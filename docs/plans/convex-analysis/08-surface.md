@@ -78,9 +78,8 @@ Most sections should be near-mechanical. These are not:
   `−log`, `−(a²−x²)^{1/2}`, the geometric mean, log-sum-exp, the Tchebycheff norm). Genuine work,
   genuine value: they are the tests that the definitions compute. Mathlib supplies the analytic
   facts (`norm_inner_le_norm` for Cauchy–Schwarz, and `Analysis/MeanInequalities.lean` for Young's
-  inequality — note that three names cited in an earlier draft of this plan
-  (`Real.add_pow_le_pow_mul_pow_of_sq_le_sq`, `inner_mul_le_norm_mul_norm`,
-  `Real.inner_le_nnorm_mul_nnorm`) do not exist).
+  inequality; note that `Real.add_pow_le_pow_mul_pow_of_sq_le_sq`,
+  `inner_mul_le_norm_mul_norm` and `Real.inner_le_nnorm_mul_nnorm` do **not** exist).
 - **§4 Theorems 4.4, 4.5** (second-derivative and Hessian criteria). Mathlib has the one-dimensional
   version in `Analysis/Convex/Deriv.lean`; the `ℝⁿ` version follows by restricting to lines, which
   needs a small lemma `convexOn_iff_convexOn_lines`.

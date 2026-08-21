@@ -70,11 +70,10 @@ def FinitelyGenerated (C : Set E) : Prop :=
 theorem polyhedral_iff_finitelyGenerated : Polyhedral C ↔ FinitelyGenerated C   -- **Thm 19.1**
 ```
 
-Proof route — and note the earlier draft conflated two different proofs. Do it for **cones** first.
-"Polyhedral ⇒ finitely generated" is Fourier–Motzkin elimination, a projection argument with nothing
-to do with polarity. "Finitely generated ⇒ polyhedral" goes by double polarity, but `K = K°°` holds
-only for **closed** cones, so it needs a prior theorem the plan originally omitted and which is the
-real content:
+Proof route — the two directions are different proofs and must not be conflated. Do it for **cones**
+first. "Polyhedral ⇒ finitely generated" is Fourier–Motzkin elimination, a projection argument with
+nothing to do with polarity. "Finitely generated ⇒ polyhedral" goes by double polarity, but
+`K = K°°` holds only for **closed** cones, so it needs a prior theorem, which is the real content:
 
 ```lean
 theorem isClosed_pointedCone_span (D : Finset E) : IsClosed (PointedCone.span ℝ ↑D : Set E)

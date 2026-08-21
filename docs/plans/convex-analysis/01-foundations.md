@@ -27,9 +27,9 @@ theorem EReal.neg_add' {a b : EReal} (h₁ : a ≠ ⊤ ∨ b ≠ ⊥) (h₂ : a 
     -(a + b) = -a + -b
 ```
 
-**Do not** write `EReal.sub_le_iff_le_add` or `EReal.coe_smul`: an earlier draft listed both as
-missing and both exist (`Mathlib/Data/EReal/Operations.lean:458` with *weaker* disjunctive
-hypotheses, and `EReal.coe_mul` respectively). Defining our own inside `namespace Tdaf.EReal` would
+**Do not** write `EReal.sub_le_iff_le_add` or `EReal.coe_smul`: both exist
+(`Mathlib/Data/EReal/Operations.lean:458` with *weaker* disjunctive hypotheses, and `EReal.coe_mul`
+respectively). Defining our own inside `namespace Tdaf.EReal` would
 shadow Mathlib's throughout `namespace Tdaf`. The genuinely absent ones are the `⨆`/`⨅` arithmetic
 above — `conj` is a `⨆` of `· − f x`, so these carry every conjugacy proof. Also import
 `Mathlib.Data.EReal.Inv` for the division `dirDeriv` needs.

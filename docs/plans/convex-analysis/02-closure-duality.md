@@ -54,8 +54,8 @@ The surface then owes a proof that for convex `f` on `ℝⁿ` this agrees with t
 | `clFn_eq_limit_along_segment` | **Thm 7.5**, Cor 7.5.1 |
 | `relint_lt_level`, `closure_level_eq` | Thm 7.6 |
 
-**Correction (review finding B1).** An earlier draft claimed Theorem 7.4 (`cl f` proper when `f` is)
-generalises to layer C via "a proper convex function has an affine minorant". **That is false**: a
+**Theorem 7.4 does not generalise to layer C**, and in particular a proper convex function need not
+have a continuous affine minorant there: a
 discontinuous linear functional `g` has dense kernel, so `closure (epi g) = univ` and
 `lscHull g ≡ ⊥`, while `g` is convex, finite everywhere and proper. The sketch assumed
 `(x₀, f x₀ − 1) ∉ closure (epi f)`, which is exactly what fails.
@@ -73,7 +73,7 @@ theorem ConvexFn.eq_bot_or_eq_top (hf : ConvexFn f) (hl : LowerSemicontinuous f)
     (h : ∃ x₀, f x₀ = ⊥) (x : E) : f x = ⊥ ∨ f x = ⊤
 ```
 
-For the first, the argument the earlier draft gave *is* correct once `f` is closed: `epi f` is a
+For the first, the usual argument is correct once `f` is closed: `epi f` is a
 nonempty closed convex set, `(x₀, f x₀ − 1) ∉ epi f`, and the separating functional cannot be
 vertical because a functional `(y,0)` takes the same value at `(x₀, f x₀ − 1)` and `(x₀, f x₀)`,
 while `x₀ ∈ dom f`.
@@ -136,10 +136,9 @@ Contents:
   ```
   with constructors for the inner-product and finite-dimensional cases.
 - **Product pairings** for D8: `prodPairing Bu Bx`, `negFst`, and `conj_prodPairing`.
-- **Compatible topologies — use Mathlib's, do not rebuild.** An earlier draft of this plan proposed
-  defining `Compatible τ B` and proving `Convex.closure_eq_of_compatible` from `iInter_halfSpaces_eq`,
-  and budgeted it as a file. That was a survey error:
-  `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` already has the theorem.
+- **Compatible topologies — use Mathlib's, do not rebuild.**
+  `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` already has the theorem, so there is no
+  `Compatible τ B` predicate to define and nothing to prove from `iInter_halfSpaces_eq`.
 
   ```lean
   theorem Convex.toWeakSpace_closure (hs : Convex ℝ s) :

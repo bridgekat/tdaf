@@ -3,9 +3,6 @@
 Source book: R. T. Rockafellar, *Convex Analysis*, Princeton, 1970. 8 parts, 39 sections,
 235 theorems + 217 corollaries + 9 lemmas (≈461 numbered results).
 
-**Reviewed at commit `1b0cc08` by three independent adversarial agents; see
-[`REVIEW-01.md`](REVIEW-01.md) for the findings and the resolutions, which are folded in below.**
-
 This is the root of a tree of plans. Sub-plans:
 
 | file | backbone area | book sections |
@@ -57,8 +54,7 @@ Surveyed against `mathlib4 @ v4.34.0-rc1`.
 - Convex programs, Lagrangians, Kuhn–Tucker vectors, dual programs, Fenchel's duality theorem.
 - Saddle-functions, minimax theorems, convex bifunctions, convex processes.
 
-Corrections to an earlier draft of this list, established by review (see
-[`REVIEW-01.md`](REVIEW-01.md) §D):
+What the Mathlib survey established:
 
 - Mathlib **does** have a minimax theorem — `Mathlib/Topology/Sion.lean` (Sion–von Neumann, with a
   saddle-point form). Reuse it for Corollary 37.6.2 rather than reproving it.
@@ -71,14 +67,12 @@ Corrections to an earlier draft of this list, established by review (see
 - What is genuinely missing and is a *file*, not a handful of lemmas: `add_iSup` / `iSup_add` /
   `iSup_sub` / `mul_le_mul_left` for `EReal`. `conj` is a `⨆` of `· − f x`, so these are the
   workhorses of every conjugacy proof.
-- **Correction (survey error).** This plan originally added "`Compatible τ B` and Mackey–Arens:
-  nothing in Mathlib, and on D3's critical path". That was wrong. `Mathlib/Analysis/LocallyConvex/
-  WeakSpace.lean` proves exactly the theorem in question — its module docstring reads "if `E` is a
-  vector space with two locally convex topologies, then the closure of a convex set is the same in
-  either topology, provided they have the same collection of continuous linear functionals". The
-  names are `Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex` and
-  `LinearEquiv.image_closure_of_convex`. The grep-based survey missed it because no declaration in
-  the file contains the word "compatible".
+- Mathlib **does** have compatible-topology independence, in
+  `Mathlib/Analysis/LocallyConvex/WeakSpace.lean`: the closure of a convex set is the same under any
+  two locally convex topologies with the same continuous dual. The names are
+  `Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex` and
+  `LinearEquiv.image_closure_of_convex`. No declaration in that file contains the word "compatible",
+  so only a semantic search finds it — see `NOTES.md` gotcha 48.
 
 Two concrete Mathlib mismatches to be careful about:
 
@@ -180,22 +174,20 @@ The biconjugate is `conj B.flip (conj B f) : E → EReal`, so the correspondence
 reflexivity assumptions. Instantiations: `ℝⁿ` with the inner product (Rockafellar), a normed space
 with `topDualPairing`, a Hilbert space with itself. (Not the weak topology — see below.)
 
-**Whatever topology `E` already has.** An earlier draft of this decision made the weak topology
-`σ(E, F)` — Mathlib's type synonym `WeakBilin B` — the mechanism: prove the duality theorems there,
-transport out. That was wrong, and the machinery has been deleted. The duality theorems hold in
-whatever topology `E` already carries, provided its continuous dual is the `F` side of the pairing,
-and that is said as a hypothesis on the pairing rather than engineered by a change of type. The
-spelling follows Mathlib's `LinearMap.IsContPerfPair` — a `Prop`-valued class whose second field
-uses the first — because our situation is the one that idiom is for: a single pairing threaded
-through many results.
+**Whatever topology `E` already has.** The duality theorems hold in whatever topology `E` carries,
+provided its continuous dual is the `F` side of the pairing. That is a hypothesis on the pairing,
+not a change of type: `σ(E, F)` enters only as one instance among several — the coarsest compatible
+topology, never the mechanism. The spelling follows Mathlib's `LinearMap.IsContPerfPair`, a
+`Prop`-valued class whose second field uses the first, because our situation is the one that idiom
+is for: a single pairing threaded through many results.
 
 ```lean
-class LinearMap.IsContinuousPairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : Prop where
+class IsContinuousPairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : Prop where
   continuous_left (B) (y : F) : Continuous fun x : E => B x y
 
-def evalCLM (B) [B.IsContinuousPairing] : F →ₗ[ℝ] StrongDual ℝ E
+def evalCLM (B) [IsContinuousPairing B] : F →ₗ[ℝ] StrongDual ℝ E
 
-class LinearMap.IsCompatiblePairing (B) : Prop extends B.IsContinuousPairing where
+class IsCompatiblePairing (B) : Prop extends IsContinuousPairing B where
   surjective_eval (B) : Function.Surjective (evalCLM B)
 ```
 
@@ -230,7 +222,7 @@ once in `Duality/Pairing.lean` and threaded from there.
 
 *Compatible-topology independence is a corollary, not a file.* The statement that `cl C` is the
 same in every topology compatible with the pairing is **not** on the path to Fenchel–Moreau — that
-was a consequence of the abandoned weak-topology design — and it is also not new work:
+and it is not new work:
 `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` has it as `Convex.toWeakSpace_closure` and
 `LinearEquiv.image_closure_of_convex`. What was budgeted as `Duality/Compatible.lean` is a page of
 corollaries specialising those to `epi f`, at layer C (Mathlib's version needs `RCLike 𝕜` and
@@ -261,13 +253,12 @@ Rockafellar's order is §6 (relative interiors) → §7 (closure) → §8, §9 �
 - Relative interiors are needed only for the **exact**, closure-free forms of the duality formulas
   (§16, §23.8, §31) — i.e. as constraint qualifications, not as foundations.
 
-**Correction (review finding B1).** An earlier draft of this decision claimed that a proper convex
-function has a continuous affine minorant in any locally convex space, hence that Theorem 7.4 holds
-at layer C. That is **false**. If `g : E →ₗ[ℝ] ℝ` is a discontinuous linear functional then `ker g`
+**Why `clFn` branches on `lscHull f`.** A proper convex function need **not** have a continuous
+affine minorant in a locally convex space, so Theorem 7.4 does not hold at layer C. If `g : E →ₗ[ℝ] ℝ` is a discontinuous linear functional then `ker g`
 is dense, `closure (epi g) = univ`, and `lscHull g ≡ ⊥` — yet `g` is convex, finite everywhere and
 proper. The consequence reached further than §7: with `f := g + δ(·|closedBall 0 1)` one gets
-`conj B f ≡ ⊤` and `biconj B f ≡ ⊥ ≠ clFn f`, so **Fenchel–Moreau itself would have been false as
-originally planned**. Three changes repair it:
+`conj B f ≡ ⊤` and `biconj B f ≡ ⊥ ≠ clFn f`, so a naive reading of §12 makes **Fenchel–Moreau
+itself false**. Three things keep it true:
 
 1. `clFn` branches on whether **`lscHull f`** takes `⊥`, not on whether `f` does — the standard
    Γ-regularization. This makes `biconj = clFn` unconditionally true, and for convex `f` in `ℝⁿ` it
@@ -311,10 +302,10 @@ structure IsExactSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) :
 ```
 
 with `conj_add : conj B (f + g) = infConv (conj B f) (conj B g)` a *theorem* derived from
-`exact_le` — the reverse inequality holds unconditionally, so stating both is redundant. (An earlier
-draft had two fields and no properness; review found the second field was then *unsatisfiable* when
-`dom f ∩ dom g = ∅`, since `f + g ≡ ⊤` forces `conj B (f+g) ≡ ⊥` while conjugates of proper
-functions are never `⊥`. It also hid an `∞ − ∞` inside `f + g`, which is the `Pi` `EReal` sum.)
+`exact_le` — the reverse inequality holds unconditionally, so stating both is redundant. Properness
+is not decoration: without it the field is *unsatisfiable* when `dom f ∩ dom g = ∅`, since
+`f + g ≡ ⊤` forces `conj B (f+g) ≡ ⊥` while conjugates of proper functions are never `⊥`. It also
+hides an `∞ − ∞` inside `f + g`, which is the `Pi` `EReal` sum.
 
 with sufficient conditions proved separately:
 
@@ -590,8 +581,8 @@ genuinely finite-dimensional work and is the main risk (see §6 below).
 
 ## 7. Status
 
-Stages 1 and 2 are substantially done. Everything below compiles with no `sorry`, no warnings, and
-`#print axioms` showing only `propext`, `Classical.choice`, `Quot.sound`.
+Stages 1–4 are done: §§2–8, 11–14 and 23, including Fenchel–Moreau. The library compiles with no
+`sorry`, no warnings, and `#print axioms` showing only `propext`, `Classical.choice`, `Quot.sound`.
 
 | module | contents |
 |---|---|
@@ -602,8 +593,40 @@ Stages 1 and 2 are substantially done. Everything below compiles with no `sorry`
 | `Analysis/Convex/Homogeneous.lean` | `PosHomogeneous`; Thm 2.6 for cones; **Thms 4.7, 4.8**, Cors 4.7.1–4.7.2 |
 | `Analysis/Convex/Operations/Epi.lean` | `ofEpi`, `IsEpiLike` and its closure properties; **Thm 5.3** |
 | `Analysis/Convex/Operations/Basic.lean` | `epi_iSup`; **Thms 5.1, 5.2, 5.5**; scalar multiples, restriction |
+| `Operations/InfConv.lean` | `□` (**Thm 5.4**), the `AddCommMonoid` on `InfConvFn E` |
+| `Operations/Hull.lean` | `convFn`, `convHullFn` (**Thm 5.6**, proved), the `GaloisCoinsertion` onto convex functions |
+| `Operations/Image.lean` | `mapLin`/`compLin` (**Thm 5.7**), their `GaloisConnection`, partial minimisation |
+| `Homogenize.lean` | `smulRight`, `levelOneLift`, `hom`, `homCone`, `homEpiCone` (D6) |
+| `Closure.lean` | `lscHull`, `clFn`, `ClosedFn` (**§7** at layer B/C), incl. the Fenchel–Moreau keystone |
+| `Lattice.lean` | the convex functions as a `CompleteLattice` (§5) |
+| `Separation.lean` | §11 at layer C, plus the reusable non-vertical separation lemma |
+| `Recession/Cone.lean` | §8's set half, layered A/B/D |
+| `Duality/Pairing.lean` | dual pairs, adjoint pairs, product pairings, the dual of `E × ℝ` |
+| `Duality/Conjugate.lean` | **Theorems 12.1 and 12.2 — Fenchel–Moreau** |
+| `RelativeInterior.lean` | §6, and **every result stages 2–3 deferred to it** |
+| `Recession/Function.lean` | §8's function half — Theorems 8.5–8.8 |
+| `Duality/Support.lean` | §13, with `supportEquiv` for the one-to-one correspondence |
+| `Duality/Polar.lean` | §14 up to Theorem 14.5, polarity as a `GaloisConnection` |
+| `Subgradient/Defs.lean` | §23 — the first subgradient anywhere in the Lean ecosystem |
 
-Confirmed by building these:
+Next: §9 (closedness criteria), §10 (continuity), §16 (dual operations), then §§17–22 and §§24–26.
+`Duality/Compatible.lean` is a page of corollaries over Mathlib's `WeakSpace.lean` rather than the
+file it was once budgeted as; `RelativeInterior.lean` still owes Corollary 6.8.1, Theorems 6.7/6.9
+and the `ri` half of Theorem 7.6, none of which blocks anything.
+
+## 8. Open questions
+
+* Whether Rockafellar ever uses an `∞ − ∞` convention locally in §16/§30 (some treatments take
+  `∞ − ∞ = ∞` there). `EReal` picks `⊥`. This decides whether D5's side conditions are cosmetic.
+* Whether `IsExactSum.of_continuousAt` is as cheap in a bare TVS as D5 assumes — a short spike would
+  settle it.
+* Whether `Mathlib/Analysis/Convex/Approximation.lean` and `Mathlib/Topology/Sion.lean` overlap §10
+  and §35–§36 beyond the minimax theorem itself.
+
+## 9. Corrections to Rockafellar and to this plan
+
+Each of these was established while formalizing, and each is a statement about the mathematics
+rather than about the book's exposition. Design decision D0 explains the recurring shape.
 
 * `EReal` is the right carrier — every §4 convention holds in Mathlib's `EReal`, and the `∞ − ∞`
   Rockafellar leaves undefined never surfaces under the properness hypotheses.
@@ -611,9 +634,6 @@ Confirmed by building these:
   lines via `ConvexOn.convex_epigraph`.
 * Theorem 4.2's strict form is the right primitive: 4.1, both halves of 4.6, and their concave
   mirrors are short consequences, and no proof ever has to reason about `⊥ + ⊤`.
-
-Corrected while building, and folded into the sub-plans:
-
 * **`epi (ofEpi F) = F` needs a hypothesis** (`IsEpiLike`), and closedness alone does not supply it
   (`{(0,0)}` is closed and is not an epigraph). Consequently the §5 "operation = `ofEpi` of a set"
   identities are `rfl`, and the content-bearing epigraph identities are conditional.
@@ -623,23 +643,10 @@ Corrected while building, and folded into the sub-plans:
 * **Theorem 5.1 needs `φ ⊤ = ⊤` explicitly**, and is stated more generally than the book (`φ` may
   take `⊥`).
 * **D2's "generate the concave API by `simp`"** does not work: the natural simp set loops.
-
-Stage 2 is complete and stage 3 has begun. Added since:
-
-| module | contents |
-|---|---|
-| `Operations/InfConv.lean` | `□` (**Thm 5.4**), the `AddCommMonoid` on `InfConvFn E` |
-| `Operations/Hull.lean` | `convFn`, `convHullFn` (**Thm 5.6**, proved), the `GaloisCoinsertion` onto convex functions |
-| `Operations/Image.lean` | `mapLin`/`compLin` (**Thm 5.7**), their `GaloisConnection`, partial minimisation |
-| `Homogenize.lean` | `smulRight`, `levelOneLift`, `hom`, `homCone`, `homEpiCone` (D6) |
-| `Closure.lean` | `lscHull`, `clFn`, `ClosedFn` (**§7** at layer B/C), incl. the Fenchel–Moreau keystone |
-
-Three further corrections established by building these:
-
 * **The dichotomy lemma must say "no finite values", not "identically `⊥`".** On `ℝ`, the function
   that is `⊥` at the origin and `⊤` elsewhere is convex and lower semicontinuous and takes `⊥`
-  without being constant. Rockafellar's Corollary 7.2.1 says exactly "can have no finite values";
-  that is what generalises, and an earlier draft of the plan asked for the false stronger form.
+  without being constant. Rockafellar's Corollary 7.2.1 says exactly "can have no finite values",
+  and that is what generalises; the stronger "identically `⊥`" is false.
 * **`□` is not associative by set `add_assoc`.** Since `epi (f □ g) ⊇ epi f + epi g` strictly, the
   outer convolution is not taken against the sum one started with; `epi_ofEpi_add_subset` is the
   bridge, and is needed whenever two `ofEpi`-defined operations compose.
@@ -647,33 +654,6 @@ Three further corrections established by building these:
   while an epigraph contains the whole vertical ray: `epi (hom f) = homCone f ∪ {0} ×ˢ Ici 0`. D6's
   wording invited the wrong assumption. Also `hom` and `smulRight` need `dom f ≠ ∅` in several
   places that the plan never flagged.
-
-Interfaces instantiated so far, per `README:91`: `GaloisInsertion`/`ClosureOperator` for
-`ofEpi`/`epi`, `ConvexCone` for the epigraph of a positively homogeneous convex function and for
-`epi (hom f)`, `AddCommMonoid` for `□`, `GaloisCoinsertion` for `conv`, `GaloisConnection` for
-`compLin`/`mapLin`, `ClosureOperator` for `lscHull` and `clFn`. One was deliberately **declined**:
-a `MulAction ℝ≥0 (E → EReal)` for `smulRight` would give `a • f` a second meaning clashing with the
-pointwise action, so it is a bundled `MonoidHom` into `Function.End` instead.
-
-**Stage 3 is done, including the keystone.** Added since:
-
-| module | contents |
-|---|---|
-| `Lattice.lean` | the convex functions as a `CompleteLattice` (§5) |
-| `Separation.lean` | §11 at layer C, plus the reusable non-vertical separation lemma |
-| `Recession/Cone.lean` | §8's set half, layered A/B/D |
-| `Duality/Pairing.lean` | dual pairs, adjoint pairs, product pairings, the dual of `E × ℝ` |
-| `Duality/Conjugate.lean` | **Theorems 12.1 and 12.2 — Fenchel–Moreau** |
-
-**Fenchel–Moreau holds in whatever topology `E` already carries**, provided its continuous dual is
-the `F` side of the pairing. Carrying that as two hypotheses proves the theorem directly, and both
-are trivial when `E` is paired with its own dual — so `biconj_eq_clFn_topDual` is Fenchel–Moreau in
-the norm topology of a Banach space and `biconj_eq_clFn_inner` is Rockafellar's `ℝⁿ` via
-Fréchet–Riesz. The weak-topology machinery that an earlier draft of D3 made the centrepiece has been
-**deleted**; `Duality/Compatible.lean` is deferred with it.
-
-Further corrections from this stage:
-
 * **Fenchel's inequality as §2.4 stated it is false.** `⟨x,y⟩ ≤ f x + f* y` fails at improper `f`,
   because `⊤ + ⊥ = ⊥`. The unconditional content is `⟨x,y⟩ - f x ≤ f* y`; the named inequality
   carries properness, which is Rockafellar's own wording.
@@ -687,50 +667,6 @@ Further corrections from this stage:
   direct-sum decomposition are **layer A**. Only Theorem 8.4 and Corollary 8.4.1 are layer D.
 * **§2.4's proof plan omitted a case**: the vertical coefficient can be negative, zero *or
   positive*, and ruling out the third needs upward closedness of the epigraph.
-
-Next: `Duality/{Support,Polar}` (§13–§15), `Recession/Function.lean` (§8's function half),
-`RelativeInterior.lean` (§6) — which unblocks the results deliberately deferred from §7, §8 and §11 —
-and `Subgradient/Defs.lean` (§23), whose pivot (Theorem 23.5) is now available.
-
-### Deleted, and why
-
-The weak-topology machinery (`WeakBilin` transport in `Duality/Pairing.lean`, the `_weak` corollaries
-in `Duality/Conjugate.lean`) has been removed, ~120 lines. It was the mechanism an earlier draft of
-D3 proposed for proving the duality theorems; carrying compatibility as hypotheses proves them in
-whatever topology `E` already has, so the transport was never used by anything. `Duality/Compatible.lean`
-is deferred along with it.
-
-## 8. Conventions
-
-- Namespace: everything backbone under `Tdaf`, then Mathlib-style names
-  (`Tdaf.ConvexFn`, `Tdaf.conj`, `Tdaf.subgradient`).
-- Surface under namespace `Rockafellar`, with names `theorem_4_2`, `corollary_16_4_1`, etc., and a
-  docstring quoting the book's statement.
-- `EReal`-valued definitions carry no `'`-suffix; real-valued specialisations get `Real` in the name.
-- Every backbone definition that has a Mathlib counterpart gets a bridge lemma
-  (`convexOn_iff_convexFn`, `gauge_eq_toReal_egauge`, `polar_eq_of_balanced`, …), so that surface
-  proofs can move freely between the two.
-- Notation (`□`, `#`, `δ(·|C)`, `f0⁺`) is declared in the surface's `Notation.lean` and in scoped
-  namespaces in the backbone, never globally.
-
-**Stage 4 is done.** Added since:
-
-| module | contents |
-|---|---|
-| `RelativeInterior.lean` | §6, and **every result stages 2–3 deferred to it** |
-| `Recession/Function.lean` | §8's function half — Theorems 8.5–8.8 |
-| `Duality/Support.lean` | §13, with `supportEquiv` for the one-to-one correspondence |
-| `Duality/Polar.lean` | §14 up to Theorem 14.5, polarity as a `GaloisConnection` |
-| `Subgradient/Defs.lean` | §23 — the first subgradient anywhere in the Lean ecosystem |
-
-`RelativeInterior.lean` discharged all six deferrals named for it: Lemma 7.3, Theorems 7.2/7.4 with
-Corollaries 7.2.1/7.2.2/7.2.3/7.4.1/7.4.2, Corollary 8.3.1, Theorem 11.3, and
-Corollaries 11.6.1/11.6.2. Theorem 11.3 needed a *relatively open* form of Theorem 11.2, which
-`Separation.lean` supplies only for genuinely open sets; that is `exists_lt_of_notMem_relint` and it
-is the largest single piece of the file. §3.1 should have listed it as a prerequisite.
-
-Further corrections from this stage:
-
 * **`epi_recessionFn` needs no hypothesis at all**, not `ClosedFn f` as §3.3 specified. The stated
   reason — that `0⁺(epi f)` has closed vertical sections only when `epi f` is closed — is simply
   false: upward closure is monotonicity of `ν ↦ μ + aν`, and closure from below follows from

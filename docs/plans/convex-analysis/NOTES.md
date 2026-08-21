@@ -218,8 +218,7 @@ From the repository `README.md` ("Reviewing a formalization"):
   has it.
 * **Bundle *concepts*, not individual assumptions.** `Proper`, `ConvexFn`, `IsExactSum` are named
   mathematical concepts and are structures. A single side condition such as `∀ x, f x ≠ ⊥` is not a
-  concept — repeat it inline rather than inventing a name for it. (An earlier `NeBotFn` wrapper was
-  removed for exactly this reason.)
+  concept — repeat it inline rather than inventing a name for it.
 * **Instantiate the Mathlib interfaces that emerge implicitly.** If a definition turns out to be a
   Galois connection, a closure operator, a cone, a module, a lattice — say so, eagerly, and get the
   machinery and the lemma names for free instead of hand-rolling them. Two already in the library:
@@ -400,13 +399,14 @@ From the repository `README.md` ("Reviewing a formalization"):
 40. **`Tdaf.EReal.coe_sub_le_comm : (a:ℝ) - z ≤ w ↔ (a:ℝ) - w ≤ z` is unconditional** (all eight
     `⊥`/`⊤` combinations work, because `a` is finite). This one symmetry makes `conj_le_iff`, the
     conjugacy Galois connection and `biconj B f ≤ f` hypothesis-free. It is the `EReal` fact §12
-    turns on — and note that `add_iSup`/`iSup_add`/`iSup_sub`, which `REVIEW-01` §D predicted would
-    "carry every conjugacy proof", were **not needed at all**.
-41. **Do not reach for the weak topology.** An earlier design proved the duality theorems in
-    `WeakBilin B` and transported out; the machinery has been deleted. The theorems hold in whatever
-    topology `E` already carries, provided its continuous dual is the `F` side of the pairing, and
-    that is carried as two hypotheses — both trivial when `E` is paired with its own dual. The
-    general pairing exists so that `E` and `F` may differ (§30, §33), not for the weak topology.
+    turns on. `add_iSup`/`iSup_add`/`iSup_sub` for `EReal`, long expected to carry every conjugacy
+    proof, are **not needed for §12 at all**; §13 does need them, as `Tdaf.EReal.coe_mul_iSup` and
+    friends.
+41. **Do not reach for the weak topology.** The duality theorems hold in whatever topology `E`
+    carries, provided its continuous dual is the `F` side of the pairing — that is
+    `Tdaf.IsCompatiblePairing`, and it is trivial when `E` is paired with its own dual. `σ(E, F)` is
+    one instance of it, the coarsest, never the mechanism. The general pairing exists so that `E`
+    and `F` may differ (§30, §33).
 42. **`PointedCone`, not `ConvexCone`, is the bundling to reach for.** `PointedCone R E` is
     `Submodule {c // 0 ≤ c} E`, so it has a span (`PointedCone.hull`, renamed from `span`), and
     `PointedCone.lineal` already *is* `C ⊓ -C` with the "largest subspace inside" Galois connection.
@@ -429,13 +429,12 @@ From the repository `README.md` ("Reviewing a formalization"):
     `isBounded_iff_asymptoticCone_subset_singleton` giving Theorem 8.4 in three lines; the usable
     `{x | l x ≤ c}` form of `iInter_halfSpaces_eq` exists only in the `RCLike` namespace.
 
-48. **Search Mathlib *semantically* before concluding it lacks something.** Two survey errors in a
-    row came from grepping for names. `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` contains
-    exactly the compatible-topology theorem this project budgeted as a file
-    (`Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex`,
-    `LinearEquiv.image_closure_of_convex`), and no declaration in it contains the word
-    "compatible". Likewise `LinearMap.dualEmbedding_surjective` — the Weak Representation Theorem —
-    was reported missing. **Use <https://leansearch.net> (`POST /search`, body
+48. **Search Mathlib *semantically* before concluding it lacks something.** Grepping for names
+    misses whole files. `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` holds the
+    compatible-topology theorem (`Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex`,
+    `LinearEquiv.image_closure_of_convex`) and no declaration in it contains the word "compatible";
+    `LinearMap.dualEmbedding_surjective` is the Weak Representation Theorem and says neither word.
+    **Use <https://leansearch.net> (`POST /search`, body
     `{"query": ["…"], "num_results": 8}`), which matches informal descriptions, and only then
     grep.**
 49. **Do not use `LinearMap.IsContPerfPair` for the pairing hypotheses.** The name is inviting and
@@ -459,8 +458,10 @@ From the repository `README.md` ("Reviewing a formalization"):
 52. **`Tdaf.Convex.*` kills dot notation.** Generalised field notation resolves `hC.foo` against the
     **root** `Convex` namespace only, so `hC.segment_mem_relint` fails with "The environment does
     not contain `Function.segment_mem_relint`". Inside `namespace Tdaf`, write
-    `Convex.segment_mem_relint hC …`. Same reason `LinearMap.IsCompatiblePairing` must be declared
-    with `_root_.`: `Tdaf.LinearMap.IsCompatiblePairing` would give no `B.IsCompatiblePairing`.
+    `Convex.segment_mem_relint hC …`. The same reasoning is why `Tdaf.IsCompatiblePairing` is a
+    prefix predicate rather than a `LinearMap` field: a downstream project should not squat in
+    Mathlib's namespace just to buy dot notation, and `[IsCompatiblePairing B.flip]` reads better
+    than the projection form anyway.
 53. **`add_comm` with no arguments rewrites the wrong `+`.** In `f (x + y) ≤ ↑s + ↑r` a bare
     `rw [add_comm]` hits `x + y` *inside* `f`. Always supply both arguments. Likewise
     `add_le_add_right h c` proves `c + a ≤ c + b`, not `a + c ≤ b + c`; `add_le_add h le_rfl` is
@@ -489,15 +490,15 @@ From the repository `README.md` ("Reviewing a formalization"):
     `surjective_eval (B) : Function.Surjective (evalCLM B)` elaborates off the parent. Ordering the
     file *base class → map → extension* is what makes this possible, and it is worth the trouble:
     stating the field through the map rather than through an inlined anonymous constructor is what
-    let `exists_pairing_eq` be a `rw` instead of `rfl`-poking, and it deleted a duplicate definition
-    (`pairingCLM`) that existed only because the class had no map of its own.
+    let `exists_pairing_eq` be a `rw` instead of `rfl`-poking, and it means the map is available to
+    downstream files instead of being re-defined there.
 60. **`LinearMap.flip` is a plain `def`, so instance search will not unfold it.** With
-    `[B.IsContinuousPairing]` in context, `inferInstance` for `B.flip.flip.IsContinuousPairing`
-    **fails**, although `‹B.IsContinuousPairing›` typechecks at that type — defeq holds at default
+    `[IsContinuousPairing B]` in context, `inferInstance` for `IsContinuousPairing B.flip.flip`
+    **fails**, although `‹IsContinuousPairing B.flip.flip›` typechecks at that type — defeq holds at default
     transparency, not at instance transparency. One bridge instance fixes it for the whole library;
     check whether it is load-bearing by demoting it to a `theorem` and rebuilding.
 61. **An instance binder does not pin implicit arguments the way a hypothesis did.** A hypothesis
-    mentioning `B` determined `B` for free; `[B.IsCompatiblePairing]` never does. Any lemma whose
+    mentioning `B` determined `B` for free; `[IsCompatiblePairing B]` never does. Any lemma whose
     *conclusion* does not mention `B` now needs `(B := B)` at the call site, and the error is the
     less helpful "typeclass instance problem is stuck".
 62. **`simp` will not close `evalCLM`'s `map_add'`/`map_smul'`**: `ContinuousLinearMap.coe_mk'`
@@ -509,8 +510,8 @@ From the repository `README.md` ("Reviewing a formalization"):
 
 ## 3. Review findings
 
-The plan was reviewed adversarially at commit `1b0cc08`; see [`REVIEW-01.md`](REVIEW-01.md). Read it
-before starting a module. The findings that bite hardest in day-to-day work:
+The plan was reviewed adversarially early on; the findings are folded into the plans above and into
+the gotchas below. The ones that bite hardest in day-to-day work:
 
 * `open Pointwise` is needed by every file using `epi f + epi g`, `a • epi f` or set negation, and
   its absence shows up as an instance-synthesis failure rather than a clear error.
@@ -519,8 +520,8 @@ before starting a module. The findings that bite hardest in day-to-day work:
 * `EReal.sub_le_iff_le_add`, `le_sub_iff_add_le`, `sub_le_of_le_add` already exist in Mathlib with
   *weaker* disjunctive hypotheses. Do not redefine them — inside `namespace Tdaf` ours would shadow
   Mathlib's.
-* `add_iSup` / `iSup_add` / `iSup_sub` for `EReal` do **not** exist anywhere in Mathlib and must be
-  written; they carry every conjugacy proof.
+* `add_iSup` / `iSup_add` / `iSup_sub` for `EReal` do **not** exist anywhere in Mathlib. §12 turns
+  out not to need them (gotcha 40); §13 does, and `Tdaf/Order/EReal.lean` now has them.
 * `WeakBilin B` is a type synonym: `simp`/`rw` do not fire through it, and pair literals in
   `WeakBilin B × ℝ` need manual ascription.
 * Mathlib already has `egauge` (`Analysis/Convex/EGauge.lean`) and a minimax theorem

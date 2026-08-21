@@ -110,7 +110,7 @@ theorem Convex.closure_image_eq (hC : Convex ℝ C) (hC' : C.Nonempty) (A : E �
     recessionCone (A '' closure C) = A '' recessionCone (closure C)
 ```
 
-Prerequisites the earlier draft left unnamed: `recessionCone (S ∩ T) = recessionCone S ∩ recessionCone T`
+Prerequisites, easily missed: `recessionCone (S ∩ T) = recessionCone S ∩ recessionCone T`
 for nonempty closed convex `S`, `T` (Corollary 8.3.3); `recessionCone (A ⁻¹' closedBall y ε) = ker A`;
 and the translation lemma turning `L ⊆ linealitySpace (cl C)` into "`L^⊥ ∩ cl C` has the same image".
 Note also that Mathlib's nested-compacts lemma is
@@ -179,8 +179,7 @@ Three corrections from review. (i) `conj B (f + g) ≤ infConv (conj B f) (conj 
 *unconditional*, so `conj_add` is a **theorem** derived from `exact_le`, not a second field; stating
 both was redundant, and the equality form was moreover *unsatisfiable* when `dom f ∩ dom g = ∅`
 (then `f + g ≡ ⊤`, so `conj B (f+g) ≡ ⊥`, while conjugates of proper functions are never `⊥`).
-(ii) Properness is a genuine hypothesis of Theorems 16.3/16.4 that the earlier draft dropped — and it
-is also what keeps the `Pi` sum `f + g` from hiding an `∞ − ∞`. (iii) `A.adjoint` does not exist for
+(ii) Properness is a genuine hypothesis of Theorems 16.3/16.4, and it is also what keeps the `Pi` sum `f + g` from hiding an `∞ − ∞`. (iii) `A.adjoint` does not exist for
 a linear map between arbitrary paired spaces; the transpose is extra *data*, supplied as `A'`
 together with `IsAdjointPair` (see `Duality/Pairing.lean`).
 
@@ -202,8 +201,8 @@ theorem IsExactSum.of_continuousAt (h : ∃ x ∈ dom g, ContinuousAt f x ∧ f 
 statements, so `Polyhedral/Duality.lean` imports `Exact.lean`; putting `of_polyhedral` in
 `Exact.lean` makes the two mutually importing. `Exact.lean` holds only the interface and its
 interface-only consequences, importing `Duality/Conjugate` and `Operations/InfConv`. Note also
-`PolyhedralFn` (functions), not `Polyhedral` (sets) — the earlier draft applied the set-level
-predicate to a function, which is a type error.
+`PolyhedralFn` (functions), not `Polyhedral` (sets); applying the set-level predicate to a function
+is a type error.
 
 `of_relint` is proved from §9 (Theorem 9.2 / Corollary 9.2.1 give closedness and attainment, via
 Lemma 16.2 and Corollary 16.2.1) plus §6. `of_continuousAt` is a genuine generalisation valid in any
