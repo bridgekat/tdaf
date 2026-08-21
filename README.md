@@ -94,7 +94,10 @@ In such cases, the agent should make sure that the formalization is idiomatic Le
 - Prefer defining and using bundled, named interfaces for a named concept rather than repeating individual assumptions.
 - Identify Mathlib interfaces (e.g. topological spaces, modules, rings) that emerge implicitly from the definitions, and instantiate them eagerly to benefit from Mathlib machinery (e.g. the `ring` tactic and helpful lemmas) and simplify proofs.
 
-Finally, check for semantic alignment: at surface level, confirm that the definition or theorem statement matches the textbook definition or statement, with no axiomatic or definitional cheats. This includes correct use of dependent definitions or theorems. At backbone level, confirm that the definition or theorem statement agrees with the specification in the plan.
+Finally, check for semantic alignment:
+
+- At surface level, confirm that the definition or theorem statement matches the textbook definition or statement, with no axiomatic or definitional cheats. This includes correct use of dependent definitions or theorems.
+- At backbone level, confirm that the definition or theorem statement agrees with the specification in the plan.
 
 ### General instructions for agents
 
