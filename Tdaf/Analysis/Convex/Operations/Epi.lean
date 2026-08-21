@@ -5,6 +5,8 @@ Authors: TDAF contributors
 -/
 import Mathlib.Topology.Instances.Real.Lemmas
 import Mathlib.Topology.Order.DenselyOrdered
+import Mathlib.Order.Closure
+import Mathlib.Order.GaloisConnection.Basic
 import Tdaf.Analysis.Convex.Epigraph
 
 /-!
@@ -65,11 +67,11 @@ open Set
 
 namespace Tdaf
 
-/-! ### The function determined by a set -/
-
 section Basic
 
 variable {E : Type*}
+
+/-! ### The function determined by a set -/
 
 /-- The function whose graph is the *lower boundary* of a set `F ⊆ E × ℝ`:
 `ofEpi F x = inf {μ | (x, μ) ∈ F}` (Rockafellar §5, the construction of Theorem 5.3).
@@ -146,6 +148,39 @@ the value of `f`. -/
 their `ofEpi` descriptions. -/
 theorem eq_ofEpi_of_epi_eq (h : epi f = F) : f = ofEpi F := by rw [← h, ofEpi_epi]
 
+/-! ### The Galois connection between sets and functions
+
+`subset_epi_iff_le_ofEpi` says exactly that `ofEpi` and `epi` are adjoint, antitonely. Recording
+that as Mathlib's `GaloisConnection` — and, since `ofEpi (epi f) = f`, as a `GaloisInsertion` —
+makes the whole `ClosureOperator` API available, and identifies `IsEpiLike` with the closed elements
+of that operator. The `OrderDual` on the function side is what makes the antitone adjunction fit
+Mathlib's monotone `GaloisConnection`. -/
+
+open OrderDual in
+/-- `ofEpi` is left adjoint to `epi`, antitonely: `F ⊆ epi g ↔ g ≤ ofEpi F`. -/
+theorem gc_ofEpi_epi :
+    GaloisConnection (fun F : Set (E × ℝ) => toDual (ofEpi F))
+      (fun g : (E → EReal)ᵒᵈ => epi (ofDual g)) :=
+  fun _ _ => subset_epi_iff_le_ofEpi.symm
+
+open OrderDual in
+/-- The adjunction is an insertion, because `ofEpi (epi f) = f` on the nose. -/
+noncomputable def gi_ofEpi_epi :
+    GaloisInsertion (fun F : Set (E × ℝ) => toDual (ofEpi F))
+      (fun g : (E → EReal)ᵒᵈ => epi (ofDual g)) :=
+  gc_ofEpi_epi.toGaloisInsertion fun g => le_of_eq (by simp [ofEpi_epi])
+
+/-- The closure operator `F ↦ epi (ofEpi F)` induced by the adjunction. Its closed elements are
+exactly the epi-like sets, so `Mathlib`'s `ClosureOperator` API — monotonicity, extensivity,
+idempotence, and the complete lattice of closed elements — applies to them. -/
+noncomputable def epiClosure : ClosureOperator (Set (E × ℝ)) := gc_ofEpi_epi.closureOperator
+
+@[simp] theorem epiClosure_apply (F : Set (E × ℝ)) : epiClosure F = epi (ofEpi F) := rfl
+
+/-- `epi` is injective: a function is determined by its epigraph. -/
+theorem epi_injective : Function.Injective (epi : (E → EReal) → Set (E × ℝ)) :=
+  fun _ _ h => by simpa using congrArg ofEpi h
+
 /-! ### Sets that are epigraphs -/
 
 /-- `F ⊆ E × ℝ` is *epi-like* when it is the epigraph of some function `E → EReal`.
@@ -170,6 +205,10 @@ def IsEpiLike (F : Set (E × ℝ)) : Prop := ∃ f : E → EReal, F = epi f
 /-- `ofEpi F` is the only possible witness, so `IsEpiLike` is decided by a single equation. -/
 theorem isEpiLike_iff : IsEpiLike F ↔ epi (ofEpi F) = F :=
   ⟨epi_ofEpi, fun h => ⟨ofEpi F, h.symm⟩⟩
+
+/-- `IsEpiLike` is `epiClosure`-closedness. -/
+theorem isEpiLike_iff_isClosed {F : Set (E × ℝ)} : IsEpiLike F ↔ epiClosure.IsClosed F :=
+  isEpiLike_iff
 
 /-- Vertical sections of an epi-like set are upward closed. -/
 theorem IsEpiLike.mem_of_le (h : IsEpiLike F) (hμ : (x, μ) ∈ F) (hμν : μ ≤ ν) : (x, ν) ∈ F := by

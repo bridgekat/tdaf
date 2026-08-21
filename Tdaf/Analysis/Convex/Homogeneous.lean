@@ -391,6 +391,28 @@ theorem PosHomogeneous.exists_linearMap_span (hf : PosHomogeneous f) (hconv : Co
   (hf.exists_linearMap_iff hconv hbot _).2 fun _ hx =>
     hf.neg_eq_of_mem_span hconv hbot hs hb hx
 
+/-- The epigraph of a positively homogeneous convex function, bundled as a Mathlib `ConvexCone`.
+
+Theorems 4.7 and `posHomogeneous_iff_isCone_epi` together say precisely that `epi f` is a convex
+cone; recording it as `ConvexCone ℝ (E × ℝ)` makes Mathlib's cone API available to §13 (support
+functions) and §14 (polarity), where these epigraphs are the objects of interest. -/
+def PosHomogeneous.epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f) (hbot : ∀ x, f x ≠ ⊥) :
+    ConvexCone ℝ (E × ℝ) where
+  carrier := epi f
+  smul_mem' c hc p hp := by
+    have hcone := (posHomogeneous_iff_isCone_epi (f := f)).1 hf c hc
+    rw [← hcone]; exact Set.smul_mem_smul_set hp
+  add_mem' p hp q hq := by
+    refine le_trans ((hf.convexFn_iff_subadditive hbot).1 hconv p.1 q.1) ?_
+    rw [Prod.snd_add, _root_.EReal.coe_add]
+    exact add_le_add hp hq
+
+@[simp] theorem PosHomogeneous.coe_epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f)
+    (hbot : ∀ x, f x ≠ ⊥) : (hf.epiCone hconv hbot : Set (E × ℝ)) = epi f := rfl
+
 end Module
+
+
+
 
 end Tdaf

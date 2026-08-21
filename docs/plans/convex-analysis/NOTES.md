@@ -144,6 +144,15 @@ From the repository `README.md` ("Reviewing a formalization"):
   mathematical concepts and are structures. A single side condition such as `∀ x, f x ≠ ⊥` is not a
   concept — repeat it inline rather than inventing a name for it. (An earlier `NeBotFn` wrapper was
   removed for exactly this reason.)
+* **Instantiate the Mathlib interfaces that emerge implicitly.** If a definition turns out to be a
+  Galois connection, a closure operator, a cone, a module, a lattice — say so, eagerly, and get the
+  machinery and the lemma names for free instead of hand-rolling them. Two already in the library:
+  `gc_ofEpi_epi` / `gi_ofEpi_epi` / `epiClosure` (`Operations/Epi.lean`) turn
+  `subset_epi_iff_le_ofEpi` into a `GaloisInsertion` and identify `IsEpiLike` with closure-operator
+  closedness; `PosHomogeneous.epiCone` (`Homogeneous.lean`) bundles the epigraph of a positively
+  homogeneous convex function as a `ConvexCone ℝ (E × ℝ)`, which §13 and §14 will want.
+  Candidates not yet done: the convex functions as a `CompleteLattice` via a `GaloisInsertion`
+  (`Lattice.lean`), recession cones as `PointedCone`, `∂f` as a `Rel`/set-valued map.
 * Code should be idiomatic and pleasant to read, not merely correct.
 
 ---
@@ -264,6 +273,15 @@ From the repository `README.md` ("Reviewing a formalization"):
     `EReal.rec (⊥ : EReal) φ ⊤` defines a function by cases, with `rec_bot`/`rec_coe`/`rec_top`
     `@[simp]` and `rfl`. Write `_root_.EReal.rec` inside `namespace Tdaf`.
 26. **Generic `add_le_add` works on `EReal`** (there is a `CovariantClass`); no bespoke lemma needed.
+27. **Antitone Galois connections need the `OrderDual` dance**, and it is only half free.
+    `GaloisConnection (fun F => toDual (ofEpi F)) (fun g => epi (ofDual g))` is `rfl`-easy from the
+    adjunction lemma, and `ClosureOperator` / `GaloisInsertion` / injectivity all follow. But
+    transporting `gc.u_iInf` / `gc.l_iSup` back through `toDual` does **not** `simp` away: the goal
+    keeps `sSup (⇑toDual ⁻¹' range …)` against `fun x => sSup (range …)`. Prove `epi_iSup`-style
+    lemmas directly (three lines) rather than fighting the dual.
+28. **A `def` producing a structure whose fields mention section variables must live inside the
+    section that binds them.** Appending a `ConvexCone ℝ (E × ℝ)` definition after `end Module`
+    fails with `failed to synthesize AddCommMonoid (E × ℝ)`, not with a scoping error.
 
 ---
 

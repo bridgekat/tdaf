@@ -54,7 +54,7 @@ Plans may be automatically extracted from textbooks. In such cases, the agent sh
 
 - Analyze all book contents, factor out commonalities (similar to finding a minimum spanning tree covering the topics *across all books*).
 - Optionally search the web to see if there are more general theorem statements.
-- Plan the backbone-surface split, threading general definitions and theorems into a logically coherent spanning tree, putting special forms at the leaves to the surface. You are encouraged to form you own opinions on how the material should be organized in the backbone, before adapting the book's content to them.
+- Plan the backbone-surface split, threading general definitions and theorems into a logically coherent spanning tree, putting special forms at the leaves to the surface. The agent is encouraged to form its own opinions on how the material should be organized in the backbone, before adapting the book's content to them.
 - Search in Mathlib for existing formalizations to build upon, and vocabulary to reuse.
 - Repeat until sufficient understanding is achieved, then write the plan.
 
@@ -64,7 +64,12 @@ Anytime when proposing the plan, the agent can experiment with Lean and Mathlib 
 
 The review of a plan may be done at any time after the plan is written. This can be prompted by a user, or initiated by a formalizer agent if it thinks the plan needs improvement during the formalization process. Reviews should be done by a fresh agent or an independent sub-agent that inherits little context, better with "adversarial" goals.
 
-In such cases, the agent should scrutinize the plan, consider proof approaches, explore possible alternative choices, weigh the costs/benefits and suggest improvements. Make sure that the above criteria are met, e.g. backbone and surface should be appropriately delineated. For complex plans, focus on one aspect at a time; sub-agents can be spawned to explore possible directions.
+In such cases, the agent should:
+
+- Scrutinize the plan, consider proof approaches, explore possible alternative choices, weigh the costs/benefits and suggest improvements.
+- Make sure that the project criteria are met, e.g. backbone and surface should be appropriately delineated.
+- Make sure everything is carefully named, so that a future uninformed agent can find things using intuitive candidate names.
+- Consider typical future demands, e.g. integrating another textbook on the same topic into this project, or formalizing another research paper in the same area using this project. Adjust the plan to reduce anticipated amount of work needed to accommodate for such demands.
 
 Treat the review process as a search for better (structures of) proofs. Think hard on plans, as this may save time and effort in the actual formalization process, and reduce the need for later refactoring when new demands arise.
 
@@ -77,18 +82,19 @@ The user can prompt an agent to formalize a plan. In such cases, the agent shoul
 - Proceed to fill in the proofs, optionally by spawning parallel sub-agents to work on different files in the skeleton. If any of them proves difficult to complete, identify the cause, report back and stop for a restructure of the plan if necessary.
 - Verify the formalization by compiling the Lean files, or use MCP tools when available.
 
-Finally, check for semantic alignment: at surface level, confirm that the definition or theorem statement matches the textbook definition or statement, with no axiomatic or definitional cheats. This includes correct use of dependent definitions or theorems. At backbone level, confirm that the definition or theorem statement agrees with the specification in the plan.
-
 ### Reviewing a formalization
 
 The review of a formalization may be done at any time after the formalization has begun. This can be prompted by a user, or initiated by a formalizer agent if it thinks the existing formalization needs improvement during the process. Reviews should be done by a fresh agent or an independent sub-agent that inherits little context, better with "adversarial" goals.
 
 In such cases, the agent should make sure that the formalization is idiomatic Lean code and pleasant to read, on top of being semantically correct. Some code style guidance:
 
+- Match Mathlib style in general: use notations, tactics, and doc comments in similar ways as Mathlib.
 - Minimize duplication: something may have been formalized elsewhere in Mathlib or within this project, or the same logic is repeated in multiple proofs.
 - Prefer multiple short lemmas rather than rushing to theorems in long proofs.
 - Prefer defining and using bundled, named interfaces for a named concept rather than repeating individual assumptions.
 - Identify Mathlib interfaces (e.g. topological spaces, modules, rings) that emerge implicitly from the definitions, and instantiate them eagerly to benefit from Mathlib machinery (e.g. the `ring` tactic and helpful lemmas) and simplify proofs.
+
+Finally, check for semantic alignment: at surface level, confirm that the definition or theorem statement matches the textbook definition or statement, with no axiomatic or definitional cheats. This includes correct use of dependent definitions or theorems. At backbone level, confirm that the definition or theorem statement agrees with the specification in the plan.
 
 ### General instructions for agents
 
