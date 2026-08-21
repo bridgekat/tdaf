@@ -446,11 +446,43 @@ From the repository `README.md` ("Reviewing a formalization"):
     hypothesis D0 exists to avoid.
 50. **Mathlib's own precedent for the pairing hypotheses is to leave them unbundled.**
     `LinearEquiv.image_closure_of_convex` carries
-    `(he₁ : ∀ f : StrongDual 𝕜 F, Continuous (e.dualMap f))` and the `e.symm` twin — `hBc`/`hBs` in
+    `(he₁ : ∀ f : StrongDual 𝕜 F, Continuous (e.dualMap f))` and the `e.symm` twin — `IsCompatiblePairing`'s two fields in
     another notation — as plain hypotheses, with a docstring explaining the choice to phrase
     compatibility "in terms of linear maps between locally convex spaces, rather than creating two
     separate topologies on the same space". Our case differs only in scale (67 signatures, not 3),
     which is the argument for a class here and not there.
+
+51. **`Rel` is now `SetRel α β := Set (α × β)`** (an `abbrev`, `Mathlib/Data/Rel.lean`), with
+    `SetRel.inv`, `.dom`, `.cod`, `.image`, `.comp`. This is *the* bundling for a multivalued map,
+    and it is what makes Corollary 23.5.1 read as `∂(f*) = (∂f)⁻¹` rather than as a `∀ x y`
+    biconditional.
+52. **`Tdaf.Convex.*` kills dot notation.** Generalised field notation resolves `hC.foo` against the
+    **root** `Convex` namespace only, so `hC.segment_mem_relint` fails with "The environment does
+    not contain `Function.segment_mem_relint`". Inside `namespace Tdaf`, write
+    `Convex.segment_mem_relint hC …`. Same reason `LinearMap.IsCompatiblePairing` must be declared
+    with `_root_.`: `Tdaf.LinearMap.IsCompatiblePairing` would give no `B.IsCompatiblePairing`.
+53. **`add_comm` with no arguments rewrites the wrong `+`.** In `f (x + y) ≤ ↑s + ↑r` a bare
+    `rw [add_comm]` hits `x + y` *inside* `f`. Always supply both arguments. Likewise
+    `add_le_add_right h c` proves `c + a ≤ c + b`, not `a + c ≤ b + c`; `add_le_add h le_rfl` is
+    unambiguous.
+54. **`field_simp` sometimes closes the goal by itself**, and a trailing `; ring` then errors with
+    "No goals to be solved" — and sometimes it does not. There is no way to tell in advance, so
+    split the lines rather than writing `<;> (field_simp; ring)`.
+55. **`positivity` ignores hypotheses.** It fails on `0 ≤ μ⁻¹` when positivity comes from
+    `hμ : 1 < μ`. Use `inv_nonneg.2 (by linarith)`.
+56. **A theorem whose statement mentions only `𝓝[>] (0:ℝ)` still auto-includes `[TopologicalSpace E]`
+    from the section**, and the unused-section-variable linter then fires. That is a *useful*
+    signal — it is how the upper half of Corollary 8.5.2 was found to be layer A.
+57. **Name clashes across the library are silent until they are not.** A duplicate reports as "has
+    already been declared" at a line far from the real cause, with no hint where the other
+    declaration lives. `grep -rn <name> Tdaf/` before naming. Worse, a *near*-duplicate does not
+    report at all: `le_of_forall_le_coe` and `le_of_forall_coe_le` were the same statement written
+    twice by two agents, and only a hand comparison caught it.
+58. **`intrinsicInterior` is defined through the subspace topology**, so `x ∈ ri s` unfolds inside
+    `affineSpan ℝ s` with its own `AddTorsor` structure. Prove the ambient metric characterisation
+    first and nothing else needs torsor transport. The stuck-instance error to expect is
+    "typeclass instance problem is stuck: `AddTorsor ?V E`", triggered inside a `fun` or anonymous
+    constructor where the expected type is not yet known.
 
 ---
 

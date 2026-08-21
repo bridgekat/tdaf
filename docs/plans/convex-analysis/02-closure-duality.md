@@ -153,7 +153,7 @@ Contents:
 
   Mathlib phrases compatibility as two hypotheses on a linear equivalence rather than as a predicate
   on topologies, deliberately — "rather than creating two separate topologies on the same space".
-  `he₁`/`he₂` are `hBc`/`hBs` in another notation.
+  `he₁`/`he₂` are `IsCompatiblePairing`'s two fields in another notation.
 
   What remains for us is the specialisation to epigraphs, `cl f` independent of the compatible
   topology, which is a handful of corollaries at layer C. This is *not* how `f** = cl f` is proved
@@ -198,7 +198,7 @@ noncomputable abbrev biconj (B) (f : E → EReal) : E → EReal := conj B.flip (
    For `≥`: work in `E` with its own topology. Suppose `biconj B f x₀ < c < clFn f x₀`.
    Then `(x₀, c) ∉ closure (epi f)`, a closed convex set; separate by
    `geometric_hahn_banach_closed_point` in `E × ℝ`, then split the functional with
-   `exists_unique_dual_prod` and recognise the horizontal part via `hBs`. Two cases: the separating functional is non-vertical (gives directly an affine minorant
+   `exists_unique_dual_prod` and recognise the horizontal part via `IsCompatiblePairing.surjective_eval`. Two cases: the separating functional is non-vertical (gives directly an affine minorant
    of `f` above `c` at `x₀`, contradicting `biconj B f x₀ < c`), or vertical (then add a large
    multiple of it to a known affine minorant — which exists by §2.1's affine-minorant lemma — to get
    a non-vertical one; this is exactly the last paragraph of Rockafellar's proof of Theorem 12.1).

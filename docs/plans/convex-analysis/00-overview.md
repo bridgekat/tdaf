@@ -184,14 +184,29 @@ with `topDualPairing`, a Hilbert space with itself. (Not the weak topology — s
 `σ(E, F)` — Mathlib's type synonym `WeakBilin B` — the mechanism: prove the duality theorems there,
 transport out. That was wrong, and the machinery has been deleted. The duality theorems hold in
 whatever topology `E` already carries, provided its continuous dual is the `F` side of the pairing,
-and that is said as two hypotheses rather than engineered by a change of type:
+and that is said as a hypothesis on the pairing rather than engineered by a change of type. The
+spelling follows Mathlib's `LinearMap.IsContPerfPair` — a `Prop`-valued class whose second field
+uses the first — because our situation is the one that idiom is for: a single pairing threaded
+through many results.
 
 ```lean
-(hBc : ∀ y : F, Continuous fun x : E => B x y)          -- every ⟨·,y⟩ is continuous
-(hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)      -- and every continuous functional is one
+class LinearMap.IsContinuousPairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : Prop where
+  continuous_left (B) (y : F) : Continuous fun x : E => B x y
+
+def evalCLM (B) [B.IsContinuousPairing] : F →ₗ[ℝ] StrongDual ℝ E
+
+class LinearMap.IsCompatiblePairing (B) : Prop extends B.IsContinuousPairing where
+  surjective_eval (B) : Function.Surjective (evalCLM B)
 ```
 
-Both are trivial when `E` is paired with its **own** continuous dual, so Fenchel–Moreau holds
+The split is load-bearing, not tidiness. Statements about *closedness* of a conjugate, a support
+function, a polar or a subdifferential need only the continuity half, and they are true in
+topologies strictly finer than the compatible ones — take `E` Banach and `F = StrongDual ℝ E` with
+its **norm** topology, where continuity holds and surjectivity fails (`E'' ⊋ E` for non-reflexive
+`E`). Demanding the full class there would restrict the most standard example in the subject to the
+weak-\* topology for no reason. Only Fenchel–Moreau and its consequences need surjectivity.
+
+Both fields are trivial when `E` is paired with its **own** continuous dual, so Fenchel–Moreau holds
 directly in the norm topology of a Banach space, in a Hilbert space, and in `ℝⁿ`. What the general
 pairing is *for* is the freedom to let `E` and `F` be different spaces — which §30 (adjoint
 bifunctions) and §33 (saddle-functions) genuinely need. It is not for the weak topology.
@@ -230,7 +245,8 @@ topologies on the same space."* Its hypotheses
 (he₂ : ∀ f : StrongDual 𝕜 E, Continuous (e.symm.dualMap f))
 ```
 
-are `hBc` and `hBs` in another notation: "these two topologies have the same continuous dual",
+are `IsCompatiblePairing`'s two fields in another notation: "these two topologies have the same
+continuous dual",
 carried as hypotheses on a map rather than bundled as a predicate on a topology.
 
 ### D4. Reorder the development: **conjugacy comes before relative interiors**
@@ -696,3 +712,45 @@ is deferred along with it.
   proofs can move freely between the two.
 - Notation (`□`, `#`, `δ(·|C)`, `f0⁺`) is declared in the surface's `Notation.lean` and in scoped
   namespaces in the backbone, never globally.
+
+**Stage 4 is done.** Added since:
+
+| module | contents |
+|---|---|
+| `RelativeInterior.lean` | §6, and **every result stages 2–3 deferred to it** |
+| `Recession/Function.lean` | §8's function half — Theorems 8.5–8.8 |
+| `Duality/Support.lean` | §13, with `supportEquiv` for the one-to-one correspondence |
+| `Duality/Polar.lean` | §14 up to Theorem 14.5, polarity as a `GaloisConnection` |
+| `Subgradient/Defs.lean` | §23 — the first subgradient anywhere in the Lean ecosystem |
+
+`RelativeInterior.lean` discharged all six deferrals named for it: Lemma 7.3, Theorems 7.2/7.4 with
+Corollaries 7.2.1/7.2.2/7.2.3/7.4.1/7.4.2, Corollary 8.3.1, Theorem 11.3, and
+Corollaries 11.6.1/11.6.2. Theorem 11.3 needed a *relatively open* form of Theorem 11.2, which
+`Separation.lean` supplies only for genuinely open sets; that is `exists_lt_of_notMem_relint` and it
+is the largest single piece of the file. §3.1 should have listed it as a prerequisite.
+
+Further corrections from this stage:
+
+* **`epi_recessionFn` needs no hypothesis at all**, not `ClosedFn f` as §3.3 specified. The stated
+  reason — that `0⁺(epi f)` has closed vertical sections only when `epi f` is closed — is simply
+  false: upward closure is monotonicity of `ν ↦ μ + aν`, and closure from below follows from
+  `f(x + a•y) ≤ μ + aρ` for every `ρ > ν`. Most of §8 moves from layer D to layer A with it, and
+  **Theorem 8.6 is layer A**, not layer D.
+* **D6's `hom f` route does not reach Corollary 8.5.2**, and not for a technical reason: `hom f` is
+  the wrong object. Rockafellar's `g` satisfies `(cl g)(0, y) = f0⁺(y)` whereas
+  `hom f (0, y) = δ(y ∣ 0)`, and bridging needs `cl (hom f)`, hence the `cl K = K ∪ {0} × 0⁺C`
+  formula that `Recession/Cone.lean` deliberately omits. The direct route is shorter even where the
+  infrastructure exists. D6's payoff is real but lies downstream in §13.5 and §14.4, not inside §8.
+* **Theorem 23.5 needs neither convexity nor properness** for conditions (a)–(c); only the passage
+  to the additive equality (d) needs `Proper`, for the `⊤ + ⊥ = ⊥` reason. §5.1 overstated it.
+* **Corollary 23.5.4 needs no closedness and no topology.** Rockafellar routes it through
+  `δ(· ∣ K)* = δ(· ∣ K°)`, which needs `K` closed; putting `z = 0` and `z = x + x` into the
+  subgradient inequality proves it for an arbitrary `PointedCone ℝ E`.
+* **Corollary 13.2.2 is false as transcribed** — another D0 case. Rockafellar gets "finite ⇒ closed"
+  from Corollary 7.4.2, which fails in infinite dimensions: a discontinuous linear functional is
+  finite, convex, positively homogeneous and not a support function. `ClosedFn` must be assumed.
+* **Theorem 14.1 needs `K.Nonempty`** (`∅° = F`, and `F°` is the pairing's kernel, not `∅`), and
+  gives `cl K` rather than `K`. **Theorem 14.5 needs `0 ∈ C`**, and needs only surjectivity of the
+  pairing, not continuity. §2.6's table said none of this.
+* **`∂δ(· ∣ C) x = N_C(x)` is false off `C`**: with the pointed-cone definition `0 ∈ N_C(x)` always,
+  while `∂δ(· ∣ C) x = ∅` for `x ∉ C ≠ ∅`. The identity carries `x ∈ C`, as Rockafellar's usage does.
