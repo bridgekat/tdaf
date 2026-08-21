@@ -148,6 +148,23 @@ the value of `f`. -/
 their `ofEpi` descriptions. -/
 theorem eq_ofEpi_of_epi_eq (h : epi f = F) : f = ofEpi F := by rw [← h, ofEpi_epi]
 
+/-- `Tdaf.ofEpi F x` depends only on the vertical section of `F` over `x`. -/
+theorem ofEpi_apply_congr (h : ∀ μ : ℝ, (x, μ) ∈ F ↔ (x, μ) ∈ G) : ofEpi F x = ofEpi G x := by
+  have hs : {μ : ℝ | (x, μ) ∈ F} = {μ : ℝ | (x, μ) ∈ G} := Set.ext h
+  simp only [ofEpi, hs]
+
+/-- The effective domain of `Tdaf.ofEpi F` is the projection of `F` on `E`, for any `F`. This is
+`Tdaf.dom_eq_fst_image_epi` transported across the Galois connection; it holds with no hypothesis
+because `ofEpi F x < ⊤` says exactly that the vertical section over `x` is nonempty. -/
+theorem dom_ofEpi (F : Set (E × ℝ)) : dom (ofEpi F) = Prod.fst '' F := by
+  ext x
+  constructor
+  · intro hx
+    by_contra hx'
+    exact absurd (ofEpi_eq_top_iff.2 fun μ hμ => hx' ⟨(x, μ), hμ, rfl⟩) hx.ne
+  · rintro ⟨⟨w, μ⟩, hw, rfl⟩
+    exact lt_of_le_of_lt (ofEpi_apply_le hw) (_root_.EReal.coe_lt_top μ)
+
 /-! ### The Galois connection between sets and functions
 
 `subset_epi_iff_le_ofEpi` says exactly that `ofEpi` and `epi` are adjoint, antitonely. Recording

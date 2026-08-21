@@ -67,17 +67,22 @@ What is true, and what this file should prove:
 theorem exists_affine_le_of_closed_proper (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f) :
     ∃ (y : F) (c : ℝ), ∀ x, ((B x y : ℝ) : EReal) - c ≤ f x
 
-/-- Dichotomy: an lsc convex function taking `⊥` anywhere is `≡ ⊥`.
-Replaces Theorem 7.2 outside finite dimensions; true in any TVS. -/
-theorem eq_bot_of_lsc_of_eq_bot (hf : ConvexFn f) (hl : LowerSemicontinuous f)
-    (h : ∃ x₀, f x₀ = ⊥) : f = fun _ => ⊥
+/-- Dichotomy (**Corollary 7.2.1**): a lower semicontinuous improper convex function has no finite
+values. Replaces Theorem 7.2 outside finite dimensions; true in any TVS. -/
+theorem ConvexFn.eq_bot_or_eq_top (hf : ConvexFn f) (hl : LowerSemicontinuous f)
+    (h : ∃ x₀, f x₀ = ⊥) (x : E) : f x = ⊥ ∨ f x = ⊤
 ```
 
 For the first, the argument the earlier draft gave *is* correct once `f` is closed: `epi f` is a
 nonempty closed convex set, `(x₀, f x₀ − 1) ∉ epi f`, and the separating functional cannot be
 vertical because a functional `(y,0)` takes the same value at `(x₀, f x₀ − 1)` and `(x₀, f x₀)`,
-while `x₀ ∈ dom f`. For the second, convexity gives `≡ ⊥` on `[x₀, x₁)` and lower semicontinuity at
-`x₁` finishes.
+while `x₀ ∈ dom f`.
+
+The second must be stated as "**no finite values**", *not* as "identically `⊥`". The stronger form
+is false: on `ℝ`, the function that is `⊥` at the origin and `⊤` elsewhere is convex (its epigraph
+is a vertical line) and lower semicontinuous (that line is closed), takes `⊥`, and is not constant.
+Rockafellar's Corollary 7.2.1 says exactly "can have no finite values", and that is what
+generalises.
 
 `ClosedFn.proper_of_proper` in its unconditional form is therefore **layer D**, alongside §7's other
 `ri`-flavoured refinements (Theorem 7.2, "`cl f` agrees with `f` on `ri (dom f)`"), all deferred to

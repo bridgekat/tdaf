@@ -187,6 +187,42 @@ theorem coe_mul_le_coe_iff {a : ℝ} (ha : 0 < a) {z : EReal} {r : ℝ} :
     rw [coe_mul_coe, _root_.EReal.coe_le_coe_iff, _root_.EReal.coe_le_coe_iff, le_div_iff₀ ha,
       mul_comm]
 
+variable {κ : Type*}
+
+/-- The coercion `ℝ → EReal` commutes with finite sums. -/
+theorem coe_sum (t : Finset κ) (r : κ → ℝ) :
+    ((∑ i ∈ t, r i : ℝ) : EReal) = ∑ i ∈ t, ((r i : ℝ) : EReal) := by
+  induction t using Finset.cons_induction with
+  | empty => simp
+  | cons i t hi ih => rw [Finset.sum_cons, Finset.sum_cons, _root_.EReal.coe_add, ih]
+
+/-- A non-negative real multiple of an `EReal` other than `⊥` is not `⊥`. The coefficient `0` is
+harmless because `EReal` obeys Rockafellar's convention `0 · ∞ = 0`. -/
+theorem coe_mul_ne_bot {a : ℝ} (ha : 0 ≤ a) {z : EReal} (hz : z ≠ ⊥) : (a : EReal) * z ≠ ⊥ := by
+  rcases eq_or_lt_of_le ha with h | h
+  · rw [← h, _root_.EReal.coe_zero, zero_mul]; simp
+  · induction z with
+    | bot => exact absurd rfl hz
+    | top => rw [_root_.EReal.coe_mul_top_of_pos h]; exact top_ne_bot
+    | coe r => rw [coe_mul_coe]; exact _root_.EReal.coe_ne_bot _
+
+/-- If a finite sum of `EReal`s none of which is `⊥` is not `⊤`, then no term is `⊤`. This is the
+form in which "the sum is unambiguous" gets used: it turns a finite bound on a sum into a finite
+bound on each term. -/
+theorem forall_ne_top_of_sum_ne_top (t : Finset κ) (z : κ → EReal) :
+    (∀ i ∈ t, z i ≠ ⊥) → (∑ i ∈ t, z i ≠ ⊤) → ∀ i ∈ t, z i ≠ ⊤ := by
+  induction t using Finset.cons_induction with
+  | empty => simp
+  | cons j t hj ih =>
+    intro hbot hsum i hi
+    rw [Finset.sum_cons] at hsum
+    have h₁ : z j ≠ ⊥ := hbot j (by simp)
+    have h₂ : (∑ k ∈ t, z k) ≠ ⊥ := sum_ne_bot fun k hk => hbot k (by simp [hk])
+    obtain ⟨hj', ht'⟩ := (_root_.EReal.add_ne_top_iff_ne_top₂ h₁ h₂).1 hsum
+    rcases Finset.mem_cons.1 hi with rfl | hi'
+    · exact hj'
+    · exact ih (fun k hk => hbot k (by simp [hk])) ht' i hi'
+
 end EReal
 
 end Tdaf

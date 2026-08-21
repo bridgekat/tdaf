@@ -556,8 +556,39 @@ Corrected while building, and folded into the sub-plans:
   take `⊥`).
 * **D2's "generate the concave API by `simp`"** does not work: the natural simp set loops.
 
-Next: `Homogenize.lean` (D6) and the `ofEpi`-derived operations (`InfConv`, `Hull`, `Image`,
-`Partial`), then stage 3 (`Closure.lean`, `Separation.lean`).
+Stage 2 is complete and stage 3 has begun. Added since:
+
+| module | contents |
+|---|---|
+| `Operations/InfConv.lean` | `□` (**Thm 5.4**), the `AddCommMonoid` on `InfConvFn E` |
+| `Operations/Hull.lean` | `convFn`, `convHullFn` (**Thm 5.6**, proved), the `GaloisCoinsertion` onto convex functions |
+| `Operations/Image.lean` | `mapLin`/`compLin` (**Thm 5.7**), their `GaloisConnection`, partial minimisation |
+| `Homogenize.lean` | `smulRight`, `levelOneLift`, `hom`, `homCone`, `homEpiCone` (D6) |
+| `Closure.lean` | `lscHull`, `clFn`, `ClosedFn` (**§7** at layer B/C), incl. the Fenchel–Moreau keystone |
+
+Three further corrections established by building these:
+
+* **The dichotomy lemma must say "no finite values", not "identically `⊥`".** On `ℝ`, the function
+  that is `⊥` at the origin and `⊤` elsewhere is convex and lower semicontinuous and takes `⊥`
+  without being constant. Rockafellar's Corollary 7.2.1 says exactly "can have no finite values";
+  that is what generalises, and an earlier draft of the plan asked for the false stronger form.
+* **`□` is not associative by set `add_assoc`.** Since `epi (f □ g) ⊇ epi f + epi g` strictly, the
+  outer convolution is not taken against the sum one started with; `epi_ofEpi_add_subset` is the
+  bridge, and is needed whenever two `ofEpi`-defined operations compose.
+* **The homogenisation cone is not the epigraph.** `homCone f` meets `λ = 0` only at the origin,
+  while an epigraph contains the whole vertical ray: `epi (hom f) = homCone f ∪ {0} ×ˢ Ici 0`. D6's
+  wording invited the wrong assumption. Also `hom` and `smulRight` need `dom f ≠ ∅` in several
+  places that the plan never flagged.
+
+Interfaces instantiated so far, per `README:91`: `GaloisInsertion`/`ClosureOperator` for
+`ofEpi`/`epi`, `ConvexCone` for the epigraph of a positively homogeneous convex function and for
+`epi (hom f)`, `AddCommMonoid` for `□`, `GaloisCoinsertion` for `conv`, `GaloisConnection` for
+`compLin`/`mapLin`, `ClosureOperator` for `lscHull` and `clFn`. One was deliberately **declined**:
+a `MulAction ℝ≥0 (E → EReal)` for `smulRight` would give `a • f` a second meaning clashing with the
+pointwise action, so it is a bundled `MonoidHom` into `Function.End` instead.
+
+Next: `Separation.lean` (§11) and then `Duality/{Pairing,Conjugate}` — Fenchel–Moreau, the keystone,
+whose input `exists_affine_le_of_closed_proper` is now available.
 
 ## 8. Conventions
 

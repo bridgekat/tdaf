@@ -98,6 +98,19 @@ theorem dom_eq_fst_image_epi (f : E → EReal) : dom f = Prod.fst '' epi f := by
   · rintro ⟨⟨y, μ⟩, hy, rfl⟩
     exact lt_of_le_of_lt hy (_root_.EReal.coe_lt_top μ)
 
+/-- The epigraph is nonempty exactly when the effective domain is: both say `f ≢ +∞`. -/
+theorem epi_nonempty_iff (f : E → EReal) : (epi f).Nonempty ↔ (dom f).Nonempty := by
+  rw [dom_eq_fst_image_epi, Set.image_nonempty]
+
+/-- The epigraph is empty exactly when the effective domain is: both say `f ≡ +∞`. -/
+theorem epi_eq_empty_iff (f : E → EReal) : epi f = ∅ ↔ dom f = ∅ := by
+  rw [← Set.not_nonempty_iff_eq_empty, ← Set.not_nonempty_iff_eq_empty, epi_nonempty_iff]
+
+/-- The function identically `+∞` has empty epigraph. -/
+@[simp] theorem epi_top : epi (⊤ : E → EReal) = ∅ := by
+  ext p
+  simp [epi, Pi.top_apply]
+
 /-- `f` is *proper* when it is finite somewhere and never takes the value `⊥`.
 
 Rockafellar §4: equivalently, `epi f` is nonempty and contains no vertical lines. -/

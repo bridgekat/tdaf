@@ -179,7 +179,7 @@ instance-synthesis error rather than a clear one if forgotten.
 | `compMonoOn φ f` | `φ ∘ f`, `φ` convex nondecreasing | Thm 5.1 |
 | `f + g` | pointwise (`Pi` instance) | Thm 5.2 |
 | `ofEpi F` | `fun x => ⨅ {μ : ℝ // (x,μ) ∈ F}, μ` for `F ⊆ E × ℝ` convex | **Thm 5.3** |
-| `infConv f g` (`□`) | `fun x => ⨅ y, f (x - y) + g y` | Thm 5.4 |
+| `infConv f g` (`□`) | `ofEpi (epi f + epi g)` — **not** the `⨅` formula; see below | Thm 5.4 |
 | `smulLeft a f` | `(a : EReal) * f x`, `a ≥ 0` | §5 |
 | `smulRight f a` (`fλ`) | `ofEpi (a • epi f)`, `a ≥ 0`; `= a * f (a⁻¹ • x)` for `a > 0` | §5 |
 | `sSupFn` | pointwise supremum | Thm 5.5 |
@@ -214,7 +214,8 @@ Two corrections established while writing `Operations/Epi.lean`:
 noncomputable def ofEpi (F : Set (E × ℝ)) : E → EReal := fun x => ⨅ μ ∈ {μ : ℝ | (x, μ) ∈ F}, (μ : EReal)
 
 theorem convexFn_ofEpi (hF : Convex ℝ F) : ConvexFn (ofEpi F)          -- **Thm 5.3**
-theorem infConv_eq_ofEpi : infConv f g = ofEpi (epi f + epi g)         -- Thm 5.4
+theorem infConv_apply (hf hg : ∀ x, _ x ≠ ⊥) :                            -- Thm 5.4
+    infConv f g x = ⨅ y, f (x - y) + g y
 theorem convFn_eq_ofEpi : convFn F = ofEpi (convexHull ℝ (⋃ i, epi (F i)))  -- Thm 5.6
 theorem mapLin_eq_ofEpi : mapLin A f = ofEpi ((A.prodMap .id) '' epi f)     -- Thm 5.7
 ```

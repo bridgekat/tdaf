@@ -132,6 +132,44 @@ extractor — the infimum is not attained, so this is the only way in), `subset_
 `ConvexFn.add` (Thm 5.2, needs `∀ x, f x ≠ ⊥` on both), `.sum`, `.smul`, `.restrict`,
 `.add_indicatorFn`, `extendTop`, `ConvexFn.comp` / `.comp_extendTop` (Thm 5.1).
 
+### `Tdaf/Analysis/Convex/Operations/InfConv.lean`
+
+`infConv f g := ofEpi (epi f + epi g)` (**not** the infimum formula — that is `infConv_apply`, under
+`∀ x, f x ≠ ⊥` on *both*), `dom_infConv : dom (f □ g) = dom f + dom g` (**no** hypothesis),
+`infConv_comm`, `infConv_assoc` (needs `epi_ofEpi_add_subset`, *not* set `add_assoc`),
+`infConv_indicatorFn_zero` (identity), `convexFn_infConv` (Thm 5.4), and the type synonym
+`InfConvFn E` carrying `AddCommMonoid`, whose `nsmul` is n-fold infimal convolution.
+
+### `Tdaf/Analysis/Convex/Operations/Hull.lean`
+
+`convFn` (family), `convHullFn` (single function), `convFn₂`; `isGreatest_convFn` (the universal
+property), `convFn_apply` (**Theorem 5.6**, proved), `convFn₂_apply`, and
+`gci_val_convHullFn` — `conv` as a **`GaloisCoinsertion`**, right adjoint to the inclusion of convex
+functions. `Lattice.lean` gets its `CompleteLattice` from `GaloisCoinsertion.liftCompleteLattice`.
+
+### `Tdaf/Analysis/Convex/Operations/Image.lean`
+
+`mapLin A f`, `compLin g A`; `convexFn_mapLin`/`convexFn_compLin` (**Theorem 5.7**),
+`gc_compLin_mapLin` (an honest *monotone* `GaloisConnection`, no `OrderDual`), `mapLin_eq_ofEpi`,
+`dom_mapLin`, `convexFn_iInf_right` (partial minimisation, the form §29 uses), and
+`exists_epi_mapLin_ne_image` — a witness that `epi (A f) ≠ (A × id) '' epi f`.
+
+### `Tdaf/Analysis/Convex/Homogenize.lean`
+
+`smulRight f a := ofEpi (a • epi f)` with `epi_smulRight` for `a > 0` **only**, `smulRight_zero`
+(`= δ(·|0)`, needs `f ≢ ⊤`), `not_isEpiLike_zero_smul_epi`; `smulRightHom : ℝ≥0 →* Function.End _`;
+`levelOneLift`; `hom`, `posHomogeneous_hom`, `convexFn_hom`, `hom_isGreatest`; `homCone` and
+`epi_hom : epi (hom f) = homCone f ∪ {0} ×ˢ Ici 0` (**the cone is not the epigraph**); `homEpiCone`.
+
+### `Tdaf/Analysis/Convex/Closure.lean`
+
+`lscHull f := ofEpi (closure (epi f))` with `epi_lscHull` **unconditional**;
+`clFn` (branching on `lscHull f`, `open Classical in`), `ClosedFn`;
+`lowerSemicontinuous_iff_isClosed_epi` (**Thm 7.1**), `isGreatest_lscHull`, `closedFn_iff`,
+`iInf_clFn_eq_iInf`, `ConvexFn.eq_bot_or_eq_top` (**Cor 7.2.1**),
+`exists_affine_le_of_closed_proper` (**the Fenchel–Moreau keystone**),
+`tendsto_lscHull_along_segment` (**Thm 7.5**), `lscHullClosure`/`clFnClosure` as `ClosureOperator`s.
+
 ---
 
 ## 1a. House style
@@ -282,6 +320,31 @@ From the repository `README.md` ("Reviewing a formalization"):
 28. **A `def` producing a structure whose fields mention section variables must live inside the
     section that binds them.** Appending a `ConvexCone ℝ (E × ℝ)` definition after `end Module`
     fails with `failed to synthesize AddCommMonoid (E × ℝ)`, not with a scoping error.
+
+29. **`AddCommMonoid` on a type synonym: the `nsmul` default cannot fire.** `nsmulRecAuto` needs an
+    `AddSemigroup` *instance*, which does not exist while the instance is being elaborated. Declare
+    standalone `Add`/`Zero` instances first, then `nsmul := nsmulRec`, `nsmul_zero := fun _ => rfl`,
+    `nsmul_succ := fun _ _ => rfl`. A failed instance then produces gotcha-14-style landslides
+    through `rfl` (`Not a definitional equality` everywhere downstream); only the first error is real.
+30. **`⋃ a > 0, a • s` silently elaborates `a : ℕ`** via `AddMonoid.toNatSMul`, giving a definition
+    that is not the one you wrote. Symptom: an "unused section variable `[Module ℝ E]`" warning on a
+    statement that visibly scales by a real. Always write `⋃ a > (0 : ℝ), …`.
+31. **`Set.mem_add` destructuring leaves un-normalised pairs**; `rw [Prod.mk_add_mk]` before
+    `mk_mem_epi`. `Set.image_add (AddMonoidHom.fst E ℝ)` closes
+    `Prod.fst '' (A + B) = Prod.fst '' A + Prod.fst '' B` with no coercion friction.
+32. **`indicatorFn_of_mem`/`_of_notMem` mis-unify against `{0} : Set E`** — `hx : ¬ x = 0` matches
+    `x ∉ s` with `s := Eq x`. Bind through an ascribed `have` and rewrite with that.
+33. **`if_pos`/`if_neg` → `ite_cond_eq_true`/`ite_cond_eq_false` → both deprecated.** Live names:
+    `ite_eq_left_of_eq_true _ _ (eq_true h)`, `ite_eq_right_of_eq_false _ _ (eq_false h)`.
+34. **`rw [foo (f := x)]` on a definition unfold is rejected**; named arguments only work for real
+    equations. Use `simp only [foo]`.
+35. `LinearEquiv.prodAssoc R M₁ M₂ M₃` exists and is `@[simps apply]`; `Set.image_preimage_eq _
+    e.surjective` turns a preimage description into an image description in one line.
+36. **`EReal` is not a semiring**, so `Finset.mul_sum` and relatives do not apply. `EReal.coe_sum`,
+    `coe_mul_ne_bot`, `forall_ne_top_of_sum_ne_top` fill that gap in `Order/EReal.lean`.
+37. **Mathematical, not Lean:** `□` associativity is *not* `add_assoc` on `Set (E × ℝ)`, because
+    `epi (f □ g) ⊋ epi f + epi g`. The bridge is `epi_ofEpi_add_subset`. The same lemma is needed
+    whenever two `ofEpi`-defined operations compose.
 
 ---
 

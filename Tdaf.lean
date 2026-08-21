@@ -5,3 +5,8 @@ import Tdaf.Analysis.Convex.Concave
 import Tdaf.Analysis.Convex.Homogeneous
 import Tdaf.Analysis.Convex.Operations.Epi
 import Tdaf.Analysis.Convex.Operations.Basic
+import Tdaf.Analysis.Convex.Operations.InfConv
+import Tdaf.Analysis.Convex.Operations.Hull
+import Tdaf.Analysis.Convex.Operations.Image
+import Tdaf.Analysis.Convex.Homogenize
+import Tdaf.Analysis.Convex.Closure

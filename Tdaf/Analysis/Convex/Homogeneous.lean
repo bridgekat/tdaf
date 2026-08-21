@@ -393,22 +393,23 @@ theorem PosHomogeneous.exists_linearMap_span (hf : PosHomogeneous f) (hconv : Co
 
 /-- The epigraph of a positively homogeneous convex function, bundled as a Mathlib `ConvexCone`.
 
-Theorems 4.7 and `posHomogeneous_iff_isCone_epi` together say precisely that `epi f` is a convex
-cone; recording it as `ConvexCone ℝ (E × ℝ)` makes Mathlib's cone API available to §13 (support
+`posHomogeneous_iff_isCone_epi` says `epi f` is a cone, and Theorem 2.6
+(`convex_iff_add_mem_of_isCone`) then upgrades its convexity to closure under addition. No
+hypothesis on the values of `f` is needed: subadditivity (Theorem 4.7, which does need `f ≠ ⊥`) is
+not the route. Recording the cone makes Mathlib's `ConvexCone` API available to §13 (support
 functions) and §14 (polarity), where these epigraphs are the objects of interest. -/
-def PosHomogeneous.epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f) (hbot : ∀ x, f x ≠ ⊥) :
-    ConvexCone ℝ (E × ℝ) where
+def PosHomogeneous.epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f) : ConvexCone ℝ (E × ℝ) where
   carrier := epi f
   smul_mem' c hc p hp := by
-    have hcone := (posHomogeneous_iff_isCone_epi (f := f)).1 hf c hc
-    rw [← hcone]; exact Set.smul_mem_smul_set hp
-  add_mem' p hp q hq := by
-    refine le_trans ((hf.convexFn_iff_subadditive hbot).1 hconv p.1 q.1) ?_
-    rw [Prod.snd_add, _root_.EReal.coe_add]
-    exact add_le_add hp hq
+    rw [← (posHomogeneous_iff_isCone_epi (f := f)).1 hf c hc]
+    exact Set.smul_mem_smul_set hp
+  add_mem' p hp q hq :=
+    (convex_iff_add_mem_of_isCone ((posHomogeneous_iff_isCone_epi (f := f)).1 hf)).1
+      hconv.convex_epi p hp q hq
 
-@[simp] theorem PosHomogeneous.coe_epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f)
-    (hbot : ∀ x, f x ≠ ⊥) : (hf.epiCone hconv hbot : Set (E × ℝ)) = epi f := rfl
+/-- The carrier of `Tdaf.PosHomogeneous.epiCone` is the epigraph. -/
+@[simp] theorem PosHomogeneous.coe_epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f) :
+    (hf.epiCone hconv : Set (E × ℝ)) = epi f := rfl
 
 end Module
 
