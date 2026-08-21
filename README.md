@@ -62,7 +62,7 @@ Anytime when proposing the plan, the agent can experiment with Lean and Mathlib 
 
 ### Reviewing a plan
 
-The review of a plan may be done at any time after the plan is written. This can be prompted by a user, or initiated by a formalizer agent if it thinks the plan needs improvement during the formalization process.
+The review of a plan may be done at any time after the plan is written. This can be prompted by a user, or initiated by a formalizer agent if it thinks the plan needs improvement during the formalization process. Reviews should be done by a fresh agent or an independent sub-agent that inherits little context, better with "adversarial" goals.
 
 In such cases, the agent should scrutinize the plan, consider proof approaches, explore possible alternative choices, weigh the costs/benefits and suggest improvements. Make sure that the above criteria are met, e.g. backbone and surface should be appropriately delineated. For complex plans, focus on one aspect at a time; sub-agents can be spawned to explore possible directions.
 
@@ -78,6 +78,16 @@ The user can prompt an agent to formalize a plan. In such cases, the agent shoul
 - Verify the formalization by compiling the Lean files, or use MCP tools when available.
 
 Finally, check for semantic alignment: at surface level, confirm that the definition or theorem statement matches the textbook definition or statement, with no axiomatic or definitional cheats. This includes correct use of dependent definitions or theorems. At backbone level, confirm that the definition or theorem statement agrees with the specification in the plan.
+
+### Reviewing a formalization
+
+The review of a formalization may be done at any time after the formalization has begun. This can be prompted by a user, or initiated by a formalizer agent if it thinks the existing formalization needs improvement during the process. Reviews should be done by a fresh agent or an independent sub-agent that inherits little context, better with "adversarial" goals.
+
+In such cases, the agent should make sure that the formalization is idiomatic Lean code and pleasant to read, on top of being semantically correct. Some code style guidance:
+
+- Minimize duplication: something may have been formalized elsewhere in Mathlib or within this project, or the same logic is repeated in multiple proofs.
+- Prefer defining and using bundled, named interfaces for a named concept rather than repeating individual assumptions.
+- Prefer multiple short lemmas rather than rushing to theorems in long proofs.
 
 ### General instructions for agents
 

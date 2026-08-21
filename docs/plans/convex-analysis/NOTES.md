@@ -38,9 +38,14 @@ theorem le_iff_epi_subset {f g : E → EReal} : f ≤ g ↔ epi g ⊆ epi f
 def dom (f : E → EReal) : Set E := {x | f x < ⊤}
 @[simp] theorem mem_dom {f : E → EReal} {x : E} : x ∈ dom f ↔ f x < ⊤
 
-structure Proper (f : E → EReal) : Prop where
+/-- Bundled: `f` never takes the value `⊥`. Use this, not `∀ x, f x ≠ ⊥`. -/
+structure NeBotFn (f : E → EReal) : Prop where
+  ne_bot : ∀ x, f x ≠ ⊥
+theorem NeBotFn.bot_lt {f} (hf : NeBotFn f) (x : E) : ⊥ < f x
+theorem NeBotFn.mono {f g} (hf : NeBotFn f) (h : f ≤ g) : NeBotFn g
+
+structure Proper (f : E → EReal) : Prop extends NeBotFn f where
   dom_nonempty : (dom f).Nonempty
-  ne_bot : ∀ x, ⊥ < f x
 
 noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x => ⨅ _ : x ∈ s, f x
 @[simp] theorem restrict_of_mem    {…} (hx : x ∈ s) : restrict s f x = f x
@@ -50,7 +55,9 @@ noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x 
 With `[AddCommGroup E] [Module ℝ E]`:
 
 ```lean
-def ConvexFn (f : E → EReal) : Prop := Convex ℝ (epi f)
+structure ConvexFn (f : E → EReal) : Prop where
+  convex_epi : Convex ℝ (epi f)
+@[simp] theorem convexFn_iff_convex_epi {f : E → EReal} : ConvexFn f ↔ Convex ℝ (epi f)
 
 theorem combo_of_pos {P : E → Prop} {x y : E} {a b : ℝ} (hx : P x) (hy : P y)
     (ha : 0 ≤ a) (hb : 0 ≤ b) (hab : a + b = 1) (h : 0 < a → 0 < b → P (a • x + b • y)) :
@@ -70,7 +77,7 @@ theorem convexFn_iff_forall_lt (f : E → EReal) :        -- Rockafellar Theorem
       ∀ α β : ℝ, f x < (α : EReal) → f y < (β : EReal) →
         f (a • x + b • y) < ((a * α + b * β : ℝ) : EReal)
 
-theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :   -- Rockafellar Theorem 4.1
+theorem convexFn_iff_le {f : E → EReal} (hf : NeBotFn f) :      -- Rockafellar Theorem 4.1
     ConvexFn f ↔ ∀ (x y : E) (a b : ℝ), 0 < a → 0 < b → a + b = 1 →
       f (a • x + b • y) ≤ (a : EReal) * f x + (b : EReal) * f y
 
@@ -90,13 +97,27 @@ theorem convexOn_iff_convexFn (s : Set E) (g : E → ℝ) :
 noncomputable def indicatorFn (s : Set E) : E → EReal := restrict s (fun _ => 0)
 @[simp] theorem indicatorFn_of_mem    (hx : x ∈ s) : indicatorFn s x = 0
 @[simp] theorem indicatorFn_of_notMem (hx : x ∉ s) : indicatorFn s x = ⊤
-theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥
+theorem neBotFn_indicatorFn (s : Set E) : NeBotFn (indicatorFn s)
 @[simp] theorem dom_indicatorFn (s : Set E) : dom (indicatorFn s) = s
 theorem epi_indicatorFn (s : Set E) : epi (indicatorFn s) = s ×ˢ Set.Ici (0 : ℝ)
 @[simp] theorem convexFn_indicatorFn {s : Set E} : ConvexFn (indicatorFn s) ↔ Convex ℝ s
-theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
+theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : NeBotFn f) :
     restrict s f = f + indicatorFn s
 ```
+
+---
+
+## 1a. House style
+
+From the repository `README.md` ("Reviewing a formalization"):
+
+* **Minimize duplication.** Before writing a lemma, check whether Mathlib or this project already
+  has it.
+* **Prefer bundled, named interfaces over loose individual assumptions.** Write a `structure`
+  carrying the hypothesis and use its projections, rather than repeating `∀ x, f x ≠ ⊥` at every
+  call site. `NeBotFn`, `Proper`, `ConvexFn` and the planned `IsExactSum` / `IsExactImage` all
+  follow this pattern; new hypotheses that recur should too.
+* Code should be idiomatic and pleasant to read, not merely correct.
 
 ---
 
@@ -157,7 +178,11 @@ theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f
    ```
    immediately *before* the declaration — and before its docstring, not after.
 
-10. **`⨅ _ : p, f` for a `Prop` `p`** is the decidability-free way to write `if p then f else ⊤`
+10. **A `Prop`-valued `structure` with one field** is how bundled hypotheses are written here.
+    Introduce it with `refine ⟨?_⟩` or `exact ⟨h⟩`, and consume it through the projection
+    (`hf.convex_epi`, `hf.ne_bot x`). `structure Foo … extends Bar …` gives the coercion for free.
+
+11. **`⨅ _ : p, f` for a `Prop` `p`** is the decidability-free way to write `if p then f else ⊤`
     in a complete lattice; `iInf_pos` and `iInf_neg` are the defining equations. Same trick with
     `⨆ _ : p, f` for `… else ⊥`.
 

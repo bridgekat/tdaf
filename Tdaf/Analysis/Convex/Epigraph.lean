@@ -16,6 +16,7 @@ following Rockafellar, *Convex Analysis*, §4.
 
 * `Tdaf.epi f` — the epigraph of `f`, a subset of `E × ℝ`.
 * `Tdaf.dom f` — the effective domain of `f`, where `f < ⊤`.
+* `Tdaf.NeBotFn f` — `f` never takes the value `⊥`.
 * `Tdaf.Proper f` — `f` is finite somewhere and never `⊥`.
 * `Tdaf.restrict s f` — `f` restricted to `s`, extended by `⊤`.
 * `Tdaf.ConvexFn f` — `f` is convex, meaning that `epi f` is a convex set.
@@ -84,14 +85,27 @@ def dom (f : E → EReal) : Set E := {x | f x < ⊤}
 
 @[simp] theorem mem_dom {f : E → EReal} {x : E} : x ∈ dom f ↔ f x < ⊤ := Iff.rfl
 
+/-- `f` never takes the value `⊥`, i.e. `f` maps into `(-∞, +∞]`.
+
+This is the standing hypothesis under which Rockafellar's arithmetic of convex functions is
+unambiguous: it is exactly what rules out the forbidden `∞ - ∞`. It is bundled as a named
+predicate rather than spelled out as `∀ x, f x ≠ ⊥` at every use site. -/
+structure NeBotFn (f : E → EReal) : Prop where
+  /-- `f` never takes the value `⊥`. -/
+  ne_bot : ∀ x, f x ≠ ⊥
+
+theorem NeBotFn.bot_lt {f : E → EReal} (hf : NeBotFn f) (x : E) : ⊥ < f x :=
+  bot_lt_iff_ne_bot.2 (hf.ne_bot x)
+
+theorem NeBotFn.mono {f g : E → EReal} (hf : NeBotFn f) (h : f ≤ g) : NeBotFn g :=
+  ⟨fun x => bot_lt_iff_ne_bot.1 ((hf.bot_lt x).trans_le (h x))⟩
+
 /-- `f` is *proper* when it is finite somewhere and never takes the value `⊥`.
 
 Rockafellar §4: equivalently, `epi f` is nonempty and contains no vertical lines. -/
-structure Proper (f : E → EReal) : Prop where
+structure Proper (f : E → EReal) : Prop extends NeBotFn f where
   /-- `f` is not identically `⊤`. -/
   dom_nonempty : (dom f).Nonempty
-  /-- `f` never takes the value `⊥`. -/
-  ne_bot : ∀ x, ⊥ < f x
 
 /-- `f` restricted to `s` and extended by `⊤` off `s`.
 
@@ -118,7 +132,12 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 This is Rockafellar's definition (§4). See `Tdaf.convexFn_iff_forall_lt` (Theorem 4.2) and
 `Tdaf.convexFn_iff_le` (Theorem 4.1) for the analytic characterisations. -/
-def ConvexFn (f : E → EReal) : Prop := Convex ℝ (epi f)
+structure ConvexFn (f : E → EReal) : Prop where
+  /-- The epigraph of a convex function is convex. -/
+  convex_epi : Convex ℝ (epi f)
+
+@[simp] theorem convexFn_iff_convex_epi {f : E → EReal} : ConvexFn f ↔ Convex ℝ (epi f) :=
+  ⟨fun h => h.convex_epi, fun h => ⟨h⟩⟩
 
 /-- A convex-combination goal in which one coefficient may vanish reduces to the case where both
 coefficients are positive. -/
@@ -138,13 +157,14 @@ two points of the epigraph lies in the epigraph. -/
 theorem ConvexFn.epi_combo {f : E → EReal} (hf : ConvexFn f) {x y : E} {μ ν : ℝ}
     (hx : f x ≤ (μ : EReal)) (hy : f y ≤ (ν : EReal)) {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
     (hab : a + b = 1) : f (a • x + b • y) ≤ ((a * μ + b * ν : ℝ) : EReal) :=
-  hf (show (x, μ) ∈ epi f from hx) (show (y, ν) ∈ epi f from hy) ha hb hab
+  hf.convex_epi (show (x, μ) ∈ epi f from hx) (show (y, ν) ∈ epi f from hy) ha hb hab
 
 /-- Conversely, the combination property characterises convexity. -/
 theorem convexFn_of_epi_combo {f : E → EReal}
     (h : ∀ (x y : E) (μ ν : ℝ), f x ≤ (μ : EReal) → f y ≤ (ν : EReal) →
       ∀ a b : ℝ, 0 ≤ a → 0 ≤ b → a + b = 1 → f (a • x + b • y) ≤ ((a * μ + b * ν : ℝ) : EReal)) :
     ConvexFn f := by
+  refine ⟨?_⟩
   rintro ⟨x, μ⟩ hx ⟨y, ν⟩ hy a b ha hb hab
   exact h x y μ ν hx hy a b ha hb hab
 
@@ -187,7 +207,7 @@ theorem convexFn_iff_forall_lt (f : E → EReal) :
 
 /-- **Rockafellar, Theorem 4.1.** For a function `f` that never takes the value `⊥` — equivalently,
 a function into `(-∞, +∞]` — convexity is the familiar inequality. -/
-theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
+theorem convexFn_iff_le {f : E → EReal} (hf : NeBotFn f) :
     ConvexFn f ↔ ∀ (x y : E) (a b : ℝ), 0 < a → 0 < b → a + b = 1 →
       f (a • x + b • y) ≤ (a : EReal) * f x + (b : EReal) * f y := by
   rw [convexFn_iff_forall_lt]
@@ -198,13 +218,13 @@ theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     · rw [hx, EReal.mul_top_of_pos (hacoe ha)]
       rcases eq_top_or_lt_top (f y) with hy | hy
       · rw [hy, EReal.mul_top_of_pos (hacoe hb), EReal.top_add_top]; exact le_top
-      · obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf y) hy
+      · obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot y) hy
         rw [hq, Tdaf.EReal.coe_mul_coe, EReal.top_add_coe]; exact le_top
-    obtain ⟨p, hp⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf x) hx
+    obtain ⟨p, hp⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot x) hx
     rcases eq_top_or_lt_top (f y) with hy | hy
     · rw [hy, EReal.mul_top_of_pos (hacoe hb), hp, Tdaf.EReal.coe_mul_coe, EReal.coe_add_top]
       exact le_top
-    obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf y) hy
+    obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot y) hy
     rw [hp, hq, Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← EReal.coe_add]
     refine Tdaf.EReal.le_coe_of_forall_lt (fun r hr => ?_)
     have hx' : f x < ((p + (r - (a * p + b * q)) : ℝ) : EReal) := by
@@ -217,9 +237,9 @@ theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     rwa [harith] at key
   · intro h x y a b ha hb hab α β hx hy
     obtain ⟨p, hp⟩ :=
-      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf x) (hx.trans (EReal.coe_lt_top α))
+      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot x) (hx.trans (EReal.coe_lt_top α))
     obtain ⟨q, hq⟩ :=
-      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf y) (hy.trans (EReal.coe_lt_top β))
+      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot y) (hy.trans (EReal.coe_lt_top β))
     refine lt_of_le_of_lt (h x y a b ha hb hab) ?_
     rw [hp, hq, Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← EReal.coe_add]
     rw [hp] at hx; rw [hq] at hy
@@ -289,7 +309,7 @@ theorem epi_restrict_coe (s : Set E) (g : E → ℝ) :
 extension by `⊤`. This is the interface through which the surface layer reuses Mathlib. -/
 theorem convexOn_iff_convexFn (s : Set E) (g : E → ℝ) :
     ConvexOn ℝ s g ↔ ConvexFn (restrict s fun x => (g x : EReal)) := by
-  rw [ConvexFn, epi_restrict_coe]
+  rw [convexFn_iff_convex_epi, epi_restrict_coe]
   exact ⟨fun h => h.convex_epigraph, fun h => convexOn_of_convex_epigraph h⟩
 
 end Module
