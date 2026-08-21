@@ -70,8 +70,15 @@ Corrections to an earlier draft of this list, established by review (see
   case of Theorem 17.2 is genuinely new work.
 - What is genuinely missing and is a *file*, not a handful of lemmas: `add_iSup` / `iSup_add` /
   `iSup_sub` / `mul_le_mul_left` for `EReal`. `conj` is a `⨆` of `· − f x`, so these are the
-  workhorses of every conjugacy proof. Likewise `Compatible τ B` and Mackey–Arens: nothing in
-  Mathlib, and on D3's critical path.
+  workhorses of every conjugacy proof.
+- **Correction (survey error).** This plan originally added "`Compatible τ B` and Mackey–Arens:
+  nothing in Mathlib, and on D3's critical path". That was wrong. `Mathlib/Analysis/LocallyConvex/
+  WeakSpace.lean` proves exactly the theorem in question — its module docstring reads "if `E` is a
+  vector space with two locally convex topologies, then the closure of a convex set is the same in
+  either topology, provided they have the same collection of continuous linear functionals". The
+  names are `Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex` and
+  `LinearEquiv.image_closure_of_convex`. The grep-based survey missed it because no declaration in
+  the file contains the word "compatible".
 
 Two concrete Mathlib mismatches to be careful about:
 
@@ -206,10 +213,25 @@ variable (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) (hA : ∀ x z, B' (A x) z 
 with constructors supplying `A'` in the inner-product and finite-dimensional instantiations. Named
 once in `Duality/Pairing.lean` and threaded from there.
 
-*Compatible-topology independence is optional, not foundational.* The statement that `cl C` is the
-same in every topology compatible with the pairing is worth having, but it is **not** on the path to
-Fenchel–Moreau — that was a consequence of the abandoned weak-topology design. `Duality/Compatible.lean`
-is deferred until something actually needs it.
+*Compatible-topology independence is a corollary, not a file.* The statement that `cl C` is the
+same in every topology compatible with the pairing is **not** on the path to Fenchel–Moreau — that
+was a consequence of the abandoned weak-topology design — and it is also not new work:
+`Mathlib/Analysis/LocallyConvex/WeakSpace.lean` has it as `Convex.toWeakSpace_closure` and
+`LinearEquiv.image_closure_of_convex`. What was budgeted as `Duality/Compatible.lean` is a page of
+corollaries specialising those to `epi f`, at layer C (Mathlib's version needs `RCLike 𝕜` and
+`LocallyConvexSpace`, which is right — Mazur's theorem needs Hahn–Banach).
+
+Mathlib's file also endorses the shape D3 arrived at, and says so in its docstring: *"we phrase
+this in terms of linear maps between locally convex spaces, rather than creating two separate
+topologies on the same space."* Its hypotheses
+
+```lean
+(he₁ : ∀ f : StrongDual 𝕜 F, Continuous (e.dualMap f))
+(he₂ : ∀ f : StrongDual 𝕜 E, Continuous (e.symm.dualMap f))
+```
+
+are `hBc` and `hBs` in another notation: "these two topologies have the same continuous dual",
+carried as hypotheses on a map rather than bundled as a predicate on a topology.
 
 ### D4. Reorder the development: **conjugacy comes before relative interiors**
 

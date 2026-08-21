@@ -136,24 +136,28 @@ Contents:
   ```
   with constructors for the inner-product and finite-dimensional cases.
 - **Product pairings** for D8: `prodPairing Bu Bx`, `negFst`, and `conj_prodPairing`.
-- **Compatible topologies — deferred.** The two halves of compatibility are carried as hypotheses on
-  the theorems that need them (see D3), so nothing here is on the critical path. The statement below
-  — that `cl C` does not depend on which compatible topology is chosen — remains worth having, but
-  only once something needs it:
+- **Compatible topologies — use Mathlib's, do not rebuild.** An earlier draft of this plan proposed
+  defining `Compatible τ B` and proving `Convex.closure_eq_of_compatible` from `iInter_halfSpaces_eq`,
+  and budgeted it as a file. That was a survey error:
+  `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` already has the theorem.
 
   ```lean
-  /-- For a convex set, the closure is the same in any topology compatible with the pairing. -/
-  theorem Convex.closure_eq_of_compatible (hs : Convex ℝ s) (h₁ : Compatible τ₁ B)
-      (h₂ : Compatible τ₂ B) : closure[τ₁] s = closure[τ₂] s
+  theorem Convex.toWeakSpace_closure (hs : Convex ℝ s) :
+      toWeakSpace 𝕜 E '' closure s = closure (toWeakSpace 𝕜 E '' s)
 
-  /-- Hence, for a convex function, `cl f` does not depend on the compatible topology. -/
-  theorem ConvexFn.clFn_eq_of_compatible …
+  theorem LinearEquiv.image_closure_of_convex (hs : Convex ℝ s) (e : E ≃ₗ[𝕜] F)
+      (he₁ : ∀ f : StrongDual 𝕜 F, Continuous (e.dualMap f))
+      (he₂ : ∀ f : StrongDual 𝕜 E, Continuous (e.symm.dualMap f)) :
+      e '' closure s = closure (e '' s)
   ```
 
-  Proof: both closures equal the intersection of the closed half-spaces containing `s`
-  (Theorem 11.5 in each topology), and those half-spaces are the same set by compatibility.
+  Mathlib phrases compatibility as two hypotheses on a linear equivalence rather than as a predicate
+  on topologies, deliberately — "rather than creating two separate topologies on the same space".
+  `he₁`/`he₂` are `hBc`/`hBs` in another notation.
 
-  This is *not* how `f** = cl f` is proved — see D3. It is an independent statement, deferred.
+  What remains for us is the specialisation to epigraphs, `cl f` independent of the compatible
+  topology, which is a handful of corollaries at layer C. This is *not* how `f** = cl f` is proved
+  — see D3.
 
 - The canonical instances:
   - `E` a real normed space, `F := StrongDual ℝ E`, `B := topDualPairing ℝ E`;

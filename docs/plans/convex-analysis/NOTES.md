@@ -429,6 +429,29 @@ From the repository `README.md` ("Reviewing a formalization"):
     `isBounded_iff_asymptoticCone_subset_singleton` giving Theorem 8.4 in three lines; the usable
     `{x | l x ≤ c}` form of `iInter_halfSpaces_eq` exists only in the `RCLike` namespace.
 
+48. **Search Mathlib *semantically* before concluding it lacks something.** Two survey errors in a
+    row came from grepping for names. `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` contains
+    exactly the compatible-topology theorem this project budgeted as a file
+    (`Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex`,
+    `LinearEquiv.image_closure_of_convex`), and no declaration in it contains the word
+    "compatible". Likewise `LinearMap.dualEmbedding_surjective` — the Weak Representation Theorem —
+    was reported missing. **Use <https://leansearch.net> (`POST /search`, body
+    `{"query": ["…"], "num_results": 8}`), which matches informal descriptions, and only then
+    grep.**
+49. **Do not use `LinearMap.IsContPerfPair` for the pairing hypotheses.** The name is inviting and
+    the trap is quiet. It demands *joint* continuity of `(x, y) ↦ B x y` (so `F` needs a topology),
+    and *bijectivity* on both sides where we need surjectivity on one; and its only
+    `topDualPairing` instance is
+    `variable [FiniteDimensional 𝕜 E] [T2Space E]` — adopting it silently reimposes exactly the
+    hypothesis D0 exists to avoid.
+50. **Mathlib's own precedent for the pairing hypotheses is to leave them unbundled.**
+    `LinearEquiv.image_closure_of_convex` carries
+    `(he₁ : ∀ f : StrongDual 𝕜 F, Continuous (e.dualMap f))` and the `e.symm` twin — `hBc`/`hBs` in
+    another notation — as plain hypotheses, with a docstring explaining the choice to phrase
+    compatibility "in terms of linear maps between locally convex spaces, rather than creating two
+    separate topologies on the same space". Our case differs only in scale (67 signatures, not 3),
+    which is the argument for a class here and not there.
+
 ---
 
 ## 3. Review findings
