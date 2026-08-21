@@ -253,6 +253,113 @@ theorem coe_sub_le_comm {a : ℝ} {z w : EReal} : (a : EReal) - z ≤ w ↔ (a :
         _root_.EReal.coe_le_coe_iff]
       constructor <;> intro h <;> linarith
 
+/-- Reflecting an `EReal` in two real numbers: `b - (a - z) = (b - a) + z`. In particular
+`a - (a - z) = z`, so `z ↦ a - z` is an involution of `EReal` for every *real* `a`. -/
+theorem coe_sub_coe_sub (a b : ℝ) (z : EReal) :
+    (b : EReal) - ((a : EReal) - z) = ((b - a : ℝ) : EReal) + z := by
+  induction z with
+  | bot => rw [_root_.EReal.coe_sub_bot, _root_.EReal.sub_top, _root_.EReal.add_bot]
+  | coe r =>
+    rw [← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_add,
+      _root_.EReal.coe_eq_coe_iff]
+    ring
+  | top => rw [_root_.EReal.sub_top, _root_.EReal.coe_sub_bot, _root_.EReal.coe_add_top]
+
+/-- To bound an `EReal` by another it suffices to bound it by the reals above the latter. -/
+theorem le_of_forall_coe_le {u v : EReal} (h : ∀ s : ℝ, v ≤ (s : EReal) → u ≤ (s : EReal)) :
+    u ≤ v := by
+  induction v with
+  | bot => exact le_of_eq (eq_bot_of_forall_le_coe fun s => h s bot_le)
+  | coe t => exact h t le_rfl
+  | top => exact le_top
+
+/-- Multiplication by a positive real commutes with an infimum. `EReal` has `PosMulMono` but no
+`PosMulStrictMono` (`NOTES.md` gotcha 15), so the reverse inequality goes through `a⁻¹`. -/
+theorem coe_mul_iInf {ι : Sort*} {a : ℝ} (ha : 0 < a) (g : ι → EReal) :
+    (a : EReal) * ⨅ i, g i = ⨅ i, (a : EReal) * g i := by
+  have hcancel : ∀ z : EReal, ((a⁻¹ : ℝ) : EReal) * ((a : EReal) * z) = z := fun z => by
+    rw [← mul_assoc, coe_mul_coe, inv_mul_cancel₀ ha.ne', _root_.EReal.coe_one, one_mul]
+  refine le_antisymm (le_iInf fun i => (coe_mul_le_coe_mul_iff ha).2 (iInf_le g i)) ?_
+  rw [← coe_mul_le_coe_mul_iff (a := a⁻¹) (inv_pos.2 ha), hcancel]
+  exact le_iInf fun i =>
+    (hcancel (g i)) ▸ (coe_mul_le_coe_mul_iff (inv_pos.2 ha)).2 (iInf_le _ i)
+
+/-- The difference quotient `(u - r) / a` bounded above by a real, for `a > 0`. -/
+theorem sub_div_le_coe_iff {r m a : ℝ} (ha : 0 < a) (u : EReal) :
+    (u - (r : EReal)) / (a : EReal) ≤ (m : EReal) ↔ u ≤ ((r + m * a : ℝ) : EReal) := by
+  rw [_root_.EReal.div_le_iff_le_mul (mod_cast ha) (_root_.EReal.coe_ne_top a),
+    _root_.EReal.sub_le_iff_le_add (.inl (_root_.EReal.coe_ne_bot r))
+      (.inl (_root_.EReal.coe_ne_top r)), coe_mul_coe, ← _root_.EReal.coe_add,
+    show (a * m + r : ℝ) = r + m * a from by ring]
+
+/-- The difference quotient `(u - r) / a` bounded below by a real, for `a > 0`. -/
+theorem coe_le_sub_div_iff {r m a : ℝ} (ha : 0 < a) (u : EReal) :
+    (m : EReal) ≤ (u - (r : EReal)) / (a : EReal) ↔ ((r + m * a : ℝ) : EReal) ≤ u := by
+  rw [_root_.EReal.le_div_iff_mul_le (mod_cast ha) (_root_.EReal.coe_ne_top a),
+    _root_.EReal.le_sub_iff_add_le (.inl (_root_.EReal.coe_ne_bot r))
+      (.inl (_root_.EReal.coe_ne_top r)), coe_mul_coe, ← _root_.EReal.coe_add,
+    show (m * a + r : ℝ) = r + m * a from by ring]
+
+/-- A positive real scalar commutes with a supremum. Mathlib has no `EReal.mul_iSup`; the proof is
+the standard one for an order isomorphism, run by hand because multiplication by `a` is not
+registered as one. -/
+theorem coe_mul_iSup {a : ℝ} (ha : 0 < a) {ι : Sort*} (u : ι → EReal) :
+    (a : EReal) * ⨆ i, u i = ⨆ i, (a : EReal) * u i := by
+  have key : ∀ b : ℝ, 0 < b → ∀ v : ι → EReal,
+      (⨆ i, (b : EReal) * v i) ≤ (b : EReal) * ⨆ i, v i := fun b hb v =>
+    iSup_le fun i => mul_le_mul_of_nonneg_left (le_iSup v i) (by exact_mod_cast hb.le)
+  refine le_antisymm ?_ (key a ha u)
+  have h := key a⁻¹ (inv_pos.2 ha) fun i => (a : EReal) * u i
+  have hid : ∀ i, ((a⁻¹ : ℝ) : EReal) * ((a : EReal) * u i) = u i := fun i => by
+    rw [← mul_assoc, Tdaf.EReal.coe_mul_coe, inv_mul_cancel₀ ha.ne', _root_.EReal.coe_one, one_mul]
+  simp only [hid] at h
+  calc (a : EReal) * ⨆ i, u i
+      ≤ (a : EReal) * (((a⁻¹ : ℝ) : EReal) * ⨆ i, (a : EReal) * u i) :=
+        mul_le_mul_of_nonneg_left h (by exact_mod_cast ha.le)
+    _ = ⨆ i, (a : EReal) * u i := by
+        rw [← mul_assoc, Tdaf.EReal.coe_mul_coe, mul_inv_cancel₀ ha.ne', _root_.EReal.coe_one,
+          one_mul]
+
+/-- A *real* constant may be moved in and out of a supremum. Because it is finite no `∞ - ∞`
+arises, so there is no hypothesis; the empty index set works too, since `⊥ + r = ⊥`. -/
+theorem iSup_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
+    (⨆ i, u i) + (r : EReal) = ⨆ i, (u i + (r : EReal)) := by
+  have key : ∀ (c : ℝ) (v : ι → EReal), (⨆ i, (v i + (c : EReal))) ≤ (⨆ i, v i) + (c : EReal) :=
+    fun c v => iSup_le fun i => add_le_add (le_iSup v i) le_rfl
+  refine le_antisymm ?_ (key r u)
+  have h := key (-r) fun i => u i + (r : EReal)
+  have hid : ∀ i, u i + (r : EReal) + ((-r : ℝ) : EReal) = u i := fun i => by
+    rw [_root_.EReal.coe_neg, ← sub_eq_add_neg, _root_.EReal.add_sub_cancel_right]
+  simp only [hid] at h
+  calc (⨆ i, u i) + (r : EReal)
+      ≤ ((⨆ i, (u i + (r : EReal))) + ((-r : ℝ) : EReal)) + (r : EReal) := add_le_add h le_rfl
+    _ = ⨆ i, (u i + (r : EReal)) := by
+        rw [_root_.EReal.coe_neg, ← sub_eq_add_neg, _root_.EReal.sub_add_cancel]
+
+/-- The set-indexed form of `Tdaf.EReal.iSup_add_coe`. -/
+theorem biSup_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
+    (⨆ a ∈ s, u a) + (r : EReal) = ⨆ a ∈ s, (u a + (r : EReal)) := by
+  rw [iSup_add_coe]
+  exact iSup_congr fun a => iSup_add_coe _ r
+
+/-- An arbitrary constant may be moved in and out of a supremum over a set on which the values are
+never `⊥`. The hypothesis is what rules out `⊥ + ⊤ = ⊥` disagreeing with `⨆ (⊥ + ⊤)`. -/
+theorem biSup_add_of_ne_bot {α : Type*} {s : Set α} {u : α → EReal} (hu : ∀ a ∈ s, u a ≠ ⊥)
+    (M : EReal) : (⨆ a ∈ s, u a) + M = ⨆ a ∈ s, (u a + M) := by
+  induction M with
+  | bot => simp
+  | coe r => exact biSup_add_coe s u r
+  | top =>
+    rcases s.eq_empty_or_nonempty with rfl | ⟨a₀, ha₀⟩
+    · simp
+    · have hne : (⨆ a ∈ s, u a) ≠ ⊥ := fun hc =>
+        hu a₀ ha₀ (le_bot_iff.1 (hc ▸ le_iSup₂ (f := fun a (_ : a ∈ s) => u a) a₀ ha₀))
+      rw [_root_.EReal.add_top_of_ne_bot hne]
+      refine (top_le_iff.1 ?_).symm
+      calc (⊤ : EReal) = u a₀ + ⊤ := (_root_.EReal.add_top_of_ne_bot (hu a₀ ha₀)).symm
+        _ ≤ ⨆ a ∈ s, (u a + (⊤ : EReal)) :=
+          le_iSup₂ (f := fun a (_ : a ∈ s) => u a + (⊤ : EReal)) a₀ ha₀
+
 end EReal
 
 end Tdaf

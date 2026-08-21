@@ -6,6 +6,7 @@ Authors: TDAF contributors
 import Mathlib.Analysis.LocallyConvex.Separation
 import Mathlib.Topology.Instances.EReal.Lemmas
 import Mathlib.Topology.Semicontinuity.Basic
+import Tdaf.Analysis.Convex.Indicator
 import Tdaf.Analysis.Convex.Operations.Epi
 import Tdaf.Analysis.Convex.Separation
 
@@ -444,6 +445,30 @@ this is the `hmin` field of `clFnClosure`, restated without the `OrderDual` wrap
 theorem le_clFn_of_le (hg : ClosedFn g) (hgf : g ≤ f) : g ≤ clFn f :=
   hg.symm.trans_le (clFn_mono hgf)
 
+
+/-! ### Indicator functions -/
+
+omit [AddCommGroup E] [IsTopologicalAddGroup E] in
+/-- The lower semicontinuous hull of an indicator function is the indicator of the closure. -/
+@[simp] theorem lscHull_indicatorFn (s : Set E) :
+    lscHull (indicatorFn s) = indicatorFn (closure s) := by
+  have h : closure (epi (indicatorFn s)) = epi (indicatorFn (closure s)) := by
+    rw [epi_indicatorFn, epi_indicatorFn, closure_prod_eq, isClosed_Ici.closure_eq]
+  rw [lscHull, h, ofEpi_epi]
+
+omit [AddCommGroup E] [IsTopologicalAddGroup E] in
+/-- **`cl δ(· | s) = δ(· | cl s)`** (Rockafellar §7): closing an indicator function closes its
+set. -/
+@[simp] theorem clFn_indicatorFn (s : Set E) :
+    clFn (indicatorFn s) = indicatorFn (closure s) := by
+  rw [clFn_of_forall_ne_bot fun x => by
+    rw [lscHull_indicatorFn]; exact indicatorFn_ne_bot _ _, lscHull_indicatorFn]
+
+omit [AddCommGroup E] [IsTopologicalAddGroup E] in
+/-- The indicator of a closed set is a closed convex function. -/
+theorem closedFn_indicatorFn {s : Set E} (hs : IsClosed s) : ClosedFn (indicatorFn s) := by
+  change clFn (indicatorFn s) = indicatorFn s
+  rw [clFn_indicatorFn, hs.closure_eq]
 
 end Hull
 
