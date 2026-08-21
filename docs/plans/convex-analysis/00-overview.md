@@ -522,25 +522,42 @@ genuinely finite-dimensional work and is the main risk (see §6 below).
 
 ## 7. Status
 
-Stage 1 is under way. Formalised so far, all compiling with no `sorry` and with
-`#print axioms` showing only `propext`, `Classical.choice`, `Quot.sound`:
+Stages 1 and 2 are substantially done. Everything below compiles with no `sorry`, no warnings, and
+`#print axioms` showing only `propext`, `Classical.choice`, `Quot.sound`.
 
 | module | contents |
 |---|---|
-| `Tdaf/Order/EReal.lean` | the arithmetic conventions of §4 checked against `EReal`; `le_coe_of_forall_lt`, `eq_bot_of_forall_le_coe`, `exists_real_btwn_of_lt_coe`, `exists_coe_of_ne_bot_of_lt_top` |
-| `Tdaf/Analysis/Convex/Epigraph.lean` | `epi`, `dom`, `Proper`, `restrict`, `ConvexFn`; **Theorem 4.1**, **Theorem 4.2**, **Theorem 4.6** (both forms), convexity of `dom`, and the Mathlib bridge `convexOn_iff_convexFn` |
-| `Tdaf/Analysis/Convex/Indicator.lean` | `indicatorFn`, `epi_indicatorFn`, `dom_indicatorFn`, `convexFn_indicatorFn`, `restrict_eq_add_indicatorFn` |
+| `Tdaf/Order/EReal.lean` | §4's arithmetic conventions checked against `EReal`; order/negation/`⨆` helpers |
+| `Analysis/Convex/Epigraph.lean` | `epi`, `dom`, `Proper`, `restrict`, `ConvexFn`; **Thms 4.1, 4.2, 4.6**; `dom_eq_fst_image_epi`; the Mathlib bridge |
+| `Analysis/Convex/Indicator.lean` | `indicatorFn` and its epigraph/domain/convexity |
+| `Analysis/Convex/Concave.lean` | `hypo`, `ConcaveFn`, `domConcave`, `ProperConcave`, `restrictConcave`; the §30 mirrors of 4.1/4.2/4.6; `concaveOn_iff_concaveFn` |
+| `Analysis/Convex/Homogeneous.lean` | `PosHomogeneous`; Thm 2.6 for cones; **Thms 4.7, 4.8**, Cors 4.7.1–4.7.2 |
+| `Analysis/Convex/Operations/Epi.lean` | `ofEpi`, `IsEpiLike` and its closure properties; **Thm 5.3** |
+| `Analysis/Convex/Operations/Basic.lean` | `epi_iSup`; **Thms 5.1, 5.2, 5.5**; scalar multiples, restriction |
 
-Confirmed by this first pass:
+Confirmed by building these:
 
-* `EReal` really is the right carrier — every one of Rockafellar's §4 conventions holds in Mathlib's
-  `EReal`, and the `∞ - ∞` he leaves undefined never surfaces.
-* The `E × ℝ` epigraph (rather than `E × EReal`) is the right choice, and the Mathlib bridge
-  `convexOn_iff_convexFn` goes through in two lines via `ConvexOn.convex_epigraph`.
-* Theorem 4.2's strict form is the right primitive: Theorem 4.1 and both halves of Theorem 4.6 are
-  short consequences, and no proof in the file ever has to reason about `⊥ + ⊤`.
+* `EReal` is the right carrier — every §4 convention holds in Mathlib's `EReal`, and the `∞ − ∞`
+  Rockafellar leaves undefined never surfaces under the properness hypotheses.
+* The `E × ℝ` epigraph (not `E × EReal`) is right, and `convexOn_iff_convexFn` goes through in two
+  lines via `ConvexOn.convex_epigraph`.
+* Theorem 4.2's strict form is the right primitive: 4.1, both halves of 4.6, and their concave
+  mirrors are short consequences, and no proof ever has to reason about `⊥ + ⊤`.
 
-Next: `Concave.lean`, `Homogeneous.lean`, then `Operations/*` (stage 2).
+Corrected while building, and folded into the sub-plans:
+
+* **`epi (ofEpi F) = F` needs a hypothesis** (`IsEpiLike`), and closedness alone does not supply it
+  (`{(0,0)}` is closed and is not an epigraph). Consequently the §5 "operation = `ofEpi` of a set"
+  identities are `rfl`, and the content-bearing epigraph identities are conditional.
+* **Corollary 4.7.1 and Theorem 4.8's basis clause are false as literally written**, for the trivial
+  reason that the book's `λ₁,…,λₘ` assumes `m ≥ 1`; the formalisation adds `Nonempty`.
+* **Theorem 5.2 needs `∀ x, f x ≠ ⊥`, not properness**, and it is not droppable.
+* **Theorem 5.1 needs `φ ⊤ = ⊤` explicitly**, and is stated more generally than the book (`φ` may
+  take `⊥`).
+* **D2's "generate the concave API by `simp`"** does not work: the natural simp set loops.
+
+Next: `Homogenize.lean` (D6) and the `ofEpi`-derived operations (`InfConv`, `Hull`, `Image`,
+`Partial`), then stage 3 (`Closure.lean`, `Separation.lean`).
 
 ## 8. Conventions
 

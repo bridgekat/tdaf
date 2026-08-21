@@ -121,7 +121,10 @@ a function-level one applied to `indicatorFn`.
 
 ```lean
 def hypo (g : E → EReal) : Set (E × ℝ) := {p | (p.2 : EReal) ≤ g p.1}
-def ConcaveFn (g : E → EReal) : Prop := Convex ℝ (hypo g)
+structure ConcaveFn (g : E → EReal) : Prop where convex_hypo : Convex ℝ (hypo g)
+/-- `g` on `s`, extended by `⊥`. `Tdaf.restrict` extends by `⊤` and is the wrong object here. -/
+noncomputable def restrictConcave (s : Set E) (g : E → EReal) : E → EReal :=
+  fun x => ⨆ _ : x ∈ s, g x
 def domConcave (g : E → EReal) : Set E := {x | ⊥ < g x}
 structure ProperConcave (g : E → EReal) : Prop where ...
 
@@ -129,8 +132,13 @@ theorem concaveFn_iff_convexFn_neg : ConcaveFn g ↔ ConvexFn (fun x => -(g x))
 theorem hypo_neg : hypo g = Prod.map id Neg.neg ⁻¹' epi (fun x => -(g x))   -- up to a sign
 ```
 
-The whole concave API is generated from these two lemmas by `simp`-normalising through negation;
-only the *definitions* are duplicated, not the proofs.
+The set-level lemmas and Theorem 4.6 do transfer mechanically, but **not by `simp`**: the natural
+simp set (`← EReal.neg_lt_neg_iff` against `neg_neg`/`neg_bot`/`neg_top`) loops. Each transfer is one
+or two hand-written lines. And the Theorem 4.1 mirror is not a pure normalisation at all — it needs
+`EReal.neg_add`'s side conditions, hence the hypothesis `∀ x, g x ≠ ⊤`.
+
+Worth stating precisely, because D2's caveat is easy to over-read: `hypo_neg` and
+`concaveFn_iff_convexFn_neg` need **no** hypotheses. Only the lemmas that form a *sum* do.
 
 ## 1.5 `Tdaf/Analysis/Convex/Homogeneous.lean` — §4 end
 
@@ -140,10 +148,19 @@ def PosHomogeneous (f : E → EReal) : Prop := ∀ (a : ℝ), 0 < a → ∀ x, f
 theorem posHomogeneous_iff_isCone_epi : PosHomogeneous f ↔ (∀ a > 0, a • epi f = epi f)
 theorem PosHomogeneous.convexFn_iff_subadditive (hf : PosHomogeneous f) (h : ∀ x, f x ≠ ⊥) :
     ConvexFn f ↔ ∀ x y, f (x + y) ≤ f x + f y                                  -- **Thm 4.7**
-theorem PosHomogeneous.sum_le (…) : f (∑ i, aᵢ • xᵢ) ≤ ∑ i, (aᵢ:EReal) * f xᵢ  -- **Cor 4.7.1**
+theorem PosHomogeneous.sum_le (…) (hs : s.Nonempty) : …                        -- **Cor 4.7.1**
 theorem PosHomogeneous.neg_le (…) : -(f x) ≤ f (-x)                            -- **Cor 4.7.2**
-theorem PosHomogeneous.isLinearOn_iff (…) : … ↔ ∀ x ∈ L, f (-x) = -(f x)       -- **Thm 4.8**
+theorem PosHomogeneous.exists_linearMap_iff (…) :                              -- **Thm 4.8**
+    (∃ g : L →ₗ[ℝ] ℝ, ∀ x : L, f x = g x) ↔ ∀ x ∈ L, f (-x) = -(f x)
+theorem PosHomogeneous.exists_linearMap_span (…) (hs : s.Nonempty) : …         -- **Thm 4.8**
 ```
+
+**Two statements in §4 are false as the book writes them, for the same trivial reason**, and the
+formalisation must add `Nonempty`. Corollary 4.7.1 with an *empty* family asserts `f 0 ≤ 0`, and
+Theorem 4.8's basis clause with `L = {0}` has a vacuous hypothesis but still demands `f 0 = 0`.
+Counterexample to both (machine-checked): `f = indicatorFn {x : ℝ | 0 < x}` is positively
+homogeneous, convex and proper, with `f 0 = ⊤`. Positive homogeneity constrains `f 0` only to the
+trichotomy `f 0 ∈ {0, ⊤, ⊥}` — the book's `λ₁,…,λₘ` notation silently assumes `m ≥ 1`.
 
 Theorem 4.7 is the bridge between §4 and §13 (support functions) and §15 (gauges): it says a
 positively homogeneous function is convex exactly when it is subadditive, i.e. its epigraph is a
@@ -174,7 +191,23 @@ instance-synthesis error rather than a clear one if forgotten.
 
 `ofEpi` (Theorem 5.3) is the single generator: **every** other construction in §5 is `ofEpi` applied
 to a convex set built from epigraphs. Stating it once and deriving the rest is the main structural
-saving in this file.
+saving in this file. Note `ofEpi` needs **no** algebraic structure on `E`; only Theorem 5.3 does.
+
+Two corrections established while writing `Operations/Epi.lean`:
+
+* **`epi (ofEpi F) = F` is false in general** — `F = {p : ℝ × ℝ | 0 < p.2}` is convex with
+  `epi (ofEpi F) ≠ F`, and `{(0,0)}` is closed but is not an epigraph, so *closedness alone is not
+  enough either*. The hypothesis is `IsEpiLike F := ∃ f, F = epi f`, checkable via
+  `isEpiLike_iff_forall` (vertical sections upward-closed and closed below).
+* **Therefore `infConv_eq_ofEpi`, `convFn_eq_ofEpi` and `mapLin_eq_ofEpi` below are the wrong
+  theorems.** If the operation is *defined* as an `ofEpi`, those statements are `rfl`. The
+  content-bearing statements are `epi (infConv f g) = epi f + epi g` etc., and they are **false**
+  without `IsEpiLike` — the infimal convolution's infimum need not be attained. Likewise
+  `smulRight f a` has `epi (smulRight f a) = a • epi f` only for `a > 0`: at `a = 0` the set
+  `0 • epi f` is `{(0,0)}`. (The *definition* still computes correctly there,
+  `ofEpi {(0,0)} = indicatorFn {0}`, which is Rockafellar's `f0`.)
+* `lscHull` is the one operation needing no such hypothesis (`IsEpiLike.closure` discharges it), but
+  it needs `[ContinuousAdd E]` — layer B, not layer A.
 
 ```lean
 /-- The function whose graph is the lower boundary of a set `F ⊆ E × ℝ` (Rockafellar Thm 5.3). -/
@@ -186,13 +219,26 @@ theorem convFn_eq_ofEpi : convFn F = ofEpi (convexHull ℝ (⋃ i, epi (F i)))  
 theorem mapLin_eq_ofEpi : mapLin A f = ofEpi ((A.prodMap .id) '' epi f)     -- Thm 5.7
 ```
 
-Note the properness side conditions: `f₁ + f₂` needs both proper to avoid `∞ − ∞` (Thm 5.2), and
-infimal convolution of improper functions is *defined* through epigraph addition rather than the
-infimum formula — Rockafellar makes exactly this point, so `infConv` should be **defined** as
-`ofEpi (epi f + epi g)` with the infimum formula as a theorem under properness.
+Note the side conditions. Infimal convolution of improper functions is *defined* through epigraph
+addition rather than the infimum formula — Rockafellar makes exactly this point — so `infConv` is
+**defined** as `ofEpi (epi f + epi g)`, with the infimum formula a theorem under properness.
+
+Theorem 5.2's hypothesis is `∀ x, f x ≠ ⊥` on *both* summands, not full properness: `dom_nonempty`
+does no work. It is **not** droppable. On `ℝ`, `f x = ⊥` for `x > 0` else `⊤`, and `g x = ⊥` for
+`x < 0` else `⊤`, are both convex (epigraphs `Ioi 0 ×ˢ univ` and `Iio 0 ×ˢ univ`), but `f + g` is `⊥`
+off `0` and `⊤` at `0`, whose epigraph is not convex.
+
+Theorem 5.1 needs three hypotheses in `EReal`, because `EReal` is not an `ℝ`-module and
+`ConvexFn (φ : EReal → EReal)` is not statable at all: `φ`'s convexity is asserted on `ℝ`
+(`ConvexFn fun r : ℝ => φ r`), plus `Monotone φ` and `φ ⊤ = ⊤`. The last is load-bearing — with
+`φ ≡ 0` on `ℝ` and `φ ⊤ = 1`, `φ ∘ δ(·|[0,1])` has `(0.5, 0)` and `(2, 1)` in its epigraph but not
+their midpoint. `φ` need **not** avoid `⊥`, so the result is strictly more general than the book's;
+`extendTop` fixes the book's under-determined `φ ⊥` to recover Theorem 5.1 verbatim.
 
 `Lattice.lean` then records: convex functions on `E` with the pointwise order form a complete
-lattice with `⨆ = sSupFn` and `⨅ = convFn` (§5, after Theorem 5.6).
+lattice with `⨆ = sSupFn` and `⨅ = convFn` (§5, after Theorem 5.6). `sSupFn` should **not** be a
+separate definition — `⨆ i, f i x` already is the pointwise supremum, and `convexFn_iSup` states
+Theorem 5.5 on it directly.
 
 ## 1.7 `Tdaf/Analysis/Convex/Homogenize.lean` — [D6](00-overview.md#d6)
 

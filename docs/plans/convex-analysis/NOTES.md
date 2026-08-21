@@ -103,6 +103,35 @@ theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f
     restrict s f = f + indicatorFn s
 ```
 
+### `Tdaf/Analysis/Convex/Concave.lean`
+
+`hypo`, `ConcaveFn` (structure over `Convex ℝ (hypo g)`), `domConcave`, `ProperConcave`,
+`restrictConcave s g = ⨆ _ : x ∈ s, g x` (extension by `⊥` — `Tdaf.restrict` extends by `⊤` and is
+the wrong object for a concave function), `concaveFn_iff_convexFn_neg` (**no** side condition),
+`concaveFn_iff_forall_gt`, `concaveFn_iff_le` (needs `∀ x, g x ≠ ⊤`), `ConcaveFn.convex_gt/_ge`,
+`concaveOn_iff_concaveFn`.
+
+### `Tdaf/Analysis/Convex/Homogeneous.lean`
+
+`PosHomogeneous`, `posHomogeneous_iff_isCone_epi`, `convex_iff_add_mem_of_isCone` (Thm 2.6),
+`PosHomogeneous.convexFn_iff_subadditive` (Thm 4.7), `.sum_le` (Cor 4.7.1, **needs `s.Nonempty`**),
+`.neg_le` (Cor 4.7.2), `.isLinearOn_iff` / `.exists_linearMap_iff` / `.exists_linearMap_span`
+(Thm 4.8), `.map_zero` (only the trichotomy `f 0 ∈ {0, ⊤, ⊥}`).
+
+### `Tdaf/Analysis/Convex/Operations/Epi.lean`
+
+`ofEpi F = fun x => ⨅ μ ∈ {μ : ℝ | (x, μ) ∈ F}, (μ : EReal)`, `ofEpi_lt_iff` (**the** witness
+extractor — the infimum is not attained, so this is the only way in), `subset_epi_iff_le_ofEpi`,
+`ofEpi_epi` (`simp`, unconditional), `IsEpiLike F := ∃ f, F = epi f`, `isEpiLike_iff_forall`
+(sections upward-closed and closed below), `epi_ofEpi` (needs `IsEpiLike`), `IsEpiLike.iInter/.inter/
+.union/.closure/.of_isClosed`, `convexFn_ofEpi` (Thm 5.3).
+
+### `Tdaf/Analysis/Convex/Operations/Basic.lean`
+
+`epi_iSup`, `epi_biSup`, `epi_sup`, `dom_add`, `epi_restrict`, `convexFn_iSup` (Thm 5.5),
+`ConvexFn.add` (Thm 5.2, needs `∀ x, f x ≠ ⊥` on both), `.sum`, `.smul`, `.restrict`,
+`.add_indicatorFn`, `extendTop`, `ConvexFn.comp` / `.comp_extendTop` (Thm 5.1).
+
 ---
 
 ## 1a. House style
@@ -183,6 +212,58 @@ From the repository `README.md` ("Reviewing a formalization"):
 11. **`⨅ _ : p, f` for a `Prop` `p`** is the decidability-free way to write `if p then f else ⊤`
     in a complete lattice; `iInf_pos` and `iInf_neg` are the defining equations. Same trick with
     `⨆ _ : p, f` for `… else ⊥`.
+
+### Added by the stage-1/2 modules
+
+12. **Two `simp` loops, both real.** `simp [Tdaf.EReal.coe_mul_coe]` loops — it is the exact inverse
+    of Mathlib's `EReal.coe_mul`, which is in the default simp set; use `rw`. And a simp set
+    containing `← EReal.neg_lt_neg_iff` loops against `neg_neg`/`neg_bot`/`neg_top`. **This kills
+    D2's "generate the concave API by `simp`-normalising through negation"** — each transfer is one
+    or two hand-written lines.
+13. **`Mathlib.Analysis.Convex.Function` imports no topology at all.** `IsClosed`, `closure`,
+    `ContinuousAdd` are unknown identifiers in a file whose Mathlib reach is only `Epigraph.lean`.
+    Minimal pair: `Mathlib.Topology.Instances.Real.Lemmas` + `Mathlib.Topology.Order.DenselyOrdered`.
+14. **`relaxedAutoImplicit = false` turns one missing import into a landslide** — a missing
+    `TopologicalSpace` produced ~12 cascading errors with `sorry`-typed hypotheses. Only the first
+    error is real.
+15. **`PosMulMono EReal` lives in `Mathlib/Data/EReal/Inv.lean`**, not `Operations.lean`; and there
+    is **no** `PosMulStrictMono EReal`, so `le_of_mul_le_mul_left` cannot reflect an order. Multiply
+    through by `(a⁻¹ : EReal)` — that is what `Tdaf.EReal.coe_mul_le_coe_iff` packages.
+16. **`EReal.neg_add` concludes `-(x+y) = -x - y`, with a subtraction.** After `rw` you are left with
+    `-a + -b = -a - b`, which the closing `rfl` does not discharge though it is defeq; finish with
+    `sub_eq_add_neg`.
+17. **`linear_combination` is not in scope** from `Mathlib.Data.EReal.*` alone. Prefer explicit
+    rewriting (`rw [sub_mul, one_mul, h, sub_self]`) in `Order/EReal.lean` over adding tactic
+    imports to a low-level file.
+18. **`Finset` induction.** `Finset.cons_induction` (cases `empty`/`cons`) needs no `DecidableEq`.
+    `Finset.Nonempty.cons_induction` has **one** major premise: write
+    `induction hs using Finset.Nonempty.cons_induction`, not `induction s, hs using …`. Both
+    auto-revert hypotheses mentioning `s`, so `ih` is the full implication.
+19. **`WithBot` big-operator lemmas do not transfer to `EReal`** — `EReal` is a `def`, not an
+    `abbrev`, over `WithBot (WithTop ℝ)`.
+20. **Gotcha 2 refined.** `simp only` *does* push through `Prod` projections of a *single* scaled or
+    added pair (`Prod.smul_fst`, `Prod.fst_add`, … are all `@[simp]`). The warning is specifically
+    about *convex combinations* `a • p + b • q`. For sets, this works:
+    `simpa [Prod.smul_mk, Prod.mk_add_mk, smul_eq_mul] using hF hμ hν ha.le hb.le hab`.
+    Also: `rintro ⟨y, ρ⟩ hp` beats `intro p hp; obtain ⟨y, ρ⟩ := p`, which leaves `hp` phrased with
+    `(y, ρ).2` and defeats `exact_mod_cast`.
+21. **`ConvexCone` is half-reusable.** `ConvexCone.convex` accepts an anonymous-constructor cone
+    `⟨s, _, _⟩` whose coercion is `rfl`-equal to `s`, giving "closed under `+` and positive `•` ⇒
+    convex" directly. The converse is **not** in Mathlib. There is no `IsCone` predicate on bare
+    sets, only the bundled structure.
+22. **Pointwise cone lemmas**: `Set.smul_mem_smul_set_iff₀`, `Set.mem_smul_set_iff_inv_smul_mem₀`.
+    To use `a • s = s` inside an `Iff`, `conv_lhs => rw [← hs a ha]` — a bare `rw` rewrites both
+    sides and destroys the goal.
+23. **`open Set` makes bare `restrict` ambiguous** with `Set.restrict`; write `Tdaf.restrict`.
+24. Names: `Continuous.prodMk` (not `prod_mk`), `abs_add_le` (not `abs_add`), `iInf_lt_iff` for
+    witness extraction, `iSup_pos`/`iSup_neg` as the `⨆` duals of `iInf_pos`/`iInf_neg`,
+    `forall₂_congr`/`forall₃_congr` to push an `Iff` through a `∀`-chain, `EReal.coe_toReal`.
+    `Set.mem_Ici`/`left_mem_Ici` do **not** exist as identifiers; close `μ ∈ Ici μ` with
+    `exact le_refl μ` (`le_rfl` gets stuck on an unresolved `Preorder`).
+25. **`EReal.rec` is usable as a definitional combinator**, not just an eliminator:
+    `EReal.rec (⊥ : EReal) φ ⊤` defines a function by cases, with `rec_bot`/`rec_coe`/`rec_top`
+    `@[simp]` and `rfl`. Write `_root_.EReal.rec` inside `namespace Tdaf`.
+26. **Generic `add_le_add` works on `EReal`** (there is a `CovariantClass`); no bespoke lemma needed.
 
 ---
 
