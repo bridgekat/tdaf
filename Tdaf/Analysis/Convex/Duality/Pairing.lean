@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Mathlib.Analysis.InnerProductSpace.Adjoint
-import Mathlib.Analysis.LocallyConvex.WeakDual
+import Mathlib.Analysis.LocallyConvex.Polar
 import Tdaf.Analysis.Convex.Closure
 
 /-!
@@ -28,8 +28,6 @@ This file collects the vocabulary that the rest of the development is stated aga
   to the pairings `B` and `B'`.
 * `Tdaf.prodPairing Bu Bx`, `Tdaf.negFst B` — the pairing of `U × X` with `V × Y`, and the sign
   flip on the first factor that the adjoint of a convex bifunction (§30) is stated against.
-* `Tdaf.toWeak B`, `Tdaf.weakPairing B`, `Tdaf.toWeakFn B`, `Tdaf.toWeakSet B`,
-  `Tdaf.toWeakSetProd B` — the transport across the type synonym `WeakBilin B`.
 
 ## Main results
 
@@ -45,9 +43,6 @@ This file collects the vocabulary that the rest of the development is stated aga
   for a *unique* pair `(y, c)`. Mathlib does not provide this, and Fenchel–Moreau needs it twice:
   the separating functional of `E × ℝ` must be split into a horizontal part and a vertical
   coefficient before it can be recognised as an affine minorant.
-* `Tdaf.continuous_weakPairing`, `Tdaf.exists_weakPairing_eq` — the two facts that make
-  `WeakBilin B` the topology in which the duality theorems are easiest: the pairing is continuous,
-  and *every* continuous functional comes from the pairing (Mathlib's Weak Representation Theorem).
 
 ## Design notes
 
@@ -61,11 +56,20 @@ a module with *itself* (`B : M →ₗ[R] M →ₛₗ[I] M₃`), whereas a dual p
 **Separating pairings are Mathlib's `LinearMap.Nondegenerate`**, which is by definition
 `SeparatingLeft B ∧ SeparatingRight B`; no new predicate is introduced here.
 
-**`WeakBilin B` is a type synonym**, so `simp` and `rw` do not fire through it. The transport
-supplied here is deliberately built out of the identity linear equivalence `Tdaf.toWeak B`, which
-makes every transport lemma below true by `rfl`: convexity, properness, epigraphs and effective
-domains are *the same objects*, and only the topology differs. That is exactly what makes "prove it
-in `WeakBilin B`, transport out" cheap.
+**No weak topology.** An earlier design made the weak topology `σ(E, F)` — Mathlib's type synonym
+`WeakBilin B` — the mechanism by which the duality theorems were to be proved and then transported
+out. It is not needed: the duality theorems hold in whatever topology `E` already carries, provided
+its continuous dual is the `F` side of the pairing, and that is stated as a hypothesis rather than
+engineered by a change of type. What the pairing is *for* is the freedom to let `E` and `F` be
+different spaces, which §30 (adjoint bifunctions) and §33 (saddle-functions) need.
+
+**Infinite dimensions cost hypotheses, not generality.** In the category of topological vector
+spaces the arrows are the *continuous* linear maps, and a discontinuous linear functional is simply
+not a morphism; likewise a subspace that is to behave like a finite-dimensional one has to be
+assumed closed. Both are automatic in finite dimensions, which is why Rockafellar never writes
+them. Where a statement of his fails here — `Tdaf.exists_affine_le_of_closed_proper` needs `f`
+closed, `Tdaf.exists_ne_zero_forall_le_of_closure_ne_univ` needs `closure C ≠ univ` — the missing
+hypothesis is always of one of those two kinds.
 
 ## References
 
@@ -367,87 +371,5 @@ theorem exists_unique_dual_prod (g : (E × ℝ) →L[ℝ] ℝ) :
 
 end ProdDual
 
-/-! ### The weak topology of a pairing
-
-`WeakBilin B` is Mathlib's type synonym for `E` carrying the topology `σ(E, F)`. It is a locally
-convex space and its continuous dual is exactly `F` (Mathlib's Weak Representation Theorem), which
-is what makes it the cheapest place to prove Fenchel–Moreau. Because it is a *synonym*, `simp` and
-`rw` do not fire through it; the transport below is the fix, and every lemma in it is `rfl`. -/
-
-section Weak
-
-variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-variable (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
-
-/-- The identity linear equivalence between `E` and the weak-topology synonym `WeakBilin B`. -/
-noncomputable def toWeak : E ≃ₗ[ℝ] WeakBilin B := LinearEquiv.refl ℝ E
-
-@[simp] theorem toWeak_symm_apply_toWeak (x : E) : (toWeak B).symm (toWeak B x) = x := rfl
-
-/-- The pairing `B`, regarded as a pairing on the synonym `WeakBilin B`. -/
-noncomputable def weakPairing : WeakBilin B →ₗ[ℝ] F →ₗ[ℝ] ℝ := B
-
-@[simp] theorem weakPairing_apply (x : E) (y : F) : weakPairing B (toWeak B x) y = B x y := rfl
-
-/-- A function on `E`, regarded as a function on `WeakBilin B`. -/
-noncomputable def toWeakFn (f : E → EReal) : WeakBilin B → EReal := fun x => f ((toWeak B).symm x)
-
-@[simp] theorem toWeakFn_apply (f : E → EReal) (x : E) : toWeakFn B f (toWeak B x) = f x := rfl
-
-/-- A subset of `E`, regarded as a subset of `WeakBilin B`. -/
-noncomputable def toWeakSet (s : Set E) : Set (WeakBilin B) := (toWeak B).symm ⁻¹' s
-
-@[simp] theorem mem_toWeakSet {s : Set E} {x : E} : toWeak B x ∈ toWeakSet B s ↔ x ∈ s := Iff.rfl
-
-/-- A subset of `E × ℝ`, regarded as a subset of `WeakBilin B × ℝ`. -/
-noncomputable def toWeakSetProd (s : Set (E × ℝ)) : Set (WeakBilin B × ℝ) :=
-  (fun p => ((toWeak B).symm p.1, p.2)) ⁻¹' s
-
-@[simp] theorem mem_toWeakSetProd {s : Set (E × ℝ)} {x : E} {μ : ℝ} :
-    ((toWeak B x, μ) : WeakBilin B × ℝ) ∈ toWeakSetProd B s ↔ (x, μ) ∈ s := Iff.rfl
-
-/-- Convexity is unaffected by the transport: the weak topology changes no linear structure. -/
-@[simp] theorem convex_toWeakSet {s : Set E} : Convex ℝ (toWeakSet B s) ↔ Convex ℝ s := Iff.rfl
-
-/-- Convexity in `E × ℝ` is unaffected by the transport. -/
-@[simp] theorem convex_toWeakSetProd {s : Set (E × ℝ)} :
-    Convex ℝ (toWeakSetProd B s) ↔ Convex ℝ s := Iff.rfl
-
-/-- Epigraphs are unaffected by the transport. -/
-@[simp] theorem epi_toWeakFn (f : E → EReal) : epi (toWeakFn B f) = toWeakSetProd B (epi f) := rfl
-
-/-- Effective domains are unaffected by the transport. -/
-@[simp] theorem dom_toWeakFn (f : E → EReal) : dom (toWeakFn B f) = toWeakSet B (dom f) := rfl
-
-/-- Convexity of a function is unaffected by the transport. -/
-@[simp] theorem convexFn_toWeakFn {f : E → EReal} : ConvexFn (toWeakFn B f) ↔ ConvexFn f := Iff.rfl
-
-/-- Properness is unaffected by the transport. -/
-@[simp] theorem proper_toWeakFn {f : E → EReal} : Proper (toWeakFn B f) ↔ Proper f := Iff.rfl
-
-/-! The instances the duality proofs consume are all found by `inferInstance`; they are recorded
-here so that a reader does not have to rediscover that fact, and so that a Mathlib change breaking
-one of them breaks this file rather than a proof three modules downstream. -/
-
-example : IsTopologicalAddGroup (WeakBilin B) := inferInstance
-example : ContinuousSMul ℝ (WeakBilin B) := inferInstance
-example : LocallyConvexSpace ℝ (WeakBilin B) := inferInstance
-example : IsTopologicalAddGroup (WeakBilin B × ℝ) := inferInstance
-example : ContinuousSMul ℝ (WeakBilin B × ℝ) := inferInstance
-example : LocallyConvexSpace ℝ (WeakBilin B × ℝ) := inferInstance
-
-/-- The pairing is continuous in the weak topology. -/
-theorem continuous_weakPairing (y : F) : Continuous fun x : WeakBilin B => weakPairing B x y :=
-  WeakBilin.eval_continuous B y
-
-/-- **The Weak Representation Theorem**, in the form the duality proofs use: every continuous
-linear functional on `WeakBilin B` is `x ↦ ⟨x, y⟩` for some `y : F`. This is the hypothesis that
-turns the separating functional produced by Hahn–Banach into an affine minorant. -/
-theorem exists_weakPairing_eq (g : WeakBilin B →L[ℝ] ℝ) :
-    ∃ y : F, ∀ x, g x = weakPairing B x y := by
-  obtain ⟨y, hy⟩ := LinearMap.dualEmbedding_surjective B g
-  exact ⟨y, fun x => by rw [← hy]; rfl⟩
-
-end Weak
 
 end Tdaf

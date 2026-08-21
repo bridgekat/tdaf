@@ -89,6 +89,28 @@ Two concrete Mathlib mismatches to be careful about:
 These are the choices that determine the shape of everything downstream. Each was checked to
 typecheck against Mathlib before being written down.
 
+### D0. Infinite dimensions cost hypotheses, not generality
+
+The backbone works over topological vector spaces, and in that category the arrows are the
+**continuous** linear maps. A discontinuous linear functional is not a morphism; a subspace that is
+to behave like a finite-dimensional one has to be assumed **closed**. Both conditions are automatic
+in finite dimensions, which is exactly why Rockafellar never writes them.
+
+So when one of his statements fails here, the fix is essentially always to restore one of those two
+hypotheses rather than to abandon the generalisation. Every instance found so far is of that shape:
+
+| his statement | what it needs here |
+|---|---|
+| Theorem 7.4, "`cl f` is proper when `f` is" | `f` **closed** (`exists_affine_le_of_closed_proper`) |
+| the branch in `cl f` | branch on `lscHull f`, i.e. on the **closed** object |
+| Corollary 11.5.2, "`C ≠ ℝⁿ` lies in a half-space" | `closure C ≠ univ` |
+| Corollary 11.7.3, the cone version | likewise |
+| Theorem 16.3 and §30's adjoints | `A` **continuous**, and the transpose supplied as data |
+
+This is the reading to apply to any further surprise, and it is why the discontinuous-functional
+counterexample keeps recurring: it is simply the standard witness that a linear map need not be a
+morphism.
+
 ### D1. Convex functions are `E → EReal`, and convexity means "the epigraph is convex"
 
 ```lean
@@ -149,12 +171,25 @@ noncomputable def conj (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) :
 
 The biconjugate is `conj B.flip (conj B f) : E → EReal`, so the correspondence is symmetric without
 reflexivity assumptions. Instantiations: `ℝⁿ` with the inner product (Rockafellar), a normed space
-with `topDualPairing`, a Hilbert space with itself, `WeakBilin B` for the weak topology.
+with `topDualPairing`, a Hilbert space with itself. (Not the weak topology — see below.)
 
-This is the level of generality at which Fenchel–Moreau is actually *easy*: `WeakBilin B` carries a
-`LocallyConvexSpace` instance in Mathlib, so `geometric_hahn_banach_closed_point` applies directly
-(verified, along with `LocallyConvexSpace ℝ (WeakBilin B × ℝ)`). Everything in §12–§16 is
-pairing-level; nothing there needs finite dimensions.
+**Whatever topology `E` already has.** An earlier draft of this decision made the weak topology
+`σ(E, F)` — Mathlib's type synonym `WeakBilin B` — the mechanism: prove the duality theorems there,
+transport out. That was wrong, and the machinery has been deleted. The duality theorems hold in
+whatever topology `E` already carries, provided its continuous dual is the `F` side of the pairing,
+and that is said as two hypotheses rather than engineered by a change of type:
+
+```lean
+(hBc : ∀ y : F, Continuous fun x : E => B x y)          -- every ⟨·,y⟩ is continuous
+(hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)      -- and every continuous functional is one
+```
+
+Both are trivial when `E` is paired with its **own** continuous dual, so Fenchel–Moreau holds
+directly in the norm topology of a Banach space, in a Hilbert space, and in `ℝⁿ`. What the general
+pairing is *for* is the freedom to let `E` and `F` be different spaces — which §30 (adjoint
+bifunctions) and §33 (saddle-functions) genuinely need. It is not for the weak topology.
+
+Everything in §12–§16 is pairing-level; nothing there needs finite dimensions.
 
 **Two things the pairing does not give you, established by review.**
 
@@ -171,10 +206,10 @@ variable (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) (hA : ∀ x z, B' (A x) z 
 with constructors supplying `A'` in the inner-product and finite-dimensional instantiations. Named
 once in `Duality/Pairing.lean` and threaded from there.
 
-*There is no compatible-topology machinery.* `Convex.closure_eq_of_compatible` (§2.3 of sub-plan 2)
-has no Mathlib support; `Compatible` must be defined and the theorem built from `iInter_halfSpaces_eq`
-in each topology. Budget it as a file, not a lemma. Also budget a small `WeakBilin`-transport simp
-set: `WeakBilin B` is a type synonym and pair literals in `WeakBilin B × ℝ` need manual ascription.
+*Compatible-topology independence is optional, not foundational.* The statement that `cl C` is the
+same in every topology compatible with the pairing is worth having, but it is **not** on the path to
+Fenchel–Moreau — that was a consequence of the abandoned weak-topology design. `Duality/Compatible.lean`
+is deferred until something actually needs it.
 
 ### D4. Reorder the development: **conjugacy comes before relative interiors**
 
@@ -385,7 +420,6 @@ Tdaf/
     Separation.lean                   -- proper/strong separation; §11 (wraps Mathlib)
     Duality/
       Pairing.lean                    -- dual pairs, adjoint pairs, prodPairing/negFst
-      Compatible.lean                 -- compatible topologies; closure independent of choice
       Conjugate.lean                  -- conj B f, Fenchel inequality, Fenchel–Moreau; §12
       Support.lean                    -- support functions; §13
       Polar.lean                      -- one-sided polar cone / polar set, gaugeFn; §14, §15
@@ -473,9 +507,6 @@ Estimated in "sections' worth of statements" (448 total).
 `Order/EReal.lean` in stage 1 is a **file**, not a handful of lemmas: `add_iSup`, `iSup_add`,
 `iSup_sub`, `mul_le_mul_left` for `EReal` exist nowhere in Mathlib, each needs `⊥`/`⊤` side
 conditions, and `conj` is a `⨆` of `· − f x`, so every conjugacy proof consumes them.
-`Duality/Compatible.lean` in stage 4 is likewise unbudgeted work with no Mathlib support (no
-Mackey–Arens).
-
 Stages 1–5 are the critical path: they are dimension-free, they are what Mathlib most conspicuously
 lacks, and every later stage depends on them. Stage 6 is the largest block of genuinely hard,
 genuinely finite-dimensional work and is the main risk (see §6 below).
@@ -513,10 +544,9 @@ genuinely finite-dimensional work and is the main risk (see §6 below).
 7. **`EReal` ergonomics.** `EReal` lacks a `SMul ℝ EReal` instance, its `Sub` is `a + (-b)`, and
    negation does not distribute over addition. `iSup_sub` / `add_iSup` / `iSup_add` are absent from
    Mathlib entirely. Budget `Tdaf/Order/EReal.lean` as real work up front.
-8. **`WeakBilin B` is a type synonym.** `simp`/`rw` do not fire through it, and Mathlib does not give
-   you the continuous dual of `WeakBilin B × ℝ` — decomposing `g (x,μ) = B x y + c·μ` is
-   hand-written (restrict along `ContinuousLinearMap.inl`, apply
-   `LinearMap.dualEmbedding_surjective`, take `c = g (0,1)`). Budget a transport simp set before §12.
+8. **The dual of `E × ℝ`.** Mathlib does not decompose a continuous functional on `E × ℝ` into a
+   horizontal part and a vertical coefficient; that is `Tdaf.exists_unique_dual_prod`, built by
+   restricting along `ContinuousLinearMap.inl`/`inr`. §12 needs it twice and §13 again.
 9. **§34's equivalence classes.** `dom₁`/`dom₂` for saddle-functions must be defined before anything
    in §34 can be stated at all; see sub-plan 7.
 
@@ -594,16 +624,15 @@ pointwise action, so it is a bundled `MonoidHom` into `Function.End` instead.
 | `Lattice.lean` | the convex functions as a `CompleteLattice` (§5) |
 | `Separation.lean` | §11 at layer C, plus the reusable non-vertical separation lemma |
 | `Recession/Cone.lean` | §8's set half, layered A/B/D |
-| `Duality/Pairing.lean` | dual pairs, adjoint pairs, product pairings, `WeakBilin` transport |
+| `Duality/Pairing.lean` | dual pairs, adjoint pairs, product pairings, the dual of `E × ℝ` |
 | `Duality/Conjugate.lean` | **Theorems 12.1 and 12.2 — Fenchel–Moreau** |
 
-**Fenchel–Moreau holds in three settings, none of them requiring the `WeakBilin` transport that D3
-made the centrepiece.** Carrying compatibility as two hypotheses (`∀ y, Continuous (B · y)` and every
-continuous functional is `B · y`) proves it directly in *any* compatible topology, and both
-hypotheses are trivial for `topDualPairing` — so `biconj_eq_clFn_topDual` is Fenchel–Moreau **in the
-norm topology of a Banach space**, and `biconj_eq_clFn_inner` is Rockafellar's `ℝⁿ` via
-Fréchet–Riesz. `Duality/Compatible.lean` is still wanted, but only for topology-independence of
-`cl f`; it is **not** on the critical path.
+**Fenchel–Moreau holds in whatever topology `E` already carries**, provided its continuous dual is
+the `F` side of the pairing. Carrying that as two hypotheses proves the theorem directly, and both
+are trivial when `E` is paired with its own dual — so `biconj_eq_clFn_topDual` is Fenchel–Moreau in
+the norm topology of a Banach space and `biconj_eq_clFn_inner` is Rockafellar's `ℝⁿ` via
+Fréchet–Riesz. The weak-topology machinery that an earlier draft of D3 made the centrepiece has been
+**deleted**; `Duality/Compatible.lean` is deferred with it.
 
 Further corrections from this stage:
 
@@ -621,8 +650,17 @@ Further corrections from this stage:
 * **§2.4's proof plan omitted a case**: the vertical coefficient can be negative, zero *or
   positive*, and ruling out the third needs upward closedness of the epigraph.
 
-Next: `Duality/{Support,Polar}` (§13–§15), `Recession/Function.lean` (§8's function half), then
-`RelativeInterior.lean` (§6) — which unblocks the results deliberately deferred from §7, §8 and §11.
+Next: `Duality/{Support,Polar}` (§13–§15), `Recession/Function.lean` (§8's function half),
+`RelativeInterior.lean` (§6) — which unblocks the results deliberately deferred from §7, §8 and §11 —
+and `Subgradient/Defs.lean` (§23), whose pivot (Theorem 23.5) is now available.
+
+### Deleted, and why
+
+The weak-topology machinery (`WeakBilin` transport in `Duality/Pairing.lean`, the `_weak` corollaries
+in `Duality/Conjugate.lean`) has been removed, ~120 lines. It was the mechanism an earlier draft of
+D3 proposed for proving the duality theorems; carrying compatibility as hypotheses proves them in
+whatever topology `E` already has, so the transport was never used by anything. `Duality/Compatible.lean`
+is deferred along with it.
 
 ## 8. Conventions
 

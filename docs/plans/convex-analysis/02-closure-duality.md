@@ -136,12 +136,10 @@ Contents:
   ```
   with constructors for the inner-product and finite-dimensional cases.
 - **Product pairings** for D8: `prodPairing Bu Bx`, `negFst`, and `conj_prodPairing`.
-- The `WeakBilin` transport simp set — `WeakBilin B` is a type synonym and `simp`/`rw` do not fire
-  through it; pair literals in `WeakBilin B × ℝ` need manual ascription.
-- **Compatible topologies** — this is a *file* (`Duality/Compatible.lean`), not a lemma: Mathlib has
-  no Mackey–Arens and nothing about which topologies induce a given dual. A topology `τ` on `E` is
-  compatible with `B` if the `τ`-continuous linear functionals are exactly `{B · y | y : F}`. Key
-  theorem:
+- **Compatible topologies — deferred.** The two halves of compatibility are carried as hypotheses on
+  the theorems that need them (see D3), so nothing here is on the critical path. The statement below
+  — that `cl C` does not depend on which compatible topology is chosen — remains worth having, but
+  only once something needs it:
 
   ```lean
   /-- For a convex set, the closure is the same in any topology compatible with the pairing. -/
@@ -155,14 +153,12 @@ Contents:
   Proof: both closures equal the intersection of the closed half-spaces containing `s`
   (Theorem 11.5 in each topology), and those half-spaces are the same set by compatibility.
 
-  This is what makes D3 sound: `f** = cl f` is proved in the weak topology `σ(E,F)` (where it is
-  easy, because `WeakBilin B` is a `LocallyConvexSpace` in Mathlib) and then transported to the
-  norm topology, which is what applications want.
+  This is *not* how `f** = cl f` is proved — see D3. It is an independent statement, deferred.
 
 - The canonical instances:
   - `E` a real normed space, `F := StrongDual ℝ E`, `B := topDualPairing ℝ E`;
   - `E` a real inner-product space, `F := E`, `B := innerₗ` (this is Rockafellar's `ℝⁿ`);
-  - a general `B` with `WeakBilin B` as the carrier.
+  - a general `B`, with compatibility carried as hypotheses rather than by a change of topology.
 
 ## 2.4 `Tdaf/Analysis/Convex/Duality/Conjugate.lean` — §12
 
@@ -195,14 +191,16 @@ noncomputable abbrev biconj (B) (f : E → EReal) : E → EReal := conj B.flip (
    so `biconj B f = ⊥` identically, which is `clFn f` by definition. If `f = ⊤` identically then
    `conj B f = ⊥` and `biconj B f = ⊤`.
 2. Proper case. `biconj B f ≤ clFn f` is immediate from Fenchel's inequality.
-   For `≥`: work in the locally convex space `WeakBilin B`. Suppose `biconj B f x₀ < c < clFn f x₀`.
+   For `≥`: work in `E` with its own topology. Suppose `biconj B f x₀ < c < clFn f x₀`.
    Then `(x₀, c) ∉ closure (epi f)`, a closed convex set; separate by
-   `geometric_hahn_banach_closed_point` in `WeakBilin B × ℝ`, whose continuous dual is
-   `F × ℝ`. Two cases: the separating functional is non-vertical (gives directly an affine minorant
+   `geometric_hahn_banach_closed_point` in `E × ℝ`, then split the functional with
+   `exists_unique_dual_prod` and recognise the horizontal part via `hBs`. Two cases: the separating functional is non-vertical (gives directly an affine minorant
    of `f` above `c` at `x₀`, contradicting `biconj B f x₀ < c`), or vertical (then add a large
    multiple of it to a known affine minorant — which exists by §2.1's affine-minorant lemma — to get
    a non-vertical one; this is exactly the last paragraph of Rockafellar's proof of Theorem 12.1).
-3. Transport from `WeakBilin B` to any compatible topology by §2.3.
+3. No transport step: the compatibility hypotheses already cover every admissible topology, and
+   there are **three** cases in step 2, not two — the vertical coefficient may be negative, zero or
+   positive, and ruling out positive needs upward closedness of the epigraph.
 
 Step 2 is where the affine-minorant lemma from §2.1 is consumed, which is why the two files must be
 developed together.

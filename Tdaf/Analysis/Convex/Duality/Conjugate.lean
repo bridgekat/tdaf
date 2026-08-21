@@ -35,30 +35,27 @@ every duality result in Parts III, V, VI, VII and VIII of the book reduces to Fe
   function is the pointwise supremum of the affine functions below it.
 * `Tdaf.biconj_eq_clFn` — **Theorem 12.2**, Fenchel–Moreau: `f** = cl f` for convex `f`.
 * `Tdaf.proper_conj_iff` — **Theorem 12.2**, properness half.
-* `Tdaf.biconj_eq_clFn_weak`, `Tdaf.biconj_eq_clFn_topDual`, `Tdaf.biconj_eq_clFn_inner` —
-  Fenchel–Moreau with every hypothesis discharged, for the three canonical pairings: `WeakBilin B`,
-  a locally convex space against `topDualPairing`, and a real Hilbert space against its own inner
-  product.
+* `Tdaf.biconj_eq_clFn_topDual`, `Tdaf.biconj_eq_clFn_inner` — Fenchel–Moreau with every
+  hypothesis discharged: a locally convex space paired with its own continuous dual, and a real
+  Hilbert space paired with itself by the inner product. These are the settings applications use,
+  and both are in the space's *own* topology.
 * `Tdaf.gc_conj_conj`, `Tdaf.conjClosure` — conjugacy as an antitone Galois connection and the
   closure operator it induces, mirroring `Tdaf.gc_ofEpi_epi` and `Tdaf.epiClosure`.
 
 ## Design notes
 
-**The topology is a hypothesis, not a type synonym.** Fenchel–Moreau needs `E` to carry a topology
-that is *compatible* with the pairing, meaning that the continuous linear functionals on `E` are
-exactly the `⟨·, y⟩`. Rather than fix the weak topology `σ(E, F)` — that is, work in the type
-synonym `WeakBilin B` — the theorems below carry the two halves of compatibility as explicit
-hypotheses,
+**Whatever topology `E` already has.** Fenchel–Moreau does not care which topology `E` carries, so
+long as its continuous dual is the `F` side of the pairing. The theorems below say exactly that, as
+two explicit hypotheses:
 
-* `hBc : ∀ y, Continuous fun x => B x y` — the topology is at least as fine as `σ(E, F)`;
-* `hBs : ∀ g : E →L[ℝ] ℝ, ∃ y, ∀ x, g x = B x y` — and no finer, as far as functionals go.
+* `hBc : ∀ y, Continuous fun x => B x y` — every `⟨·, y⟩` is continuous;
+* `hBs : ∀ g : E →L[ℝ] ℝ, ∃ y, ∀ x, g x = B x y` — and every continuous functional is one.
 
-This costs nothing (in `WeakBilin B` both are Mathlib theorems, recorded as
-`Tdaf.continuous_weakPairing` and `Tdaf.exists_weakPairing_eq`, and the `WeakBilin` corollaries at
-the end of this file are one-liners) and it means that a normed space with its norm topology, a
-Hilbert space, and `ℝⁿ` are all covered directly, without any transport. It is *not* a substitute
-for `Duality/Compatible.lean`, whose job is the different and harder statement that the *closure*
-of a convex set does not depend on which compatible topology is chosen.
+The canonical instance is a locally convex space paired with its **own** continuous dual, where both
+hypotheses are trivial (`y.continuous`, and `⟨g, fun _ => rfl⟩`), so a Banach space in its norm
+topology, a Hilbert space, and `ℝⁿ` are all covered directly. No weak topology and no type synonym
+appear anywhere in this file: the general pairing buys the freedom to let `E` and `F` be different
+spaces — which §30 and §33 need — and nothing else.
 
 **Fenchel's inequality is not hypothesis-free.** `⟨x, y⟩ ≤ f x + f* y` is *false* in `EReal` when
 `f ≡ +∞`: then `f* ≡ -∞` and the right-hand side is `⊤ + ⊥ = ⊥`. It is false again when `f` takes
@@ -575,41 +572,6 @@ noncomputable def conjEquiv (hBc : ∀ y : F, Continuous fun x : E => B x y)
 
 end Involution
 
-/-! ### Canonical instantiations
-
-Three pairings: the weak topology `σ(E, F)` of an arbitrary pairing, a locally convex space paired
-with its own topological dual, and a real Hilbert space paired with itself — Rockafellar's `Rⁿ`. In
-each case both compatibility hypotheses are discharged outright, so Fenchel–Moreau holds with no
-side condition beyond convexity. -/
-
-section Weak
-
-variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
-
-/-- The conjugate is insensitive to the transport into `WeakBilin B`. -/
-@[simp] theorem conj_toWeakFn (f : E → EReal) : conj (weakPairing B) (toWeakFn B f) = conj B f :=
-  rfl
-
-/-- **Fenchel–Moreau in the weak topology `σ(E, F)`.** -/
-theorem biconj_eq_clFn_weak {f : WeakBilin B → EReal} (hf : ConvexFn f) :
-    biconj (weakPairing B) f = clFn f :=
-  biconj_eq_clFn (continuous_weakPairing B) (exists_weakPairing_eq B) hf
-
-/-- **Theorem 12.1 in the weak topology `σ(E, F)`.** -/
-theorem eq_biSup_affineFn_weak {f : WeakBilin B → EReal} (hf : ConvexFn f) (hc : ClosedFn f) :
-    f = fun x => ⨆ p ∈ {p : F × ℝ | affineFn (weakPairing B) p.1 p.2 ≤ f},
-      affineFn (weakPairing B) p.1 p.2 x :=
-  eq_biSup_affineFn (exists_weakPairing_eq B) hf hc
-
-/-- **Corollary 12.2.1 in the weak topologies `σ(E, F)` and `σ(F, E)`.** -/
-noncomputable def conjEquivWeak :
-    {f : WeakBilin B → EReal // ConvexFn f ∧ ClosedFn f ∧ Proper f} ≃
-      {g : WeakBilin B.flip → EReal // ConvexFn g ∧ ClosedFn g ∧ Proper g} :=
-  conjEquiv (weakPairing B) (continuous_weakPairing B) (exists_weakPairing_eq B)
-    (continuous_weakPairing B.flip) (exists_weakPairing_eq B.flip)
-
-end Weak
 
 section TopDual
 
