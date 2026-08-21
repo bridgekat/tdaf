@@ -38,14 +38,12 @@ theorem le_iff_epi_subset {f g : E → EReal} : f ≤ g ↔ epi g ⊆ epi f
 def dom (f : E → EReal) : Set E := {x | f x < ⊤}
 @[simp] theorem mem_dom {f : E → EReal} {x : E} : x ∈ dom f ↔ f x < ⊤
 
-/-- Bundled: `f` never takes the value `⊥`. Use this, not `∀ x, f x ≠ ⊥`. -/
-structure NeBotFn (f : E → EReal) : Prop where
-  ne_bot : ∀ x, f x ≠ ⊥
-theorem NeBotFn.bot_lt {f} (hf : NeBotFn f) (x : E) : ⊥ < f x
-theorem NeBotFn.mono {f g} (hf : NeBotFn f) (h : f ≤ g) : NeBotFn g
-
-structure Proper (f : E → EReal) : Prop extends NeBotFn f where
+structure Proper (f : E → EReal) : Prop where
   dom_nonempty : (dom f).Nonempty
+  ne_bot : ∀ x, f x ≠ ⊥
+
+/-- `dom` is Rockafellar's projection of the epigraph — with no hypothesis on `f`. -/
+theorem dom_eq_fst_image_epi (f : E → EReal) : dom f = Prod.fst '' epi f
 
 noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x => ⨅ _ : x ∈ s, f x
 @[simp] theorem restrict_of_mem    {…} (hx : x ∈ s) : restrict s f x = f x
@@ -77,7 +75,7 @@ theorem convexFn_iff_forall_lt (f : E → EReal) :        -- Rockafellar Theorem
       ∀ α β : ℝ, f x < (α : EReal) → f y < (β : EReal) →
         f (a • x + b • y) < ((a * α + b * β : ℝ) : EReal)
 
-theorem convexFn_iff_le {f : E → EReal} (hf : NeBotFn f) :      -- Rockafellar Theorem 4.1
+theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :  -- Rockafellar Theorem 4.1
     ConvexFn f ↔ ∀ (x y : E) (a b : ℝ), 0 < a → 0 < b → a + b = 1 →
       f (a • x + b • y) ≤ (a : EReal) * f x + (b : EReal) * f y
 
@@ -97,11 +95,11 @@ theorem convexOn_iff_convexFn (s : Set E) (g : E → ℝ) :
 noncomputable def indicatorFn (s : Set E) : E → EReal := restrict s (fun _ => 0)
 @[simp] theorem indicatorFn_of_mem    (hx : x ∈ s) : indicatorFn s x = 0
 @[simp] theorem indicatorFn_of_notMem (hx : x ∉ s) : indicatorFn s x = ⊤
-theorem neBotFn_indicatorFn (s : Set E) : NeBotFn (indicatorFn s)
+theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥
 @[simp] theorem dom_indicatorFn (s : Set E) : dom (indicatorFn s) = s
 theorem epi_indicatorFn (s : Set E) : epi (indicatorFn s) = s ×ˢ Set.Ici (0 : ℝ)
 @[simp] theorem convexFn_indicatorFn {s : Set E} : ConvexFn (indicatorFn s) ↔ Convex ℝ s
-theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : NeBotFn f) :
+theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     restrict s f = f + indicatorFn s
 ```
 
@@ -113,10 +111,10 @@ From the repository `README.md` ("Reviewing a formalization"):
 
 * **Minimize duplication.** Before writing a lemma, check whether Mathlib or this project already
   has it.
-* **Prefer bundled, named interfaces over loose individual assumptions.** Write a `structure`
-  carrying the hypothesis and use its projections, rather than repeating `∀ x, f x ≠ ⊥` at every
-  call site. `NeBotFn`, `Proper`, `ConvexFn` and the planned `IsExactSum` / `IsExactImage` all
-  follow this pattern; new hypotheses that recur should too.
+* **Bundle *concepts*, not individual assumptions.** `Proper`, `ConvexFn`, `IsExactSum` are named
+  mathematical concepts and are structures. A single side condition such as `∀ x, f x ≠ ⊥` is not a
+  concept — repeat it inline rather than inventing a name for it. (An earlier `NeBotFn` wrapper was
+  removed for exactly this reason.)
 * Code should be idiomatic and pleasant to read, not merely correct.
 
 ---
@@ -188,7 +186,27 @@ From the repository `README.md` ("Reviewing a formalization"):
 
 ---
 
-## 3. Build and verification
+## 3. Review findings
+
+The plan was reviewed adversarially at commit `1b0cc08`; see [`REVIEW-01.md`](REVIEW-01.md). Read it
+before starting a module. The findings that bite hardest in day-to-day work:
+
+* `open Pointwise` is needed by every file using `epi f + epi g`, `a • epi f` or set negation, and
+  its absence shows up as an instance-synthesis failure rather than a clear error.
+* `EReal` negation does **not** distribute over addition (`-(⊥ + ⊤) = ⊤` but `(-⊥) + (-⊤) = ⊥`).
+  Mathlib's `EReal.neg_add` carries two hypotheses. Every concave/convex sign transfer needs them.
+* `EReal.sub_le_iff_le_add`, `le_sub_iff_add_le`, `sub_le_of_le_add` already exist in Mathlib with
+  *weaker* disjunctive hypotheses. Do not redefine them — inside `namespace Tdaf` ours would shadow
+  Mathlib's.
+* `add_iSup` / `iSup_add` / `iSup_sub` for `EReal` do **not** exist anywhere in Mathlib and must be
+  written; they carry every conjugacy proof.
+* `WeakBilin B` is a type synonym: `simp`/`rw` do not fire through it, and pair literals in
+  `WeakBilin B × ℝ` need manual ascription.
+* Mathlib already has `egauge` (`Analysis/Convex/EGauge.lean`) and a minimax theorem
+  (`Topology/Sion.lean`). It does **not** have `cone : Set E → Set E` (use `PointedCone.span`),
+  `IsCompact.convexHull`, or any adjoint for a linear map between arbitrary paired spaces.
+
+## 4. Build and verification
 
 From the repository (or worktree) root:
 

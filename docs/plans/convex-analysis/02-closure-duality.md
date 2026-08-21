@@ -20,10 +20,16 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
 /-- The lower semicontinuous hull: the function whose epigraph is `closure (epi f)`. -/
 noncomputable def lscHull (f : E → EReal) : E → EReal := ofEpi (closure (epi f))
 
-/-- Rockafellar's closure of a convex function: the lsc hull, except that a convex function
-taking the value `-∞` anywhere is closed to the constant `-∞`. -/
+/-- The closure of a convex function: the lsc hull, except that if the lsc hull takes `-∞` anywhere
+then the closure is the constant `-∞`.
+
+Rockafellar branches on whether `f` itself takes `-∞`. That is equivalent for convex `f` in `ℝⁿ`
+(by Theorems 7.2/7.4) but **not** in general: a discontinuous linear functional is proper with
+`lscHull` identically `-∞`, and branching on `f` would falsify Fenchel–Moreau. Branching on the hull
+is the standard Γ-regularization and makes `f** = clFn f` unconditional. -/
+open Classical in
 noncomputable def clFn (f : E → EReal) : E → EReal :=
-  if ∃ x, f x = ⊥ then (fun _ => ⊥) else lscHull f
+  if ∃ x, lscHull f x = ⊥ then (fun _ => ⊥) else lscHull f
 
 def ClosedFn (f : E → EReal) : Prop := clFn f = f
 ```
@@ -31,32 +37,52 @@ def ClosedFn (f : E → EReal) : Prop := clFn f = f
 The `-∞` exception looks arbitrary but is exactly what makes `f** = cl f` hold for improper `f`, and
 Part VII depends on that. Rockafellar says so where he defines it; the docstring should too.
 
+`open Classical in` is required: there is no `Decidable (∃ x, lscHull f x = ⊥)` instance, and the
+`⨅ _ : p, f` trick used for `restrict` does not apply here because the default branch is a function.
+
+The surface then owes a proof that for convex `f` on `ℝⁿ` this agrees with the book's definition.
+
 | Lean name | book |
 |---|---|
-| `lowerSemicontinuous_iff_isClosed_epi` (wraps Mathlib) | **Thm 7.1** |
+| `lowerSemicontinuous_iff_isClosed_epi` (**not** a wrap: Mathlib's version puts the epigraph in `E × EReal`, ours in `E × ℝ`; ~10 lines) | **Thm 7.1** |
 | `ConvexFn.eq_bot_of_mem_relint_dom` | Thm 7.2 *(finite-dim; see note)* |
 | `lscHull_eq_liminf` : `lscHull f x = liminf f (𝓝[≠] x)` | §7 |
 | `clFn_le`, `clFn_mono`, `clFn_idem`, `sInf_clFn_eq_sInf` | §7 |
-| `ClosedFn.proper_of_proper` : `Proper f → Proper (clFn f)` | **Thm 7.4** |
+| `exists_affine_le_of_closed_proper`, `eq_bot_of_lsc_of_eq_bot` | — (replace Thm 7.2/7.4 at layer C) |
+| `ClosedFn.proper_of_proper` : `Proper f → Proper (clFn f)` | **Thm 7.4** *(finite-dim)* |
 | `clFn_eq_of_mem_relint_dom` | Thm 7.4 *(finite-dim)* |
 | `clFn_eq_limit_along_segment` | **Thm 7.5**, Cor 7.5.1 |
 | `relint_lt_level`, `closure_level_eq` | Thm 7.6 |
 
-**Generalisation note (important).** Rockafellar proves Theorem 7.4 (`cl f` is proper when `f` is)
-using relative interiors. In a locally convex space there is a shorter and more general route:
+**Correction (review finding B1).** An earlier draft claimed Theorem 7.4 (`cl f` proper when `f` is)
+generalises to layer C via "a proper convex function has an affine minorant". **That is false**: a
+discontinuous linear functional `g` has dense kernel, so `closure (epi g) = univ` and
+`lscHull g ≡ ⊥`, while `g` is convex, finite everywhere and proper. The sketch assumed
+`(x₀, f x₀ − 1) ∉ closure (epi f)`, which is exactly what fails.
 
-> a proper convex function has an affine minorant.
+What is true, and what this file should prove:
 
-Proof: `(x₀, f x₀ − 1) ∉ closure (epi f)`, which is a nonempty closed convex set, so
-`geometric_hahn_banach_closed_point` gives a continuous linear functional separating them; the
-separating functional cannot be vertical because the point lies strictly below a point of the
-epigraph over the same `x₀`. Hence `cl f` is bounded below by an affine function, so never `−∞`,
-so proper.
+```lean
+/-- A closed proper convex function has a continuous affine minorant. -/
+theorem exists_affine_le_of_closed_proper (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f) :
+    ∃ (y : F) (c : ℝ), ∀ x, ((B x y : ℝ) : EReal) - c ≤ f x
 
-Therefore `ClosedFn.proper_of_proper` belongs in **layer C** and is stated for any locally convex
-`E`, with §7's `ri`-flavoured refinements (Theorem 7.2, and "`cl f` agrees with `f` on
-`ri (dom f)`") deferred to `RelativeInterior.lean` as finite-dimensional strengthenings. This
-inverts the book's dependency and is the single most useful restructuring in the whole plan.
+/-- Dichotomy: an lsc convex function taking `⊥` anywhere is `≡ ⊥`.
+Replaces Theorem 7.2 outside finite dimensions; true in any TVS. -/
+theorem eq_bot_of_lsc_of_eq_bot (hf : ConvexFn f) (hl : LowerSemicontinuous f)
+    (h : ∃ x₀, f x₀ = ⊥) : f = fun _ => ⊥
+```
+
+For the first, the argument the earlier draft gave *is* correct once `f` is closed: `epi f` is a
+nonempty closed convex set, `(x₀, f x₀ − 1) ∉ epi f`, and the separating functional cannot be
+vertical because a functional `(y,0)` takes the same value at `(x₀, f x₀ − 1)` and `(x₀, f x₀)`,
+while `x₀ ∈ dom f`. For the second, convexity gives `≡ ⊥` on `[x₀, x₁)` and lower semicontinuity at
+`x₁` finishes.
+
+`ClosedFn.proper_of_proper` in its unconditional form is therefore **layer D**, alongside §7's other
+`ri`-flavoured refinements (Theorem 7.2, "`cl f` agrees with `f` on `ri (dom f)`"), all deferred to
+`RelativeInterior.lean`. D4's *ordering* conclusion is unaffected: conjugacy still needs only
+separation.
 
 ## 2.2 `Tdaf/Analysis/Convex/Separation.lean` — §11
 
@@ -97,8 +123,20 @@ Contents:
 - `Pairing.IsSeparating B` — abbreviation for `B.SeparatingLeft ∧ B.SeparatingRight`
   (Mathlib has `LinearMap.SeparatingLeft`/`SeparatingRight`).
 - The affine functions of the pairing: `affineFn B y c : E → EReal := fun x => (B x y : EReal) - c`.
-- **Compatible topologies.** A topology `τ` on `E` is compatible with `B` if the `τ`-continuous
-  linear functionals are exactly `{B · y | y : F}`. Key theorem:
+- **Adjoint pairs.** `Aᵀ` does not exist for a bare `A : E →ₗ[ℝ] G` between paired spaces; it is
+  extra data. Following Mathlib's `LinearMap.IsAdjointPair`:
+  ```lean
+  def IsAdjointPair (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ)
+      (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) : Prop := ∀ x z, B' (A x) z = B x (A' z)
+  ```
+  with constructors for the inner-product and finite-dimensional cases.
+- **Product pairings** for D8: `prodPairing Bu Bx`, `negFst`, and `conj_prodPairing`.
+- The `WeakBilin` transport simp set — `WeakBilin B` is a type synonym and `simp`/`rw` do not fire
+  through it; pair literals in `WeakBilin B × ℝ` need manual ascription.
+- **Compatible topologies** — this is a *file* (`Duality/Compatible.lean`), not a lemma: Mathlib has
+  no Mackey–Arens and nothing about which topologies induce a given dual. A topology `τ` on `E` is
+  compatible with `B` if the `τ`-continuous linear functionals are exactly `{B · y | y : F}`. Key
+  theorem:
 
   ```lean
   /-- For a convex set, the closure is the same in any topology compatible with the pairing. -/
@@ -204,8 +242,12 @@ def polarCone (B) (K : Set E) : Set F := {y | ∀ x ∈ K, B x y ≤ 0}
 /-- Polar of a convex set containing the origin: `C° = {y | ∀ x ∈ C, ⟨x,y⟩ ≤ 1}`. -/
 def polarSet (B) (C : Set E) : Set F := {y | ∀ x ∈ C, B x y ≤ 1}
 
-/-- Gauge, `EReal`-valued (Mathlib's `gauge` is the `ℝ`-valued restriction to absorbing sets). -/
-noncomputable def egauge (C : Set E) : E → EReal := fun x => ⨅ a ∈ {a : ℝ | 0 ≤ a ∧ x ∈ a • C}, (a : EReal)
+/-- Gauge, `EReal`-valued. Named `gaugeFn` because **Mathlib already has an `egauge`**
+(`Mathlib/Analysis/Convex/EGauge.lean`, `ℝ≥0∞`-valued); consider reusing that instead, since
+Rockafellar's gauge is nonnegative and `ℝ≥0∞` loses nothing. Mathlib's `gauge` is the `ℝ`-valued
+restriction to absorbing sets and returns `0`, not `⊤`, off them. -/
+noncomputable def gaugeFn (C : Set E) : E → EReal :=
+  fun x => ⨅ a ∈ {a : ℝ | 0 ≤ a ∧ x ∈ a • C}, (a : EReal)
 ```
 
 | Lean name | book |
@@ -214,7 +256,7 @@ noncomputable def egauge (C : Set E) : E → EReal := fun x => ⨅ a ∈ {a : �
 | `polarCone_cone_dom_eq_recession_conj` | Thm 14.2, Cor 14.2.1–2 |
 | `polarCone_of_level_sets` | Thm 14.3 |
 | `polar_of_epi_cone` (the `ℝ × E × ℝ` construction) | **Thm 14.4** |
-| `polarSet_polarSet`, `egauge_eq_supportFn_polar` | **Thm 14.5**, Cor 14.5.1 |
+| `polarSet_polarSet`, `gaugeFn_eq_supportFn_polar` | **Thm 14.5**, Cor 14.5.1 |
 | `recession_polar_duality` | Thm 14.6, Cor 14.6.1 |
 | `conj_nonneg_vanishing` | Thm 14.7 |
 | `polarGauge`, `polarGauge_polarGauge` | **Thm 15.1**, Cor 15.1.1–2 |
@@ -226,7 +268,7 @@ Bridge lemmas to Mathlib:
 
 ```lean
 theorem polarSet_eq_polar_of_balanced (h : Balanced ℝ C) : polarSet B C = B.polar C
-theorem egauge_eq_gauge (h : Absorbent ℝ C) (x) : egauge C x = (gauge C x : EReal)
+theorem gaugeFn_eq_gauge (h : Absorbent ℝ C) (x) : gaugeFn C x = (gauge C x : EReal)
 ```
 
 Rockafellar's own remark in §14 — that the general polarity of sets "is not mentioned subsequently"

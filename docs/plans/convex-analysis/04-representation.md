@@ -24,8 +24,9 @@ in `{0,1}`, and `conv S` is the level-1 slice of `cone S`.
 | `IsCompact.isClosed_convexHull` : `cl (conv S) = conv (cl S)` for bounded `S` | **Thm 17.2**, Cor 17.2.1 |
 | `convFn_of_compact_epi` | Thm 17.3 |
 
-Theorem 17.2 for *compact* `S` is `IsCompact.convexHull` in Mathlib
-(`Analysis/Convex/Topology.lean`); only the bounded-not-closed case is new.
+`IsCompact.convexHull` does **not** exist in Mathlib — the nearest is
+`Set.Finite.isCompact_convexHull` (`Analysis/Convex/Topology.lean:348`), for *finite* sets. So the
+compact case of Theorem 17.2 is genuinely new work, not a specialisation.
 
 ## 4.2 `Face.lean` — §18
 
@@ -54,19 +55,35 @@ cone, so again the `ℝ × E` cone picture), Straszewicz's theorem, Theorem 18.8
 **Theorem 19.1 (Minkowski–Weyl) is the gate for all of §19–§22 and is not in Mathlib.**
 
 ```lean
-/-- A polyhedral convex set: a finite intersection of closed half-spaces. -/
-def Polyhedral (C : Set E) : Prop := ∃ (s : Finset (E →ₗ[ℝ] ℝ × ℝ)), C = ⋂ p ∈ s, {x | p.1 x ≤ p.2}
+/-- A polyhedral convex set: a finite intersection of closed half-spaces.
+Note the parenthesisation: `→ₗ[ℝ]` binds looser than `×`, so `Finset (E →ₗ[ℝ] ℝ × ℝ)` would be
+`Finset (E →ₗ[ℝ] (ℝ × ℝ))` and `p.2` would elaborate to the `map_smul'` field. -/
+def Polyhedral (C : Set E) : Prop :=
+  ∃ s : Finset ((E →ₗ[ℝ] ℝ) × ℝ), C = ⋂ p ∈ s, {x | p.1 x ≤ p.2}
 
-/-- A finitely generated convex set: `conv S` for a finite set of points and directions. -/
-def FinitelyGenerated (C : Set E) : Prop := ∃ (P D : Finset E), C = convexHull ℝ P + cone D
+/-- A finitely generated convex set: `conv S` for a finite set of points and directions.
+Mathlib has no `cone : Set E → Set E`; `ConvexCone.hull` is the *wrong* object here because it need
+not contain `0`, whereas Rockafellar's `cone D` must. Use `PointedCone.span`. -/
+def FinitelyGenerated (C : Set E) : Prop :=
+  ∃ P D : Finset E, C = convexHull ℝ ↑P + (PointedCone.span ℝ ↑D : Set E)
 
 theorem polyhedral_iff_finitelyGenerated : Polyhedral C ↔ FinitelyGenerated C   -- **Thm 19.1**
 ```
 
-Proof route: prove it first for **cones** (`K = {x | ⟨x,aᵢ⟩ ≤ 0}` ⟺ `K = cone {b₁,…,b_k}`) by double
-polarity — `K°` finitely generated ⟺ `K` polyhedral — with induction on the number of generators
-(Fourier–Motzkin), then homogenise to get the general case via [D6](00-overview.md#d6). Both
-directions need the polar-cone theory of `Duality/Polar.lean` (Theorem 14.1).
+Proof route — and note the earlier draft conflated two different proofs. Do it for **cones** first.
+"Polyhedral ⇒ finitely generated" is Fourier–Motzkin elimination, a projection argument with nothing
+to do with polarity. "Finitely generated ⇒ polyhedral" goes by double polarity, but `K = K°°` holds
+only for **closed** cones, so it needs a prior theorem the plan originally omitted and which is the
+real content:
+
+```lean
+theorem isClosed_pointedCone_span (D : Finset E) : IsClosed (PointedCone.span ℝ ↑D : Set E)
+```
+
+(Carathéodory-for-cones plus a compactness argument.) Homogenising to the non-cone case needs
+`C ≠ ∅` — for `C = ∅` the cone `{(λ,x) | λ ≥ 0, aᵢ x ≤ λ bᵢ}` is not the cone over `C` — and needs
+`0⁺C = {x | aᵢ x ≤ 0}` to identify the `λ = 0` slice. Both directions need the polar-cone theory of
+`Duality/Polar.lean` (Theorem 14.1).
 
 | Lean name | book |
 |---|---|

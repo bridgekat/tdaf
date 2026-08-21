@@ -13,7 +13,11 @@ absolute gap in Mathlib, so §23 is high priority — higher than Part IV.
 ## 5.1 `Subgradient/Defs.lean` — §23.1–§23.7
 
 ```lean
-/-- One-sided directional derivative. `EReal`-valued; exists for all convex `f` by Thm 23.1. -/
+/-- One-sided directional derivative, meaningful when `f x` is finite.
+
+Theorem 23.1's hypothesis ("`x` a point where `f` is finite") must be kept: `EReal` has `⊤ - ⊤ = ⊥`,
+so off `dom f` this expression is `⊥` in every direction and the advertised `f'(x;0) = 0` fails.
+Needs `import Mathlib.Data.EReal.Inv` for the division. -/
 noncomputable def dirDeriv (f : E → EReal) (x y : E) : EReal :=
   ⨅ a ∈ Set.Ioi (0:ℝ), (f (x + a • y) - f x) / (a : EReal)
 
@@ -27,7 +31,7 @@ def normalCone (B) (C : Set E) (x : E) : Set F := {y | ∀ z ∈ C, B (z - x) y 
 
 | Lean name | statement | book |
 |---|---|---|
-| `dirDeriv_eq_iInf`, `monotone_diffQuotient` | difference quotient is nondecreasing in `a`; `f'(x;0)=0`; `-f'(x;-y) ≤ f'(x;y)` | **Thm 23.1** |
+| `dirDeriv_eq_iInf`, `monotone_diffQuotient` (all with `f x ≠ ⊤`, `f x ≠ ⊥`) | difference quotient is nondecreasing in `a`; `f'(x;0)=0`; `-f'(x;-y) ≤ f'(x;y)` | **Thm 23.1** |
 | `posHomogeneous_dirDeriv`, `convexFn_dirDeriv` | `f'(x;·)` is a positively homogeneous convex function | **Thm 23.1** |
 | `mem_subgradient_iff_le_dirDeriv` | `y ∈ ∂f x ↔ ∀ v, ⟨v,y⟩ ≤ f'(x;v)`; and `cl (f'(x;·)) = δ*(·|∂f x)` | **Thm 23.2** |
 | `proper_of_subgradient_nonempty` | subdifferentiable ⟹ proper | **Thm 23.3** |
@@ -50,7 +54,8 @@ all — and Theorem 23.5 is layer C. Only Theorem 23.4 (nonemptiness) needs fini
 ```lean
 theorem subgradient_add_subset : ∂f₁ x + ∂f₂ x ⊆ ∂(f₁+f₂) x                       -- always
 theorem subgradient_add (h : IsExactSum B f₁ f₂) : ∂(f₁+f₂) x = ∂f₁ x + ∂f₂ x     -- **Thm 23.8**
-theorem subgradient_compLin (h : IsExactImage B A g) : ∂(g ∘ A) x = Aᵀ '' ∂g (A x) -- **Thm 23.9**
+theorem subgradient_compLin (h : IsExactImage B B' A A' hA g) :
+    ∂(g ∘ A) x = A' '' ∂g (A x)                                                    -- **Thm 23.9**
 theorem PolyhedralFn.subgradient_nonempty …                                        -- **Thm 23.10**
 ```
 

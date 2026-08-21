@@ -36,14 +36,27 @@ namespace Rockafellar
 variable {n : ℕ}
 abbrev Rn (n : ℕ) := EuclideanSpace ℝ (Fin n)
 
-/-- Rockafellar's pairing: the standard inner product on `ℝⁿ`, as a bilinear map. -/
-noncomputable def pairing (n : ℕ) : Rn n →ₗ[ℝ] Rn n →ₗ[ℝ] ℝ := innerₗ ℝ
+/-- Rockafellar's pairing: the standard inner product on `ℝⁿ`, as a bilinear map.
+Note `innerₗ` takes the *space*, not the field: `innerₗ ℝ` elaborates to `ℝ →ₗ[ℝ] ℝ →ₗ[ℝ] ℝ`. -/
+noncomputable def pairing (n : ℕ) : Rn n →ₗ[ℝ] Rn n →ₗ[ℝ] ℝ := innerₗ (Rn n)
 ```
 
 Everything is then `Tdaf.conj (pairing n)`, `Tdaf.subgradient (pairing n)`, etc. Because `Rn n` is a
 finite-dimensional real inner-product space, all four layers of
 [D9](00-overview.md#d9-generality-boundaries) are available simultaneously, which is exactly why the
 book can state everything without qualification.
+
+The surface also owns two *bridging obligations* that the backbone's generality creates:
+
+1. **`clFn` agrees with the book.** The backbone defines `clFn` by branching on whether `lscHull f`
+   takes `⊥` (necessary in infinite dimensions — see [D4](00-overview.md#d4)); Rockafellar branches
+   on whether `f` does. Prove they coincide for convex `f` on `ℝⁿ`, via Theorems 7.2 and 7.4.
+2. **`(-∞, +∞]`-valued functions.** Rockafellar repeatedly writes "a function from `C` to
+   `(-∞,+∞]`" (Theorems 4.1, 4.3, 4.7, 5.1). Supply
+   `{f : E → EReal // ∀ x, f x ≠ ⊥} ≃ (E → WithTop ℝ)` so those statements can be given in the
+   book's own terms. This is the *only* place `WithTop ℝ` should appear: it is not a complete
+   lattice (no `OrderBot`, since `ℝ` has no least element), so it cannot carry the `⨆`/`⨅` that
+   `conj`, `ofEpi` and `infConv` are defined by, and it is not closed under the operations.
 
 A design point worth stating: Rockafellar identifies `ℝⁿ` with its dual throughout, writing `x*` for
 a vector in the same space. The surface honours this by taking `F = E` and `B = ⟨·,·⟩`. The `*`
@@ -64,8 +77,10 @@ Most sections should be near-mechanical. These are not:
 - **§4–§5 examples.** The concrete conjugate pairs and convex functions (`eˣ`, `|x|ᵖ/p`,
   `−log`, `−(a²−x²)^{1/2}`, the geometric mean, log-sum-exp, the Tchebycheff norm). Genuine work,
   genuine value: they are the tests that the definitions compute. Mathlib supplies the analytic
-  facts (`Real.add_pow_le_pow_mul_pow_of_sq_le_sq`, `inner_mul_le_norm_mul_norm`,
-  `Real.inner_le_nnorm_mul_nnorm`, `Analysis/MeanInequalities.lean` for Young's inequality).
+  facts (`norm_inner_le_norm` for Cauchy–Schwarz, and `Analysis/MeanInequalities.lean` for Young's
+  inequality — note that three names cited in an earlier draft of this plan
+  (`Real.add_pow_le_pow_mul_pow_of_sq_le_sq`, `inner_mul_le_norm_mul_norm`,
+  `Real.inner_le_nnorm_mul_nnorm`) do not exist).
 - **§4 Theorems 4.4, 4.5** (second-derivative and Hessian criteria). Mathlib has the one-dimensional
   version in `Analysis/Convex/Deriv.lean`; the `ℝⁿ` version follows by restricting to lines, which
   needs a small lemma `convexOn_iff_convexOn_lines`.

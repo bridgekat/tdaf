@@ -51,6 +51,13 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
        ∀ u, infBifun F 0 ≤ infBifun F u + ((B u v : ℝ) : EReal)}
 ```
 
+**Check this against §29 before writing the file.** Review flagged that this may be Theorem 29.1's
+*conclusion* rather than Rockafellar's definition, which would make
+`kuhnTucker_iff_neg_mem_subgradient` an `Iff.rfl` — the definitional cheat that
+[`08-surface.md`](08-surface.md) §8.4 item 4 forbids. Rockafellar's own definition (§29) is that
+`inf_u {⟨u*,u⟩ + inf F u}` is finite and equal to the optimal value `inf F 0`; if so, `KuhnTucker`
+should be stated that way and the displayed inequality becomes the first half of Theorem 29.1.
+
 | Lean name | book |
 |---|---|
 | `convexFn_infBifun`, `dom_infBifun` | **Thm 29.1** |
@@ -84,8 +91,17 @@ theorem mem_kuhnTucker_iff_iInf_lagrangian :
 `lagrangian` is a partial concave conjugate; every Lagrangian fact is a partial-conjugate fact. This
 is what lets §28, §29, §36 and §37 share proofs instead of repeating them four times.
 
-**Ordinary convex programs (§28) go to the surface.** The backbone provides the bifunction attached
-to a system of convex inequalities and affine equations,
+**§28 splits.** The `(m+3)`-tuple packaging and the book's numbering go to the surface, but
+**Theorem 28.2 (existence of Kuhn–Tucker vectors under Slater's condition) stays in the backbone** —
+review finding C3. Slater for finitely many convex inequalities is not about coordinates
+(`Fin m → ℝ` with the product order generalises verbatim), it is the single most-used result in
+convex optimisation practice, and sending it to the surface would force applications to import a
+`Rockafellar`-namespaced, `EuclideanSpace`-specific file to get strong duality — a layering
+inversion. So `Optimization/Lagrangian.lean` carries "Slater ⇒ `KuhnTucker` nonempty and compact"
+(Corollary 29.1.4 plus §21's theorem of the alternative).
+
+The backbone provides the bifunction attached to a system of convex inequalities and affine
+equations,
 
 ```lean
 noncomputable def ineqBifun (f₀ : E → EReal) (f : Fin m → E → EReal) (r : ℕ) :
@@ -96,10 +112,8 @@ noncomputable def ineqBifun (f₀ : E → EReal) (f : Fin m → E → EReal) (r 
 ```
 
 and proves that its `KuhnTucker` set is exactly the set of Kuhn–Tucker coefficient vectors and that
-its Lagrangian is `f₀ + Σ λᵢ fᵢ` on `C`. Then §28's Theorems 28.1–28.4 and the Kuhn–Tucker theorem
-(Corollary 28.3.1) are surface-level specialisations. Theorem 28.2 (existence of Kuhn–Tucker vectors
-under Slater's condition) is the one with real content; it is Corollary 29.1.4 together with §21's
-theorem of the alternative.
+its Lagrangian is `f₀ + Σ λᵢ fᵢ` on `C`. Then §28's Theorems 28.1, 28.3, 28.4 and the Kuhn–Tucker
+theorem (Corollary 28.3.1) are surface-level specialisations of backbone results.
 
 ## 6.4 `Optimization/Adjoint.lean` — §30
 
@@ -114,7 +128,7 @@ noncomputable def adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X �
 | Lean name | book |
 |---|---|
 | `concaveBifun_adjointBifun`, `adjointBifun_adjointBifun_eq_cl` | **Thm 30.1** |
-| `adjointBifun_zero_eq_conj_infBifun` — the dual objective is the conjugate of the primal perturbation function | **Thm 30.2** |
+| `adjointBifun_zero_eq_concaveConj_neg_infBifun` — the dual objective is the **concave** conjugate of `−inf F` | **Thm 30.2** |
 | `dual_inconsistent_iff` | Cor 30.2.1 |
 | `weak_duality` : `sup F* 0 ≤ inf F 0` | **Cor 30.2.2** |
 | `Normal` (def) and `normal_iff` | **Thm 30.3** |
@@ -122,8 +136,13 @@ noncomputable def adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X �
 | `kuhnTucker_eq_optimalSolutions_dual` | **Thm 30.5**, Cor 30.5.1–2 |
 
 Theorem 30.1 (`F** = cl F`) is Fenchel–Moreau applied to the graph function with the sign-flipped
-pairing on `U × X`; it should be a two-line consequence, not a new proof. That is the whole point of
-[D8](00-overview.md#d8).
+pairing on `U × X` — i.e. `negFst (prodPairing Bu Bx)` from `Duality/Pairing.lean`; it should be a
+two-line consequence, not a new proof. That is the whole point of [D8](00-overview.md#d8).
+
+**Sign warning.** Theorem 30.2 is about the **concave** conjugate: the book (line 12487) says `F*0`
+is the conjugate of the *concave* function `−inf F`, and `g* ≠ −(−g)*`. `inf F` is convex; its
+convex conjugate is not `F*0`. Every §30 statement mixing the two must go through `concaveConj`,
+which `Concave.lean` must therefore define (D2).
 
 ## 6.5 `Optimization/Fenchel.lean` — §31
 
@@ -132,6 +151,10 @@ theorem fenchel_duality (hf : ConvexFn f) (hg : ConcaveFn g)
     (h : IsExactSum B f (fun x => -(g x))) :
     (⨅ x, f x - g x) = ⨆ y, concaveConj B g y - conj B f y
 ```
+
+`concaveConj` (`g*(y) = ⨅ x, ⟨x,y⟩ - g x`) is announced in D2 but must actually be defined, in
+`Concave.lean`; likewise `prox` for Theorem 31.5, which needs an inner-product space and a real
+existence-and-uniqueness proof.
 
 Rockafellar's hypotheses — (a) `ri (dom f) ∩ ri (dom g) ≠ ∅`, and (b) `f, g` closed with
 `ri (dom g*) ∩ ri (dom f*) ≠ ∅` — are the primal-side and dual-side instances of `IsExactSum`, with

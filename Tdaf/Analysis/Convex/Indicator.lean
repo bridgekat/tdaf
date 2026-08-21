@@ -15,7 +15,7 @@ which every statement about convex *sets* becomes an instance of a statement abo
 ## Main results
 
 * `Tdaf.convexFn_indicatorFn` — `δ(· | s)` is convex iff `s` is convex.
-* `Tdaf.neBotFn_indicatorFn` — indicator functions never take the value `⊥`.
+* `Tdaf.indicatorFn_ne_bot` — indicator functions never take the value `⊥`.
 * `Tdaf.dom_indicatorFn` — the effective domain of `δ(· | s)` is `s`.
 * `Tdaf.epi_indicatorFn` — the epigraph of `δ(· | s)` is the "half-cylinder" `s ×ˢ Ici 0`.
 
@@ -41,8 +41,8 @@ noncomputable def indicatorFn (s : Set E) : E → EReal := restrict s (fun _ => 
 @[simp] theorem indicatorFn_of_notMem {s : Set E} {x : E} (hx : x ∉ s) : indicatorFn s x = ⊤ :=
   restrict_of_notMem hx
 
-theorem neBotFn_indicatorFn (s : Set E) : NeBotFn (indicatorFn s) :=
-  ⟨fun x => by by_cases hx : x ∈ s <;> simp [hx]⟩
+theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥ := by
+  by_cases hx : x ∈ s <;> simp [hx]
 
 @[simp] theorem dom_indicatorFn (s : Set E) : dom (indicatorFn s) = s := by
   ext x; by_cases hx : x ∈ s <;> simp [hx]
@@ -71,13 +71,13 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 omit [AddCommGroup E] [Module ℝ E] in
 /-- Adding an indicator function restricts the effective domain (Rockafellar §5). -/
-theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : NeBotFn f) :
+theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     restrict s f = f + indicatorFn s := by
   funext x
   by_cases hx : x ∈ s
   · simp [hx]
   · simp only [restrict_of_notMem hx, Pi.add_apply, indicatorFn_of_notMem hx]
-    exact (EReal.add_top_of_ne_bot (hf.ne_bot x)).symm
+    exact (EReal.add_top_of_ne_bot (hf x)).symm
 
 end Module
 

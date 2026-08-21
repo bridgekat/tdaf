@@ -78,9 +78,15 @@ is the statement, and it is proved from Corollary 6.5.1 and Corollary 6.5.2.
 noncomputable def recessionFn (f : E → EReal) : E → EReal := ofEpi (recessionCone (epi f))
 ```
 
+`epi (ofEpi S) = S` is **not** automatic: it needs every vertical section of `S` to be closed below.
+`0⁺(epi f)` has that property only when `epi f` is closed. So `epi_recessionFn` and the §8 function
+statements carry `ClosedFn f`, exactly as Rockafellar assumes. Make the section-closedness condition
+a named lemma in `Operations/Epi.lean` — `lscHull`, `infConv`, `mapLin`, `convFn` and `smulRight` all
+consume it.
+
 | Lean name | statement | book |
 |---|---|---|
-| `epi_recessionFn` | `epi (recessionFn f) = recessionCone (epi f)` | definition |
+| `epi_recessionFn` (needs `ClosedFn f`) | `epi (recessionFn f) = recessionCone (epi f)` | §8 |
 | `recessionFn_eq_iSup_diff` | `f0⁺ y = ⨆ x ∈ dom f, f (x+y) - f x` | **Thm 8.5** |
 | `recessionFn_eq_limit` | `f0⁺ y = lim_{a→∞} (f (x+a•y) - f x)/a` for closed `f`, any `x ∈ dom f` | **Thm 8.5** |
 | `recessionFn_isLeast` | least `h` with `f z ≤ f x + h (z-x)` | Cor 8.5.1 |
@@ -103,6 +109,15 @@ theorem Convex.closure_image_eq (hC : Convex ℝ C) (hC' : C.Nonempty) (A : E �
     closure (A '' C) = A '' closure C ∧
     recessionCone (A '' closure C) = A '' recessionCone (closure C)
 ```
+
+Prerequisites the earlier draft left unnamed: `recessionCone (S ∩ T) = recessionCone S ∩ recessionCone T`
+for nonempty closed convex `S`, `T` (Corollary 8.3.3); `recessionCone (A ⁻¹' closedBall y ε) = ker A`;
+and the translation lemma turning `L ⊆ linealitySpace (cl C)` into "`L^⊥ ∩ cl C` has the same image".
+Note also that Mathlib's nested-compacts lemma is
+`IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed`, indexed by a **type** with
+`[Nonempty ι]` and `Directed (· ⊇ ·)`, so the proof must be reorganised around `t n = C_{1/(n+1)}`
+and then `⋂ n, A '' t n ⊆ ⋂ n, closedBall y (1/(n+1)) = {y}`. Continuity of `A` comes free from
+`FiniteDimensional ℝ E`.
 
 Proof (Rockafellar's, and there is no shorter one): let
 `L = 0⁺(cl C) ∩ ker A` (a subspace by hypothesis); replace `C` by `L^⊥ ∩ cl C`, which has the same
@@ -149,23 +164,46 @@ polyhedral convex set is locally simplicial), so define it here.
 ## 3.6 `Tdaf/Analysis/Convex/Duality/Exact.lean` — [D5](00-overview.md#d5)
 
 ```lean
-structure IsExactSum (B) (f g : E → EReal) : Prop where
-  conj_add : conj B (f + g) = infConv (conj B f) (conj B g)
-  attained : ∀ y, ∃ y₁ y₂, y₁ + y₂ = y ∧ conj B (f + g) y = conj B f y₁ + conj B g y₂
+structure IsExactSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) : Prop where
+  proper_left  : Proper f
+  proper_right : Proper g
+  exact_le : ∀ y, ∃ y₁ y₂, y₁ + y₂ = y ∧ conj B f y₁ + conj B g y₂ ≤ conj B (f + g) y
 
-structure IsExactImage (B) (A : E →ₗ[ℝ] G) (g : G → EReal) : Prop where
-  conj_comp : conj B (g ∘ A) = mapLin A.adjoint (conj B' g)
-  attained : ∀ y, ∃ z, A.adjoint z = y ∧ …
+structure IsExactImage (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ)
+    (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) (hA : IsAdjointPair B B' A A') (g : G → EReal) : Prop where
+  proper : Proper g
+  exact_le : ∀ y, ∃ z, A' z = y ∧ conj B' g z ≤ conj B (g ∘ A) y
 ```
+
+Three corrections from review. (i) `conj B (f + g) ≤ infConv (conj B f) (conj B g)` is
+*unconditional*, so `conj_add` is a **theorem** derived from `exact_le`, not a second field; stating
+both was redundant, and the equality form was moreover *unsatisfiable* when `dom f ∩ dom g = ∅`
+(then `f + g ≡ ⊤`, so `conj B (f+g) ≡ ⊥`, while conjugates of proper functions are never `⊥`).
+(ii) Properness is a genuine hypothesis of Theorems 16.3/16.4 that the earlier draft dropped — and it
+is also what keeps the `Pi` sum `f + g` from hiding an `∞ − ∞`. (iii) `A.adjoint` does not exist for
+a linear map between arbitrary paired spaces; the transpose is extra *data*, supplied as `A'`
+together with `IsAdjointPair` (see `Duality/Pairing.lean`).
 
 Sufficient conditions, each proved once:
 
 ```lean
-theorem IsExactSum.of_relint (h : (ri (dom f) ∩ ri (dom g)).Nonempty) : IsExactSum B f g -- Thm 16.4
-theorem IsExactSum.of_polyhedral (hf : Polyhedral f) (h : (dom f ∩ ri (dom g)).Nonempty) : …  -- Thm 20.1
-theorem IsExactSum.of_continuousAt (h : ∃ x ∈ dom g, ContinuousAt f x ∧ f x ≠ ⊤) : …          -- not in book
-theorem IsExactImage.of_relint (h : ∃ x, A x ∈ ri (dom g)) : IsExactImage B A g               -- Thm 16.3
+-- in RelativeInterior.lean
+theorem IsExactSum.of_relint (hf : Proper f) (hg : Proper g)
+    (h : (ri (dom f) ∩ ri (dom g)).Nonempty) : IsExactSum B f g                     -- Thm 16.4
+theorem IsExactImage.of_relint (hg : Proper g) (h : ∃ x, A x ∈ ri (dom g)) : …      -- Thm 16.3
+-- in Polyhedral/Duality.lean
+theorem IsExactSum.of_polyhedral (hf : PolyhedralFn f) (hg : Proper g)
+    (h : (dom f ∩ ri (dom g)).Nonempty) : IsExactSum B f g                          -- Thm 20.1
+-- in a layer-B file
+theorem IsExactSum.of_continuousAt (h : ∃ x ∈ dom g, ContinuousAt f x ∧ f x ≠ ⊤) : … -- not in book
 ```
+
+**Placement matters.** These do *not* live in `Exact.lean`. §20's theorems *are* `IsExactSum`
+statements, so `Polyhedral/Duality.lean` imports `Exact.lean`; putting `of_polyhedral` in
+`Exact.lean` makes the two mutually importing. `Exact.lean` holds only the interface and its
+interface-only consequences, importing `Duality/Conjugate` and `Operations/InfConv`. Note also
+`PolyhedralFn` (functions), not `Polyhedral` (sets) — the earlier draft applied the set-level
+predicate to a function, which is a type error.
 
 `of_relint` is proved from §9 (Theorem 9.2 / Corollary 9.2.1 give closedness and attainment, via
 Lemma 16.2 and Corollary 16.2.1) plus §6. `of_continuousAt` is a genuine generalisation valid in any

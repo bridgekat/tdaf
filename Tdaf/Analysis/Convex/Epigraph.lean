@@ -16,7 +16,6 @@ following Rockafellar, *Convex Analysis*, §4.
 
 * `Tdaf.epi f` — the epigraph of `f`, a subset of `E × ℝ`.
 * `Tdaf.dom f` — the effective domain of `f`, where `f < ⊤`.
-* `Tdaf.NeBotFn f` — `f` never takes the value `⊥`.
 * `Tdaf.Proper f` — `f` is finite somewhere and never `⊥`.
 * `Tdaf.restrict s f` — `f` restricted to `s`, extended by `⊤`.
 * `Tdaf.ConvexFn f` — `f` is convex, meaning that `epi f` is a convex set.
@@ -85,27 +84,28 @@ def dom (f : E → EReal) : Set E := {x | f x < ⊤}
 
 @[simp] theorem mem_dom {f : E → EReal} {x : E} : x ∈ dom f ↔ f x < ⊤ := Iff.rfl
 
-/-- `f` never takes the value `⊥`, i.e. `f` maps into `(-∞, +∞]`.
-
-This is the standing hypothesis under which Rockafellar's arithmetic of convex functions is
-unambiguous: it is exactly what rules out the forbidden `∞ - ∞`. It is bundled as a named
-predicate rather than spelled out as `∀ x, f x ≠ ⊥` at every use site. -/
-structure NeBotFn (f : E → EReal) : Prop where
-  /-- `f` never takes the value `⊥`. -/
-  ne_bot : ∀ x, f x ≠ ⊥
-
-theorem NeBotFn.bot_lt {f : E → EReal} (hf : NeBotFn f) (x : E) : ⊥ < f x :=
-  bot_lt_iff_ne_bot.2 (hf.ne_bot x)
-
-theorem NeBotFn.mono {f g : E → EReal} (hf : NeBotFn f) (h : f ≤ g) : NeBotFn g :=
-  ⟨fun x => bot_lt_iff_ne_bot.1 ((hf.bot_lt x).trans_le (h x))⟩
+/-- Rockafellar defines `dom f` as the projection of `epi f` on `E`. That holds with no hypothesis
+on `f`, improper functions included, which is why `dom` must not be restricted to functions that
+avoid `⊥`: Theorem 7.2 is a statement about `ri (dom f)` for *improper* `f`. -/
+theorem dom_eq_fst_image_epi (f : E → EReal) : dom f = Prod.fst '' epi f := by
+  ext x
+  constructor
+  · intro hx
+    rcases eq_or_lt_of_le (bot_le : (⊥ : EReal) ≤ f x) with h | h
+    · exact ⟨(x, 0), by simp [epi, ← h], rfl⟩
+    · obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top h.ne' hx
+      exact ⟨(x, r), by simp [epi, hr], rfl⟩
+  · rintro ⟨⟨y, μ⟩, hy, rfl⟩
+    exact lt_of_le_of_lt hy (_root_.EReal.coe_lt_top μ)
 
 /-- `f` is *proper* when it is finite somewhere and never takes the value `⊥`.
 
 Rockafellar §4: equivalently, `epi f` is nonempty and contains no vertical lines. -/
-structure Proper (f : E → EReal) : Prop extends NeBotFn f where
+structure Proper (f : E → EReal) : Prop where
   /-- `f` is not identically `⊤`. -/
   dom_nonempty : (dom f).Nonempty
+  /-- `f` never takes the value `⊥`. -/
+  ne_bot : ∀ x, f x ≠ ⊥
 
 /-- `f` restricted to `s` and extended by `⊤` off `s`.
 
@@ -207,7 +207,7 @@ theorem convexFn_iff_forall_lt (f : E → EReal) :
 
 /-- **Rockafellar, Theorem 4.1.** For a function `f` that never takes the value `⊥` — equivalently,
 a function into `(-∞, +∞]` — convexity is the familiar inequality. -/
-theorem convexFn_iff_le {f : E → EReal} (hf : NeBotFn f) :
+theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     ConvexFn f ↔ ∀ (x y : E) (a b : ℝ), 0 < a → 0 < b → a + b = 1 →
       f (a • x + b • y) ≤ (a : EReal) * f x + (b : EReal) * f y := by
   rw [convexFn_iff_forall_lt]
@@ -218,13 +218,13 @@ theorem convexFn_iff_le {f : E → EReal} (hf : NeBotFn f) :
     · rw [hx, EReal.mul_top_of_pos (hacoe ha)]
       rcases eq_top_or_lt_top (f y) with hy | hy
       · rw [hy, EReal.mul_top_of_pos (hacoe hb), EReal.top_add_top]; exact le_top
-      · obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot y) hy
+      · obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf y) hy
         rw [hq, Tdaf.EReal.coe_mul_coe, EReal.top_add_coe]; exact le_top
-    obtain ⟨p, hp⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot x) hx
+    obtain ⟨p, hp⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf x) hx
     rcases eq_top_or_lt_top (f y) with hy | hy
     · rw [hy, EReal.mul_top_of_pos (hacoe hb), hp, Tdaf.EReal.coe_mul_coe, EReal.coe_add_top]
       exact le_top
-    obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot y) hy
+    obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf y) hy
     rw [hp, hq, Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← EReal.coe_add]
     refine Tdaf.EReal.le_coe_of_forall_lt (fun r hr => ?_)
     have hx' : f x < ((p + (r - (a * p + b * q)) : ℝ) : EReal) := by
@@ -237,9 +237,9 @@ theorem convexFn_iff_le {f : E → EReal} (hf : NeBotFn f) :
     rwa [harith] at key
   · intro h x y a b ha hb hab α β hx hy
     obtain ⟨p, hp⟩ :=
-      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot x) (hx.trans (EReal.coe_lt_top α))
+      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf x) (hx.trans (EReal.coe_lt_top α))
     obtain ⟨q, hq⟩ :=
-      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.ne_bot y) (hy.trans (EReal.coe_lt_top β))
+      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf y) (hy.trans (EReal.coe_lt_top β))
     refine lt_of_le_of_lt (h x y a b ha hb hab) ?_
     rw [hp, hq, Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← EReal.coe_add]
     rw [hp] at hx; rw [hq] at hy

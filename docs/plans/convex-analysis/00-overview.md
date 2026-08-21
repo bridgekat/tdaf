@@ -1,7 +1,10 @@
 # Plan: Convex Analysis (Rockafellar) — root plan
 
 Source book: R. T. Rockafellar, *Convex Analysis*, Princeton, 1970. 8 parts, 39 sections,
-236 theorems + 203 corollaries + 9 lemmas (448 numbered results).
+235 theorems + 217 corollaries + 9 lemmas (≈461 numbered results).
+
+**Reviewed at commit `1b0cc08` by three independent adversarial agents; see
+[`REVIEW-01.md`](REVIEW-01.md) for the findings and the resolutions, which are folded in below.**
 
 This is the root of a tree of plans. Sub-plans:
 
@@ -53,6 +56,22 @@ Surveyed against `mathlib4 @ v4.34.0-rc1`.
 - Polyhedral convexity (Minkowski–Weyl), Legendre transformation.
 - Convex programs, Lagrangians, Kuhn–Tucker vectors, dual programs, Fenchel's duality theorem.
 - Saddle-functions, minimax theorems, convex bifunctions, convex processes.
+
+Corrections to an earlier draft of this list, established by review (see
+[`REVIEW-01.md`](REVIEW-01.md) §D):
+
+- Mathlib **does** have a minimax theorem — `Mathlib/Topology/Sion.lean` (Sion–von Neumann, with a
+  saddle-point form). Reuse it for Corollary 37.6.2 rather than reproving it.
+- Mathlib **does** have an `egauge`: `Mathlib/Analysis/Convex/EGauge.lean`, `ℝ≥0∞`-valued. Ours is
+  renamed `Tdaf.gaugeFn` to avoid the clash.
+- `EReal.sub_le_iff_le_add`, `le_sub_iff_add_le`, `sub_le_of_le_add` all exist already, with weaker
+  disjunctive hypotheses than the versions this plan proposed to write.
+- `IsCompact.convexHull` does **not** exist (only `Set.Finite.isCompact_convexHull`), so the compact
+  case of Theorem 17.2 is genuinely new work.
+- What is genuinely missing and is a *file*, not a handful of lemmas: `add_iSup` / `iSup_add` /
+  `iSup_sub` / `mul_le_mul_left` for `EReal`. `conj` is a `⨆` of `· − f x`, so these are the
+  workhorses of every conjugacy proof. Likewise `Compatible τ B` and Mackey–Arens: nothing in
+  Mathlib, and on D3's critical path.
 
 Two concrete Mathlib mismatches to be careful about:
 
@@ -112,6 +131,12 @@ Parts VI–VIII mix the two constantly, so the backbone defines `ConcaveFn`, `hy
 `concaveConj` outright and proves the sign-transfer lemmas, rather than forcing every statement
 through `-g`. `ConcaveFn g ↔ ConvexFn (-g)` is the defining lemma, not the definition's shape.
 
+**Caveat established by review.** `EReal` negation does *not* distribute over addition:
+`-(⊥ + ⊤) = ⊤` while `(-⊥) + (-⊤) = ⊥`. Mathlib's `EReal.neg_add` carries two hypotheses. So every
+sign-transfer lemma needs `≠ ⊥` / `≠ ⊤` side conditions, and they bite exactly at the improper
+functions that §34 and Part VII are about. Put a single `EReal.neg_add`-shaped helper in
+`Order/EReal.lean` so the conditions are uniform rather than rediscovered per file.
+
 ### D3. Duality is developed for a **dual pair**, not for `ℝⁿ` and not for the dual space
 
 ```lean
@@ -127,8 +152,29 @@ reflexivity assumptions. Instantiations: `ℝⁿ` with the inner product (Rockaf
 with `topDualPairing`, a Hilbert space with itself, `WeakBilin B` for the weak topology.
 
 This is the level of generality at which Fenchel–Moreau is actually *easy*: `WeakBilin B` carries a
-`LocallyConvexSpace` instance in Mathlib, so `geometric_hahn_banach_closed_point` applies directly.
-Everything in §12–§16 is pairing-level; nothing there needs finite dimensions.
+`LocallyConvexSpace` instance in Mathlib, so `geometric_hahn_banach_closed_point` applies directly
+(verified, along with `LocallyConvexSpace ℝ (WeakBilin B × ℝ)`). Everything in §12–§16 is
+pairing-level; nothing there needs finite dimensions.
+
+**Two things the pairing does not give you, established by review.**
+
+*There is no adjoint.* For `A : E →ₗ[ℝ] G` between spaces carrying arbitrary pairings, `Aᵀ` does not
+exist — Mathlib's `LinearMap.adjoint` needs `RCLike` inner-product spaces and finite dimension, and
+in general the transpose exists only if `A` is weakly continuous, in which case it is extra *data*.
+So every statement using `Aᵀ` carries an adjoint-pair datum, in Mathlib's `LinearMap.IsAdjointPair`
+shape:
+
+```lean
+variable (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) (hA : ∀ x z, B' (A x) z = B x (A' z))
+```
+
+with constructors supplying `A'` in the inner-product and finite-dimensional instantiations. Named
+once in `Duality/Pairing.lean` and threaded from there.
+
+*There is no compatible-topology machinery.* `Convex.closure_eq_of_compatible` (§2.3 of sub-plan 2)
+has no Mathlib support; `Compatible` must be defined and the theorem built from `iInter_halfSpaces_eq`
+in each topology. Budget it as a file, not a lemma. Also budget a small `WeakBilin`-transport simp
+set: `WeakBilin B` is a type synonym and pair literals in `WeakBilin B × ℝ` need manual ascription.
 
 ### D4. Reorder the development: **conjugacy comes before relative interiors**
 
@@ -137,11 +183,30 @@ Rockafellar's order is §6 (relative interiors) → §7 (closure) → §8, §9 �
 
 - Theorem 12.1 ("a closed convex function is the sup of the affine functions below it") needs only
   separation, i.e. §11.
-- Theorem 7.4 ("`cl f` is proper when `f` is") is proved in the book via relative interiors, but in
-  any locally convex space it follows from separation alone: a proper convex lsc function has an
-  affine minorant.
+- Theorem 7.4 ("`cl f` is proper when `f` is") is **finite-dimensional and stays that way** — see
+  the correction below.
 - Relative interiors are needed only for the **exact**, closure-free forms of the duality formulas
   (§16, §23.8, §31) — i.e. as constraint qualifications, not as foundations.
+
+**Correction (review finding B1).** An earlier draft of this decision claimed that a proper convex
+function has a continuous affine minorant in any locally convex space, hence that Theorem 7.4 holds
+at layer C. That is **false**. If `g : E →ₗ[ℝ] ℝ` is a discontinuous linear functional then `ker g`
+is dense, `closure (epi g) = univ`, and `lscHull g ≡ ⊥` — yet `g` is convex, finite everywhere and
+proper. The consequence reached further than §7: with `f := g + δ(·|closedBall 0 1)` one gets
+`conj B f ≡ ⊤` and `biconj B f ≡ ⊥ ≠ clFn f`, so **Fenchel–Moreau itself would have been false as
+originally planned**. Three changes repair it:
+
+1. `clFn` branches on whether **`lscHull f`** takes `⊥`, not on whether `f` does — the standard
+   Γ-regularization. This makes `biconj = clFn` unconditionally true, and for convex `f` in `ℝⁿ` it
+   provably coincides with Rockafellar's definition, so surface fidelity is untouched. Proving that
+   coincidence becomes a surface obligation.
+2. The affine-minorant lemma is stated for **closed** proper convex `f`. In that form the argument is
+   correct: the separating functional cannot be vertical because a functional `(y,0)` takes the same
+   value at `(x₀,c)` and `(x₀, f x₀)`, and `x₀ ∈ dom f`.
+3. Add the **dichotomy lemma** — *an lsc convex function taking `⊥` anywhere is `≡ ⊥`* — which is
+   what replaces Theorem 7.2 outside finite dimensions and was missing entirely. True in any TVS.
+
+The *ordering* conclusion below survives unchanged; only the justification did not.
 
 So the backbone's logical order is
 
@@ -165,11 +230,18 @@ book — Attouch–Brezis/Rockafellar–Robinson conditions in Banach spaces. Th
 
 ```lean
 /-- `f` and `g` add exactly: the conjugate of the sum is the infimal convolution of the
-conjugates, with the infimum attained. -/
+conjugates, and the infimum is attained. -/
 structure IsExactSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) : Prop where
-  conj_add : conj B (f + g) = infConv (conj B f) (conj B g)
-  attained : ∀ y, ∃ y₁ y₂, y₁ + y₂ = y ∧ conj B (f + g) y = conj B f y₁ + conj B g y₂
+  proper_left  : Proper f
+  proper_right : Proper g
+  exact_le : ∀ y, ∃ y₁ y₂, y₁ + y₂ = y ∧ conj B f y₁ + conj B g y₂ ≤ conj B (f + g) y
 ```
+
+with `conj_add : conj B (f + g) = infConv (conj B f) (conj B g)` a *theorem* derived from
+`exact_le` — the reverse inequality holds unconditionally, so stating both is redundant. (An earlier
+draft had two fields and no properness; review found the second field was then *unsatisfiable* when
+`dom f ∩ dom g = ∅`, since `f + g ≡ ⊤` forces `conj B (f+g) ≡ ⊥` while conjugates of proper
+functions are never `⊥`. It also hid an `∞ − ∞` inside `f + g`, which is the `Pi` `EReal` sum.)
 
 with sufficient conditions proved separately:
 
@@ -181,22 +253,36 @@ with sufficient conditions proved separately:
 Then §23.8 (`∂(f+g) = ∂f + ∂g`), §31 (Fenchel duality) and §38 are consequences of `IsExactSum`,
 each proved once. This is the README's "prefer interfaces over concrete implementations" applied to
 the single most repeated hypothesis in the book. The analogous interface for images under linear
-maps is `IsExactImage A f` (Theorem 16.3), whose sufficient conditions come from §9.
+maps is `IsExactImage` (Theorem 16.3), whose sufficient conditions come from §9 — and which carries
+the adjoint-pair datum of D3, since the transpose is not a function of `A`.
+
+**Placement (review finding C2).** `Duality/Exact.lean` holds the *interface* and its interface-only
+consequences, and imports only `Duality/Conjugate` and `Operations/InfConv`. Each
+`IsExactSum.of_*` is declared in the module that owns its hypothesis — `of_relint` in
+`RelativeInterior.lean`, `of_polyhedral` in `Polyhedral/Duality.lean`, `of_continuousAt` in a
+layer-B file. Putting them all in `Exact.lean` would make `Polyhedral/Duality.lean` and
+`Exact.lean` mutually importing, since §20's theorems *are* `IsExactSum` statements.
 
 ### D6. Homogenisation is a first-class operation
 
 Rockafellar repeatedly passes to a cone one dimension up:
 
 - the cone `K(C) = {(λ,x) | λ > 0, x ∈ λC} ⊆ ℝ × E` of a convex set (§2, §3, §6.8.1, §8.2, §9.6);
-- the positively homogeneous convex function generated by `h` (§5), which is `cl` of a cone
-  construction, and gives: gauges (§5, §15), recession functions (§8.5.2), the support function of
-  a level set (§13.5), the two-step homogenisation of Theorem 14.4;
+- the positively homogeneous convex function generated by `h` (§5), which is Theorem 5.3 applied to
+  the cone generated by `epi h` — **no closure is taken**; Theorem 9.7 is precisely about when the
+  closure may be interchanged. It gives: gauges (§5, §15), recession functions, the support function
+  of a level set (§13.5), the two-step homogenisation of Theorem 14.4;
 - `fλ` (right scalar multiplication), which is the `λ`-slice of that cone.
 
 Making `hom : (E → EReal) → (ℝ × E → EReal)` a named backbone operation with its own API — rather
 than re-deriving the cone by hand in each section — collapses a large amount of duplicated argument.
-Concretely, `f0⁺ = (cl (hom f)) (0, ·)` and `fλ = (hom f) (λ, ·)`, and Theorem 8.5's limit formula
-becomes an instance of Corollary 7.5.1 applied to `hom f`.
+Concretely, `fλ = (hom f) (λ, ·)`, and for **closed proper** `f`, `f0⁺ = (cl (hom f)) (0, ·)` —
+Corollary 8.5.2, which carries a closedness hypothesis and (unless `0 ∈ dom f`) is stated only for
+`y ∈ dom f`. It is **Corollary 8.5.2**, not Theorem 8.5's `λ → ∞` limit formula, that becomes an
+instance of Corollary 7.5.1 applied to `hom f`.
+
+Note also that `hom f` is generated by the *level-1 lift* of `f` (`h (λ,x) = f x` if `λ = 1`, `⊤`
+otherwise), not by `f` itself; the two operators are different and both occur in §5.
 
 ### D7. "Points and directions" are handled by homogenisation, not by an ad hoc definition
 
@@ -231,6 +317,31 @@ adjoints and dual programs (§30) and the conjugate saddle-function theory (§37
 one operator plus Fenchel–Moreau. Rockafellar develops these four times over; the backbone should
 develop them once.
 
+**What makes this work, and was missing (review finding B4).** The full conjugate on `U × X` needs a
+pairing on `U × X` built from `Bu` and `Bx` *with a sign flip on the first factor*. Before any
+`Optimization/` code, `Duality/Pairing.lean` must supply
+
+```lean
+def prodPairing (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) :
+    (U × X) →ₗ[ℝ] (V × Y) →ₗ[ℝ] ℝ
+def negFst (B : (U × X) →ₗ[ℝ] (V × Y) →ₗ[ℝ] ℝ) : (U × X) →ₗ[ℝ] (V × Y) →ₗ[ℝ] ℝ
+theorem conj_prodPairing : conj (prodPairing Bu Bx) = partialConj₁ Bu ∘ partialConj₂ Bx
+```
+
+and D8 must fix, in one table, the convention for each of the five operators — because there are
+four different sign conventions in play and Rockafellar writes none of them down together:
+
+| operator | variable | convex or concave | pairing sign |
+|---|---|---|---|
+| bracket, §33 | second | convex conjugate | `Bx` |
+| Lagrangian, §28–29 | first | concave conjugate | `Bu` |
+| adjoint `F*`, §30 | both | convex | `negFst (prodPairing Bu Bx)` |
+| `cl₁`, §33–34 | first | concave closure | — |
+| `cl₂`, §33–34 | second | convex closure | — |
+
+All the `EReal` side conditions of D8 live in `conj_prodPairing`; it needs `a + ⨆ = ⨆ (a + ·)` for
+real `a`, which is on the `Order/EReal.lean` list.
+
 ### D9. Generality boundaries
 
 | layer | assumption | what lives there |
@@ -261,7 +372,7 @@ Tdaf/
     Indicator.lean                    -- indicator δ(·|C); sets ↔ functions
     Concave.lean                      -- ConcaveFn, hypo, sign-transfer API
     Homogeneous.lean                  -- positively homogeneous fns; Thm 4.7, 4.8
-    Homogenize.lean                   -- hom f, fλ, cone of a convex set; §5, D6
+    Homogenize.lean                   -- (after Operations/: needs ofEpi, smulRight) hom f, fλ, cone of a convex set; §5, D6
     Operations/
       Basic.lean                      -- λ • f, f + g, sup, pointwise inf; Thm 5.1, 5.2, 5.5
       Epi.lean                        -- Thm 5.3 (function from a convex set in E × ℝ)
@@ -273,10 +384,11 @@ Tdaf/
     Closure.lean                      -- cl f, closed convex functions; §7
     Separation.lean                   -- proper/strong separation; §11 (wraps Mathlib)
     Duality/
-      Pairing.lean                    -- dual pairs, compatible topologies, weak lsc = lsc
+      Pairing.lean                    -- dual pairs, adjoint pairs, prodPairing/negFst
+      Compatible.lean                 -- compatible topologies; closure independent of choice
       Conjugate.lean                  -- conj B f, Fenchel inequality, Fenchel–Moreau; §12
       Support.lean                    -- support functions; §13
-      Polar.lean                      -- one-sided polar cone / polar set, EReal gauge; §14, §15
+      Polar.lean                      -- one-sided polar cone / polar set, gaugeFn; §14, §15
       Exact.lean                      -- IsExactSum / IsExactImage interfaces (D5)
       Ops.lean                        -- the dual-operations table; §16
     RelativeInterior.lean             -- ri calculus; §6                       [finite-dim]
@@ -350,13 +462,19 @@ Estimated in "sections' worth of statements" (448 total).
 | 2 | `Operations/*`, `Homogenize`, `Lattice` | ~25 | §3, §5 |
 | 3 | `Closure`, `Separation` | ~25 | first topology; layer B/C |
 | 4 | `Duality/{Pairing,Conjugate}` | ~15 | **Fenchel–Moreau** — the keystone |
-| 5 | `Duality/{Support,Polar}` | ~35 | §13–§15 |
-| 6 | `RelativeInterior`, `Recession/*`, `Continuity` | ~60 | finite-dim machinery |
+| 5 | `Recession/{Cone,Function}` (defs, layer A/B), `Duality/{Support,Polar}` | ~45 | §13–§15; 13.3–13.5 need `f0⁺` |
+| 6 | `RelativeInterior`, `Recession/Closedness`, `Continuity` | ~50 | finite-dim machinery |
 | 7 | `Duality/{Exact,Ops}` | ~20 | §16, exact duality |
 | 8 | `Subgradient/*` | ~55 | §23–§26 |
 | 9 | `Face`, `Polyhedral/*`, `Caratheodory`, `Helly`, `LinearInequalities` | ~75 | §17–§22 |
 | 10 | `Optimization/*` | ~60 | §27–§32 |
 | 11 | `Saddle/*`, `Bifunction/*` | ~60 | §33–§39 |
+
+`Order/EReal.lean` in stage 1 is a **file**, not a handful of lemmas: `add_iSup`, `iSup_add`,
+`iSup_sub`, `mul_le_mul_left` for `EReal` exist nowhere in Mathlib, each needs `⊥`/`⊤` side
+conditions, and `conj` is a `⨆` of `· − f x`, so every conjugacy proof consumes them.
+`Duality/Compatible.lean` in stage 4 is likewise unbudgeted work with no Mathlib support (no
+Mackey–Arens).
 
 Stages 1–5 are the critical path: they are dimension-free, they are what Mathlib most conspicuously
 lacks, and every later stage depends on them. Stage 6 is the largest block of genuinely hard,
@@ -382,16 +500,25 @@ genuinely finite-dimensional work and is the main risk (see §6 below).
    (`Analysis/Calculus/Rademacher.lean`) that may shortcut this — worth checking before doing it by
    hand. Rockafellar's own proof goes through Theorem 25.4 and one-dimensional monotone functions.
 5. **Theorem 19.1** (Minkowski–Weyl: polyhedral ⟺ finitely generated). Not in Mathlib. The standard
-   proof is by Fourier–Motzkin elimination or by double polarity plus induction. This gates all of
-   §19–§22 and the polyhedral refinements everywhere else.
+   proof is by Fourier–Motzkin elimination or by double polarity plus induction — but note these
+   are *different* proofs of the two directions, and that the crux is a third theorem: double
+   polarity gives `K = K°°` only for **closed** cones, so "finitely generated ⇒ polyhedral" needs
+   **"a finitely generated cone is closed"** first (Carathéodory-for-cones plus compactness).
+   Homogenising to the non-cone case additionally needs `C ≠ ∅`. This gates all of §19–§22 and
+   the polyhedral refinements everywhere else.
 6. **Theorem 34.4/34.5** (equivalence classes of closed saddle-functions determined by their
    kernels). The bookkeeping around four different closure operations (`cl₁`, `cl₂`, `cl₁cl₂`,
    `cl₂cl₁`) is the fussiest part of the book. Mitigation: D8 — build it on a single
    `partialConj`/`partialClosure` API with the sign symmetry made explicit.
-7. **`EReal` ergonomics.** `EReal` lacks a `SMul ℝ EReal` instance and its `Sub` is
-   `a + (-b)`; expect to need a small `Tdaf/Order/EReal.lean` of arithmetic lemmas
-   (`sub_le_iff`, `iSup_sub`, `add_iSup` under sign conditions). Budget for this up front rather
-   than accumulating ad hoc lemmas across files.
+7. **`EReal` ergonomics.** `EReal` lacks a `SMul ℝ EReal` instance, its `Sub` is `a + (-b)`, and
+   negation does not distribute over addition. `iSup_sub` / `add_iSup` / `iSup_add` are absent from
+   Mathlib entirely. Budget `Tdaf/Order/EReal.lean` as real work up front.
+8. **`WeakBilin B` is a type synonym.** `simp`/`rw` do not fire through it, and Mathlib does not give
+   you the continuous dual of `WeakBilin B × ℝ` — decomposing `g (x,μ) = B x y + c·μ` is
+   hand-written (restrict along `ContinuousLinearMap.inl`, apply
+   `LinearMap.dualEmbedding_surjective`, take `c = g (0,1)`). Budget a transport simp set before §12.
+9. **§34's equivalence classes.** `dom₁`/`dom₂` for saddle-functions must be defined before anything
+   in §34 can be stated at all; see sub-plan 7.
 
 ## 7. Status
 

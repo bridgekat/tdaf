@@ -24,7 +24,13 @@ noncomputable def partialCl₂ (f : U × X → EReal) : U × X → EReal :=
   fun p => clFn (fun x => f (p.1, x)) p.2
 ```
 
-with `partialConj₁`, `partialCl₁` the mirror images. Facts to prove once:
+with `partialConj₁`, `partialCl₁` the mirror images — and, from `Duality/Pairing.lean`, the product
+pairing `prodPairing Bu Bx` with its sign-flip `negFst`, plus the composition law
+`conj (prodPairing Bu Bx) = partialConj₁ Bu ∘ partialConj₂ Bx`. That law is the entire technical
+content of [D8](00-overview.md#d8) and was missing from the first draft of this plan; see D8's sign
+table for which of {bracket, Lagrangian, adjoint, `cl₁`, `cl₂`} uses which convention.
+
+Facts to prove once:
 
 - `partialConj₂` preserves convexity in the second variable and *reverses* it in the first
   (Theorem 33.1: `⟨Fu, x*⟩` is concave-convex);
@@ -45,22 +51,32 @@ structure ConcaveConvexFn (K : U × X → EReal) : Prop where
 
 def SaddleFn (K : U × X → EReal) : Prop := ConcaveConvexFn K ∨ ConcaveConvexFn (fun p => -(K p))
 
-/-- Two saddle-functions are equivalent when they have the same lower and upper closures. -/
-def SaddleEquiv (K L : U × X → EReal) : Prop :=
-  partialCl₂ (partialCl₁ K) = partialCl₂ (partialCl₁ L) ∧
-  partialCl₁ (partialCl₂ K) = partialCl₁ (partialCl₂ L)
+/-- The effective domains of a saddle-function. These are **not** projections of a single `dom`,
+and they must be defined before anything in §34 can even be stated. Rockafellar §34:
+`dom₁ K = {u | K (u, ·) ≢ -∞}`, `dom₂ K = {v | K (·, v) ≢ +∞}` for concave-convex `K`. -/
+def dom₁ (K : U × X → EReal) : Set U := {u | ∃ x, K (u, x) ≠ ⊥}
+def dom₂ (K : U × X → EReal) : Set X := {x | ∃ u, K (u, x) ≠ ⊤}
 
-/-- The kernel: the restriction to `ri dom₁ K × ri dom₂ K`. -/
-noncomputable def kernel (K : U × X → EReal) : Set (U × X) := ri (dom₁ K) ×ˢ ri (dom₂ K)
+/-- Two saddle-functions are equivalent when their partial closures agree.
+Rockafellar (line 14641) uses the **single** partial closures, not the doubled ones: `K` and `L` are
+equivalent iff `cl₁ K = cl₁ L` and `cl₂ K = cl₂ L`. Theorem 34.4's proof concludes exactly that. -/
+def SaddleEquiv (K L : U × X → EReal) : Prop :=
+  partialCl₁ K = partialCl₁ L ∧ partialCl₂ K = partialCl₂ L
+
+/-- The kernel is the **restriction of `K`** to `ri (dom₁ K) × ri (dom₂ K)` (book, line 14887) —
+a *function*, not its domain. Defining it as the domain would make Theorem 34.4 refutable, since
+`K` and `K + 1` would share a kernel without being equivalent. -/
+noncomputable def kernel (K : U × X → EReal) : (ri (dom₁ K) ×ˢ ri (dom₂ K) : Set (U × X)) → EReal :=
+  (ri (dom₁ K) ×ˢ ri (dom₂ K)).restrict K
 ```
 
 | Lean name | book |
 |---|---|
 | `concaveConvex_bracket` : `⟨Fu, y⟩` is concave-convex and convex-closed | **Thm 33.1**, Cor 33.1.1–3 |
 | `bracket_relint_eq` | **Thm 33.2**, Cor 33.2.1–2 |
-| `bifun_saddle_correspondence` : closed convex bifunctions ↔ equivalence classes of closed saddle-functions | **Thm 33.3**, Cor 33.3.1–3 |
+| `bifun_saddle_correspondence` : closed convex bifunctions ↔ **lower closed** concave-convex functions (and closed concave bifunctions ↔ **upper closed** ones) | **Thm 33.3**, Cor 33.3.1–3 |
 | `saddleFn_partialCl` | **Thm 34.1** |
-| `saddleEquiv_class_of_closed_bifun` | **Thm 34.2**, Cor 34.2.1–4 |
+| `saddleEquiv_class_of_closed_bifun` — the *equivalence-class* form of the correspondence | **Thm 34.2**, Cor 34.2.1–4 |
 | `closed_iff_structural` | **Thm 34.3** |
 | `saddleEquiv_iff_kernel_eq` | **Thm 34.4** |
 | `exists_unique_saddleEquiv_class_of_kernel` | **Thm 34.5**, Cor 34.5.1 |
@@ -129,12 +145,11 @@ has a saddle-point) is the classical minimax theorem — von Neumann's, in Kakut
 is the headline result of Part VII. It should be stated in the surface exactly in that form, since
 it is the version everyone cites.
 
-Note that Mathlib has *no* minimax theorem, so this is a genuinely new contribution and worth
-prioritising over the more technical §34/§35 material. A direct route to Corollary 37.6.2 that
-bypasses most of §33–§37: for compact `C`, `D` and continuous finite `K`, the two iterated extrema
-agree by a separation argument on the sets of "mixed strategies"; but Rockafellar's route through
-conjugate saddle-functions gives the far stronger unbounded versions (Theorems 37.3, 37.6). Do the
-easy version first as a sanity anchor, then the general one.
+**Correction:** Mathlib *does* have a minimax theorem — `Mathlib/Topology/Sion.lean` (Sion–von
+Neumann, including a saddle-point form). So Corollary 37.6.2 should be **derived from Mathlib's**
+rather than reproved, and the "genuinely new contribution" argument for prioritising §36/§37 does not
+stand. What is genuinely new here is Rockafellar's unbounded versions (Theorems 37.3, 37.6), reached
+through conjugate saddle-functions; those remain worth doing, but after §34 rather than before it.
 
 ## 7.5 `Bifunction/Algebra.lean` — §38
 
@@ -162,7 +177,7 @@ noncomputable def fenchelPairing (f : E → EReal) (g : E → EReal) : EReal :=
 | `adjoint_apply_fn` | **Thm 38.4**, Cor 38.4.1 |
 | `adjoint_comp` | **Thm 38.5**, Cor 38.5.1 |
 | `fenchelPairing_conj` | Lemma 38.6 |
-| `fenchelPairing_adjoint` : `⟨f, F* y⟩ = ⟨F f, y⟩` | **Thm 38.7**, Cor 38.7.1 |
+| `fenchelPairing_adjoint` : the four-way identity `⟨Ff, g*⟩ = ⟨f, F*g*⟩ = -⟨f*, F_* g⟩ = -⟨F_*^* f*, g⟩`, for proper concave `g` and the *lower* adjoint `F_*` | **Thm 38.7**, Cor 38.7.1 |
 
 Theorem 38.7 is the payoff — "adjoints move across the inner product", exactly as in linear algebra
 — and Rockafellar calls it "remarkable and non-trivial". Its hypotheses are again `ri`-intersection
