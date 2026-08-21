@@ -15,6 +15,8 @@ import Tdaf.Analysis.Convex.Operations.Hull
 import Tdaf.Analysis.Convex.Operations.Image
 import Tdaf.Analysis.Convex.Operations.InfConv
 import Tdaf.Analysis.Convex.Recession.Cone
+import Tdaf.Analysis.Convex.Recession.Function
+import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Separation
 import Tdaf.Analysis.Convex.Subgradient.Defs
 import Tdaf.Order.EReal
