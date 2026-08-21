@@ -372,4 +372,73 @@ theorem exists_unique_dual_prod (g : (E × ℝ) →L[ℝ] ℝ) :
 end ProdDual
 
 
+/-! ### Compatible topologies
+
+Rockafellar works in `ℝⁿ`, where the continuous dual is the algebraic dual and there is nothing to
+say. Here the topology on `E` has to be *compatible* with the pairing: the continuous linear
+functionals on `E` must be exactly the `⟨·, y⟩`. That is one condition in each direction, and
+Mathlib's way of packaging such a pair of conditions is a `Prop`-valued class whose second field
+uses the first — the shape of `LinearMap.IsContPerfPair`, of which this is the weakening we need.
+
+`IsContPerfPair` itself is *not* usable: it asks for joint continuity of `(x, y) ↦ B x y` (so `F`
+would need a topology) and for bijectivity on both sides where surjectivity on one is enough, and
+its only `topDualPairing` instance carries `[FiniteDimensional 𝕜 E] [T2Space E]`. -/
+
+section Compatible
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [AddCommGroup F] [Module ℝ F]
+
+/-- The topology on `E` is **compatible** with the pairing `B`: every `⟨·, y⟩` is continuous, and
+the resulting map `F → StrongDual ℝ E` is onto, so that every continuous linear functional on `E`
+is `⟨·, y⟩` for some `y : F`.
+
+This is the hypothesis under which conjugacy is an involution — see `Tdaf.biconj_eq_clFn`. It says
+nothing about *which* compatible topology `E` carries: the weak topology `σ(E, F)` is the coarsest
+one, but a Banach space paired with its own dual satisfies it in the norm topology, and that is the
+instance applications use. -/
+class _root_.LinearMap.IsCompatiblePairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : Prop where
+  /-- Every `⟨·, y⟩` is continuous. -/
+  continuous_left (B) (y : F) : Continuous fun x : E => B x y
+  /-- Every continuous linear functional on `E` arises as some `⟨·, y⟩`. -/
+  surjective_eval (B) :
+    Function.Surjective fun y : F => (⟨B.flip y, continuous_left y⟩ : StrongDual ℝ E)
+
+variable (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [B.IsCompatiblePairing]
+
+/-- Every `⟨·, y⟩` is continuous. The unbundled form of
+`LinearMap.IsCompatiblePairing.continuous_flip`. -/
+theorem continuous_pairing (y : F) : Continuous fun x : E => B x y :=
+  LinearMap.IsCompatiblePairing.continuous_left B y
+
+/-- Every continuous linear functional on `E` arises as some `⟨·, y⟩`. The unbundled form of
+`LinearMap.IsCompatiblePairing.surjective_eval`. -/
+theorem exists_pairing_eq (g : StrongDual ℝ E) : ∃ y : F, ∀ x, g x = B x y := by
+  obtain ⟨y, hy⟩ := LinearMap.IsCompatiblePairing.surjective_eval B g
+  exact ⟨y, fun x => by rw [← hy]; rfl⟩
+
+end Compatible
+
+section CompatibleInstances
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+
+/-- A topological vector space is compatibly paired with its own continuous dual, in its own
+topology. This is the instance that Fenchel–Moreau is applied through in practice. -/
+instance instIsCompatiblePairingTopDual :
+    ((topDualPairing ℝ E).flip).IsCompatiblePairing where
+  continuous_left y := y.continuous
+  surjective_eval g := ⟨g, rfl⟩
+
+/-- A real Hilbert space is compatibly paired with itself by the inner product (Fréchet–Riesz). -/
+instance instIsCompatiblePairingInner {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [CompleteSpace E] : (innerₗ E).IsCompatiblePairing where
+  continuous_left y := by simpa using (continuous_id.inner continuous_const : _)
+  surjective_eval g := ⟨(InnerProductSpace.toDual ℝ E).symm g, by
+    ext x
+    simp [innerₗ_apply_apply, InnerProductSpace.toDual_symm_apply]⟩
+
+end CompatibleInstances
+
+
 end Tdaf

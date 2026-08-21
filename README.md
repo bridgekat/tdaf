@@ -88,7 +88,7 @@ The review of a formalization may be done at any time after the formalization ha
 
 In such cases, the agent should make sure that the formalization is idiomatic Lean code and pleasant to read, on top of being semantically correct. Some code style guidance:
 
-- Match Mathlib style in general: use notations, tactics, and doc comments in similar ways as Mathlib.
+- Match Mathlib style in general: use notations, tactics, and doc comments in similar ways. By default, follow the same conventions.
 - Minimize duplication: something may have been formalized elsewhere in Mathlib or within this project, or the same logic is repeated in multiple proofs.
 - Prefer multiple short lemmas rather than rushing to theorems in long proofs.
 - Prefer defining and using bundled, named interfaces for a named concept rather than repeating individual assumptions.
