@@ -54,7 +54,7 @@ Plans may be automatically extracted from textbooks. In such cases, the agent sh
 
 - Analyze all book contents, factor out commonalities (similar to finding a minimum spanning tree covering the topics *across all books*).
 - Optionally search the web to see if there are more general theorem statements.
-- Plan the backbone-surface split, threading general definitions and theorems into a logically coherent spanning tree, putting special forms at the leaves to the surface.
+- Plan the backbone-surface split, threading general definitions and theorems into a logically coherent spanning tree, putting special forms at the leaves to the surface. You are encouraged to form you own opinions on how the material should be organized in the backbone, before adapting the book's content to them.
 - Search in Mathlib for existing formalizations to build upon, and vocabulary to reuse.
 - Repeat until sufficient understanding is achieved, then write the plan.
 
@@ -81,5 +81,6 @@ Finally, check for semantic alignment: at surface level, confirm that the defini
 
 ### General instructions for agents
 
+- If a single task is too large (e.g. analyzing a whole book), break it down into smaller, self-contained tasks and spawn sub-agents to work on them. Give clear instructions on the expected input and output formats to sub-agents, and designate a different working directory for each (so they do not interfere with each other).
 - When spawning sub-agents that can modify Lean code in the repository, ensure that (1) the whole project compiles clean before spawning (2) each sub-agent (including yourself) works on a separate worktree or in a temporary directory, *not* touching the original copy. You should handle the merge after all other agents finish their work and none of them is still running.
 - In difficult situations, you may spawn sub-agents to explore solutions, but given them an effort limit and ask them to report what works and what does not. You should selectively consolidate their reports into a central record file, which is passed to new sub-agents to avoid repeating the same mistakes.
