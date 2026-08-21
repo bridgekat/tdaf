@@ -49,8 +49,10 @@ proved again.
 `s : Set E`. Rockafellar identifies `Rⁿ` with its dual and never has to say this; here the two
 spaces are genuinely different, and a statement such as Theorem 13.2 — which asks both that
 `g : F → EReal` be closed and that the set it supports be closed in `E` — needs a topology and a
-compatible pairing on *both* sides. That is why the characterisation theorems carry four
-hypotheses, exactly as `Tdaf.conjEquiv` does.
+compatible pairing on *both* sides. That is why the characterisation theorems ask for a class on
+each side, exactly as `Tdaf.conjEquiv` does — `[B.flip.IsCompatiblePairing]` throughout, and on the
+`E` side either `[B.IsCompatiblePairing]` or, where only closedness of the supported set is at
+stake, the weaker `[B.IsContinuousPairing]`.
 
 **Positive homogeneity is what an indicator conjugates to, and conversely.**
 `Tdaf.conj_eq_indicatorFn_of_posHomogeneous` is proved with no topology at all: reindexing the
@@ -372,60 +374,49 @@ end PosHom
 section Closed
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Set E}
+  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.flip.IsContinuousPairing] {s : Set E}
 
-/-- The support function is lower semicontinuous as soon as the pairing is continuous in the dual
-variable. -/
-theorem lowerSemicontinuous_supportFn (hB : ∀ x : E, Continuous fun y : F => B x y) :
-    LowerSemicontinuous (supportFn B s) := by
-  rw [supportFn_eq_conj_indicatorFn]; exact lowerSemicontinuous_conj hB
+/-- The support function is lower semicontinuous as soon as the pairing is continuous on the `F`
+side. -/
+theorem lowerSemicontinuous_supportFn : LowerSemicontinuous (supportFn B s) := by
+  rw [supportFn_eq_conj_indicatorFn]; exact lowerSemicontinuous_conj
 
 variable [IsTopologicalAddGroup F]
 
 /-- **The support function of any set is a closed convex function** — it is a conjugate. -/
-theorem closedFn_supportFn (hB : ∀ x : E, Continuous fun y : F => B x y) :
-    ClosedFn (supportFn B s) := by
-  rw [supportFn_eq_conj_indicatorFn]; exact closedFn_conj hB
+theorem closedFn_supportFn : ClosedFn (supportFn B s) := by
+  rw [supportFn_eq_conj_indicatorFn]; exact closedFn_conj
 
 end Closed
 
-/-! ### The pairing as a continuous linear functional, and the closure of the set -/
+/-! ### The closure of the set
+
+`Tdaf.evalCLM B y : StrongDual ℝ E` is the continuous linear functional `⟨·, y⟩`; it is what turns
+the half-space characterisations of §11 — which quantify over `StrongDual ℝ E` — into statements
+about `F`. -/
 
 section ContinuousPairing
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  [TopologicalSpace E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Set E}
+  [TopologicalSpace E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsContinuousPairing] {s : Set E}
 
-/-- The continuous linear functional `⟨·, y⟩ : E → ℝ` determined by `y : F`. It exists exactly when
-the pairing is continuous in its first variable, and it is what turns the half-space
-characterisations of §11 — which quantify over `E →L[ℝ] ℝ` — into statements about `F`. -/
-def pairingCLM (hB : ∀ y : F, Continuous fun x : E => B x y) (y : F) : E →L[ℝ] ℝ where
-  toLinearMap := B.flip y
-  cont := hB y
-
-/-- `Tdaf.pairingCLM` evaluates as the pairing does. -/
-@[simp] theorem pairingCLM_apply (hB : ∀ y : F, Continuous fun x : E => B x y) (y : F) (x : E) :
-    pairingCLM hB y x = B x y := rfl
-
-/-- The set `{x | ⟨x, y⟩ ≤ M}` is closed when the pairing is continuous in its first variable. -/
-theorem isClosed_setOf_pairing_le (hB : ∀ y : F, Continuous fun x : E => B x y) (y : F)
-    (M : EReal) : IsClosed {x : E | ((B x y : ℝ) : EReal) ≤ M} :=
-  isClosed_Iic.preimage (_root_.EReal.continuous_coe_iff.2 (hB y))
+/-- The set `{x | ⟨x, y⟩ ≤ M}` is closed when the pairing is continuous on the `E` side. -/
+theorem isClosed_setOf_pairing_le (y : F) (M : EReal) :
+    IsClosed {x : E | ((B x y : ℝ) : EReal) ≤ M} :=
+  isClosed_Iic.preimage (_root_.EReal.continuous_coe_iff.2 (continuous_pairing B y))
 
 /-- **The support function does not see the closure** (Rockafellar §13). -/
-theorem supportFn_closure (hB : ∀ y : F, Continuous fun x : E => B x y) (s : Set E) :
-    supportFn B (closure s) = supportFn B s := by
+theorem supportFn_closure (s : Set E) : supportFn B (closure s) = supportFn B s := by
   funext y
   refine le_antisymm (iSup₂_le fun x hx => ?_) (supportFn_mono subset_closure y)
   exact closure_minimal (fun z hz => le_supportFn hz y)
-    (isClosed_setOf_pairing_le hB y (supportFn B s y)) hx
+    (isClosed_setOf_pairing_le y (supportFn B s y)) hx
 
 /-- `Tdaf.supportSet` is closed: it is a level set of the lower semicontinuous function `g*`. -/
-theorem isClosed_supportSet (hB : ∀ y : F, Continuous fun x : E => B x y) (g : F → EReal) :
-    IsClosed (supportSet B.flip g) := by
+theorem isClosed_supportSet (g : F → EReal) : IsClosed (supportSet B.flip g) := by
   rw [supportSet_eq_setOf_conj_le,
     show ((0 : EReal)) = ((0 : ℝ) : EReal) from _root_.EReal.coe_zero.symm]
-  exact lowerSemicontinuous_iff_isClosed_le.1 (lowerSemicontinuous_conj (B := B.flip) hB) 0
+  exact lowerSemicontinuous_iff_isClosed_le.1 (lowerSemicontinuous_conj (B := B.flip)) 0
 
 end ContinuousPairing
 
@@ -435,17 +426,15 @@ section Theorem131
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsCompatiblePairing]
 
 /-- **Rockafellar, Theorem 13.1.** A point lies in the closed convex hull of `s` if and only if it
 satisfies every weak linear inequality that the support function of `s` records.
 
 This is Corollary 11.5.1 read through the pairing: `Tdaf.closure_convexHull_eq_iInter_halfspaces`
-quantifies over the continuous linear functionals on `E`, and the two compatibility hypotheses say
+quantifies over the continuous linear functionals on `E`, and compatibility of the pairing says
 that these are precisely the `⟨·, y⟩`. -/
-theorem mem_closure_convexHull_iff_le_supportFn
-    (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y) (s : Set E) (x : E) :
+theorem mem_closure_convexHull_iff_le_supportFn (s : Set E) (x : E) :
     x ∈ closure (convexHull ℝ s) ↔ ∀ y : F, ((B x y : ℝ) : EReal) ≤ supportFn B s y := by
   rw [← closure_convexHull_eq_iInter_halfspaces s]
   simp only [Set.mem_iInter, Set.mem_ofPred]
@@ -454,12 +443,12 @@ theorem mem_closure_convexHull_iff_le_supportFn
     by_contra hcon
     rw [not_le] at hcon
     obtain ⟨c, hc₁, hc₂⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hcon
-    have hbnd : ∀ z ∈ s, pairingCLM hBc y z ≤ c := supportFn_le_coe_iff.1 hc₁.le
-    have hx := h (pairingCLM hBc y) c hbnd
-    rw [pairingCLM_apply] at hx
+    have hbnd : ∀ z ∈ s, evalCLM B y z ≤ c := supportFn_le_coe_iff.1 hc₁.le
+    have hx := h (evalCLM B y) c hbnd
+    rw [evalCLM_apply] at hx
     exact absurd hc₂ (not_lt.2 (by exact_mod_cast hx))
   · intro h g c hg
-    obtain ⟨y, hy⟩ := hBs g
+    obtain ⟨y, hy⟩ := exists_pairing_eq B g
     have hsup : supportFn B s y ≤ (c : EReal) :=
       supportFn_le_coe_iff.2 fun z hz => hy z ▸ hg z hz
     rw [hy x]
@@ -467,17 +456,15 @@ theorem mem_closure_convexHull_iff_le_supportFn
 
 /-- **Rockafellar, Corollary 13.1.1.** Closed convex hulls are ordered by their support
 functions. -/
-theorem closure_convexHull_subset_iff_supportFn_le
-    (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y) (s t : Set E) :
+theorem closure_convexHull_subset_iff_supportFn_le (s t : Set E) :
     closure (convexHull ℝ s) ⊆ closure (convexHull ℝ t) ↔ supportFn B s ≤ supportFn B t := by
   constructor
   · intro h y
     have h' := supportFn_mono (B := B) h y
-    rwa [supportFn_closure hBc, supportFn_convexHull, supportFn_closure hBc,
+    rwa [supportFn_closure, supportFn_convexHull, supportFn_closure,
       supportFn_convexHull] at h'
   · intro h x hx
-    rw [mem_closure_convexHull_iff_le_supportFn hBc hBs] at hx ⊢
+    rw [mem_closure_convexHull_iff_le_supportFn (B := B)] at hx ⊢
     exact fun y => (hx y).trans (h y)
 
 end Theorem131
@@ -491,7 +478,7 @@ section Corollary1321
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {g : F → EReal}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.flip.IsCompatiblePairing] {g : F → EReal}
 
 /-- **Rockafellar, Corollary 13.2.1.** The closure of a positively homogeneous convex function that
 is not identically `+∞` is the support function of a certain closed convex set, namely
@@ -500,30 +487,24 @@ is not identically `+∞` is the support function of a certain closed convex set
 The improper case is included: if `g` takes `-∞` then `cl g ≡ -∞`, `supportSet B.flip g` is empty,
 and both sides are the support function of `∅`. -/
 theorem clFn_eq_supportFn_of_posHomogeneous
-    (hBc : ∀ x : E, Continuous fun y : F => B x y)
-    (hBs : ∀ h : F →L[ℝ] ℝ, ∃ x : E, ∀ y, h y = B x y)
     (hg : PosHomogeneous g) (hconv : ConvexFn g) (hne : ∃ y, g y ≠ ⊤) :
     clFn g = supportFn B (supportSet B.flip g) := by
   rw [supportFn_eq_conj_indicatorFn,
     ← conj_eq_indicatorFn_of_posHomogeneous (B := B.flip) hg hne]
-  exact (biconj_eq_clFn (B := B.flip) hBc hBs hconv).symm
+  exact (biconj_eq_clFn (B := B.flip) hconv).symm
 
 /-- A closed positively homogeneous convex function *is* the support function of
 `Tdaf.supportSet B.flip g`. -/
-theorem supportFn_supportSet (hBc : ∀ x : E, Continuous fun y : F => B x y)
-    (hBs : ∀ h : F →L[ℝ] ℝ, ∃ x : E, ∀ y, h y = B x y)
-    (hg : PosHomogeneous g) (hconv : ConvexFn g) (hcl : ClosedFn g) (hne : ∃ y, g y ≠ ⊤) :
-    supportFn B (supportSet B.flip g) = g :=
-  (clFn_eq_supportFn_of_posHomogeneous hBc hBs hg hconv hne).symm.trans hcl
+theorem supportFn_supportSet (hg : PosHomogeneous g) (hconv : ConvexFn g) (hcl : ClosedFn g)
+    (hne : ∃ y, g y ≠ ⊤) : supportFn B (supportSet B.flip g) = g :=
+  (clFn_eq_supportFn_of_posHomogeneous hg hconv hne).symm.trans hcl
 
 /-- The set supporting a closed *proper* positively homogeneous convex function is nonempty: only
 the empty set has `-∞` for a support function. -/
-theorem nonempty_supportSet (hBc : ∀ x : E, Continuous fun y : F => B x y)
-    (hBs : ∀ h : F →L[ℝ] ℝ, ∃ x : E, ∀ y, h y = B x y)
-    (hg : PosHomogeneous g) (hconv : ConvexFn g) (hcl : ClosedFn g) (hp : Proper g) :
-    (supportSet B.flip g).Nonempty := by
+theorem nonempty_supportSet (hg : PosHomogeneous g) (hconv : ConvexFn g) (hcl : ClosedFn g)
+    (hp : Proper g) : (supportSet B.flip g).Nonempty := by
   obtain ⟨y₀, hy₀⟩ := hp.dom_nonempty
-  have hg' := supportFn_supportSet hBc hBs hg hconv hcl ⟨y₀, hy₀.ne⟩
+  have hg' := supportFn_supportSet (B := B) hg hconv hcl ⟨y₀, hy₀.ne⟩
   rcases (supportSet B.flip g).eq_empty_or_nonempty with hemp | hne
   · rw [hemp, supportFn_empty] at hg'
     exact absurd (congrFun hg' y₀).symm (hp.ne_bot y₀)
@@ -551,24 +532,20 @@ closed convex set are conjugate to each other.
 
 One direction is `Tdaf.supportFn_eq_conj_indicatorFn`, which is a definition unfolded; the other is
 Fenchel–Moreau together with `cl δ(· | s) = δ(· | cl s)`. -/
-theorem conj_supportFn (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ h : E →L[ℝ] ℝ, ∃ y : F, ∀ x, h x = B x y)
-    (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
+theorem conj_supportFn [B.IsCompatiblePairing] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
     conj B.flip (supportFn B s) = indicatorFn s := by
   rw [supportFn_eq_conj_indicatorFn]
   change biconj B (indicatorFn s) = indicatorFn s
-  rw [biconj_eq_clFn hBc hBs (convexFn_indicatorFn.2 hs₁), clFn_indicatorFn, hs₂.closure_eq]
+  rw [biconj_eq_clFn (convexFn_indicatorFn.2 hs₁), clFn_indicatorFn, hs₂.closure_eq]
 
 omit [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F]
   [LocallyConvexSpace ℝ F] in
 /-- **Theorem 13.1 for a closed convex set**: `s` is recovered from its support function. -/
-theorem supportSet_supportFn (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ h : E →L[ℝ] ℝ, ∃ y : F, ∀ x, h x = B x y)
-    (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
+theorem supportSet_supportFn [B.IsCompatiblePairing] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
     supportSet B.flip (supportFn B s) = s := by
   ext x
   simp only [mem_supportSet, LinearMap.flip_apply]
-  rw [← mem_closure_convexHull_iff_le_supportFn hBc hBs, hs₁.convexHull_eq, hs₂.closure_eq]
+  rw [← mem_closure_convexHull_iff_le_supportFn, hs₁.convexHull_eq, hs₂.closure_eq]
 
 omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] in
 /-- **Rockafellar, Theorem 13.2**, the characterisation: *the* support functions of the nonempty
@@ -578,40 +555,36 @@ Rockafellar states the class of sets as "non-empty convex"; since the support fu
 the closure or the convex hull, the same functions arise from the nonempty *closed convex* sets,
 and that is what is asserted here, so that the correspondence is one-to-one
 (`Tdaf.supportEquiv`). -/
-theorem exists_supportFn_iff (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBc' : ∀ x : E, Continuous fun y : F => B x y)
-    (hBs' : ∀ h : F →L[ℝ] ℝ, ∃ x : E, ∀ y, h y = B x y) :
+theorem exists_supportFn_iff [B.IsContinuousPairing] [B.flip.IsCompatiblePairing] :
     (∃ C : Set E, C.Nonempty ∧ Convex ℝ C ∧ IsClosed C ∧ g = supportFn B C) ↔
       (ConvexFn g ∧ ClosedFn g ∧ Proper g ∧ PosHomogeneous g) := by
   constructor
   · rintro ⟨C, hne, -, -, rfl⟩
-    exact ⟨convexFn_supportFn B C, closedFn_supportFn hBc', proper_supportFn hne,
+    exact ⟨convexFn_supportFn B C, closedFn_supportFn, proper_supportFn hne,
       posHomogeneous_supportFn B C⟩
   · rintro ⟨hconv, hcl, hp, hph⟩
     obtain ⟨y₀, hy₀⟩ := hp.dom_nonempty
     have hg : supportFn B (supportSet B.flip g) = g :=
-      supportFn_supportSet hBc' hBs' hph hconv hcl ⟨y₀, hy₀.ne⟩
-    exact ⟨supportSet B.flip g, nonempty_supportSet hBc' hBs' hph hconv hcl hp,
-      convex_supportSet B.flip g, isClosed_supportSet hBc g, hg.symm⟩
+      supportFn_supportSet hph hconv hcl ⟨y₀, hy₀.ne⟩
+    exact ⟨supportSet B.flip g, nonempty_supportSet hph hconv hcl hp,
+      convex_supportSet B.flip g, isClosed_supportSet g, hg.symm⟩
 
 /-- **Rockafellar, Theorem 13.2** as a bijection, the "important one-to-one correspondence between
 the closed convex sets and objects of quite a different sort". It is the restriction of
 `Tdaf.conjEquiv` along the two embeddings `s ↦ δ(· | s)` and "positively homogeneous". -/
-noncomputable def supportEquiv (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ h : E →L[ℝ] ℝ, ∃ y : F, ∀ x, h x = B x y)
-    (hBc' : ∀ x : E, Continuous fun y : F => B x y)
-    (hBs' : ∀ h : F →L[ℝ] ℝ, ∃ x : E, ∀ y, h y = B x y) :
+noncomputable def supportEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [B.IsCompatiblePairing]
+    [B.flip.IsCompatiblePairing] :
     {C : Set E // C.Nonempty ∧ Convex ℝ C ∧ IsClosed C} ≃
       {g : F → EReal // ConvexFn g ∧ ClosedFn g ∧ Proper g ∧ PosHomogeneous g} where
-  toFun C := ⟨supportFn B C.1, convexFn_supportFn B C.1, closedFn_supportFn hBc',
+  toFun C := ⟨supportFn B C.1, convexFn_supportFn B C.1, closedFn_supportFn,
     proper_supportFn C.2.1, posHomogeneous_supportFn B C.1⟩
   invFun g := ⟨supportSet B.flip g.1,
-    nonempty_supportSet hBc' hBs' g.2.2.2.2 g.2.1 g.2.2.1 g.2.2.2.1,
-    convex_supportSet B.flip g.1, isClosed_supportSet hBc g.1⟩
-  left_inv C := Subtype.ext (supportSet_supportFn hBc hBs C.2.2.1 C.2.2.2)
+    nonempty_supportSet g.2.2.2.2 g.2.1 g.2.2.1 g.2.2.2.1,
+    convex_supportSet B.flip g.1, isClosed_supportSet g.1⟩
+  left_inv C := Subtype.ext (supportSet_supportFn C.2.2.1 C.2.2.2)
   right_inv g := Subtype.ext <| by
     obtain ⟨y₀, hy₀⟩ := g.2.2.2.1.dom_nonempty
-    exact supportFn_supportSet hBc' hBs' g.2.2.2.2 g.2.1 g.2.2.1 ⟨y₀, hy₀.ne⟩
+    exact supportFn_supportSet g.2.2.2.2 g.2.1 g.2.2.1 ⟨y₀, hy₀.ne⟩
 
 omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] in
 /-- **Rockafellar, Corollary 13.2.2.** The support functions of the nonempty sets on which every
@@ -620,19 +593,17 @@ omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
 The `ClosedFn` hypothesis is not in the book: see the design note above. Rockafellar's "bounded" is
 here read as "`⟨·, y⟩` is bounded above on `C` for every `y`", which is what his own proof uses and
 which coincides with boundedness in `Rⁿ`. -/
-theorem exists_supportFn_finite_iff (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBc' : ∀ x : E, Continuous fun y : F => B x y)
-    (hBs' : ∀ h : F →L[ℝ] ℝ, ∃ x : E, ∀ y, h y = B x y) :
+theorem exists_supportFn_finite_iff [B.IsContinuousPairing] [B.flip.IsCompatiblePairing] :
     (∃ C : Set E, C.Nonempty ∧ (∀ y : F, ∃ c : ℝ, ∀ x ∈ C, B x y ≤ c) ∧ g = supportFn B C) ↔
       ((∀ y, g y ≠ ⊥) ∧ (∀ y, g y ≠ ⊤) ∧ ConvexFn g ∧ ClosedFn g ∧ PosHomogeneous g) := by
   constructor
   · rintro ⟨C, hne, hbdd, rfl⟩
     exact ⟨supportFn_ne_bot hne, fun y => (supportFn_lt_top_iff.2 (hbdd y)).ne,
-      convexFn_supportFn B C, closedFn_supportFn hBc', posHomogeneous_supportFn B C⟩
+      convexFn_supportFn B C, closedFn_supportFn, posHomogeneous_supportFn B C⟩
   · rintro ⟨hb, ht, hconv, hcl, hph⟩
     have hp : Proper g := ⟨⟨0, lt_top_iff_ne_top.2 (ht 0)⟩, hb⟩
     obtain ⟨C, hne, -, -, hg⟩ :=
-      (exists_supportFn_iff hBc hBc' hBs').2 ⟨hconv, hcl, hp, hph⟩
+      (exists_supportFn_iff (B := B)).2 ⟨hconv, hcl, hp, hph⟩
     refine ⟨C, hne, fun y => supportFn_lt_top_iff.1 ?_, hg⟩
     rw [← hg]
     exact lt_top_iff_ne_top.2 (ht y)

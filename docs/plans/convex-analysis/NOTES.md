@@ -484,6 +484,27 @@ From the repository `README.md` ("Reviewing a formalization"):
     "typeclass instance problem is stuck: `AddTorsor ?V E`", triggered inside a `fun` or anonymous
     constructor where the expected type is not yet known.
 
+59. **`class Foo (B) : Prop extends B.Bar where` parses, and dot notation works in `extends`.** The
+    field of the extension may mention a definition that itself requires the parent instance —
+    `surjective_eval (B) : Function.Surjective (evalCLM B)` elaborates off the parent. Ordering the
+    file *base class → map → extension* is what makes this possible, and it is worth the trouble:
+    stating the field through the map rather than through an inlined anonymous constructor is what
+    let `exists_pairing_eq` be a `rw` instead of `rfl`-poking, and it deleted a duplicate definition
+    (`pairingCLM`) that existed only because the class had no map of its own.
+60. **`LinearMap.flip` is a plain `def`, so instance search will not unfold it.** With
+    `[B.IsContinuousPairing]` in context, `inferInstance` for `B.flip.flip.IsContinuousPairing`
+    **fails**, although `‹B.IsContinuousPairing›` typechecks at that type — defeq holds at default
+    transparency, not at instance transparency. One bridge instance fixes it for the whole library;
+    check whether it is load-bearing by demoting it to a `theorem` and rebuilding.
+61. **An instance binder does not pin implicit arguments the way a hypothesis did.** A hypothesis
+    mentioning `B` determined `B` for free; `[B.IsCompatiblePairing]` never does. Any lemma whose
+    *conclusion* does not mention `B` now needs `(B := B)` at the call site, and the error is the
+    less helpful "typeclass instance problem is stuck".
+62. **`simp` will not close `evalCLM`'s `map_add'`/`map_smul'`**: `ContinuousLinearMap.coe_mk'`
+    fires on the left and the right stays stuck. `ContinuousLinearMap.ext fun x => map_add (B x) y₁ y₂`
+    closes it by defeq. Also, `ContinuousLinearMap.add_apply`/`.smul_apply` are deprecated in favour
+    of the root-namespace `add_apply`/`smul_apply`.
+
 ---
 
 ## 3. Review findings

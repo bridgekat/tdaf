@@ -49,8 +49,9 @@ cones. That restriction is polarity, and it is proved here from
   in `Mathlib/Geometry/Convex/Cone/Dual.lean` is `{y | ∀ x ∈ s, 0 ≤ p x y}`, the *inner* dual, so
   `K° = (-K)ᵛ = -(Kᵛ)`. Mathlib also has `ProperCone.dual` with `ProperCone.dual_flip_dual`, the
   bipolar theorem for a *perfect continuous* pairing (`LinearMap.IsContPerfPair`); the version
-  proved here instead carries the two compatibility hypotheses of `Conjugate.lean`, so it applies
-  to a space paired with its own continuous dual without asking for a perfect pairing.
+  proved here instead asks for `LinearMap.IsCompatiblePairing`, so it applies to a space paired
+  with its own continuous dual without asking for a perfect pairing; closedness of the polar
+  (`Tdaf.isClosed_polarCone`) needs only `LinearMap.IsContinuousPairing`.
 * `Tdaf.polarSet_eq_polar_of_balanced` — Mathlib's `LinearMap.polar` is the **absolute** polar
   `{y | ∀ x ∈ s, ‖B x y‖ ≤ 1}`. It agrees with `Tdaf.polarSet` exactly on balanced sets;
   Rockafellar's polar is one-sided and the two are genuinely different objects otherwise.
@@ -377,36 +378,34 @@ end Indicator
 section Closed
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {K C : Set E}
+  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.flip.IsContinuousPairing] {K C : Set E}
 
 /-- **Rockafellar, Theorem 14.1**, first assertion: the polar of any set is closed, being an
 intersection of homogeneous closed half-spaces. -/
-theorem isClosed_polarCone (hB : ∀ x : E, Continuous fun y : F => B x y) :
-    IsClosed (polarCone B K) := by
+theorem isClosed_polarCone : IsClosed (polarCone B K) := by
   have h : polarCone B K = ⋂ x ∈ K, {y : F | B x y ≤ 0} := by ext y; simp [polarCone]
   rw [h]
-  exact isClosed_biInter fun x _ => isClosed_le (hB x) continuous_const
+  exact isClosed_biInter fun x _ => isClosed_le (continuous_pairing B.flip x) continuous_const
 
 /-- The polar of a set in the sense of `Tdaf.polarSet` is closed, for the same reason: it is an
 intersection of closed half-spaces. -/
-theorem isClosed_polarSet (hB : ∀ x : E, Continuous fun y : F => B x y) :
-    IsClosed (polarSet B C) := by
+theorem isClosed_polarSet : IsClosed (polarSet B C) := by
   have h : polarSet B C = ⋂ x ∈ C, {y : F | B x y ≤ 1} := by ext y; simp [polarSet]
   rw [h]
-  exact isClosed_biInter fun x _ => isClosed_le (hB x) continuous_const
+  exact isClosed_biInter fun x _ => isClosed_le (continuous_pairing B.flip x) continuous_const
 
 end Closed
 
 section ClosureDomain
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  [TopologicalSpace E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
+  [TopologicalSpace E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsContinuousPairing]
 
 /-- **The polar does not see the closure** (Rockafellar §14: `(cl K)° = K°`). -/
-theorem polarCone_closure (hB : ∀ y : F, Continuous fun x : E => B x y) (K : Set E) :
-    polarCone (B := B) (closure K) = polarCone B K := by
+theorem polarCone_closure (K : Set E) : polarCone (B := B) (closure K) = polarCone B K := by
   refine subset_antisymm (polarCone_anti subset_closure) fun y hy x hx => ?_
-  exact closure_minimal (fun z hz => hy z hz) (isClosed_le (hB y) continuous_const) hx
+  exact closure_minimal (fun z hz => hy z hz)
+    (isClosed_le (continuous_pairing B y) continuous_const) hx
 
 end ClosureDomain
 
@@ -419,7 +418,7 @@ section Theorem141
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {K : Set E}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsCompatiblePairing] {K : Set E}
 
 /-- **Rockafellar, Theorem 14.1**, second assertion, in the form `D0` predicts: the bipolar of a
 nonempty convex cone is its *closure*.
@@ -429,9 +428,8 @@ point outside `cl K` is strongly separated from it by a continuous linear functi
 `cl K` is a nonempty cone, `f ≤ 0` on `cl K` and the separating constant is nonnegative
 (`Tdaf.le_zero_of_isCone_of_forall_le` and `Tdaf.nonneg_of_isCone_of_forall_le`), so the `y`
 representing `f` lies in `K°` and detects the point. -/
-theorem polarCone_polarCone (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)
-    (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) :
+theorem polarCone_polarCone (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K)
+    (hne : K.Nonempty) :
     polarCone B.flip (polarCone B K) = closure K := by
   have hmem : ∀ ⦃a : ℝ⦄, 0 < a → ∀ ⦃x⦄, x ∈ K → a • x ∈ K :=
     fun _ ha _ hx => (smul_mem_iff_of_isCone hcone ha).2 hx
@@ -444,41 +442,35 @@ theorem polarCone_polarCone (hBc : ∀ y : F, Continuous fun x : E => B x y)
       le_zero_of_isCone_of_forall_le (smul_mem_closure_of_isCone hmem) hbdd (subset_closure hz)
     have hu : 0 ≤ u := nonneg_of_isCone_of_forall_le (smul_mem_closure_of_isCone hmem) hbdd
       (hne.mono subset_closure)
-    obtain ⟨y, hy⟩ := hBs f
+    obtain ⟨y, hy⟩ := exists_pairing_eq B f
     have hyK : y ∈ polarCone B K := fun z hz => hy z ▸ hle z hz
     have := hx y hyK
     rw [LinearMap.flip_apply, ← hy x] at this
     linarith
-  · exact closure_minimal (subset_polarCone_polarCone B K)
-      (isClosed_polarCone (B := B.flip) fun y => hBc y)
+  · exact closure_minimal (subset_polarCone_polarCone B K) (isClosed_polarCone (B := B.flip))
 
 /-- **Rockafellar, Theorem 14.1.** For a nonempty *closed* convex cone the polarity correspondence
 is an involution: `K°° = K`. -/
-theorem polarCone_polarCone_of_isClosed (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)
-    (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
-    (hcl : IsClosed K) : polarCone B.flip (polarCone B K) = K :=
-  (polarCone_polarCone hBc hBs hconv hcone hne).trans hcl.closure_eq
+theorem polarCone_polarCone_of_isClosed (hconv : Convex ℝ K)
+    (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (hcl : IsClosed K) :
+    polarCone B.flip (polarCone B K) = K :=
+  (polarCone_polarCone hconv hcone hne).trans hcl.closure_eq
 
 /-- **Rockafellar, Theorem 14.1** for a bundled cone: for a closed `PointedCone`, `K°° = K`. All
 three hypotheses of the previous statement are supplied by the bundling. -/
-theorem polarCone_polarCone_pointedCone (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)
-    (K : PointedCone ℝ E) (hcl : IsClosed (K : Set E)) :
+theorem polarCone_polarCone_pointedCone (K : PointedCone ℝ E) (hcl : IsClosed (K : Set E)) :
     polarCone B.flip (polarCone B (K : Set E)) = (K : Set E) :=
-  polarCone_polarCone_of_isClosed hBc hBs (K : ConvexCone ℝ E).convex
+  polarCone_polarCone_of_isClosed (K : ConvexCone ℝ E).convex
     (smul_coe_pointedCone K) ⟨0, K.zero_mem⟩ hcl
 
 /-- **Rockafellar, Theorem 14.1**, third assertion, in the remaining direction: for a nonempty
 closed convex cone the indicator of `K°` conjugates back to the indicator of `K`. -/
-theorem conj_indicatorFn_polarCone (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)
-    (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
-    (hcl : IsClosed K) :
+theorem conj_indicatorFn_polarCone (hconv : Convex ℝ K)
+    (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (hcl : IsClosed K) :
     conj B.flip (indicatorFn (polarCone B K)) = indicatorFn K := by
   rw [conj_indicatorFn_eq_indicatorFn_polarCone (B := B.flip) (smul_polarCone B K)
       (polarCone_nonempty B K),
-    polarCone_polarCone_of_isClosed hBc hBs hconv hcone hne hcl]
+    polarCone_polarCone_of_isClosed hconv hcone hne hcl]
 
 end Theorem141
 
@@ -491,21 +483,20 @@ section Theorem145
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C : Set E}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsCompatiblePairing] {C : Set E}
 
 /-- **Rockafellar, Theorem 14.5**, first assertion: the polar of a closed convex set containing the
 origin is another closed convex set containing the origin, and `C°° = C`.
 
 Containment of the origin is what makes the separating constant positive, so that the separating
 functional can be rescaled to have value exactly `1` on the boundary of the half-space. -/
-theorem polarSet_polarSet (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)
-    (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
+theorem polarSet_polarSet (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
     polarSet B.flip (polarSet B C) = C := by
   refine subset_antisymm (fun x hx => ?_) (subset_polarSet_polarSet B C)
   by_contra hcon
   obtain ⟨f, u, hfC, hfx⟩ := geometric_hahn_banach_closed_point hconv hcl hcon
   have hu : 0 < u := by simpa using hfC 0 h0
-  obtain ⟨y, hy⟩ := hBs f
+  obtain ⟨y, hy⟩ := exists_pairing_eq B f
   have hyC : u⁻¹ • y ∈ polarSet B C := by
     intro z hz
     rw [map_smul, smul_eq_mul, ← hy z]
@@ -517,10 +508,9 @@ theorem polarSet_polarSet (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x 
 
 /-- The closed elements of `Tdaf.polarSetClosure` include every closed convex set containing the
 origin — the reading of Theorem 14.5 as a statement about the bipolar closure operator. -/
-theorem isClosed_polarSetClosure_of_isClosed (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y)
-    (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
-    (polarSetClosure B).IsClosed C :=
-  isClosed_polarSetClosure_iff.2 (polarSet_polarSet hBs hconv hcl h0)
+theorem isClosed_polarSetClosure_of_isClosed (hconv : Convex ℝ C) (hcl : IsClosed C)
+    (h0 : (0 : E) ∈ C) : (polarSetClosure B).IsClosed C :=
+  isClosed_polarSetClosure_iff.2 (polarSet_polarSet hconv hcl h0)
 
 end Theorem145
 
@@ -577,16 +567,15 @@ section ExamplesTopology
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsCompatiblePairing]
 
 /-- **Rockafellar §14**, dually: the polar of the solution set of the homogeneous inequalities
 `⟨aᵢ, y⟩ ≤ 0` is the closure of the convex cone generated by the `aᵢ`. -/
-theorem polarCone_setOf_forall_le_zero {ι : Sort*} (hBc : ∀ y : F, Continuous fun x : E => B x y)
-    (hBs : ∀ g : E →L[ℝ] ℝ, ∃ y : F, ∀ x, g x = B x y) (a : ι → E) :
+theorem polarCone_setOf_forall_le_zero {ι : Sort*} (a : ι → E) :
     polarCone B.flip {y : F | ∀ i, B (a i) y ≤ 0} =
       closure (PointedCone.hull ℝ (Set.range a) : Set E) := by
   rw [← polarCone_hull_range B a]
-  exact polarCone_polarCone hBc hBs
+  exact polarCone_polarCone
     ((PointedCone.hull ℝ (Set.range a) : ConvexCone ℝ E)).convex
     (smul_coe_pointedCone _) ⟨0, (PointedCone.hull ℝ (Set.range a)).zero_mem⟩
 
