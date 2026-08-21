@@ -7,6 +7,7 @@ import Mathlib.Analysis.LocallyConvex.Separation
 import Mathlib.Topology.Instances.EReal.Lemmas
 import Mathlib.Topology.Semicontinuity.Basic
 import Tdaf.Analysis.Convex.Operations.Epi
+import Tdaf.Analysis.Convex.Separation
 
 /-!
 # Closures of convex functions
@@ -638,43 +639,10 @@ theorem exists_affine_le_of_closed_proper (hf : ConvexFn f) (hc : ClosedFn f) (h
   obtain ⟨t, ht⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hp.ne_bot x₀) hx₀
   have hlsc : LowerSemicontinuous f := (closedFn_iff_lowerSemicontinuous hp.ne_bot).1 hc
   have hclosed : IsClosed (epi f) := lowerSemicontinuous_iff_isClosed_epi.1 hlsc
-  have hnot : ((x₀, t - 1) : E × ℝ) ∉ epi f := fun hmem => by
-    rw [mk_mem_epi, ht, _root_.EReal.coe_le_coe_iff] at hmem
-    linarith
-  obtain ⟨L, u, hLs, hLx⟩ := geometric_hahn_banach_closed_point hf.convex_epi hclosed hnot
-  -- Decompose `L` into its horizontal and vertical parts.
-  have hL : ∀ (x : E) (μ : ℝ), L (x, μ) = L (x, 0) + μ * L (0, 1) := by
-    intro x μ
-    have hsplit : ((x, μ) : E × ℝ) = (x, 0) + μ • ((0 : E), (1 : ℝ)) := by simp
-    rw [hsplit, map_add, map_smul, smul_eq_mul]
-  -- The functional is not vertical, and points downwards.
-  have hmem : ((x₀, t) : E × ℝ) ∈ epi f := by rw [mk_mem_epi, ht]
-  have hA := hLs _ hmem
-  rw [hL] at hA hLx
-  have hexp : (t - 1) * L ((0 : E), (1 : ℝ)) = t * L ((0 : E), (1 : ℝ)) - L ((0 : E), (1 : ℝ)) := by
-    ring
-  rw [hexp] at hLx
-  have hneg : L ((0 : E), (1 : ℝ)) < 0 := by linarith
-  -- Rescale.
-  have hd : 0 < -L ((0 : E), (1 : ℝ)) := neg_pos.2 hneg
-  have hd' : (-L ((0 : E), (1 : ℝ))) ≠ 0 := ne_of_gt hd
-  refine ⟨(-L ((0 : E), (1 : ℝ)))⁻¹ • L.comp (ContinuousLinearMap.inl ℝ E ℝ),
-    u / (-L ((0 : E), (1 : ℝ))), fun x => ?_⟩
-  rw [← _root_.EReal.coe_sub]
-  by_contra hlt
-  rw [not_le] at hlt
-  obtain ⟨μ, hμ1, hμ2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hlt
-  have hmemx : ((x, μ) : E × ℝ) ∈ epi f := hμ1.le
-  have hbound := hLs _ hmemx
-  rw [hL] at hbound
-  have happ : ((-L ((0 : E), (1 : ℝ)))⁻¹ • L.comp (ContinuousLinearMap.inl ℝ E ℝ)) x
-      = (-L ((0 : E), (1 : ℝ)))⁻¹ * L (x, 0) := by simp
-  rw [happ] at hμ2
-  have hμ2' : μ < (-L ((0 : E), (1 : ℝ)))⁻¹ * L (x, 0) - u / (-L ((0 : E), (1 : ℝ))) := by
-    exact_mod_cast hμ2
-  have hscaled := mul_lt_mul_of_pos_right hμ2' hd
-  rw [sub_mul, inv_mul_eq_div, div_mul_cancel₀ _ hd', div_mul_cancel₀ _ hd'] at hscaled
-  nlinarith [hbound, hscaled]
+  obtain ⟨y, b, hy, _⟩ :=
+    exists_affine_le_of_isClosed_epi hf hclosed (ν := t) (μ := t - 1) (le_of_eq ht)
+      (by rw [ht]; exact_mod_cast (by linarith : t - 1 < t))
+  exact ⟨y, b, hy⟩
 
 end LocallyConvex
 

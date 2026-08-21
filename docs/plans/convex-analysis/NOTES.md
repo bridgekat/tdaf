@@ -170,6 +170,44 @@ functions. `Lattice.lean` gets its `CompleteLattice` from `GaloisCoinsertion.lif
 `exists_affine_le_of_closed_proper` (**the Fenchel–Moreau keystone**),
 `tendsto_lscHull_along_segment` (**Thm 7.5**), `lscHullClosure`/`clFnClosure` as `ClosureOperator`s.
 
+### `Tdaf/Analysis/Convex/Lattice.lean`
+
+`ConvexFns E` (`abbrev` on the subtype) with `CompleteLattice` from
+`gci_val_convHullFn.liftCompleteLattice`; `coe_sSup`/`coe_iSup` (join is pointwise),
+`coe_sInf`/`coe_iInf` (meet is `convFn`, **not** pointwise), `coe_top`/`coe_bot`,
+`coeOrderEmbedding`, `coeSSupHom`, and `not_coe_inf_eq_inf` (the strictness witness).
+
+### `Tdaf/Analysis/Convex/Separation.lean`
+
+`Separates`, `SeparatesProperly`, `SeparatesStrongly` (**the strict-gap definition in `EReal`** —
+needs no topology on `E`); Theorem 11.1 in all three forms; `separatesStrongly_iff_exists_nhds` and
+`..._closedBall` (the `εB` form); Thm 11.2, 11.4 (+ compact/closed corollaries), 11.5, 11.6
+(full `iff` at layer C, with `(interior C).Nonempty`), 11.7; `halfSpaceCone : _ → PointedCone ℝ E`;
+and `exists_affine_lt_of_notMem` / `exists_affine_le_of_isClosed_epi` — the reusable non-vertical
+separation lemma that `Closure.lean` now consumes.
+
+### `Tdaf/Analysis/Convex/Recession/Cone.lean`
+
+`recessionCone`, `recessionPointedCone : PointedCone ℝ E` (**no hypothesis on `C`**),
+`linealitySpace`, `linealitySubmodule` (`= PointedCone.lineal`, so Thm 2.7 is two lines);
+Thm 8.1 (layer A), Thm 8.2/8.3 and Cors 8.3.2–8.3.4 (**layer B**), `isClosed_recessionCone`
+(**layer B**), Thm 8.4/Cor 8.4.1 (layer D); bridges to Mathlib's `asymptoticCone`.
+
+### `Tdaf/Analysis/Convex/Duality/Pairing.lean`
+
+`affineFn`, `IsAdjointPair` (four-space — Mathlib's pairs a module with *itself*),
+`dualPrecomp` (Mathlib has no `ContinuousLinearMap.dualMap`), `prodPairing`/`negFst` (for D8),
+`dual_prod_apply`/`exists_unique_dual_prod` (the dual of `E × ℝ`), and the `WeakBilin` transport
+API (`toWeak`, `toWeakFn`, `toWeakSet`, …) — all transporting by `rfl`/`Iff.rfl`.
+
+### `Tdaf/Analysis/Convex/Duality/Conjugate.lean`
+
+`conj B f`, `biconj`; `sub_le_conj` (**unconditional**), `le_add_conj` (Fenchel's inequality —
+needs properness, see gotcha 47), `conj_le_iff` (the adjunction, unconditional), `conj_clFn`,
+`eq_biSup_affineFn` (**Thm 12.1**), `biconj_eq_clFn` (**Thm 12.2, Fenchel–Moreau**), `conjEquiv`,
+`gc_conj_conj`/`conjClosure`, and three instantiations: `_weak`, `_topDual` (**the norm topology of
+a Banach space, no transport**), `_inner` (Hilbert/`ℝⁿ`, via Fréchet–Riesz).
+
 ---
 
 ## 1a. House style
@@ -345,6 +383,47 @@ From the repository `README.md` ("Reviewing a formalization"):
 37. **Mathematical, not Lean:** `□` associativity is *not* `add_assoc` on `Set (E × ℝ)`, because
     `epi (f □ g) ⊋ epi f + epi g`. The bridge is `epi_ofEpi_add_subset`. The same lemma is needed
     whenever two `ofEpi`-defined operations compose.
+
+38. **A recurring *class* of error: Rockafellar's `ℝⁿ` statements get closedness for free.** Three
+    times now the same counterexample — a discontinuous linear functional, whose kernel is proper,
+    convex and *dense* — has falsified a statement transcribed literally from the book: D4's
+    affine-minorant claim, the branch condition in `clFn`, and Corollaries 11.5.2 and 11.7.3
+    (`C ≠ univ` does **not** give a closed half-space; the hypothesis must be `closure C ≠ univ`).
+    **Before transcribing any `ℝⁿ` statement that quantifies over "proper", "`≠ ℝⁿ`", or "closed",
+    test it against that functional.**
+39. **`⊤ + ⊥ = ⊥`, so `a ≤ u + v` statements need checking at the improper values.** Fenchel's
+    inequality `⟨x,y⟩ ≤ f x + f* y` is *false* for `f ≡ ⊤` (RHS `= ⊤ + ⊥ = ⊥`) and for `f` taking
+    `⊥`. The unconditional content is `sub_le_conj : ⟨x,y⟩ - f x ≤ f* y`.
+40. **`Tdaf.EReal.coe_sub_le_comm : (a:ℝ) - z ≤ w ↔ (a:ℝ) - w ≤ z` is unconditional** (all eight
+    `⊥`/`⊤` combinations work, because `a` is finite). This one symmetry makes `conj_le_iff`, the
+    conjugacy Galois connection and `biconj B f ≤ f` hypothesis-free. It is the `EReal` fact §12
+    turns on — and note that `add_iSup`/`iSup_add`/`iSup_sub`, which `REVIEW-01` §D predicted would
+    "carry every conjugacy proof", were **not needed at all**.
+41. **`WeakBilin` transport is free but every such `def` must be `noncomputable`** (it depends on
+    `WeakBilin.instAddCommMonoid`; the error names that instance, not the synonym). Built as
+    preimages under `(toWeak B).symm`, `ConvexFn`/`Proper`/`Convex`/`epi`/`dom` all transport by
+    `rfl` or `Iff.rfl`.
+42. **`PointedCone`, not `ConvexCone`, is the bundling to reach for.** `PointedCone R E` is
+    `Submodule {c // 0 ≤ c} E`, so it has a span (`PointedCone.hull`, renamed from `span`), and
+    `PointedCone.lineal` already *is* `C ⊓ -C` with the "largest subspace inside" Galois connection.
+    `ConvexCone` has no span at all. `lineal` needs `[LinearOrder R]`, so wrappers over `ℝ` must be
+    `noncomputable` — and the error blames `Real.linearOrder`, which looks unrelated.
+43. **Structure-instance fields of `Submodule`/`PointedCone` bind their points implicitly**: write
+    `add_mem' {x y} hx hy := …`, else the points are inaccessible.
+44. **`le_iSup₂ x hx` / `iInf₂_le x hx` cannot infer the family through a coercion.** With
+    `⨆ x ∈ s, ((f x : ℝ) : EReal)` elaboration stalls. Fix once with an explicit
+    `(f := fun y (_ : y ∈ s) => …)` wrapper.
+45. **`iInf_apply`/`iSup_apply` will not unify against `sInf (Set.range (Subtype.val ∘ f)) x`** —
+    `iInf` is semireducible, so the higher-order pattern is unsolvable. `change` first.
+46. **`GaloisCoinsertion.liftCompleteLattice` computes by `rfl`** and keeps the ambient
+    `PartialOrder` syntactically, so on a subtype the lifted order *is* `Subtype.partialOrder`. Use
+    `abbrev`, not `def`, for the bundled subtype.
+47. **Mathlib survey corrections found this stage**: `LinearMap.Nondegenerate` already is
+    `SeparatingLeft ∧ SeparatingRight`; `LinearMap.IsAdjointPair` pairs a module with *itself*, so a
+    four-space version must be written; there is **no** `ContinuousLinearMap.dualMap`;
+    `asymptoticCone` exists (`Mathlib/Topology/Algebra/AsymptoticCone.lean`) and is `0⁺(cl C)`, with
+    `isBounded_iff_asymptoticCone_subset_singleton` giving Theorem 8.4 in three lines; the usable
+    `{x | l x ≤ c}` form of `iInter_halfSpaces_eq` exists only in the `RCLike` namespace.
 
 ---
 

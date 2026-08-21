@@ -587,8 +587,42 @@ Interfaces instantiated so far, per `README:91`: `GaloisInsertion`/`ClosureOpera
 a `MulAction ℝ≥0 (E → EReal)` for `smulRight` would give `a • f` a second meaning clashing with the
 pointwise action, so it is a bundled `MonoidHom` into `Function.End` instead.
 
-Next: `Separation.lean` (§11) and then `Duality/{Pairing,Conjugate}` — Fenchel–Moreau, the keystone,
-whose input `exists_affine_le_of_closed_proper` is now available.
+**Stage 3 is done, including the keystone.** Added since:
+
+| module | contents |
+|---|---|
+| `Lattice.lean` | the convex functions as a `CompleteLattice` (§5) |
+| `Separation.lean` | §11 at layer C, plus the reusable non-vertical separation lemma |
+| `Recession/Cone.lean` | §8's set half, layered A/B/D |
+| `Duality/Pairing.lean` | dual pairs, adjoint pairs, product pairings, `WeakBilin` transport |
+| `Duality/Conjugate.lean` | **Theorems 12.1 and 12.2 — Fenchel–Moreau** |
+
+**Fenchel–Moreau holds in three settings, none of them requiring the `WeakBilin` transport that D3
+made the centrepiece.** Carrying compatibility as two hypotheses (`∀ y, Continuous (B · y)` and every
+continuous functional is `B · y`) proves it directly in *any* compatible topology, and both
+hypotheses are trivial for `topDualPairing` — so `biconj_eq_clFn_topDual` is Fenchel–Moreau **in the
+norm topology of a Banach space**, and `biconj_eq_clFn_inner` is Rockafellar's `ℝⁿ` via
+Fréchet–Riesz. `Duality/Compatible.lean` is still wanted, but only for topology-independence of
+`cl f`; it is **not** on the critical path.
+
+Further corrections from this stage:
+
+* **Fenchel's inequality as §2.4 stated it is false.** `⟨x,y⟩ ≤ f x + f* y` fails at improper `f`,
+  because `⊤ + ⊥ = ⊥`. The unconditional content is `⟨x,y⟩ - f x ≤ f* y`; the named inequality
+  carries properness, which is Rockafellar's own wording.
+* **Corollaries 11.5.2 and 11.7.3 are false at layer C** — the third instance of the
+  discontinuous-functional counterexample. `C ≠ univ` does not give a closed half-space; the
+  hypothesis is `closure C ≠ univ`.
+* **Theorems 11.2 and 11.6 are not finite-dimensional**, contrary to §2.2; 11.6's full `iff` holds
+  at layer C with `(interior C).Nonempty` for `ri C ≠ ∅`.
+* **§3.2's layer table was too strong in five places.** Closedness of `0⁺ C`, Theorem 8.2,
+  Theorem 8.3 and Corollaries 8.3.2–8.3.4 are all **layer B**; the lineality space and the
+  direct-sum decomposition are **layer A**. Only Theorem 8.4 and Corollary 8.4.1 are layer D.
+* **§2.4's proof plan omitted a case**: the vertical coefficient can be negative, zero *or
+  positive*, and ruling out the third needs upward closedness of the epigraph.
+
+Next: `Duality/{Support,Polar}` (§13–§15), `Recession/Function.lean` (§8's function half), then
+`RelativeInterior.lean` (§6) — which unblocks the results deliberately deferred from §7, §8 and §11.
 
 ## 8. Conventions
 

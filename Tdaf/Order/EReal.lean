@@ -223,6 +223,36 @@ theorem forall_ne_top_of_sum_ne_top (t : Finset κ) (z : κ → EReal) :
     · exact hj'
     · exact ih (fun k hk => hbot k (by simp [hk])) ht' i hi'
 
+/-- `a - z` is `⊥` exactly when `z` is `⊤`, for a real `a`. -/
+theorem coe_sub_eq_bot_iff {a : ℝ} {z : EReal} : (a : EReal) - z = ⊥ ↔ z = ⊤ := by
+  induction z with
+  | bot => simp
+  | top => simp
+  | coe r =>
+    refine ⟨fun h => absurd h ?_, fun h => absurd h (by simp)⟩
+    rw [← _root_.EReal.coe_sub]
+    exact _root_.EReal.coe_ne_bot _
+
+/-- Subtracting a value below `⊤` from a real number cannot give `⊥`. -/
+theorem coe_sub_ne_bot {a : ℝ} {z : EReal} (h : z ≠ ⊤) : (a : EReal) - z ≠ ⊥ := fun hc =>
+  h (coe_sub_eq_bot_iff.1 hc)
+
+/-- **The symmetry of Fenchel's inequality**, and the single `EReal` fact that carries the whole of
+§12: `a - z ≤ w ↔ a - w ≤ z` whenever `a` is a real number. There is *no* side condition: all eight
+degenerate combinations of `⊥` and `⊤` work out, because `a` is finite. -/
+theorem coe_sub_le_comm {a : ℝ} {z w : EReal} : (a : EReal) - z ≤ w ↔ (a : EReal) - w ≤ z := by
+  induction z with
+  | bot => simpa using coe_sub_eq_bot_iff.symm
+  | top => simp
+  | coe r =>
+    induction w with
+    | bot => simp [coe_sub_eq_bot_iff]
+    | top => simp
+    | coe s =>
+      rw [← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub, _root_.EReal.coe_le_coe_iff,
+        _root_.EReal.coe_le_coe_iff]
+      constructor <;> intro h <;> linarith
+
 end EReal
 
 end Tdaf

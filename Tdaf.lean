@@ -8,5 +8,10 @@ import Tdaf.Analysis.Convex.Operations.Basic
 import Tdaf.Analysis.Convex.Operations.InfConv
 import Tdaf.Analysis.Convex.Operations.Hull
 import Tdaf.Analysis.Convex.Operations.Image
+import Tdaf.Analysis.Convex.Lattice
 import Tdaf.Analysis.Convex.Homogenize
 import Tdaf.Analysis.Convex.Closure
+import Tdaf.Analysis.Convex.Separation
+import Tdaf.Analysis.Convex.Recession.Cone
+import Tdaf.Analysis.Convex.Duality.Pairing
+import Tdaf.Analysis.Convex.Duality.Conjugate

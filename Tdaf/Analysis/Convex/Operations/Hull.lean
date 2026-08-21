@@ -413,6 +413,14 @@ theorem convFn₂_apply (hf : ConvexFn f) (hg : ConvexFn g) (hf' : Proper f) (hg
     refine (add_le_add h₁ h₂).trans (le_of_eq ?_)
     rw [Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← EReal.coe_add, hμ2]
 
+/-- `conv (f ⊓ g) = conv {f, g}`: the convex hull of the pointwise minimum of two functions is the
+convex hull of the pair. Both sides are the greatest convex function below both arguments. -/
+theorem convHullFn_inf (f g : E → EReal) : convHullFn (f ⊓ g) = convFn₂ f g :=
+  le_antisymm
+    (le_convFn₂ (convexFn_convHullFn _) ((convHullFn_le _).trans inf_le_left)
+      ((convHullFn_le _).trans inf_le_right))
+    (le_convHullFn (convexFn_convFn₂ f g) (convFn₂_le_inf f g))
+
 end Binary
 
 end Module
