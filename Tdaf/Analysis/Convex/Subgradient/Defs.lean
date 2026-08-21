@@ -83,12 +83,12 @@ precedent is `Tdaf.recessionPointedCone`.
 Three places, and each is one of D0's two shapes.
 
 * `Tdaf.isClosed_subgradient` needs *the map `⟨z, ·⟩ : F → ℝ` to be continuous* for every `z`.
-  Rockafellar gets this for free in `ℝⁿ`; here it is `[B.flip.IsContinuousPairing]`, the same
+  Rockafellar gets this for free in `ℝⁿ`; here it is `[IsContinuousPairing B.flip]`, the same
   instance `Tdaf.closedFn_conj` asks for, and no surjectivity is involved.
 * `Tdaf.subgradient_conj_indicatorFn` (Corollary 23.5.3) needs `C` **closed** — Rockafellar says so
   too — and it needs it through `Tdaf.closedFn_indicatorFn`.
 * Everything derived from Fenchel–Moreau (`Tdaf.subgradientRel_conj_eq_inv`,
-  `Tdaf.clFn_dirDeriv`) carries `Tdaf.biconj_eq_clFn`'s `[B.IsCompatiblePairing]`.
+  `Tdaf.clFn_dirDeriv`) carries `Tdaf.biconj_eq_clFn`'s `[IsCompatiblePairing B]`.
 
 **Corollary 23.5.4 needs no closedness at all.** Rockafellar derives it from
 `δ(· | K)* = δ(· | K°)`, which needs `K` closed; the direct argument — put `z = 0` and `z = x + x`
@@ -418,7 +418,7 @@ theorem continuous_add_coe (u : EReal) : Continuous fun t : ℝ => u + (t : ERea
 /-- **The subdifferential is closed** once every `⟨z, ·⟩ : F → ℝ` is continuous. This is design
 decision D0 in its "the map is continuous" form: in `ℝⁿ` it is automatic, and here it is the
 instance `Tdaf.closedFn_conj` asks for. -/
-theorem isClosed_subgradient [B.flip.IsContinuousPairing] (f : E → EReal) (x : E) :
+theorem isClosed_subgradient [IsContinuousPairing B.flip] (f : E → EReal) (x : E) :
     IsClosed (subgradient B f x) := by
   rw [show subgradient B f x = ⋂ z : E, {y | f x + ((B (z - x) y : ℝ) : EReal) ≤ f z} from
     Set.ext fun y => by simp]
@@ -701,7 +701,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 
 /-- **Theorem 23.5**, (a) ⟺ `(a**)`: `∂(cl f) x = ∂f x` wherever `(cl f) x = f x`. Only the
 continuity of the pairing is needed, through `Tdaf.conj_clFn`. -/
-theorem mem_subgradient_clFn_iff [B.IsContinuousPairing] (hx : clFn f x = f x) :
+theorem mem_subgradient_clFn_iff [IsContinuousPairing B] (hx : clFn f x = f x) :
     y ∈ subgradient B (clFn f) x ↔ y ∈ subgradient B f x := by
   rw [mem_subgradient_iff_conj_le, mem_subgradient_iff_conj_le, conj_clFn, hx]
 
@@ -709,7 +709,7 @@ variable [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
 
 /-- **Corollary 23.5.1**, pointwise: for a closed proper convex `f`, `x ∈ ∂f* y` and `y ∈ ∂f x`
 say the same thing. -/
-theorem mem_subgradient_conj_iff_of_closedFn [B.IsCompatiblePairing] (hf : ConvexFn f)
+theorem mem_subgradient_conj_iff_of_closedFn [IsCompatiblePairing B] (hf : ConvexFn f)
     (hc : ClosedFn f) :
     x ∈ subgradient B.flip (conj B f) y ↔ y ∈ subgradient B f x :=
   mem_subgradient_conj_iff (congrFun (biconj_eq_self hf hc) x)
@@ -718,27 +718,27 @@ theorem mem_subgradient_conj_iff_of_closedFn [B.IsCompatiblePairing] (hf : Conve
 multivalued mapping — the graph of `∂f*` is the flip of the graph of `∂f`.
 
 This is the form §26 and §31 want, and it is why `Tdaf.subgradientRel` exists. -/
-theorem subgradientRel_conj_eq_inv [B.IsCompatiblePairing] (hf : ConvexFn f) (hc : ClosedFn f) :
+theorem subgradientRel_conj_eq_inv [IsCompatiblePairing B] (hf : ConvexFn f) (hc : ClosedFn f) :
     subgradientRel B.flip (conj B f) = (subgradientRel B f).inv := by
   ext ⟨y, x⟩
   simp only [SetRel.mem_inv, mem_subgradientRel]
   exact mem_subgradient_conj_iff_of_closedFn hf hc
 
 /-- **Corollary 23.5.2**: at a point where a convex `f` is subdifferentiable, `(cl f) x = f x`. -/
-theorem clFn_eq_of_mem_subgradient [B.IsCompatiblePairing] (hf : ConvexFn f)
+theorem clFn_eq_of_mem_subgradient [IsCompatiblePairing B] (hf : ConvexFn f)
     (hy : y ∈ subgradient B f x) : clFn f x = f x := by
   rw [← congrFun (biconj_eq_clFn (B := B) hf) x]
   exact biconj_eq_of_mem_subgradient hy
 
 /-- **Corollary 23.5.2**, second half: and then `∂(cl f) x = ∂f x`. -/
-theorem subgradient_clFn [B.IsCompatiblePairing] (hf : ConvexFn f)
+theorem subgradient_clFn [IsCompatiblePairing B] (hf : ConvexFn f)
     (hy : y ∈ subgradient B f x) : subgradient B (clFn f) x = subgradient B f x :=
   Set.ext fun _ => mem_subgradient_clFn_iff (clFn_eq_of_mem_subgradient hf hy)
 
 /-- **Corollary 23.5.3.** For a nonempty closed convex set `C`, the subgradients at `y` of the
 support function `δ*(· | C) = δ(· | C)*` are exactly the points of `C` at which the linear function
 `⟨·, y⟩` attains its maximum over `C`. -/
-theorem subgradient_conj_indicatorFn [B.IsCompatiblePairing] {C : Set E} (hC : IsClosed C)
+theorem subgradient_conj_indicatorFn [IsCompatiblePairing B] {C : Set E} (hC : IsClosed C)
     (hCc : Convex ℝ C) (hCne : C.Nonempty) (y : F) :
     subgradient B.flip (conj B (indicatorFn C)) y = {x ∈ C | ∀ z ∈ C, B z y ≤ B x y} := by
   ext x
@@ -754,7 +754,7 @@ theorem subgradient_conj_indicatorFn [B.IsCompatiblePairing] {C : Set E} (hC : I
 `Tdaf.supportFn` does not exist yet (§13 is not written), but the support function of a set *is*
 the conjugate of its indicator, so `conj B.flip (indicatorFn (∂f x))` is the statement rather than
 a weakening of it. It should be restated with `supportFn` when §13 lands. -/
-theorem clFn_dirDeriv [B.IsCompatiblePairing] (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
+theorem clFn_dirDeriv [IsCompatiblePairing B] (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     clFn (dirDeriv f x) = conj B.flip (indicatorFn (subgradient B f x)) := by
   rw [← conj_dirDeriv ht hb]
   exact (biconj_eq_clFn (convexFn_dirDeriv hf ht hb)).symm

@@ -46,18 +46,18 @@ every duality result in Parts III, V, VI, VII and VIII of the book reduces to Fe
 
 **Whatever topology `E` already has.** Fenchel–Moreau does not care which topology `E` carries, so
 long as its continuous dual is the `F` side of the pairing. That is
-`LinearMap.IsCompatiblePairing B`, and its two fields are what the theorems below consume:
+`Tdaf.IsCompatiblePairing B`, and its two fields are what the theorems below consume:
 
 * `Tdaf.continuous_pairing B y : Continuous fun x => B x y` — every `⟨·, y⟩` is continuous;
 * `Tdaf.exists_pairing_eq B g : ∃ y, ∀ x, g x = B x y` — and every continuous functional is one.
 
-The first is a class in its own right, `LinearMap.IsContinuousPairing`, which
+The first is a class in its own right, `Tdaf.IsContinuousPairing`, which
 `IsCompatiblePairing` extends, and the closedness half of this file — `Tdaf.closedFn_conj`,
 `Tdaf.conj_clFn`, `Tdaf.biconj_le_clFn` — asks only for it. That is not a refinement for its own
 sake: a Banach space paired with its **norm**-topology dual is a continuous pairing on both sides
 but a compatible one only if it is reflexive, and those three statements are true there. A
-statement symmetric in the two sides asks for `[B.IsCompatiblePairing]` and
-`[B.flip.IsCompatiblePairing]` together — `Tdaf.conjEquiv` is the example. The canonical instance
+statement symmetric in the two sides asks for `[IsCompatiblePairing B]` and
+`[IsCompatiblePairing B.flip]` together — `Tdaf.conjEquiv` is the example. The canonical instance
 is a locally convex space paired with its **own** continuous dual
 (`Tdaf.instIsCompatiblePairingTopDual`), where both fields are trivial, so a Banach space in its
 norm topology, a Hilbert space, and `ℝⁿ` are all covered directly and every hypothesis of
@@ -254,7 +254,7 @@ dual. -/
 section ConjClosed
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.flip.IsContinuousPairing] {f : E → EReal}
+  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B.flip] {f : E → EReal}
 
 /-- The conjugate is lower semicontinuous whenever the pairing is continuous on the `F` side. No
 surjectivity is needed, so this applies to a Banach space paired with its norm dual. -/
@@ -286,7 +286,7 @@ section ConjClosure
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
-  [B.IsContinuousPairing] {f : E → EReal}
+  [IsContinuousPairing B] {f : E → EReal}
 
 /-- **Rockafellar, Theorem 12.2** (first half): `(cl f)* = f*`.
 
@@ -313,7 +313,7 @@ section Theorem121
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsCompatiblePairing] {f : E → EReal}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
 /-- **Rockafellar, Theorem 12.1**, in its working form: below any value strictly under a closed
 convex function there is an affine minorant of the pairing.
@@ -438,7 +438,7 @@ section FenchelMoreau
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsCompatiblePairing] {f : E → EReal}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
 /-- **Rockafellar, Theorem 12.2 — the Fenchel–Moreau theorem.** For a convex function,
 `f** = cl f`.
@@ -550,7 +550,7 @@ section Involution
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
-  (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [B.IsCompatiblePairing] [B.flip.IsCompatiblePairing]
+  (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
 
 /-- **Rockafellar, Corollary 12.2.1.** The conjugacy operation induces a symmetric one-to-one
 correspondence between the closed proper convex functions on `E` and those on `F`. -/

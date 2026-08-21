@@ -50,9 +50,9 @@ proved again.
 spaces are genuinely different, and a statement such as Theorem 13.2 — which asks both that
 `g : F → EReal` be closed and that the set it supports be closed in `E` — needs a topology and a
 compatible pairing on *both* sides. That is why the characterisation theorems ask for a class on
-each side, exactly as `Tdaf.conjEquiv` does — `[B.flip.IsCompatiblePairing]` throughout, and on the
-`E` side either `[B.IsCompatiblePairing]` or, where only closedness of the supported set is at
-stake, the weaker `[B.IsContinuousPairing]`.
+each side, exactly as `Tdaf.conjEquiv` does — `[IsCompatiblePairing B.flip]` throughout, and on the
+`E` side either `[IsCompatiblePairing B]` or, where only closedness of the supported set is at
+stake, the weaker `[IsContinuousPairing B]`.
 
 **Positive homogeneity is what an indicator conjugates to, and conversely.**
 `Tdaf.conj_eq_indicatorFn_of_posHomogeneous` is proved with no topology at all: reindexing the
@@ -374,7 +374,7 @@ end PosHom
 section Closed
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.flip.IsContinuousPairing] {s : Set E}
+  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B.flip] {s : Set E}
 
 /-- The support function is lower semicontinuous as soon as the pairing is continuous on the `F`
 side. -/
@@ -398,7 +398,7 @@ about `F`. -/
 section ContinuousPairing
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  [TopologicalSpace E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsContinuousPairing] {s : Set E}
+  [TopologicalSpace E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B] {s : Set E}
 
 /-- The set `{x | ⟨x, y⟩ ≤ M}` is closed when the pairing is continuous on the `E` side. -/
 theorem isClosed_setOf_pairing_le (y : F) (M : EReal) :
@@ -426,7 +426,7 @@ section Theorem131
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.IsCompatiblePairing]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B]
 
 /-- **Rockafellar, Theorem 13.1.** A point lies in the closed convex hull of `s` if and only if it
 satisfies every weak linear inequality that the support function of `s` records.
@@ -478,7 +478,7 @@ section Corollary1321
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [B.flip.IsCompatiblePairing] {g : F → EReal}
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B.flip] {g : F → EReal}
 
 /-- **Rockafellar, Corollary 13.2.1.** The closure of a positively homogeneous convex function that
 is not identically `+∞` is the support function of a certain closed convex set, namely
@@ -532,7 +532,7 @@ closed convex set are conjugate to each other.
 
 One direction is `Tdaf.supportFn_eq_conj_indicatorFn`, which is a definition unfolded; the other is
 Fenchel–Moreau together with `cl δ(· | s) = δ(· | cl s)`. -/
-theorem conj_supportFn [B.IsCompatiblePairing] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
+theorem conj_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
     conj B.flip (supportFn B s) = indicatorFn s := by
   rw [supportFn_eq_conj_indicatorFn]
   change biconj B (indicatorFn s) = indicatorFn s
@@ -541,7 +541,7 @@ theorem conj_supportFn [B.IsCompatiblePairing] (hs₁ : Convex ℝ s) (hs₂ : I
 omit [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F]
   [LocallyConvexSpace ℝ F] in
 /-- **Theorem 13.1 for a closed convex set**: `s` is recovered from its support function. -/
-theorem supportSet_supportFn [B.IsCompatiblePairing] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
+theorem supportSet_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
     supportSet B.flip (supportFn B s) = s := by
   ext x
   simp only [mem_supportSet, LinearMap.flip_apply]
@@ -555,7 +555,7 @@ Rockafellar states the class of sets as "non-empty convex"; since the support fu
 the closure or the convex hull, the same functions arise from the nonempty *closed convex* sets,
 and that is what is asserted here, so that the correspondence is one-to-one
 (`Tdaf.supportEquiv`). -/
-theorem exists_supportFn_iff [B.IsContinuousPairing] [B.flip.IsCompatiblePairing] :
+theorem exists_supportFn_iff [IsContinuousPairing B] [IsCompatiblePairing B.flip] :
     (∃ C : Set E, C.Nonempty ∧ Convex ℝ C ∧ IsClosed C ∧ g = supportFn B C) ↔
       (ConvexFn g ∧ ClosedFn g ∧ Proper g ∧ PosHomogeneous g) := by
   constructor
@@ -572,8 +572,8 @@ theorem exists_supportFn_iff [B.IsContinuousPairing] [B.flip.IsCompatiblePairing
 /-- **Rockafellar, Theorem 13.2** as a bijection, the "important one-to-one correspondence between
 the closed convex sets and objects of quite a different sort". It is the restriction of
 `Tdaf.conjEquiv` along the two embeddings `s ↦ δ(· | s)` and "positively homogeneous". -/
-noncomputable def supportEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [B.IsCompatiblePairing]
-    [B.flip.IsCompatiblePairing] :
+noncomputable def supportEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] :
     {C : Set E // C.Nonempty ∧ Convex ℝ C ∧ IsClosed C} ≃
       {g : F → EReal // ConvexFn g ∧ ClosedFn g ∧ Proper g ∧ PosHomogeneous g} where
   toFun C := ⟨supportFn B C.1, convexFn_supportFn B C.1, closedFn_supportFn,
@@ -593,7 +593,7 @@ omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
 The `ClosedFn` hypothesis is not in the book: see the design note above. Rockafellar's "bounded" is
 here read as "`⟨·, y⟩` is bounded above on `C` for every `y`", which is what his own proof uses and
 which coincides with boundedness in `Rⁿ`. -/
-theorem exists_supportFn_finite_iff [B.IsContinuousPairing] [B.flip.IsCompatiblePairing] :
+theorem exists_supportFn_finite_iff [IsContinuousPairing B] [IsCompatiblePairing B.flip] :
     (∃ C : Set E, C.Nonempty ∧ (∀ y : F, ∃ c : ℝ, ∀ x ∈ C, B x y ≤ c) ∧ g = supportFn B C) ↔
       ((∀ y, g y ≠ ⊥) ∧ (∀ y, g y ≠ ⊤) ∧ ConvexFn g ∧ ClosedFn g ∧ PosHomogeneous g) := by
   constructor
