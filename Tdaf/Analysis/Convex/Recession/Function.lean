@@ -132,7 +132,8 @@ rather than `f0⁺`. Rockafellar's `g` is *not* `hom f` either — it is `cl (ho
 * the formula `cl K = K ∪ {0} × 0⁺C` of Theorem 8.2, which `Recession/Cone.lean` deliberately does
   not prove (its direct proof of Theorem 8.2 supersedes it and nothing in §9 consumes it), and
 * Theorem 7.4 (`cl f = f` on `ri (dom f)`) to know that `cl (hom f)` still agrees with `fa` for
-  `a > 0`; Theorem 7.4 needs `RelativeInterior.lean`, which does not exist yet, and is layer D.
+  `a > 0`; that is `Tdaf.ConvexFn.clFn_eq_of_mem_relint_dom` in
+  `Tdaf/Analysis/Convex/RelativeInterior.lean`, layer D and not imported here.
 
 So D6's payoff is real but it is *downstream* of §8, not a shortcut into it. The proof here is
 direct and splits cleanly:
@@ -1106,7 +1107,7 @@ homogenisation `g = hom f`, which is design decision D6's advertised payoff. Tha
   `Tdaf/Analysis/Convex/Recession/Cone.lean` deliberately omits (its direct proof of Theorem 8.2
   supersedes it, and nothing in §9 consumes it), and
 * Theorem 7.4 (`cl f = f` on `ri (dom f)`) to know that `cl (hom f)` still agrees with `fa` for
-  `a > 0`; Theorem 7.4 lives in the unwritten `RelativeInterior.lean` and is layer D.
+  `a > 0`; that is `Tdaf.ConvexFn.clFn_eq_of_mem_relint_dom`, layer D and not imported here.
 
 The direct proof below uses only Theorems 8.1, 8.2 and 8.3 and stays at layer B. It splits into
 the two halves of `tendsto_order`, and only the *upper* half needs a point of `dom f` on the ray

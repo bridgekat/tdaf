@@ -63,13 +63,10 @@ a module with *itself* (`B : M →ₗ[R] M →ₛₗ[I] M₃`), whereas a dual p
 **Separating pairings are Mathlib's `LinearMap.Nondegenerate`**, which is by definition
 `SeparatingLeft B ∧ SeparatingRight B`; no new predicate is introduced here.
 
-**No weak topology.** An earlier design made the weak topology `σ(E, F)` — Mathlib's type synonym
-`WeakBilin B` — the mechanism by which the duality theorems were to be proved and then transported
-out. It is not needed: the duality theorems hold in whatever topology `E` already carries, provided
-its continuous dual is the `F` side of the pairing, and that is stated as the class
-`Tdaf.IsCompatiblePairing` rather than engineered by a change of type. What the pairing is
-*for* is the freedom to let `E` and `F` be different spaces, which §30 (adjoint bifunctions) and
-§33 (saddle-functions) need.
+**Whatever topology `E` already carries.** The duality theorems ask only that the continuous dual
+of `E` be the `F` side of the pairing, which is the class `Tdaf.IsCompatiblePairing`; no change of
+topology on `E` is involved. What the pairing is *for* is the freedom to let `E` and `F` be
+different spaces, which §30 (adjoint bifunctions) and §33 (saddle-functions) need.
 
 **Infinite dimensions cost hypotheses, not generality.** In the category of topological vector
 spaces the arrows are the *continuous* linear maps, and a discontinuous linear functional is simply

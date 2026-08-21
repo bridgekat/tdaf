@@ -59,12 +59,13 @@ while `g` itself is convex, finite everywhere and proper. With Rockafellar's bra
 of `g` is `≡ ⊥` too — and for `g + δ(· | closedBall 0 1)` the same phenomenon breaks
 `f** = cl f` for a function with bounded effective domain. Branching on the hull, as here, is the
 standard Γ-regularization and makes `f** = clFn f` unconditional. The price is that
-`Proper f → Proper (clFn f)` (Theorem 7.4) is no longer available at this layer; it is
-finite-dimensional and belongs with the relative-interior theory.
+`Proper f → Proper (clFn f)` (Theorem 7.4) is unavailable at this layer; it is finite-dimensional,
+and is `Tdaf.ConvexFn.proper_clFn` in `Tdaf/Analysis/Convex/RelativeInterior.lean`.
 
 **What is deliberately absent.** Theorem 7.2, Theorem 7.4, Lemma 7.3, and the `ri`-flavoured halves
 of Theorems 7.5 and 7.6 all rest on relative interiors and on Theorem 6.1, and are
-finite-dimensional. They are not stated here, not even in weakened form.
+finite-dimensional. They are not stated here, not even in weakened form;
+`Tdaf/Analysis/Convex/RelativeInterior.lean` supplies Lemma 7.3 and Theorems 7.2 and 7.4.
 
 **The dichotomy.** The layer-B replacement for Theorem 7.2 is Corollary 7.2.1, and it must be
 stated as "no finite values", not as "identically `⊥`": the function on `ℝ` that is `⊥` at the

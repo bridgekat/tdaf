@@ -61,9 +61,8 @@ statement symmetric in the two sides asks for `[IsCompatiblePairing B]` and
 is a locally convex space paired with its **own** continuous dual
 (`Tdaf.instIsCompatiblePairingTopDual`), where both fields are trivial, so a Banach space in its
 norm topology, a Hilbert space, and `ℝⁿ` are all covered directly and every hypothesis of
-Fenchel–Moreau is discharged by instance search. No weak topology and no type synonym appear
-anywhere in this file: the general pairing buys the freedom to let `E` and `F` be different spaces
-— which §30 and §33 need — and nothing else.
+Fenchel–Moreau is discharged by instance search. The general pairing buys the freedom to let `E`
+and `F` be different spaces — which §30 and §33 need — and nothing else.
 
 **Fenchel's inequality is not hypothesis-free.** `⟨x, y⟩ ≤ f x + f* y` is *false* in `EReal` when
 `f ≡ +∞`: then `f* ≡ -∞` and the right-hand side is `⊤ + ⊥ = ⊥`. It is false again when `f` takes

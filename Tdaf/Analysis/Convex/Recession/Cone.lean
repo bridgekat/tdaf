@@ -83,7 +83,7 @@ computes is `0⁺(cl C)` — precisely the "asymptotic cone" terminology Rockafe
 declines to adopt. `Tdaf.recessionCone_eq_asymptoticCone` records that the two agree for nonempty
 closed convex sets, and `Tdaf.recessionCone_closure_eq_asymptoticCone` records the general
 identification. A separate definition is still needed: `Tdaf.recessionCone` is purely algebraic,
-and `Tdaf/Analysis/Convex/Recession/Function.lean` will define the recession function of `f` as
+and `Tdaf/Analysis/Convex/Recession/Function.lean` defines the recession function of `f` as
 `ofEpi (0⁺(epi f))` at layer A, where no topology on `E × ℝ` is available.
 
 ### What is deliberately absent
@@ -95,10 +95,10 @@ it. Stating it needs a set-level homogenisation `K` that belongs with
 nothing in §9 consumes it.
 
 *Corollary 8.3.1*, `0⁺(ri C) = 0⁺(cl C)`, which is stated with relative interiors and rests on
-Theorem 6.1. `Tdaf/Analysis/Convex/RelativeInterior.lean` does not exist yet, so the layer-B
-stand-in `Tdaf.recessionCone_interior_eq_recessionCone_closure`, with `interior` in place of `ri`,
-is proved here instead — the same substitution `Tdaf/Analysis/Convex/Closure.lean` makes for
-Theorem 7.5.
+Theorem 6.1. It is `Tdaf.Convex.recessionCone_relint` in
+`Tdaf/Analysis/Convex/RelativeInterior.lean`; what is proved here is the layer-B stand-in
+`Tdaf.recessionCone_interior_eq_recessionCone_closure`, with `interior` in place of `ri` — the
+same substitution `Tdaf/Analysis/Convex/Closure.lean` makes for Theorem 7.5.
 
 *Rockafellar's `rank`*. The direct-sum decomposition `C = L + (C ∩ L')` is here, at layer A and for
 an arbitrary complement `L'` of the lineality space `L`, which subsumes the orthogonal complement

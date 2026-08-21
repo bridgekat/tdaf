@@ -87,10 +87,11 @@ Theorem 11.7 the answer is yes: it is a pointed convex cone, and bundling it as
 
 **What is deliberately absent.** Theorem 11.3 (proper separation of `C₁` and `C₂` is possible
 exactly when `ri C₁` and `ri C₂` are disjoint) and Corollaries 11.6.1 and 11.6.2 rest on
-Theorem 6.1 and on `ri C ≠ ∅` for nonempty convex `C`. They are finite-dimensional and belong with
-`RelativeInterior.lean`; they are not stated here, not even in weakened form. Corollary 11.4.1 is
-phrased with recession cones (§9), which do not exist yet, and is skipped; Corollary 11.4.2 is
-obtained from Mathlib's compact/closed separation instead of from Corollary 11.4.1 as in the book.
+Theorem 6.1 and on `ri C ≠ ∅` for nonempty convex `C`. They are finite-dimensional and are proved
+downstream, in `Tdaf/Analysis/Convex/RelativeInterior.lean`. Corollary 11.4.1 is phrased with
+recession cones (§9, `Tdaf/Analysis/Convex/Recession/Cone.lean`), also downstream, and is skipped;
+Corollary 11.4.2 is obtained from Mathlib's compact/closed separation instead of from
+Corollary 11.4.1 as in the book.
 
 Two statements of the book are *false* at this layer and are corrected rather than dropped.
 Corollary 11.5.2 — a convex set other than the whole space lies in a closed half-space — is proved
@@ -548,7 +549,8 @@ Rockafellar's hypothesis is that `C` be *relatively* open, which in `ℝⁿ` is 
 every nonempty convex set there has a nonempty relative interior, and that relative interior is
 relatively open, so the theorem applies to every nonempty convex set through `ri C`. Outside finite
 dimensions the relative interior is not available and openness is the right hypothesis; the
-relatively open version belongs with `RelativeInterior.lean`. -/
+relatively open version is `Tdaf.exists_lt_of_notMem_relint` in
+`Tdaf/Analysis/Convex/RelativeInterior.lean`. -/
 theorem exists_separates_of_isOpen_of_disjoint_affine {C : Set E} {M : AffineSubspace ℝ E}
     (hC₁ : Convex ℝ C) (hC₂ : IsOpen C) (hC₃ : C.Nonempty) {p : E} (hp : p ∈ M)
     (hdisj : Disjoint C (M : Set E)) :
@@ -606,8 +608,9 @@ the interior of `C`.
 
 Rockafellar's statement is about `ri C`, and needs no hypothesis of the kind
 `(interior C).Nonempty`, because in `ℝⁿ` a nonempty convex set has nonempty relative interior
-(Theorem 6.2). Outside finite dimensions that fails, and the relative-interior statement —
-together with Corollaries 11.6.1 and 11.6.2 — is deferred to `RelativeInterior.lean`. -/
+(Theorem 6.2). Outside finite dimensions that fails, so `interior` is the hypothesis here;
+Corollaries 11.6.1 and 11.6.2 are `Tdaf.exists_ne_zero_isMaxOn_of_mem_frontier` and
+`Tdaf.notMem_relint_iff_exists_isMaxOn` in `Tdaf/Analysis/Convex/RelativeInterior.lean`. -/
 theorem exists_isSupporting_iff_disjoint_interior {C D : Set E} (hC : Convex ℝ C)
     (hD : Convex ℝ D) (hDC : D ⊆ C) (hD' : D.Nonempty) (hCi : (interior C).Nonempty) :
     (∃ (g : E →L[ℝ] ℝ) (b : ℝ), IsSupporting g b C ∧ (∀ x ∈ D, g x = b) ∧ ∃ x ∈ C, g x ≠ b) ↔

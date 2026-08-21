@@ -5,8 +5,7 @@ Authors: TDAF contributors
 -/
 import Mathlib.Data.EReal.Inv
 import Mathlib.Data.Rel
-import Tdaf.Analysis.Convex.Duality.Conjugate
-import Tdaf.Analysis.Convex.Homogeneous
+import Tdaf.Analysis.Convex.Duality.Support
 
 /-!
 # Subgradients, normal cones and directional derivatives
@@ -46,13 +45,13 @@ inequalities, one for each `z`, and neither it nor Theorem 23.5 uses any topolog
 * `Tdaf.biconj_eq_of_mem_subgradient`, `Tdaf.clFn_eq_of_mem_subgradient`,
   `Tdaf.subgradient_clFn` — **Corollary 23.5.2**.
 * `Tdaf.subgradient_indicatorFn` — `∂δ(· | C) x = N_C(x)`, for `x ∈ C`.
-* `Tdaf.subgradient_conj_indicatorFn` — **Corollary 23.5.3**: `∂δ*(· | C) y` is the set of
-  maximizers of `⟨·, y⟩` over `C`.
+* `Tdaf.subgradient_supportFn`, `Tdaf.subgradient_conj_indicatorFn` — **Corollary 23.5.3**:
+  `∂δ*(· | C) y` is the set of maximizers of `⟨·, y⟩` over `C`.
 * `Tdaf.mem_subgradient_indicatorFn_pointedCone` — **Corollary 23.5.4**.
 * `Tdaf.monotoneOn_sub_div`, `Tdaf.dirDeriv_zero`, `Tdaf.posHomogeneous_dirDeriv`,
   `Tdaf.convexFn_dirDeriv`, `Tdaf.neg_dirDeriv_neg_le` — **Theorem 23.1**.
-* `Tdaf.mem_subgradient_iff_le_dirDeriv`, `Tdaf.conj_dirDeriv`, `Tdaf.clFn_dirDeriv` —
-  **Theorem 23.2**, both halves.
+* `Tdaf.mem_subgradient_iff_le_dirDeriv`, `Tdaf.supportSet_dirDeriv`, `Tdaf.conj_dirDeriv`,
+  `Tdaf.clFn_dirDeriv` — **Theorem 23.2**, both halves.
 * `Tdaf.proper_of_mem_subgradient` — **Theorem 23.3**, first half.
 * `Tdaf.convex_subgradient`, `Tdaf.isClosed_subgradient` — `∂f x` is convex always, and closed as
   soon as the pairing is continuous in its second variable.
@@ -106,20 +105,17 @@ is a reindexing of the infimum and holds for every `f` and every `x`.
 ### What is deferred
 
 * **Theorem 23.4** (`∂f x ≠ ∅` on `ri (dom f)`, and `f'(x; ·) = δ*(· | ∂f x)` there) and
-  **Theorem 23.7** rest on relative interiors, which `Tdaf/Analysis/Convex/RelativeInterior.lean`
-  will supply. They are not stated here, not even weakened. Only the relative-interior-free first
+  **Theorem 23.7** rest on relative interiors, which live in
+  `Tdaf/Analysis/Convex/RelativeInterior.lean`, a finite-dimensional module this file does not
+  import. They are not stated here, not even weakened. Only the relative-interior-free first
   sentence of Theorem 23.4 — `∂f x = ∅` off `dom f` for proper `f` — is recorded, as
   `Tdaf.subgradient_eq_empty_of_notMem_dom`.
 * The second half of **Theorem 23.3** (if `f` is not subdifferentiable at `x` then
   `f'(x; z - x) = -∞` for `z ∈ ri (dom f)`) is relative-interior-based and is deferred with it.
 * **Theorem 23.6** (ε-subgradients) is omitted: its proof runs through Theorems 9.7 and 13.5, and
-  §13 does not exist yet.
+  Theorem 13.5 is itself deferred by `Tdaf/Analysis/Convex/Duality/Support.lean`.
 * **Theorems 23.8–23.10** are subdifferential *calculus* and belong in
   `Tdaf/Analysis/Convex/Subgradient/Calculus.lean`.
-* `Tdaf.clFn_dirDeriv` states the second half of Theorem 23.2 as `cl (f'(x; ·)) = δ(· | ∂f x)*`,
-  since §13's `δ*(· | S)` does not exist yet. The conjugate of an indicator *is* the support
-  function, so this is the statement and not a weakening; it should be restated with `supportFn`
-  when §13 lands.
 
 ## References
 
@@ -636,55 +632,22 @@ theorem mem_subgradient_iff_le_dirDeriv (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     rw [hr]
     exact h2
 
+/-- The set §13 attaches to `f'(x; ·)` is the subdifferential: `Tdaf.supportSet` unfolds to the
+system of inequalities `⟨v, y⟩ ≤ f'(x; v)`, which is `Tdaf.mem_subgradient_iff_le_dirDeriv`. -/
+theorem supportSet_dirDeriv (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
+    supportSet B (dirDeriv f x) = subgradient B f x :=
+  Set.ext fun _ => (mem_subgradient_iff_le_dirDeriv ht hb).symm
+
 /-- **Theorem 23.2**, the dual half: the conjugate of `f'(x; ·)` is the *indicator* of `∂f x`.
 
-This is Corollary 13.2.1 specialised to the positively homogeneous convex function `f'(x; ·)`,
-proved here directly since §13 does not exist yet. `f'(x; ·)` vanishes at the origin, so the
-supremum defining the conjugate is `0` at every `y` with `⟨·, y⟩ ≤ f'(x; ·)`; and at any other `y`
-positive homogeneity drives it to `⊤`.
-
-Convexity of `f` is not needed: `Tdaf.mem_subgradient_iff_le_dirDeriv` and
-`Tdaf.posHomogeneous_dirDeriv` carry no such hypothesis, and they are the whole proof. -/
+This is `Tdaf.conj_eq_indicatorFn_of_posHomogeneous` — the engine of Corollary 13.2.1 — applied to
+`f'(x; ·)`, which is positively homogeneous and finite at the origin. Convexity of `f` is not
+needed, and neither is any topology. -/
 theorem conj_dirDeriv (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     conj B (dirDeriv f x) = indicatorFn (subgradient B f x) := by
-  funext y
-  by_cases hy : y ∈ subgradient B f x
-  · rw [indicatorFn_of_mem hy]
-    have hle := (mem_subgradient_iff_le_dirDeriv ht hb).1 hy
-    refine le_antisymm (iSup_le fun v => ?_) ?_
-    · rw [EReal.coe_sub_le_comm, sub_zero]
-      exact hle v
-    · have h0 := sub_le_conj B (dirDeriv f x) 0 y
-      rwa [map_zero, LinearMap.zero_apply, dirDeriv_zero ht hb, _root_.EReal.coe_zero,
-        sub_zero] at h0
-  · rw [indicatorFn_of_notMem hy]
-    by_contra hcon
-    obtain ⟨M, hM, -⟩ :=
-      _root_.EReal.lt_iff_exists_real_btwn.1 (lt_top_iff_ne_top.2 hcon)
-    rw [mem_subgradient_iff_le_dirDeriv ht hb] at hy
-    push Not at hy
-    obtain ⟨v, hv⟩ := hy
-    obtain ⟨d, hd1, hd2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hv
-    have hpos : 0 < B v y - d := by
-      have : d < B v y := mod_cast hd2
-      linarith
-    obtain ⟨l, hl, hlM⟩ : ∃ l : ℝ, 0 < l ∧ M < l * (B v y - d) :=
-      ⟨(|M| + 1) / (B v y - d), div_pos (by positivity) hpos, by
-        rw [div_mul_cancel₀ _ hpos.ne']
-        linarith [le_abs_self M]⟩
-    have hterm := sub_le_conj B (dirDeriv f x) (l • v) y
-    rw [map_smul, LinearMap.smul_apply, smul_eq_mul,
-      posHomogeneous_dirDeriv f x l hl v] at hterm
-    have hmul : (l : EReal) * dirDeriv f x v ≤ ((l * d : ℝ) : EReal) := by
-      rw [← EReal.coe_mul_coe]
-      exact (EReal.coe_mul_le_coe_mul_iff hl).2 hd1.le
-    have hbound : ((l * (B v y - d) : ℝ) : EReal) ≤ conj B (dirDeriv f x) y := by
-      refine le_trans ?_ hterm
-      rw [show (l * (B v y - d) : ℝ) = l * B v y - l * d from by ring, _root_.EReal.coe_sub]
-      exact _root_.EReal.sub_le_sub le_rfl hmul
-    have hfin := lt_of_le_of_lt hbound hM
-    rw [_root_.EReal.coe_lt_coe_iff] at hfin
-    linarith
+  rw [conj_eq_indicatorFn_of_posHomogeneous (posHomogeneous_dirDeriv f x)
+      ⟨0, by rw [dirDeriv_zero ht hb]; simp⟩,
+    supportSet_dirDeriv ht hb]
 
 end DirDerivSubgradient
 
@@ -737,7 +700,8 @@ theorem subgradient_clFn [IsCompatiblePairing B] (hf : ConvexFn f)
 
 /-- **Corollary 23.5.3.** For a nonempty closed convex set `C`, the subgradients at `y` of the
 support function `δ*(· | C) = δ(· | C)*` are exactly the points of `C` at which the linear function
-`⟨·, y⟩` attains its maximum over `C`. -/
+`⟨·, y⟩` attains its maximum over `C`. `Tdaf.subgradient_supportFn` is the same statement with
+§13's `Tdaf.supportFn`. -/
 theorem subgradient_conj_indicatorFn [IsCompatiblePairing B] {C : Set E} (hC : IsClosed C)
     (hCc : Convex ℝ C) (hCne : C.Nonempty) (y : F) :
     subgradient B.flip (conj B (indicatorFn C)) y = {x ∈ C | ∀ z ∈ C, B z y ≤ B x y} := by
@@ -749,14 +713,21 @@ theorem subgradient_conj_indicatorFn [IsCompatiblePairing B] {C : Set E} (hC : I
   simp only [mem_normalCone]
   exact forall₂_congr fun z _ => by rw [map_sub, LinearMap.sub_apply, sub_nonpos]
 
+/-- **Corollary 23.5.3**, with §13's `Tdaf.supportFn`: `∂δ*(· | C) y` is the face of `C` on which
+`⟨·, y⟩` is maximized. -/
+theorem subgradient_supportFn [IsCompatiblePairing B] {C : Set E} (hC : IsClosed C)
+    (hCc : Convex ℝ C) (hCne : C.Nonempty) (y : F) :
+    subgradient B.flip (supportFn B C) y = {x ∈ C | ∀ z ∈ C, B z y ≤ B x y} := by
+  rw [supportFn_eq_conj_indicatorFn]
+  exact subgradient_conj_indicatorFn hC hCc hCne y
+
 /-- **Theorem 23.2**, second half: the closure of `f'(x; ·)` is the support function of `∂f x`.
 
-`Tdaf.supportFn` does not exist yet (§13 is not written), but the support function of a set *is*
-the conjugate of its indicator, so `conj B.flip (indicatorFn (∂f x))` is the statement rather than
-a weakening of it. It should be restated with `supportFn` when §13 lands. -/
+This is Corollary 13.2.1 (`Tdaf.clFn_eq_supportFn_of_posHomogeneous`) for `f'(x; ·)`, and it is
+proved the same way: apply Fenchel–Moreau to `Tdaf.conj_dirDeriv`. -/
 theorem clFn_dirDeriv [IsCompatiblePairing B] (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
-    clFn (dirDeriv f x) = conj B.flip (indicatorFn (subgradient B f x)) := by
-  rw [← conj_dirDeriv ht hb]
+    clFn (dirDeriv f x) = supportFn B.flip (subgradient B f x) := by
+  rw [supportFn_eq_conj_indicatorFn, ← conj_dirDeriv ht hb]
   exact (biconj_eq_clFn (convexFn_dirDeriv hf ht hb)).symm
 
 end FenchelMoreau
