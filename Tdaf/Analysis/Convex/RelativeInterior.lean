@@ -22,36 +22,36 @@ theory that Mathlib's `Mathlib.Analysis.Convex.Intrinsic` does not carry.
 
 ## Main results
 
-* `Tdaf.mem_intrinsicInterior_iff` — the metric description of `ri s`: a point of the affine hull
+* `mem_intrinsicInterior_iff` — the metric description of `ri s`: a point of the affine hull
   lies in `ri s` exactly when some ball of the affine hull around it is contained in `s`. This is
   the cornerstone from which the rest of the file is derived.
-* `Tdaf.Convex.segment_mem_relint` — Theorem 6.1, the *line segment principle*: the half-open
+* `Convex.segment_mem_relint` — Theorem 6.1, the *line segment principle*: the half-open
   segment from a point of `ri C` to a point of `cl C` stays in `ri C`.
-* `Tdaf.Convex.relint_nonempty`, `Tdaf.Convex.affineSpan_relint` — Theorem 6.2.
-* `Tdaf.Convex.closure_relint`, `Tdaf.Convex.relint_closure` — Theorem 6.3, and its corollaries
-  `Tdaf.Convex.closure_eq_iff_relint_eq` (6.3.1) and
-  `Tdaf.Convex.relint_inter_nonempty_of_isOpen` (6.3.2).
-* `Tdaf.Convex.mem_relint_iff_prolong` — Theorem 6.4, the *prolongation principle*.
-* `Tdaf.Convex.closure_iInter`, `Tdaf.Convex.relint_iInter` — Theorem 6.5, with the binary and
-  affine-subspace specialisations `Tdaf.Convex.relint_inter_affine` (Corollary 6.5.1) and
-  `Tdaf.Convex.relint_subset_relint_of_subset_closure` (Corollary 6.5.2).
-* `Tdaf.Convex.relint_image` — Theorem 6.6, with `Tdaf.Convex.relint_smul` (6.6.1) and
-  `Tdaf.Convex.relint_add` (6.6.2).
-* `Tdaf.Convex.mem_relint_prod_iff` — Theorem 6.8, the description of `ri S` for `S` in a product
+* `Convex.relint_nonempty`, `Convex.affineSpan_relint` — Theorem 6.2.
+* `Convex.closure_relint`, `Convex.relint_closure` — Theorem 6.3, and its corollaries
+  `Convex.closure_eq_iff_relint_eq` (6.3.1) and
+  `Convex.relint_inter_nonempty_of_isOpen` (6.3.2).
+* `Convex.mem_relint_iff_prolong` — Theorem 6.4, the *prolongation principle*.
+* `Convex.closure_iInter`, `Convex.relint_iInter` — Theorem 6.5, with the binary and
+  affine-subspace specialisations `Convex.relint_inter_affine` (Corollary 6.5.1) and
+  `Convex.relint_subset_relint_of_subset_closure` (Corollary 6.5.2).
+* `Convex.relint_image` — Theorem 6.6, with `Convex.relint_smul` (6.6.1) and
+  `Convex.relint_add` (6.6.2).
+* `Convex.mem_relint_prod_iff` — Theorem 6.8, the description of `ri S` for `S` in a product
   by a projection and a slice.
-* `Tdaf.ConvexFn.relint_epi` — Lemma 7.3, the relative interior of an epigraph.
-* `Tdaf.ConvexFn.proper_clFn`, `Tdaf.ConvexFn.clFn_eq_of_mem_relint_dom` — Theorem 7.4.
-* `Tdaf.exists_separatesProperly_iff_disjoint_relint` — Theorem 11.3, proper separation in terms of
+* `ConvexFn.relint_epi` — Lemma 7.3, the relative interior of an epigraph.
+* `ConvexFn.proper_clFn`, `ConvexFn.clFn_eq_of_mem_relint_dom` — Theorem 7.4.
+* `exists_separatesProperly_iff_disjoint_relint` — Theorem 11.3, proper separation in terms of
   relative interiors.
 
 ## Design notes
 
-Everything rests on `Tdaf.mem_intrinsicInterior_iff`, which converts `x ∈ ri s` — defined in
+Everything rests on `mem_intrinsicInterior_iff`, which converts `x ∈ ri s` — defined in
 Mathlib through the subspace topology on `affineSpan ℝ s` — into a statement about distances in
 the ambient space. Rockafellar instead reduces to the full-dimensional case by transporting along
 an affine isomorphism; the metric description avoids that transport entirely, and with it the
 `AddTorsor` bookkeeping that a change of ambient space would force on every proof. Theorem 6.1 and
-the relatively-open separation lemma `Tdaf.exists_lt_of_notMem_relint` are both direct
+the relatively-open separation lemma `exists_lt_of_notMem_relint` are both direct
 ε-arguments through this description.
 
 Finite-dimensionality (design decision D0) enters through `intrinsicClosure_eq_closure`, which
@@ -59,7 +59,7 @@ identifies the closure taken in the affine hull with the ambient closure, and th
 closedness of affine subspaces. Results not needing it are stated in the ambient generality of a
 real normed space and carry `omit [FiniteDimensional ℝ E]`.
 
-The convexity lemmas are named `Tdaf.Convex.*` and shadow the root namespace `Convex`. Generalised
+The convexity lemmas are named `Convex.*` and shadow the root namespace `Convex`. Generalised
 field notation resolves `hC.segment_mem_relint` against the *root* `Convex` namespace only, so
 these lemmas must be applied by their explicit names, `Convex.segment_mem_relint hC …`, which
 inside `namespace Tdaf` resolves correctly.
@@ -69,21 +69,21 @@ inside `namespace Tdaf` resolves correctly.
 Several earlier modules record design notes deferring finite-dimensional results to this file.
 The following are now proved:
 
-* Lemma 7.3 (deferred by `Tdaf.Analysis.Convex.Closure`) — `Tdaf.ConvexFn.relint_epi`.
+* Lemma 7.3 (deferred by `Tdaf.Analysis.Convex.Closure`) — `ConvexFn.relint_epi`.
 * Theorem 7.2 and Corollaries 7.2.1, 7.2.3 (deferred by `Tdaf.Analysis.Convex.Closure`) —
-  `Tdaf.ConvexFn.eq_bot_of_mem_relint_dom`, `Tdaf.ConvexFn.eq_bot_of_mem_closure_dom`,
-  `Tdaf.ConvexFn.forall_ne_bot_or_forall_infinite`. `Tdaf.ConvexFn.eq_bot_or_eq_top` in
+  `ConvexFn.eq_bot_of_mem_relint_dom`, `ConvexFn.eq_bot_of_mem_closure_dom`,
+  `ConvexFn.forall_ne_bot_or_forall_infinite`. `ConvexFn.eq_bot_or_eq_top` in
   `Closure.lean` is the dimension-free replacement, valid for a function that is `⊥` somewhere and
   whose domain is relatively open; the genuinely finite-dimensional statement is the one here,
   which needs no hypothesis on `dom f` and locates the `⊥` values precisely on `ri (dom f)`.
 * Theorem 7.4 and Corollaries 7.2.2, 7.4.1, 7.4.2 (deferred by `Tdaf.Analysis.Convex.Closure`) —
-  `Tdaf.ConvexFn.clFn_eq_of_mem_relint_dom`, `Tdaf.ConvexFn.proper_clFn`,
-  `Tdaf.ConvexFn.relint_dom_clFn`, `Tdaf.ConvexFn.closedFn_of_dom_eq_coe`.
+  `ConvexFn.clFn_eq_of_mem_relint_dom`, `ConvexFn.proper_clFn`,
+  `ConvexFn.relint_dom_clFn`, `ConvexFn.closedFn_of_dom_eq_coe`.
 * Corollary 8.3.1 (deferred by `Tdaf.Analysis.Convex.Recession.Cone`) —
-  `Tdaf.Convex.recessionCone_relint`.
+  `Convex.recessionCone_relint`.
 * Theorem 11.3 and Corollaries 11.6.1, 11.6.2 (deferred by `Tdaf.Analysis.Convex.Separation`) —
-  `Tdaf.exists_separatesProperly_iff_disjoint_relint`,
-  `Tdaf.exists_ne_zero_isMaxOn_of_mem_frontier`, `Tdaf.notMem_relint_iff_exists_isMaxOn`.
+  `exists_separatesProperly_iff_disjoint_relint`,
+  `exists_ne_zero_isMaxOn_of_mem_frontier`, `notMem_relint_iff_exists_isMaxOn`.
 
 ## References
 
@@ -93,7 +93,7 @@ The following are now proved:
 
 open Set Filter Topology Pointwise
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-- Rockafellar's `ri C`, the *relative interior* of `C`: Mathlib's `intrinsicInterior ℝ C`. -/
 scoped notation "ri" => intrinsicInterior ℝ
@@ -440,11 +440,12 @@ theorem Convex.relint_iInter {ι : Type*} [Finite ι] {C : ι → Set E} (hC : �
 /-! ### Binary intersections, Corollary 6.5.1 and Corollary 6.5.2 -/
 
 omit [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
-/-- `Bool` is the finite index type that specialises Theorem 6.5 to a binary intersection. -/
-theorem iInter_bool {α : Type*} (D : Bool → Set α) : (⋂ b, D b) = D true ∩ D false := by
-  ext p
-  simp only [mem_iInter, mem_inter_iff, Bool.forall_bool]
-  exact ⟨fun hp => ⟨hp.2, hp.1⟩, fun hp => ⟨hp.2, hp.1⟩⟩
+/-- `Bool` is the finite index type that specialises Theorem 6.5 to a binary intersection.
+
+This is Mathlib's `iInf_bool_eq` read in the complete lattice `Set α`; it is restated in `⋂`/`∩`
+form because that is the form Theorem 6.5 and its corollaries are stated in. -/
+theorem iInter_bool {α : Type*} (D : Bool → Set α) : (⋂ b, D b) = D true ∩ D false :=
+  iInf_bool_eq (f := D)
 
 /-- **Rockafellar, Theorem 6.5** for two sets. -/
 theorem Convex.closure_inter (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂)
@@ -614,7 +615,7 @@ theorem Convex.mem_relint_prod_iff {S : Set (E × F)} (hS : Convex ℝ S) {y : E
 
 /-- **Rockafellar, Corollary 8.3.1**: the relative interior and the closure of a convex set have
 the same directions of recession. This is the statement `Tdaf/Analysis/Convex/Recession/Cone.lean`
-defers, where `Tdaf.recessionCone_interior_eq_recessionCone_closure` is proved instead. -/
+defers, where `recessionCone_interior_eq_recessionCone_closure` is proved instead. -/
 theorem Convex.recessionCone_relint (hC : Convex ℝ C) :
     recessionCone (ri C) = recessionCone (closure C) := by
   refine Subset.antisymm ?_ fun y hy x hx a ha => ?_
@@ -683,7 +684,7 @@ relative interior point of its effective domain — so it is infinite except per
 boundary points of `dom f`.
 
 `Tdaf/Analysis/Convex/Closure.lean` proves the layer-B replacement
-`Tdaf.ConvexFn.eq_bot_or_eq_top` (Rockafellar's Corollary 7.2.1), which holds in any topological
+`ConvexFn.eq_bot_or_eq_top` (Rockafellar's Corollary 7.2.1), which holds in any topological
 vector space; this is the finite-dimensional statement it replaces. -/
 theorem ConvexFn.eq_bot_of_mem_relint_dom (hf : ConvexFn f) (hp : ¬ Proper f) {x : E}
     (hx : x ∈ ri (dom f)) : f x = ⊥ := by
@@ -762,7 +763,7 @@ theorem ConvexFn.lscHull_eq_of_mem_relint_dom (hf : ConvexFn f) {x : E}
   exact hmem.2
 
 /-- **Rockafellar, Theorem 7.4**: the lower semicontinuous hull of a *proper* convex function is
-nowhere `−∞`. This is what makes `Tdaf.clFn f` the hull rather than the constant `⊥`, and it is
+nowhere `−∞`. This is what makes `clFn f` the hull rather than the constant `⊥`, and it is
 finite-dimensional: see design decision D0 and the module docstring. -/
 theorem ConvexFn.lscHull_ne_bot (hf : ConvexFn f) (hp : Proper f) (x : E) : lscHull f x ≠ ⊥ := by
   intro hbot
@@ -779,12 +780,12 @@ theorem ConvexFn.lscHull_ne_bot (hf : ConvexFn f) (hp : Proper f) (x : E) : lscH
   exact hp.ne_bot z (hf.lscHull_eq_of_mem_relint_dom hz ▸ h1)
 
 /-- **Rockafellar, Theorem 7.4**: for a proper convex function the closure *is* the lower
-semicontinuous hull; the exceptional branch of `Tdaf.clFn` is never taken. -/
+semicontinuous hull; the exceptional branch of `clFn` is never taken. -/
 theorem ConvexFn.clFn_eq_lscHull (hf : ConvexFn f) (hp : Proper f) : clFn f = lscHull f :=
   clFn_of_forall_ne_bot (hf.lscHull_ne_bot hp)
 
 /-- **Rockafellar, Theorem 7.4**: the closure of a proper convex function is proper (and hence, by
-`Tdaf.closedFn_clFn`, a closed proper convex function). -/
+`closedFn_clFn`, a closed proper convex function). -/
 theorem ConvexFn.proper_clFn (hf : ConvexFn f) (hp : Proper f) : Proper (clFn f) := by
   rw [hf.clFn_eq_lscHull hp]
   exact ⟨hp.dom_nonempty.mono (dom_subset_dom_lscHull f), hf.lscHull_ne_bot hp⟩
@@ -801,7 +802,7 @@ theorem ConvexFn.clFn_eq_of_mem_relint_dom (hf : ConvexFn f) {x : E} (hx : x ∈
     rw [clFn_of_exists_eq_bot ⟨x, hl⟩, hbot]
 
 /-- **Rockafellar, Theorem 7.4**: `cl f` also agrees with `f` off the closure of `dom f`, where
-both are `+∞`. Together with `Tdaf.ConvexFn.clFn_eq_of_mem_relint_dom` this is the assertion that
+both are `+∞`. Together with `ConvexFn.clFn_eq_of_mem_relint_dom` this is the assertion that
 `cl f` differs from `f` at most at relative boundary points of `dom f`. -/
 theorem ConvexFn.clFn_eq_of_notMem_closure_dom (hf : ConvexFn f) (hp : Proper f) {x : E}
     (hx : x ∉ closure (dom f)) : clFn f x = f x := by
@@ -843,68 +844,97 @@ end Functions
 
 section Separation
 
+/-! ### Transversal thickening
+
+Rockafellar's device for turning a relative-interior statement into an interior statement: add to
+`C` a complement `W'` of the direction of its affine hull. The thickened set `C + W'` is convex, its
+affine hull is everything (so it has nonempty interior), and it meets `aff C` in `C` again — so
+`x ∉ ri C` becomes `x ∉ int (C + W')` and Mathlib's separation theorems for *open* convex sets
+apply. The same device is what §6 and §11 use whenever `ri` has to be reduced to `int`.
+
+**Layer audit.** All three lemmas below are layer B/C: they need the topology (through `ri`) but
+not `[FiniteDimensional ℝ E]`, which is why each carries an `omit`. Finite-dimensionality enters
+only in `exists_lt_of_notMem_relint` itself, and only twice — through
+`Convex.interior_nonempty_iff_affineSpan_eq_top` and through closedness of an affine subspace. -/
+
+omit [FiniteDimensional ℝ E] in
+/-- **Transversal thickening, trace.** The thickened set meets the affine hull of `C` in `C`. -/
+theorem add_submodule_inter_affineSpan {W' : Submodule ℝ E}
+    (hcompl : IsCompl (affineSpan ℝ C).direction W') :
+    (C + (W' : Set E)) ∩ (affineSpan ℝ C : Set E) = C := by
+  ext p
+  refine ⟨fun ⟨hpD, hpA⟩ => ?_, fun hp =>
+    ⟨Set.mem_add.2 ⟨p, hp, 0, W'.zero_mem, add_zero p⟩, subset_affineSpan ℝ C hp⟩⟩
+  obtain ⟨c, hc, w, hw, rfl⟩ := Set.mem_add.1 hpD
+  have hwW : w ∈ (affineSpan ℝ C).direction := by
+    simpa using AffineSubspace.vsub_mem_direction hpA (subset_affineSpan ℝ C hc)
+  have hw0 : w = 0 := by
+    have hmem : w ∈ (affineSpan ℝ C).direction ⊓ W' := ⟨hwW, hw⟩
+    rw [hcompl.inf_eq_bot] at hmem
+    simpa using hmem
+  rw [hw0, add_zero]
+  exact hc
+
+omit [FiniteDimensional ℝ E] in
+/-- **Transversal thickening, span.** The thickened set is affinely spanning. -/
+theorem affineSpan_add_submodule_eq_top (hne : C.Nonempty) {W' : Submodule ℝ E}
+    (hcompl : IsCompl (affineSpan ℝ C).direction W') :
+    affineSpan ℝ (C + (W' : Set E)) = ⊤ := by
+  obtain ⟨c₀, hc₀⟩ := hne
+  have hCD : C ⊆ C + (W' : Set E) := fun p hp =>
+    Set.mem_add.2 ⟨p, hp, 0, W'.zero_mem, add_zero p⟩
+  refine eq_top_iff.2 fun p _ => ?_
+  have hmem : p - c₀ ∈ (affineSpan ℝ C).direction ⊔ W' := by
+    rw [hcompl.sup_eq_top]; trivial
+  obtain ⟨w, hw, w', hw', hsum⟩ := Submodule.mem_sup.1 hmem
+  have hwA : w + c₀ ∈ affineSpan ℝ C := by
+    have hv := AffineSubspace.vadd_mem_of_mem_direction hw (subset_affineSpan ℝ C hc₀)
+    simpa using hv
+  have h1 : w + c₀ ∈ affineSpan ℝ (C + (W' : Set E)) := affineSpan_mono ℝ hCD hwA
+  have h2 : w' ∈ (affineSpan ℝ (C + (W' : Set E))).direction := by
+    have hc₀w'D : w' + c₀ ∈ C + (W' : Set E) :=
+      Set.mem_add.2 ⟨c₀, hc₀, w', hw', add_comm c₀ w'⟩
+    simpa using AffineSubspace.vsub_mem_direction
+      (subset_affineSpan ℝ _ hc₀w'D) (subset_affineSpan ℝ _ (hCD hc₀))
+  have hp : p = w' +ᵥ (w + c₀) := by
+    rw [vadd_eq_add, sub_eq_iff_eq_add.1 hsum.symm]
+    abel
+  rw [hp]
+  exact AffineSubspace.vadd_mem_of_mem_direction h2 h1
+
+omit [FiniteDimensional ℝ E] in
+/-- **Transversal thickening, relative interior.** A point of `aff C` outside `ri C` is outside the
+interior of the thickening. This is the step that lets an *open*-set separation theorem be used. -/
+theorem notMem_interior_add_submodule {x₀ : E} {W' : Submodule ℝ E}
+    (hcompl : IsCompl (affineSpan ℝ C).direction W') (hx₀A : x₀ ∈ affineSpan ℝ C)
+    (hx₀ : x₀ ∉ ri C) : x₀ ∉ interior (C + (W' : Set E)) := by
+  intro hint
+  refine hx₀ (mem_intrinsicInterior_iff.2 ⟨hx₀A, ?_⟩)
+  obtain ⟨ε, hε, hball⟩ := Metric.mem_nhds_iff.1 (mem_interior_iff_mem_nhds.1 hint)
+  refine ⟨ε, hε, fun y hy hd => ?_⟩
+  have hmem : y ∈ (C + (W' : Set E)) ∩ (affineSpan ℝ C : Set E) :=
+    ⟨hball (by simpa [Metric.mem_ball] using hd), hy⟩
+  rwa [add_submodule_inter_affineSpan hcompl] at hmem
+
 /-- **Rockafellar, Theorem 11.2**, in the relatively open form his §11 actually uses, specialised
 to a point: a point outside `ri C` is *properly* separated from `C` by a hyperplane through it.
 
-The proof thickens `C` transversally to its affine hull: if `W` is the direction of `aff C` and
-`W'` is any complement of `W`, then `D = C + W'` is a convex set with nonempty interior whose
-trace on `aff C` is `C` again, so `x₀ ∉ ri C` becomes `x₀ ∉ int D` and Mathlib's separation of a
-point from an open convex set applies. -/
+The proof thickens `C` transversally to its affine hull (see above), so that `x₀ ∉ ri C` becomes
+`x₀ ∉ int (C + W')` and Mathlib's separation of a point from an open convex set applies. -/
 theorem exists_lt_of_notMem_relint (hC : Convex ℝ C) (hne : C.Nonempty) {x₀ : E}
     (hx₀ : x₀ ∉ ri C) :
     ∃ g : E →L[ℝ] ℝ, (∀ x ∈ C, g x ≤ g x₀) ∧ ∃ x ∈ C, g x < g x₀ := by
   obtain ⟨c₀, hc₀⟩ := hne
   by_cases hx₀A : x₀ ∈ affineSpan ℝ C
   · obtain ⟨W', hcompl⟩ := (affineSpan ℝ C).direction.exists_isCompl
-    have hW'conv : Convex ℝ (W' : Set E) := fun _ hp _ hq a b _ _ _ =>
-      W'.add_mem (W'.smul_mem a hp) (W'.smul_mem b hq)
     have hCD : C ⊆ C + (W' : Set E) := fun p hp =>
       Set.mem_add.2 ⟨p, hp, 0, W'.zero_mem, add_zero p⟩
-    have hDconv : Convex ℝ (C + (W' : Set E)) := hC.add hW'conv
-    have hDA : (C + (W' : Set E)) ∩ (affineSpan ℝ C : Set E) = C := by
-      ext p
-      constructor
-      · rintro ⟨hpD, hpA⟩
-        obtain ⟨c, hc, w, hw, rfl⟩ := Set.mem_add.1 hpD
-        have hwW : w ∈ (affineSpan ℝ C).direction := by
-          simpa using AffineSubspace.vsub_mem_direction hpA (subset_affineSpan ℝ C hc)
-        have hw0 : w = 0 := by
-          have hmem : w ∈ (affineSpan ℝ C).direction ⊓ W' := ⟨hwW, hw⟩
-          rw [hcompl.inf_eq_bot] at hmem
-          simpa using hmem
-        rw [hw0, add_zero]
-        exact hc
-      · exact fun hp => ⟨hCD hp, subset_affineSpan ℝ C hp⟩
-    have hx₀int : x₀ ∉ interior (C + (W' : Set E)) := by
-      intro hint
-      refine hx₀ (mem_intrinsicInterior_iff.2 ⟨hx₀A, ?_⟩)
-      obtain ⟨ε, hε, hball⟩ := Metric.mem_nhds_iff.1 (mem_interior_iff_mem_nhds.1 hint)
-      refine ⟨ε, hε, fun y hy hd => ?_⟩
-      have hmem : y ∈ (C + (W' : Set E)) ∩ (affineSpan ℝ C : Set E) :=
-        ⟨hball (by simpa [Metric.mem_ball] using hd), hy⟩
-      rwa [hDA] at hmem
-    have hspan : affineSpan ℝ (C + (W' : Set E)) = ⊤ := by
-      refine eq_top_iff.2 fun p _ => ?_
-      have hmem : p - c₀ ∈ (affineSpan ℝ C).direction ⊔ W' := by
-        rw [hcompl.sup_eq_top]; trivial
-      obtain ⟨w, hw, w', hw', hsum⟩ := Submodule.mem_sup.1 hmem
-      have hwA : w + c₀ ∈ affineSpan ℝ C := by
-        have hv := AffineSubspace.vadd_mem_of_mem_direction hw (subset_affineSpan ℝ C hc₀)
-        simpa using hv
-      have h1 : w + c₀ ∈ affineSpan ℝ (C + (W' : Set E)) := affineSpan_mono ℝ hCD hwA
-      have h2 : w' ∈ (affineSpan ℝ (C + (W' : Set E))).direction := by
-        have hc₀w'D : w' + c₀ ∈ C + (W' : Set E) :=
-          Set.mem_add.2 ⟨c₀, hc₀, w', hw', add_comm c₀ w'⟩
-        simpa using AffineSubspace.vsub_mem_direction
-          (subset_affineSpan ℝ _ hc₀w'D) (subset_affineSpan ℝ _ (hCD hc₀))
-      have hp : p = w' +ᵥ (w + c₀) := by
-        rw [vadd_eq_add, sub_eq_iff_eq_add.1 hsum.symm]
-        abel
-      rw [hp]
-      exact AffineSubspace.vadd_mem_of_mem_direction h2 h1
+    have hDconv : Convex ℝ (C + (W' : Set E)) := hC.add W'.convex
     have hint : (interior (C + (W' : Set E))).Nonempty :=
-      hDconv.interior_nonempty_iff_affineSpan_eq_top.2 hspan
-    obtain ⟨g, hg⟩ := geometric_hahn_banach_open_point hDconv.interior isOpen_interior hx₀int
+      hDconv.interior_nonempty_iff_affineSpan_eq_top.2
+        (affineSpan_add_submodule_eq_top ⟨c₀, hc₀⟩ hcompl)
+    obtain ⟨g, hg⟩ := geometric_hahn_banach_open_point hDconv.interior isOpen_interior
+      (notMem_interior_add_submodule hcompl hx₀A hx₀)
     have hle : ∀ x ∈ C + (W' : Set E), g x ≤ g x₀ := by
       intro x hx
       have hsub : closure (interior (C + (W' : Set E))) ⊆ {y | g y ≤ g x₀} :=
@@ -916,31 +946,14 @@ theorem exists_lt_of_notMem_relint (hC : Convex ℝ C) (hne : C.Nonempty) {x₀ 
     by_contra hcon
     push Not at hcon
     have hconst : ∀ x ∈ C, g x = g x₀ := fun x hx => le_antisymm (hle x (hCD hx)) (hcon x hx)
-    have hconstA : ∀ y ∈ affineSpan ℝ C, g y = g x₀ := by
-      let Q : AffineSubspace ℝ E :=
-        { carrier := {y | g y = g x₀}
-          smul_vsub_vadd_mem' := by
-            rintro t p₁ p₂ p₃ h₁ h₂ h₃
-            have e₁ : g p₁ = g x₀ := h₁
-            have e₂ : g p₂ = g x₀ := h₂
-            have e₃ : g p₃ = g x₀ := h₃
-            change g (t • (p₁ -ᵥ p₂) +ᵥ p₃) = g x₀
-            simp only [vsub_eq_sub, vadd_eq_add, map_add, map_smul, map_sub, e₁, e₂, e₃,
-              smul_eq_mul]
-            ring }
-      have hQ : affineSpan ℝ C ≤ Q := by
-        rw [affineSpan_le]
-        exact fun y hy => (hconst y hy : g y = g x₀)
-      exact fun y hy => hQ hy
+    -- `g` agrees on `C` with the constant map `g x₀`, so their linear parts — `g` itself and `0` —
+    -- agree on `vectorSpan ℝ C`, which is `(affineSpan ℝ C).direction`.
+    have hEqOn : Set.EqOn (g : E →ₗ[ℝ] ℝ).toAffineMap (AffineMap.const ℝ E (g x₀)) C :=
+      fun x hx => hconst x hx
     have hWzero : ∀ w ∈ (affineSpan ℝ C).direction, g w = 0 := by
       intro w hw
-      have hwA : w + c₀ ∈ affineSpan ℝ C := by
-        have hv := AffineSubspace.vadd_mem_of_mem_direction hw (subset_affineSpan ℝ C hc₀)
-        simpa using hv
-      have h1 : g (w + c₀) = g x₀ := hconstA _ hwA
-      have h2 : g c₀ = g x₀ := hconstA _ (subset_affineSpan ℝ C hc₀)
-      rw [map_add, h2] at h1
-      linarith
+      rw [direction_affineSpan] at hw
+      simpa using AffineMap.linear_eqOn_vectorSpan hEqOn hw
     have hW'zero : ∀ w' ∈ W', g w' = 0 := by
       intro w' hw'
       by_contra hne0
@@ -1103,4 +1116,4 @@ end Separation
 
 end Layer
 
-end Tdaf
+end Tdaf.ConvexAnalysis

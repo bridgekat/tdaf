@@ -15,51 +15,51 @@ every duality result in Parts III, V, VI, VII and VIII of the book reduces to Fe
 
 ## Main definitions
 
-* `Tdaf.conj B f` — the conjugate `f*(y) = sup_x (⟨x, y⟩ - f x)`.
-* `Tdaf.biconj B f` — the biconjugate `f**`, back on `E`.
-* `Tdaf.conjClosure B` — conjugacy packaged as a `ClosureOperator` on `(E → EReal)ᵒᵈ`, whose
+* `conj B f` — the conjugate `f*(y) = sup_x (⟨x, y⟩ - f x)`.
+* `biconj B f` — the biconjugate `f**`, back on `E`.
+* `conjClosure B` — conjugacy packaged as a `ClosureOperator` on `(E → EReal)ᵒᵈ`, whose
   closed elements are (Fenchel–Moreau) exactly the closed convex functions.
-* `Tdaf.conjEquiv` — the involution of **Corollary 12.2.1** on closed proper convex functions.
+* `conjEquiv` — the involution of **Corollary 12.2.1** on closed proper convex functions.
 
 ## Main results
 
-* `Tdaf.le_add_conj` — **Fenchel's inequality** `⟨x, y⟩ ≤ f x + f* y`. See the design note below:
-  as an inequality in `EReal` it needs `Tdaf.Proper f`, and the hypothesis is not removable.
-* `Tdaf.sub_le_conj`, `Tdaf.conj_le_coe_iff`, `Tdaf.conj_le_iff` — the hypothesis-free forms of the
+* `le_add_conj` — **Fenchel's inequality** `⟨x, y⟩ ≤ f x + f* y`. See the design note below:
+  as an inequality in `EReal` it needs `Proper f`, and the hypothesis is not removable.
+* `sub_le_conj`, `conj_le_coe_iff`, `conj_le_iff` — the hypothesis-free forms of the
   same fact. The last says that `conj B` and `conj B.flip` are an *antitone Galois connection*.
-* `Tdaf.convexFn_conj`, `Tdaf.closedFn_conj`, `Tdaf.conj_antitone` — the conjugate of an arbitrary
+* `convexFn_conj`, `closedFn_conj`, `conj_antitone` — the conjugate of an arbitrary
   function is a closed convex function, and conjugacy reverses the order.
-* `Tdaf.conj_of_eq_bot`, `Tdaf.conj_top`, `Tdaf.conj_eq_bot_iff` — the improper cases.
-* `Tdaf.conj_clFn` — **Theorem 12.2**, first half: `(cl f)* = f*`.
-* `Tdaf.exists_affineFn_le_of_lt`, `Tdaf.eq_biSup_affineFn` — **Theorem 12.1**: a closed convex
+* `conj_of_eq_bot`, `conj_top`, `conj_eq_bot_iff` — the improper cases.
+* `conj_clFn` — **Theorem 12.2**, first half: `(cl f)* = f*`.
+* `exists_affineFn_le_of_lt`, `eq_biSup_affineFn` — **Theorem 12.1**: a closed convex
   function is the pointwise supremum of the affine functions below it.
-* `Tdaf.biconj_eq_clFn` — **Theorem 12.2**, Fenchel–Moreau: `f** = cl f` for convex `f`.
-* `Tdaf.proper_conj_iff` — **Theorem 12.2**, properness half.
-* `Tdaf.biconj_eq_clFn_topDual`, `Tdaf.biconj_eq_clFn_inner` — Fenchel–Moreau with every
+* `biconj_eq_clFn` — **Theorem 12.2**, Fenchel–Moreau: `f** = cl f` for convex `f`.
+* `proper_conj_iff` — **Theorem 12.2**, properness half.
+* `biconj_eq_clFn_topDual`, `biconj_eq_clFn_inner` — Fenchel–Moreau with every
   hypothesis discharged: a locally convex space paired with its own continuous dual, and a real
   Hilbert space paired with itself by the inner product. These are the settings applications use,
   and both are in the space's *own* topology.
-* `Tdaf.gc_conj_conj`, `Tdaf.conjClosure` — conjugacy as an antitone Galois connection and the
-  closure operator it induces, mirroring `Tdaf.gc_ofEpi_epi` and `Tdaf.epiClosure`.
+* `gc_conj_conj`, `conjClosure` — conjugacy as an antitone Galois connection and the
+  closure operator it induces, mirroring `gc_ofEpi_epi` and `epiClosure`.
 
 ## Design notes
 
 **Whatever topology `E` already has.** Fenchel–Moreau does not care which topology `E` carries, so
 long as its continuous dual is the `F` side of the pairing. That is
-`Tdaf.IsCompatiblePairing B`, and its two fields are what the theorems below consume:
+`IsCompatiblePairing B`, and its two fields are what the theorems below consume:
 
-* `Tdaf.continuous_pairing B y : Continuous fun x => B x y` — every `⟨·, y⟩` is continuous;
-* `Tdaf.exists_pairing_eq B g : ∃ y, ∀ x, g x = B x y` — and every continuous functional is one.
+* `continuous_pairing B y : Continuous fun x => B x y` — every `⟨·, y⟩` is continuous;
+* `exists_pairing_eq B g : ∃ y, ∀ x, g x = B x y` — and every continuous functional is one.
 
-The first is a class in its own right, `Tdaf.IsContinuousPairing`, which
-`IsCompatiblePairing` extends, and the closedness half of this file — `Tdaf.closedFn_conj`,
-`Tdaf.conj_clFn`, `Tdaf.biconj_le_clFn` — asks only for it. That is not a refinement for its own
+The first is a class in its own right, `IsContinuousPairing`, which
+`IsCompatiblePairing` extends, and the closedness half of this file — `closedFn_conj`,
+`conj_clFn`, `biconj_le_clFn` — asks only for it. That is not a refinement for its own
 sake: a Banach space paired with its **norm**-topology dual is a continuous pairing on both sides
 but a compatible one only if it is reflexive, and those three statements are true there. A
 statement symmetric in the two sides asks for `[IsCompatiblePairing B]` and
-`[IsCompatiblePairing B.flip]` together — `Tdaf.conjEquiv` is the example. The canonical instance
+`[IsCompatiblePairing B.flip]` together — `conjEquiv` is the example. The canonical instance
 is a locally convex space paired with its **own** continuous dual
-(`Tdaf.instIsCompatiblePairingTopDual`), where both fields are trivial, so a Banach space in its
+(`instIsCompatiblePairingTopDual`), where both fields are trivial, so a Banach space in its
 norm topology, a Hilbert space, and `ℝⁿ` are all covered directly and every hypothesis of
 Fenchel–Moreau is discharged by instance search. The general pairing buys the freedom to let `E`
 and `F` be different spaces — which §30 and §33 need — and nothing else.
@@ -67,13 +67,13 @@ and `F` be different spaces — which §30 and §33 need — and nothing else.
 **Fenchel's inequality is not hypothesis-free.** `⟨x, y⟩ ≤ f x + f* y` is *false* in `EReal` when
 `f ≡ +∞`: then `f* ≡ -∞` and the right-hand side is `⊤ + ⊥ = ⊥`. It is false again when `f` takes
 `-∞`: then `f* ≡ +∞` and the right-hand side is `⊥ + ⊤ = ⊥`. Rockafellar states the inequality
-"for any proper convex function `f` and its conjugate", and `Tdaf.Proper f` is exactly what is
-needed. The `∞ - ∞`-free form `⟨x, y⟩ - f x ≤ f* y` (`Tdaf.sub_le_conj`) is unconditional, and it
+"for any proper convex function `f` and its conjugate", and `Proper f` is exactly what is
+needed. The `∞ - ∞`-free form `⟨x, y⟩ - f x ≤ f* y` (`sub_le_conj`) is unconditional, and it
 is the form every proof below actually uses.
 
 **`Tdaf.EReal.coe_sub_le_comm` does the work.** Because `⟨x, y⟩` is always a *real* number,
 `⟨x, y⟩ - z ≤ w ↔ ⟨x, y⟩ - w ≤ z` holds with no side condition whatsoever. That single symmetry is
-what makes `Tdaf.conj_le_iff` — and hence the Galois connection, `Tdaf.biconj_le`, and half of
+what makes `conj_le_iff` — and hence the Galois connection, `biconj_le`, and half of
 Fenchel–Moreau — unconditional, improper functions included.
 
 ## References
@@ -84,7 +84,7 @@ Fenchel–Moreau — unconditional, improper functions included.
 
 open Set OrderDual
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### The conjugate -/
 
@@ -118,7 +118,7 @@ theorem biconj_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (x 
 
 /-- **Fenchel's inequality, `∞ - ∞`-free.** This is the defining property of the supremum, and it
 holds for every `f`, `x` and `y`. Every proof in this file goes through it rather than through the
-additive form `Tdaf.le_add_conj`. -/
+additive form `le_add_conj`. -/
 theorem sub_le_conj (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (x : E) (y : F) :
     ((B x y : ℝ) : EReal) - f x ≤ conj B f y :=
   le_iSup (fun x : E => ((B x y : ℝ) : EReal) - f x) x
@@ -176,19 +176,19 @@ theorem conj_ne_bot (h : (dom f).Nonempty) (y : F) : conj B f y ≠ ⊥ := by
 
 The properness hypothesis is not decorative. If `f ≡ +∞` then `f* ≡ -∞` and the right-hand side is
 `⊤ + ⊥ = ⊥`; if `f` takes `-∞` then `f* ≡ +∞` and the right-hand side is `⊥ + ⊤ = ⊥`. In both cases
-the inequality fails. Use `Tdaf.sub_le_conj` when no properness is available. -/
+the inequality fails. Use `sub_le_conj` when no properness is available. -/
 theorem le_add_conj (hb : f x ≠ ⊥) (hd : (dom f).Nonempty) (y : F) :
     ((B x y : ℝ) : EReal) ≤ f x + conj B f y := by
   rw [add_comm]
   exact (_root_.EReal.sub_le_iff_le_add (.inl hb) (.inr (conj_ne_bot hd y))).1 (sub_le_conj B f x y)
 
-/-- Fenchel's inequality, packaged against `Tdaf.Proper`. -/
+/-- Fenchel's inequality, packaged against `Proper`. -/
 theorem Proper.le_add_conj (hp : Proper f) (x : E) (y : F) :
     ((B x y : ℝ) : EReal) ≤ f x + conj B f y :=
-  _root_.Tdaf.le_add_conj (hp.ne_bot x) hp.dom_nonempty y
+  _root_.Tdaf.ConvexAnalysis.le_add_conj (hp.ne_bot x) hp.dom_nonempty y
 
 /-- If the conjugate is proper then so is the original function; no hypothesis is needed for this
-direction. The converse is `Tdaf.proper_conj`, and needs closedness. -/
+direction. The converse is `proper_conj`, and needs closedness. -/
 theorem proper_of_proper_conj (h : Proper (conj B f)) : Proper f := by
   refine ⟨?_, fun x hx => ?_⟩
   · obtain ⟨y, hy⟩ := h.dom_nonempty
@@ -228,8 +228,8 @@ end Defs
 
 /-! ### Why Fenchel's inequality needs properness
 
-The two `example`s below are the reason `Tdaf.le_add_conj` carries hypotheses, and they are why
-`Tdaf.sub_le_conj` rather than `Tdaf.le_add_conj` is what the proofs in this file use. In `EReal`
+The two `example`s below are the reason `le_add_conj` carries hypotheses, and they are why
+`sub_le_conj` rather than `le_add_conj` is what the proofs in this file use. In `EReal`
 the value `⊥` is absorbing for addition, so `⊤ + ⊥ = ⊥ + ⊤ = ⊥`, and the additive form of Fenchel's
 inequality collapses at each of the two improper functions. Rockafellar states the inequality only
 "for any proper convex function `f` and its conjugate". -/
@@ -268,7 +268,7 @@ variable [IsTopologicalAddGroup F]
 
 /-- **The conjugate is a closed convex function** (Rockafellar §12), with no hypothesis on `f`.
 
-The two branches of `Tdaf.closedFn_iff` correspond exactly to the two possibilities for `f`: if
+The two branches of `closedFn_iff` correspond exactly to the two possibilities for `f`: if
 `f ≡ +∞` the conjugate is the constant `⊥`, and otherwise it is lower semicontinuous and never
 takes `⊥`. -/
 theorem closedFn_conj : ClosedFn (conj B f) := by
@@ -319,12 +319,12 @@ convex function there is an affine minorant of the pairing.
 
 The proof is Rockafellar's. `epi f` is a closed convex set not containing `(x₀, α)`, so a
 continuous linear functional on `E × ℝ` separates them; splitting it with
-`Tdaf.exists_unique_dual_prod` into a horizontal part `g` and a vertical coefficient `c₀`, upward
+`exists_unique_dual_prod` into a horizontal part `g` and a vertical coefficient `c₀`, upward
 closedness of `epi f` forces `c₀ ≤ 0` — no *lower* half-space can contain an epigraph. If `c₀ < 0`
 the functional is *upper* and rescaling by `-c₀` gives the affine minorant directly. If `c₀ = 0`
 the functional is *vertical*, and the last paragraph of Rockafellar's proof applies: `g - u` is
 `≤ 0` on `dom f` and `> 0` at `x₀`, so adding a large multiple of it to the affine minorant
-supplied by `Tdaf.exists_affine_le_of_closed_proper` produces a non-vertical one. -/
+supplied by `exists_affine_le_of_closed_proper` produces a non-vertical one. -/
 theorem exists_affineFn_le_of_lt (hf : ConvexFn f) (hc : ClosedFn f) {x₀ : E} {α : ℝ}
     (h : (α : EReal) < f x₀) :
     ∃ (y : F) (c : ℝ), affineFn B y c ≤ f ∧ (α : EReal) < affineFn B y c x₀ := by
@@ -388,7 +388,7 @@ theorem exists_affineFn_le_of_lt (hf : ConvexFn f) (hc : ClosedFn f) {x₀ : E} 
       rw [hL] at hLx
       nlinarith
   · -- Vertical half-space: absorb it into a known affine minorant.
-    obtain ⟨w, c₂, hw⟩ := exists_affine_le_of_closed_proper hf hc hp
+    obtain ⟨w, c₂, hw⟩ := exists_affine_le_of_closed_proper ⟨hf, hc, hp⟩
     obtain ⟨y₂, hy₂⟩ := exists_pairing_eq B w
     have hdom : ∀ x, f x < ⊤ → g x < u := by
       intro x hx
@@ -442,11 +442,11 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 /-- **Rockafellar, Theorem 12.2 — the Fenchel–Moreau theorem.** For a convex function,
 `f** = cl f`.
 
-The improper cases come first and are the reason `Tdaf.clFn` is defined by branching on
-`Tdaf.lscHull f` rather than on `f`: if `f` takes `-∞` anywhere then `f* ≡ +∞` and `f** ≡ -∞`,
+The improper cases come first and are the reason `clFn` is defined by branching on
+`lscHull f` rather than on `f`: if `f` takes `-∞` anywhere then `f* ≡ +∞` and `f** ≡ -∞`,
 which is `cl f` only under that branching; and if `f ≡ +∞` then `f* ≡ -∞` and `f** ≡ +∞ = cl f`.
 
-In the proper case, `f** ≤ cl f` is `Tdaf.biconj_le_clFn`, needing no convexity. The converse is
+In the proper case, `f** ≤ cl f` is `biconj_le_clFn`, needing no convexity. The converse is
 Theorem 12.1 applied to `cl f`: an affine minorant of `cl f` strictly above a given value at `x₀`
 is an affine minorant of `f`, so it is recorded in `f*` and hence in `f**`. -/
 theorem biconj_eq_clFn (hf : ConvexFn f) : biconj B f = clFn f := by
@@ -476,21 +476,20 @@ theorem biconj_eq_clFn (hf : ConvexFn f) : biconj B f = clFn f := by
   exact _root_.EReal.sub_le_sub le_rfl hcy
 
 /-- **Rockafellar, Theorem 12.2** (properness half): the conjugate of a closed proper convex
-function is proper. Together with `Tdaf.proper_of_proper_conj` this is "`f*` is proper if and only
+function is proper. Together with `proper_of_proper_conj` this is "`f*` is proper if and only
 if `f` is". -/
-theorem proper_conj (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f) :
-    Proper (conj B f) := by
-  obtain ⟨w, c, hw⟩ := exists_affine_le_of_closed_proper hf hc hp
+theorem proper_conj (hf : ClosedProperConvexFn f) : Proper (conj B f) := by
+  obtain ⟨w, c, hw⟩ := exists_affine_le_of_closed_proper hf
   obtain ⟨y, hy⟩ := exists_pairing_eq B w
   refine ⟨⟨y, lt_of_le_of_lt (conj_le_coe_iff.2 fun x => ?_) (_root_.EReal.coe_lt_top c)⟩,
-    conj_ne_bot hp.dom_nonempty⟩
+    conj_ne_bot hf.proper.dom_nonempty⟩
   rw [affineFn_apply, ← hy x]
   exact hw x
 
 /-- **Rockafellar, Theorem 12.2**, properness in full. -/
 theorem proper_conj_iff (hf : ConvexFn f) (hc : ClosedFn f) :
     Proper (conj B f) ↔ Proper f :=
-  ⟨proper_of_proper_conj, proper_conj hf hc⟩
+  ⟨proper_of_proper_conj, fun hp => proper_conj ⟨hf, hc, hp⟩⟩
 
 /-- A closed convex function is its own biconjugate. -/
 theorem biconj_eq_self (hf : ConvexFn f) (hc : ClosedFn f) : biconj B f = f :=
@@ -500,10 +499,10 @@ end FenchelMoreau
 
 /-! ### Conjugacy as a Galois connection
 
-`Tdaf.conj_le_iff` says that `conj B` and `conj B.flip` are adjoint, antitonely, exactly as
-`Tdaf.subset_epi_iff_le_ofEpi` does for `ofEpi` and `epi`. Recording it makes the whole
+`conj_le_iff` says that `conj B` and `conj B.flip` are adjoint, antitonely, exactly as
+`subset_epi_iff_le_ofEpi` does for `ofEpi` and `epi`. Recording it makes the whole
 `ClosureOperator` API available, and Fenchel–Moreau then identifies the closed elements of that
-operator with the closed convex functions. As with `Tdaf.gc_ofEpi_epi`, the `OrderDual` on the
+operator with the closed convex functions. As with `gc_ofEpi_epi`, the `OrderDual` on the
 domain is what makes the antitone adjunction fit Mathlib's monotone `GaloisConnection`. -/
 
 section Galois
@@ -516,7 +515,7 @@ theorem gc_conj_conj (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
       (fun g : F → EReal => toDual (conj B.flip g)) := fun _ _ => conj_le_iff
 
 /-- The closure operator `f ↦ f**` induced by the adjunction. Its closed elements are the functions
-equal to their own biconjugate, which by Fenchel–Moreau (`Tdaf.isClosed_conjClosure_iff`) are
+equal to their own biconjugate, which by Fenchel–Moreau (`isClosed_conjClosure_iff`) are
 exactly the closed convex functions. -/
 noncomputable def conjClosure (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : ClosureOperator (E → EReal)ᵒᵈ :=
   (gc_conj_conj B).closureOperator
@@ -524,7 +523,7 @@ noncomputable def conjClosure (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : ClosureOpe
 @[simp] theorem conjClosure_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) :
     conjClosure B (toDual f) = toDual (biconj B f) := rfl
 
-/-- Closedness for `Tdaf.conjClosure` is the fixed-point equation `f** = f`. -/
+/-- Closedness for `conjClosure` is the fixed-point equation `f** = f`. -/
 theorem isClosed_conjClosure_iff {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} :
     (conjClosure B).IsClosed (toDual f) ↔ biconj B f = f :=
   ⟨fun h => congrArg ofDual h, fun h => congrArg toDual h⟩
@@ -542,7 +541,7 @@ end Galois
 Here both spaces carry topologies compatible with the pairing. Everything is symmetric under
 `B ↦ B.flip`, and `B.flip.flip = B` holds by `rfl`, so the two directions of the equivalence are
 the same argument run twice. Instance search does *not* see that `rfl`, since `LinearMap.flip` is
-not reducible; `Tdaf.instIsContinuousPairingFlipFlip` is what closes the gap. -/
+not reducible; `instIsContinuousPairingFlipFlip` is what closes the gap. -/
 
 section Involution
 
@@ -554,16 +553,13 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 /-- **Rockafellar, Corollary 12.2.1.** The conjugacy operation induces a symmetric one-to-one
 correspondence between the closed proper convex functions on `E` and those on `F`. -/
 noncomputable def conjEquiv :
-    {f : E → EReal // ConvexFn f ∧ ClosedFn f ∧ Proper f} ≃
-      {g : F → EReal // ConvexFn g ∧ ClosedFn g ∧ Proper g} where
-  toFun f := ⟨conj B f.1, convexFn_conj B f.1, closedFn_conj,
-    proper_conj f.2.1 f.2.2.1 f.2.2.2⟩
-  invFun g := ⟨conj B.flip g.1, convexFn_conj B.flip g.1, closedFn_conj,
-    proper_conj g.2.1 g.2.2.1 g.2.2.2⟩
-  left_inv f := Subtype.ext (biconj_eq_self f.2.1 f.2.2.1)
-  right_inv g := Subtype.ext (biconj_eq_self (B := B.flip) g.2.1 g.2.2.1)
+    {f : E → EReal // ClosedProperConvexFn f} ≃ {g : F → EReal // ClosedProperConvexFn g} where
+  toFun f := ⟨conj B f.1, convexFn_conj B f.1, closedFn_conj, proper_conj f.2⟩
+  invFun g := ⟨conj B.flip g.1, convexFn_conj B.flip g.1, closedFn_conj, proper_conj g.2⟩
+  left_inv f := Subtype.ext (biconj_eq_self f.2.convex f.2.closed)
+  right_inv g := Subtype.ext (biconj_eq_self (B := B.flip) g.2.convex g.2.closed)
 
-@[simp] theorem conjEquiv_apply (f : {f : E → EReal // ConvexFn f ∧ ClosedFn f ∧ Proper f}) :
+@[simp] theorem conjEquiv_apply (f : {f : E → EReal // ClosedProperConvexFn f}) :
     (conjEquiv B f : F → EReal) = conj B f := rfl
 
 end Involution
@@ -579,7 +575,7 @@ original topology of `E` and with no hypothesis beyond convexity.
 
 Both halves of compatibility are trivial for `topDualPairing` — a continuous linear functional is
 continuous, and it represents itself — and instance search supplies them from
-`Tdaf.instIsCompatiblePairingTopDual`. -/
+`instIsCompatiblePairingTopDual`. -/
 theorem biconj_eq_clFn_topDual {f : E → EReal} (hf : ConvexFn f) :
     biconj (topDualPairing ℝ E).flip f = clFn f :=
   biconj_eq_clFn hf
@@ -600,7 +596,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteS
 setting of Rockafellar's `Rⁿ`, in the norm topology.
 
 Compatibility is the Fréchet–Riesz representation theorem, `InnerProductSpace.toDual`, packaged as
-`Tdaf.instIsCompatiblePairingInner`. -/
+`instIsCompatiblePairingInner`. -/
 theorem biconj_eq_clFn_inner {f : E → EReal} (hf : ConvexFn f) :
     biconj (innerₗ E) f = clFn f :=
   biconj_eq_clFn hf
@@ -613,4 +609,4 @@ theorem eq_biSup_affineFn_inner {f : E → EReal} (hf : ConvexFn f) (hc : Closed
 
 end Hilbert
 
-end Tdaf
+end Tdaf.ConvexAnalysis

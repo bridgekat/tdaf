@@ -33,6 +33,7 @@ by reading the file alone.
 
 ```lean
 namespace Rockafellar
+open Tdaf.ConvexAnalysis
 variable {n : ℕ}
 abbrev Rn (n : ℕ) := EuclideanSpace ℝ (Fin n)
 
@@ -41,7 +42,7 @@ Note `innerₗ` takes the *space*, not the field: `innerₗ ℝ` elaborates to `
 noncomputable def pairing (n : ℕ) : Rn n →ₗ[ℝ] Rn n →ₗ[ℝ] ℝ := innerₗ (Rn n)
 ```
 
-Everything is then `Tdaf.conj (pairing n)`, `Tdaf.subgradient (pairing n)`, etc. Because `Rn n` is a
+Everything is then `conj (pairing n)`, `subgradient (pairing n)`, etc. Because `Rn n` is a
 finite-dimensional real inner-product space, all four layers of
 [D9](00-overview.md#d9-generality-boundaries) are available simultaneously, which is exactly why the
 book can state everything without qualification.
@@ -86,7 +87,7 @@ Most sections should be near-mechanical. These are not:
 - **§22.** The elementary-vector development is self-contained linear algebra with no backbone
   counterpart; it lives here in full, including Tucker's complementarity theorem (Theorem 22.7).
 - **§28.** Ordinary convex programs as `(C, f₀, …, f_m, r)`. The surface defines the structure,
-  builds the associated bifunction (`Tdaf.ineqBifun`), and derives Theorems 28.1–28.4 and the
+  builds the associated bifunction (`ineqBifun`), and derives Theorems 28.1–28.4 and the
   Kuhn–Tucker theorem from §29–§30. This is the thickest surface file and the most important one:
   it is where the abstract perturbation theory becomes recognisable Lagrange multipliers.
 - **§30–§31 examples.** Linear programming duality, quadratic programming, the geometric-programming

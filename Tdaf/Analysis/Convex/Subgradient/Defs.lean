@@ -16,44 +16,44 @@ which the graph of that affine function is a non-vertical supporting hyperplane 
 `(x, f x)`. The set of them is the *subdifferential* `∂f x`.
 
 Nothing in Mathlib defines a subgradient, so the definitions here are the ones the rest of the
-library will use. `Tdaf.subgradient` is deliberately **algebraic**: it is a system of weak linear
+library will use. `subgradient` is deliberately **algebraic**: it is a system of weak linear
 inequalities, one for each `z`, and neither it nor Theorem 23.5 uses any topology.
 
 ## Main definitions
 
-* `Tdaf.subgradient B f x` — the subdifferential `∂f x`, a subset of `F`.
-* `Tdaf.subgradientRel B f` — the *graph* of `∂f`, as a `SetRel E F`. Corollary 23.5.1 is literally
+* `subgradient B f x` — the subdifferential `∂f x`, a subset of `F`.
+* `subgradientRel B f` — the *graph* of `∂f`, as a `SetRel E F`. Corollary 23.5.1 is literally
   `SetRel.inv` applied to it; see the design note.
-* `Tdaf.normalCone B C x` — the normal cone `N_C(x)`, with `Tdaf.normalPointedCone` bundling it as
+* `normalCone B C x` — the normal cone `N_C(x)`, with `normalPointedCone` bundling it as
   a `PointedCone ℝ F`.
-* `Tdaf.dirDeriv f x y` — the one-sided directional derivative `f'(x; y)`, as the infimum of the
+* `dirDeriv f x y` — the one-sided directional derivative `f'(x; y)`, as the infimum of the
   difference quotient. Only meaningful where `f x` is finite; see the design note.
 
 ## Main results
 
-* `Tdaf.mem_subgradient_iff_forall_sub_le`, `Tdaf.mem_subgradient_iff_conj_le`,
-  `Tdaf.mem_subgradient_iff_conj_eq`, `Tdaf.mem_subgradient_iff_add_conj_le`,
-  `Tdaf.Proper.mem_subgradient_iff_add_conj_eq` — **Theorem 23.5**, conditions (a)–(d). The first
+* `mem_subgradient_iff_forall_sub_le`, `mem_subgradient_iff_conj_le`,
+  `mem_subgradient_iff_conj_eq`, `mem_subgradient_iff_add_conj_le`,
+  `Proper.mem_subgradient_iff_add_conj_eq` — **Theorem 23.5**, conditions (a)–(d). The first
   four are *unconditional*: neither convexity nor properness is used. Only the passage from the
-  inequality (c) to the equality (d) needs `Tdaf.Proper`, for the reason recorded in `NOTES.md`
-  gotcha 39.
-* `Tdaf.mem_subgradient_clFn_iff`, `Tdaf.mem_subgradient_conj_iff` — **Theorem 23.5**, the extra
+  inequality (c) to the equality (d) needs `Proper`, for the reason recorded in `NOTES.md`
+  gotcha 22.
+* `mem_subgradient_clFn_iff`, `mem_subgradient_conj_iff` — **Theorem 23.5**, the extra
   conditions `(a*)`, `(b*)` and `(a**)` available when `(cl f) x = f x`.
-* `Tdaf.subgradientRel_conj_eq_inv` — **Corollary 23.5.1**: for a closed proper convex `f` the
+* `subgradientRel_conj_eq_inv` — **Corollary 23.5.1**: for a closed proper convex `f` the
   graph of `∂f*` is the flip of the graph of `∂f`.
-* `Tdaf.Proper.mem_subgradient_tfae` — the four conditions of **Theorem 23.5** as one `List.TFAE`.
-* `Tdaf.biconj_eq_of_mem_subgradient`, `Tdaf.clFn_eq_of_mem_subgradient`,
-  `Tdaf.subgradient_clFn` — **Corollary 23.5.2**.
-* `Tdaf.subgradient_indicatorFn` — `∂δ(· | C) x = N_C(x)`, for `x ∈ C`.
-* `Tdaf.subgradient_supportFn`, `Tdaf.subgradient_conj_indicatorFn` — **Corollary 23.5.3**:
+* `Proper.mem_subgradient_tfae` — the four conditions of **Theorem 23.5** as one `List.TFAE`.
+* `biconj_eq_of_mem_subgradient`, `clFn_eq_of_mem_subgradient`,
+  `subgradient_clFn` — **Corollary 23.5.2**.
+* `subgradient_indicatorFn` — `∂δ(· | C) x = N_C(x)`, for `x ∈ C`.
+* `subgradient_supportFn`, `subgradient_conj_indicatorFn` — **Corollary 23.5.3**:
   `∂δ*(· | C) y` is the set of maximizers of `⟨·, y⟩` over `C`.
-* `Tdaf.mem_subgradient_indicatorFn_pointedCone` — **Corollary 23.5.4**.
-* `Tdaf.monotoneOn_sub_div`, `Tdaf.dirDeriv_zero`, `Tdaf.posHomogeneous_dirDeriv`,
-  `Tdaf.convexFn_dirDeriv`, `Tdaf.neg_dirDeriv_neg_le` — **Theorem 23.1**.
-* `Tdaf.mem_subgradient_iff_le_dirDeriv`, `Tdaf.supportSet_dirDeriv`, `Tdaf.conj_dirDeriv`,
-  `Tdaf.clFn_dirDeriv` — **Theorem 23.2**, both halves.
-* `Tdaf.proper_of_mem_subgradient` — **Theorem 23.3**, first half.
-* `Tdaf.convex_subgradient`, `Tdaf.isClosed_subgradient` — `∂f x` is convex always, and closed as
+* `mem_subgradient_indicatorFn_pointedCone` — **Corollary 23.5.4**.
+* `monotoneOn_sub_div`, `dirDeriv_zero`, `posHomogeneous_dirDeriv`,
+  `convexFn_dirDeriv`, `neg_dirDeriv_neg_le` — **Theorem 23.1**.
+* `mem_subgradient_iff_le_dirDeriv`, `supportSet_dirDeriv`, `conj_dirDeriv`,
+  `clFn_dirDeriv` — **Theorem 23.2**, both halves.
+* `proper_of_mem_subgradient` — **Theorem 23.3**, first half.
+* `convex_subgradient`, `isClosed_subgradient` — `∂f x` is convex always, and closed as
   soon as the pairing is continuous in its second variable.
 
 ## Design notes
@@ -64,37 +64,37 @@ Yes. Rockafellar calls `∂f` a *multivalued mapping*, and every statement of §
 closedness of the graph, maximality) and of §26 is about its graph, not about the individual sets
 `∂f x`. Mathlib's `SetRel E F := Set (E × F)` is exactly that object, with `SetRel.inv`,
 `SetRel.dom`, `SetRel.image` and `SetRel.comp` supplied. Corollary 23.5.1 says `∂(f*) = (∂f)⁻¹`,
-and with `Tdaf.subgradientRel` that is what it literally says
-(`Tdaf.subgradientRel_conj_eq_inv`); phrased through the pointwise sets it is a `∀ x y`
-biconditional that §24 would have to re-bundle. Both forms are provided — `Tdaf.subgradient` is
-what a user asks for at a point, `Tdaf.subgradientRel` is what the theory is about — and
-`Tdaf.mem_subgradientRel` is the definitional bridge.
+and with `subgradientRel` that is what it literally says
+(`subgradientRel_conj_eq_inv`); phrased through the pointwise sets it is a `∀ x y`
+biconditional that §24 would have to re-bundle. Both forms are provided — `subgradient` is
+what a user asks for at a point, `subgradientRel` is what the theory is about — and
+`mem_subgradientRel` is the definitional bridge.
 
 `∂f x` is *not* bundled as a convex set or as a closed convex set. Convexity holds unconditionally
-(`Tdaf.convex_subgradient`), but closedness needs a hypothesis (below), so a bundled "closed convex
+(`convex_subgradient`), but closedness needs a hypothesis (below), so a bundled "closed convex
 set" would carry that hypothesis as data and would be unusable at layer A, which is where the
 subgradient inequality lives. `N_C(x)` *is* bundled, as a `PointedCone ℝ F`
-(`Tdaf.normalPointedCone`), because it is a cone with no hypothesis whatever on `C` or `x`; the
-precedent is `Tdaf.recessionPointedCone`.
+(`normalPointedCone`), because it is a cone with no hypothesis whatever on `C` or `x`; the
+precedent is `recessionPointedCone`.
 
 ### Where topology enters (design decision D0)
 
 Three places, and each is one of D0's two shapes.
 
-* `Tdaf.isClosed_subgradient` needs *the map `⟨z, ·⟩ : F → ℝ` to be continuous* for every `z`.
+* `isClosed_subgradient` needs *the map `⟨z, ·⟩ : F → ℝ` to be continuous* for every `z`.
   Rockafellar gets this for free in `ℝⁿ`; here it is `[IsContinuousPairing B.flip]`, the same
-  instance `Tdaf.closedFn_conj` asks for, and no surjectivity is involved.
-* `Tdaf.subgradient_conj_indicatorFn` (Corollary 23.5.3) needs `C` **closed** — Rockafellar says so
-  too — and it needs it through `Tdaf.closedFn_indicatorFn`.
-* Everything derived from Fenchel–Moreau (`Tdaf.subgradientRel_conj_eq_inv`,
-  `Tdaf.clFn_dirDeriv`) carries `Tdaf.biconj_eq_clFn`'s `[IsCompatiblePairing B]`.
+  instance `closedFn_conj` asks for, and no surjectivity is involved.
+* `subgradient_conj_indicatorFn` (Corollary 23.5.3) needs `C` **closed** — Rockafellar says so
+  too — and it needs it through `closedFn_indicatorFn`.
+* Everything derived from Fenchel–Moreau (`subgradientRel_conj_eq_inv`,
+  `clFn_dirDeriv`) carries `biconj_eq_clFn`'s `[IsCompatiblePairing B]`.
 
 **Corollary 23.5.4 needs no closedness at all.** Rockafellar derives it from
 `δ(· | K)* = δ(· | K°)`, which needs `K` closed; the direct argument — put `z = 0` and `z = x + x`
 into the subgradient inequality — does not, so the statement here is for an arbitrary
 `PointedCone ℝ E`.
 
-### The finiteness hypothesis on `Tdaf.dirDeriv`
+### The finiteness hypothesis on `dirDeriv`
 
 Theorem 23.1's "let `x` be a point where `f` is finite" is not removable. `EReal` has `⊤ - ⊤ = ⊥`
 and `⊥ - ⊥ = ⊥`, so off `dom f` the difference quotient is `⊥` in every direction, `f'(x; ·)` is
@@ -109,7 +109,7 @@ is a reindexing of the infimum and holds for every `f` and every `x`.
   `Tdaf/Analysis/Convex/RelativeInterior.lean`, a finite-dimensional module this file does not
   import. They are not stated here, not even weakened. Only the relative-interior-free first
   sentence of Theorem 23.4 — `∂f x = ∅` off `dom f` for proper `f` — is recorded, as
-  `Tdaf.subgradient_eq_empty_of_notMem_dom`.
+  `subgradient_eq_empty_of_notMem_dom`.
 * The second half of **Theorem 23.3** (if `f` is not subdifferentiable at `x` then
   `f'(x; z - x) = -∞` for `z ∈ ri (dom f)`) is relative-interior-based and is deferred with it.
 * **Theorem 23.6** (ε-subgradients) is omitted: its proof runs through Theorems 9.7 and 13.5, and
@@ -125,7 +125,7 @@ is a reindexing of the infimum and holds for every `f` and every `x`.
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Definitions -/
 
@@ -141,13 +141,13 @@ satisfying Rockafellar's *subgradient inequality*
 Geometrically, when `f x` is finite, `y` is a subgradient exactly when the graph of the affine
 function `z ↦ f x + ⟨z - x, y⟩` is a non-vertical supporting hyperplane to `epi f` at `(x, f x)`.
 The definition is purely algebraic — an infinite system of weak linear inequalities — and no
-topology is used until `Tdaf.isClosed_subgradient`. -/
+topology is used until `isClosed_subgradient`. -/
 def subgradient (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (x : E) : Set F :=
   {y | ∀ z, f x + ((B (z - x) y : ℝ) : EReal) ≤ f z}
 
 /-- The **graph of the subdifferential**: Rockafellar's multivalued mapping `∂f : x ↦ ∂f x`, as a
 `SetRel E F`. This is the object §24 and §26 are about, and it is what Corollary 23.5.1
-(`Tdaf.subgradientRel_conj_eq_inv`) inverts. -/
+(`subgradientRel_conj_eq_inv`) inverts. -/
 def subgradientRel (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) : SetRel E F :=
   {p | p.2 ∈ subgradient B f p.1}
 
@@ -156,8 +156,8 @@ def subgradientRel (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) : Set
 
 Rockafellar introduces `N_C(x)` as `∂δ(x | C)` and therefore leaves it empty for `x ∉ C`. Here it
 is defined for every `x`, which is what makes it a pointed cone with no hypothesis; the price is
-that `Tdaf.subgradient_indicatorFn` carries `x ∈ C`, with
-`Tdaf.subgradient_indicatorFn_of_notMem` for the other case. -/
+that `subgradient_indicatorFn` carries `x ∈ C`, with
+`subgradient_indicatorFn_of_notMem` for the other case. -/
 def normalCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) (x : E) : Set F :=
   {y | ∀ z ∈ C, B (z - x) y ≤ 0}
 
@@ -172,7 +172,7 @@ variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {C : Set E} {x 
 
 /-- The normal cone is a pointed convex cone, with no hypothesis on `C` or on `x`. Bundling it
 buys convexity, pointedness and the universal property of `PointedCone.hull`; the precedent is
-`Tdaf.recessionPointedCone`. -/
+`recessionPointedCone`. -/
 def normalPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) (x : E) : PointedCone ℝ F where
   carrier := normalCone B C x
   zero_mem' z _ := by simp
@@ -183,7 +183,7 @@ def normalPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) (x : E) 
     rw [LinearMap.map_smul_of_tower]
     exact smul_nonpos_of_nonneg_of_nonpos c.2 (h z hz)
 
-/-- The carrier of `Tdaf.normalPointedCone` is the normal cone. -/
+/-- The carrier of `normalPointedCone` is the normal cone. -/
 @[simp] theorem coe_normalPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) (x : E) :
     (normalPointedCone B C x : Set F) = normalCone B C x := rfl
 
@@ -241,7 +241,7 @@ theorem mem_subgradient_iff_conj_eq :
 
 /-- **Theorem 23.5**, (a) ⟺ (c) in Rockafellar's additive form `f x + f* y ≤ ⟨x, y⟩`.
 Unconditional: adding a *real* number is an order isomorphism of `EReal`, so no `∞ - ∞` arises.
-Contrast `Tdaf.Proper.mem_subgradient_iff_add_conj_eq`. -/
+Contrast `Proper.mem_subgradient_iff_add_conj_eq`. -/
 theorem mem_subgradient_iff_add_conj_le :
     y ∈ subgradient B f x ↔ f x + conj B f y ≤ ((B x y : ℝ) : EReal) := by
   rw [mem_subgradient_iff_conj_le, _root_.EReal.le_sub_iff_add_le
@@ -252,7 +252,7 @@ at `(x, y)`.
 
 Properness is not decorative. For `f ≡ ⊤` every `y` is a subgradient at every `x` (the subgradient
 inequality reads `⊤ ≤ ⊤`), while `f* ≡ ⊥` and so `f x + f* y = ⊤ + ⊥ = ⊥ ≠ ⟨x, y⟩`. This is the
-trap `Tdaf.le_add_conj` carries too; see `NOTES.md` gotcha 39. -/
+trap `le_add_conj` carries too; see `NOTES.md` gotcha 22. -/
 theorem Proper.mem_subgradient_iff_add_conj_eq (hp : Proper f) :
     y ∈ subgradient B f x ↔ f x + conj B f y = ((B x y : ℝ) : EReal) := by
   rw [mem_subgradient_iff_add_conj_le]
@@ -413,7 +413,7 @@ theorem continuous_add_coe (u : EReal) : Continuous fun t : ℝ => u + (t : ERea
 
 /-- **The subdifferential is closed** once every `⟨z, ·⟩ : F → ℝ` is continuous. This is design
 decision D0 in its "the map is continuous" form: in `ℝⁿ` it is automatic, and here it is the
-instance `Tdaf.closedFn_conj` asks for. -/
+instance `closedFn_conj` asks for. -/
 theorem isClosed_subgradient [IsContinuousPairing B.flip] (f : E → EReal) (x : E) :
     IsClosed (subgradient B f x) := by
   rw [show subgradient B f x = ⋂ z : E, {y | f x + ((B (z - x) y : ℝ) : EReal) ≤ f z} from
@@ -433,7 +433,7 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal} {x y : E}
 difference quotient.
 
 By Theorem 23.1 the quotient is nondecreasing in `a` for convex `f` finite at `x`
-(`Tdaf.monotoneOn_sub_div`), so the infimum is the limit as `a ↓ 0`, which is Rockafellar's
+(`monotoneOn_sub_div`), so the infimum is the limit as `a ↓ 0`, which is Rockafellar's
 definition. Off `dom f` the expression degenerates: `⊤ - ⊤ = ⊥` in `EReal`, so `f'(x; ·) ≡ ⊥` and
 Theorem 23.1's `f'(x; 0) = 0` fails. This is why the finiteness hypothesis is kept throughout. -/
 noncomputable def dirDeriv (f : E → EReal) (x y : E) : EReal :=
@@ -486,7 +486,7 @@ theorem posHomogeneous_dirDeriv (f : E → EReal) (x : E) : PosHomogeneous (dirD
     exact iInf_le _ (⟨(a : ℝ) * c, mul_pos a.2 hc⟩ : Set.Ioi (0 : ℝ))
 
 /-- **Theorem 23.1**: for convex `f` finite at `x`, the difference quotient is nondecreasing in the
-step `a`. This is what makes the infimum defining `Tdaf.dirDeriv` the limit as `a ↓ 0`, which is
+step `a`. This is what makes the infimum defining `dirDeriv` the limit as `a ↓ 0`, which is
 Rockafellar's definition.
 
 The proof is his: `x + a • y` is the convex combination of `x` and `x + b • y` with weights
@@ -525,7 +525,7 @@ theorem exists_le_of_dirDeriv_lt (hf : ConvexFn f) {r : ℝ} (hr : f x = (r : ER
 /-- **Theorem 23.1**: `f'(x; ·)` is a convex function, for convex `f` finite at `x`.
 
 Monotonicity of the difference quotient is what makes the proof short: the two witnesses supplied
-by `Tdaf.exists_le_of_dirDeriv_lt` can be taken at a *common* step `a`, so the convex combination
+by `exists_le_of_dirDeriv_lt` can be taken at a *common* step `a`, so the convex combination
 is formed at the single point `x + a • (s • y₁ + t • y₂)`. -/
 theorem convexFn_dirDeriv (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     ConvexFn (dirDeriv f x) := by
@@ -573,7 +573,7 @@ theorem convexFn_dirDeriv (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥
 
 /-- **Theorem 23.1**: `-f'(x; -y) ≤ f'(x; y)`.
 
-No `≠ ⊥` hypothesis on `f'(x; ·)` appears, although `Tdaf.PosHomogeneous.neg_le`
+No `≠ ⊥` hypothesis on `f'(x; ·)` appears, although `PosHomogeneous.neg_le`
 (Corollary 4.7.2) carries one: the argument through `f'(x; 0) = 0` does not need it, and
 `f'(x; ·)` really can take the value `⊥` — that is the content of Theorem 23.3's second half. -/
 theorem neg_dirDeriv_neg_le (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) (y : E) :
@@ -632,15 +632,15 @@ theorem mem_subgradient_iff_le_dirDeriv (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     rw [hr]
     exact h2
 
-/-- The set §13 attaches to `f'(x; ·)` is the subdifferential: `Tdaf.supportSet` unfolds to the
-system of inequalities `⟨v, y⟩ ≤ f'(x; v)`, which is `Tdaf.mem_subgradient_iff_le_dirDeriv`. -/
+/-- The set §13 attaches to `f'(x; ·)` is the subdifferential: `supportSet` unfolds to the
+system of inequalities `⟨v, y⟩ ≤ f'(x; v)`, which is `mem_subgradient_iff_le_dirDeriv`. -/
 theorem supportSet_dirDeriv (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     supportSet B (dirDeriv f x) = subgradient B f x :=
   Set.ext fun _ => (mem_subgradient_iff_le_dirDeriv ht hb).symm
 
 /-- **Theorem 23.2**, the dual half: the conjugate of `f'(x; ·)` is the *indicator* of `∂f x`.
 
-This is `Tdaf.conj_eq_indicatorFn_of_posHomogeneous` — the engine of Corollary 13.2.1 — applied to
+This is `conj_eq_indicatorFn_of_posHomogeneous` — the engine of Corollary 13.2.1 — applied to
 `f'(x; ·)`, which is positively homogeneous and finite at the origin. Convexity of `f` is not
 needed, and neither is any topology. -/
 theorem conj_dirDeriv (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
@@ -653,7 +653,7 @@ end DirDerivSubgradient
 
 /-! ### Corollaries 23.5.1–23.5.3, and the closure of the directional derivative
 
-Everything here consumes Fenchel–Moreau, so the pairing hypotheses of `Tdaf.biconj_eq_clFn` come
+Everything here consumes Fenchel–Moreau, so the pairing hypotheses of `biconj_eq_clFn` come
 with it. -/
 
 section FenchelMoreau
@@ -663,7 +663,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {x : E} {y : F}
 
 /-- **Theorem 23.5**, (a) ⟺ `(a**)`: `∂(cl f) x = ∂f x` wherever `(cl f) x = f x`. Only the
-continuity of the pairing is needed, through `Tdaf.conj_clFn`. -/
+continuity of the pairing is needed, through `conj_clFn`. -/
 theorem mem_subgradient_clFn_iff [IsContinuousPairing B] (hx : clFn f x = f x) :
     y ∈ subgradient B (clFn f) x ↔ y ∈ subgradient B f x := by
   rw [mem_subgradient_iff_conj_le, mem_subgradient_iff_conj_le, conj_clFn, hx]
@@ -680,7 +680,7 @@ theorem mem_subgradient_conj_iff_of_closedFn [IsCompatiblePairing B] (hf : Conve
 /-- **Corollary 23.5.1**: for a closed proper convex `f`, `∂f*` is the inverse of `∂f` as a
 multivalued mapping — the graph of `∂f*` is the flip of the graph of `∂f`.
 
-This is the form §26 and §31 want, and it is why `Tdaf.subgradientRel` exists. -/
+This is the form §26 and §31 want, and it is why `subgradientRel` exists. -/
 theorem subgradientRel_conj_eq_inv [IsCompatiblePairing B] (hf : ConvexFn f) (hc : ClosedFn f) :
     subgradientRel B.flip (conj B f) = (subgradientRel B f).inv := by
   ext ⟨y, x⟩
@@ -700,8 +700,8 @@ theorem subgradient_clFn [IsCompatiblePairing B] (hf : ConvexFn f)
 
 /-- **Corollary 23.5.3.** For a nonempty closed convex set `C`, the subgradients at `y` of the
 support function `δ*(· | C) = δ(· | C)*` are exactly the points of `C` at which the linear function
-`⟨·, y⟩` attains its maximum over `C`. `Tdaf.subgradient_supportFn` is the same statement with
-§13's `Tdaf.supportFn`. -/
+`⟨·, y⟩` attains its maximum over `C`. `subgradient_supportFn` is the same statement with
+§13's `supportFn`. -/
 theorem subgradient_conj_indicatorFn [IsCompatiblePairing B] {C : Set E} (hC : IsClosed C)
     (hCc : Convex ℝ C) (hCne : C.Nonempty) (y : F) :
     subgradient B.flip (conj B (indicatorFn C)) y = {x ∈ C | ∀ z ∈ C, B z y ≤ B x y} := by
@@ -713,7 +713,7 @@ theorem subgradient_conj_indicatorFn [IsCompatiblePairing B] {C : Set E} (hC : I
   simp only [mem_normalCone]
   exact forall₂_congr fun z _ => by rw [map_sub, LinearMap.sub_apply, sub_nonpos]
 
-/-- **Corollary 23.5.3**, with §13's `Tdaf.supportFn`: `∂δ*(· | C) y` is the face of `C` on which
+/-- **Corollary 23.5.3**, with §13's `supportFn`: `∂δ*(· | C) y` is the face of `C` on which
 `⟨·, y⟩` is maximized. -/
 theorem subgradient_supportFn [IsCompatiblePairing B] {C : Set E} (hC : IsClosed C)
     (hCc : Convex ℝ C) (hCne : C.Nonempty) (y : F) :
@@ -723,8 +723,8 @@ theorem subgradient_supportFn [IsCompatiblePairing B] {C : Set E} (hC : IsClosed
 
 /-- **Theorem 23.2**, second half: the closure of `f'(x; ·)` is the support function of `∂f x`.
 
-This is Corollary 13.2.1 (`Tdaf.clFn_eq_supportFn_of_posHomogeneous`) for `f'(x; ·)`, and it is
-proved the same way: apply Fenchel–Moreau to `Tdaf.conj_dirDeriv`. -/
+This is Corollary 13.2.1 (`clFn_eq_supportFn_of_posHomogeneous`) for `f'(x; ·)`, and it is
+proved the same way: apply Fenchel–Moreau to `conj_dirDeriv`. -/
 theorem clFn_dirDeriv [IsCompatiblePairing B] (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     clFn (dirDeriv f x) = supportFn B.flip (subgradient B f x) := by
   rw [supportFn_eq_conj_indicatorFn, ← conj_dirDeriv ht hb]
@@ -732,4 +732,4 @@ theorem clFn_dirDeriv [IsCompatiblePairing B] (hf : ConvexFn f) (ht : f x ≠ �
 
 end FenchelMoreau
 
-end Tdaf
+end Tdaf.ConvexAnalysis

@@ -19,40 +19,40 @@ half-spaces — together with the statements Mathlib does not have.
 
 ## Main definitions
 
-* `Tdaf.Separates f c s t` — the hyperplane `{x | f x = c}` separates `s` and `t`: `s` lies in the
+* `Separates f c s t` — the hyperplane `{x | f x = c}` separates `s` and `t`: `s` lies in the
   closed half-space `{x | f x ≤ c}` and `t` in the opposite one.
-* `Tdaf.SeparatesProperly f c s t` — separation in which `s` and `t` are not *both* contained in
+* `SeparatesProperly f c s t` — separation in which `s` and `t` are not *both* contained in
   the hyperplane.
-* `Tdaf.SeparatesStrongly f c s t` — separation with a *gap*: `⨆_{s} f < c < ⨅_{t} f`, the extrema
+* `SeparatesStrongly f c s t` — separation with a *gap*: `⨆_{s} f < c < ⨅_{t} f`, the extrema
   being taken in `EReal`.
-* `Tdaf.IsSupporting f c s` — `{x | f x ≤ c}` is a supporting half-space to `s` and
+* `IsSupporting f c s` — `{x | f x ≤ c}` is a supporting half-space to `s` and
   `{x | f x = c}` a supporting hyperplane: `f ≠ 0`, `f ≤ c` on `s`, and `f x = c` somewhere on `s`.
-* `Tdaf.halfSpaceCone f` — the homogeneous closed half-space `{x | f x ≤ 0}`, bundled as a
+* `halfSpaceCone f` — the homogeneous closed half-space `{x | f x ≤ 0}`, bundled as a
   `PointedCone ℝ E`.
 
 ## Main results
 
-* `Tdaf.separates_iff_iSup_le_iInf`, `Tdaf.exists_separatesProperly_iff_iSup_le_iInf`,
-  `Tdaf.exists_separatesStrongly_iff_iSup_lt_iInf` — **Theorem 11.1**, the description of the three
+* `separates_iff_iSup_le_iInf`, `exists_separatesProperly_iff_iSup_le_iInf`,
+  `exists_separatesStrongly_iff_iSup_lt_iInf` — **Theorem 11.1**, the description of the three
   notions by the extrema of `f` over the two sets.
-* `Tdaf.separatesStrongly_iff_exists_gap`, `Tdaf.separatesStrongly_iff_exists_nhds`,
-  `Tdaf.separatesStrongly_iff_exists_closedBall` — the three faces of strong separation: a uniform
+* `separatesStrongly_iff_exists_gap`, `separatesStrongly_iff_exists_nhds`,
+  `separatesStrongly_iff_exists_closedBall` — the three faces of strong separation: a uniform
   gap, a neighbourhood of the origin, and — in a normed space — Rockafellar's `ε`-balls.
-* `Tdaf.exists_separates_of_isOpen_of_disjoint_affine` — **Theorem 11.2**, with an open convex set
+* `exists_separates_of_isOpen_of_disjoint_affine` — **Theorem 11.2**, with an open convex set
   in place of a relatively open one.
-* `Tdaf.separatesStrongly_iff_zero_notMem_closure_sub` — **Theorem 11.4**: strong separation is
+* `separatesStrongly_iff_zero_notMem_closure_sub` — **Theorem 11.4**: strong separation is
   possible exactly when `0 ∉ closure (s - t)`.
-* `Tdaf.separatesStrongly_of_disjoint_isCompact_isClosed` — **Corollary 11.4.2**.
-* `Tdaf.isClosed_convex_eq_iInter_halfspaces` — **Theorem 11.5**, with
-  `Tdaf.mem_iff_forall_le_halfSpace` as its pointwise form and
-  `Tdaf.closure_convexHull_eq_iInter_halfspaces` as Corollary 11.5.1.
-* `Tdaf.exists_isSupporting_iff_disjoint_interior` — **Theorem 11.6**, with `interior` in place of
+* `separatesStrongly_of_disjoint_isCompact_isClosed` — **Corollary 11.4.2**.
+* `isClosed_convex_eq_iInter_halfspaces` — **Theorem 11.5**, with
+  `mem_iff_forall_le_halfSpace` as its pointwise form and
+  `closure_convexHull_eq_iInter_halfspaces` as Corollary 11.5.1.
+* `exists_isSupporting_iff_disjoint_interior` — **Theorem 11.6**, with `interior` in place of
   `ri`.
-* `Tdaf.SeparatesProperly.zero_of_isCone_left` — **Theorem 11.7**: proper separation of a cone can
+* `SeparatesProperly.zero_of_isCone_left` — **Theorem 11.7**: proper separation of a cone can
   always be moved to a hyperplane through the origin; Corollaries 11.7.1–11.7.3 follow.
-* `Tdaf.exists_separating_of_notMem_closed_convex` — the point/closed-convex-set case, in the form
+* `exists_separating_of_notMem_closed_convex` — the point/closed-convex-set case, in the form
   the conjugacy module consumes.
-* `Tdaf.exists_affine_lt_of_notMem`, `Tdaf.exists_affine_le_of_isClosed_epi` — the `E × ℝ`
+* `exists_affine_lt_of_notMem`, `exists_affine_le_of_isClosed_epi` — the `E × ℝ`
   specialisation: separating a point from a closed convex set that has a point vertically above it
   produces a *non-vertical* functional, hence a continuous affine function on `E`.
 
@@ -72,8 +72,8 @@ because
 * taking the extrema in `EReal` removes the `Nonempty` and `BddAbove` side conditions that a
   real-valued `sSup` would force, exactly as elsewhere in this library.
 
-The other two phrasings are recorded as `Tdaf.separatesStrongly_iff_exists_nhds` and
-`Tdaf.separatesStrongly_iff_exists_closedBall`. Note that *pointwise* strict separation — `f < c`
+The other two phrasings are recorded as `separatesStrongly_iff_exists_nhds` and
+`separatesStrongly_iff_exists_closedBall`. Note that *pointwise* strict separation — `f < c`
 on `s` and `c < f` on `t` — is a genuinely weaker notion, Rockafellar's "strict separation", and is
 not among the three.
 
@@ -82,7 +82,7 @@ not among the three.
 `isClosed_le` and `convex_halfSpace_le` — apply to that description directly, so a bundled type
 would buy a coercion and nothing else. For the *homogeneous* half-space `{x | f x ≤ 0}` of
 Theorem 11.7 the answer is yes: it is a pointed convex cone, and bundling it as
-`Tdaf.halfSpaceCone f : PointedCone ℝ E` supplies convexity, pointedness and — through
+`halfSpaceCone f : PointedCone ℝ E` supplies convexity, pointedness and — through
 `Submodule.span_le` — the universal property of `PointedCone.hull` on which Corollary 11.7.2 turns.
 
 **What is deliberately absent.** Theorem 11.3 (proper separation of `C₁` and `C₂` is possible
@@ -108,7 +108,7 @@ Corollary 11.7.3.
 
 open Set Filter Topology Pointwise
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### The three notions of separation -/
 
@@ -122,7 +122,7 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
 
 Rockafellar asks in addition that `{x | f x = c}` really be a hyperplane, that is, that `f ≠ 0`.
 That is not built into the definition here, because it is automatic in the two notions where it
-matters: see `Tdaf.SeparatesProperly.ne_zero` and `Tdaf.SeparatesStrongly.ne_zero`. -/
+matters: see `SeparatesProperly.ne_zero` and `SeparatesStrongly.ne_zero`. -/
 structure Separates (f : E →L[ℝ] ℝ) (c : ℝ) (s t : Set E) : Prop where
   /-- `f` is at most `c` on `s`. -/
   le_of_mem_left : ∀ ⦃x⦄, x ∈ s → f x ≤ c
@@ -140,9 +140,9 @@ structure SeparatesProperly (f : E →L[ℝ] ℝ) (c : ℝ) (s t : Set E) : Prop
 in `EReal` so that empty and unbounded sets need no special treatment.
 
 This is condition (c) of Rockafellar's Theorem 11.1. His definition — `s + εB` and `t + εB` in
-opposite open half-spaces — presupposes a norm; see `Tdaf.separatesStrongly_iff_exists_nhds` for
+opposite open half-spaces — presupposes a norm; see `separatesStrongly_iff_exists_nhds` for
 the neighbourhood form, valid in any topological vector space, and
-`Tdaf.separatesStrongly_iff_exists_closedBall` for the literal ball form. -/
+`separatesStrongly_iff_exists_closedBall` for the literal ball form. -/
 structure SeparatesStrongly (f : E →L[ℝ] ℝ) (c : ℝ) (s t : Set E) : Prop where
   /-- `f` stays bounded away from `c` from below on `s`. -/
   iSup_lt : (⨆ x ∈ s, (f x : EReal)) < (c : EReal)
@@ -549,7 +549,7 @@ Rockafellar's hypothesis is that `C` be *relatively* open, which in `ℝⁿ` is 
 every nonempty convex set there has a nonempty relative interior, and that relative interior is
 relatively open, so the theorem applies to every nonempty convex set through `ri C`. Outside finite
 dimensions the relative interior is not available and openness is the right hypothesis; the
-relatively open version is `Tdaf.exists_lt_of_notMem_relint` in
+relatively open version is `exists_lt_of_notMem_relint` in
 `Tdaf/Analysis/Convex/RelativeInterior.lean`. -/
 theorem exists_separates_of_isOpen_of_disjoint_affine {C : Set E} {M : AffineSubspace ℝ E}
     (hC₁ : Convex ℝ C) (hC₂ : IsOpen C) (hC₃ : C.Nonempty) {p : E} (hp : p ∈ M)
@@ -609,8 +609,8 @@ the interior of `C`.
 Rockafellar's statement is about `ri C`, and needs no hypothesis of the kind
 `(interior C).Nonempty`, because in `ℝⁿ` a nonempty convex set has nonempty relative interior
 (Theorem 6.2). Outside finite dimensions that fails, so `interior` is the hypothesis here;
-Corollaries 11.6.1 and 11.6.2 are `Tdaf.exists_ne_zero_isMaxOn_of_mem_frontier` and
-`Tdaf.notMem_relint_iff_exists_isMaxOn` in `Tdaf/Analysis/Convex/RelativeInterior.lean`. -/
+Corollaries 11.6.1 and 11.6.2 are `exists_ne_zero_isMaxOn_of_mem_frontier` and
+`notMem_relint_iff_exists_isMaxOn` in `Tdaf/Analysis/Convex/RelativeInterior.lean`. -/
 theorem exists_isSupporting_iff_disjoint_interior {C D : Set E} (hC : Convex ℝ C)
     (hD : Convex ℝ D) (hDC : D ⊆ C) (hD' : D.Nonempty) (hCi : (interior C).Nonempty) :
     (∃ (g : E →L[ℝ] ℝ) (b : ℝ), IsSupporting g b C ∧ (∀ x ∈ D, g x = b) ∧ ∃ x ∈ C, g x ≠ b) ↔
@@ -646,7 +646,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E →L[ℝ]
 
 /-- **Rockafellar's own definition of strong separation**, available once there is a norm: `s + εB`
 and `t + εB` lie in opposite open half-spaces for some `ε > 0`, where `B` is the closed unit ball.
-Together with `Tdaf.separatesStrongly_iff_exists_nhds` this shows that nothing is lost by taking
+Together with `separatesStrongly_iff_exists_nhds` this shows that nothing is lost by taking
 the gap `⨆_{s} f < c < ⨅_{t} f` as the definition. -/
 theorem separatesStrongly_iff_exists_closedBall :
     SeparatesStrongly f c s t ↔
@@ -698,7 +698,7 @@ def halfSpaceCone (f : E →L[ℝ] ℝ) : PointedCone ℝ E where
 @[simp]
 theorem mem_halfSpaceCone {x : E} : x ∈ halfSpaceCone f ↔ f x ≤ 0 := Iff.rfl
 
-/-- The underlying set of `Tdaf.halfSpaceCone f` is the homogeneous half-space `{x | f x ≤ 0}`. -/
+/-- The underlying set of `halfSpaceCone f` is the homogeneous half-space `{x | f x ≤ 0}`. -/
 @[simp]
 theorem coe_halfSpaceCone : (halfSpaceCone f : Set E) = {x | f x ≤ 0} := rfl
 
@@ -975,7 +975,7 @@ for some `ν > μ`, the functional separating `(x₀, μ)` from the closed conve
 Normalising the vertical component to `-1` turns the separating functional into a continuous affine
 function of `E` that stays strictly below `F` and strictly above `μ` at `x₀`.
 
-This is the reusable half of `Tdaf.exists_affine_le_of_closed_proper`, and it is what the conjugacy
+This is the reusable half of `exists_affine_le_of_closed_proper`, and it is what the conjugacy
 module consumes when it separates a point below the graph from the epigraph. -/
 theorem exists_affine_lt_of_notMem {F : Set (E × ℝ)} (hF₁ : Convex ℝ F) (hF₂ : IsClosed F)
     {x₀ : E} {μ ν : ℝ} (hμν : μ < ν) (hν : (x₀, ν) ∈ F) (hμ : (x₀, μ) ∉ F) :
@@ -1014,7 +1014,7 @@ theorem exists_affine_lt_of_notMem {F : Set (E × ℝ)} (hF₁ : Convex ℝ F) (
 /-- **The epigraph form.** A convex function with a closed epigraph has, at every point of its
 domain and below every value it takes there, a continuous affine minorant passing above that value.
 
-`Tdaf.exists_affine_le_of_closed_proper` is this lemma with `μ := f x₀ - 1`; the separating
+`exists_affine_le_of_closed_proper` is this lemma with `μ := f x₀ - 1`; the separating
 functional is non-vertical because `x₀ ∈ dom f`. -/
 theorem exists_affine_le_of_isClosed_epi {g : E → EReal} (hg : ConvexFn g)
     (hcl : IsClosed (epi g)) {x₀ : E} {μ ν : ℝ} (hν : g x₀ ≤ (ν : EReal))
@@ -1033,4 +1033,4 @@ theorem exists_affine_le_of_isClosed_epi {g : E → EReal} (hg : ConvexFn g)
 
 end LocallyConvex
 
-end Tdaf
+end Tdaf.ConvexAnalysis

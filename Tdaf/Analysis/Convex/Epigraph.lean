@@ -14,20 +14,20 @@ following Rockafellar, *Convex Analysis*, §4.
 
 ## Main definitions
 
-* `Tdaf.epi f` — the epigraph of `f`, a subset of `E × ℝ`.
-* `Tdaf.dom f` — the effective domain of `f`, where `f < ⊤`.
-* `Tdaf.Proper f` — `f` is finite somewhere and never `⊥`.
-* `Tdaf.restrict s f` — `f` restricted to `s`, extended by `⊤`.
-* `Tdaf.ConvexFn f` — `f` is convex, meaning that `epi f` is a convex set.
+* `epi f` — the epigraph of `f`, a subset of `E × ℝ`.
+* `dom f` — the effective domain of `f`, where `f < ⊤`.
+* `Proper f` — `f` is finite somewhere and never `⊥`.
+* `restrict s f` — `f` restricted to `s`, extended by `⊤`.
+* `ConvexFn f` — `f` is convex, meaning that `epi f` is a convex set.
 
 ## Main results
 
-* `Tdaf.convexFn_iff_forall_lt` — Rockafellar's Theorem 4.2, the characterisation of convexity by
+* `convexFn_iff_forall_lt` — Rockafellar's Theorem 4.2, the characterisation of convexity by
   strict inequalities. This is the form that avoids `∞ - ∞` entirely.
-* `Tdaf.convexFn_iff_le` — Rockafellar's Theorem 4.1, the familiar inequality, valid when `f` never
+* `convexFn_iff_le` — Rockafellar's Theorem 4.1, the familiar inequality, valid when `f` never
   takes the value `⊥`.
-* `Tdaf.ConvexFn.convex_lt`, `Tdaf.ConvexFn.convex_le`, `Tdaf.ConvexFn.convex_dom` — Theorem 4.6.
-* `Tdaf.convexOn_iff_convexFn` — the bridge to Mathlib's `ConvexOn`.
+* `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — Theorem 4.6.
+* `convexOn_iff_convexFn` — the bridge to Mathlib's `ConvexOn`.
 
 ## Design notes
 
@@ -40,7 +40,7 @@ ones, and Part VII of the book depends on them.
 Note also that the epigraph lives in `E × ℝ`, not `E × EReal`: the second coordinate ranges over
 the *reals*. This differs from Mathlib's `ConvexOn.convex_epigraph`, which uses the codomain of the
 function for the second coordinate. For `EReal`-valued functions the two are genuinely different
-sets, so `Tdaf.epi` is a new definition rather than a specialisation.
+sets, so `epi` is a new definition rather than a specialisation.
 
 ## References
 
@@ -49,7 +49,7 @@ sets, so `Tdaf.epi` is a new definition rather than a specialisation.
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Epigraphs, domains, properness -/
 
@@ -68,11 +68,12 @@ theorem mem_epi {f : E → EReal} {p : E × ℝ} : p ∈ epi f ↔ f p.1 ≤ (p.
 
 theorem mk_mem_epi {f : E → EReal} {x : E} {μ : ℝ} : (x, μ) ∈ epi f ↔ f x ≤ (μ : EReal) := Iff.rfl
 
-theorem epi_mono {f g : E → EReal} (h : f ≤ g) : epi g ⊆ epi f := fun _ hp => (h _).trans hp
+/-- `epi` is **antitone**: a larger function has a smaller epigraph. -/
+theorem epi_anti {f g : E → EReal} (h : f ≤ g) : epi g ⊆ epi f := fun _ hp => (h _).trans hp
 
 /-- The epigraph determines the function: `f ≤ g` exactly when `epi g ⊆ epi f`. -/
 theorem le_iff_epi_subset {f g : E → EReal} : f ≤ g ↔ epi g ⊆ epi f := by
-  refine ⟨epi_mono, fun h x => ?_⟩
+  refine ⟨epi_anti, fun h x => ?_⟩
   by_contra hx
   obtain ⟨q, hgq, hqf⟩ := EReal.lt_iff_exists_real_btwn.1 (not_le.1 hx)
   exact absurd (h (show (x, q) ∈ epi g from hgq.le)) (not_le.2 hqf)
@@ -124,7 +125,7 @@ structure Proper (f : E → EReal) : Prop where
 
 This encoding of "a convex function given on a convex set" recurs constantly; Rockafellar adopts it
 as the standing convention in §4. The `⨅` formulation avoids a decidability hypothesis; see
-`Tdaf.restrict_of_mem` and `Tdaf.restrict_of_notMem` for the defining equations. -/
+`restrict_of_mem` and `restrict_of_notMem` for the defining equations. -/
 noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x => ⨅ _ : x ∈ s, f x
 
 @[simp] theorem restrict_of_mem {s : Set E} {f : E → EReal} {x : E} (hx : x ∈ s) :
@@ -143,8 +144,8 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 /-- A function `f : E → EReal` is convex when its epigraph is a convex subset of `E × ℝ`.
 
-This is Rockafellar's definition (§4). See `Tdaf.convexFn_iff_forall_lt` (Theorem 4.2) and
-`Tdaf.convexFn_iff_le` (Theorem 4.1) for the analytic characterisations. -/
+This is Rockafellar's definition (§4). See `convexFn_iff_forall_lt` (Theorem 4.2) and
+`convexFn_iff_le` (Theorem 4.1) for the analytic characterisations. -/
 structure ConvexFn (f : E → EReal) : Prop where
   /-- The epigraph of a convex function is convex. -/
   convex_epi : Convex ℝ (epi f)
@@ -327,4 +328,4 @@ theorem convexOn_iff_convexFn (s : Set E) (g : E → ℝ) :
 
 end Module
 
-end Tdaf
+end Tdaf.ConvexAnalysis

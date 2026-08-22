@@ -23,45 +23,45 @@ and those with `(f0⁺) (-y) = -(f0⁺) y` its *lineality space*.
 
 ## Main definitions
 
-* `Tdaf.recessionFn f` — the recession function `f0⁺`, as `Tdaf.ofEpi (0⁺(epi f))`.
-* `Tdaf.recessionConeFn f` — the recession cone of `f`, `{y | (f0⁺) y ≤ 0}`, a bare `Set E`, and
-  `Tdaf.recessionPointedConeFn f` — the same set bundled as a `PointedCone ℝ E`.
-* `Tdaf.constancySpace f` and `Tdaf.constancySubmodule f` — the constancy space, bare and bundled
+* `recessionFn f` — the recession function `f0⁺`, as `ofEpi (0⁺(epi f))`.
+* `recessionConeFn f` — the recession cone of `f`, `{y | (f0⁺) y ≤ 0}`, a bare `Set E`, and
+  `recessionPointedConeFn f` — the same set bundled as a `PointedCone ℝ E`.
+* `constancySpace f` and `constancySubmodule f` — the constancy space, bare and bundled
   as a `Submodule ℝ E` (Mathlib's `PointedCone.lineal` of the recession cone).
-* `Tdaf.linealitySpaceFn f`, `Tdaf.linealitySubmoduleFn f`, `Tdaf.linealityFn f` — the lineality
+* `linealitySpaceFn f`, `linealitySubmoduleFn f`, `linealityFn f` — the lineality
   space of `f`, its `Submodule ℝ E` structure, and Rockafellar's *lineality of `f`*.
 
 ## Main results
 
-* `Tdaf.epi_recessionFn` — `epi (f0⁺) = 0⁺(epi f)`, **with no hypothesis on `f`**; the plan's
+* `epi_recessionFn` — `epi (f0⁺) = 0⁺(epi f)`, **with no hypothesis on `f`**; the plan's
   `ClosedFn f` is not needed. See the design note below.
-* `Tdaf.posHomogeneous_recessionFn`, `Tdaf.convexFn_recessionFn`, `Tdaf.recessionFn_ne_bot`,
-  `Tdaf.proper_recessionFn`, `Tdaf.closedFn_recessionFn` — **Theorem 8.5**, first assertion: `f0⁺`
+* `posHomogeneous_recessionFn`, `convexFn_recessionFn`, `recessionFn_ne_bot`,
+  `proper_recessionFn`, `closedFn_recessionFn` — **Theorem 8.5**, first assertion: `f0⁺`
   is a positively homogeneous convex function, proper when `f` is proper and closed when `f` is
   closed.
-* `Tdaf.recessionFn_apply_eq_iSup_sub` — **Theorem 8.5**, the difference formula
+* `recessionFn_apply_eq_iSup_sub` — **Theorem 8.5**, the difference formula
   `(f0⁺) y = sup {f (x + y) - f x | x ∈ dom f}`.
-* `Tdaf.recessionFn_apply_eq_iSup_inv_mul`, `Tdaf.tendsto_coe_inv_mul_sub_atTop` — **Theorem 8.5**,
+* `recessionFn_apply_eq_iSup_inv_mul`, `tendsto_coe_inv_mul_sub_atTop` — **Theorem 8.5**,
   the difference-quotient formula and its limit form, for closed `f` and *any one* `x ∈ dom f`.
-* `Tdaf.recessionFn_isLeast` — **Corollary 8.5.1**: `f0⁺` is the least `h` with
+* `recessionFn_isLeast` — **Corollary 8.5.1**: `f0⁺` is the least `h` with
   `f z ≤ f x + h (z - x)` for all `x, z`.
-* `Tdaf.tendsto_smulRight_recessionFn`, `Tdaf.tendsto_smulRight_recessionFn_of_zero_mem_dom` —
+* `tendsto_smulRight_recessionFn`, `tendsto_smulRight_recessionFn_of_zero_mem_dom` —
   **Corollary 8.5.2**: `(f0⁺) y = lim_{a ↓ 0} (fa) y` on `dom f`, and everywhere when
   `0 ∈ dom f`.
-* `Tdaf.forall_antitone_iff_recessionFn_nonpos`, `Tdaf.antitone_along_of_liminf_lt_top`,
-  `Tdaf.recessionFn_nonpos_of_antitone` — **Theorem 8.6**, with
-  `Tdaf.forall_eq_iff_recessionFn_nonpos` (**Corollary 8.6.1**) and
-  `Tdaf.ConvexFn.eq_of_le_on_affineSubspace` (**Corollary 8.6.2**).
-* `Tdaf.recessionCone_setOf_le`, `Tdaf.linealitySpace_setOf_le` — **Theorem 8.7**: all nonempty
+* `forall_antitone_iff_recessionFn_nonpos`, `antitone_along_of_liminf_lt_top`,
+  `recessionFn_nonpos_of_antitone` — **Theorem 8.6**, with
+  `forall_eq_iff_recessionFn_nonpos` (**Corollary 8.6.1**) and
+  `ConvexFn.eq_of_le_on_affineSubspace` (**Corollary 8.6.2**).
+* `recessionCone_setOf_le`, `linealitySpace_setOf_le` — **Theorem 8.7**: all nonempty
   level sets of a closed convex `f` share the recession cone and the constancy space of `f`;
-  `Tdaf.isBounded_setOf_le` is **Corollary 8.7.1**.
-* `Tdaf.forall_eq_add_iff_mk_mem_linealitySpace_epi`, `Tdaf.mk_mem_linealitySpace_epi_iff`,
-  `Tdaf.forall_eq_add_iff_recessionFn`, `Tdaf.linealitySpaceFn_eq_image` — **Theorem 8.8**, the
+  `isBounded_setOf_le` is **Corollary 8.7.1**.
+* `forall_eq_add_iff_mk_mem_linealitySpace_epi`, `mk_mem_linealitySpace_epi_iff`,
+  `forall_eq_add_iff_recessionFn`, `linealitySpaceFn_eq_image` — **Theorem 8.8**, the
   three equivalent conditions and the identification of the lineality space of `f` with the
-  projection of the lineality space of `epi f`; `Tdaf.recessionFn_eq_of_affine_along` is the last
+  projection of the lineality space of `epi f`; `recessionFn_eq_of_affine_along` is the last
   assertion, for closed `f`.
-* `Tdaf.recessionFn_le_coe_iff`, `Tdaf.le_recessionFn_iff`, `Tdaf.recessionFn_le_coe_iff_forall`,
-  `Tdaf.recessionFn_le_coe_iff_of_convexFn` — the `≤`-characterisations. §13 (Theorem 13.3
+* `recessionFn_le_coe_iff`, `le_recessionFn_iff`, `recessionFn_le_coe_iff_forall`,
+  `recessionFn_le_coe_iff_of_convexFn` — the `≤`-characterisations. §13 (Theorem 13.3
   identifies `f0⁺` with the support function of `dom f*`) enters through these.
 
 ## Layers
@@ -82,18 +82,18 @@ project plan, and the audit below corrects §3.3 of that plan in four places.
 * **Layer D**, `[NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]`:
   Corollary 8.7.1 only, and only because it calls Theorem 8.4.
 
-Closedness is always carried as `IsClosed (epi f)`, never as `Tdaf.ClosedFn f`. The two agree for
-functions that never take `⊥` (`Tdaf.closedFn_iff_lowerSemicontinuous` and
-`Tdaf.lowerSemicontinuous_iff_isClosed_epi`), but `ClosedFn` additionally collapses improper
+Closedness is always carried as `IsClosed (epi f)`, never as `ClosedFn f`. The two agree for
+functions that never take `⊥` (`closedFn_iff_lowerSemicontinuous` and
+`lowerSemicontinuous_iff_isClosed_epi`), but `ClosedFn` additionally collapses improper
 functions to the constant `⊥`, which is irrelevant here and would exclude honest examples.
 
 ## Design notes
 
 ### `epi (f0⁺) = 0⁺(epi f)` needs no hypothesis
 
-The plan expected `Tdaf.epi_recessionFn` to carry `ClosedFn f`, on the ground that
-`epi (ofEpi F) = F` needs `Tdaf.IsEpiLike F`. But `0⁺(epi f)` is epi-like for *every* `f`
-(`Tdaf.isEpiLike_recessionCone_epi`), and neither half of `Tdaf.isEpiLike_iff_forall` needs
+The plan expected `epi_recessionFn` to carry `ClosedFn f`, on the ground that
+`epi (ofEpi F) = F` needs `IsEpiLike F`. But `0⁺(epi f)` is epi-like for *every* `f`
+(`isEpiLike_recessionCone_epi`), and neither half of `isEpiLike_iff_forall` needs
 closedness, convexity or nonemptiness:
 
 * upward closure of a vertical section is monotonicity of `ν ↦ μ + a * ν` for `a ≥ 0`;
@@ -109,7 +109,7 @@ answer has to be independent of the base point `x`.
 
 Rockafellar proves the first assertion of Theorem 8.6 — that `liminf_{a → ∞} f (x + a • y) < +∞`
 already makes `a ↦ f (x + a • y)` nonincreasing — by passing to the closure of the one-dimensional
-restriction and invoking Theorems 8.3 and 7.4. `Tdaf.antitone_along_of_liminf_lt_top` proves it
+restriction and invoking Theorems 8.3 and 7.4. `antitone_along_of_liminf_lt_top` proves it
 directly: for `a₁ < a₂`, a real `μ` with `f (x + a₁ • y) ≤ μ` and a very large `l` with
 `f (x + l • y) < α`, the point `x + a₂ • y` is a convex combination of `x + a₁ • y` and
 `x + l • y` whose weight on the second tends to `0` as `l → ∞`, so convexity gives
@@ -117,14 +117,14 @@ directly: for `a₁ < a₂`, a real `μ` with `f (x + a₁ • y) ≤ μ` and a 
 gives Corollary 8.6.2 without Rockafellar's detour through Corollary 7.4.2.
 
 The equivalence "`f (x + a • y)` nonincreasing for every `x`" ⟺ "`(f0⁺) y ≤ 0`"
-(`Tdaf.forall_antitone_iff_recessionFn_nonpos`) needs no hypothesis on `f` at all; and so does the
+(`forall_antitone_iff_recessionFn_nonpos`) needs no hypothesis on `f` at all; and so does the
 equivalence (a) ⟺ (b) of Theorem 8.8.
 
 ### Corollary 8.5.2 and design decision D6: the `hom f` route does not close
 
 D6 predicts that Corollary 8.5.2 "stops being a separate limit argument and becomes Corollary
 7.5.1 applied to `hom f`". It does not, and the obstruction is the one
-`Tdaf/Analysis/Convex/Homogenize.lean` already flags: `Tdaf.homCone f ≠ epi (Tdaf.hom f)`, the
+`Tdaf/Analysis/Convex/Homogenize.lean` already flags: `homCone f ≠ epi (hom f)`, the
 difference being the vertical ray `{0} ×ˢ Ici 0`, and correspondingly `hom f (0, ·) = δ(· | 0)`
 rather than `f0⁺`. Rockafellar's `g` is *not* `hom f` either — it is `cl (hom f)` that has
 `(cl g) (0, y) = (f0⁺) y`, and identifying `cl (hom f)` needs
@@ -132,15 +132,15 @@ rather than `f0⁺`. Rockafellar's `g` is *not* `hom f` either — it is `cl (ho
 * the formula `cl K = K ∪ {0} × 0⁺C` of Theorem 8.2, which `Recession/Cone.lean` deliberately does
   not prove (its direct proof of Theorem 8.2 supersedes it and nothing in §9 consumes it), and
 * Theorem 7.4 (`cl f = f` on `ri (dom f)`) to know that `cl (hom f)` still agrees with `fa` for
-  `a > 0`; that is `Tdaf.ConvexFn.clFn_eq_of_mem_relint_dom` in
+  `a > 0`; that is `ConvexFn.clFn_eq_of_mem_relint_dom` in
   `Tdaf/Analysis/Convex/RelativeInterior.lean`, layer D and not imported here.
 
 So D6's payoff is real but it is *downstream* of §8, not a shortcut into it. The proof here is
 direct and splits cleanly:
 
-* the **lower** half (`Tdaf.eventually_lt_smulRight`) is Theorem 8.2 applied to the sequence
+* the **lower** half (`eventually_lt_smulRight`) is Theorem 8.2 applied to the sequence
   `aₙ⁻¹ • (y, β) ∈ epi f`, and is where closedness and convexity are used;
-* the **upper** half (`Tdaf.eventually_smulRight_lt`) is Theorem 8.1 applied at a base point
+* the **upper** half (`eventually_smulRight_lt`) is Theorem 8.1 applied at a base point
   `θ • y ∈ dom f` together with one limit in `ℝ`, and needs **no topology on `E`**.
 
 The `θ` in the upper half explains Rockafellar's two hypotheses at once: `θ = 1` is `y ∈ dom f` and
@@ -149,19 +149,19 @@ that reaches `a⁻¹ • y` must lie on the line through `y`.
 
 ### Which Mathlib interfaces are instantiated, and which are not
 
-`Tdaf.recessionPointedConeFn` and `Tdaf.constancySubmodule` are the two structures §8 genuinely
+`recessionPointedConeFn` and `constancySubmodule` are the two structures §8 genuinely
 introduces on the function side, and both are bundled: the recession cone of `f` as a
 `PointedCone ℝ E` (no hypothesis needed), and the constancy space as `PointedCone.lineal` of it,
-which is Theorem 2.7 for free. `Tdaf.linealitySubmoduleFn` is bundled as the image of
-`Tdaf.linealitySubmodule (epi f)` under `LinearMap.fst`, so the subspace structure is again free
-and `Tdaf.coe_linealitySubmoduleFn` — the identification of its carrier with Rockafellar's
+which is Theorem 2.7 for free. `linealitySubmoduleFn` is bundled as the image of
+`linealitySubmodule (epi f)` under `LinearMap.fst`, so the subspace structure is again free
+and `coe_linealitySubmoduleFn` — the identification of its carrier with Rockafellar's
 `{y | (f0⁺) (-y) = -(f0⁺) y}` — *is* Theorem 8.8.
 
-`epi (f0⁺)` is deliberately **not** bundled a second time. `Tdaf.PosHomogeneous.epiCone` would
-produce it as a `ConvexCone ℝ (E × ℝ)` from `Tdaf.posHomogeneous_recessionFn` and
-`Tdaf.convexFn_recessionFn` (neither of which needs a hypothesis, so the cone is available
-cheaply), but `Tdaf.recessionPointedCone (epi f)` already carries the same set as a strictly
-stronger `PointedCone ℝ (E × ℝ)`. `Tdaf.coe_recessionPointedCone_epi` records the identification
+`epi (f0⁺)` is deliberately **not** bundled a second time. `PosHomogeneous.epiCone` would
+produce it as a `ConvexCone ℝ (E × ℝ)` from `posHomogeneous_recessionFn` and
+`convexFn_recessionFn` (neither of which needs a hypothesis, so the cone is available
+cheaply), but `recessionPointedCone (epi f)` already carries the same set as a strictly
+stronger `PointedCone ℝ (E × ℝ)`. `coe_recessionPointedCone_epi` records the identification
 instead.
 
 ## References
@@ -173,16 +173,7 @@ instead.
 
 open Filter Pointwise Set Topology
 
-namespace Tdaf
-
-/-! ### Auxiliary facts about `EReal`
-
-These belong with the rest of the `EReal` support lemmas in `Tdaf/Order/EReal.lean`; they are
-collected here because the recession theory is so far their only consumer. -/
-
-namespace EReal
-
-end EReal
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Layer A: the recession function -/
 
@@ -195,8 +186,8 @@ recession cone of the epigraph of `f`,
 
 `epi (f0⁺) = 0⁺(epi f)`.
 
-The definition is `Tdaf.ofEpi` of that cone, which is the only way to write it down before knowing
-that the cone *is* an epigraph. It is: `Tdaf.epi_recessionFn` proves `epi (f0⁺) = 0⁺(epi f)` with
+The definition is `ofEpi` of that cone, which is the only way to write it down before knowing
+that the cone *is* an epigraph. It is: `epi_recessionFn` proves `epi (f0⁺) = 0⁺(epi f)` with
 no hypothesis at all. -/
 noncomputable def recessionFn (f : E → EReal) : E → EReal := ofEpi (recessionCone (epi f))
 
@@ -237,7 +228,7 @@ theorem mk_mem_recessionCone_epi_iff :
     exact (h x a ha).trans (add_le_add hx le_rfl)
 
 /-- A vertical section of `0⁺(epi f)` is upward closed: this is one of the two halves of
-`Tdaf.IsEpiLike`. -/
+`IsEpiLike`. -/
 theorem mk_mem_recessionCone_epi_of_le (h : ((y, ν) : E × ℝ) ∈ recessionCone (epi f)) {ρ : ℝ}
     (hνρ : ν ≤ ρ) : ((y, ρ) : E × ℝ) ∈ recessionCone (epi f) := by
   rw [mk_mem_recessionCone_epi] at h ⊢
@@ -251,7 +242,7 @@ theorem mk_mem_recessionCone_epi_of_le (h : ((y, ν) : E × ℝ) ∈ recessionCo
 Vertical sections are upward closed because `μ + a * ν` grows with `ν`, and they are closed from
 below because `f (x + a • y) ≤ μ + a * ρ` for every `ρ > ν` forces `f (x + a • y) ≤ μ + a * ν`.
 Neither half needs `epi f` to be closed or convex, so the plan's `ClosedFn f` hypothesis on
-`Tdaf.epi_recessionFn` is not required. -/
+`epi_recessionFn` is not required. -/
 theorem isEpiLike_recessionCone_epi (f : E → EReal) : IsEpiLike (recessionCone (epi f)) := by
   refine isEpiLike_of_forall (fun _ _ _ hμ hμν => mk_mem_recessionCone_epi_of_le hμ hμν)
     fun y ν h => ?_
@@ -273,7 +264,7 @@ theorem isEpiLike_recessionCone_epi (f : E → EReal) : IsEpiLike (recessionCone
 
 /-- **The defining property of the recession function**: its epigraph is the recession cone of the
 epigraph. Rockafellar takes this as the definition; here it is a theorem, and — because
-`Tdaf.isEpiLike_recessionCone_epi` is unconditional — it carries no hypothesis on `f`. -/
+`isEpiLike_recessionCone_epi` is unconditional — it carries no hypothesis on `f`. -/
 @[simp]
 theorem epi_recessionFn (f : E → EReal) : epi (recessionFn f) = recessionCone (epi f) :=
   epi_ofEpi (isEpiLike_recessionCone_epi f)
@@ -285,7 +276,7 @@ theorem recessionFn_le_coe_iff :
   exact mk_mem_epi.symm
 
 /-- The `≤`-characterisation of `f0⁺` against an arbitrary function: `f0⁺` is the greatest function
-whose epigraph contains `0⁺(epi f)`. This is `Tdaf.subset_epi_iff_le_ofEpi` for the recession
+whose epigraph contains `0⁺(epi f)`. This is `subset_epi_iff_le_ofEpi` for the recession
 cone, and it is what makes `f0⁺` a *universal object* rather than a formula. -/
 theorem le_recessionFn_iff : g ≤ recessionFn f ↔ recessionCone (epi f) ⊆ epi g :=
   subset_epi_iff_le_ofEpi.symm
@@ -326,8 +317,8 @@ theorem recessionFn_le_coe_iff_of_convexFn (hf : ConvexFn f) :
 /-! ### Layer A: `f0⁺` is a positively homogeneous convex function -/
 
 /-- A positive multiple of a recession cone is that recession cone: `0⁺C` is a cone. This is the
-scaling half of `Tdaf.recessionPointedCone`, in the `a • s = s` form that
-`Tdaf.posHomogeneous_iff_isCone_epi` asks for. -/
+scaling half of `recessionPointedCone`, in the `a • s = s` form that
+`posHomogeneous_iff_isCone_epi` asks for. -/
 theorem smul_recessionCone {a : ℝ} (ha : 0 < a) (C : Set E) :
     a • recessionCone C = recessionCone C := by
   refine Set.Subset.antisymm ?_ fun z hz => ?_
@@ -348,8 +339,8 @@ needed: `0⁺C` is convex for every `C`, convex or not. -/
 theorem convexFn_recessionFn (f : E → EReal) : ConvexFn (recessionFn f) :=
   convexFn_iff_convex_epi.2 (by rw [epi_recessionFn]; exact convex_recessionCone (epi f))
 
-/-- `epi (f0⁺)` bundled as a cone. `Tdaf.PosHomogeneous.epiCone` would produce it as a
-`ConvexCone ℝ (E × ℝ)` from the two theorems above; `Tdaf.recessionPointedCone` already produces
+/-- `epi (f0⁺)` bundled as a cone. `PosHomogeneous.epiCone` would produce it as a
+`ConvexCone ℝ (E × ℝ)` from the two theorems above; `recessionPointedCone` already produces
 the same set as a strictly stronger `PointedCone ℝ (E × ℝ)`, with no hypothesis, so that is the
 bundling recorded here. -/
 @[simp]
@@ -472,7 +463,7 @@ theorem add_smul_le_of_recessionFn_nonpos (h : recessionFn f y ≤ 0) (x : E) {a
   have h0 : recessionFn f y ≤ ((0 : ℝ) : EReal) := by rwa [_root_.EReal.coe_zero]
   simpa using recessionFn_le_coe_iff_forall.1 h0 x a ha
 
-/-- The converse of `Tdaf.add_smul_le_of_recessionFn_nonpos`. -/
+/-- The converse of `add_smul_le_of_recessionFn_nonpos`. -/
 theorem recessionFn_nonpos_iff :
     recessionFn f y ≤ 0 ↔ ∀ (x : E) (a : ℝ), 0 ≤ a → f (x + a • y) ≤ f x := by
   refine ⟨fun h x a ha => add_smul_le_of_recessionFn_nonpos h x ha, fun h => ?_⟩
@@ -635,7 +626,7 @@ theorem mem_recessionConeFn_iff_mk :
 
 /-- **Rockafellar §8**: the recession cone of `f` is a convex cone containing the origin, bundled
 as a `PointedCone ℝ E`. No hypothesis on `f` is needed, exactly as for
-`Tdaf.recessionPointedCone`. -/
+`recessionPointedCone`. -/
 def recessionPointedConeFn (f : E → EReal) : PointedCone ℝ E where
   carrier := recessionConeFn f
   zero_mem' := recessionFn_apply_zero_le f
@@ -649,12 +640,12 @@ def recessionPointedConeFn (f : E → EReal) : PointedCone ℝ E where
     rw [Prod.smul_mk, smul_eq_mul, mul_zero] at h
     exact mem_recessionConeFn_iff_mk.2 h
 
-/-- The carrier of `Tdaf.recessionPointedConeFn` is the recession cone of `f`. -/
+/-- The carrier of `recessionPointedConeFn` is the recession cone of `f`. -/
 @[simp]
 theorem coe_recessionPointedConeFn (f : E → EReal) :
     (recessionPointedConeFn f : Set E) = recessionConeFn f := rfl
 
-/-- Membership in `Tdaf.recessionPointedConeFn` is membership in the recession cone of `f`. -/
+/-- Membership in `recessionPointedConeFn` is membership in the recession cone of `f`. -/
 @[simp]
 theorem mem_recessionPointedConeFn : y ∈ recessionPointedConeFn f ↔ y ∈ recessionConeFn f :=
   Iff.rfl
@@ -683,13 +674,13 @@ subspace, bundled as a `Submodule ℝ E`. -/
 noncomputable def constancySubmodule (f : E → EReal) : Submodule ℝ E :=
   (recessionPointedConeFn f).lineal
 
-/-- The carrier of `Tdaf.constancySubmodule` is the constancy space. -/
+/-- The carrier of `constancySubmodule` is the constancy space. -/
 @[simp]
 theorem coe_constancySubmodule (f : E → EReal) :
     (constancySubmodule f : Set E) = constancySpace f := by
   ext z; simp [constancySubmodule, constancySpace]
 
-/-- Membership in `Tdaf.constancySubmodule` is membership in the constancy space. -/
+/-- Membership in `constancySubmodule` is membership in the constancy space. -/
 @[simp]
 theorem mem_constancySubmodule : y ∈ constancySubmodule f ↔ y ∈ constancySpace f := by
   rw [← SetLike.mem_coe, coe_constancySubmodule]
@@ -828,13 +819,13 @@ theorem linealitySpaceFn_eq_image (hp : Proper f) :
     rw [h1, h2, _root_.EReal.coe_neg]
 
 /-- **Rockafellar, Theorem 8.8**: the lineality space of `f` is a subspace, bundled as a
-`Submodule ℝ E`. It is the image of `Tdaf.linealitySubmodule (epi f)` under the projection, which
-makes the subspace structure free; `Tdaf.coe_linealitySubmoduleFn` identifies its carrier with
-`Tdaf.linealitySpaceFn`, and that identification is Theorem 8.8 itself. -/
+`Submodule ℝ E`. It is the image of `linealitySubmodule (epi f)` under the projection, which
+makes the subspace structure free; `coe_linealitySubmoduleFn` identifies its carrier with
+`linealitySpaceFn`, and that identification is Theorem 8.8 itself. -/
 noncomputable def linealitySubmoduleFn (f : E → EReal) : Submodule ℝ E :=
   Submodule.map (LinearMap.fst ℝ E ℝ) (linealitySubmodule (epi f))
 
-/-- The carrier of `Tdaf.linealitySubmoduleFn` is the lineality space of `f`. -/
+/-- The carrier of `linealitySubmoduleFn` is the lineality space of `f`. -/
 theorem coe_linealitySubmoduleFn (hp : Proper f) :
     (linealitySubmoduleFn f : Set E) = linealitySpaceFn f := by
   rw [linealitySpaceFn_eq_image hp, linealitySubmoduleFn, Submodule.map_coe,
@@ -964,7 +955,7 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTop
   [ContinuousSMul ℝ E] {f : E → EReal} {x y : E}
 
 /-- **Rockafellar, Theorem 8.5**, last assertion: `f0⁺` is closed as soon as `f` is. Only
-closedness of `epi f` is used — `Tdaf.isClosed_recessionCone` needs neither convexity nor
+closedness of `epi f` is used — `isClosed_recessionCone` needs neither convexity nor
 nonemptiness — so this is layer B. -/
 theorem isClosed_epi_recessionFn (hc : IsClosed (epi f)) : IsClosed (epi (recessionFn f)) := by
   rw [epi_recessionFn]
@@ -1025,7 +1016,7 @@ theorem recessionFn_apply_eq_iSup_inv_mul (hf : ConvexFn f) (hc : IsClosed (epi 
   exact forall₂_congr fun a ha => (coe_inv_mul_sub_le_coe_iff (y := y) hbot hx ha).symm
 
 /-- **Rockafellar, Theorem 8.5**, the limit formula: the difference quotient increases to
-`(f0⁺) y` as `a → ∞`. Monotonicity of the quotient (`Tdaf.monotone_coe_inv_mul_sub`) is what turns
+`(f0⁺) y` as `a → ∞`. Monotonicity of the quotient (`monotone_coe_inv_mul_sub`) is what turns
 the supremum into a limit. -/
 theorem tendsto_coe_inv_mul_sub_atTop (hf : ConvexFn f) (hc : IsClosed (epi f))
     (hbot : ∀ z, f z ≠ ⊥) (hx : x ∈ dom f) (y : E) :
@@ -1048,10 +1039,10 @@ theorem tendsto_coe_inv_mul_sub_atTop (hf : ConvexFn f) (hc : IsClosed (epi f))
 
 /-- **Rockafellar, Theorem 8.6**, last assertion: when `f` is closed, a single `x ∈ dom f` along
 which `f` is nonincreasing already forces `(f0⁺) y ≤ 0`. -/
-theorem recessionFn_nonpos_of_antitone (hf : ConvexFn f) (hc : IsClosed (epi f)) (hp : Proper f)
+theorem recessionFn_nonpos_of_antitone (hf : ClosedProperConvexFn f)
     (hx : x ∈ dom f) (h : Antitone fun a : ℝ => f (x + a • y)) : recessionFn f y ≤ 0 := by
   have h0 : recessionFn f y ≤ ((0 : ℝ) : EReal) := by
-    rw [recessionFn_le_coe_iff_of_isClosed hf hc hp.ne_bot hx]
+    rw [recessionFn_le_coe_iff_of_isClosed hf.convex hf.isClosed_epi hf.proper.ne_bot hx]
     intro a ha
     have hstep := h ha.le
     simp only [zero_smul, add_zero] at hstep
@@ -1060,14 +1051,14 @@ theorem recessionFn_nonpos_of_antitone (hf : ConvexFn f) (hc : IsClosed (epi f))
 
 /-- **Rockafellar, Theorem 8.8**, last assertion: for a closed `f`, a single `x ∈ dom f` along
 which `f` is affine with slope `ν` already forces `(f0⁺) y = ν` and `(f0⁺) (-y) = -ν`. -/
-theorem recessionFn_eq_of_affine_along (hf : ConvexFn f) (hc : IsClosed (epi f)) (hp : Proper f)
+theorem recessionFn_eq_of_affine_along (hf : ClosedProperConvexFn f)
     (hx : x ∈ dom f) {ν : ℝ} (h : ∀ a : ℝ, f (x + a • y) = f x + ((a * ν : ℝ) : EReal)) :
     recessionFn f y = (ν : EReal) ∧ recessionFn f (-y) = ((-ν : ℝ) : EReal) := by
-  obtain ⟨s, hs⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hp.ne_bot x) hx
-  refine (mk_mem_linealitySpace_epi_iff hp).1 (mem_linealitySpace.2 ⟨?_, ?_⟩)
-  · refine mk_mem_recessionCone_epi_of_ray hf hc x s fun a _ => ?_
+  obtain ⟨s, hs⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.proper.ne_bot x) hx
+  refine (mk_mem_linealitySpace_epi_iff hf.proper).1 (mem_linealitySpace.2 ⟨?_, ?_⟩)
+  · refine mk_mem_recessionCone_epi_of_ray hf.convex hf.isClosed_epi x s fun a _ => ?_
     rw [h a, hs, ← _root_.EReal.coe_add]
-  · refine (mk_mem_recessionCone_epi_of_ray hf hc x s fun a _ => ?_ :
+  · refine (mk_mem_recessionCone_epi_of_ray hf.convex hf.isClosed_epi x s fun a _ => ?_ :
       ((-y, -ν) : E × ℝ) ∈ recessionCone (epi f))
     have hstep := h (-a)
     rw [neg_smul, ← smul_neg, hs, ← _root_.EReal.coe_add] at hstep
@@ -1100,14 +1091,14 @@ theorem linealitySpace_setOf_le (hf : ConvexFn f) (hc : IsClosed (epi f)) {α : 
 Rockafellar derives `(f0⁺) y = lim_{a ↓ 0} (fa) y` from Corollary 7.5.1 applied to the
 homogenisation `g = hom f`, which is design decision D6's advertised payoff. That route does
 **not** close with the material available here, and the obstruction is exactly the one
-`Tdaf/Analysis/Convex/Homogenize.lean` warns about: `Tdaf.homCone f ≠ epi (Tdaf.hom f)`, and
+`Tdaf/Analysis/Convex/Homogenize.lean` warns about: `homCone f ≠ epi (hom f)`, and
 `hom f (0, ·) = δ(· | 0)` rather than `f0⁺`. Repairing it needs `cl (hom f)`, hence
 
 * the `cl K = K ∪ {0} × 0⁺C` formula of Theorem 8.2, which
   `Tdaf/Analysis/Convex/Recession/Cone.lean` deliberately omits (its direct proof of Theorem 8.2
   supersedes it, and nothing in §9 consumes it), and
 * Theorem 7.4 (`cl f = f` on `ri (dom f)`) to know that `cl (hom f)` still agrees with `fa` for
-  `a > 0`; that is `Tdaf.ConvexFn.clFn_eq_of_mem_relint_dom`, layer D and not imported here.
+  `a > 0`; that is `ConvexFn.clFn_eq_of_mem_relint_dom`, layer D and not imported here.
 
 The direct proof below uses only Theorems 8.1, 8.2 and 8.3 and stays at layer B. It splits into
 the two halves of `tendsto_order`, and only the *upper* half needs a point of `dom f` on the ray
@@ -1194,22 +1185,21 @@ theorem eventually_smulRight_lt (hp : Proper f) {θ : ℝ} (hθ : θ • y ∈ d
 
 /-- **Rockafellar, Corollary 8.5.2**: for a closed proper convex `f`, the recession function is the
 limit of the right scalar multiples `fa` as `a ↓ 0`, at every `y ∈ dom f` — and, by
-`Tdaf.tendsto_smulRight_recessionFn_of_zero_mem_dom`, at *every* `y` when `0 ∈ dom f`. -/
-theorem tendsto_smulRight_recessionFn (hf : ConvexFn f) (hc : IsClosed (epi f)) (hp : Proper f)
-    (hy : y ∈ dom f) :
+`tendsto_smulRight_recessionFn_of_zero_mem_dom`, at *every* `y` when `0 ∈ dom f`. -/
+theorem tendsto_smulRight_recessionFn (hf : ClosedProperConvexFn f) (hy : y ∈ dom f) :
     Tendsto (fun a : ℝ => smulRight f a y) (𝓝[>] (0 : ℝ)) (𝓝 (recessionFn f y)) := by
   rw [tendsto_order]
-  exact ⟨fun _ hb => eventually_lt_smulRight hf hc hb,
-    fun _ hb => eventually_smulRight_lt hp (θ := 1) (by rwa [one_smul]) hb⟩
+  exact ⟨fun _ hb => eventually_lt_smulRight hf.convex hf.isClosed_epi hb,
+    fun _ hb => eventually_smulRight_lt hf.proper (θ := 1) (by rwa [one_smul]) hb⟩
 
 /-- **Rockafellar, Corollary 8.5.2**, global form: when `0 ∈ dom f` the limit formula holds at
 every `y`, with no condition on `y` at all. -/
-theorem tendsto_smulRight_recessionFn_of_zero_mem_dom (hf : ConvexFn f) (hc : IsClosed (epi f))
-    (hp : Proper f) (h0 : (0 : E) ∈ dom f) (y : E) :
+theorem tendsto_smulRight_recessionFn_of_zero_mem_dom (hf : ClosedProperConvexFn f)
+    (h0 : (0 : E) ∈ dom f) (y : E) :
     Tendsto (fun a : ℝ => smulRight f a y) (𝓝[>] (0 : ℝ)) (𝓝 (recessionFn f y)) := by
   rw [tendsto_order]
-  exact ⟨fun _ hb => eventually_lt_smulRight hf hc hb,
-    fun _ hb => eventually_smulRight_lt hp (θ := 0) (by rwa [zero_smul]) hb⟩
+  exact ⟨fun _ hb => eventually_lt_smulRight hf.convex hf.isClosed_epi hb,
+    fun _ hb => eventually_smulRight_lt hf.proper (θ := 0) (by rwa [zero_smul]) hb⟩
 
 end Topological
 
@@ -1241,4 +1231,4 @@ theorem isBounded_setOf_le (hf : ConvexFn f) (hc : IsClosed (epi f)) {α β : �
 
 end FiniteDimensional
 
-end Tdaf
+end Tdaf.ConvexAnalysis

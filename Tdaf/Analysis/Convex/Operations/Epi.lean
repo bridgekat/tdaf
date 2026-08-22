@@ -24,18 +24,18 @@ written to be used by all of them.
 
 ## Main definitions
 
-* `Tdaf.ofEpi F` — the function determined by `F ⊆ E × ℝ`.
-* `Tdaf.IsEpiLike F` — `F` *is* an epigraph, i.e. `F = epi f` for some `f`.
+* `ofEpi F` — the function determined by `F ⊆ E × ℝ`.
+* `IsEpiLike F` — `F` *is* an epigraph, i.e. `F = epi f` for some `f`.
 
 ## Main results
 
-* `Tdaf.subset_epi_iff_le_ofEpi` — the defining adjunction `F ⊆ epi g ↔ g ≤ ofEpi F`. `ofEpi` and
+* `subset_epi_iff_le_ofEpi` — the defining adjunction `F ⊆ epi g ↔ g ≤ ofEpi F`. `ofEpi` and
   `epi` form an antitone Galois connection, and every order fact below is a formal consequence.
-* `Tdaf.convexFn_ofEpi` — **Rockafellar's Theorem 5.3**: `ofEpi F` is convex when `F` is.
-* `Tdaf.ofEpi_epi` — `ofEpi (epi f) = f`, with no hypothesis.
-* `Tdaf.epi_ofEpi` — `epi (ofEpi F) = F`, under `IsEpiLike F`.
-* `Tdaf.IsEpiLike.iInter`, `Tdaf.IsEpiLike.inter`, `Tdaf.IsEpiLike.union`,
-  `Tdaf.IsEpiLike.of_isClosed`, `Tdaf.IsEpiLike.closure` — the stability properties that the §5
+* `convexFn_ofEpi` — **Rockafellar's Theorem 5.3**: `ofEpi F` is convex when `F` is.
+* `ofEpi_epi` — `ofEpi (epi f) = f`, with no hypothesis.
+* `epi_ofEpi` — `epi (ofEpi F) = F`, under `IsEpiLike F`.
+* `IsEpiLike.iInter`, `IsEpiLike.inter`, `IsEpiLike.union`,
+  `IsEpiLike.of_isClosed`, `IsEpiLike.closure` — the stability properties that the §5
   operations consume.
 
 ## Design notes
@@ -45,8 +45,8 @@ Only `F ⊆ epi (ofEpi F)` holds unconditionally; equality says exactly that eve
 `{μ : ℝ | (x, μ) ∈ F}` is one of `∅`, `ℝ`, `Set.Ici c` — upward closed *and* attaining its
 infimum. Both halves are needed: `Set.Ioi c` is upward closed but does not attain, and `{0}`
 attains but is not upward closed. Since a set of that shape is precisely a vertical section of an
-epigraph, `IsEpiLike F` is *defined* as `∃ f, F = epi f`; `Tdaf.isEpiLike_iff_forall` is the
-pointwise criterion one actually checks, and `Tdaf.isEpiLike_iff` says the witness is always
+epigraph, `IsEpiLike F` is *defined* as `∃ f, F = epi f`; `isEpiLike_iff_forall` is the
+pointwise criterion one actually checks, and `isEpiLike_iff` says the witness is always
 `ofEpi F`.
 
 The definition of `ofEpi` needs no structure on `E` whatsoever, so `IsEpiLike` and the whole order
@@ -65,7 +65,7 @@ it is a named predicate here rather than an inline side condition.
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 section Basic
 
@@ -109,12 +109,12 @@ theorem subset_epi_iff_le_ofEpi : F ⊆ epi g ↔ g ≤ ofEpi F := by
     exact (h y).trans (ofEpi_apply_le hp)
 
 /-- `F` always lies in the epigraph of the function it determines. The reverse inclusion is
-`Tdaf.epi_ofEpi` and needs `Tdaf.IsEpiLike`. -/
+`epi_ofEpi` and needs `IsEpiLike`. -/
 theorem subset_epi_ofEpi (F : Set (E × ℝ)) : F ⊆ epi (ofEpi F) :=
   subset_epi_iff_le_ofEpi.2 le_rfl
 
 /-- `ofEpi` is antitone: a larger set has more points to take an infimum over. (Compare
-`Tdaf.epi_mono`, which is antitone in the same sense.) -/
+`epi_anti`, which is antitone in the same sense.) -/
 theorem ofEpi_mono (h : F ⊆ G) : ofEpi G ≤ ofEpi F :=
   subset_epi_iff_le_ofEpi.1 (h.trans (subset_epi_ofEpi G))
 
@@ -148,13 +148,13 @@ the value of `f`. -/
 their `ofEpi` descriptions. -/
 theorem eq_ofEpi_of_epi_eq (h : epi f = F) : f = ofEpi F := by rw [← h, ofEpi_epi]
 
-/-- `Tdaf.ofEpi F x` depends only on the vertical section of `F` over `x`. -/
+/-- `ofEpi F x` depends only on the vertical section of `F` over `x`. -/
 theorem ofEpi_apply_congr (h : ∀ μ : ℝ, (x, μ) ∈ F ↔ (x, μ) ∈ G) : ofEpi F x = ofEpi G x := by
   have hs : {μ : ℝ | (x, μ) ∈ F} = {μ : ℝ | (x, μ) ∈ G} := Set.ext h
   simp only [ofEpi, hs]
 
-/-- The effective domain of `Tdaf.ofEpi F` is the projection of `F` on `E`, for any `F`. This is
-`Tdaf.dom_eq_fst_image_epi` transported across the Galois connection; it holds with no hypothesis
+/-- The effective domain of `ofEpi F` is the projection of `F` on `E`, for any `F`. This is
+`dom_eq_fst_image_epi` transported across the Galois connection; it holds with no hypothesis
 because `ofEpi F x < ⊤` says exactly that the vertical section over `x` is nonempty. -/
 theorem dom_ofEpi (F : Set (E × ℝ)) : dom (ofEpi F) = Prod.fst '' F := by
   ext x
@@ -202,14 +202,14 @@ theorem epi_injective : Function.Injective (epi : (E → EReal) → Set (E × �
 
 /-- `F ⊆ E × ℝ` is *epi-like* when it is the epigraph of some function `E → EReal`.
 
-Equivalently (`Tdaf.isEpiLike_iff_forall`), every vertical section `{μ | (x, μ) ∈ F}` is upward
+Equivalently (`isEpiLike_iff_forall`), every vertical section `{μ | (x, μ) ∈ F}` is upward
 closed and attains its infimum — that is, it is `∅`, `ℝ`, or a closed half-line `Set.Ici c`.
 
 This is the condition under which `epi (ofEpi F) = F`, and it is a genuine hypothesis: it fails for
 `{p | 0 < p.2}` (upward closed but not attaining) and for `{(0, 0)}` (attaining but not upward
 closed). Stating it as an existential makes it a *concept* — "`F` is an epigraph" — rather than a
-pair of side conditions, and makes `Tdaf.isEpiLike_epi` and the stability lemmas below one-liners;
-`Tdaf.isEpiLike_iff` recovers the canonical witness, which is always `ofEpi F`. -/
+pair of side conditions, and makes `isEpiLike_epi` and the stability lemmas below one-liners;
+`isEpiLike_iff` recovers the canonical witness, which is always `ofEpi F`. -/
 def IsEpiLike (F : Set (E × ℝ)) : Prop := ∃ f : E → EReal, F = epi f
 
 @[simp] theorem isEpiLike_epi (f : E → EReal) : IsEpiLike (epi f) := ⟨f, rfl⟩
@@ -301,9 +301,9 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 Rockafellar's proof is "evident from Theorem 4.2", and that really is the route: the infimum
 defining `ofEpi F x` need not be attained, so no witness can be chosen from a non-strict
-inequality. Theorem 4.2 (`Tdaf.convexFn_iff_forall_lt`) asks only for *strict* upper bounds
+inequality. Theorem 4.2 (`convexFn_iff_forall_lt`) asks only for *strict* upper bounds
 `ofEpi F x < α`, and a strict inequality against an infimum does produce a witness
-(`Tdaf.ofEpi_lt_iff`). -/
+(`ofEpi_lt_iff`). -/
 theorem convexFn_ofEpi {F : Set (E × ℝ)} (hF : Convex ℝ F) : ConvexFn (ofEpi F) := by
   rw [convexFn_iff_forall_lt]
   intro x y a b ha hb hab α β hx hy
@@ -357,4 +357,4 @@ theorem IsEpiLike.closure (h : IsEpiLike F) : IsEpiLike (_root_.closure F) := by
 
 end Topology
 
-end Tdaf
+end Tdaf.ConvexAnalysis

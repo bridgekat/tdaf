@@ -70,7 +70,7 @@ Key results:
 
 | Lean name | book |
 |---|---|
-| `mem_epi`, `epi_mono`, `epi_subset_epi_iff_le` | — |
+| `mem_epi`, `epi_anti`, `epi_subset_epi_iff_le` | — |
 | `ConvexFn.convex_dom : ConvexFn f → Convex ℝ (dom f)` | §4 (dom is a linear image of epi) |
 | `convexFn_iff_forall_lt` — the `<`-form, no `∞ − ∞` | **Thm 4.2** |
 | `convexFn_iff_le_of_ne_bot` — the `≤`-form for `f : E → (−∞,∞]` | **Thm 4.1** |
@@ -122,7 +122,7 @@ a function-level one applied to `indicatorFn`.
 ```lean
 def hypo (g : E → EReal) : Set (E × ℝ) := {p | (p.2 : EReal) ≤ g p.1}
 structure ConcaveFn (g : E → EReal) : Prop where convex_hypo : Convex ℝ (hypo g)
-/-- `g` on `s`, extended by `⊥`. `Tdaf.restrict` extends by `⊤` and is the wrong object here. -/
+/-- `g` on `s`, extended by `⊥`. `restrict` extends by `⊤` and is the wrong object here. -/
 noncomputable def restrictConcave (s : Set E) (g : E → EReal) : E → EReal :=
   fun x => ⨆ _ : x ∈ s, g x
 def domConcave (g : E → EReal) : Set E := {x | ⊥ < g x}

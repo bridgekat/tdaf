@@ -17,31 +17,31 @@ from a point of `C` stays inside `C`. The *lineality space* is the largest subsp
 
 ## Main definitions
 
-* `Tdaf.recessionCone C` — the recession cone `0⁺C`, as a bare `Set E`.
-* `Tdaf.recessionPointedCone C` — the same set bundled as a `PointedCone ℝ E`.
-* `Tdaf.linealitySpace C` — the lineality space, as a bare `Set E`.
-* `Tdaf.linealitySubmodule C` — the same set bundled as a `Submodule ℝ E`.
-* `Tdaf.lineality C` — its dimension, Rockafellar's *lineality of `C`*.
+* `recessionCone C` — the recession cone `0⁺C`, as a bare `Set E`.
+* `recessionPointedCone C` — the same set bundled as a `PointedCone ℝ E`.
+* `linealitySpace C` — the lineality space, as a bare `Set E`.
+* `linealitySubmodule C` — the same set bundled as a `Submodule ℝ E`.
+* `lineality C` — its dimension, Rockafellar's *lineality of `C`*.
 
 ## Main results
 
-* `Tdaf.recessionCone_eq_add_subset` — **Theorem 8.1**: for convex `C`, `0⁺C = {y | C + y ⊆ C}`.
-  That `0⁺C` is a convex cone containing the origin is `Tdaf.recessionPointedCone`, and it needs
+* `recessionCone_eq_add_subset` — **Theorem 8.1**: for convex `C`, `0⁺C = {y | C + y ⊆ C}`.
+  That `0⁺C` is a convex cone containing the origin is `recessionPointedCone`, and it needs
   no hypothesis on `C` at all.
-* `Tdaf.recessionCone_coe_affineSubspace`, `Tdaf.recessionCone_setOf_forall_le` — the recession
+* `recessionCone_coe_affineSubspace`, `recessionCone_setOf_forall_le` — the recession
   cone of a nonempty affine set is its direction, and that of the solution set of a system of weak
   linear inequalities is the solution set of the associated homogeneous system.
-* `Tdaf.eq_add_inter_of_isCompl` — Rockafellar's direct-sum decomposition `C = L + (C ∩ L')`, for
+* `eq_add_inter_of_isCompl` — Rockafellar's direct-sum decomposition `C = L + (C ∩ L')`, for
   any complement `L'` of the lineality space `L`.
-* `Tdaf.isClosed_recessionCone` — `0⁺C` is closed as soon as `C` is.
-* `Tdaf.mem_recessionCone_iff_exists_tendsto` — **Theorem 8.2**: for a nonempty closed convex `C`,
+* `isClosed_recessionCone` — `0⁺C` is closed as soon as `C` is.
+* `mem_recessionCone_iff_exists_tendsto` — **Theorem 8.2**: for a nonempty closed convex `C`,
   `0⁺C` consists of the limits of sequences `lᵢ • xᵢ` with `xᵢ ∈ C` and `lᵢ ↓ 0`.
-* `Tdaf.mem_recessionCone_of_exists_ray` — **Theorem 8.3**: one half-line in the direction `y`
+* `mem_recessionCone_of_exists_ray` — **Theorem 8.3**: one half-line in the direction `y`
   inside a closed convex `C` forces all of them.
-* `Tdaf.recessionCone_iInter`, `Tdaf.recessionCone_preimage` — **Corollaries 8.3.3 and 8.3.4**.
-* `Tdaf.recessionCone_eq_asymptoticCone` — the bridge to Mathlib's `asymptoticCone`.
-* `Tdaf.isBounded_iff_recessionCone_eq_zero` — **Theorem 8.4**, with
-  `Tdaf.isBounded_inter_of_direction_eq` for **Corollary 8.4.1**.
+* `recessionCone_iInter`, `recessionCone_preimage` — **Corollaries 8.3.3 and 8.3.4**.
+* `recessionCone_eq_asymptoticCone` — the bridge to Mathlib's `asymptoticCone`.
+* `isBounded_iff_recessionCone_eq_zero` — **Theorem 8.4**, with
+  `isBounded_inter_of_direction_eq` for **Corollary 8.4.1**.
 
 ## Layers
 
@@ -64,7 +64,7 @@ names are those of the project plan.
 ### Why closedness of `0⁺C` is layer B, and needs neither convexity nor nonemptiness
 
 Writing the definition as an intersection,
-`0⁺C = ⋂ x ∈ C, ⋂ a ∈ Ici 0, (fun y => x + a • y) ⁻¹' C` (`Tdaf.recessionCone_eq_iInter`, itself
+`0⁺C = ⋂ x ∈ C, ⋂ a ∈ Ici 0, (fun y => x + a • y) ⁻¹' C` (`recessionCone_eq_iInter`, itself
 layer A) exhibits `0⁺C` as an intersection of preimages of `C` under continuous maps. So `C`
 closed gives `0⁺C` closed in any topological vector space, with no convexity, no nonemptiness and
 no local compactness. Rockafellar states the closedness as part of Theorem 8.2 and proves it from
@@ -80,9 +80,9 @@ Theorem 8.3 is then a one-line corollary, applying Theorem 8.2 to `lᵢ = (i+1)�
 Mathlib has `asymptoticCone ℝ C`, defined by a filter condition. It is *not* `0⁺C`: it is always
 closed, it is empty for `C = ∅`, and `asymptoticCone ℝ (closure C) = asymptoticCone ℝ C`. What it
 computes is `0⁺(cl C)` — precisely the "asymptotic cone" terminology Rockafellar mentions and
-declines to adopt. `Tdaf.recessionCone_eq_asymptoticCone` records that the two agree for nonempty
-closed convex sets, and `Tdaf.recessionCone_closure_eq_asymptoticCone` records the general
-identification. A separate definition is still needed: `Tdaf.recessionCone` is purely algebraic,
+declines to adopt. `recessionCone_eq_asymptoticCone` records that the two agree for nonempty
+closed convex sets, and `recessionCone_closure_eq_asymptoticCone` records the general
+identification. A separate definition is still needed: `recessionCone` is purely algebraic,
 and `Tdaf/Analysis/Convex/Recession/Function.lean` defines the recession function of `f` as
 `ofEpi (0⁺(epi f))` at layer A, where no topology on `E × ℝ` is available.
 
@@ -91,13 +91,13 @@ and `Tdaf/Analysis/Convex/Recession/Function.lean` defines the recession functio
 *The `cl K` formula* of Theorem 8.2, `cl K = K ∪ {0} × 0⁺C` for the cone `K` generated by
 `{1} × C`. In the plan it was the proof route for Theorem 8.2; the direct proof above supersedes
 it. Stating it needs a set-level homogenisation `K` that belongs with
-`Tdaf/Analysis/Convex/Homogenize.lean` (whose `Tdaf.homCone` is the epigraph analogue), and
+`Tdaf/Analysis/Convex/Homogenize.lean` (whose `homCone` is the epigraph analogue), and
 nothing in §9 consumes it.
 
 *Corollary 8.3.1*, `0⁺(ri C) = 0⁺(cl C)`, which is stated with relative interiors and rests on
-Theorem 6.1. It is `Tdaf.Convex.recessionCone_relint` in
+Theorem 6.1. It is `Convex.recessionCone_relint` in
 `Tdaf/Analysis/Convex/RelativeInterior.lean`; what is proved here is the layer-B stand-in
-`Tdaf.recessionCone_interior_eq_recessionCone_closure`, with `interior` in place of `ri` — the
+`recessionCone_interior_eq_recessionCone_closure`, with `interior` in place of `ri` — the
 same substitution `Tdaf/Analysis/Convex/Closure.lean` makes for Theorem 7.5.
 
 *Rockafellar's `rank`*. The direct-sum decomposition `C = L + (C ∩ L')` is here, at layer A and for
@@ -105,7 +105,7 @@ an arbitrary complement `L'` of the lineality space `L`, which subsumes the orth
 `L^⊥` of the book (take `L' = Lᗮ`, using `Submodule.isCompl_orthogonal_of_hasOrthogonalProjection`);
 no inner product is needed and none is imported. `rank C = dim C - lineality C`, however, needs
 `dim C = Module.finrank ℝ (vectorSpan ℝ C)` together with the affine-hull calculus of §6 to be
-worth anything, so only `Tdaf.lineality` is defined here.
+worth anything, so only `lineality` is defined here.
 
 ## References
 
@@ -115,7 +115,7 @@ worth anything, so only `Tdaf.lineality` is defined here.
 
 open Bornology Filter Pointwise Set Topology
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Layer A: the definitions and their algebraic structure -/
 
@@ -163,20 +163,20 @@ theorem add_mem_recessionCone (hy : y ∈ recessionCone C) (hz : z ∈ recession
 origin, bundled as a Mathlib `PointedCone`.
 
 No hypothesis on `C` is needed. Convexity of `C` enters only in the second half of Theorem 8.1,
-`Tdaf.recessionCone_eq_add_subset`. Recording the cone makes the `PointedCone` API — and in
-particular `PointedCone.lineal`, which is `Tdaf.linealitySubmodule` — available downstream. -/
+`recessionCone_eq_add_subset`. Recording the cone makes the `PointedCone` API — and in
+particular `PointedCone.lineal`, which is `linealitySubmodule` — available downstream. -/
 def recessionPointedCone (C : Set E) : PointedCone ℝ E where
   carrier := recessionCone C
   zero_mem' := zero_mem_recessionCone C
   add_mem' := add_mem_recessionCone
   smul_mem' c _ hy := smul_mem_recessionCone c.2 hy
 
-/-- The carrier of `Tdaf.recessionPointedCone` is the recession cone. -/
+/-- The carrier of `recessionPointedCone` is the recession cone. -/
 @[simp]
 theorem coe_recessionPointedCone (C : Set E) :
     (recessionPointedCone C : Set E) = recessionCone C := rfl
 
-/-- Membership in `Tdaf.recessionPointedCone` is membership in the recession cone. -/
+/-- Membership in `recessionPointedCone` is membership in the recession cone. -/
 @[simp]
 theorem mem_recessionPointedCone : y ∈ recessionPointedCone C ↔ y ∈ recessionCone C := Iff.rfl
 
@@ -206,20 +206,20 @@ theorem recessionCone_singleton (x : E) : recessionCone ({x} : Set E) = {0} := b
     exact zero_mem_recessionCone _
 
 /-- The recession cone as an intersection of preimages of `C`. This is what makes it closed
-whenever `C` is; see `Tdaf.isClosed_recessionCone`. For `a > 0` the `a`-th preimage is
+whenever `C` is; see `isClosed_recessionCone`. For `a > 0` the `a`-th preimage is
 `a⁻¹ • (C - x)`, which is the form Rockafellar's argument uses. -/
 theorem recessionCone_eq_iInter (C : Set E) :
     recessionCone C = ⋂ x ∈ C, ⋂ a ∈ Ici (0 : ℝ), (fun y => x + a • y) ⁻¹' C := by
   ext y; simp [recessionCone]
 
 /-- Directions of recession of every member of a family recede from the intersection. The reverse
-inclusion needs closedness and convexity; it is Corollary 8.3.3, `Tdaf.recessionCone_iInter`. -/
+inclusion needs closedness and convexity; it is Corollary 8.3.3, `recessionCone_iInter`. -/
 theorem iInter_recessionCone_subset {ι : Sort*} (C : ι → Set E) :
     ⋂ i, recessionCone (C i) ⊆ recessionCone (⋂ i, C i) := by
   intro y hy x hx a ha
   exact mem_iInter.2 fun i => (mem_iInter.1 hy i) x (mem_iInter.1 hx i) a ha
 
-/-- The binary form of `Tdaf.iInter_recessionCone_subset`. -/
+/-- The binary form of `iInter_recessionCone_subset`. -/
 theorem inter_recessionCone_subset (C D : Set E) :
     recessionCone C ∩ recessionCone D ⊆ recessionCone (C ∩ D) := by
   rintro y ⟨hyC, hyD⟩ x ⟨hxC, hxD⟩ a ha
@@ -278,17 +278,17 @@ theorem linealitySpace_subset_recessionCone (C : Set E) :
     linealitySpace C ⊆ recessionCone C := inter_subset_left
 
 /-- **Rockafellar, Theorem 2.7** applied to `0⁺C`: the lineality space is a subspace, bundled as a
-`Submodule ℝ E`. It is Mathlib's `PointedCone.lineal` of `Tdaf.recessionPointedCone`. -/
+`Submodule ℝ E`. It is Mathlib's `PointedCone.lineal` of `recessionPointedCone`. -/
 noncomputable def linealitySubmodule (C : Set E) : Submodule ℝ E :=
   (recessionPointedCone C).lineal
 
-/-- The carrier of `Tdaf.linealitySubmodule` is the lineality space. -/
+/-- The carrier of `linealitySubmodule` is the lineality space. -/
 @[simp]
 theorem coe_linealitySubmodule (C : Set E) :
     (linealitySubmodule C : Set E) = linealitySpace C := by
   ext y; simp [linealitySubmodule, linealitySpace]
 
-/-- Membership in `Tdaf.linealitySubmodule` is membership in the lineality space. -/
+/-- Membership in `linealitySubmodule` is membership in the lineality space. -/
 @[simp]
 theorem mem_linealitySubmodule : y ∈ linealitySubmodule C ↔ y ∈ linealitySpace C := by
   rw [← SetLike.mem_coe, coe_linealitySubmodule]
@@ -453,7 +453,7 @@ theorem tendsto_inv_nat_add_one_atTop_nhds_zero :
 /-- The recession cone of a closed set is closed.
 
 No convexity and no nonemptiness are needed, and no local compactness: by
-`Tdaf.recessionCone_eq_iInter`, `0⁺C` is an intersection of preimages of `C` under the continuous
+`recessionCone_eq_iInter`, `0⁺C` is an intersection of preimages of `C` under the continuous
 maps `y ↦ x + a • y`. Rockafellar packages this statement into Theorem 8.2. -/
 theorem isClosed_recessionCone (hC : IsClosed C) : IsClosed (recessionCone C) := by
   rw [recessionCone_eq_iInter]
@@ -756,4 +756,4 @@ theorem isBounded_inter_of_direction_eq (hC : Convex ℝ C) (hC' : IsClosed C)
 
 end FiniteDimensional
 
-end Tdaf
+end Tdaf.ConvexAnalysis

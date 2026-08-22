@@ -63,9 +63,14 @@ discontinuous linear functional `g` has dense kernel, so `closure (epi g) = univ
 What is true, and what this file should prove:
 
 ```lean
-/-- A closed proper convex function has a continuous affine minorant. -/
-theorem exists_affine_le_of_closed_proper (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f) :
-    ∃ (y : F) (c : ℝ), ∀ x, ((B x y : ℝ) : EReal) - c ≤ f x
+/-- A closed proper convex function has a continuous affine minorant.
+
+The hypotheses are bundled as `ClosedProperConvexFn` (`Closure.lean`), and the conclusion is stated
+with `y : E →L[ℝ] ℝ` rather than a pairing-valued `y : F`, so that `Closure.lean` need not import
+`Duality/Pairing.lean`; `Conjugate.lean` converts with `exists_pairing_eq` at the two places that
+need the pairing form. -/
+theorem exists_affine_le_of_closed_proper (hf : ClosedProperConvexFn f) :
+    ∃ (y : E →L[ℝ] ℝ) (c : ℝ), ∀ x, ((y x : ℝ) : EReal) - c ≤ f x
 
 /-- Dichotomy (**Corollary 7.2.1**): a lower semicontinuous improper convex function has no finite
 values. Replaces Theorem 7.2 outside finite dimensions; true in any TVS. -/
@@ -183,7 +188,7 @@ noncomputable abbrev biconj (B) (f : E → EReal) : E → EReal := conj B.flip (
 | `closedFn_iff_eq_sSup_affine` | a closed convex function is the sup of the affine functions below it | **Thm 12.1** |
 | `conj_clFn` | `conj B (clFn f) = conj B f` | **Thm 12.2** |
 | `biconj_eq_clFn` | `biconj B f = clFn f` for convex `f` — **Fenchel–Moreau** | **Thm 12.2** |
-| `conjEquiv` | the induced involution on closed proper convex functions | Cor 12.2.1 |
+| `conjEquiv` | the induced involution on `ClosedProperConvexFn` | Cor 12.2.1 |
 | `conj_eq_iSup_relint` | the sup may be restricted to `ri (dom f)` | Cor 12.2.2 *(finite-dim)* |
 | `conj_comp_affine` | conjugate of `f ∘ T` for an affine `T` | Thm 12.3 |
 | `monotoneConj` | the monotone conjugate `g⁺` on the nonnegative orthant | Thm 12.4 *(surface)* |

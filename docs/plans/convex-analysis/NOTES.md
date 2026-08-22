@@ -7,7 +7,11 @@ project. Keep it up to date: it exists so that the same obstacles are not redisc
 
 ## 1. The API that already exists
 
-### `Tdaf/Order/EReal.lean` (namespace `Tdaf.EReal`)
+Everything under `Tdaf/Analysis/Convex/` lives in `namespace Tdaf.ConvexAnalysis`; the names below
+are written as they are inside it. `Tdaf/Order/EReal.lean` is `Tdaf.EReal`, deliberately outside the
+topic namespace: its lemmas are general-purpose `EReal` facts with no convexity in them.
+
+### `Tdaf/Order/EReal.lean`
 
 ```lean
 theorem le_coe_of_forall_lt {z : EReal} {r : ℝ} (h : ∀ q : ℝ, r < q → z < (q : EReal)) :
@@ -20,11 +24,11 @@ theorem exists_coe_of_ne_bot_of_lt_top {z : EReal} (h₁ : z ≠ ⊥) (h₂ : z 
     ∃ r : ℝ, z = (r : EReal)
 ```
 
-Note the namespace clash: inside `namespace Tdaf`, plain `EReal.foo` resolves to `Tdaf.EReal.foo`
-first. Write `_root_.EReal.foo` for Mathlib's lemmas when the name exists in both, and
+Note the namespace clash: plain `EReal.foo` resolves to `Tdaf.EReal.foo` first, from anywhere under
+`namespace Tdaf`. Write `_root_.EReal.foo` for Mathlib's lemmas when the name exists in both, and
 `Tdaf.EReal.foo` for ours when the surrounding context makes plain `EReal.foo` ambiguous.
 
-### `Tdaf/Analysis/Convex/Epigraph.lean` (namespace `Tdaf`)
+### `Tdaf/Analysis/Convex/Epigraph.lean`
 
 No structure on `E` at all:
 
@@ -32,7 +36,7 @@ No structure on `E` at all:
 def epi (f : E → EReal) : Set (E × ℝ) := {p | f p.1 ≤ (p.2 : EReal)}
 @[simp] theorem mem_epi {f : E → EReal} {p : E × ℝ} : p ∈ epi f ↔ f p.1 ≤ (p.2 : EReal)
 theorem mk_mem_epi {f : E → EReal} {x : E} {μ : ℝ} : (x, μ) ∈ epi f ↔ f x ≤ (μ : EReal)
-theorem epi_mono {f g : E → EReal} (h : f ≤ g) : epi g ⊆ epi f
+theorem epi_anti {f g : E → EReal} (h : f ≤ g) : epi g ⊆ epi f
 theorem le_iff_epi_subset {f g : E → EReal} : f ≤ g ↔ epi g ⊆ epi f
 
 def dom (f : E → EReal) : Set E := {x | f x < ⊤}
@@ -89,7 +93,7 @@ theorem convexOn_iff_convexFn (s : Set E) (g : E → ℝ) :
     ConvexOn ℝ s g ↔ ConvexFn (restrict s fun x => (g x : EReal))
 ```
 
-### `Tdaf/Analysis/Convex/Indicator.lean` (namespace `Tdaf`)
+### `Tdaf/Analysis/Convex/Indicator.lean`
 
 ```lean
 noncomputable def indicatorFn (s : Set E) : E → EReal := restrict s (fun _ => 0)
@@ -106,8 +110,8 @@ theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f
 ### `Tdaf/Analysis/Convex/Concave.lean`
 
 `hypo`, `ConcaveFn` (structure over `Convex ℝ (hypo g)`), `domConcave`, `ProperConcave`,
-`restrictConcave s g = ⨆ _ : x ∈ s, g x` (extension by `⊥` — `Tdaf.restrict` extends by `⊤` and is
-the wrong object for a concave function), `concaveFn_iff_convexFn_neg` (**no** side condition),
+`restrictConcave s g = ⨆ _ : x ∈ s, g x` (extension by `⊥` — `restrict` extends by `⊤` and is the
+wrong object for a concave function), `concaveFn_iff_convexFn_neg` (**no** side condition),
 `concaveFn_iff_forall_gt`, `concaveFn_iff_le` (needs `∀ x, g x ≠ ⊤`), `ConcaveFn.convex_gt/_ge`,
 `concaveOn_iff_concaveFn`.
 
@@ -116,7 +120,8 @@ the wrong object for a concave function), `concaveFn_iff_convexFn_neg` (**no** s
 `PosHomogeneous`, `posHomogeneous_iff_isCone_epi`, `convex_iff_add_mem_of_isCone` (Thm 2.6),
 `PosHomogeneous.convexFn_iff_subadditive` (Thm 4.7), `.sum_le` (Cor 4.7.1, **needs `s.Nonempty`**),
 `.neg_le` (Cor 4.7.2), `.isLinearOn_iff` / `.exists_linearMap_iff` / `.exists_linearMap_span`
-(Thm 4.8), `.map_zero` (only the trichotomy `f 0 ∈ {0, ⊤, ⊥}`).
+(Thm 4.8), `.map_zero_trichotomy` (`f 0 ∈ {0, ⊤, ⊥}`; the conditional equality is
+`.map_zero_eq_zero`).
 
 ### `Tdaf/Analysis/Convex/Operations/Epi.lean`
 
@@ -166,7 +171,9 @@ functions. `Lattice.lean` gets its `CompleteLattice` from `GaloisCoinsertion.lif
 `lscHull f := ofEpi (closure (epi f))` with `epi_lscHull` **unconditional**;
 `clFn` (branching on `lscHull f`, `open Classical in`), `ClosedFn`;
 `lowerSemicontinuous_iff_isClosed_epi` (**Thm 7.1**), `isGreatest_lscHull`, `closedFn_iff`,
-`iInf_clFn_eq_iInf`, `ConvexFn.eq_bot_or_eq_top` (**Cor 7.2.1**),
+`iInf_clFn_eq_iInf`, `ConvexFn.eq_bot_or_eq_top` (**Cor 7.2.1**);
+`ClosedProperConvexFn` (the bundled `convex`/`closed`/`proper` triple, with `.isClosed_epi`,
+`.lowerSemicontinuous` and the `of_isClosed_epi` constructor §8 uses);
 `exists_affine_le_of_closed_proper` (**the Fenchel–Moreau keystone**),
 `tendsto_lscHull_along_segment` (**Thm 7.5**), `lscHullClosure`/`clFnClosure` as `ClosureOperator`s.
 
@@ -196,13 +203,14 @@ Thm 8.1 (layer A), Thm 8.2/8.3 and Cors 8.3.2–8.3.4 (**layer B**), `isClosed_r
 ### `Tdaf/Analysis/Convex/Duality/Pairing.lean`
 
 `affineFn`, `IsAdjointPair` (four-space — Mathlib's pairs a module with *itself*),
-`dualPrecomp` (Mathlib has no `ContinuousLinearMap.dualMap`), `prodPairing`/`negFst` (for D8),
-and `dual_prod_apply`/`exists_unique_dual_prod` (the dual of `E × ℝ`, which Mathlib lacks).
+`prodPairing`/`negFst` (for D8), and `dual_prod_apply`/`exists_unique_dual_prod` (the dual of
+`E × ℝ`, which Mathlib lacks). The dual precomposition datum is Mathlib's
+`ContinuousLinearMap.precomp ℝ A` — see gotcha 28.
 
 ### `Tdaf/Analysis/Convex/Duality/Conjugate.lean`
 
 `conj B f`, `biconj`; `sub_le_conj` (**unconditional**), `le_add_conj` (Fenchel's inequality —
-needs properness, see gotcha 47), `conj_le_iff` (the adjunction, unconditional), `conj_clFn`,
+needs properness, see gotcha 23), `conj_le_iff` (the adjunction, unconditional), `conj_clFn`,
 `eq_biSup_affineFn` (**Thm 12.1**), `biconj_eq_clFn` (**Thm 12.2, Fenchel–Moreau**), `conjEquiv`,
 `gc_conj_conj`/`conjClosure`, and two instantiations, both in the space's *own* topology:
 `_topDual` (a locally convex space against its continuous dual — so, a Banach space in its norm
@@ -216,51 +224,53 @@ From the repository `README.md` ("Reviewing a formalization"):
 
 * **Minimize duplication.** Before writing a lemma, check whether Mathlib or this project already
   has it.
-* **Bundle *concepts*, not individual assumptions.** `Proper`, `ConvexFn`, `IsExactSum` are named
-  mathematical concepts and are structures. A single side condition such as `∀ x, f x ≠ ⊥` is not a
-  concept — repeat it inline rather than inventing a name for it.
+* **Bundle *concepts*, not individual assumptions.** `Proper`, `ConvexFn`, `ClosedProperConvexFn`,
+  `IsExactSum` are named mathematical concepts and are structures. A single side condition such as
+  `∀ x, f x ≠ ⊥` is not a concept — repeat it inline rather than inventing a name for it. A
+  *conjunction* of concepts qualifies when the book names it: "closed proper convex function" is
+  Rockafellar's most repeated phrase and is `ClosedProperConvexFn`. Two of the three is not — leave
+  `(hf : ConvexFn f) (hc : IsClosed (epi f))` inline.
+* **A name must not resolve to the wrong statement.** The worst outcome is a name a reader will
+  guess that exists and means something else. `epi_anti` is antitone, so it may not be `epi_mono`;
+  `PosHomogeneous.map_zero_trichotomy` is `f 0 ∈ {0, ⊤, ⊥}` rather than Mathlib's universal
+  `f 0 = 0`, so it may not be `map_zero` (the conditional equality is `map_zero_eq_zero`). Leaving
+  the guessable name *unbound* is better than binding it to a near-miss.
 * **Instantiate the Mathlib interfaces that emerge implicitly.** If a definition turns out to be a
   Galois connection, a closure operator, a cone, a module, a lattice — say so, eagerly, and get the
-  machinery and the lemma names for free instead of hand-rolling them. Two already in the library:
-  `gc_ofEpi_epi` / `gi_ofEpi_epi` / `epiClosure` (`Operations/Epi.lean`) turn
-  `subset_epi_iff_le_ofEpi` into a `GaloisInsertion` and identify `IsEpiLike` with closure-operator
-  closedness; `PosHomogeneous.epiCone` (`Homogeneous.lean`) bundles the epigraph of a positively
-  homogeneous convex function as a `ConvexCone ℝ (E × ℝ)`, which §13 and §14 will want.
-  Candidates not yet done: the convex functions as a `CompleteLattice` via a `GaloisInsertion`
-  (`Lattice.lean`), recession cones as `PointedCone`, `∂f` as a `Rel`/set-valued map.
+  machinery and the lemma names for free instead of hand-rolling them. `gc_ofEpi_epi` /
+  `gi_ofEpi_epi` / `epiClosure` (`Operations/Epi.lean`) turn `subset_epi_iff_le_ofEpi` into a
+  `GaloisInsertion` and identify `IsEpiLike` with closure-operator closedness;
+  `PosHomogeneous.epiCone` (`Homogeneous.lean`) bundles the epigraph of a positively homogeneous
+  convex function as a `ConvexCone ℝ (E × ℝ)`, which §13 and §14 want.
 * Code should be idiomatic and pleasant to read, not merely correct.
 
 ---
 
-## 2. Lean/Mathlib gotchas found so far
+## 2. Lean/Mathlib gotchas
 
-1. **`Convex ℝ s` unfolds to a `∀ ⦃x⦄, x ∈ s → ∀ ⦃y⦄, y ∈ s → ∀ ⦃a b⦄, …` chain.**
-   `intro x hx y hy a b ha hb hab` leaves the goal `a • x + b • y ∈ s`.
+Only what cost real time to find. Trivia that an error message explains on its own does not belong
+here.
 
-2. **`simp only [mem_epi]` does not compute `Prod` projections of a linear combination.**
-   `(a • (x,μ) + b • (y,ν)).2` is defeq to `a * μ + b * ν` but not syntactically equal, and
-   `linarith` cannot see through it. Prefer `convexFn_of_epi_combo` / `ConvexFn.epi_combo`, which
-   present the statement already in projected form, over unfolding `Convex` by hand.
+1. **Convex combinations do not project through `simp`.** `(a • (x,μ) + b • (y,ν)).2` is defeq to
+   `a * μ + b * ν` but not syntactically equal, and `linarith` cannot see through it. Prefer
+   `convexFn_of_epi_combo` / `ConvexFn.epi_combo`, which present the statement already projected,
+   over unfolding `Convex` by hand. A *single* scaled or added pair is fine (`Prod.smul_fst`,
+   `Prod.fst_add` are `@[simp]`); it is combinations that stall. For sets,
+   `simpa [Prod.smul_mk, Prod.mk_add_mk, smul_eq_mul] using hF hμ hν ha.le hb.le hab` works. And
+   `rintro ⟨y, ρ⟩ hp` beats `intro p hp; obtain ⟨y, ρ⟩ := p`, which leaves `hp` phrased with
+   `(y, ρ).2` and defeats `exact_mod_cast`.
 
-3. **Degenerate coefficients.** Almost every convexity proof needs the `a = 0` and `b = 0` cases
-   separately (the interesting argument needs `0 < a` and `0 < b`). Use `combo_of_pos`; it discharges
-   both degenerate branches by `simpa`.
+2. **Degenerate coefficients.** Almost every convexity proof needs the `a = 0` and `b = 0` cases
+   separately (the interesting argument needs `0 < a` and `0 < b`). Use `combo_of_pos`; it
+   discharges both degenerate branches by `simpa`.
 
-4. **`EReal` has no `SMul ℝ EReal` instance.** Write `(a : EReal) * z`. `Tdaf.EReal.coe_mul_coe`
+3. **`EReal` has no `SMul ℝ EReal` instance.** Write `(a : EReal) * z`. `Tdaf.EReal.coe_mul_coe`
    converts `(a : EReal) * (r : EReal) = ((a * r : ℝ) : EReal)`.
 
-5. **`EReal` case analysis**: `induction z with | bot => … | coe r => … | top => …`
-   (`EReal.rec` is the registered `induction_eliminator`, case names `bot`, `coe`, `top`).
-   For "is it `⊤`?" use `rcases eq_top_or_lt_top z with h | h`.
+4. **`open Pointwise` is needed by every file using `epi f + epi g`, `a • epi f` or set negation**,
+   and its absence shows up as an instance-synthesis failure rather than a clear error.
 
-6. **Useful Mathlib `EReal` lemmas** (all in `Mathlib/Data/EReal/{Basic,Operations}.lean`):
-   `EReal.lt_iff_exists_real_btwn`, `EReal.coe_le_coe_iff`, `EReal.coe_lt_coe_iff`,
-   `EReal.coe_add`, `EReal.coe_mul`, `EReal.coe_lt_top`, `EReal.top_add_top`, `EReal.top_add_coe`,
-   `EReal.coe_add_top`, `EReal.top_add_of_ne_bot`, `EReal.add_top_of_ne_bot`,
-   `EReal.mul_top_of_pos`, `EReal.coe_mul_top_of_pos`, `EReal.sub_le_iff_le_add`,
-   `EReal.le_sub_iff_add_le`, `EReal.sub_le_of_le_add`.
-
-7. **`nlinarith` often fails on `a * p + b * q < r` given `p < r`, `q < r`, `a + b = 1`.**
+5. **`nlinarith` often fails on `a * p + b * q < r` given `p < r`, `q < r`, `a + b = 1`.**
    Feed it the products explicitly:
    ```lean
    have h1 : a * p < a * r := mul_lt_mul_of_pos_left hp ha
@@ -270,7 +280,7 @@ From the repository `README.md` ("Reviewing a formalization"):
    ```
    `linear_combination c * hab` is the reliable way to use `a + b = 1` in a nonlinear identity.
 
-8. **Style linters that fail the build if ignored**: the file header must be
+6. **Style linters that fail the build if ignored**: the file header must be
    ```
    /-
    Copyright (c) 2026 TDAF contributors. All rights reserved.
@@ -279,111 +289,90 @@ From the repository `README.md` ("Reviewing a formalization"):
    -/
    ```
    `show` may not change the goal — use `change`. `push_neg` is deprecated in favour of `push Not`.
-   `if_pos`/`if_neg` are deprecated. `Set.mem_setOf_eq` is deprecated in favour of
-   `Set.mem_ofPred_eq` — or just rely on definitional equality (`have hx' : f x < α := hx`).
+   `Set.mem_setOf_eq` is deprecated in favour of `Set.mem_ofPred_eq` — or just rely on definitional
+   equality (`have hx' : f x < α := hx`). `if_pos`/`if_neg` are deprecated, and so are the
+   replacements they suggest, `ite_cond_eq_true`/`ite_cond_eq_false`; the live names are
+   `ite_eq_left_of_eq_true _ _ (eq_true h)` and `ite_eq_right_of_eq_false _ _ (eq_false h)`.
 
-9. **Unused section variables are a linter error-level warning.** If a lemma in a
-   `variable {E} [AddCommGroup E] [Module ℝ E]` section does not use the algebraic structure, put
+7. **Unused section variables are an error-level warning — and a useful signal.** Write
    ```lean
    omit [AddCommGroup E] [Module ℝ E] in
    ```
-   immediately *before* the declaration — and before its docstring, not after.
+   immediately *before* the declaration, and before its docstring, not after. When the linter fires
+   unexpectedly it is usually reporting that the result belongs in a weaker layer of D9: that is how
+   the upper half of Corollary 8.5.2 was found to be layer A, and how the three
+   transversal-thickening lemmas of `RelativeInterior.lean` were found not to need finite dimension.
 
-10. **A `Prop`-valued `structure` with one field** is how bundled hypotheses are written here.
-    Introduce it with `refine ⟨?_⟩` or `exact ⟨h⟩`, and consume it through the projection
-    (`hf.convex_epi`, `hf.ne_bot x`). `structure Foo … extends Bar …` gives the coercion for free.
+8. **`⨅ _ : p, f` for a `Prop` `p`** is the decidability-free way to write `if p then f else ⊤`
+   in a complete lattice; `iInf_pos` and `iInf_neg` are the defining equations. Same trick with
+   `⨆ _ : p, f` for `… else ⊥`.
 
-11. **`⨅ _ : p, f` for a `Prop` `p`** is the decidability-free way to write `if p then f else ⊤`
-    in a complete lattice; `iInf_pos` and `iInf_neg` are the defining equations. Same trick with
-    `⨆ _ : p, f` for `… else ⊥`.
+9. **Two `simp` loops, both real, and both about negation.** `simp [Tdaf.EReal.coe_mul_coe]` loops —
+   it is the exact inverse of Mathlib's `EReal.coe_mul`, which is in the default simp set; use `rw`.
+   And a simp set containing `← EReal.neg_lt_neg_iff` loops against `neg_neg`/`neg_bot`/`neg_top`.
+   **This kills D2's "generate the concave API by `simp`-normalising through negation"** — each
+   transfer is one or two hand-written lines. Underneath both: `EReal` negation does not distribute
+   over addition (`-(⊥ + ⊤) = ⊤` but `(-⊥) + (-⊤) = ⊥`), and Mathlib's `EReal.neg_add` carries two
+   hypotheses.
 
-### Added by the stage-1/2 modules
-
-12. **Two `simp` loops, both real.** `simp [Tdaf.EReal.coe_mul_coe]` loops — it is the exact inverse
-    of Mathlib's `EReal.coe_mul`, which is in the default simp set; use `rw`. And a simp set
-    containing `← EReal.neg_lt_neg_iff` loops against `neg_neg`/`neg_bot`/`neg_top`. **This kills
-    D2's "generate the concave API by `simp`-normalising through negation"** — each transfer is one
-    or two hand-written lines.
-13. **`Mathlib.Analysis.Convex.Function` imports no topology at all.** `IsClosed`, `closure`,
+10. **`Mathlib.Analysis.Convex.Function` imports no topology at all.** `IsClosed`, `closure`,
     `ContinuousAdd` are unknown identifiers in a file whose Mathlib reach is only `Epigraph.lean`.
-    Minimal pair: `Mathlib.Topology.Instances.Real.Lemmas` + `Mathlib.Topology.Order.DenselyOrdered`.
-14. **`relaxedAutoImplicit = false` turns one missing import into a landslide** — a missing
+    Minimal pair: `Mathlib.Topology.Instances.Real.Lemmas` and
+    `Mathlib.Topology.Order.DenselyOrdered`.
+
+11. **`relaxedAutoImplicit = false` turns one missing import into a landslide** — a missing
     `TopologicalSpace` produced ~12 cascading errors with `sorry`-typed hypotheses. Only the first
     error is real.
-15. **`PosMulMono EReal` lives in `Mathlib/Data/EReal/Inv.lean`**, not `Operations.lean`; and there
+
+12. **`PosMulMono EReal` lives in `Mathlib/Data/EReal/Inv.lean`**, not `Operations.lean`; and there
     is **no** `PosMulStrictMono EReal`, so `le_of_mul_le_mul_left` cannot reflect an order. Multiply
     through by `(a⁻¹ : EReal)` — that is what `Tdaf.EReal.coe_mul_le_coe_iff` packages.
-16. **`EReal.neg_add` concludes `-(x+y) = -x - y`, with a subtraction.** After `rw` you are left with
-    `-a + -b = -a - b`, which the closing `rfl` does not discharge though it is defeq; finish with
-    `sub_eq_add_neg`.
-17. **`linear_combination` is not in scope** from `Mathlib.Data.EReal.*` alone. Prefer explicit
-    rewriting (`rw [sub_mul, one_mul, h, sub_self]`) in `Order/EReal.lean` over adding tactic
-    imports to a low-level file.
-18. **`Finset` induction.** `Finset.cons_induction` (cases `empty`/`cons`) needs no `DecidableEq`.
+
+13. **`Finset` induction.** `Finset.cons_induction` (cases `empty`/`cons`) needs no `DecidableEq`.
     `Finset.Nonempty.cons_induction` has **one** major premise: write
     `induction hs using Finset.Nonempty.cons_induction`, not `induction s, hs using …`. Both
     auto-revert hypotheses mentioning `s`, so `ih` is the full implication.
-19. **`WithBot` big-operator lemmas do not transfer to `EReal`** — `EReal` is a `def`, not an
-    `abbrev`, over `WithBot (WithTop ℝ)`.
-20. **Gotcha 2 refined.** `simp only` *does* push through `Prod` projections of a *single* scaled or
-    added pair (`Prod.smul_fst`, `Prod.fst_add`, … are all `@[simp]`). The warning is specifically
-    about *convex combinations* `a • p + b • q`. For sets, this works:
-    `simpa [Prod.smul_mk, Prod.mk_add_mk, smul_eq_mul] using hF hμ hν ha.le hb.le hab`.
-    Also: `rintro ⟨y, ρ⟩ hp` beats `intro p hp; obtain ⟨y, ρ⟩ := p`, which leaves `hp` phrased with
-    `(y, ρ).2` and defeats `exact_mod_cast`.
-21. **`ConvexCone` is half-reusable.** `ConvexCone.convex` accepts an anonymous-constructor cone
+
+14. **`EReal` is a `def` over `WithBot (WithTop ℝ)`, not an `abbrev`, and is not a semiring.**
+    `WithBot` big-operator lemmas do not transfer, and `Finset.mul_sum` and relatives do not apply.
+    `EReal.coe_sum`, `coe_mul_ne_bot` and `forall_ne_top_of_sum_ne_top` fill that gap in
+    `Tdaf/Order/EReal.lean`.
+
+15. **`ConvexCone` is half-reusable.** `ConvexCone.convex` accepts an anonymous-constructor cone
     `⟨s, _, _⟩` whose coercion is `rfl`-equal to `s`, giving "closed under `+` and positive `•` ⇒
     convex" directly. The converse is **not** in Mathlib. There is no `IsCone` predicate on bare
     sets, only the bundled structure.
-22. **Pointwise cone lemmas**: `Set.smul_mem_smul_set_iff₀`, `Set.mem_smul_set_iff_inv_smul_mem₀`.
-    To use `a • s = s` inside an `Iff`, `conv_lhs => rw [← hs a ha]` — a bare `rw` rewrites both
-    sides and destroys the goal.
-23. **`open Set` makes bare `restrict` ambiguous** with `Set.restrict`; write `Tdaf.restrict`.
-24. Names: `Continuous.prodMk` (not `prod_mk`), `abs_add_le` (not `abs_add`), `iInf_lt_iff` for
-    witness extraction, `iSup_pos`/`iSup_neg` as the `⨆` duals of `iInf_pos`/`iInf_neg`,
-    `forall₂_congr`/`forall₃_congr` to push an `Iff` through a `∀`-chain, `EReal.coe_toReal`.
-    `Set.mem_Ici`/`left_mem_Ici` do **not** exist as identifiers; close `μ ∈ Ici μ` with
-    `exact le_refl μ` (`le_rfl` gets stuck on an unresolved `Preorder`).
-25. **`EReal.rec` is usable as a definitional combinator**, not just an eliminator:
+
+16. **`open Set` makes bare `restrict` ambiguous** with `Set.restrict`; write
+    `Tdaf.ConvexAnalysis.restrict`.
+
+17. **`EReal.rec` is usable as a definitional combinator**, not just an eliminator:
     `EReal.rec (⊥ : EReal) φ ⊤` defines a function by cases, with `rec_bot`/`rec_coe`/`rec_top`
-    `@[simp]` and `rfl`. Write `_root_.EReal.rec` inside `namespace Tdaf`.
-26. **Generic `add_le_add` works on `EReal`** (there is a `CovariantClass`); no bespoke lemma needed.
-27. **Antitone Galois connections need the `OrderDual` dance**, and it is only half free.
+    `@[simp]` and `rfl`. Write `_root_.EReal.rec` inside `namespace Tdaf.ConvexAnalysis`.
+
+18. **Antitone Galois connections need the `OrderDual` dance**, and it is only half free.
     `GaloisConnection (fun F => toDual (ofEpi F)) (fun g => epi (ofDual g))` is `rfl`-easy from the
     adjunction lemma, and `ClosureOperator` / `GaloisInsertion` / injectivity all follow. But
     transporting `gc.u_iInf` / `gc.l_iSup` back through `toDual` does **not** `simp` away: the goal
     keeps `sSup (⇑toDual ⁻¹' range …)` against `fun x => sSup (range …)`. Prove `epi_iSup`-style
     lemmas directly (three lines) rather than fighting the dual.
-28. **A `def` producing a structure whose fields mention section variables must live inside the
+
+19. **A `def` producing a structure whose fields mention section variables must live inside the
     section that binds them.** Appending a `ConvexCone ℝ (E × ℝ)` definition after `end Module`
     fails with `failed to synthesize AddCommMonoid (E × ℝ)`, not with a scoping error.
 
-29. **`AddCommMonoid` on a type synonym: the `nsmul` default cannot fire.** `nsmulRecAuto` needs an
+20. **`AddCommMonoid` on a type synonym: the `nsmul` default cannot fire.** `nsmulRecAuto` needs an
     `AddSemigroup` *instance*, which does not exist while the instance is being elaborated. Declare
     standalone `Add`/`Zero` instances first, then `nsmul := nsmulRec`, `nsmul_zero := fun _ => rfl`,
-    `nsmul_succ := fun _ _ => rfl`. A failed instance then produces gotcha-14-style landslides
-    through `rfl` (`Not a definitional equality` everywhere downstream); only the first error is real.
-30. **`⋃ a > 0, a • s` silently elaborates `a : ℕ`** via `AddMonoid.toNatSMul`, giving a definition
+    `nsmul_succ := fun _ _ => rfl`. A failed instance then produces gotcha-11-style landslides
+    through `rfl` (`Not a definitional equality` everywhere downstream); only the first error is
+    real.
+
+21. **`⋃ a > 0, a • s` silently elaborates `a : ℕ`** via `AddMonoid.toNatSMul`, giving a definition
     that is not the one you wrote. Symptom: an "unused section variable `[Module ℝ E]`" warning on a
     statement that visibly scales by a real. Always write `⋃ a > (0 : ℝ), …`.
-31. **`Set.mem_add` destructuring leaves un-normalised pairs**; `rw [Prod.mk_add_mk]` before
-    `mk_mem_epi`. `Set.image_add (AddMonoidHom.fst E ℝ)` closes
-    `Prod.fst '' (A + B) = Prod.fst '' A + Prod.fst '' B` with no coercion friction.
-32. **`indicatorFn_of_mem`/`_of_notMem` mis-unify against `{0} : Set E`** — `hx : ¬ x = 0` matches
-    `x ∉ s` with `s := Eq x`. Bind through an ascribed `have` and rewrite with that.
-33. **`if_pos`/`if_neg` → `ite_cond_eq_true`/`ite_cond_eq_false` → both deprecated.** Live names:
-    `ite_eq_left_of_eq_true _ _ (eq_true h)`, `ite_eq_right_of_eq_false _ _ (eq_false h)`.
-34. **`rw [foo (f := x)]` on a definition unfold is rejected**; named arguments only work for real
-    equations. Use `simp only [foo]`.
-35. `LinearEquiv.prodAssoc R M₁ M₂ M₃` exists and is `@[simps apply]`; `Set.image_preimage_eq _
-    e.surjective` turns a preimage description into an image description in one line.
-36. **`EReal` is not a semiring**, so `Finset.mul_sum` and relatives do not apply. `EReal.coe_sum`,
-    `coe_mul_ne_bot`, `forall_ne_top_of_sum_ne_top` fill that gap in `Order/EReal.lean`.
-37. **Mathematical, not Lean:** `□` associativity is *not* `add_assoc` on `Set (E × ℝ)`, because
-    `epi (f □ g) ⊋ epi f + epi g`. The bridge is `epi_ofEpi_add_subset`. The same lemma is needed
-    whenever two `ofEpi`-defined operations compose.
 
-38. **Infinite dimensions cost hypotheses, not generality — see design decision D0.** In the
+22. **Infinite dimensions cost hypotheses, not generality — see design decision D0.** In the
     category of topological vector spaces the arrows are the *continuous* linear maps, so a
     discontinuous linear functional is not a morphism, and a subspace expected to behave like a
     finite-dimensional one must be assumed *closed*. Both are automatic in finite dimensions, which
@@ -393,43 +382,48 @@ From the repository `README.md` ("Reviewing a formalization"):
     `closure C ≠ univ`, and §16/§30's adjoints need `A` continuous with the transpose as data.
     **Before transcribing an `ℝⁿ` statement quantifying over "proper", "`≠ ℝⁿ`" or "closed", test it
     against a discontinuous functional** — it is the standard witness for exactly this.
-39. **`⊤ + ⊥ = ⊥`, so `a ≤ u + v` statements need checking at the improper values.** Fenchel's
+
+23. **`⊤ + ⊥ = ⊥`, so `a ≤ u + v` statements need checking at the improper values.** Fenchel's
     inequality `⟨x,y⟩ ≤ f x + f* y` is *false* for `f ≡ ⊤` (RHS `= ⊤ + ⊥ = ⊥`) and for `f` taking
     `⊥`. The unconditional content is `sub_le_conj : ⟨x,y⟩ - f x ≤ f* y`.
-40. **`Tdaf.EReal.coe_sub_le_comm : (a:ℝ) - z ≤ w ↔ (a:ℝ) - w ≤ z` is unconditional** (all eight
+
+24. **`Tdaf.EReal.coe_sub_le_comm : (a:ℝ) - z ≤ w ↔ (a:ℝ) - w ≤ z` is unconditional** (all eight
     `⊥`/`⊤` combinations work, because `a` is finite). This one symmetry makes `conj_le_iff`, the
     conjugacy Galois connection and `biconj B f ≤ f` hypothesis-free. It is the `EReal` fact §12
     turns on. `add_iSup`/`iSup_add`/`iSup_sub` for `EReal`, long expected to carry every conjugacy
     proof, are **not needed for §12 at all**; §13 does need them, as `Tdaf.EReal.coe_mul_iSup` and
     friends.
-41. **Do not reach for the weak topology.** The duality theorems hold in whatever topology `E`
+
+25. **Do not reach for the weak topology.** The duality theorems hold in whatever topology `E`
     carries, provided its continuous dual is the `F` side of the pairing — that is
-    `Tdaf.IsCompatiblePairing`, and it is trivial when `E` is paired with its own dual. `σ(E, F)` is
-    one instance of it, the coarsest, never the mechanism. The general pairing exists so that `E`
-    and `F` may differ (§30, §33).
-42. **`PointedCone`, not `ConvexCone`, is the bundling to reach for.** `PointedCone R E` is
+    `IsCompatiblePairing`, and it is trivial when `E` is paired with its own dual. `σ(E, F)` is one
+    instance of it, the coarsest, never the mechanism. The general pairing exists so that `E` and
+    `F` may differ (§30, §33). `WeakBilin B` is besides a type synonym, so `simp`/`rw` do not fire
+    through it and pair literals in `WeakBilin B × ℝ` need manual ascription.
+
+26. **`PointedCone`, not `ConvexCone`, is the bundling to reach for.** `PointedCone R E` is
     `Submodule {c // 0 ≤ c} E`, so it has a span (`PointedCone.hull`, renamed from `span`), and
     `PointedCone.lineal` already *is* `C ⊓ -C` with the "largest subspace inside" Galois connection.
     `ConvexCone` has no span at all. `lineal` needs `[LinearOrder R]`, so wrappers over `ℝ` must be
     `noncomputable` — and the error blames `Real.linearOrder`, which looks unrelated.
-43. **Structure-instance fields of `Submodule`/`PointedCone` bind their points implicitly**: write
-    `add_mem' {x y} hx hy := …`, else the points are inaccessible.
-44. **`le_iSup₂ x hx` / `iInf₂_le x hx` cannot infer the family through a coercion.** With
-    `⨆ x ∈ s, ((f x : ℝ) : EReal)` elaboration stalls. Fix once with an explicit
-    `(f := fun y (_ : y ∈ s) => …)` wrapper.
-45. **`iInf_apply`/`iSup_apply` will not unify against `sInf (Set.range (Subtype.val ∘ f)) x`** —
-    `iInf` is semireducible, so the higher-order pattern is unsolvable. `change` first.
-46. **`GaloisCoinsertion.liftCompleteLattice` computes by `rfl`** and keeps the ambient
+
+27. **`GaloisCoinsertion.liftCompleteLattice` computes by `rfl`** and keeps the ambient
     `PartialOrder` syntactically, so on a subtype the lifted order *is* `Subtype.partialOrder`. Use
     `abbrev`, not `def`, for the bundled subtype.
-47. **Mathlib survey corrections found this stage**: `LinearMap.Nondegenerate` already is
-    `SeparatingLeft ∧ SeparatingRight`; `LinearMap.IsAdjointPair` pairs a module with *itself*, so a
-    four-space version must be written; there is **no** `ContinuousLinearMap.dualMap`;
-    `asymptoticCone` exists (`Mathlib/Topology/Algebra/AsymptoticCone.lean`) and is `0⁺(cl C)`, with
-    `isBounded_iff_asymptoticCone_subset_singleton` giving Theorem 8.4 in three lines; the usable
-    `{x | l x ≤ c}` form of `iInter_halfSpaces_eq` exists only in the `RCLike` namespace.
 
-48. **Search Mathlib *semantically* before concluding it lacks something.** Grepping for names
+28. **Mathlib survey corrections.** `LinearMap.Nondegenerate` already is
+    `SeparatingLeft ∧ SeparatingRight`; `LinearMap.IsAdjointPair` pairs a module with *itself*, so a
+    four-space version must be written; there is no `ContinuousLinearMap.dualMap`, **but the thing
+    it names does exist under another name** — `ContinuousLinearMap.precomp` in
+    `Mathlib/Topology/Algebra/Module/Spaces/ContinuousLinearMap.lean`, which is precomposition as a
+    *continuous* linear map of duals and is definitionally what a hand-rolled `dualPrecomp` would
+    be; `asymptoticCone` exists (`Mathlib/Topology/Algebra/AsymptoticCone.lean`) and is `0⁺(cl C)`,
+    with `isBounded_iff_asymptoticCone_subset_singleton` giving Theorem 8.4 in three lines; the
+    usable `{x | l x ≤ c}` form of `iInter_halfSpaces_eq` exists only in the `RCLike` namespace.
+    Every one of these was first missed by grepping for a name instead of for the concept — which is
+    the next entry.
+
+29. **Search Mathlib *semantically* before concluding it lacks something.** Grepping for names
     misses whole files. `Mathlib/Analysis/LocallyConvex/WeakSpace.lean` holds the
     compatible-topology theorem (`Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex`,
     `LinearEquiv.image_closure_of_convex`) and no declaration in it contains the word "compatible";
@@ -437,98 +431,78 @@ From the repository `README.md` ("Reviewing a formalization"):
     **Use <https://leansearch.net> (`POST /search`, body
     `{"query": ["…"], "num_results": 8}`), which matches informal descriptions, and only then
     grep.**
-49. **Do not use `LinearMap.IsContPerfPair` for the pairing hypotheses.** The name is inviting and
+
+30. **Do not use `LinearMap.IsContPerfPair` for the pairing hypotheses.** The name is inviting and
     the trap is quiet. It demands *joint* continuity of `(x, y) ↦ B x y` (so `F` needs a topology),
     and *bijectivity* on both sides where we need surjectivity on one; and its only
     `topDualPairing` instance is
     `variable [FiniteDimensional 𝕜 E] [T2Space E]` — adopting it silently reimposes exactly the
     hypothesis D0 exists to avoid.
-50. **Mathlib's own precedent for the pairing hypotheses is to leave them unbundled.**
-    `LinearEquiv.image_closure_of_convex` carries
-    `(he₁ : ∀ f : StrongDual 𝕜 F, Continuous (e.dualMap f))` and the `e.symm` twin — `IsCompatiblePairing`'s two fields in
-    another notation — as plain hypotheses, with a docstring explaining the choice to phrase
-    compatibility "in terms of linear maps between locally convex spaces, rather than creating two
-    separate topologies on the same space". Our case differs only in scale (67 signatures, not 3),
-    which is the argument for a class here and not there.
 
-51. **`Rel` is now `SetRel α β := Set (α × β)`** (an `abbrev`, `Mathlib/Data/Rel.lean`), with
+31. **Mathlib's own precedent for the pairing hypotheses is to leave them unbundled.**
+    `LinearEquiv.image_closure_of_convex` carries
+    `(he₁ : ∀ f : StrongDual 𝕜 F, Continuous (e.dualMap f))` and the `e.symm` twin —
+    `IsCompatiblePairing`'s two fields in another notation — as plain hypotheses, with a docstring
+    explaining the choice to phrase compatibility "in terms of linear maps between locally convex
+    spaces, rather than creating two separate topologies on the same space". Our case differs only
+    in scale (67 signatures, not 3), which is the argument for a class here and not there.
+
+32. **`Rel` is now `SetRel α β := Set (α × β)`** (an `abbrev`, `Mathlib/Data/Rel.lean`), with
     `SetRel.inv`, `.dom`, `.cod`, `.image`, `.comp`. This is *the* bundling for a multivalued map,
     and it is what makes Corollary 23.5.1 read as `∂(f*) = (∂f)⁻¹` rather than as a `∀ x y`
     biconditional.
-52. **`Tdaf.Convex.*` kills dot notation.** Generalised field notation resolves `hC.foo` against the
-    **root** `Convex` namespace only, so `hC.segment_mem_relint` fails with "The environment does
-    not contain `Function.segment_mem_relint`". Inside `namespace Tdaf`, write
-    `Convex.segment_mem_relint hC …`. The same reasoning is why `Tdaf.IsCompatiblePairing` is a
+
+33. **Generalised field notation resolves against the *root* namespace only.** A declaration named
+    `Convex.foo` in this project is `Tdaf.ConvexAnalysis.Convex.foo`, and `hC.foo` for
+    `hC : Convex ℝ C` will not find it — it fails with "The environment does not contain
+    `Function.foo`". Write `Convex.foo hC …`. The same reasoning is why `IsCompatiblePairing` is a
     prefix predicate rather than a `LinearMap` field: a downstream project should not squat in
     Mathlib's namespace just to buy dot notation, and `[IsCompatiblePairing B.flip]` reads better
     than the projection form anyway.
-53. **`add_comm` with no arguments rewrites the wrong `+`.** In `f (x + y) ≤ ↑s + ↑r` a bare
-    `rw [add_comm]` hits `x + y` *inside* `f`. Always supply both arguments. Likewise
-    `add_le_add_right h c` proves `c + a ≤ c + b`, not `a + c ≤ b + c`; `add_le_add h le_rfl` is
-    unambiguous.
-54. **`field_simp` sometimes closes the goal by itself**, and a trailing `; ring` then errors with
-    "No goals to be solved" — and sometimes it does not. There is no way to tell in advance, so
-    split the lines rather than writing `<;> (field_simp; ring)`.
-55. **`positivity` ignores hypotheses.** It fails on `0 ≤ μ⁻¹` when positivity comes from
-    `hμ : 1 < μ`. Use `inv_nonneg.2 (by linarith)`.
-56. **A theorem whose statement mentions only `𝓝[>] (0:ℝ)` still auto-includes `[TopologicalSpace E]`
-    from the section**, and the unused-section-variable linter then fires. That is a *useful*
-    signal — it is how the upper half of Corollary 8.5.2 was found to be layer A.
-57. **Name clashes across the library are silent until they are not.** A duplicate reports as "has
+
+34. **Name clashes across the library are silent until they are not.** A duplicate reports as "has
     already been declared" at a line far from the real cause, with no hint where the other
     declaration lives. `grep -rn <name> Tdaf/` before naming. Worse, a *near*-duplicate does not
     report at all: `le_of_forall_le_coe` and `le_of_forall_coe_le` were the same statement written
-    twice by two agents, and only a hand comparison caught it.
-58. **`intrinsicInterior` is defined through the subspace topology**, so `x ∈ ri s` unfolds inside
+    twice by two agents, and only a hand comparison caught it. The same hazard points outward:
+    inside `namespace Tdaf.EReal` a local `EReal.foo` shadows a future Mathlib `EReal.foo`, and
+    `EReal.sub_le_iff_le_add`, `le_sub_iff_add_le` and `sub_le_of_le_add` already exist upstream
+    with *weaker* disjunctive hypotheses than the obvious hand-written versions.
+
+35. **`intrinsicInterior` is defined through the subspace topology**, so `x ∈ ri s` unfolds inside
     `affineSpan ℝ s` with its own `AddTorsor` structure. Prove the ambient metric characterisation
     first and nothing else needs torsor transport. The stuck-instance error to expect is
     "typeclass instance problem is stuck: `AddTorsor ?V E`", triggered inside a `fun` or anonymous
     constructor where the expected type is not yet known.
 
-59. **`class Foo (B) : Prop extends B.Bar where` parses, and dot notation works in `extends`.** The
+36. **`class Foo (B) : Prop extends B.Bar where` parses, and dot notation works in `extends`.** The
     field of the extension may mention a definition that itself requires the parent instance —
     `surjective_eval (B) : Function.Surjective (evalCLM B)` elaborates off the parent. Ordering the
     file *base class → map → extension* is what makes this possible, and it is worth the trouble:
     stating the field through the map rather than through an inlined anonymous constructor is what
     let `exists_pairing_eq` be a `rw` instead of `rfl`-poking, and it means the map is available to
     downstream files instead of being re-defined there.
-60. **`LinearMap.flip` is a plain `def`, so instance search will not unfold it.** With
+
+37. **`LinearMap.flip` is a plain `def`, so instance search will not unfold it.** With
     `[IsContinuousPairing B]` in context, `inferInstance` for `IsContinuousPairing B.flip.flip`
-    **fails**, although `‹IsContinuousPairing B.flip.flip›` typechecks at that type — defeq holds at default
-    transparency, not at instance transparency. One bridge instance fixes it for the whole library;
-    check whether it is load-bearing by demoting it to a `theorem` and rebuilding.
-61. **An instance binder does not pin implicit arguments the way a hypothesis did.** A hypothesis
+    **fails**, although `‹IsContinuousPairing B.flip.flip›` typechecks at that type — defeq holds at
+    default transparency, not at instance transparency. One bridge instance fixes it for the whole
+    library; check whether it is load-bearing by demoting it to a `theorem` and rebuilding.
+
+38. **An instance binder does not pin implicit arguments the way a hypothesis did.** A hypothesis
     mentioning `B` determined `B` for free; `[IsCompatiblePairing B]` never does. Any lemma whose
     *conclusion* does not mention `B` now needs `(B := B)` at the call site, and the error is the
     less helpful "typeclass instance problem is stuck".
-62. **`simp` will not close `evalCLM`'s `map_add'`/`map_smul'`**: `ContinuousLinearMap.coe_mk'`
-    fires on the left and the right stays stuck. `ContinuousLinearMap.ext fun x => map_add (B x) y₁ y₂`
-    closes it by defeq. Also, `ContinuousLinearMap.add_apply`/`.smul_apply` are deprecated in favour
-    of the root-namespace `add_apply`/`smul_apply`.
+
+39. **Two hand-rolled `AffineSubspace` arguments have Mathlib names.** "A map constant on `s` is
+    constant on `affineSpan ℝ s`" is `AffineMap.eqOn_affineSpan` (with `AffineMap.const` as the
+    second map), and "… so its linear part vanishes on the direction" is
+    `AffineMap.linear_eqOn_vectorSpan` composed with `direction_affineSpan`. Building the level-set
+    `AffineSubspace` by hand costs ~25 lines and is what `exists_lt_of_notMem_relint` used to do.
 
 ---
 
-## 3. Review findings
-
-The plan was reviewed adversarially early on; the findings are folded into the plans above and into
-the gotchas below. The ones that bite hardest in day-to-day work:
-
-* `open Pointwise` is needed by every file using `epi f + epi g`, `a • epi f` or set negation, and
-  its absence shows up as an instance-synthesis failure rather than a clear error.
-* `EReal` negation does **not** distribute over addition (`-(⊥ + ⊤) = ⊤` but `(-⊥) + (-⊤) = ⊥`).
-  Mathlib's `EReal.neg_add` carries two hypotheses. Every concave/convex sign transfer needs them.
-* `EReal.sub_le_iff_le_add`, `le_sub_iff_add_le`, `sub_le_of_le_add` already exist in Mathlib with
-  *weaker* disjunctive hypotheses. Do not redefine them — inside `namespace Tdaf` ours would shadow
-  Mathlib's.
-* `add_iSup` / `iSup_add` / `iSup_sub` for `EReal` do **not** exist anywhere in Mathlib. §12 turns
-  out not to need them (gotcha 40); §13 does, and `Tdaf/Order/EReal.lean` now has them.
-* `WeakBilin B` is a type synonym: `simp`/`rw` do not fire through it, and pair literals in
-  `WeakBilin B × ℝ` need manual ascription.
-* Mathlib already has `egauge` (`Analysis/Convex/EGauge.lean`) and a minimax theorem
-  (`Topology/Sion.lean`). It does **not** have `cone : Set E → Set E` (use `PointedCone.span`),
-  `IsCompact.convexHull`, or any adjoint for a linear map between arbitrary paired spaces.
-
-## 4. Build and verification
+## 3. Build and verification
 
 From the repository (or worktree) root:
 

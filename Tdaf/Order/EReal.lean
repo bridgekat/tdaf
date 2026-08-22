@@ -166,8 +166,8 @@ theorem neg_le_of_zero_le_add {u v : EReal} (hu : u ≠ ⊥) (h : 0 ≤ u + v) :
 
 /-- A finite sum of `EReal`s none of which is `⊥` is not `⊥`.
 
-This is an `EReal` fact rather than a convexity fact; it is stated here because `Tdaf.ConvexFn.sum`
-is its only consumer so far. -/
+This is an `EReal` fact rather than a convexity fact; it is stated here because
+`Tdaf.ConvexAnalysis.ConvexFn.sum` is its only consumer so far. -/
 theorem sum_ne_bot {ι : Type*} {s : Finset ι} {g : ι → EReal} (h : ∀ i ∈ s, g i ≠ ⊥) :
     ∑ i ∈ s, g i ≠ ⊥ := by
   induction s using Finset.cons_induction with
@@ -274,7 +274,7 @@ theorem le_of_forall_coe_le {u v : EReal} (h : ∀ s : ℝ, v ≤ (s : EReal) �
   | top => exact le_top
 
 /-- Multiplication by a positive real commutes with an infimum. `EReal` has `PosMulMono` but no
-`PosMulStrictMono` (`NOTES.md` gotcha 15), so the reverse inequality goes through `a⁻¹`. -/
+`PosMulStrictMono` (`NOTES.md` gotcha 12), so the reverse inequality goes through `a⁻¹`. -/
 theorem coe_mul_iInf {ι : Sort*} {a : ℝ} (ha : 0 < a) (g : ι → EReal) :
     (a : EReal) * ⨅ i, g i = ⨅ i, (a : EReal) * g i := by
   have hcancel : ∀ z : EReal, ((a⁻¹ : ℝ) : EReal) * ((a : EReal) * z) = z := fun z => by

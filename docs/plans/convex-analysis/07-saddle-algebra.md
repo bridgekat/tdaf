@@ -27,7 +27,7 @@ noncomputable def partialCl₂ (f : U × X → EReal) : U × X → EReal :=
 with `partialConj₁`, `partialCl₁` the mirror images — and, from `Duality/Pairing.lean`, the product
 pairing `prodPairing Bu Bx` with its sign-flip `negFst`, plus the composition law
 `conj (prodPairing Bu Bx) = partialConj₁ Bu ∘ partialConj₂ Bx`. That law is the entire technical
-content of [D8](00-overview.md#d8) and was missing from the first draft of this plan; see D8's sign
+content of [D8](00-overview.md#d8); see D8's sign
 table for which of {bracket, Lagrangian, adjoint, `cl₁`, `cl₂`} uses which convention.
 
 Facts to prove once:

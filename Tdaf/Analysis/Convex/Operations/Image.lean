@@ -20,36 +20,36 @@ is the interesting one: the infimum need not be attained, so `A f` is not read o
 
 ## Main definitions
 
-* `Tdaf.mapLin A f` — the image `A f` of `f` under `A`.
-* `Tdaf.compLin g A` — the inverse image `g A` of `g` under `A`.
+* `mapLin A f` — the image `A f` of `f` under `A`.
+* `compLin g A` — the inverse image `g A` of `g` under `A`.
 
 ## Main results
 
-* `Tdaf.convexFn_compLin` and `Tdaf.convexFn_mapLin` — **Rockafellar's Theorem 5.7**.
-* `Tdaf.gc_compLin_mapLin` — `g ↦ g A` is left adjoint to `f ↦ A f`. This is an honest, *monotone*
-  Galois connection between `G → EReal` and `E → EReal`, and it is where `Tdaf.mapLin_le`,
-  `Tdaf.le_mapLin` and the monotonicity lemmas come from.
-* `Tdaf.mapLin_eq_ofEpi` — the image is the function determined by the image of the epigraph under
+* `convexFn_compLin` and `convexFn_mapLin` — **Rockafellar's Theorem 5.7**.
+* `gc_compLin_mapLin` — `g ↦ g A` is left adjoint to `f ↦ A f`. This is an honest, *monotone*
+  Galois connection between `G → EReal` and `E → EReal`, and it is where `mapLin_le`,
+  `le_mapLin` and the monotonicity lemmas come from.
+* `mapLin_eq_ofEpi` — the image is the function determined by the image of the epigraph under
   `(x, μ) ↦ (A x, μ)`, which is Rockafellar's own proof of Theorem 5.7.
-* `Tdaf.dom_mapLin`, `Tdaf.dom_compLin` — the effective domain is transported the same way.
-* `Tdaf.convexFn_iInf_right` — the projection case Rockafellar highlights: partial minimisation
+* `dom_mapLin`, `dom_compLin` — the effective domain is transported the same way.
+* `convexFn_iInf_right` — the projection case Rockafellar highlights: partial minimisation
   `(y ↦ ⨅ z, h (y, z))` of a convex function of two variables is convex. This is the form §29 uses.
 
 ## Design notes
 
 **`epi (A f) = (A × id) '' epi f` is false**, and the false statement is the trap this file exists
 to avoid: the infimum defining `(A f) y` need not be attained, so the epigraph of the image can be
-strictly larger than the image of the epigraph. `Tdaf.exists_epi_mapLin_ne_image` exhibits the
+strictly larger than the image of the epigraph. `exists_epi_mapLin_ne_image` exhibits the
 failure with `A = 0` on `ℝ` and `f` the convex function `x ↦ x` on `(0, ∞)`: `(A f) 0 = 0`, so
 `(0, 0)` lies in the epigraph of the image, while the image of `epi f` is `{0} × (0, ∞)`. What is
-true unconditionally is `Tdaf.mapLin_eq_ofEpi`; `Tdaf.epi_mapLin` recovers the set equation from the
-hypothesis `Tdaf.IsEpiLike`, which is exactly the missing attainment.
+true unconditionally is `mapLin_eq_ofEpi`; `epi_mapLin` recovers the set equation from the
+hypothesis `IsEpiLike`, which is exactly the missing attainment.
 
 **Why an adjunction and not merely a pair of inequalities.** `mapLin_le` and `le_mapLin` are the two
 halves of "`A f` is an infimum", and together they say `g ≤ A f ↔ g A ≤ f`, which is a Galois
-connection between the pointwise orders — no `OrderDual` needed, unlike `Tdaf.gc_ofEpi_epi`, since
+connection between the pointwise orders — no `OrderDual` needed, unlike `gc_ofEpi_epi`, since
 both `compLin` and `mapLin` are monotone. Recording it gives the monotonicity lemmas, the unit and
-counit (`Tdaf.le_mapLin_compLin`, `Tdaf.compLin_mapLin_le`), and — for surjective `A`, where the
+counit (`le_mapLin_compLin`, `compLin_mapLin_le`), and — for surjective `A`, where the
 connection becomes a `GaloisCoinsertion` — the identity `A (g A) = g` for free.
 
 ## References
@@ -60,7 +60,7 @@ connection becomes a `GaloisCoinsertion` — the identity `A (g A) = g` for free
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 section Module
 
@@ -72,7 +72,7 @@ variable {E G : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup G] [Module 
 (Rockafellar §5, Theorem 5.7).
 
 The infimum is over the fibre of `A` above `y`, and is `⊤` when that fibre is empty — so `A f` is
-`⊤` off the range of `A`, as it must be. It is generally *not attained*; `Tdaf.mapLin_lt_iff` is
+`⊤` off the range of `A`, as it must be. It is generally *not attained*; `mapLin_lt_iff` is
 the way to extract a witness. -/
 noncomputable def mapLin (A : E →ₗ[ℝ] G) (f : E → EReal) : G → EReal :=
   fun y => ⨅ x ∈ {x | A x = y}, f x
@@ -97,7 +97,7 @@ theorem le_mapLin (h : ∀ x : E, A x = y → z ≤ f x) : z ≤ mapLin A f y :=
   le_iInf₂ (f := fun z (_ : z ∈ {z | A z = y}) => f z) h
 
 /-- The witness extractor. The infimum defining `A f` need not be attained, so — exactly as for
-`Tdaf.ofEpi` — arguments about `mapLin` go through a strict inequality. -/
+`ofEpi` — arguments about `mapLin` go through a strict inequality. -/
 theorem mapLin_lt_iff : mapLin A f y < z ↔ ∃ x : E, A x = y ∧ f x < z := by
   simp only [mapLin, iInf_lt_iff, exists_prop]
   exact Iff.rfl
@@ -183,7 +183,7 @@ theorem convexFn_compLin (A : E →ₗ[ℝ] G) (hg : ConvexFn g) : ConvexFn (com
 
 /-- The image of `f` is the function determined, in the sense of Theorem 5.3, by the image of
 `epi f` under `(x, μ) ↦ (A x, μ)`. This is Rockafellar's own route to Theorem 5.7, and it is an
-equality of *functions* — the corresponding equality of *sets*, `Tdaf.epi_mapLin`, needs a
+equality of *functions* — the corresponding equality of *sets*, `epi_mapLin`, needs a
 hypothesis. -/
 theorem mapLin_eq_ofEpi (A : E →ₗ[ℝ] G) (f : E → EReal) :
     mapLin A f = ofEpi (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f) := by
@@ -208,7 +208,7 @@ theorem convexFn_mapLin (A : E →ₗ[ℝ] G) (hf : ConvexFn f) : ConvexFn (mapL
 
 /-- The set equation behind Theorem 5.7, with the hypothesis that makes it true: the image of the
 epigraph must itself be an epigraph, i.e. the infimum defining `A f` must be attained wherever it is
-finite. See `Tdaf.exists_epi_mapLin_ne_image` for the failure without it. -/
+finite. See `exists_epi_mapLin_ne_image` for the failure without it. -/
 theorem epi_mapLin (h : IsEpiLike (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f)) :
     epi (mapLin A f) = A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f := by
   rw [mapLin_eq_ofEpi]
@@ -248,23 +248,23 @@ theorem compLin_indicatorFn (A : E →ₗ[ℝ] G) (s : Set G) :
 function equal to `x` on `(0, ∞)` and `⊤` elsewhere, `(A f) 0 = inf {x | x > 0} = 0` is not
 attained: `(0, 0)` belongs to `epi (A f)` but not to the image of `epi f`, which is `{0} × (0, ∞)`.
 
-This is why `Tdaf.epi_mapLin` carries `Tdaf.IsEpiLike` and why the unconditional statement of
-Theorem 5.7 is about functions (`Tdaf.mapLin_eq_ofEpi`), not sets. -/
+This is why `epi_mapLin` carries `IsEpiLike` and why the unconditional statement of
+Theorem 5.7 is about functions (`mapLin_eq_ofEpi`), not sets. -/
 theorem exists_epi_mapLin_ne_image :
     ∃ (f : ℝ → EReal) (A : ℝ →ₗ[ℝ] ℝ), ConvexFn f ∧
       epi (mapLin A f) ≠ A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f := by
-  refine ⟨Tdaf.restrict (Ioi 0) (fun x => (x : EReal)), 0, ?_, ?_⟩
+  refine ⟨Tdaf.ConvexAnalysis.restrict (Ioi 0) (fun x => (x : EReal)), 0, ?_, ?_⟩
   · refine convexFn_of_epi_combo fun u v μ ν hu hv a b ha hb hab => ?_
     have hu0 : u ∈ Ioi (0 : ℝ) := by
       by_contra h
-      rw [Tdaf.restrict_of_notMem h] at hu
+      rw [Tdaf.ConvexAnalysis.restrict_of_notMem h] at hu
       exact absurd hu (not_le.2 (EReal.coe_lt_top μ))
     have hv0 : v ∈ Ioi (0 : ℝ) := by
       by_contra h
-      rw [Tdaf.restrict_of_notMem h] at hv
+      rw [Tdaf.ConvexAnalysis.restrict_of_notMem h] at hv
       exact absurd hv (not_le.2 (EReal.coe_lt_top ν))
-    rw [Tdaf.restrict_of_mem hu0] at hu
-    rw [Tdaf.restrict_of_mem hv0] at hv
+    rw [Tdaf.ConvexAnalysis.restrict_of_mem hu0] at hu
+    rw [Tdaf.ConvexAnalysis.restrict_of_mem hv0] at hv
     have hu0' : (0 : ℝ) < u := hu0
     have hv0' : (0 : ℝ) < v := hv0
     have huμ : u ≤ μ := by exact_mod_cast hu
@@ -276,18 +276,18 @@ theorem exists_epi_mapLin_ne_image :
       · have hb1 : b = 1 := by linarith
         rw [hb1]; linarith
       · nlinarith
-    rw [Tdaf.restrict_of_mem hpos]
+    rw [Tdaf.ConvexAnalysis.restrict_of_mem hpos]
     have hle : a • u + b • v ≤ a * μ + b * ν := by
       simp only [smul_eq_mul]
       nlinarith
     exact_mod_cast hle
   · intro hcontra
-    set f : ℝ → EReal := Tdaf.restrict (Ioi 0) (fun x => (x : EReal)) with hf
+    set f : ℝ → EReal := Tdaf.ConvexAnalysis.restrict (Ioi 0) (fun x => (x : EReal)) with hf
     have hmem : ((0 : ℝ), (0 : ℝ)) ∈ epi (mapLin (0 : ℝ →ₗ[ℝ] ℝ) f) := by
       refine mk_mem_epi.2 (Tdaf.EReal.le_coe_of_forall_lt fun q hq => ?_)
       refine lt_of_le_of_lt (mapLin_le (x := q / 2) (by simp)) ?_
       have hq2 : q / 2 ∈ Ioi (0 : ℝ) := by change (0 : ℝ) < q / 2; linarith
-      rw [hf, Tdaf.restrict_of_mem hq2]
+      rw [hf, Tdaf.ConvexAnalysis.restrict_of_mem hq2]
       exact_mod_cast (by linarith : q / 2 < q)
     rw [hcontra] at hmem
     obtain ⟨⟨u, μ⟩, hu, huv⟩ := hmem
@@ -296,9 +296,9 @@ theorem exists_epi_mapLin_ne_image :
     rw [h2] at hu'
     have hu0 : u ∈ Ioi (0 : ℝ) := by
       by_contra h
-      rw [hf, Tdaf.restrict_of_notMem h] at hu'
+      rw [hf, Tdaf.ConvexAnalysis.restrict_of_notMem h] at hu'
       exact absurd hu' (not_le.2 (EReal.coe_lt_top 0))
-    rw [hf, Tdaf.restrict_of_mem hu0] at hu'
+    rw [hf, Tdaf.ConvexAnalysis.restrict_of_mem hu0] at hu'
     exact absurd (by exact_mod_cast hu' : u ≤ (0 : ℝ)) (not_le.2 hu0)
 
 end Module
@@ -340,4 +340,4 @@ theorem dom_iInf_right (h : Y × Z → EReal) :
 
 end Projection
 
-end Tdaf
+end Tdaf.ConvexAnalysis

@@ -31,21 +31,21 @@ def normalCone (B) (C : Set E) (x : E) : Set F := {y | ∀ z ∈ C, B (z - x) y 
 
 | Lean name | statement | book |
 |---|---|---|
-| `dirDeriv_eq_iInf`, `monotone_diffQuotient` (all with `f x ≠ ⊤`, `f x ≠ ⊥`) | difference quotient is nondecreasing in `a`; `f'(x;0)=0`; `-f'(x;-y) ≤ f'(x;y)` | **Thm 23.1** |
-| `posHomogeneous_dirDeriv`, `convexFn_dirDeriv` | `f'(x;·)` is a positively homogeneous convex function | **Thm 23.1** |
-| `mem_subgradient_iff_le_dirDeriv` | `y ∈ ∂f x ↔ ∀ v, ⟨v,y⟩ ≤ f'(x;v)`; and `cl (f'(x;·)) = δ*(·|∂f x)` | **Thm 23.2** |
-| `proper_of_subgradient_nonempty` | subdifferentiable ⟹ proper | **Thm 23.3** |
-| `subgradient_nonempty_of_mem_relint_dom` | `∂f x ≠ ∅` on `ri (dom f)`; `f'(x;·) = δ*(·|∂f x)`; bounded iff `x ∈ int (dom f)` | **Thm 23.4** *(finite-dim)* |
-| `mem_subgradient_iff_fenchel_eq` | the four equivalent conditions, incl. `f x + f* y = ⟨x,y⟩` | **Thm 23.5** |
-| `subgradient_conj_eq_inv` | `∂f*` is the inverse relation of `∂f` for closed proper `f` | **Cor 23.5.1** |
-| `subgradient_indicator_eq_normalCone` | `∂δ(·|C) x = N_C(x)` | §23 |
-| `subgradient_supportFn` | `∂δ*(·|C) y` = argmax of `⟨·,y⟩` over `C` | Cor 23.5.3 |
-| `subgradient_indicator_cone_iff` | `y ∈ ∂δ(·|K)(x) ↔ x ∈ K, y ∈ K°, ⟨x,y⟩ = 0` | Cor 23.5.4 |
-| `epsSubgradient` and `dirDeriv_eq_limit_eps` | ε-subgradients | Thm 23.6 |
-| `normalCone_level_eq_cone_subgradient` | Thm 23.7, Cor 23.7.1 |
+| `dirDeriv_apply`, `monotoneOn_sub_div`, `dirDeriv_zero`, `neg_dirDeriv_neg_le` — the last three with `f x ≠ ⊤`, `f x ≠ ⊥` | difference quotient is nondecreasing in `a`; `f'(x;0)=0`; `-f'(x;-y) ≤ f'(x;y)` | **Thm 23.1** |
+| `posHomogeneous_dirDeriv` (no hypothesis), `convexFn_dirDeriv` | `f'(x;·)` is a positively homogeneous convex function | **Thm 23.1** |
+| `mem_subgradient_iff_le_dirDeriv`, `supportSet_dirDeriv`, `conj_dirDeriv`, `clFn_dirDeriv` | `y ∈ ∂f x ↔ ∀ v, ⟨v,y⟩ ≤ f'(x;v)`; and `cl (f'(x;·)) = δ*(·|∂f x)` | **Thm 23.2** |
+| `proper_of_mem_subgradient`, `proper_of_subgradient_nonempty` | subdifferentiable ⟹ proper | **Thm 23.3** |
+| `subgradient_nonempty_of_mem_relint_dom` — **not written**; needs `RelativeInterior.lean`, which this file does not import. Only `subgradient_eq_empty_of_notMem_dom` (the `ri`-free first sentence) exists. | `∂f x ≠ ∅` on `ri (dom f)`; `f'(x;·) = δ*(·|∂f x)`; bounded iff `x ∈ int (dom f)` | **Thm 23.4** *(finite-dim)* |
+| `Proper.mem_subgradient_tfae` and its four unbundled forms `mem_subgradient_iff_forall_sub_le` / `_conj_le` / `_conj_eq` / `_add_conj_le`, plus `Proper.mem_subgradient_iff_add_conj_eq` (the Fenchel-equality one) | the four equivalent conditions, incl. `f x + f* y = ⟨x,y⟩` | **Thm 23.5** |
+| `subgradientRel_conj_eq_inv`, `mem_subgradient_conj_iff_of_closedFn` | `∂f*` is the inverse relation of `∂f` for closed proper `f` | **Cor 23.5.1** |
+| `subgradient_indicatorFn` (carries `x ∈ C`, see §9 of the overview), `subgradient_indicatorFn_of_notMem`, `mem_subgradient_indicatorFn_iff` | `∂δ(·|C) x = N_C(x)` | §23 |
+| `subgradient_supportFn`, `subgradient_conj_indicatorFn` | `∂δ*(·|C) y` = argmax of `⟨·,y⟩` over `C` | Cor 23.5.3 |
+| `mem_subgradient_indicatorFn_pointedCone` (delivered **without** the closedness Rockafellar assumes) | `y ∈ ∂δ(·|K)(x) ↔ x ∈ K, y ∈ K°, ⟨x,y⟩ = 0` | Cor 23.5.4 |
+| `epsSubgradient` and `dirDeriv_eq_limit_eps` — **not written**; deferred with Thm 13.5 | ε-subgradients | Thm 23.6 |
+| `normalCone_level_eq_cone_subgradient` — **not written**; `ri`-based | | Thm 23.7, Cor 23.7.1 |
 
-`mem_subgradient_iff_fenchel_eq` (Theorem 23.5) is the pivot: it identifies `∂f` with the equality
-case of Fenchel's inequality, hence with a purely conjugacy-level notion, hence gives
+`Proper.mem_subgradient_iff_add_conj_eq` (Theorem 23.5) is the pivot: it identifies `∂f` with the
+equality case of Fenchel's inequality, hence with a purely conjugacy-level notion, hence gives
 `Cor 23.5.1` for free. Note the definition of `subgradient` above is **layer A** — no topology at
 all — and Theorem 23.5 is layer C. Only Theorem 23.4 (nonemptiness) needs finite dimensions.
 

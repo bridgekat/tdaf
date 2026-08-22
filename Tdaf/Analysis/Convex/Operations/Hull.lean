@@ -18,60 +18,60 @@ hull is what replaces it.
 
 ## Main definitions
 
-* `Tdaf.convFn f` — the convex hull of a family `f : ι → E → EReal`.
-* `Tdaf.convHullFn g` — the convex hull of a single function, `conv g`, i.e. the greatest convex
+* `convFn f` — the convex hull of a family `f : ι → E → EReal`.
+* `convHullFn g` — the convex hull of a single function, `conv g`, i.e. the greatest convex
   function majorised by `g`.
-* `Tdaf.convFn₂ f g` — the binary case, which is the meet of two convex functions.
+* `convFn₂ f g` — the binary case, which is the meet of two convex functions.
 
 ## Main results
 
-* `Tdaf.convexFn_convFn` — the convex hull is convex (an instance of Theorem 5.3).
-* `Tdaf.convFn_le`, `Tdaf.le_convFn`, `Tdaf.isGreatest_convFn` — **the universal property**: the
+* `convexFn_convFn` — the convex hull is convex (an instance of Theorem 5.3).
+* `convFn_le`, `le_convFn`, `isGreatest_convFn` — **the universal property**: the
   convex hull is the greatest convex function below all of the `f i`. This is the definition
   Rockafellar states in words, and everything else in this file is a consequence of it.
-* `Tdaf.convFn_le_iInf` — the convex hull is below the pointwise infimum, generally *strictly*;
-  `Tdaf.convFn₂_indicatorFn_lt_inf` is a machine-checked witness of the strictness.
-* `Tdaf.gci_val_convHullFn` — `conv` is a **coreflection**: it is right adjoint to the inclusion of
+* `convFn_le_iInf` — the convex hull is below the pointwise infimum, generally *strictly*;
+  `convFn₂_indicatorFn_lt_inf` is a machine-checked witness of the strictness.
+* `gci_val_convHullFn` — `conv` is a **coreflection**: it is right adjoint to the inclusion of
   the convex functions into all functions, as a `GaloisCoinsertion`. This is the structural fact
   that makes the convex functions a complete lattice with `⨅ = convFn` and `⨆ = sSup` (§5, after
   Theorem 5.6); `Lattice.lean` gets that from `GaloisCoinsertion.liftCompleteLattice`.
-* `Tdaf.convFn_apply` — **Rockafellar's Theorem 5.6**: the explicit formula
+* `convFn_apply` — **Rockafellar's Theorem 5.6**: the explicit formula
   `(conv {f i}) x = inf {∑ λ i * f i (x i) | ∑ λ i • x i = x}`.
-* `Tdaf.convFn₂_apply` — Theorem 5.6 for two functions, in the shape one actually uses:
+* `convFn₂_apply` — Theorem 5.6 for two functions, in the shape one actually uses:
   `(conv {f, g}) x = inf {a * f u + b * g v | a • u + b • v = x}`.
 
 ## Design notes
 
 **Why both `convFn` and `convHullFn`.** They determine each other —
-`Tdaf.convFn_eq_convHullFn_iInf` says `conv {f i} = conv (⨅ i, f i)`, and `Tdaf.convFn_unit` says
+`convFn_eq_convHullFn_iInf` says `conv {f i} = conv (⨅ i, f i)`, and `convFn_unit` says
 `conv g = conv {g}` — but they play different roles: `convFn` is the *infimum* in the lattice of
 convex functions, while `convHullFn` is the *coreflector* onto that lattice. Only the latter is an
 adjoint, and only the former takes a family.
 
 **Why a `GaloisCoinsertion` and not a `ClosureOperator`.** `conv` is contracting (`conv g ≤ g`),
 monotone and idempotent, so it is a closure operator on `(E → EReal)ᵒᵈ`. Recording it that way costs
-an `OrderDual` transport that Mathlib does not simplify away (compare `Tdaf.epiClosure`, where the
+an `OrderDual` transport that Mathlib does not simplify away (compare `epiClosure`, where the
 dual is unavoidable because `ofEpi` is *antitone*). Here the adjunction is honestly monotone —
 the inclusion of convex functions into all functions is left adjoint to `conv` — so the
 `GaloisCoinsertion` between `{g // ConvexFn g}` and `E → EReal` is available directly, and it is
 strictly more useful: `GaloisCoinsertion.liftCompleteLattice` is what `Lattice.lean` needs. The
-three closure-operator facts are recorded separately as `Tdaf.convHullFn_le`,
-`Tdaf.convHullFn_mono` and `Tdaf.convHullFn_idem`.
+three closure-operator facts are recorded separately as `convHullFn_le`,
+`convHullFn_mono` and `convHullFn_idem`.
 
-**The two forms of Theorem 5.6.** `Tdaf.convFn_apply` is the book's statement, over an arbitrary
-index set, and its infimum ranges over `Finset`-indexed convex combinations. `Tdaf.convFn₂_apply`
+**The two forms of Theorem 5.6.** `convFn_apply` is the book's statement, over an arbitrary
+index set, and its infimum ranges over `Finset`-indexed convex combinations. `convFn₂_apply`
 is the two-function case written without `Finset`s, which is the form later sections use. They are
 proved independently — the binary case through Mathlib's `convexJoin` (Rockafellar's Theorem 3.3
 for two sets), the general case through `convexHull_eq` — and their hypotheses differ accordingly:
 the general case needs only `f i ≠ ⊥`, while the binary case, routed through
-`Convex.convexHull_union`, additionally wants both epigraphs non-empty, i.e. full `Tdaf.Proper`.
+`Convex.convexHull_union`, additionally wants both epigraphs non-empty, i.e. full `Proper`.
 The mathematical content of the difference is nil (`dom f = ∅` means `f ≡ ⊤`, and both sides are
 then computed by the other function alone); it is an artefact of the shortest available route.
 
 **Where the merging happens.** Theorem 3.3 presents a point of `conv (⋃ i, C i)` as a convex
 combination of finitely many points each drawn from *some* `C i`, with repetitions allowed, whereas
 Theorem 5.6's infimum ranges over combinations with *one* point per index. The proof of
-`Tdaf.convFn_apply` bridges the two by replacing the points drawn from a single `C i = epi (f i)`
+`convFn_apply` bridges the two by replacing the points drawn from a single `C i = epi (f i)`
 by their center of mass, which is legitimate exactly because `epi (f i)` is convex — and that is
 the only use made of the convexity hypothesis.
 
@@ -83,7 +83,7 @@ the only use made of the convexity hypothesis.
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 
 section Module
@@ -100,7 +100,7 @@ variable {ι : Sort*} {f : ι → E → EReal} {g : E → EReal}
 Rockafellar's Theorem 5.3, by the convex hull of the union of the epigraphs (Rockafellar §5, the
 discussion preceding Theorem 5.6).
 
-`Tdaf.isGreatest_convFn` is the characterisation Rockafellar gives in words: this is the greatest
+`isGreatest_convFn` is the characterisation Rockafellar gives in words: this is the greatest
 convex function `h`, proper or not, with `h ≤ f i` for every `i`. -/
 noncomputable def convFn (f : ι → E → EReal) : E → EReal :=
   ofEpi (convexHull ℝ (⋃ i, epi (f i)))
@@ -118,10 +118,10 @@ theorem convFn_le (f : ι → E → EReal) (i : ι) : convFn f ≤ f i := by
   rwa [ofEpi_epi] at h'
 
 /-- **The universal property.** Any convex function below every `f i` is below the convex hull; with
-`Tdaf.convFn_le` and `Tdaf.convexFn_convFn` this says the convex hull is the *greatest* convex
+`convFn_le` and `convexFn_convFn` this says the convex hull is the *greatest* convex
 minorant of the family. -/
 theorem le_convFn (hg : ConvexFn g) (h : ∀ i, g ≤ f i) : g ≤ convFn f :=
-  subset_epi_iff_le_ofEpi.1 (convexHull_min (iUnion_subset fun i => epi_mono (h i)) hg.convex_epi)
+  subset_epi_iff_le_ofEpi.1 (convexHull_min (iUnion_subset fun i => epi_anti (h i)) hg.convex_epi)
 
 /-- The universal property, packaged as `IsGreatest`. -/
 theorem isGreatest_convFn (f : ι → E → EReal) :
@@ -134,13 +134,13 @@ theorem convFn_mono {f₁ f₂ : ι → E → EReal} (h : ∀ i, f₁ i ≤ f₂
 
 /-- The epigraph of the convex hull is the convex hull of the union of epigraphs — under the
 hypothesis that the latter is an epigraph at all. It need not be: even for two functions the
-infimum in Theorem 5.6 need not be attained. Compare `Tdaf.epi_ofEpi`. -/
+infimum in Theorem 5.6 need not be attained. Compare `epi_ofEpi`. -/
 theorem epi_convFn (h : IsEpiLike (convexHull ℝ (⋃ i, epi (f i)))) :
     epi (convFn f) = convexHull ℝ (⋃ i, epi (f i)) :=
   epi_ofEpi h
 
 /-- The convex hull is below the pointwise infimum. The inequality is strict in general — see
-`Tdaf.convFn₂_indicatorFn_lt_inf` — and that is the entire reason the convex hull exists: the
+`convFn₂_indicatorFn_lt_inf` — and that is the entire reason the convex hull exists: the
 pointwise infimum of convex functions is not convex. -/
 theorem convFn_le_iInf (f : ι → E → EReal) (x : E) : convFn f x ≤ ⨅ i, f i x :=
   le_iInf fun i => convFn_le f i x
@@ -173,7 +173,7 @@ theorem convHullFn_le (g : E → EReal) : convHullFn g ≤ g := by
 
 /-- **The universal property of `conv g`.** -/
 theorem le_convHullFn (hh : ConvexFn h) (hg : h ≤ g) : h ≤ convHullFn g :=
-  subset_epi_iff_le_ofEpi.1 (convexHull_min (epi_mono hg) hh.convex_epi)
+  subset_epi_iff_le_ofEpi.1 (convexHull_min (epi_anti hg) hh.convex_epi)
 
 /-- `conv g` is the greatest convex minorant of `g`. -/
 theorem isGreatest_convHullFn (g : E → EReal) :
@@ -209,7 +209,7 @@ section Coreflection
 
 /-- **`conv` is right adjoint to the inclusion of the convex functions.** For convex `h` and
 arbitrary `g`, `h ≤ g` and `h ≤ conv g` say the same thing — which is the universal property
-`Tdaf.le_convHullFn` read as an adjunction. -/
+`le_convHullFn` read as an adjunction. -/
 theorem gc_val_convHullFn :
     GaloisConnection (Subtype.val : {g : E → EReal // ConvexFn g} → (E → EReal))
       (fun g : E → EReal => (⟨convHullFn g, convexFn_convHullFn g⟩ :
@@ -219,7 +219,7 @@ theorem gc_val_convHullFn :
 
 /-- The adjunction is a coinsertion, because `conv` fixes the convex functions. The convex
 functions are therefore a *coreflective* subobject of all `EReal`-valued functions, and inherit a
-complete lattice structure in which the infimum is `Tdaf.convFn`. -/
+complete lattice structure in which the infimum is `convFn`. -/
 noncomputable def gci_val_convHullFn :
     GaloisCoinsertion (Subtype.val : {g : E → EReal // ConvexFn g} → (E → EReal))
       (fun g : E → EReal => (⟨convHullFn g, convexFn_convHullFn g⟩ :
@@ -243,7 +243,7 @@ theorem convFn_eq_convHullFn_iInf (f : ι → E → EReal) :
       (convHullFn_le _).trans fun x => iInf_le (fun j => f j x) i)
 
 /-- The convex hull of a single function is the convex hull of the one-element family, so
-`Tdaf.convHullFn` really is a special case of `Tdaf.convFn`. -/
+`convHullFn` really is a special case of `convFn`. -/
 theorem convFn_unit (g : E → EReal) : convFn (fun _ : Unit => g) = convHullFn g := by
   rw [convFn_eq_convHullFn_iInf]
   simp
@@ -277,7 +277,7 @@ theorem convFn₂_le_right (f g : E → EReal) : convFn₂ f g ≤ g := by
 /-- **The universal property**, binary case. -/
 theorem le_convFn₂ (hh : ConvexFn h) (h₁ : h ≤ f) (h₂ : h ≤ g) : h ≤ convFn₂ f g :=
   subset_epi_iff_le_ofEpi.1
-    (convexHull_min (union_subset (epi_mono h₁) (epi_mono h₂)) hh.convex_epi)
+    (convexHull_min (union_subset (epi_anti h₁) (epi_anti h₂)) hh.convex_epi)
 
 /-- The binary convex hull is the greatest convex function below both arguments. -/
 theorem isGreatest_convFn₂ (f g : E → EReal) :
@@ -289,7 +289,7 @@ theorem isGreatest_convFn₂ (f g : E → EReal) :
 theorem convFn₂_le_inf (f g : E → EReal) : convFn₂ f g ≤ f ⊓ g :=
   le_inf (convFn₂_le_left f g) (convFn₂_le_right f g)
 
-/-- The binary case is the two-element instance of `Tdaf.convFn`: both are the greatest convex
+/-- The binary case is the two-element instance of `convFn`: both are the greatest convex
 function below `f` and below `g`. -/
 theorem convFn₂_eq_convFn (f g : E → EReal) :
     convFn₂ f g = convFn (fun b : Bool => cond b f g) := by
@@ -299,12 +299,12 @@ theorem convFn₂_eq_convFn (f g : E → EReal) :
   · exact convFn₂_le_right f g
   · exact convFn₂_le_left f g
 
-/-- **The inequality `Tdaf.convFn₂_le_inf` is strict in general.** The indicator functions of `{0}`
+/-- **The inequality `convFn₂_le_inf` is strict in general.** The indicator functions of `{0}`
 and `{1}` in `ℝ` are both convex; their pointwise minimum is `⊤` at `1 / 2`, while their convex
 hull — the indicator function of the segment `[0, 1]` — is `0` there.
 
 This is what makes the convex hull a genuinely new construction rather than a pointwise infimum,
-and it is the reason `Tdaf.convFn` is defined through epigraphs. -/
+and it is the reason `convFn` is defined through epigraphs. -/
 theorem convFn₂_indicatorFn_lt_inf :
     convFn₂ (indicatorFn ({0} : Set ℝ)) (indicatorFn ({1} : Set ℝ)) (1 / 2) <
       indicatorFn ({0} : Set ℝ) (1 / 2) ⊓ indicatorFn ({1} : Set ℝ) (1 / 2) := by
@@ -378,14 +378,14 @@ is given by the explicit formula
 `(conv {f, g}) x = inf {a f u + b g v | a u + b v = x, a, b ≥ 0, a + b = 1}`.
 
 Properness is Rockafellar's hypothesis and both halves of it are used: `f, g ≠ ⊥` keeps the sum
-unambiguous (see `Tdaf.convFn₂_le_combo`), and `dom f, dom g ≠ ∅` makes the epigraphs non-empty,
+unambiguous (see `convFn₂_le_combo`), and `dom f, dom g ≠ ∅` makes the epigraphs non-empty,
 which is what turns the convex hull of their union into the convex join (Rockafellar's Theorem 3.3,
 Mathlib's `Convex.convexHull_union`).
 
 Note that the infimum is over *all* representations, and it is genuinely an infimum: it need not be
-attained, so the proof of `≥` goes through `Tdaf.le_ofEpi` rather than through a chosen witness.
+attained, so the proof of `≥` goes through `le_ofEpi` rather than through a chosen witness.
 
-`Tdaf.convFn_apply` proves the same theorem for an arbitrary family and needs only the `≠ ⊥` half
+`convFn_apply` proves the same theorem for an arbitrary family and needs only the `≠ ⊥` half
 of properness; the extra hypothesis here buys the shorter proof through `convexJoin`. -/
 theorem convFn₂_apply (hf : ConvexFn f) (hg : ConvexFn g) (hf' : Proper f) (hg' : Proper g)
     (x : E) :
@@ -583,4 +583,4 @@ theorem convFn_apply {f : ι → E → EReal} (hf : ∀ i, ConvexFn (f i)) (hf' 
 
 end Formula
 
-end Tdaf
+end Tdaf.ConvexAnalysis

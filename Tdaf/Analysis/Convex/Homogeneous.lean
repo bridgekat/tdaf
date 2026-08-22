@@ -17,32 +17,33 @@ of support functions (§13) and gauges (§15) rests on that equivalence.
 
 ## Main definitions
 
-* `Tdaf.PosHomogeneous f` — `f (a • x) = a * f x` for every `a > 0`.
+* `PosHomogeneous f` — `f (a • x) = a * f x` for every `a > 0`.
 
 ## Main results
 
-* `Tdaf.posHomogeneous_iff_isCone_epi` — positive homogeneity is exactly the epigraph being a cone.
-* `Tdaf.convex_iff_add_mem_of_isCone` — Rockafellar's Theorem 2.6: a cone is convex iff it is
+* `posHomogeneous_iff_isCone_epi` — positive homogeneity is exactly the epigraph being a cone.
+* `convex_iff_add_mem_of_isCone` — Rockafellar's Theorem 2.6: a cone is convex iff it is
   closed under addition. This is Mathlib's `ConvexCone` content, repackaged as a statement about
   bare sets.
-* `Tdaf.PosHomogeneous.convexFn_iff_subadditive` — **Theorem 4.7**.
-* `Tdaf.PosHomogeneous.sum_le` — **Corollary 4.7.1**, subadditivity for positive linear
+* `PosHomogeneous.convexFn_iff_subadditive` — **Theorem 4.7**.
+* `PosHomogeneous.sum_le` — **Corollary 4.7.1**, subadditivity for positive linear
   combinations.
-* `Tdaf.PosHomogeneous.neg_le` — **Corollary 4.7.2**, `-(f x) ≤ f (-x)`.
-* `Tdaf.PosHomogeneous.isLinearOn_iff` and `Tdaf.PosHomogeneous.exists_linearMap_iff` —
+* `PosHomogeneous.neg_le` — **Corollary 4.7.2**, `-(f x) ≤ f (-x)`.
+* `PosHomogeneous.isLinearOn_iff` and `PosHomogeneous.exists_linearMap_iff` —
   **Theorem 4.8**, linearity on a subspace `L` is equivalent to `f (-x) = -(f x)` on `L`.
-* `Tdaf.PosHomogeneous.neg_eq_of_mem_span` — the second half of Theorem 4.8: it suffices to check
+* `PosHomogeneous.neg_eq_of_mem_span` — the second half of Theorem 4.8: it suffices to check
   `f (-b) = -(f b)` on a spanning set of `L`, in particular on a basis.
 
 ## Design notes
 
 `PosHomogeneous` constrains *positive* multipliers only, so it says nothing whatever about `f 0`:
 `f 0 = a * f 0` for every `a > 0` forces `f 0 ∈ {0, ⊤, ⊥}` and no more
-(`Tdaf.PosHomogeneous.map_zero`). Rockafellar makes the same remark, and the value `f 0 = ⊤` really
-does occur — `δ(· | C)` for a convex cone `C` not containing the origin is positively homogeneous
-and proper. This is why Corollary 4.7.1 carries a nonemptiness hypothesis on the index set (the
-empty sum would assert `f 0 ≤ 0`) and why the spanning-set form of Theorem 4.8 carries one too.
-Rockafellar's own proof of the basis half of Theorem 4.8 silently uses `f 0 = 0` at `λᵢ = 0`.
+(`PosHomogeneous.map_zero_trichotomy`). Rockafellar makes the same remark, and the value
+`f 0 = ⊤` really does occur — `δ(· | C)` for a convex cone `C` not containing the origin is
+positively homogeneous and proper. This is why Corollary 4.7.1 carries a nonemptiness hypothesis
+on the index set (the empty sum would assert `f 0 ≤ 0`) and why the spanning-set form of
+Theorem 4.8 carries one too. Rockafellar's own proof of the basis half of Theorem 4.8 silently
+uses `f 0 = 0` at `λᵢ = 0`.
 
 Rockafellar states Theorem 4.7 for `f` with values in `(-∞, +∞]`; that hypothesis is kept inline as
 `∀ x, f x ≠ ⊥` rather than being bundled, following the house convention that a single side
@@ -59,18 +60,13 @@ instance, and `(a : EReal) * z` is used throughout instead.
 
 open Set Pointwise
 
-namespace Tdaf
-
-/-! ### Auxiliary facts about `EReal`
-
-These belong with the rest of the `EReal` support lemmas in `Tdaf/Order/EReal.lean`; they are
-collected here because they are used only by the homogeneity theory. -/
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Cones: Rockafellar's Theorem 2.6
 
 A *cone*, in Rockafellar's sense, is a set closed under multiplication by positive scalars; it need
 not contain the origin. The condition is written `∀ a : ℝ, 0 < a → a • s = s` rather than being
-given a name, so that it matches `Tdaf.posHomogeneous_iff_isCone_epi` verbatim. -/
+given a name, so that it matches `posHomogeneous_iff_isCone_epi` verbatim. -/
 
 section Cone
 
@@ -116,7 +112,7 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 `f (a • x) = a * f x` for every `a > 0` (Rockafellar §4).
 
 Only *positive* scalars are constrained. In particular `f 0` is not determined: see
-`Tdaf.PosHomogeneous.map_zero`. -/
+`PosHomogeneous.map_zero_trichotomy`. -/
 def PosHomogeneous (f : E → EReal) : Prop :=
   ∀ (a : ℝ), 0 < a → ∀ x, f (a • x) = (a : EReal) * f x
 
@@ -125,7 +121,8 @@ variable {f : E → EReal}
 /-- Positive homogeneity leaves only three possible values at the origin. Rockafellar notes the
 same: `f 0` may be `0` or `-∞` for a positively homogeneous function, and `+∞` as well once
 improper functions are admitted. -/
-theorem PosHomogeneous.map_zero (hf : PosHomogeneous f) : f 0 = 0 ∨ f 0 = ⊤ ∨ f 0 = ⊥ := by
+theorem PosHomogeneous.map_zero_trichotomy (hf : PosHomogeneous f) :
+    f 0 = 0 ∨ f 0 = ⊤ ∨ f 0 = ⊥ := by
   refine EReal.eq_zero_or_eq_top_or_eq_bot (a := 2) (by norm_num) ?_
   have h := hf 2 two_pos 0
   rw [smul_zero] at h
@@ -134,7 +131,7 @@ theorem PosHomogeneous.map_zero (hf : PosHomogeneous f) : f 0 = 0 ∨ f 0 = ⊤ 
 /-- A positively homogeneous function that never takes the value `⊥` is nonnegative at the
 origin. -/
 theorem PosHomogeneous.zero_le_map_zero (hf : PosHomogeneous f) (h : f 0 ≠ ⊥) : 0 ≤ f 0 := by
-  rcases hf.map_zero with h0 | h0 | h0
+  rcases hf.map_zero_trichotomy with h0 | h0 | h0
   · exact h0.ge
   · exact h0 ▸ le_top
   · exact absurd h0 h
@@ -192,7 +189,7 @@ theorem posHomogeneous_indicatorFn {s : Set E} :
 /-- **Rockafellar, Theorem 4.7.** A positively homogeneous function `f` with values in `(-∞, +∞]`
 is convex if and only if it is subadditive.
 
-Following the book, the proof is Theorem 2.6 (`Tdaf.convex_iff_add_mem_of_isCone`) applied to the
+Following the book, the proof is Theorem 2.6 (`convex_iff_add_mem_of_isCone`) applied to the
 cone `epi f`: subadditivity of `f` is precisely closure of `epi f` under addition. -/
 theorem PosHomogeneous.convexFn_iff_subadditive (hf : PosHomogeneous f) (hbot : ∀ x, f x ≠ ⊥) :
     ConvexFn f ↔ ∀ x y, f (x + y) ≤ f x + f y := by
@@ -407,7 +404,7 @@ def PosHomogeneous.epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f) : Convex
     (convex_iff_add_mem_of_isCone ((posHomogeneous_iff_isCone_epi (f := f)).1 hf)).1
       hconv.convex_epi p hp q hq
 
-/-- The carrier of `Tdaf.PosHomogeneous.epiCone` is the epigraph. -/
+/-- The carrier of `PosHomogeneous.epiCone` is the epigraph. -/
 @[simp] theorem PosHomogeneous.coe_epiCone (hf : PosHomogeneous f) (hconv : ConvexFn f) :
     (hf.epiCone hconv : Set (E × ℝ)) = epi f := rfl
 
@@ -416,4 +413,4 @@ end Module
 
 
 
-end Tdaf
+end Tdaf.ConvexAnalysis

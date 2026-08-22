@@ -17,14 +17,14 @@ elsewhere.
 
 ## Main results
 
-* `Tdaf.convexFn_iSup` — **Theorem 5.5**, the pointwise supremum of convex functions is convex.
-  The proof is the set identity `Tdaf.epi_iSup`, `epi (⨆ i, f i) = ⋂ i, epi (f i)`, which is reused
+* `convexFn_iSup` — **Theorem 5.5**, the pointwise supremum of convex functions is convex.
+  The proof is the set identity `epi_iSup`, `epi (⨆ i, f i) = ⋂ i, epi (f i)`, which is reused
   for support functions.
-* `Tdaf.ConvexFn.add` — **Theorem 5.2**, together with `Tdaf.dom_add` and `Tdaf.ConvexFn.sum`.
-* `Tdaf.ConvexFn.smul` — multiplication by a nonnegative real (§5).
-* `Tdaf.ConvexFn.comp` — **Theorem 5.1**, composition with a nondecreasing convex function.
-* `Tdaf.ConvexFn.restrict` — restricting to a convex set preserves convexity, and
-  `Tdaf.ConvexFn.add_indicatorFn` says the same thing in the form "adding an indicator function to
+* `ConvexFn.add` — **Theorem 5.2**, together with `dom_add` and `ConvexFn.sum`.
+* `ConvexFn.smul` — multiplication by a nonnegative real (§5).
+* `ConvexFn.comp` — **Theorem 5.1**, composition with a nondecreasing convex function.
+* `ConvexFn.restrict` — restricting to a convex set preserves convexity, and
+  `ConvexFn.add_indicatorFn` says the same thing in the form "adding an indicator function to
   `f` restricts the effective domain" (Rockafellar's remark after Theorem 5.2).
 
 ## Design notes
@@ -41,11 +41,11 @@ So the hypothesis carried here is exactly `∀ x, _ x ≠ ⊥`, written inline r
 **How Theorem 5.1 is stated.** Rockafellar takes `φ : ℝ → (-∞, +∞]` convex and nondecreasing and
 extends it to `+∞` by `φ (+∞) = +∞`. Since `EReal` is not an `ℝ`-module, `ConvexFn φ` cannot be
 stated for `φ : EReal → EReal`; but the *only* thing the proof asks of `φ` off the reals is
-monotonicity and the value at `⊤`. `Tdaf.ConvexFn.comp` therefore takes `φ : EReal → EReal` with
+monotonicity and the value at `⊤`. `ConvexFn.comp` therefore takes `φ : EReal → EReal` with
 three separate hypotheses — `ConvexFn fun r : ℝ => φ r` (convexity, stated where it is statable),
 `Monotone φ`, and `φ ⊤ = ⊤` — which is both faithful and directly usable when `φ` is naturally
-given on all of `EReal`. `Tdaf.extendTop` performs the book's extension for a `φ` given on `ℝ`, and
-`Tdaf.ConvexFn.comp_extendTop` is Theorem 5.1 verbatim in those terms. The hypothesis `φ ⊤ = ⊤` is
+given on all of `EReal`. `extendTop` performs the book's extension for a `φ` given on `ℝ`, and
+`ConvexFn.comp_extendTop` is Theorem 5.1 verbatim in those terms. The hypothesis `φ ⊤ = ⊤` is
 not decoration: a monotone convex `φ : ℝ → EReal` bounded above is constant, and gluing a strictly
 larger finite value at `⊤` breaks convexity of `φ ∘ f` as soon as `dom f` has nonconvex complement.
 Note that `φ` is *not* required to avoid `⊥`, which the book's `(-∞, +∞]` does require; the proof
@@ -59,7 +59,7 @@ never needs it.
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Epigraphs of suprema, sums and restrictions
 
@@ -78,13 +78,13 @@ theorem epi_iSup {ι : Sort*} (f : ι → E → EReal) : epi (fun x => ⨆ i, f 
   ext p
   simp [epi, iSup_le_iff]
 
-/-- The `Set`-indexed form of `Tdaf.epi_iSup`. -/
+/-- The `Set`-indexed form of `epi_iSup`. -/
 theorem epi_biSup {ι : Type*} (s : Set ι) (f : ι → E → EReal) :
     epi (fun x => ⨆ i ∈ s, f i x) = ⋂ i ∈ s, epi (f i) := by
   ext p
   simp [epi, iSup_le_iff]
 
-/-- The binary case of `Tdaf.epi_iSup`. -/
+/-- The binary case of `epi_iSup`. -/
 theorem epi_sup (f g : E → EReal) : epi (f ⊔ g) = epi f ∩ epi g := by
   ext p
   simp [epi, sup_le_iff]
@@ -102,7 +102,7 @@ theorem dom_add {f g : E → EReal} (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x �
 
 /-- The epigraph of a restriction is the epigraph cut down to a vertical slab.
 
-This generalises `Tdaf.epi_restrict_coe` to `EReal`-valued `f`. -/
+This generalises `epi_restrict_coe` to `EReal`-valued `f`. -/
 theorem epi_restrict (s : Set E) (f : E → EReal) : epi (restrict s f) = epi f ∩ s ×ˢ univ := by
   ext p
   by_cases hp : p.1 ∈ s <;> simp [epi, hp]
@@ -243,7 +243,7 @@ immaterial to it. -/
 noncomputable def extendTop (φ : ℝ → EReal) : EReal → EReal :=
   _root_.EReal.rec ⊥ φ ⊤
 
-/-- On the reals, `Tdaf.extendTop φ` is `φ`. -/
+/-- On the reals, `extendTop φ` is `φ`. -/
 @[simp] theorem extendTop_coe (φ : ℝ → EReal) (r : ℝ) : extendTop φ (r : EReal) = φ r := rfl
 
 /-- Rockafellar's convention `φ (+∞) = +∞`. -/
@@ -309,14 +309,14 @@ theorem ConvexFn.comp_extendTop {f : E → EReal} {φ : ℝ → EReal} (hf : Con
 
 /-- Restricting a convex function to a convex set gives a convex function (Rockafellar §5). -/
 theorem ConvexFn.restrict {f : E → EReal} {s : Set E} (hf : ConvexFn f) (hs : Convex ℝ s) :
-    ConvexFn (Tdaf.restrict s f) := by
+    ConvexFn (Tdaf.ConvexAnalysis.restrict s f) := by
   refine ⟨?_⟩
   rw [epi_restrict]
   exact hf.convex_epi.inter (hs.prod convex_univ)
 
 /-- Rockafellar's remark after Theorem 5.2: "adding an indicator function to `f` amounts to
-restricting the effective domain of `f`". Combined with `Tdaf.restrict_eq_add_indicatorFn`, this is
-`Tdaf.ConvexFn.restrict` read as an instance of `Tdaf.ConvexFn.add`. -/
+restricting the effective domain of `f`". Combined with `restrict_eq_add_indicatorFn`, this is
+`ConvexFn.restrict` read as an instance of `ConvexFn.add`. -/
 theorem ConvexFn.add_indicatorFn {f : E → EReal} {s : Set E} (hf : ConvexFn f)
     (hf' : ∀ x, f x ≠ ⊥) (hs : Convex ℝ s) : ConvexFn (f + indicatorFn s) := by
   rw [← restrict_eq_add_indicatorFn hf']
@@ -324,4 +324,4 @@ theorem ConvexFn.add_indicatorFn {f : E → EReal} {s : Set E} (hf : ConvexFn f)
 
 end Module
 
-end Tdaf
+end Tdaf.ConvexAnalysis

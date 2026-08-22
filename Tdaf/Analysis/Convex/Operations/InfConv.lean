@@ -15,22 +15,22 @@ and it is dual to pointwise addition of convex functions under the conjugacy of 
 
 ## Main definitions
 
-* `Tdaf.infConv f g` — the infimal convolute `f □ g`, **defined** as `ofEpi (epi f + epi g)`.
-* `Tdaf.InfConvFn E` — the type synonym `E → EReal` carrying `□` as its addition, so that
+* `infConv f g` — the infimal convolute `f □ g`, **defined** as `ofEpi (epi f + epi g)`.
+* `InfConvFn E` — the type synonym `E → EReal` carrying `□` as its addition, so that
   Rockafellar's m-ary `f₁ □ ⋯ □ fₘ` is a `Finset.sum`.
 
 ## Main results
 
-* `Tdaf.convexFn_infConv` — **Theorem 5.4**: `f □ g` is convex when `f` and `g` are.
-* `Tdaf.infConv_apply` — the classical formula `(f □ g) x = ⨅ y, f (x - y) + g y`, valid when
+* `convexFn_infConv` — **Theorem 5.4**: `f □ g` is convex when `f` and `g` are.
+* `infConv_apply` — the classical formula `(f □ g) x = ⨅ y, f (x - y) + g y`, valid when
   neither function takes the value `⊥`.
-* `Tdaf.dom_infConv` — `dom (f □ g) = dom f + dom g`, with no hypothesis at all.
-* `Tdaf.infConv_comm`, `Tdaf.infConv_assoc`, `Tdaf.infConv_indicatorFn_zero` — `□` is commutative
+* `dom_infConv` — `dom (f □ g) = dom f + dom g`, with no hypothesis at all.
+* `infConv_comm`, `infConv_assoc`, `infConv_indicatorFn_zero` — `□` is commutative
   and associative with identity `δ(· | 0)`, exactly as Rockafellar states in the paragraph after
-  Theorem 5.4. `Tdaf.InfConvFn.instAddCommMonoid` records this as a Mathlib `AddCommMonoid`.
-* `Tdaf.infConv_indicatorFn_singleton` — `f □ δ(· | a)` translates the graph of `f` by `a`.
-* `Tdaf.convexFn_sum_toInfConvFn` — Theorem 5.4 for `m` functions, as a `Finset.sum` in
-  `Tdaf.InfConvFn E`.
+  Theorem 5.4. `InfConvFn.instAddCommMonoid` records this as a Mathlib `AddCommMonoid`.
+* `infConv_indicatorFn_singleton` — `f □ δ(· | a)` translates the graph of `f` by `a`.
+* `convexFn_sum_toInfConvFn` — Theorem 5.4 for `m` functions, as a `Finset.sum` in
+  `InfConvFn E`.
 
 ## Design notes
 
@@ -38,34 +38,34 @@ and it is dual to pointwise addition of convex functions under the conjugacy of 
 convex functions and then remarks that "infimal convolution of improper functions [is not] defined
 by this formula, because of the rule of avoiding `∞ - ∞`", giving instead the epigraph definition
 `(f₁ □ f₂) x = inf {μ | (x, μ) ∈ epi f₁ + epi f₂}`. That is the definition used here. The infimum
-formula is recovered as `Tdaf.infConv_apply` under `∀ x, f x ≠ ⊥` and `∀ x, g x ≠ ⊥`; the
+formula is recovered as `infConv_apply` under `∀ x, f x ≠ ⊥` and `∀ x, g x ≠ ⊥`; the
 hypotheses are not decoration. Take `f ≡ ⊤` and `g` with `g 0 = ⊥`: then `epi f = ∅`, so
 `epi f + epi g = ∅` and `(f □ g) x = ⊤`, while `⨅ y, f (x - y) + g y = ⊤ + ⊥ = ⊥`. One `≠ ⊥`
 hypothesis does not suffice either — that example uses only `f x = ⊤` and `g y = ⊥` — so both are
 carried, inline, following the treatment of Theorem 5.2 in `Operations/Basic.lean`.
 
 **`epi (f □ g) = epi f + epi g` is false.** Only `epi f + epi g ⊆ epi (f □ g)` holds
-(`Tdaf.subset_epi_infConv`): the infimum defining `f □ g` need not be attained, and a sum of
+(`subset_epi_infConv`): the infimum defining `f □ g` need not be attained, and a sum of
 epigraphs need not be an epigraph. On `ℝ`, take `f x = 1/x` for `x > 0` and `⊤` otherwise, and
 `g ≡ 0`. Both are convex, `epi g = ℝ ×ˢ Ici 0`, and every vertical section of `epi f + epi g` is
 `Ioi 0`: the sum is `ℝ ×ˢ Ioi 0`, which is not an epigraph. Indeed `f □ g ≡ 0`, whose epigraph is
-`ℝ ×ˢ Ici 0`. `Tdaf.epi_infConv` therefore carries `Tdaf.IsEpiLike (epi f + epi g)` as a
+`ℝ ×ˢ Ici 0`. `epi_infConv` therefore carries `IsEpiLike (epi f + epi g)` as a
 hypothesis.
 
 **Associativity is not `add_assoc`.** Because `epi (f □ g)` is strictly larger than
 `epi f + epi g` in general, `epi ((f □ g) □ h)` is *not* `(epi f + epi g) + epi h`, and
 associativity does not follow from associativity of set addition alone. What makes it work is
-`Tdaf.epi_ofEpi_add_subset`: enlarging a summand to the epigraph it determines does not move the
-lower boundary of the sum, so `Tdaf.infConv_ofEpi_left` lets the `ofEpi` be peeled off. The same
+`epi_ofEpi_add_subset`: enlarging a summand to the epigraph it determines does not move the
+lower boundary of the sum, so `infConv_ofEpi_left` lets the `ofEpi` be peeled off. The same
 lemma is what a future `smulRight` / `convFn` / `mapLin` file will need.
 
 **The monoid instance.** Rockafellar: "infimal convolution is commutative, associative and
 convexity-preserving. The function `δ(· | 0)` acts as the identity element". That is an
-`AddCommMonoid`, and it is instantiated on the type synonym `Tdaf.InfConvFn E` — a synonym is
+`AddCommMonoid`, and it is instantiated on the type synonym `InfConvFn E` — a synonym is
 forced, since `E → EReal` already carries `Pi.addCommMonoid` (pointwise `+`, the operation `□` is
 *dual* to) and `Pi.commMonoid` (pointwise `*`). Additive notation is the right one: `□` is
 epigraph addition, and its unit `δ(· | 0)` is an indicator of `{0}`. The payoff is Theorem 5.4 in
-the book's own m-ary form, `Tdaf.convexFn_sum_toInfConvFn`, via `Finset.sum` and
+the book's own m-ary form, `convexFn_sum_toInfConvFn`, via `Finset.sum` and
 `Finset.cons_induction`.
 
 ## References
@@ -76,7 +76,7 @@ the book's own m-ary form, `Tdaf.convexFn_sum_toInfConvFn`, via `Finset.sum` and
 
 open Pointwise Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### The definition and its epigraph -/
 
@@ -89,15 +89,15 @@ variable {E : Type*} [AddCommGroup E] {f g f₁ f₂ g₁ g₂ : E → EReal} {y
 *Defined* by addition of epigraphs, not by the infimum formula
 `(f □ g) x = ⨅ y, f (x - y) + g y`: the latter is ill-formed when `f` or `g` takes the value `⊥`,
 because it then produces the forbidden `∞ - ∞`. Rockafellar makes exactly this point after Theorem
-5.4 and gives this definition instead. See `Tdaf.infConv_apply` for the infimum formula as a
+5.4 and gives this definition instead. See `infConv_apply` for the infimum formula as a
 theorem. -/
 noncomputable def infConv (f g : E → EReal) : E → EReal := ofEpi (epi f + epi g)
 
-/-- The definition of `Tdaf.infConv`, as a rewrite rule. -/
+/-- The definition of `infConv`, as a rewrite rule. -/
 theorem infConv_def (f g : E → EReal) : infConv f g = ofEpi (epi f + epi g) := rfl
 
 /-- The sum of the epigraphs is always contained in the epigraph of the infimal convolute. The
-reverse inclusion is `Tdaf.epi_infConv` and is genuinely conditional. -/
+reverse inclusion is `epi_infConv` and is genuinely conditional. -/
 theorem subset_epi_infConv (f g : E → EReal) : epi f + epi g ⊆ epi (infConv f g) :=
   subset_epi_ofEpi _
 
@@ -110,7 +110,7 @@ theorem epi_infConv (h : IsEpiLike (epi f + epi g)) : epi (infConv f g) = epi f 
 
 /-- The basic upper bound, phrased entirely inside the epigraphs so that no `∞ - ∞` can arise:
 a point of `epi f` over `y` and a point of `epi g` over `z` bound `f □ g` at `y + z`. This is
-`Tdaf.ofEpi_apply_le` specialised to a sum of epigraphs. -/
+`ofEpi_apply_le` specialised to a sum of epigraphs. -/
 theorem infConv_apply_le (hy : f y ≤ (ν : EReal)) (hz : g z ≤ (ρ : EReal)) :
     infConv f g (y + z) ≤ ((ν + ρ : ℝ) : EReal) := by
   refine ofEpi_apply_le ?_
@@ -123,8 +123,8 @@ theorem infConv_apply_le (hy : f y ≤ (ν : EReal)) (hz : g z ≤ (ρ : EReal))
 /-- "The effective domain of `f □ g` is the sum of `dom f` and `dom g`" (Rockafellar, §5, after
 Theorem 5.4).
 
-No hypothesis is needed, in contrast with `Tdaf.dom_add` for pointwise addition: `dom` is the
-projection of the epigraph (`Tdaf.dom_eq_fst_image_epi`) with no properness assumption, and
+No hypothesis is needed, in contrast with `dom_add` for pointwise addition: `dom` is the
+projection of the epigraph (`dom_eq_fst_image_epi`) with no properness assumption, and
 projection is an additive hom, so it commutes with the pointwise sum of sets. -/
 theorem dom_infConv (f g : E → EReal) : dom (infConv f g) = dom f + dom g := by
   rw [infConv_def, dom_ofEpi, dom_eq_fst_image_epi f, dom_eq_fst_image_epi g]
@@ -156,7 +156,7 @@ The hypotheses `∀ x, f x ≠ ⊥` and `∀ x, g x ≠ ⊥` are exactly what ma
 meaningful: `f (x - y) + g y` is the forbidden `∞ - ∞` as soon as one function reaches `⊤` where
 the other reaches `⊥`, and `EReal` resolves it as `⊥`, which is the wrong value. Concretely, for
 `f ≡ ⊤` and `g` with `g 0 = ⊥` the left side is `⊤` and the right side is `⊥`. This is why
-`Tdaf.infConv` is defined through epigraphs and this identity is a theorem rather than the
+`infConv` is defined through epigraphs and this identity is a theorem rather than the
 definition. -/
 theorem infConv_apply (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) (x : E) :
     infConv f g x = ⨅ y, f (x - y) + g y := by
@@ -197,13 +197,13 @@ theorem epi_ofEpi_add_subset (F G : Set (E × ℝ)) :
   exact_mod_cast (by linarith : τ + σ < q)
 
 /-- The `ofEpi` of a set may be convolved by adding the set itself: the `epi (ofEpi ·)` in the
-definition of `Tdaf.infConv` can be peeled off on the left. -/
+definition of `infConv` can be peeled off on the left. -/
 theorem infConv_ofEpi_left (F : Set (E × ℝ)) (g : E → EReal) :
     infConv (ofEpi F) g = ofEpi (F + epi g) := by
   refine le_antisymm (ofEpi_mono (Set.add_subset_add_right (subset_epi_ofEpi F))) ?_
   exact subset_epi_iff_le_ofEpi.1 (epi_ofEpi_add_subset F (epi g))
 
-/-- `Tdaf.infConv_ofEpi_left` on the right. -/
+/-- `infConv_ofEpi_left` on the right. -/
 theorem infConv_ofEpi_right (f : E → EReal) (G : Set (E × ℝ)) :
     infConv f (ofEpi G) = ofEpi (epi f + G) := by
   rw [infConv_comm, infConv_ofEpi_left, add_comm]
@@ -211,15 +211,15 @@ theorem infConv_ofEpi_right (f : E → EReal) (G : Set (E × ℝ)) :
 /-- `□` is associative (Rockafellar, §5).
 
 Note that this is *not* a direct consequence of associativity of set addition: `epi (f □ g)` is
-larger than `epi f + epi g` in general. `Tdaf.epi_ofEpi_add_subset`, through
-`Tdaf.infConv_ofEpi_left`, is what closes the gap. -/
+larger than `epi f + epi g` in general. `epi_ofEpi_add_subset`, through
+`infConv_ofEpi_left`, is what closes the gap. -/
 theorem infConv_assoc (f g h : E → EReal) :
     infConv (infConv f g) h = infConv f (infConv g h) := by
   rw [infConv_def f g, infConv_def g h, infConv_ofEpi_left, infConv_ofEpi_right, add_assoc]
 
-/-- `□` is monotone in both arguments, since `Tdaf.epi` and `Tdaf.ofEpi` are both antitone. -/
+/-- `□` is monotone in both arguments, since `epi` and `ofEpi` are both antitone. -/
 theorem infConv_mono (hf : f₁ ≤ f₂) (hg : g₁ ≤ g₂) : infConv f₁ g₁ ≤ infConv f₂ g₂ :=
-  ofEpi_mono (Set.add_subset_add (epi_mono hf) (epi_mono hg))
+  ofEpi_mono (Set.add_subset_add (epi_anti hf) (epi_anti hg))
 
 /-! ### Indicator functions: the identity element and translation -/
 
@@ -318,11 +318,11 @@ def toInfConvFn {E : Type*} (f : E → EReal) : InfConvFn E := f
 /-- An element of the infimal-convolution monoid, regarded as a function `E → EReal`. -/
 def ofInfConvFn {E : Type*} (F : InfConvFn E) : E → EReal := F
 
-/-- `Tdaf.toInfConvFn` and `Tdaf.ofInfConvFn` are mutually inverse. -/
+/-- `toInfConvFn` and `ofInfConvFn` are mutually inverse. -/
 @[simp] theorem ofInfConvFn_toInfConvFn {E : Type*} (f : E → EReal) :
     ofInfConvFn (toInfConvFn f) = f := rfl
 
-/-- `Tdaf.ofInfConvFn` and `Tdaf.toInfConvFn` are mutually inverse. -/
+/-- `ofInfConvFn` and `toInfConvFn` are mutually inverse. -/
 @[simp] theorem toInfConvFn_ofInfConvFn {E : Type*} (F : InfConvFn E) :
     toInfConvFn (ofInfConvFn F) = F := rfl
 
@@ -330,32 +330,32 @@ section Monoid
 
 variable {E : Type*} [AddCommGroup E]
 
-/-- Infimal convolution is the addition of `Tdaf.InfConvFn E`. -/
+/-- Infimal convolution is the addition of `InfConvFn E`. -/
 noncomputable instance InfConvFn.instAdd : Add (InfConvFn E) := ⟨infConv⟩
 
-/-- `δ(· | 0)` is the zero of `Tdaf.InfConvFn E`. -/
+/-- `δ(· | 0)` is the zero of `InfConvFn E`. -/
 noncomputable instance InfConvFn.instZero : Zero (InfConvFn E) := ⟨indicatorFn {0}⟩
 
-/-- Addition in `Tdaf.InfConvFn E` is infimal convolution. -/
+/-- Addition in `InfConvFn E` is infimal convolution. -/
 @[simp] theorem toInfConvFn_add (f g : E → EReal) :
     toInfConvFn f + toInfConvFn g = toInfConvFn (infConv f g) := rfl
 
-/-- The zero of `Tdaf.InfConvFn E` is `δ(· | 0)`. -/
+/-- The zero of `InfConvFn E` is `δ(· | 0)`. -/
 @[simp] theorem toInfConvFn_indicatorFn_zero :
     toInfConvFn (indicatorFn ({0} : Set E)) = 0 := rfl
 
-/-- `Tdaf.ofInfConvFn` turns the monoid addition back into `Tdaf.infConv`. -/
+/-- `ofInfConvFn` turns the monoid addition back into `infConv`. -/
 @[simp] theorem ofInfConvFn_add (F G : InfConvFn E) :
     ofInfConvFn (F + G) = infConv (ofInfConvFn F) (ofInfConvFn G) := rfl
 
-/-- `Tdaf.ofInfConvFn` turns the monoid zero back into `δ(· | 0)`. -/
+/-- `ofInfConvFn` turns the monoid zero back into `δ(· | 0)`. -/
 @[simp] theorem ofInfConvFn_zero :
     ofInfConvFn (0 : InfConvFn E) = indicatorFn ({0} : Set E) := rfl
 
 /-- **Rockafellar, §5**: the functions `E → EReal` form a commutative monoid under infimal
 convolution, with `δ(· | 0)` as identity.
 
-The `add` and `zero` fields are taken from `Tdaf.InfConvFn.instAdd` and `Tdaf.InfConvFn.instZero`
+The `add` and `zero` fields are taken from `InfConvFn.instAdd` and `InfConvFn.instZero`
 rather than being spelled out again: `nsmul := nsmulRec` needs `Add` and `Zero` *instances*, not
 structure fields, and the class default `nsmulRecAuto` needs an `AddSemigroup` instance that does
 not exist until this declaration is complete. -/
@@ -377,7 +377,7 @@ section MonoidConvex
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 /-- **Rockafellar, Theorem 5.4** in the book's own m-ary form: `f₁ □ ⋯ □ fₘ` is convex whenever
-`f₁, …, fₘ` are. The `□`-product is the `AddCommMonoid` sum in `Tdaf.InfConvFn E`, so the
+`f₁, …, fₘ` are. The `□`-product is the `AddCommMonoid` sum in `InfConvFn E`, so the
 induction is `Finset.cons_induction`; the empty case is `δ(· | 0)`, which is convex because `{0}`
 is. -/
 theorem convexFn_sum_toInfConvFn {ι : Type*} {s : Finset ι} {f : ι → E → EReal}
@@ -392,4 +392,4 @@ theorem convexFn_sum_toInfConvFn {ι : Type*} {s : Finset ι} {f : ι → E → 
 
 end MonoidConvex
 
-end Tdaf
+end Tdaf.ConvexAnalysis

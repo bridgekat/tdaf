@@ -14,10 +14,10 @@ which every statement about convex *sets* becomes an instance of a statement abo
 
 ## Main results
 
-* `Tdaf.convexFn_indicatorFn` — `δ(· | s)` is convex iff `s` is convex.
-* `Tdaf.indicatorFn_ne_bot` — indicator functions never take the value `⊥`.
-* `Tdaf.dom_indicatorFn` — the effective domain of `δ(· | s)` is `s`.
-* `Tdaf.epi_indicatorFn` — the epigraph of `δ(· | s)` is the "half-cylinder" `s ×ˢ Ici 0`.
+* `convexFn_indicatorFn` — `δ(· | s)` is convex iff `s` is convex.
+* `indicatorFn_ne_bot` — indicator functions never take the value `⊥`.
+* `dom_indicatorFn` — the effective domain of `δ(· | s)` is `s`.
+* `epi_indicatorFn` — the epigraph of `δ(· | s)` is the "half-cylinder" `s ×ˢ Ici 0`.
 
 ## References
 
@@ -26,7 +26,7 @@ which every statement about convex *sets* becomes an instance of a statement abo
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 section Basic
 
@@ -81,4 +81,4 @@ theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f
 
 end Module
 
-end Tdaf
+end Tdaf.ConvexAnalysis

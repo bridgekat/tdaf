@@ -14,27 +14,27 @@ of `+∞`, `≤` and `inf` are everywhere interchanged with those of `-∞`, `�
 
 ## Main definitions
 
-* `Tdaf.hypo g` — the hypograph of `g`, a subset of `E × ℝ`. (Rockafellar writes `epi g` for it,
+* `hypo g` — the hypograph of `g`, a subset of `E × ℝ`. (Rockafellar writes `epi g` for it,
   overloading the notation; we do not.)
-* `Tdaf.domConcave g` — the effective domain of a concave function, where `⊥ < g`.
-* `Tdaf.ProperConcave g` — `g` is finite somewhere and never `⊤`.
-* `Tdaf.restrictConcave s g` — `g` restricted to `s`, extended by `⊥`.
-* `Tdaf.ConcaveFn g` — `g` is concave, meaning that `hypo g` is a convex set.
+* `domConcave g` — the effective domain of a concave function, where `⊥ < g`.
+* `ProperConcave g` — `g` is finite somewhere and never `⊤`.
+* `restrictConcave s g` — `g` restricted to `s`, extended by `⊥`.
+* `ConcaveFn g` — `g` is concave, meaning that `hypo g` is a convex set.
 
 ## Main results
 
-* `Tdaf.hypo_neg`, `Tdaf.epi_neg` — the hypograph of `g` and the epigraph of `-g` are exchanged by
+* `hypo_neg`, `epi_neg` — the hypograph of `g` and the epigraph of `-g` are exchanged by
   the vertical reflection `(x, μ) ↦ (x, -μ)` of `E × ℝ`.
-* `Tdaf.concaveFn_iff_convexFn_neg` — Rockafellar's definition, "`g` is concave when `-g` is
-  convex", recovered as a theorem. Together with `Tdaf.domConcave_eq_dom_neg` and
-  `Tdaf.properConcave_iff_proper_neg` this is the sign dictionary through which the concave theory
+* `concaveFn_iff_convexFn_neg` — Rockafellar's definition, "`g` is concave when `-g` is
+  convex", recovered as a theorem. Together with `domConcave_eq_dom_neg` and
+  `properConcave_iff_proper_neg` this is the sign dictionary through which the concave theory
   is derived from the convex one.
-* `Tdaf.concaveFn_iff_forall_gt` — the mirror of Rockafellar's Theorem 4.2.
-* `Tdaf.concaveFn_iff_le` — the mirror of Rockafellar's Theorem 4.1, valid when `g` never takes the
+* `concaveFn_iff_forall_gt` — the mirror of Rockafellar's Theorem 4.2.
+* `concaveFn_iff_le` — the mirror of Rockafellar's Theorem 4.1, valid when `g` never takes the
   value `⊤`.
-* `Tdaf.ConcaveFn.convex_gt`, `Tdaf.ConcaveFn.convex_ge`, `Tdaf.ConcaveFn.convex_domConcave` — the
+* `ConcaveFn.convex_gt`, `ConcaveFn.convex_ge`, `ConcaveFn.convex_domConcave` — the
   mirror of Theorem 4.6: superlevel sets of a concave function are convex.
-* `Tdaf.concaveOn_iff_concaveFn` — the bridge to Mathlib's `ConcaveOn`.
+* `concaveOn_iff_concaveFn` — the bridge to Mathlib's `ConcaveOn`.
 
 ## Design notes
 
@@ -45,13 +45,13 @@ concave notions need first-class names rather than being spelled `ConvexFn (-g)`
 
 Sign transfer is *not* free on `EReal`, because negation does not distribute over addition:
 `-(⊥ + ⊤) = ⊤` while `(-⊥) + (-⊤) = ⊥`. Mathlib's `EReal.neg_add` therefore carries two hypotheses,
-and so does `Tdaf.EReal.neg_add_of_ne_top` below. This is why `Tdaf.concaveFn_iff_le` — unlike
-`Tdaf.concaveFn_iff_forall_gt`, which never forms an infinite sum — needs `∀ x, g x ≠ ⊤`, precisely
-mirroring the `∀ x, f x ≠ ⊥` of `Tdaf.convexFn_iff_le`. The side condition is stated inline: it is a
+and so does `Tdaf.EReal.neg_add_of_ne_top` below. This is why `concaveFn_iff_le` — unlike
+`concaveFn_iff_forall_gt`, which never forms an infinite sum — needs `∀ x, g x ≠ ⊤`, precisely
+mirroring the `∀ x, f x ≠ ⊥` of `convexFn_iff_le`. The side condition is stated inline: it is a
 hypothesis, not a concept, and is not worth a name of its own.
 
-Note that `Tdaf.domConcave` is *not* `Tdaf.dom`: for a concave function the effective domain is the
-set where `g > -∞`, which is the projection of the hypograph (`Tdaf.domConcave_eq_fst_image_hypo`).
+Note that `domConcave` is *not* `dom`: for a concave function the effective domain is the
+set where `g > -∞`, which is the projection of the hypograph (`domConcave_eq_fst_image_hypo`).
 
 ## References
 
@@ -61,7 +61,7 @@ set where `g > -∞`, which is the projection of the hypograph (`Tdaf.domConcave
 
 open Set
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Hypographs, domains, properness -/
 
@@ -72,7 +72,7 @@ variable {E : Type*}
 /-- The hypograph of `g : E → EReal`, as a subset of `E × ℝ`.
 
 Rockafellar §30: `{(x, μ) | x ∈ E, μ ∈ ℝ, μ ≤ g x}`. He writes this `epi g`, reusing the epigraph
-notation for concave functions; we keep the two names apart. As with `Tdaf.epi`, the second
+notation for concave functions; we keep the two names apart. As with `epi`, the second
 coordinate ranges over the *reals*. -/
 def hypo (g : E → EReal) : Set (E × ℝ) := {p | (p.2 : EReal) ≤ g p.1}
 
@@ -103,7 +103,7 @@ theorem hypo_neg (g : E → EReal) :
   rw [_root_.EReal.coe_neg, _root_.EReal.neg_le_neg_iff]
 
 /-- The epigraph of `-g` is the vertical reflection `(x, μ) ↦ (x, -μ)` of the hypograph of `g`; the
-converse direction of `Tdaf.hypo_neg`, the reflection being an involution. -/
+converse direction of `hypo_neg`, the reflection being an involution. -/
 theorem epi_neg (g : E → EReal) :
     epi (fun x => -(g x)) = Prod.map (id : E → E) (Neg.neg : ℝ → ℝ) ⁻¹' hypo g := by
   ext ⟨x, μ⟩
@@ -111,7 +111,7 @@ theorem epi_neg (g : E → EReal) :
   rw [_root_.EReal.coe_neg]
   exact _root_.EReal.neg_le
 
-/-- `Tdaf.hypo_neg` with the reflection applied as an image rather than a preimage. -/
+/-- `hypo_neg` with the reflection applied as an image rather than a preimage. -/
 theorem hypo_eq_image_epi_neg (g : E → EReal) :
     hypo g = Prod.map (id : E → E) (Neg.neg : ℝ → ℝ) '' epi fun x => -(g x) := by
   have hinv : Function.LeftInverse (Prod.map (id : E → E) (Neg.neg : ℝ → ℝ))
@@ -121,7 +121,7 @@ theorem hypo_eq_image_epi_neg (g : E → EReal) :
 /-- The effective domain of a concave function: the set where `g > -∞`.
 
 Rockafellar §30: `dom g = {x | g x > -∞}`, the projection of the hypograph
-(`Tdaf.domConcave_eq_fst_image_hypo`). -/
+(`domConcave_eq_fst_image_hypo`). -/
 def domConcave (g : E → EReal) : Set E := {x | ⊥ < g x}
 
 @[simp] theorem mem_domConcave {g : E → EReal} {x : E} : x ∈ domConcave g ↔ ⊥ < g x := Iff.rfl
@@ -132,7 +132,7 @@ theorem domConcave_eq_dom_neg (g : E → EReal) : domConcave g = dom fun x => -(
   change ⊥ < g x ↔ -(g x) < ⊤
   exact (_root_.EReal.neg_lt_comm (a := g x) (b := ⊤)).symm
 
-/-- The mirror of `Tdaf.dom_eq_fst_image_epi`: `domConcave g` is the projection of `hypo g` on `E`,
+/-- The mirror of `dom_eq_fst_image_epi`: `domConcave g` is the projection of `hypo g` on `E`,
 with no hypothesis on `g`. -/
 theorem domConcave_eq_fst_image_hypo (g : E → EReal) : domConcave g = Prod.fst '' hypo g := by
   rw [domConcave_eq_dom_neg, dom_eq_fst_image_epi, hypo_eq_image_epi_neg, Set.image_image]
@@ -141,7 +141,7 @@ theorem domConcave_eq_fst_image_hypo (g : E → EReal) : domConcave g = Prod.fst
 /-- `g` is a *proper* concave function when it is finite somewhere and never takes the value `⊤`.
 
 Rockafellar §30: "`g` is proper if `g x > -∞` for at least one `x` and `g x < +∞` for every `x`,
-i.e. if `-g` is proper" (`Tdaf.properConcave_iff_proper_neg`). -/
+i.e. if `-g` is proper" (`properConcave_iff_proper_neg`). -/
 structure ProperConcave (g : E → EReal) : Prop where
   /-- `g` is not identically `⊥`. -/
   domConcave_nonempty : (domConcave g).Nonempty
@@ -160,11 +160,11 @@ theorem properConcave_iff_proper_neg {g : E → EReal} :
     · rw [domConcave_eq_dom_neg]; exact h.dom_nonempty
     · simpa using h.ne_bot x
 
-/-- `g` restricted to `s` and extended by `⊥` off `s`: the concave counterpart of `Tdaf.restrict`,
+/-- `g` restricted to `s` and extended by `⊥` off `s`: the concave counterpart of `restrict`,
 which extends by `⊤`.
 
-The `⨆` formulation avoids a decidability hypothesis; see `Tdaf.restrictConcave_of_mem` and
-`Tdaf.restrictConcave_of_notMem` for the defining equations. -/
+The `⨆` formulation avoids a decidability hypothesis; see `restrictConcave_of_mem` and
+`restrictConcave_of_notMem` for the defining equations. -/
 noncomputable def restrictConcave (s : Set E) (g : E → EReal) : E → EReal :=
   fun x => ⨆ _ : x ∈ s, g x
 
@@ -190,8 +190,8 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 /-- A function `g : E → EReal` is concave when its hypograph is a convex subset of `E × ℝ`.
 
-This is the mirror of `Tdaf.ConvexFn`, and agrees with Rockafellar's "`-g` is convex" (§30) by
-`Tdaf.concaveFn_iff_convexFn_neg`. See `Tdaf.concaveFn_iff_forall_gt` and `Tdaf.concaveFn_iff_le`
+This is the mirror of `ConvexFn`, and agrees with Rockafellar's "`-g` is convex" (§30) by
+`concaveFn_iff_convexFn_neg`. See `concaveFn_iff_forall_gt` and `concaveFn_iff_le`
 for the analytic characterisations. -/
 structure ConcaveFn (g : E → EReal) : Prop where
   /-- The hypograph of a concave function is convex. -/
@@ -217,7 +217,7 @@ theorem concaveFn_of_hypo_combo {g : E → EReal}
   exact h x y μ ν hx hy a b ha hb hab
 
 /-- **Rockafellar, §30.** A function is concave exactly when its negative is convex. Like
-`Tdaf.hypo_neg`, from which it follows, this needs no side condition: only the *order* on `EReal` is
+`hypo_neg`, from which it follows, this needs no side condition: only the *order* on `EReal` is
 reversed by negation here, never a sum. -/
 theorem concaveFn_iff_convexFn_neg {g : E → EReal} : ConcaveFn g ↔ ConvexFn fun x => -(g x) := by
   constructor
@@ -240,11 +240,11 @@ theorem concaveFn_iff_convexFn_neg {g : E → EReal} : ConcaveFn g ↔ ConvexFn 
     rw [show (a * -μ + b * -ν : ℝ) = -(a * μ + b * ν) by ring, _root_.EReal.coe_neg] at key
     exact _root_.EReal.neg_le_neg_iff.1 key
 
-/-- The forward direction of `Tdaf.concaveFn_iff_convexFn_neg`, as a projection-style lemma. -/
+/-- The forward direction of `concaveFn_iff_convexFn_neg`, as a projection-style lemma. -/
 theorem ConcaveFn.convexFn_neg {g : E → EReal} (hg : ConcaveFn g) : ConvexFn fun x => -(g x) :=
   concaveFn_iff_convexFn_neg.1 hg
 
-/-- The mirror of `Tdaf.ConcaveFn.convexFn_neg`: a convex function has a concave negative. -/
+/-- The mirror of `ConcaveFn.convexFn_neg`: a convex function has a concave negative. -/
 theorem ConvexFn.concaveFn_neg {f : E → EReal} (hf : ConvexFn f) : ConcaveFn fun x => -(f x) :=
   concaveFn_iff_convexFn_neg.2 (by simpa using hf)
 
@@ -330,7 +330,7 @@ theorem hypo_restrictConcave_coe (s : Set E) (g : E → ℝ) :
 
 /-- Mathlib's `ConcaveOn` for a real-valued function on a set agrees with `ConcaveFn` for its
 extension by `⊥`. This is the concave half of the interface through which the surface layer reuses
-Mathlib; compare `Tdaf.convexOn_iff_convexFn`. -/
+Mathlib; compare `convexOn_iff_convexFn`. -/
 theorem concaveOn_iff_concaveFn (s : Set E) (g : E → ℝ) :
     ConcaveOn ℝ s g ↔ ConcaveFn (restrictConcave s fun x => (g x : EReal)) := by
   rw [concaveFn_iff_convex_hypo, hypo_restrictConcave_coe]
@@ -338,4 +338,4 @@ theorem concaveOn_iff_concaveFn (s : Set E) (g : E → ℝ) :
 
 end Module
 
-end Tdaf
+end Tdaf.ConvexAnalysis

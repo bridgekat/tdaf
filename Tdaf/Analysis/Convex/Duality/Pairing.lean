@@ -21,42 +21,45 @@ This file collects the vocabulary that the rest of the development is stated aga
 
 ## Main definitions
 
-* `Tdaf.affineFn B y c` — the affine function `x ↦ ⟨x, y⟩ - c` determined by `y : F` and `c : ℝ`.
+* `affineFn B y c` — the affine function `x ↦ ⟨x, y⟩ - c` determined by `y : F` and `c : ℝ`.
   Conjugacy is entirely a bookkeeping device for the affine functions below a given convex
   function, and these are they.
-* `Tdaf.IsContinuousPairing B` — every `⟨·, y⟩` is continuous, so the pairing lands in the
-  continuous dual of `E`; `Tdaf.continuous_pairing` is its unbundled field and `Tdaf.evalCLM B` is
+* `IsContinuousPairing B` — every `⟨·, y⟩` is continuous, so the pairing lands in the
+  continuous dual of `E`; `continuous_pairing` is its unbundled field and `evalCLM B` is
   the resulting linear map `F →ₗ[ℝ] StrongDual ℝ E`.
-* `Tdaf.IsCompatiblePairing B` — the topology on `E` is compatible with the pairing:
-  `Tdaf.evalCLM B` is moreover *onto*, so the continuous linear functionals on `E` are exactly the
+* `IsCompatiblePairing B` — the topology on `E` is compatible with the pairing:
+  `evalCLM B` is moreover *onto*, so the continuous linear functionals on `E` are exactly the
   `⟨·, y⟩`. This is the class all of Rockafellar's duality theory is stated over, and
-  `Tdaf.exists_pairing_eq` is its unbundled field.
-* `Tdaf.IsAdjointPair B B' A A'` — `A : E →ₗ[ℝ] G` and `A' : H →ₗ[ℝ] F` are adjoint with respect
+  `exists_pairing_eq` is its unbundled field.
+* `IsAdjointPair B B' A A'` — `A : E →ₗ[ℝ] G` and `A' : H →ₗ[ℝ] F` are adjoint with respect
   to the pairings `B` and `B'`.
-* `Tdaf.prodPairing Bu Bx`, `Tdaf.negFst B` — the pairing of `U × X` with `V × Y`, and the sign
+* `prodPairing Bu Bx`, `negFst B` — the pairing of `U × X` with `V × Y`, and the sign
   flip on the first factor that the adjoint of a convex bifunction (§30) is stated against.
 
 ## Main results
 
-* `Tdaf.convexFn_affineFn`, `Tdaf.closedFn_affineFn`, `Tdaf.affineFn_le_iff` — the affine functions
+* `convexFn_affineFn`, `closedFn_affineFn`, `affineFn_le_iff` — the affine functions
   of the pairing are closed, proper and convex, and `affineFn B y c ≤ f` is the inequality that the
   conjugate of `f` at `y` measures.
-* `Tdaf.EReal.coe_sub_le_comm` — `a - z ≤ w ↔ a - w ≤ z` for a *real* `a`, with no side condition.
-  This single fact is what lets the whole of §12 be developed without properness hypotheses.
-* `Tdaf.isAdjointPair_adjoint`, `Tdaf.isAdjointPair_topDualPairing` — the two instantiations that
+* `isAdjointPair_adjoint`, `isAdjointPair_topDualPairing` — the two instantiations that
   supply the adjoint datum: a real inner-product space paired with itself, and a topological vector
   space paired with its topological dual.
-* `Tdaf.exists_unique_dual_prod` — a continuous linear functional on `E × ℝ` is `(x, μ) ↦ y x + c μ`
+* `exists_unique_dual_prod` — a continuous linear functional on `E × ℝ` is `(x, μ) ↦ y x + c μ`
   for a *unique* pair `(y, c)`. Mathlib does not provide this, and Fenchel–Moreau needs it twice:
   the separating functional of `E × ℝ` must be split into a horizontal part and a vertical
   coefficient before it can be recognised as an affine minorant.
+
+Imported and used throughout, rather than proved here: `Tdaf.EReal.coe_sub_le_comm` from
+`Tdaf/Order/EReal.lean` — `a - z ≤ w ↔ a - w ≤ z` for a *real* `a`, with no side condition.
+`⟨x, y⟩ - f x` always has a real first argument, so that single unconditional fact is what lets the
+whole of §12 be developed without properness hypotheses.
 
 ## Design notes
 
 **There is no transpose.** For `A : E →ₗ[ℝ] G` between spaces carrying arbitrary pairings, `Aᵀ`
 does not exist: Mathlib's `LinearMap.adjoint` needs `RCLike` inner-product spaces and finite
 dimension, `ContinuousLinearMap.adjoint` needs completeness, and in general the transpose exists
-only when `A` is weakly continuous, in which case it is extra *data*. `Tdaf.IsAdjointPair` follows
+only when `A` is weakly continuous, in which case it is extra *data*. `IsAdjointPair` follows
 the shape of Mathlib's `LinearMap.IsAdjointPair`, which cannot be reused directly because it pairs
 a module with *itself* (`B : M →ₗ[R] M →ₛₗ[I] M₃`), whereas a dual pair has two different spaces.
 
@@ -64,7 +67,7 @@ a module with *itself* (`B : M →ₗ[R] M →ₛₗ[I] M₃`), whereas a dual p
 `SeparatingLeft B ∧ SeparatingRight B`; no new predicate is introduced here.
 
 **Whatever topology `E` already carries.** The duality theorems ask only that the continuous dual
-of `E` be the `F` side of the pairing, which is the class `Tdaf.IsCompatiblePairing`; no change of
+of `E` be the `F` side of the pairing, which is the class `IsCompatiblePairing`; no change of
 topology on `E` is involved. What the pairing is *for* is the freedom to let `E` and `F` be
 different spaces, which §30 (adjoint bifunctions) and §33 (saddle-functions) need.
 
@@ -72,8 +75,8 @@ different spaces, which §30 (adjoint bifunctions) and §33 (saddle-functions) n
 spaces the arrows are the *continuous* linear maps, and a discontinuous linear functional is simply
 not a morphism; likewise a subspace that is to behave like a finite-dimensional one has to be
 assumed closed. Both are automatic in finite dimensions, which is why Rockafellar never writes
-them. Where a statement of his fails here — `Tdaf.exists_affine_le_of_closed_proper` needs `f`
-closed, `Tdaf.exists_ne_zero_forall_le_of_closure_ne_univ` needs `closure C ≠ univ` — the missing
+them. Where a statement of his fails here — `exists_affine_le_of_closed_proper` needs `f`
+closed, `exists_ne_zero_forall_le_of_closure_ne_univ` needs `closure C ≠ univ` — the missing
 hypothesis is always of one of those two kinds.
 
 ## References
@@ -85,14 +88,7 @@ hypothesis is always of one of those two kinds.
 
 open Set
 
-namespace Tdaf
-
-/-! ### Subtracting from a real number in `EReal`
-
-`⟨x, y⟩ - f x` is the expression conjugacy is built from, and its first argument is always a *real*
-number. That is enough to make the facts below unconditional, which is why the conjugacy API can
-avoid `∞ - ∞` side conditions almost everywhere. -/
-
+namespace Tdaf.ConvexAnalysis
 
 /-! ### The affine functions of a pairing -/
 
@@ -203,7 +199,7 @@ variable {E F G H K L : Type*}
 This is the four-space version of Mathlib's `LinearMap.IsAdjointPair`, which pairs a module with
 itself and therefore does not apply to a dual pair. It is *data*, not a property of `A`: between
 arbitrarily paired spaces a transpose need not exist, and when it does it need not be unique unless
-`B` is right-separating (`Tdaf.IsAdjointPair.unique`). -/
+`B` is right-separating (`IsAdjointPair.unique`). -/
 def IsAdjointPair (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ)
     (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) : Prop := ∀ x z, B' (A x) z = B x (A' z)
 
@@ -270,21 +266,17 @@ section TopDual
 variable {E G : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [AddCommGroup G] [Module ℝ G] [TopologicalSpace G]
 
-/-- Precomposition with a continuous linear map, as a linear map of topological duals. Mathlib has
-`LinearMap.dualMap` for algebraic duals but no continuous counterpart, so it is built here. -/
-def dualPrecomp (A : E →L[ℝ] G) : (G →L[ℝ] ℝ) →ₗ[ℝ] (E →L[ℝ] ℝ) where
-  toFun z := z.comp A
-  map_add' _ _ := by ext; simp
-  map_smul' _ _ := by ext; simp
-
-@[simp] theorem dualPrecomp_apply (A : E →L[ℝ] G) (z : G →L[ℝ] ℝ) (x : E) :
-    dualPrecomp A z x = z (A x) := rfl
-
 /-- **A space paired with its topological dual.** For `topDualPairing` the adjoint datum of a
-*continuous* linear map is precomposition; no completeness or finite-dimensionality is needed. -/
+*continuous* linear map is precomposition; no completeness or finite-dimensionality is needed.
+
+The adjoint datum is Mathlib's `ContinuousLinearMap.precomp ℝ A`, which is precomposition by `A`
+as a *continuous* linear map of topological duals; `IsAdjointPair` only asks for the underlying
+linear map. (The lemma to look for is `precomp`, not `dualMap`: `LinearMap.dualMap` is the
+algebraic-dual version, and there is no `ContinuousLinearMap.dualMap`.) -/
 theorem isAdjointPair_topDualPairing (A : E →L[ℝ] G) :
     IsAdjointPair (topDualPairing ℝ E).flip (topDualPairing ℝ G).flip (A : E →ₗ[ℝ] G)
-      (dualPrecomp A) := fun _ _ => rfl
+      ((ContinuousLinearMap.precomp ℝ A : (G →L[ℝ] ℝ) →L[ℝ] (E →L[ℝ] ℝ)) :
+        (G →L[ℝ] ℝ) →ₗ[ℝ] (E →L[ℝ] ℝ)) := fun _ _ => rfl
 
 end TopDual
 
@@ -318,7 +310,7 @@ theorem prodPairing_flip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[�
 /-- The **sign flip on the first factor**: `negFst B p q = B (-p.1, p.2) q`.
 
 This is the convention that Rockafellar's adjoint `F*` of a convex bifunction (§30) is stated
-against; `Tdaf.prodPairing` alone has the wrong sign, and the mismatch is the source of the
+against; `prodPairing` alone has the wrong sign, and the mismatch is the source of the
 several incompatible sign conventions Part VI juggles. -/
 def negFst (B : (U × X) →ₗ[ℝ] (V × Y) →ₗ[ℝ] ℝ) : (U × X) →ₗ[ℝ] (V × Y) →ₗ[ℝ] ℝ :=
   B.comp (LinearMap.prodMap (-LinearMap.id) LinearMap.id)
@@ -393,12 +385,12 @@ its only `topDualPairing` instance carries `[FiniteDimensional 𝕜 E] [T2Space 
 conjugate is closed, the polar is closed, the subdifferential is closed, `f*` does not see `cl f` —
 needs only that `⟨·, y⟩` be continuous. The decisive example is a Banach space `E` paired with
 `F = StrongDual ℝ E` in the dual's **norm** topology: every `x : E` is a continuous functional on
-`E'`, so `Tdaf.IsContinuousPairing` holds on that side, while surjectivity of the evaluation
+`E'`, so `IsContinuousPairing` holds on that side, while surjectivity of the evaluation
 `E → E''` is reflexivity and fails in general. "The conjugate is lower semicontinuous on the norm
 dual" is therefore a theorem about the weaker class, and that setting is the most standard one in
-the subject. `Tdaf.IsCompatiblePairing` extends it by the surjectivity, which is not even
+the subject. `IsCompatiblePairing` extends it by the surjectivity, which is not even
 expressible until the evaluation map exists — hence the order below: base class, then
-`Tdaf.evalCLM`, then the extension. -/
+`evalCLM`, then the extension. -/
 
 section Compatible
 
@@ -408,9 +400,9 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
 /-- The pairing `B` is **continuous** in its first variable: every `⟨·, y⟩` is a continuous linear
 functional on `E`.
 
-This is all that closedness needs — `Tdaf.closedFn_conj`, `Tdaf.conj_clFn`,
-`Tdaf.isClosed_polarCone`, `Tdaf.isClosed_subgradient` — and it is strictly weaker than
-`Tdaf.IsCompatiblePairing`: a Banach space and its norm-topology dual are a continuous pairing
+This is all that closedness needs — `closedFn_conj`, `conj_clFn`,
+`isClosed_polarCone`, `isClosed_subgradient` — and it is strictly weaker than
+`IsCompatiblePairing`: a Banach space and its norm-topology dual are a continuous pairing
 in both directions, but compatible only on the side where the evaluation `E → E''` is onto, i.e.
 only when `E` is reflexive. -/
 class IsContinuousPairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : Prop where
@@ -426,20 +418,20 @@ theorem continuous_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPa
 /-- **The evaluation map of a continuous pairing**, `y ↦ ⟨·, y⟩`, into the continuous dual of `E`.
 
 It is what turns the half-space characterisations of §11 — which quantify over `StrongDual ℝ E` —
-into statements about `F`, and it is the map whose surjectivity `Tdaf.IsCompatiblePairing`
+into statements about `F`, and it is the map whose surjectivity `IsCompatiblePairing`
 asserts. -/
 def evalCLM (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] : F →ₗ[ℝ] StrongDual ℝ E where
   toFun y := ⟨B.flip y, continuous_pairing B y⟩
   map_add' y₁ y₂ := ContinuousLinearMap.ext fun x => map_add (B x) y₁ y₂
   map_smul' a y := ContinuousLinearMap.ext fun x => map_smul (B x) a y
 
-/-- `Tdaf.evalCLM` evaluates as the pairing does. -/
+/-- `evalCLM` evaluates as the pairing does. -/
 @[simp] theorem evalCLM_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] (y : F) (x : E) :
     evalCLM B y x = B x y := rfl
 
 /-- `B.flip.flip` is `B` definitionally, but not syntactically, and instance search does not unfold
 `LinearMap.flip`. Every result stated for one side of the pairing and then used at `B.flip` —
-`Tdaf.biconj_le_clFn`, `Tdaf.conjEquiv`, `Tdaf.isClosed_supportSet`, `Tdaf.polarCone_polarCone` —
+`biconj_le_clFn`, `conjEquiv`, `isClosed_supportSet`, `polarCone_polarCone` —
 asks for this instance, and without it the class would have to be passed by hand there. Only the
 base class needs such a bridge: no surjectivity-consuming result is stated on one side and then
 used at `B.flip`. -/
@@ -447,10 +439,10 @@ instance instIsContinuousPairingFlipFlip (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [
     IsContinuousPairing B.flip.flip :=
   ‹IsContinuousPairing B›
 
-/-- The topology on `E` is **compatible** with the pairing `B`: on top of continuity, `Tdaf.evalCLM`
+/-- The topology on `E` is **compatible** with the pairing `B`: on top of continuity, `evalCLM`
 is onto, so that every continuous linear functional on `E` is `⟨·, y⟩` for some `y : F`.
 
-This is the hypothesis under which conjugacy is an involution — see `Tdaf.biconj_eq_clFn`. It says
+This is the hypothesis under which conjugacy is an involution — see `biconj_eq_clFn`. It says
 nothing about *which* compatible topology `E` carries: the weak topology `σ(E, F)` is the coarsest
 one, but a Banach space paired with its own dual satisfies it in the norm topology, and that is the
 instance applications use. -/
@@ -482,7 +474,7 @@ instance instIsCompatiblePairingTopDual :
 /-- A normed space is *continuously* paired with its continuous dual in the **norm** topology of
 that dual. Compatibility fails here unless `E` is reflexive — the dual of `StrongDual ℝ E` in its
 norm topology is `E''`, not `E` — which is exactly why the closedness results are stated over
-`Tdaf.IsContinuousPairing` and not over `Tdaf.IsCompatiblePairing`. -/
+`IsContinuousPairing` and not over `IsCompatiblePairing`. -/
 instance instIsContinuousPairingTopDualNorm {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] : IsContinuousPairing (topDualPairing ℝ E) :=
   ⟨fun x => (ContinuousLinearMap.apply ℝ ℝ x).continuous⟩
@@ -499,4 +491,4 @@ instance instIsCompatiblePairingInner {E : Type*} [NormedAddCommGroup E]
 end CompatibleInstances
 
 
-end Tdaf
+end Tdaf.ConvexAnalysis

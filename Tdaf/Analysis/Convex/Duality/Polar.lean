@@ -13,62 +13,62 @@ Rockafellar's §14, over a dual pair `B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ`. §14
 positively homogeneous *indicator* function conjugates to a positively homogeneous indicator
 function, so the conjugacy correspondence of §12 restricts to a correspondence between convex
 cones. That restriction is polarity, and it is proved here from
-`Tdaf.conj_eq_indicatorFn_of_posHomogeneous` together with the separation theory of §11.
+`conj_eq_indicatorFn_of_posHomogeneous` together with the separation theory of §11.
 
 ## Main definitions
 
-* `Tdaf.polarCone B K` — Rockafellar's polar `K° = {y | ∀ x ∈ K, ⟨x, y⟩ ≤ 0}` of a convex cone.
-* `Tdaf.polarPointedCone B K` — the same set bundled as a `PointedCone ℝ F`.
-* `Tdaf.polarSet B C` — the polar `C° = {y | ∀ x ∈ C, ⟨x, y⟩ ≤ 1}` of a convex set containing the
+* `polarCone B K` — Rockafellar's polar `K° = {y | ∀ x ∈ K, ⟨x, y⟩ ≤ 0}` of a convex cone.
+* `polarPointedCone B K` — the same set bundled as a `PointedCone ℝ F`.
+* `polarSet B C` — the polar `C° = {y | ∀ x ∈ C, ⟨x, y⟩ ≤ 1}` of a convex set containing the
   origin.
-* `Tdaf.gc_polarCone_polarCone`, `Tdaf.polarConeClosure` — polarity as an *antitone Galois
+* `gc_polarCone_polarCone`, `polarConeClosure` — polarity as an *antitone Galois
   connection* between `Set E` and `Set F` and the closure operator `K ↦ K°°` it induces; likewise
-  `Tdaf.gc_polarSet_polarSet` and `Tdaf.polarSetClosure`.
+  `gc_polarSet_polarSet` and `polarSetClosure`.
 
 ## Main results
 
-* `Tdaf.conj_indicatorFn_eq_indicatorFn_polarCone` — **Theorem 14.1**, third assertion: the
+* `conj_indicatorFn_eq_indicatorFn_polarCone` — **Theorem 14.1**, third assertion: the
   indicator functions of `K` and `K°` are conjugate.
-* `Tdaf.polarCone_polarCone` — **Theorem 14.1**, second assertion: `K°° = cl K` for a nonempty
-  convex cone `K`; `Tdaf.polarCone_polarCone_of_isClosed` is the closed case, and
-  `Tdaf.isClosed_polarConeClosure_iff` identifies these with the closed elements of the closure
+* `polarCone_polarCone` — **Theorem 14.1**, second assertion: `K°° = cl K` for a nonempty
+  convex cone `K`; `polarCone_polarCone_of_isClosed` is the closed case, and
+  `isClosed_polarConeClosure_iff` identifies these with the closed elements of the closure
   operator.
-* `Tdaf.isClosed_polarCone`, `Tdaf.polarPointedCone` — **Theorem 14.1**, first assertion: `K°` is a
+* `isClosed_polarCone`, `polarPointedCone` — **Theorem 14.1**, first assertion: `K°` is a
   nonempty closed convex cone, for *any* `K`.
-* `Tdaf.polarSet_polarSet` — **Theorem 14.5**, first assertion: `C°° = C` for a closed convex `C`
+* `polarSet_polarSet` — **Theorem 14.5**, first assertion: `C°° = C` for a closed convex `C`
   containing the origin.
-* `Tdaf.polarCone_coe_submodule`, `Tdaf.polarCone_hull_range`,
-  `Tdaf.polarCone_setOf_forall_le_zero`, `Tdaf.polarCone_nonnegOrthant` — the examples of §14:
+* `polarCone_coe_submodule`, `polarCone_hull_range`,
+  `polarCone_setOf_forall_le_zero`, `polarCone_nonnegOrthant` — the examples of §14:
   the polar of a subspace is its annihilator, the polar of a generated cone is the solution set of
   the corresponding homogeneous inequalities and conversely, and the polar of the nonnegative
   orthant is the nonpositive orthant.
 
 ## Bridges to Mathlib
 
-* `Tdaf.polarPointedCone_eq_dual_neg` — Mathlib **does** have a dual cone: `PointedCone.dual p s`
+* `polarPointedCone_eq_dual_neg` — Mathlib **does** have a dual cone: `PointedCone.dual p s`
   in `Mathlib/Geometry/Convex/Cone/Dual.lean` is `{y | ∀ x ∈ s, 0 ≤ p x y}`, the *inner* dual, so
   `K° = (-K)ᵛ = -(Kᵛ)`. Mathlib also has `ProperCone.dual` with `ProperCone.dual_flip_dual`, the
   bipolar theorem for a *perfect continuous* pairing (`LinearMap.IsContPerfPair`); the version
-  proved here instead asks for `Tdaf.IsCompatiblePairing`, so it applies to a space paired
+  proved here instead asks for `IsCompatiblePairing`, so it applies to a space paired
   with its own continuous dual without asking for a perfect pairing; closedness of the polar
-  (`Tdaf.isClosed_polarCone`) needs only `Tdaf.IsContinuousPairing`.
-* `Tdaf.polarSet_eq_polar_of_balanced` — Mathlib's `LinearMap.polar` is the **absolute** polar
-  `{y | ∀ x ∈ s, ‖B x y‖ ≤ 1}`. It agrees with `Tdaf.polarSet` exactly on balanced sets;
+  (`isClosed_polarCone`) needs only `IsContinuousPairing`.
+* `polarSet_eq_polar_of_balanced` — Mathlib's `LinearMap.polar` is the **absolute** polar
+  `{y | ∀ x ∈ s, ‖B x y‖ ≤ 1}`. It agrees with `polarSet` exactly on balanced sets;
   Rockafellar's polar is one-sided and the two are genuinely different objects otherwise.
 
 ## Design notes
 
-**Polarity is a Galois connection, and `Tdaf.polarConeClosure` is its closure operator.** The
-adjunction `L ⊆ K° ↔ K ⊆ L°` is `Tdaf.subset_polarCone_comm`, and it makes `K ↦ K°°` a
+**Polarity is a Galois connection, and `polarConeClosure` is its closure operator.** The
+adjunction `L ⊆ K° ↔ K ⊆ L°` is `subset_polarCone_comm`, and it makes `K ↦ K°°` a
 `ClosureOperator (Set E)`. The `OrderDual` sits on the *codomain* here, not on the domain as in
-`Tdaf.conjClosure`, so the induced closure operator lives on `Set E` itself and `K ⊆ K°°` is its
+`conjClosure`, so the induced closure operator lives on `Set E` itself and `K ⊆ K°°` is its
 unit; Theorem 14.1 then says exactly which sets are closed for it. The change of side is forced by
 variance: `δ(· | K) ≤ δ(· | L)` means `L ⊆ K`, so the indicator embedding is *antitone*, and the
-polarity adjunction is the image of `Tdaf.conj_le_iff` under it.
+polarity adjunction is the image of `conj_le_iff` under it.
 
 **`K°° = cl K`, not `K°° = K`, is the theorem.** This is design decision `D0`: the missing
 hypothesis in a statement transcribed from `Rⁿ` is "closed" or "continuous", and here it is
-"closed". `Tdaf.polarCone_polarCone` is stated with `cl K` and needs no closedness at all.
+"closed". `polarCone_polarCone` is stated with `cl K` and needs no closedness at all.
 
 **Nonemptiness of `K` is needed.** `∅° = F` and `F° = {x | ∀ y, ⟨x, y⟩ ≤ 0}`, which is the kernel
 of the pairing rather than `cl ∅ = ∅`. Rockafellar's standing hypothesis in §14 is that the cone is
@@ -78,7 +78,7 @@ nonempty, and it is kept.
 
 * **Theorems 14.2 and 14.3, and Corollaries 14.2.1–14.2.2**, describe the polar of the cone
   generated by `dom f`, of a recession cone, and of a level set, in terms of the **recession cone**
-  of `f*`. That is `Tdaf.recessionFn` in `Tdaf/Analysis/Convex/Recession/Function.lean`, which this
+  of `f*`. That is `recessionFn` in `Tdaf/Analysis/Convex/Recession/Function.lean`, which this
   file does not import.
 * **Theorem 14.4** (the `ℝ^(n+2)` cone whose polar carries `f*`) needs the recession function of
   the positively homogeneous function generated by `f`, i.e. Theorem 13.5, which is still unstated
@@ -97,7 +97,7 @@ nonempty, and it is kept.
 
 open Set Pointwise
 
-namespace Tdaf
+namespace Tdaf.ConvexAnalysis
 
 /-! ### Definitions -/
 
@@ -109,7 +109,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 
 This is a *one-sided* polar, and it is not Mathlib's `LinearMap.polar`, which is the absolute polar
 `{y | ∀ x ∈ K, ‖⟨x, y⟩‖ ≤ 1}`. It is the negative of Mathlib's inner dual cone
-(`Tdaf.polarPointedCone_eq_dual_neg`). -/
+(`polarPointedCone_eq_dual_neg`). -/
 def polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : Set F := {y | ∀ x ∈ K, B x y ≤ 0}
 
 /-- **Rockafellar's polar of a convex set containing the origin**:
@@ -182,7 +182,7 @@ theorem polarCone_eq_polarSet_of_isCone (hK : ∀ a : ℝ, 0 < a → a • K = K
 
 /-- **The polarity adjunction**: `L ⊆ K°` and `K ⊆ L°` both say that `⟨x, y⟩ ≤ 0` for every `x ∈ K`
 and `y ∈ L`. This is the image, under the antitone embedding `s ↦ δ(· | s)`, of the adjunction
-`Tdaf.conj_le_iff` of §12. -/
+`conj_le_iff` of §12. -/
 theorem subset_polarCone_comm {L : Set F} : L ⊆ polarCone B K ↔ K ⊆ polarCone B.flip L :=
   ⟨fun h _ hx _ hy => h hy _ hx, fun h _ hy _ hx => h hx _ hy⟩
 
@@ -200,7 +200,7 @@ theorem subset_polarSet_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set 
 
 /-! ### Polarity as a Galois connection
 
-The adjunction above is exactly the shape of `Tdaf.gc_ofEpi_epi` and `Tdaf.gc_conj_conj`, and it is
+The adjunction above is exactly the shape of `gc_ofEpi_epi` and `gc_conj_conj`, and it is
 recorded here so that the whole `ClosureOperator` API is available. Unlike conjugacy, the
 `OrderDual` sits on the *codomain*, and the resulting closure operator therefore lives on `Set E`
 itself. -/
@@ -218,28 +218,28 @@ theorem gc_polarSet_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
   fun _ _ => subset_polarSet_comm
 
 /-- The bipolar operator `K ↦ K°°` as a `ClosureOperator` on `Set E`. Its closed elements are, by
-**Theorem 14.1** (`Tdaf.polarCone_polarCone_of_isClosed`), the nonempty closed convex cones. -/
+**Theorem 14.1** (`polarCone_polarCone_of_isClosed`), the nonempty closed convex cones. -/
 def polarConeClosure (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : ClosureOperator (Set E) :=
   (gc_polarCone_polarCone B).closureOperator
 
-/-- `Tdaf.polarConeClosure` is the bipolar. -/
+/-- `polarConeClosure` is the bipolar. -/
 @[simp] theorem polarConeClosure_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     polarConeClosure B K = polarCone B.flip (polarCone B K) := rfl
 
-/-- Closedness for `Tdaf.polarConeClosure` is the bipolar equation `K°° = K`. -/
+/-- Closedness for `polarConeClosure` is the bipolar equation `K°° = K`. -/
 theorem isClosed_polarConeClosure_iff :
     (polarConeClosure B).IsClosed K ↔ polarCone B.flip (polarCone B K) = K := Iff.rfl
 
 /-- The bipolar operator `C ↦ C°°` as a `ClosureOperator` on `Set E`. Its closed elements are, by
-**Theorem 14.5** (`Tdaf.polarSet_polarSet`), the closed convex sets containing the origin. -/
+**Theorem 14.5** (`polarSet_polarSet`), the closed convex sets containing the origin. -/
 def polarSetClosure (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : ClosureOperator (Set E) :=
   (gc_polarSet_polarSet B).closureOperator
 
-/-- `Tdaf.polarSetClosure` is the bipolar. -/
+/-- `polarSetClosure` is the bipolar. -/
 @[simp] theorem polarSetClosure_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) :
     polarSetClosure B C = polarSet B.flip (polarSet B C) := rfl
 
-/-- Closedness for `Tdaf.polarSetClosure` is the bipolar equation `C°° = C`. -/
+/-- Closedness for `polarSetClosure` is the bipolar equation `C°° = C`. -/
 theorem isClosed_polarSetClosure_iff :
     (polarSetClosure B).IsClosed C ↔ polarSet B.flip (polarSet B C) = C := Iff.rfl
 
@@ -254,8 +254,8 @@ theorem polarCone_polarCone_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K :
 
 /-- **The polar of an arbitrary set is a pointed convex cone** — the first assertion of
 Rockafellar's Theorem 14.1, before any topology enters. Bundling it makes `Submodule.span_le` and
-the rest of the `PointedCone` API available, exactly as for `Tdaf.halfSpaceCone` and
-`Tdaf.recessionPointedCone`. -/
+the rest of the `PointedCone` API available, exactly as for `halfSpaceCone` and
+`recessionPointedCone`. -/
 def polarPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : PointedCone ℝ F where
   carrier := polarCone B K
   zero_mem' := zero_mem_polarCone B K
@@ -267,11 +267,11 @@ def polarPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : Pointed
     calc (c : ℝ) * B x u ≤ (c : ℝ) * 0 := mul_le_mul_of_nonneg_left (hu x hx) c.2
       _ = 0 := mul_zero _
 
-/-- The underlying set of `Tdaf.polarPointedCone` is the polar cone. -/
+/-- The underlying set of `polarPointedCone` is the polar cone. -/
 @[simp] theorem coe_polarPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     (polarPointedCone B K : Set F) = polarCone B K := rfl
 
-/-- Membership in `Tdaf.polarPointedCone`, unfolded. -/
+/-- Membership in `polarPointedCone`, unfolded. -/
 @[simp] theorem mem_polarPointedCone : y ∈ polarPointedCone B K ↔ ∀ x ∈ K, B x y ≤ 0 := Iff.rfl
 
 /-- The polar of any set is convex. -/
@@ -334,7 +334,7 @@ end Defs
 
 This is the computation Rockafellar opens §14 with, and it needs no topology: the indicator of a
 cone is positively homogeneous, so its conjugate is again an indicator
-(`Tdaf.conj_eq_indicatorFn_of_posHomogeneous`), and the set it indicates is the polar. -/
+(`conj_eq_indicatorFn_of_posHomogeneous`), and the set it indicates is the polar. -/
 
 section Indicator
 
@@ -359,7 +359,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 /-- **Rockafellar, Theorem 14.1**, third assertion (and the computation §14 opens with): the
 indicator function of a nonempty convex cone and the indicator function of its polar are conjugate
 to each other. Only one direction needs the hypotheses; the other is
-`Tdaf.polarCone_polarCone`. -/
+`polarCone_polarCone`. -/
 theorem conj_indicatorFn_eq_indicatorFn_polarCone (hK : ∀ a : ℝ, 0 < a → a • K = K)
     (hne : K.Nonempty) : conj B (indicatorFn K) = indicatorFn (polarCone B K) := by
   obtain ⟨x₀, hx₀⟩ := hne
@@ -389,7 +389,7 @@ theorem isClosed_polarCone : IsClosed (polarCone B K) := by
   rw [h]
   exact isClosed_biInter fun x _ => isClosed_le (continuous_pairing B.flip x) continuous_const
 
-/-- The polar of a set in the sense of `Tdaf.polarSet` is closed, for the same reason: it is an
+/-- The polar of a set in the sense of `polarSet` is closed, for the same reason: it is an
 intersection of closed half-spaces. -/
 theorem isClosed_polarSet : IsClosed (polarSet B C) := by
   have h : polarSet B C = ⋂ x ∈ C, {y : F | B x y ≤ 1} := by ext y; simp [polarSet]
@@ -428,7 +428,7 @@ nonempty convex cone is its *closure*.
 The inclusion `cl K ⊆ K°°` holds because `K°°` is closed and contains `K`. For the converse, a
 point outside `cl K` is strongly separated from it by a continuous linear functional `f`; because
 `cl K` is a nonempty cone, `f ≤ 0` on `cl K` and the separating constant is nonnegative
-(`Tdaf.le_zero_of_isCone_of_forall_le` and `Tdaf.nonneg_of_isCone_of_forall_le`), so the `y`
+(`le_zero_of_isCone_of_forall_le` and `nonneg_of_isCone_of_forall_le`), so the `y`
 representing `f` lies in `K°` and detects the point. -/
 theorem polarCone_polarCone (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K)
     (hne : K.Nonempty) :
@@ -508,7 +508,7 @@ theorem polarSet_polarSet (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E
   rw [LinearMap.flip_apply, map_smul, smul_eq_mul, ← hy x, inv_mul_le_iff₀ hu, mul_one] at hxle
   linarith
 
-/-- The closed elements of `Tdaf.polarSetClosure` include every closed convex set containing the
+/-- The closed elements of `polarSetClosure` include every closed convex set containing the
 origin — the reading of Theorem 14.5 as a statement about the bipolar closure operator. -/
 theorem isClosed_polarSetClosure_of_isClosed (hconv : Convex ℝ C) (hcl : IsClosed C)
     (h0 : (0 : E) ∈ C) : (polarSetClosure B).IsClosed C :=
@@ -585,7 +585,7 @@ end ExamplesTopology
 
 /-! ### The nonnegative orthant
 
-Rockafellar's second example, in the setting of `Tdaf.biconj_eq_clFn_inner`: a real inner-product
+Rockafellar's second example, in the setting of `biconj_eq_clFn_inner`: a real inner-product
 space paired with itself. -/
 
 section Orthant
@@ -615,4 +615,4 @@ theorem polarCone_nonnegOrthant :
 
 end Orthant
 
-end Tdaf
+end Tdaf.ConvexAnalysis
