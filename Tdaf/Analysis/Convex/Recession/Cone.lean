@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Mathlib.Analysis.Convex.Cone.Closure
 import Mathlib.Analysis.Normed.Affine.AsymptoticCone
 import Mathlib.Analysis.Normed.Module.Convex
 import Mathlib.Geometry.Convex.Cone.Pointed
@@ -273,6 +274,11 @@ theorem mem_linealitySpace :
     y ∈ linealitySpace C ↔ y ∈ recessionCone C ∧ -y ∈ recessionCone C := by
   simp [linealitySpace]
 
+/-- `0` always lies in the lineality space. -/
+@[simp] theorem zero_mem_linealitySpace (C : Set E) : (0 : E) ∈ linealitySpace C :=
+  mem_linealitySpace.2 ⟨zero_mem_recessionCone C, by
+    rw [neg_zero]; exact zero_mem_recessionCone C⟩
+
 /-- The lineality space sits inside the recession cone. -/
 theorem linealitySpace_subset_recessionCone (C : Set E) :
     linealitySpace C ⊆ recessionCone C := inter_subset_left
@@ -414,6 +420,15 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
   · simpa using hy 0 M.zero_mem 1 zero_le_one
   · exact M.add_mem hz (M.smul_mem a hy)
 
+/-- **A pointed convex cone is its own recession cone.** This is what makes Corollary 9.1.3 a
+special case of Corollary 9.1.1: for cones the recession hypothesis is a hypothesis about the
+cones themselves. -/
+@[simp] theorem recessionCone_coe_pointedCone (K : PointedCone ℝ E) :
+    recessionCone (K : Set E) = K := by
+  refine Set.Subset.antisymm (fun y hy => ?_) (fun y hy z hz a ha => ?_)
+  · simpa using hy 0 K.zero_mem 1 zero_le_one
+  · exact K.add_mem hz (K.smul_mem ha hy)
+
 /-- The recession cone of a nonempty affine set is the subspace parallel to it. -/
 theorem recessionCone_coe_affineSubspace {s : AffineSubspace ℝ E} (hs : (s : Set E).Nonempty) :
     recessionCone (s : Set E) = s.direction := by
@@ -539,6 +554,13 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTop
 theorem tendsto_inv_nat_add_one_atTop_nhds_zero :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) := by
   simpa only [one_div] using tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ)
+
+/-- **The closure of a pointed convex cone is its own recession cone.** `PointedCone.closure`
+supplies the cone structure on `cl K`; `recessionCone_coe_pointedCone` then applies verbatim. -/
+theorem recessionCone_closure_coe_pointedCone (K : PointedCone ℝ E) :
+    recessionCone (closure (K : Set E)) = closure (K : Set E) := by
+  rw [← PointedCone.coe_closure]
+  exact recessionCone_coe_pointedCone K.closure
 
 /-- The recession cone of a closed set is closed.
 

@@ -37,10 +37,12 @@ theory that Mathlib's `Mathlib.Analysis.Convex.Intrinsic` does not carry.
   `Convex.relint_subset_relint_of_subset_closure` (Corollary 6.5.2).
 * `Convex.relint_image` — Theorem 6.6, with `Convex.relint_smul` (6.6.1) and
   `Convex.relint_add` (6.6.2).
+* `Convex.relint_preimage`, `Convex.closure_preimage` — Theorem 6.7, inverse images.
 * `Convex.mem_relint_prod_iff` — Theorem 6.8, the description of `ri S` for `S` in a product
   by a projection and a slice.
 * `ConvexFn.relint_epi` — Lemma 7.3, the relative interior of an epigraph.
 * `ConvexFn.proper_clFn`, `ConvexFn.clFn_eq_of_mem_relint_dom` — Theorem 7.4.
+* `ConvexFn.tendsto_lscHull_along_segment_relint` — Theorem 7.5, the `ri` form.
 * `exists_separatesProperly_iff_disjoint_relint` — Theorem 11.3, proper separation in terms of
   relative interiors.
 
@@ -595,6 +597,70 @@ theorem closure_add_subset (D₁ D₂ : Set E) :
   rw [← Set.add_image_prod, ← Set.add_image_prod, ← closure_prod_eq]
   exact image_closure_subset_closure_image (by fun_prop)
 
+/-! ### Theorem 6.7: inverse images under a linear map -/
+
+omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
+/-- The set-level identity behind Theorem 6.7: the graph of `A` meets the horizontal slab
+`univ ×ˢ T` exactly over `A ⁻¹' T`, and projecting to the first factor recovers it. Stated for
+an arbitrary set `M` presented as the graph, so that the caller may keep whichever coercion of
+`LinearMap.graph A` it already has. -/
+theorem image_fst_inter_prod_univ {A : E →ₗ[ℝ] F} {M : Set (E × F)}
+    (hM : M = {p : E × F | p.2 = A p.1}) (T : Set F) :
+    ⇑(LinearMap.fst ℝ E F) '' (M ∩ (univ : Set E) ×ˢ T) = A ⁻¹' T := by
+  subst hM
+  ext x
+  constructor
+  · rintro ⟨⟨y, z⟩, ⟨hg, -, hz⟩, rfl⟩
+    have hg' : z = A y := hg
+    exact hg' ▸ hz
+  · intro hx
+    exact ⟨(x, A x), ⟨rfl, mem_univ _, hx⟩, rfl⟩
+
+/-- **Rockafellar, Theorem 6.7**: an inverse image under a linear map commutes with the relative
+interior, provided some point is carried into `ri D`.
+
+The proof is Rockafellar's: `A ⁻¹' D` is the projection of `graph A ∩ (univ ×ˢ D)`, so Corollary
+6.5.1 (intersecting with an affine set) and Theorem 6.6 (images) do all the work. The relative
+interior hypothesis is what feeds Corollary 6.5.1. -/
+theorem Convex.relint_preimage {D : Set F} (hD : Convex ℝ D) (A : E →ₗ[ℝ] F)
+    (h : (A ⁻¹' ri D).Nonempty) : ri (A ⁻¹' D) = A ⁻¹' ri D := by
+  obtain ⟨x₀, hx₀⟩ := h
+  set M : AffineSubspace ℝ (E × F) := Submodule.toAffineSubspace (LinearMap.graph A) with hMdef
+  have hMset : (M : Set (E × F)) = {p : E × F | p.2 = A p.1} := rfl
+  have hriS : ri ((univ : Set E) ×ˢ D) = (univ : Set E) ×ˢ ri D := by
+    rw [intrinsicInterior_prod_eq, intrinsicInterior_univ]
+  have hne : ((M : Set (E × F)) ∩ ri ((univ : Set E) ×ˢ D)).Nonempty := by
+    refine ⟨(x₀, A x₀), ?_, ?_⟩
+    · rw [hMset]; rfl
+    · rw [hriS]; exact ⟨mem_univ _, hx₀⟩
+  have hconv : Convex ℝ ((M : Set (E × F)) ∩ (univ : Set E) ×ˢ D) :=
+    M.convex.inter (convex_univ.prod hD)
+  have himg := Convex.relint_image hconv (LinearMap.fst ℝ E F)
+  rw [Convex.relint_inter_affine (convex_univ.prod hD) hne, hriS] at himg
+  rwa [image_fst_inter_prod_univ hMset, image_fst_inter_prod_univ hMset] at himg
+
+/-- **Rockafellar, Theorem 6.7**, the closure half. One inclusion is continuity of `A`; the other
+runs through the same projection of the graph. -/
+theorem Convex.closure_preimage {D : Set F} (hD : Convex ℝ D) (A : E →ₗ[ℝ] F)
+    (h : (A ⁻¹' ri D).Nonempty) : closure (A ⁻¹' D) = A ⁻¹' closure D := by
+  obtain ⟨x₀, hx₀⟩ := h
+  refine Subset.antisymm (closure_minimal (preimage_mono subset_closure)
+    (isClosed_closure.preimage A.continuous_of_finiteDimensional)) ?_
+  set M : AffineSubspace ℝ (E × F) := Submodule.toAffineSubspace (LinearMap.graph A) with hMdef
+  have hMset : (M : Set (E × F)) = {p : E × F | p.2 = A p.1} := rfl
+  have hriS : ri ((univ : Set E) ×ˢ D) = (univ : Set E) ×ˢ ri D := by
+    rw [intrinsicInterior_prod_eq, intrinsicInterior_univ]
+  have hne : ((M : Set (E × F)) ∩ ri ((univ : Set E) ×ˢ D)).Nonempty := by
+    refine ⟨(x₀, A x₀), ?_, ?_⟩
+    · rw [hMset]; rfl
+    · rw [hriS]; exact ⟨mem_univ _, hx₀⟩
+  have hsub : ⇑(LinearMap.fst ℝ E F) '' closure ((M : Set (E × F)) ∩ (univ : Set E) ×ˢ D)
+      ⊆ closure (⇑(LinearMap.fst ℝ E F) '' ((M : Set (E × F)) ∩ (univ : Set E) ×ˢ D)) :=
+    image_closure_subset_closure_image continuous_fst
+  rw [Convex.closure_inter_affine (convex_univ.prod hD) hne, closure_prod_eq, closure_univ,
+    image_fst_inter_prod_univ hMset, image_fst_inter_prod_univ hMset] at hsub
+  exact hsub
+
 /-! ### Theorem 6.8: slices of a convex set in a product -/
 
 /-- **Rockafellar, Theorem 6.8**: a point of a convex subset of a product is a relative interior
@@ -868,6 +934,51 @@ theorem ConvexFn.closedFn_of_dom_eq_coe (hf : ConvexFn f) (hp : Proper f)
     rwa [hdom] at hx
 
 end Functions
+
+/-! ### Theorem 7.5: limits along a segment from a relative interior point -/
+
+/-- **Rockafellar, Theorem 7.5**: the lower semicontinuous hull of `f` at `y` is the limit of `f`
+along the segment running from a *relative interior* point of `dom f` towards `y`.
+
+`Tdaf/Analysis/Convex/Closure.lean` proves the layer-B version
+(`tendsto_lscHull_along_segment`), where the segment must start at an interior point of `epi f`.
+Here Lemma 7.3 supplies the relative interior point of `epi f` that Rockafellar actually uses, and
+Theorem 6.1 replaces Mathlib's `Convex.combo_interior_closure_mem_interior`. The two proofs are
+otherwise identical. -/
+theorem ConvexFn.tendsto_lscHull_along_segment_relint (hf : ConvexFn f) {x : E}
+    (hx : x ∈ ri (dom f)) (y : E) :
+    Tendsto (fun a : ℝ => f ((1 - a) • x + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (lscHull f y)) := by
+  rw [tendsto_order]
+  refine ⟨fun b hb => ?_, fun b hb => ?_⟩
+  · filter_upwards [(tendsto_segment x y).eventually (lowerSemicontinuous_lscHull f y b hb)]
+      with a ha
+    exact lt_of_lt_of_le ha (lscHull_le f _)
+  · obtain ⟨β, hβ1, hβ2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hb
+    obtain ⟨γ, hγ1, hγ2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hβ2
+    have hβγ : β < γ := by exact_mod_cast hγ1
+    have hyβ : ((y, β) : E × ℝ) ∈ closure (epi f) := by
+      rw [← epi_lscHull]; exact hβ1.le
+    obtain ⟨α, hα, -⟩ :=
+      _root_.EReal.lt_iff_exists_real_btwn.1 (mem_dom.1 (intrinsicInterior_subset hx))
+    have hxα : ((x, α) : E × ℝ) ∈ ri (epi f) := by rw [hf.relint_epi]; exact ⟨hx, hα⟩
+    filter_upwards [(tendsto_affine_nhdsLT_one α β).eventually_lt_const hβγ,
+      eventually_mem_Ico_nhdsLT_one] with a hlt ha
+    have hcombo := Convex.segment_mem_relint hf.convex_epi hxα hyβ ha.1 ha.2
+    have hpair : (1 - a) • ((x, α) : E × ℝ) + a • (y, β)
+        = ((1 - a) • x + a • y, (1 - a) * α + a * β) := by
+      simp [smul_eq_mul]
+    rw [hpair] at hcombo
+    have hle : f ((1 - a) • x + a • y) ≤ (((1 - a) * α + a * β : ℝ) : EReal) :=
+      mk_mem_epi.1 (intrinsicInterior_subset hcombo)
+    exact lt_of_le_of_lt hle (lt_trans (by exact_mod_cast hlt) hγ2)
+
+/-- **Rockafellar, Theorem 7.5** for `clFn`. Properness is what rules out the exceptional branch
+of `clFn`; compare `clFn_eq_limit_along_segment`, which has to assume it directly. -/
+theorem ConvexFn.tendsto_clFn_along_segment_relint (hf : ConvexFn f) (hp : Proper f) {x : E}
+    (hx : x ∈ ri (dom f)) (y : E) :
+    Tendsto (fun a : ℝ => f ((1 - a) • x + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y)) := by
+  rw [hf.clFn_eq_lscHull hp]
+  exact hf.tendsto_lscHull_along_segment_relint hx y
 
 /-! ### Theorem 11.3 and Corollaries 11.6.1, 11.6.2 -/
 

@@ -3,7 +3,9 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Tdaf.Analysis.Convex.Operations.Basic
 import Tdaf.Analysis.Convex.Operations.Image
+import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Recession.Function
 
 /-!
@@ -370,6 +372,60 @@ theorem Convex.recessionCone_add (hC : Convex ℝ C) (hCne : C.Nonempty) (hD : C
   rwa [closure_prod_eq, image_coprod_id_prod,
     recessionCone_prod hCne.closure hDne.closure, image_coprod_id_prod] at this
 
+/-! ### Corollaries 9.1.2 and 9.1.3 -/
+
+omit [FiniteDimensional ℝ E] in
+/-- Rockafellar's hypothesis in **Corollary 9.1.2** implies the one in Corollary 9.1.1: if no
+direction of recession of `C` has its opposite among the directions of recession of `D`, the only
+cancelling pair is `(0, 0)`, which lies in both lineality spaces. -/
+theorem forall_mem_linealitySpace_of_neg_notMem
+    (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) :
+    ∀ z ∈ recessionCone C, ∀ w ∈ recessionCone D, z + w = 0 →
+      z ∈ linealitySpace C ∧ w ∈ linealitySpace D := by
+  intro z hz w hw hzw
+  have hw' : w = -z := by rw [eq_neg_iff_add_eq_zero, add_comm]; exact hzw
+  subst hw'
+  have hz0 : z = 0 := h z hz hw
+  subst hz0
+  refine ⟨zero_mem_linealitySpace C, ?_⟩
+  rw [neg_zero]
+  exact zero_mem_linealitySpace D
+
+/-- **Rockafellar, Corollary 9.1.2**: the sum of two closed convex sets is closed as soon as no
+direction of recession of one is the opposite of a direction of recession of the other. -/
+theorem Convex.isClosed_add_of_neg_notMem_recessionCone (hC : Convex ℝ C) (hCc : IsClosed C)
+    (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
+    (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) : IsClosed (C + D) :=
+  Convex.isClosed_add hC hCc hCne hD hDc hDne (forall_mem_linealitySpace_of_neg_notMem h)
+
+/-- **Rockafellar, Corollary 9.1.2**, the recession-cone identity. -/
+theorem Convex.recessionCone_add_of_neg_notMem_recessionCone (hC : Convex ℝ C) (hCc : IsClosed C)
+    (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
+    (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) :
+    recessionCone (C + D) = recessionCone C + recessionCone D := by
+  have key := Convex.recessionCone_add hC hCne hD hDne
+    (by rw [hCc.closure_eq, hDc.closure_eq]; exact forall_mem_linealitySpace_of_neg_notMem h)
+  rwa [hCc.closure_eq, hDc.closure_eq] at key
+
+/-- **Rockafellar, Corollary 9.1.2**, the special case the statement singles out: a bounded factor
+makes the hypothesis automatic, because a bounded set recedes in no direction. -/
+theorem Convex.isClosed_add_of_isBounded (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
+    (hCb : Bornology.IsBounded C) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty) :
+    IsClosed (C + D) := by
+  refine Convex.isClosed_add_of_neg_notMem_recessionCone hC hCc hCne hD hDc hDne fun z hz _ => ?_
+  rw [recessionCone_eq_zero_of_isBounded hCne hCb] at hz
+  exact hz
+
+/-- **Rockafellar, Corollary 9.1.3**: for pointed convex cones, whose recession cones are the
+cones themselves, Corollary 9.1.1's hypothesis becomes a hypothesis about the closures. -/
+theorem closure_add_coe_pointedCone (K L : PointedCone ℝ E)
+    (h : ∀ z ∈ closure (K : Set E), ∀ w ∈ closure (L : Set E), z + w = 0 →
+      z ∈ linealitySpace (closure (K : Set E)) ∧ w ∈ linealitySpace (closure (L : Set E))) :
+    closure ((K : Set E) + (L : Set E)) = closure (K : Set E) + closure (L : Set E) := by
+  refine Convex.closure_add_eq (K : ConvexCone ℝ E).convex ⟨0, K.zero_mem⟩
+    (L : ConvexCone ℝ E).convex ⟨0, L.zero_mem⟩ ?_
+  rwa [recessionCone_closure_coe_pointedCone, recessionCone_closure_coe_pointedCone]
+
 end Sum
 
 /-! ### Theorem 9.2: images of functions -/
@@ -496,5 +552,223 @@ theorem exists_mapLin_eq (hf : ConvexFn f) (hp : Proper f) (hc : IsClosed (epi f
   exact h₂ ▸ mk_mem_epi.1 hxρ
 
 end Fn
+
+/-! ### Theorem 9.3: sums of functions -/
+
+section AddFn
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f g : E → EReal}
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
+/-- A sum of two functions that never take `⊥` never takes `⊥`. -/
+theorem add_ne_bot (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) (x : E) : (f + g) x ≠ ⊥ := by
+  rw [Pi.add_apply]
+  exact _root_.EReal.add_ne_bot_iff.2 ⟨hf x, hg x⟩
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
+/-- Properness of a sum: properness of the summands plus one common domain point. -/
+theorem Proper.add (hf : Proper f) (hg : Proper g) (hne : (dom (f + g)).Nonempty) :
+    Proper (f + g) := ⟨hne, add_ne_bot hf.ne_bot hg.ne_bot⟩
+
+omit [FiniteDimensional ℝ E] in
+/-- **Rockafellar, Theorem 9.3**, the closed case: the sum of two closed proper convex functions
+is again closed proper convex, as soon as it is not identically `+∞`.
+
+Lower semicontinuity of the sum is Mathlib's `LowerSemicontinuous.add'`, whose explicit continuity
+hypothesis is exactly what properness supplies: neither summand is `⊥`, so `EReal` addition is
+continuous at every pair of values. -/
+theorem ClosedProperConvexFn.add (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (hne : (dom (f + g)).Nonempty) : ClosedProperConvexFn (f + g) := by
+  have hbot : ∀ x, (f + g) x ≠ ⊥ := add_ne_bot hf.proper.ne_bot hg.proper.ne_bot
+  refine ⟨hf.convex.add hg.convex hf.proper.ne_bot hg.proper.ne_bot, ?_, ⟨hne, hbot⟩⟩
+  rw [closedFn_iff_lowerSemicontinuous hbot]
+  exact LowerSemicontinuous.add' hf.lowerSemicontinuous hg.lowerSemicontinuous fun x =>
+    _root_.EReal.continuousAt_add (Or.inr (hg.proper.ne_bot x)) (Or.inl (hf.proper.ne_bot x))
+
+omit [FiniteDimensional ℝ E] in
+/-- **Rockafellar, Theorem 9.3**, the recession function of a sum.
+
+Both sides are limits of difference quotients based at one common point of `dom f ∩ dom g`
+(Theorem 8.5), and `Tdaf.EReal.coe_mul_sub_add_coe_mul_sub` says the quotients themselves add up.
+Uniqueness of limits finishes; closedness is what makes a single base point enough. -/
+theorem recessionFn_add (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (hne : (dom (f + g)).Nonempty) :
+    recessionFn (f + g) = recessionFn f + recessionFn g := by
+  obtain ⟨x, hx⟩ := hne
+  have hsum : ClosedProperConvexFn (f + g) := hf.add hg ⟨x, hx⟩
+  have hdom : dom (f + g) = dom f ∩ dom g := dom_add hf.proper.ne_bot hg.proper.ne_bot
+  have hxfg : x ∈ dom f ∩ dom g := hdom ▸ hx
+  obtain ⟨p, hp⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hf.proper.ne_bot x) hxfg.1
+  obtain ⟨q, hq⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hg.proper.ne_bot x) hxfg.2
+  funext y
+  have h1 := tendsto_coe_inv_mul_sub_atTop hf.convex hf.isClosed_epi hf.proper.ne_bot hxfg.1 y
+  have h2 := tendsto_coe_inv_mul_sub_atTop hg.convex hg.isClosed_epi hg.proper.ne_bot hxfg.2 y
+  have h3 := tendsto_coe_inv_mul_sub_atTop hsum.convex hsum.isClosed_epi hsum.proper.ne_bot hx y
+  have hcont : ContinuousAt (fun r : EReal × EReal => r.1 + r.2)
+      (recessionFn f y, recessionFn g y) :=
+    _root_.EReal.continuousAt_add (Or.inr (recessionFn_ne_bot hg.proper y))
+      (Or.inl (recessionFn_ne_bot hf.proper y))
+  have hadd : Tendsto (fun a : ℝ => ((a⁻¹ : ℝ) : EReal) * (f (x + a • y) - f x)
+      + ((a⁻¹ : ℝ) : EReal) * (g (x + a • y) - g x)) atTop
+      (𝓝 (recessionFn f y + recessionFn g y)) := hcont.tendsto.comp (h1.prodMk_nhds h2)
+  have heq : (fun a : ℝ => ((a⁻¹ : ℝ) : EReal) * (f (x + a • y) - f x)
+      + ((a⁻¹ : ℝ) : EReal) * (g (x + a • y) - g x))
+      =ᶠ[atTop] fun a : ℝ => ((a⁻¹ : ℝ) : EReal) * ((f + g) (x + a • y) - (f + g) x) := by
+    filter_upwards [eventually_gt_atTop (0 : ℝ)] with a ha
+    have hx0 : (f + g) x = ((p + q : ℝ) : EReal) := by
+      rw [Pi.add_apply, hp, hq, _root_.EReal.coe_add]
+    rw [Pi.add_apply f g (x + a • y), hx0, hp, hq]
+    exact Tdaf.EReal.coe_mul_sub_add_coe_mul_sub (by positivity) (hf.proper.ne_bot _)
+      (hg.proper.ne_bot _) p q
+  exact tendsto_nhds_unique h3 (Filter.Tendsto.congr' heq hadd)
+
+/-- **Rockafellar, Theorem 9.3**, the closure formula at the level of `lscHull`: when the two
+effective domains share a relative interior point, the lower semicontinuous hull of a sum is the
+sum of the hulls.
+
+The proof is the book's. Theorem 7.5 turns each of the three hulls at `y` into a limit along one
+and the same segment, and Theorem 6.5 is what puts the common point in `ri (dom (f + g))`. -/
+theorem lscHull_add (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
+    {x : E} (hxf : x ∈ ri (dom f)) (hxg : x ∈ ri (dom g)) :
+    lscHull (f + g) = lscHull f + lscHull g := by
+  have hsum : ConvexFn (f + g) := hf.add hg hpf.ne_bot hpg.ne_bot
+  have hx : x ∈ ri (dom (f + g)) := by
+    rw [dom_add hpf.ne_bot hpg.ne_bot,
+      Convex.relint_inter hf.convex_dom hg.convex_dom ⟨x, hxf, hxg⟩]
+    exact ⟨hxf, hxg⟩
+  funext y
+  have h1 := hf.tendsto_lscHull_along_segment_relint hxf y
+  have h2 := hg.tendsto_lscHull_along_segment_relint hxg y
+  have h3 := hsum.tendsto_lscHull_along_segment_relint hx y
+  have hcont : ContinuousAt (fun r : EReal × EReal => r.1 + r.2) (lscHull f y, lscHull g y) :=
+    _root_.EReal.continuousAt_add (Or.inr (hg.lscHull_ne_bot hpg y))
+      (Or.inl (hf.lscHull_ne_bot hpf y))
+  exact tendsto_nhds_unique h3 (hcont.tendsto.comp (h1.prodMk_nhds h2))
+
+/-- **Rockafellar, Theorem 9.3**, the closure formula: `cl (f + g) = cl f + cl g` when the
+effective domains share a relative interior point. -/
+theorem clFn_add (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
+    {x : E} (hxf : x ∈ ri (dom f)) (hxg : x ∈ ri (dom g)) :
+    clFn (f + g) = clFn f + clFn g := by
+  have hxfd : x ∈ dom f := intrinsicInterior_subset hxf
+  have hxgd : x ∈ dom g := intrinsicInterior_subset hxg
+  have hne : (dom (f + g)).Nonempty := by
+    refine ⟨x, ?_⟩
+    rw [dom_add hpf.ne_bot hpg.ne_bot]
+    exact ⟨hxfd, hxgd⟩
+  have hsum : ConvexFn (f + g) := hf.add hg hpf.ne_bot hpg.ne_bot
+  rw [hsum.clFn_eq_lscHull (Proper.add hpf hpg hne), hf.clFn_eq_lscHull hpf,
+    hg.clFn_eq_lscHull hpg]
+  exact lscHull_add hf hpf hg hpg hxf hxg
+
+end AddFn
+
+/-! ### Theorem 9.4: pointwise suprema -/
+
+section SupFn
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {ι : Type*} {f : ι → E → EReal}
+
+omit [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
+/-- **Rockafellar, Theorem 9.4**, the closed case: a pointwise supremum of closed convex functions
+is closed, because its epigraph is an intersection of epigraphs. Nothing else is needed. -/
+theorem isClosed_epi_iSup (hc : ∀ i, IsClosed (epi (f i))) :
+    IsClosed (epi fun z => ⨆ i, f i z) := by
+  rw [epi_iSup]
+  exact isClosed_iInter hc
+
+omit [FiniteDimensional ℝ E] in
+/-- **Rockafellar, Theorem 9.4**, the recession function of a supremum. This is Corollary 8.3.3
+read through `epi_recessionFn`. -/
+theorem recessionFn_iSup (hconv : ∀ i, ConvexFn (f i)) (hc : ∀ i, IsClosed (epi (f i)))
+    (hne : (epi fun z => ⨆ i, f i z).Nonempty) :
+    recessionFn (fun z => ⨆ i, f i z) = fun z => ⨆ i, recessionFn (f i) z := by
+  rw [epi_iSup] at hne
+  refine epi_injective ?_
+  rw [epi_recessionFn, epi_iSup, epi_iSup,
+    recessionCone_iInter (fun i => (hconv i).convex_epi) hc hne]
+  exact iInter_congr fun i => (epi_recessionFn (f i)).symm
+
+/-- **Rockafellar, Theorem 9.4**, the closure formula at the level of `lscHull`.
+
+Lemma 7.3 supplies the common relative interior point that Theorem 6.5 needs: if `x` lies in every
+`ri (dom fᵢ)` and the supremum is finite there, then `(x, μ)` lies in every `ri (epi fᵢ)` for any
+real `μ` above the supremum. -/
+theorem lscHull_iSup (hconv : ∀ i, ConvexFn (f i)) {x : E} (hx : ∀ i, x ∈ ri (dom (f i)))
+    (hfin : (⨆ i, f i x) < ⊤) :
+    lscHull (fun z => ⨆ i, f i z) = fun z => ⨆ i, lscHull (f i) z := by
+  obtain ⟨μ, hμ, -⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hfin
+  refine epi_injective ?_
+  rw [epi_lscHull, epi_iSup, epi_iSup,
+    Convex.closure_iInter (fun i => (hconv i).convex_epi)
+      ⟨(x, μ), mem_iInter.2 fun i => by
+        rw [(hconv i).relint_epi]
+        exact ⟨hx i, lt_of_le_of_lt (le_iSup (fun j => f j x) i) hμ⟩⟩]
+  exact iInter_congr fun i => (epi_lscHull (f i)).symm
+
+end SupFn
+
+/-! ### Theorem 9.5: composition with a linear map -/
+
+section CompLinFn
+
+variable {E G : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G] {g : G → EReal}
+
+omit [FiniteDimensional ℝ G] in
+/-- **Rockafellar, Theorem 9.5**, the closed case: `g A` is closed whenever `g` is, with no
+relative interior hypothesis, because `epi (g A)` is a preimage of `epi g` under a continuous
+map. -/
+theorem isClosed_epi_compLin (hc : IsClosed (epi g)) (A : E →ₗ[ℝ] G) :
+    IsClosed (epi (compLin g A)) := by
+  rw [epi_compLin]
+  exact hc.preimage (prodMapId A).continuous_of_finiteDimensional
+
+omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ G] in
+/-- **Rockafellar, Theorem 9.5**, the recession function of a composition: `(gA)0⁺ = (g0⁺)A`.
+This is Corollary 8.3.4 read through `epi_recessionFn`. -/
+theorem recessionFn_compLin (hg : ConvexFn g) (hc : IsClosed (epi g)) (A : E →ₗ[ℝ] G)
+    (hne : (dom (compLin g A)).Nonempty) :
+    recessionFn (compLin g A) = compLin (recessionFn g) A := by
+  refine epi_injective ?_
+  rw [epi_recessionFn, epi_compLin, epi_compLin, epi_recessionFn]
+  refine recessionCone_preimage (prodMapId A) hg.convex_epi hc ?_
+  obtain ⟨x, hx⟩ := hne
+  obtain ⟨μ, hμ, -⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 (mem_dom.1 hx)
+  exact ⟨(x, μ), mk_mem_epi.2 hμ.le⟩
+
+omit [FiniteDimensional ℝ E] in
+/-- The relative interior hypothesis of **Theorem 9.5**, transported to epigraphs by Lemma 7.3. -/
+theorem preimage_relint_epi_nonempty (hg : ConvexFn g) (A : E →ₗ[ℝ] G) {x : E}
+    (hx : A x ∈ ri (dom g)) : ((prodMapId A) ⁻¹' ri (epi g)).Nonempty := by
+  obtain ⟨μ, hμ, -⟩ :=
+    _root_.EReal.lt_iff_exists_real_btwn.1 (mem_dom.1 (intrinsicInterior_subset hx))
+  refine ⟨(x, μ), ?_⟩
+  rw [Set.mem_preimage, hg.relint_epi]
+  exact ⟨hx, hμ⟩
+
+/-- **Rockafellar, Theorem 9.5**, the closure formula at the level of `lscHull`: `cl (g A) =
+(cl g) A` as soon as some `A x` is a relative interior point of `dom g`. This is Theorem 6.7
+applied to `epi g`. -/
+theorem lscHull_compLin (hg : ConvexFn g) (A : E →ₗ[ℝ] G) {x : E} (hx : A x ∈ ri (dom g)) :
+    lscHull (compLin g A) = compLin (lscHull g) A := by
+  refine epi_injective ?_
+  rw [epi_lscHull, epi_compLin, epi_compLin, epi_lscHull]
+  exact Convex.closure_preimage hg.convex_epi (prodMapId A)
+    (preimage_relint_epi_nonempty hg A hx)
+
+/-- **Rockafellar, Theorem 9.5**, the closure formula for `clFn`. -/
+theorem clFn_compLin (hg : ConvexFn g) (hp : Proper g) (A : E →ₗ[ℝ] G) {x : E}
+    (hx : A x ∈ ri (dom g)) : clFn (compLin g A) = compLin (clFn g) A := by
+  have hcomp : ConvexFn (compLin g A) := convexFn_compLin A hg
+  have hpc : Proper (compLin g A) :=
+    ⟨⟨x, by rw [dom_compLin, Set.mem_preimage]; exact intrinsicInterior_subset hx⟩,
+      fun z => by rw [compLin_apply]; exact hp.ne_bot _⟩
+  rw [hcomp.clFn_eq_lscHull hpc, hg.clFn_eq_lscHull hp]
+  exact lscHull_compLin hg A hx
+
+end CompLinFn
 
 end Tdaf.ConvexAnalysis

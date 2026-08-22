@@ -432,6 +432,50 @@ theorem coe_add_sub (p q : ℝ) (u : EReal) :
   change ((p : EReal) + (q : EReal)) + -u = ((p : EReal) + -u) + (q : EReal)
   rw [add_assoc, add_assoc, add_comm ((q : ℝ) : EReal) (-u)]
 
+/-- **The difference quotient of a sum splits.** For `c > 0`, reals `p`, `q` and `u`, `v` never
+`⊥`, `c * (u - p) + c * (v - q) = c * ((u + v) - (p + q))`.
+
+This is the one piece of `EReal` arithmetic behind the recession-function half of Rockafellar's
+Theorem 9.3: the difference quotients defining `f0⁺` and `g0⁺` add up to the one defining
+`(f + g)0⁺`. Neither `⊥` can occur on either side, so the identity is the real one wherever both
+values are real, and `⊤` on both sides otherwise. -/
+theorem coe_mul_sub_add_coe_mul_sub {c : ℝ} (hc : 0 < c) {u v : EReal} (hu : u ≠ ⊥) (hv : v ≠ ⊥)
+    (p q : ℝ) :
+    (c : EReal) * (u - (p : ℝ)) + (c : EReal) * (v - (q : ℝ))
+      = (c : EReal) * ((u + v) - ((p + q : ℝ) : EReal)) := by
+  have hsubne : ∀ {w : EReal}, w ≠ ⊥ → ∀ r : ℝ, w - (r : ℝ) ≠ ⊥ := by
+    intro w hw r
+    rw [sub_eq_add_neg, ← _root_.EReal.coe_neg]
+    exact _root_.EReal.add_ne_bot_iff.2 ⟨hw, _root_.EReal.coe_ne_bot _⟩
+  have hcn : ¬ ((c : EReal) < 0) := by
+    simp only [not_lt]
+    exact_mod_cast hc.le
+  have hmulne : ∀ {w : EReal}, w ≠ ⊥ → (c : EReal) * w ≠ ⊥ := by
+    intro w hw hbot
+    rw [_root_.EReal.mul_eq_bot] at hbot
+    rcases hbot with ⟨h1, -⟩ | ⟨-, h2⟩ | ⟨h3, -⟩ | ⟨h4, -⟩
+    · exact _root_.EReal.coe_ne_bot c h1
+    · exact hw h2
+    · exact _root_.EReal.coe_ne_top c h3
+    · exact hcn h4
+  rcases eq_top_or_lt_top u with hut | hut
+  · have huv : u + v = ⊤ := by rw [hut]; exact _root_.EReal.top_add_of_ne_bot hv
+    rw [huv, hut, _root_.EReal.top_sub_coe, _root_.EReal.top_sub_coe,
+      _root_.EReal.coe_mul_top_of_pos hc,
+      _root_.EReal.top_add_of_ne_bot (hmulne (hsubne hv q))]
+  rcases eq_top_or_lt_top v with hvt | hvt
+  · have huv : u + v = ⊤ := by rw [hvt]; exact _root_.EReal.add_top_of_ne_bot hu
+    rw [huv, hvt, _root_.EReal.top_sub_coe, _root_.EReal.top_sub_coe,
+      _root_.EReal.coe_mul_top_of_pos hc,
+      _root_.EReal.add_top_of_ne_bot (hmulne (hsubne hu p))]
+  obtain ⟨r, hr⟩ := exists_coe_of_ne_bot_of_lt_top hu hut
+  obtain ⟨s, hs⟩ := exists_coe_of_ne_bot_of_lt_top hv hvt
+  rw [hr, hs, ← _root_.EReal.coe_add, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub,
+    ← _root_.EReal.coe_sub, ← _root_.EReal.coe_mul, ← _root_.EReal.coe_mul,
+    ← _root_.EReal.coe_mul, ← _root_.EReal.coe_add]
+  norm_cast
+  ring
+
 /-- **Two slack inequalities cannot compensate each other.** If `u` and `v` are bounded below by
 reals `p` and `q`, and their sum is bounded above by `p + q`, then each is pinned to its own
 bound.

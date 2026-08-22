@@ -81,6 +81,12 @@ noncomputable def mapLin (A : E →ₗ[ℝ] G) (f : E → EReal) : G → EReal :
 (Rockafellar §5, Theorem 5.7). -/
 def compLin (g : G → EReal) (A : E →ₗ[ℝ] G) : E → EReal := g ∘ A
 
+/-- The map `(x, μ) ↦ (A x, μ)` on epigraph space, along which `epi (g A)` is the pullback of
+`epi g`. Every statement about `compLin` that goes through epigraphs is a statement about this
+map, so it is named. -/
+abbrev prodMapId (A : E →ₗ[ℝ] G) : E × ℝ →ₗ[ℝ] G × ℝ :=
+  A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ)
+
 variable {A : E →ₗ[ℝ] G} {f : E → EReal} {g : G → EReal} {x : E} {y : G} {z : EReal}
 
 @[simp] theorem compLin_apply (g : G → EReal) (A : E →ₗ[ℝ] G) (x : E) :
@@ -172,7 +178,7 @@ theorem dom_mapLin (A : E →ₗ[ℝ] G) (f : E → EReal) : dom (mapLin A f) = 
 /-- The epigraph of an inverse image is a preimage: `epi (g A)` is `epi g` pulled back along
 `(x, μ) ↦ (A x, μ)`. This is the whole proof of the easy half of Theorem 5.7. -/
 theorem epi_compLin (g : G → EReal) (A : E →ₗ[ℝ] G) :
-    epi (compLin g A) = A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) ⁻¹' epi g := rfl
+    epi (compLin g A) = prodMapId A ⁻¹' epi g := rfl
 
 /-- **Rockafellar, Theorem 5.7** (inverse images). The inverse image of a convex function under a
 linear map is convex. -/
