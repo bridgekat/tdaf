@@ -800,4 +800,3 @@ theorem tendsto_along_segment_of_closed_proper (hf : ClosedProperConvexFn f)
 end SegmentLimit
 
 end Tdaf.ConvexAnalysis
-
