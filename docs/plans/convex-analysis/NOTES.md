@@ -210,6 +210,21 @@ functions. `Lattice.lean` gets its `CompleteLattice` from `GaloisCoinsertion.lif
 `levelOneLift`; `hom`, `posHomogeneous_hom`, `convexFn_hom`, `hom_isGreatest`; `homCone` and
 `epi_hom : epi (hom f) = homCone f ∪ {0} ×ˢ Ici 0` (**the cone is not the epigraph**); `homEpiCone`.
 
+### `Tdaf/Analysis/Convex/RelativeInterior.lean`
+
+All of §6 except Cor 6.8.1 and Thm 6.9, plus the §7 results whose proofs need `ri`. Two additions
+worth knowing about:
+
+* **Thm 6.7** — `Convex.relint_preimage` and `Convex.closure_preimage`, with the set identity
+  `image_fst_inter_prod_univ` (`fst '' (graph A ∩ univ ×ˢ T) = A ⁻¹' T`). Rockafellar's proof
+  transported verbatim: `A ⁻¹' C` is a projection of an intersection with the graph of `A`, so
+  Corollary 6.5.1 and Theorem 6.6 do all the work. Theorem 9.5 is its main consumer, applied to
+  `epi g`.
+* **Thm 7.5, `ri` form** — `ConvexFn.tendsto_lscHull_along_segment_relint` and its `clFn`
+  companion. `Closure.lean` has the layer-B form with `interior (epi f)`; this one uses Lemma 7.3
+  and Theorem 6.1 instead of `Convex.combo_interior_closure_mem_interior`, and is Rockafellar's
+  own statement. Theorem 9.3 is its main consumer.
+
 ### `Tdaf/Analysis/Convex/Closure.lean`
 
 `lscHull f := ofEpi (closure (epi f))` with `epi_lscHull` **unconditional**;
@@ -258,7 +273,10 @@ Thm 8.1 (layer A), Thm 8.2/8.3 and Cors 8.3.2–8.3.4 (**layer B**), `isClosed_r
 (**layer B**), Thm 8.4/Cor 8.4.1 (layer D); bridges to Mathlib's `asymptoticCone`. Also
 `eq_add_inter_of_isCompl_of_le`, `recessionCone_preimage_affine`, `recessionCone_coe_submodule`,
 and the product lemmas `prod_recessionCone_subset` / `recessionCone_prod` / `linealitySpace_prod`
-(the last two need both factors nonempty).
+(the last two need both factors nonempty). `zero_mem_linealitySpace`, and
+`recessionCone_coe_pointedCone` / `recessionCone_closure_coe_pointedCone` — a pointed convex cone,
+and the closure of one, is its own recession cone, which is what makes Corollary 9.1.3 an instance
+of Corollary 9.1.1.
 
 ### `Tdaf/Analysis/Convex/Duality/Pairing.lean`
 
@@ -333,6 +351,31 @@ closure_add_eq, recessionCone_add}`, via `image_coprod_id_prod` and
 `forall_mem_linealitySpace_prod`. **Thm 9.2** as `closedProperConvexFn_mapLin` (epigraph identity
 *and* `ClosedProperConvexFn`) with `exists_mapLin_eq` as the attainment reading, and
 `mk_zero_mem_linealitySpace_epi_iff` transporting the hypothesis to the epigraph.
+
+**Cor 9.1.2** as `Convex.{isClosed_add_of_neg_notMem_recessionCone,
+recessionCone_add_of_neg_notMem_recessionCone, isClosed_add_of_isBounded}`, through the bridge
+`forall_mem_linealitySpace_of_neg_notMem`; **Cor 9.1.3** as `closure_add_coe_pointedCone`, through
+`recessionCone_closure_coe_pointedCone` (`Recession/Cone.lean`).
+
+The function half of §9 is three separate arguments:
+
+* **Thm 9.3** — `ClosedProperConvexFn.add` (closed case), `recessionFn_add`, `lscHull_add` and
+  `clFn_add` (the `ri` case), plus the two service lemmas `add_ne_bot` and `Proper.add`. The sum
+  is the one case that is *not* an epigraph operation, so `lscHull_add` goes through Theorem 7.5:
+  all three hulls at `y` are limits along one segment. `recessionFn_add` goes through Theorem
+  8.5's difference quotients based at a common point, glued by
+  `Tdaf.EReal.coe_mul_sub_add_coe_mul_sub`.
+* **Thm 9.4** — `isClosed_epi_iSup`, `recessionFn_iSup`, `lscHull_iSup`. `epi (sup fᵢ) = ⋂ epi fᵢ`,
+  so these are `epi_injective` on top of Corollary 8.3.3 and Theorem 6.5 respectively. The common
+  relative interior point of the epigraphs comes from Lemma 7.3.
+* **Thm 9.5** — `isClosed_epi_compLin`, `recessionFn_compLin`, `lscHull_compLin`, `clFn_compLin`,
+  with `preimage_relint_epi_nonempty` transporting the hypothesis. `epi (g A)` is the preimage of
+  `epi g` under `prodMapId A` (`Operations/Image.lean`), so these are `epi_injective` on top of
+  Corollary 8.3.4 and Theorem 6.7.
+
+Layers are *not* uniform across the section: the recession halves of 9.3, 9.4 and 9.5 and the
+closed cases carry `omit [FiniteDimensional …]`, because only the `ri` halves call Theorem 6.5,
+6.7 or 7.5.
 
 ### `Tdaf/Analysis/Convex/Recession/Conjugate.lean`
 
@@ -788,6 +831,26 @@ here.
     `span`, and rewriting in that type times out. Take `V : Submodule ℝ E` as a variable with
     `hV : V = Submodule.span ℝ …` as a hypothesis, and let the caller produce an opaque one with
     `obtain ⟨V, hV⟩ : ∃ V, V = … := ⟨_, rfl⟩`. Same proofs, no timeouts.
+
+53. **`Submodule.toAffineSubspace` is a coercion that type ascription will not trigger.**
+    `set M : AffineSubspace ℝ V := (LinearMap.graph A : Submodule ℝ V)` is a type error, not a
+    coercion — the ascription binds to the inner term. Write
+    `Submodule.toAffineSubspace (LinearMap.graph A)` explicitly. The two `Set` coercions
+    (`AffineSubspace → Set` and `Submodule → Set`) then agree by `rfl`, so
+    `have hMset : (M : Set V) = {p | p.2 = A p.1} := rfl` typechecks, but unification will *not*
+    find `?M : AffineSubspace` from a goal mentioning the submodule's coercion. Pass `M` by hand.
+
+54. **State a `rw` helper against the coercion that the caller's lemma produces.**
+    `Convex.relint_image hC (LinearMap.fst ℝ E F)` yields `⇑(LinearMap.fst ℝ E F) '' …`, not
+    `Prod.fst '' …`. Those are defeq but not syntactically equal, so a helper stated with
+    `Prod.fst` will not fire in a `rw`. `image_fst_inter_prod_univ` is stated with
+    `⇑(LinearMap.fst ℝ E F)` for exactly this reason.
+
+55. **`epi_injective` is usually the whole proof.** Every §9 result about a *set* operation on
+    epigraphs — supremum (`⋂`), composition with a linear map (preimage) — reduces to a one-line
+    `refine epi_injective ?_; rw [epi_lscHull, epi_iSup, …]`. Reach for the segment-limit machinery
+    only when the operation is *not* a set operation on epigraphs, which among §9's cases means
+    only the sum.
 
 ---
 

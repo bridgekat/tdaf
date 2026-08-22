@@ -51,8 +51,16 @@ The surface then owes a proof that for convex `f` on `ℝⁿ` this agrees with t
 | `exists_affine_le_of_closed_proper`, `eq_bot_of_lsc_of_eq_bot` | — (replace Thm 7.2/7.4 at layer C) |
 | `ClosedFn.proper_of_proper` : `Proper f → Proper (clFn f)` | **Thm 7.4** *(finite-dim)* |
 | `clFn_eq_of_mem_relint_dom` | Thm 7.4 *(finite-dim)* |
-| `clFn_eq_limit_along_segment` | **Thm 7.5**, Cor 7.5.1 |
+| `tendsto_lscHull_along_segment`, `clFn_eq_limit_along_segment`, `tendsto_along_segment_of_closed_proper` | **Thm 7.5**, Cor 7.5.1 |
 | `relint_lt_level`, `closure_level_eq` | Thm 7.6 |
+
+**Theorem 7.5 has two forms, and only one of them lives here.** The layer-B form proved in this
+file starts the segment at an *interior* point of `epi f`, because relative interiors are
+finite-dimensional. Rockafellar's own hypothesis is `x ∈ ri (dom f)`, and that form —
+`ConvexFn.tendsto_lscHull_along_segment_relint` — is in `RelativeInterior.lean`, with Lemma 7.3
+supplying the relative interior point of the epigraph and Theorem 6.1 replacing Mathlib's
+`Convex.combo_interior_closure_mem_interior`. The `ri` form is what Theorem 9.3 consumes; neither
+form subsumes the other, since `interior (epi f)` can be empty when `ri (epi f)` is not.
 
 **Theorem 7.4 does not generalise to layer C**, and in particular a proper convex function need not
 have a continuous affine minorant there: a
