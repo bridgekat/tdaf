@@ -299,6 +299,35 @@ theorem exists_one_lt_smul_mem_of_mem_relint {z : E} (hz : z ∈ ri C)
   calc ‖z - x‖ * (ε / (2 * ‖z - x‖)) = ε / 2 := by field_simp
     _ < ε := by linarith
 
+omit [FiniteDimensional ℝ E] in
+/-- **A linear function that attains its maximum over `C` at a relative interior point is constant
+on `C`** — the half of Corollary 11.6.2 that does not need separation, and the step Theorem 16.3
+turns on.
+
+Prolonging the segment from `x` past `z` stays in `C`, and a linear function cannot be maximal at
+an interior point of a segment without being constant along it. Convexity of `C` is *not* used —
+`exists_one_lt_smul_mem_of_mem_relint` already carries it — and neither is continuity of `φ`. -/
+theorem eq_of_isMaxOn_of_mem_relint {φ : E →ₗ[ℝ] ℝ} {z : E}
+    (hz : z ∈ ri C) (hmax : ∀ x ∈ C, φ x ≤ φ z) : ∀ x ∈ C, φ x = φ z := by
+  intro x hx
+  refine le_antisymm (hmax x hx) ?_
+  obtain ⟨μ, hμ, hw⟩ := exists_one_lt_smul_mem_of_mem_relint hz (subset_affineSpan ℝ C hx)
+  have hval : φ ((1 - μ) • x + μ • z) = (1 - μ) * φ x + μ * φ z := by
+    simp [map_add, map_smul]
+  have hcon := hmax _ hw
+  rw [hval] at hcon
+  nlinarith [hcon, hμ]
+
+omit [FiniteDimensional ℝ E] in
+/-- The form Theorem 16.3 uses: a linear function that is `≤ 0` on `C` and vanishes at a relative
+interior point vanishes on all of `C`. -/
+theorem eq_zero_of_nonpos_of_mem_relint {φ : E →ₗ[ℝ] ℝ} {z : E}
+    (hz : z ∈ ri C) (hnonpos : ∀ x ∈ C, φ x ≤ 0) (hz0 : φ z = 0) : ∀ x ∈ C, φ x = 0 := by
+  intro x hx
+  have hconst :=
+    eq_of_isMaxOn_of_mem_relint hz (fun w hw => by rw [hz0]; exact hnonpos w hw) x hx
+  rwa [hz0] at hconst
+
 /-- **Rockafellar, Theorem 6.3**: `cl (ri C) = cl C`. -/
 theorem Convex.closure_relint (hC : Convex ℝ C) : closure (ri C) = closure C := by
   refine Subset.antisymm (closure_mono intrinsicInterior_subset) ?_

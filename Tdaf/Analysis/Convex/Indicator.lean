@@ -47,6 +47,16 @@ theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥ := by
 @[simp] theorem dom_indicatorFn (s : Set E) : dom (indicatorFn s) = s := by
   ext x; by_cases hx : x ∈ s <;> simp [hx]
 
+/-- **Adding indicators intersects the sets.** `0 + 0 = 0`, and `⊤` absorbs everything an
+indicator can be. This is why every "intersection" corollary in the book — Cor 16.4.1's polar of
+an intersection, Cor 23.8.1's normal cone to an intersection — is the indicator instance of a
+statement about sums, with no side condition. -/
+@[simp] theorem indicatorFn_add (s t : Set E) :
+    indicatorFn s + indicatorFn t = indicatorFn (s ∩ t) := by
+  funext x
+  by_cases hs : x ∈ s <;> by_cases ht : x ∈ t <;>
+    simp [Pi.add_apply, hs, ht]
+
 /-- The epigraph of an indicator function is a "half-cylinder with cross-section `s`"
 (Rockafellar §4). -/
 theorem epi_indicatorFn (s : Set E) : epi (indicatorFn s) = s ×ˢ Ici (0 : ℝ) := by

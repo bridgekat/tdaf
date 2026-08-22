@@ -1,0 +1,286 @@
+/-
+Copyright (c) 2026 TDAF contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: TDAF contributors
+-/
+import Tdaf.Analysis.Convex.Duality.Exact
+import Tdaf.Analysis.Convex.Duality.Ops
+import Tdaf.Analysis.Convex.Recession.Closedness
+import Tdaf.Analysis.Convex.Recession.Conjugate
+import Tdaf.Analysis.Convex.RelativeInterior
+
+/-!
+# The relative-interior constraint qualification
+
+`Duality/Exact.lean` names the *conclusions* `IsExactImage` and `IsExactSum`; this file supplies
+the first sufficient condition for each, Rockafellar's own hypothesis in **Theorems 16.3 and
+16.4**:
+
+```
+A ⁻¹' ri (dom g) ≠ ∅        and        ri (dom f) ∩ ri (dom g) ≠ ∅.
+```
+
+Until now both were unpopulated interfaces — Theorems 16.3, 16.4, 23.8 and 23.9 were proved
+against them, but nothing produced one. `IsExactImage.of_relint` and `IsExactSum.of_relint` are
+what discharge them.
+
+## Main results
+
+* `IsExactImage.of_relint` — **Rockafellar, Theorem 16.3**: if `g` is closed proper convex and the
+  range of `A` meets `ri (dom g)`, then `g` pulls back exactly along `A`.
+* `IsExactSum.of_relint` — **Rockafellar, Theorem 16.4**: two closed proper convex functions whose
+  effective domains share a relative interior point add exactly.
+
+## Design notes
+
+**Neither proof is an argument; both are assemblies.** Every ingredient is already proved
+elsewhere, and the two constructors differ only in which §9 theorem they invoke — Theorem 9.2 for
+images, Corollary 9.1.1 for sums.
+
+For the image rule:
+
+1. `conj_compLin_eq_clFn_mapLin` (§16) gives `(g A)* = cl (A' g*)` for closed convex `g`,
+   unconditionally.
+2. `closedProperConvexFn_mapLin` — **Theorem 9.2** — says the closure is redundant, and the
+   infimum defining `A' g*` is attained, provided `g*` is *constant* along every direction of
+   recession that `A'` kills.
+3. `constancySpace_conj` — **Theorem 13.3** — rewrites that hypothesis about `g*` as a hypothesis
+   about `dom g`: "`g*` recedes in the direction `z`" is "`⟨·, z⟩ ≤ 0` on `dom g`", and "`g*` is
+   constant along `z`" is "`⟨·, z⟩ = 0` on `dom g`".
+4. `eq_zero_of_nonpos_of_mem_relint` (§6) closes the gap between those two: a linear function that
+   is `≤ 0` on a convex set and vanishes at a *relative interior* point vanishes identically on it.
+
+Adjointness supplies the one link between (3) and (4): `A' z = 0` forces `⟨A x₀, z⟩ = ⟨x₀, A' z⟩`
+to vanish, and `A x₀ ∈ ri (dom g)` is exactly the relative interior point step (4) asks for.
+
+For the sum rule the same four steps appear with `conj_add_eq_clFn_infConv` in place of (1) and
+`Convex.isClosed_add` — **Corollary 9.1.1** applied to `epi f*` and `epi g*` — in place of (2).
+Step (3) is again Theorem 13.3 and step (4) is `eq_of_isMaxOn_of_mem_relint`, the *maximum* form
+rather than the vanishing form: two cancelling recession directions `(z, ν)` and `(-z, -ν)` force
+`⟨x₀, z⟩ ≤ ν` and `-⟨x₀, z⟩ ≤ -ν`, so both bounds are attained at `x₀` and both linear functions
+are constant on the respective domains. Closedness of `epi f* + epi g*` then makes it an epigraph
+(`IsEpiLike.of_isClosed`), namely that of `f* □ g*`, and the splitting read off a point of that sum
+*is* the attainment `IsExactSum.exact_le` asks for.
+
+**Where the layers land.** The image rule puts Theorem 9.2 on `H`, so `H` must be
+finite-dimensional, and `ri (dom g)` puts `G` there too; `F` only receives an image, so a normed
+space suffices, and `E` is never topologised at all — it enters only through `A`, `B` and the
+adjointness datum. The sum rule is the reverse: `ri (dom f)` needs only a normed `E`, while
+Corollary 9.1.1 runs in `F × ℝ` and so `F` must be finite-dimensional.
+
+**The `< ⊤` guard is what makes the image rule true without surjectivity.** Theorem 9.2 attains
+the infimum only where the image function is bounded above by a real; off the range of `A'` both
+sides of Theorem 16.3 are `+∞` and there is nothing to attain. That is precisely the shape of
+`IsExactImage.exact_le`; see its design notes.
+
+## References
+
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Theorem 16.3,
+  Theorem 16.4).
+-/
+
+open Pointwise
+
+namespace Tdaf.ConvexAnalysis
+
+section Image
+
+variable {E F G H : Type*}
+  [AddCommGroup E] [Module ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F]
+  [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G]
+  [NormedAddCommGroup H] [NormedSpace ℝ H] [FiniteDimensional ℝ H]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
+  {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
+
+omit [FiniteDimensional ℝ G] [FiniteDimensional ℝ H] in
+/-- Theorem 9.2's hypothesis for `g*` and the transpose `A'`, discharged from Rockafellar's
+relative-interior condition.
+
+Read through Theorem 13.3 (`constancySpace_conj`), "`g*` recedes in the direction `z`, and `A'`
+kills `z`" says that `⟨·, z⟩` is `≤ 0` on `dom g` and vanishes at the point `A x₀`, which the
+hypothesis places in `ri (dom g)`. Theorem 6.4 then forces `⟨·, z⟩ ≡ 0` on `dom g`, which is
+constancy of `g*` along `z`. -/
+theorem mem_constancySpace_conj_of_relint [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
+    (hA : IsAdjointPair B B' A A') (hg : ClosedProperConvexFn g)
+    {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) {z : H}
+    (hrec : recessionFn (conj B' g) z ≤ 0) (hz0 : A' z = 0) :
+    z ∈ constancySpace (conj B' g) := by
+  have hconjp : Proper (conj B' g) := proper_conj hg
+  rw [constancySpace_conj hg.proper hconjp]
+  have hzero : ((0 : ℝ) : EReal) = 0 := by norm_num
+  have hnonpos : ∀ x ∈ dom g, (B'.flip z) x ≤ 0 := by
+    intro x hx
+    rw [recessionFn_conj hg.proper hconjp, ← hzero, supportFn_le_coe_iff] at hrec
+    exact hrec x hx
+  have hvanish : (B'.flip z) (A x₀) = 0 := by
+    rw [LinearMap.flip_apply, hA x₀ z, hz0, map_zero]
+  exact eq_zero_of_nonpos_of_mem_relint hx₀ hnonpos hvanish
+
+omit [FiniteDimensional ℝ G] in
+/-- **Rockafellar, Theorem 16.3**: a closed proper convex function pulls back exactly along a
+linear map whose range meets the relative interior of its effective domain.
+
+This is the first constructor for `IsExactImage`, and with it Theorem 16.3
+(`IsExactImage.conj_compLin`) and Theorem 23.9 (`IsExactImage.subgradient_compLin`) acquire their
+first supplied instances. -/
+theorem IsExactImage.of_relint [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
+    [IsCompatiblePairing B.flip] (hA : IsAdjointPair B B' A A') (hg : ClosedProperConvexFn g)
+    {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) :
+    IsExactImage B B' A A' hA g := by
+  have hconjp : Proper (conj B' g) := proper_conj hg
+  have hconjcpc : ClosedProperConvexFn (conj B' g) :=
+    ⟨convexFn_conj B' g, closedFn_conj, hconjp⟩
+  have hkey : ∀ z : H, recessionFn (conj B' g) z ≤ 0 → A' z = 0 → z ∈ constancySpace (conj B' g) :=
+    fun z hrec hz0 => mem_constancySpace_conj_of_relint hA hg hx₀ hrec hz0
+  obtain ⟨-, hcpc⟩ :=
+    closedProperConvexFn_mapLin (convexFn_conj B' g) hconjp hconjcpc.isClosed_epi A' hkey
+  -- Theorem 9.2 says the closure in the §16 identity is redundant
+  have heq : conj B (compLin g A) = mapLin A' (conj B' g) := by
+    rw [conj_compLin_eq_clFn_mapLin hA hg.convex hg.closed]
+    exact hcpc.closed
+  refine ⟨hg.proper, fun y hy => ?_⟩
+  rw [heq] at hy ⊢
+  obtain ⟨μ, hμ⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hcpc.proper.ne_bot y) hy
+  obtain ⟨z, hzy, hz⟩ :=
+    exists_mapLin_eq (convexFn_conj B' g) hconjp hconjcpc.isClosed_epi A' hkey hμ.le
+  exact ⟨z, hzy, hμ ▸ hz⟩
+
+end Image
+
+/-! ### Theorem 16.4: sums -/
+
+section Sum
+
+variable {E F : Type*}
+  [NormedAddCommGroup E] [NormedSpace ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
+
+omit [FiniteDimensional ℝ F] in
+/-- A direction of recession of `epi f*` bounds the pairing on `dom f`: this is Theorem 13.3 read
+one point at a time. -/
+theorem le_of_mk_mem_recessionCone_epi_conj [IsCompatiblePairing B] (hf : ClosedProperConvexFn f)
+    {z : F} {ν : ℝ} (hp : ((z, ν) : F × ℝ) ∈ recessionCone (epi (conj B f)))
+    {x : E} (hx : x ∈ dom f) : B x z ≤ ν := by
+  have hle := recessionFn_le_coe_iff.2 hp
+  rw [recessionFn_conj hf.proper (proper_conj hf), supportFn_le_coe_iff] at hle
+  exact hle x hx
+
+omit [FiniteDimensional ℝ F] in
+/-- **The relative-interior step for sums.** If `(z, ν)` is a direction of recession of `epi f*`
+whose bound `ν` is *already attained* at a relative interior point of `dom f`, then `(z, ν)` lies
+in the lineality space.
+
+Theorem 13.3 turns `(z, ν) ∈ 0⁺(epi f*)` into "`⟨·, z⟩ ≤ ν` on `dom f`". The extra hypothesis says
+the linear function `⟨·, z⟩` attains that bound at `x₀ ∈ ri (dom f)`, so Theorem 6.4 makes it
+*constant* on `dom f`, which is exactly `(-z, -ν) ∈ 0⁺(epi f*)`. -/
+theorem mk_mem_linealitySpace_epi_conj_of_relint [IsCompatiblePairing B]
+    (hf : ClosedProperConvexFn f) {x₀ : E} (hx₀ : x₀ ∈ ri (dom f)) {z : F} {ν : ℝ}
+    (hp : ((z, ν) : F × ℝ) ∈ recessionCone (epi (conj B f))) (hν : ν ≤ B x₀ z) :
+    ((z, ν) : F × ℝ) ∈ linealitySpace (epi (conj B f)) := by
+  have hx₀f : x₀ ∈ dom f := intrinsicInterior_subset hx₀
+  have hmax : B x₀ z = ν :=
+    le_antisymm (le_of_mk_mem_recessionCone_epi_conj hf hp hx₀f) hν
+  have hconst : ∀ x ∈ dom f, (B.flip z) x = (B.flip z) x₀ :=
+    eq_of_isMaxOn_of_mem_relint hx₀ fun x hx =>
+      le_trans (le_of_mk_mem_recessionCone_epi_conj hf hp hx) hν
+  refine mem_linealitySpace.2 ⟨hp, ?_⟩
+  rw [Prod.neg_mk, ← recessionFn_le_coe_iff, recessionFn_conj hf.proper (proper_conj hf),
+    supportFn_le_coe_iff]
+  intro x hx
+  have hx' : B x z = ν := by
+    have hc := hconst x hx
+    rw [LinearMap.flip_apply, LinearMap.flip_apply, hmax] at hc
+    exact hc
+  rw [map_neg, hx']
+
+/-- **Rockafellar, Theorem 16.4**: two closed proper convex functions add exactly as soon as their
+effective domains have a common relative interior point.
+
+The proof is Corollary 9.1.1 applied to the two epigraphs `epi f*` and `epi g*`. Their sum is the
+epigraph of `f* □ g*` as soon as it is closed, Theorem 16.4's closure form
+(`conj_add_eq_clFn_infConv`) then loses its closure, and the splitting that Corollary 9.1.1 hands
+back at each point is exactly the attainment `IsExactSum.exact_le` asks for.
+
+Corollary 9.1.1's hypothesis — two cancelling recession directions must be lineality directions —
+is Theorem 13.3 plus Theorem 6.4: `(z, ν) ∈ 0⁺(epi f*)` and `(-z, -ν) ∈ 0⁺(epi g*)` force
+`⟨x₀, z⟩ ≤ ν` and `-⟨x₀, z⟩ ≤ -ν` at the common point `x₀`, so both bounds are attained at a
+relative interior point and both linear functions are constant. -/
+theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) :
+    IsExactSum B f g := by
+  have hx₀f : x₀ ∈ dom f := intrinsicInterior_subset hxf
+  have hx₀g : x₀ ∈ dom g := intrinsicInterior_subset hxg
+  have hup : Proper (conj B f) := proper_conj hf
+  have hvp : Proper (conj B g) := proper_conj hg
+  have hucpc : ClosedProperConvexFn (conj B f) := ⟨convexFn_conj B f, closedFn_conj, hup⟩
+  have hvcpc : ClosedProperConvexFn (conj B g) := ⟨convexFn_conj B g, closedFn_conj, hvp⟩
+  have hune : (epi (conj B f)).Nonempty := (epi_nonempty_iff _).2 hup.dom_nonempty
+  have hvne : (epi (conj B g)).Nonempty := (epi_nonempty_iff _).2 hvp.dom_nonempty
+  -- Corollary 9.1.1's hypothesis, discharged by Theorem 13.3 and Theorem 6.4
+  have hrec : ∀ p ∈ recessionCone (epi (conj B f)), ∀ q ∈ recessionCone (epi (conj B g)),
+      p + q = 0 →
+        p ∈ linealitySpace (epi (conj B f)) ∧ q ∈ linealitySpace (epi (conj B g)) := by
+    rintro ⟨z, ν⟩ hp ⟨w, ρ⟩ hq hzero
+    have hz : z + w = 0 := congrArg Prod.fst hzero
+    have hνρ : ν + ρ = 0 := congrArg Prod.snd hzero
+    have h₁ : B x₀ z ≤ ν := le_of_mk_mem_recessionCone_epi_conj hf hp hx₀f
+    have h₂ : B x₀ w ≤ ρ := le_of_mk_mem_recessionCone_epi_conj hg hq hx₀g
+    have hBzw : B x₀ z + B x₀ w = 0 := by rw [← map_add, hz, map_zero]
+    exact ⟨mk_mem_linealitySpace_epi_conj_of_relint hf hxf hp (by linarith),
+      mk_mem_linealitySpace_epi_conj_of_relint hg hxg hq (by linarith)⟩
+  have hclosed : IsClosed (epi (conj B f) + epi (conj B g)) :=
+    Convex.isClosed_add (convexFn_conj B f).convex_epi hucpc.isClosed_epi hune
+      (convexFn_conj B g).convex_epi hvcpc.isClosed_epi hvne hrec
+  -- a closed sum of epigraphs is an epigraph, namely that of the infimal convolution
+  have hmono : ∀ (y : F) (μ ν : ℝ), (y, μ) ∈ epi (conj B f) + epi (conj B g) → μ ≤ ν →
+      (y, ν) ∈ epi (conj B f) + epi (conj B g) := by
+    rintro y μ ν ⟨⟨y₁, a⟩, h₁, ⟨y₂, b⟩, h₂, heq⟩ hμν
+    have hy : y₁ + y₂ = y := congrArg Prod.fst heq
+    have hab : a + b = μ := congrArg Prod.snd heq
+    refine ⟨(y₁, a), h₁, (y₂, b + (ν - μ)), mk_mem_epi.2 ?_, ?_⟩
+    · exact (mk_mem_epi.1 h₂).trans (by exact_mod_cast (by linarith : b ≤ b + (ν - μ)))
+    · change ((y₁, a) : F × ℝ) + (y₂, b + (ν - μ)) = (y, ν)
+      rw [Prod.mk_add_mk, hy, show a + (b + (ν - μ)) = ν by linarith]
+  have hepiEq : epi (infConv (conj B f) (conj B g)) = epi (conj B f) + epi (conj B g) :=
+    epi_infConv (IsEpiLike.of_isClosed hmono hclosed)
+  -- properness of the infimal convolution, from properness of `(f + g)*`
+  have hdomne : (dom (f + g)).Nonempty :=
+    ⟨x₀, by
+      rw [mem_dom, Pi.add_apply]
+      exact _root_.EReal.add_lt_top (mem_dom.1 hx₀f).ne (mem_dom.1 hx₀g).ne⟩
+  have hproper : Proper (infConv (conj B f) (conj B g)) := by
+    refine ⟨?_, fun y hy => ?_⟩
+    · obtain ⟨p, hp⟩ := hup.dom_nonempty
+      obtain ⟨q, hq⟩ := hvp.dom_nonempty
+      exact ⟨p + q, by rw [dom_infConv]; exact Set.add_mem_add hp hq⟩
+    · have hle := conj_add_le_infConv B f g y
+      rw [hy, le_bot_iff] at hle
+      exact conj_ne_bot hdomne y hle
+  have hclosedFn : ClosedFn (infConv (conj B f) (conj B g)) :=
+    (ClosedProperConvexFn.of_isClosed_epi
+      (convexFn_infConv (convexFn_conj B f) (convexFn_conj B g))
+      (by rw [hepiEq]; exact hclosed) hproper).closed
+  have hconjadd : conj B (f + g) = infConv (conj B f) (conj B g) := by
+    rw [conj_add_eq_clFn_infConv hf.convex hf.closed hg.convex hg.closed]
+    exact hclosedFn
+  refine ⟨hf.proper, hg.proper, fun y => ?_⟩
+  rw [hconjadd]
+  rcases eq_top_or_lt_top (infConv (conj B f) (conj B g) y) with htop | htop
+  · exact ⟨y, 0, add_zero y, by rw [htop]; exact le_top⟩
+  obtain ⟨μ, hμ⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hproper.ne_bot y) htop
+  have hmem : ((y, μ) : F × ℝ) ∈ epi (conj B f) + epi (conj B g) := by
+    rw [← hepiEq]; exact mk_mem_epi.2 hμ.le
+  obtain ⟨⟨y₁, a⟩, h₁, ⟨y₂, b⟩, h₂, heq⟩ := hmem
+  refine ⟨y₁, y₂, congrArg Prod.fst heq, ?_⟩
+  have hab : a + b = μ := congrArg Prod.snd heq
+  rw [hμ]
+  calc conj B f y₁ + conj B g y₂ ≤ ((a : ℝ) : EReal) + ((b : ℝ) : EReal) :=
+        add_le_add (mk_mem_epi.1 h₁) (mk_mem_epi.1 h₂)
+    _ = ((μ : ℝ) : EReal) := by rw [← _root_.EReal.coe_add, hab]
+
+end Sum
+
+end Tdaf.ConvexAnalysis

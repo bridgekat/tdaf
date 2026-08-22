@@ -1,8 +1,13 @@
 import Tdaf.Analysis.Convex.Closure
 import Tdaf.Analysis.Convex.Concave
+import Tdaf.Analysis.Convex.Continuity
+import Tdaf.Analysis.Convex.Duality.ConcaveConj
 import Tdaf.Analysis.Convex.Duality.Conjugate
+import Tdaf.Analysis.Convex.Duality.Exact
+import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Duality.Pairing
 import Tdaf.Analysis.Convex.Duality.Polar
+import Tdaf.Analysis.Convex.Duality.Relint
 import Tdaf.Analysis.Convex.Duality.Support
 import Tdaf.Analysis.Convex.Epigraph
 import Tdaf.Analysis.Convex.Homogeneous
@@ -14,9 +19,12 @@ import Tdaf.Analysis.Convex.Operations.Epi
 import Tdaf.Analysis.Convex.Operations.Hull
 import Tdaf.Analysis.Convex.Operations.Image
 import Tdaf.Analysis.Convex.Operations.InfConv
+import Tdaf.Analysis.Convex.Recession.Closedness
 import Tdaf.Analysis.Convex.Recession.Cone
+import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Recession.Function
 import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Separation
+import Tdaf.Analysis.Convex.Subgradient.Calculus
 import Tdaf.Analysis.Convex.Subgradient.Defs
 import Tdaf.Order.EReal

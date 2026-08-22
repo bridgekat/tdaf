@@ -328,24 +328,73 @@ theorem linealitySpace_eq_add_eq (hC : Convex ℝ C) :
     have hxw : x + -y = w := by rw [← hwv', hv]; abel
     exact hxw ▸ hw
 
-/-- **Rockafellar's direct-sum decomposition**: if `L'` is any complement of the lineality space
-`L` of `C`, then `C = L + (C ∩ L')`. The book states it for `L' = L^⊥` in an inner-product
-space; that is the special case `L' = Lᗮ`. -/
-theorem eq_add_inter_of_isCompl {L : Submodule ℝ E} (h : IsCompl (linealitySubmodule C) L) :
-    C = (linealitySubmodule C : Set E) + (C ∩ (L : Set E)) := by
+/-- **Rockafellar's direct-sum decomposition**, for an arbitrary subspace `N` of the lineality
+space: if `M` is a complement of `N`, then `C = N + (C ∩ M)`.
+
+Only `N ⊆ lin C` is used, not `N = lin C`, and that extra room is what Theorem 9.1 needs — there
+the relevant subspace is `lin C ∩ ker A`, a proper part of the lineality space in general. -/
+theorem eq_add_inter_of_isCompl_of_le {N M : Submodule ℝ E}
+    (hN : (N : Set E) ⊆ linealitySpace C) (h : IsCompl N M) :
+    C = (N : Set E) + (C ∩ (M : Set E)) := by
   refine Set.Subset.antisymm (fun x hx => ?_) ?_
-  · have hmem : x ∈ linealitySubmodule C ⊔ L := by rw [h.sup_eq_top]; trivial
+  · have hmem : x ∈ N ⊔ M := by rw [h.sup_eq_top]; trivial
     obtain ⟨p, hp, q, hq, rfl⟩ := Submodule.mem_sup.1 hmem
-    have hpneg : -p ∈ recessionCone C :=
-      (mem_linealitySpace.1 (mem_linealitySubmodule.1 hp)).2
+    have hpneg : -p ∈ recessionCone C := (mem_linealitySpace.1 (hN hp)).2
     have hqC : q ∈ C := by
       have hstep := add_mem_of_mem_recessionCone hpneg hx
       simpa [add_comm, add_assoc] using hstep
     exact Set.add_mem_add hp ⟨hqC, hq⟩
   · rintro _ ⟨p, hp, q, ⟨hqC, -⟩, rfl⟩
-    have hpC : p ∈ recessionCone C :=
-      (mem_linealitySpace.1 (mem_linealitySubmodule.1 hp)).1
+    have hpC : p ∈ recessionCone C := (mem_linealitySpace.1 (hN hp)).1
     simpa [add_comm] using add_mem_of_mem_recessionCone hpC hqC
+
+/-- **Rockafellar's direct-sum decomposition**: if `L'` is any complement of the lineality space
+`L` of `C`, then `C = L + (C ∩ L')`. The book states it for `L' = L^⊥` in an inner-product
+space; that is the special case `L' = Lᗮ`. -/
+theorem eq_add_inter_of_isCompl {L : Submodule ℝ E} (h : IsCompl (linealitySubmodule C) L) :
+    C = (linealitySubmodule C : Set E) + (C ∩ (L : Set E)) :=
+  eq_add_inter_of_isCompl_of_le (coe_linealitySubmodule C).subset h
+
+/-- Convexity is preserved by the change of variables `z ↦ x + c • z`. -/
+theorem convex_preimage_affine_smul (hC : Convex ℝ C) (x : E) (c : ℝ) :
+    Convex ℝ {z | x + c • z ∈ C} := by
+  intro z₁ h₁ z₂ h₂ a b ha hb hab
+  have hxab : a • x + b • x = x := by rw [← add_smul, hab, one_smul]
+  have heq : x + c • (a • z₁ + b • z₂) = a • (x + c • z₁) + b • (x + c • z₂) := by
+    conv_lhs => rw [← hxab]
+    simp only [smul_add, smul_smul]
+    rw [mul_comm c a, mul_comm c b]
+    abel
+  change x + c • (a • z₁ + b • z₂) ∈ C
+  rw [heq]
+  exact hC h₁ h₂ ha hb hab
+
+/-- **The recession cone is invariant under `z ↦ x + c • z` for `c > 0`.** Directions of recession
+do not see translations, and positive rescaling permutes the rays of a cone.
+
+This is the change of variables that turns "`C` recedes in the direction `v`" into a *decreasing*
+family of sets, which is how the recession half of Theorem 9.1 gets its compactness. -/
+theorem recessionCone_preimage_affine {c : ℝ} (hc : 0 < c) (x : E) (C : Set E) :
+    recessionCone {z | x + c • z ∈ C} = recessionCone C := by
+  ext w
+  simp only [mem_recessionCone, Set.mem_ofPred_eq]
+  constructor
+  · intro hw u hu b hb
+    have hz : x + c • (c⁻¹ • (u - x)) ∈ C := by
+      rw [smul_inv_smul₀ hc.ne']
+      simpa using hu
+    have hstep := hw _ hz (b / c) (by positivity)
+    have heq : x + c • (c⁻¹ • (u - x) + (b / c) • w) = u + b • w := by
+      rw [smul_add, smul_inv_smul₀ hc.ne', smul_smul, mul_div_cancel₀ _ hc.ne']
+      abel
+    rwa [heq] at hstep
+  · intro hw z hz a ha
+    have hstep := hw _ hz (c * a) (by positivity)
+    have heq : x + c • (z + a • w) = x + c • z + (c * a) • w := by
+      rw [smul_add, smul_smul]
+      abel
+    rwa [heq]
+
 
 /-- Rockafellar's *lineality of `C`*: the dimension of its lineality space. -/
 noncomputable def lineality (C : Set E) : ℕ := Module.finrank ℝ (linealitySubmodule C)
@@ -357,6 +406,13 @@ end Defs
 section Examples
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
+
+/-- A subspace is its own recession cone. -/
+@[simp] theorem recessionCone_coe_submodule (M : Submodule ℝ E) :
+    recessionCone (M : Set E) = M := by
+  refine Set.Subset.antisymm (fun y hy => ?_) (fun y hy z hz a ha => ?_)
+  · simpa using hy 0 M.zero_mem 1 zero_le_one
+  · exact M.add_mem hz (M.smul_mem a hy)
 
 /-- The recession cone of a nonempty affine set is the subspace parallel to it. -/
 theorem recessionCone_coe_affineSubspace {s : AffineSubspace ℝ E} (hs : (s : Set E).Nonempty) :
@@ -424,6 +480,40 @@ theorem linealitySpace_setOf_forall_le {ι : Type*} (b : ι → E →ₗ[ℝ] �
 end Examples
 
 /-! ### Layer A: preimages under a linear map -/
+
+section Prod
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {C : Set E} {D : Set F}
+
+/-- A pair of recession directions is a recession direction of the product. Unconditional. -/
+theorem prod_recessionCone_subset (C : Set E) (D : Set F) :
+    recessionCone C ×ˢ recessionCone D ⊆ recessionCone (C ×ˢ D) := by
+  rintro ⟨y₁, y₂⟩ ⟨hy₁, hy₂⟩ ⟨x₁, x₂⟩ hx a ha
+  exact ⟨hy₁ x₁ hx.1 a ha, hy₂ x₂ hx.2 a ha⟩
+
+/-- **The recession cone of a product is the product of the recession cones.**
+
+Both factors must be nonempty: `0⁺(C ×ˢ ∅) = 0⁺ ∅ = univ`, which is not `0⁺C ×ˢ univ` unless
+`0⁺C` is everything. The point of the hypothesis is that testing the first coordinate needs a
+witness in the second. -/
+theorem recessionCone_prod (hC : C.Nonempty) (hD : D.Nonempty) :
+    recessionCone (C ×ˢ D) = recessionCone C ×ˢ recessionCone D := by
+  refine Set.Subset.antisymm (fun y hy => ⟨fun x hx a ha => ?_, fun x hx a ha => ?_⟩)
+    (prod_recessionCone_subset C D)
+  · obtain ⟨w, hw⟩ := hD
+    exact (hy (x, w) ⟨hx, hw⟩ a ha).1
+  · obtain ⟨w, hw⟩ := hC
+    exact (hy (w, x) ⟨hw, hx⟩ a ha).2
+
+/-- **The lineality space of a product is the product of the lineality spaces.** -/
+theorem linealitySpace_prod (hC : C.Nonempty) (hD : D.Nonempty) :
+    linealitySpace (C ×ˢ D) = linealitySpace C ×ˢ linealitySpace D := by
+  ext ⟨y₁, y₂⟩
+  simp only [mem_linealitySpace, recessionCone_prod hC hD, Set.mem_prod, Prod.neg_mk]
+  tauto
+
+end Prod
 
 section PreimageDefs
 

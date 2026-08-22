@@ -187,6 +187,17 @@ theorem coe_mul_le_coe_iff {a : ℝ} (ha : 0 < a) {z : EReal} {r : ℝ} :
     rw [coe_mul_coe, _root_.EReal.coe_le_coe_iff, _root_.EReal.coe_le_coe_iff, le_div_iff₀ ha,
       mul_comm]
 
+/-- The mirror of `Tdaf.EReal.coe_mul_le_coe_iff`: dividing through a *lower* bound by a positive
+real. -/
+theorem coe_le_coe_mul_iff {a : ℝ} (ha : 0 < a) {z : EReal} {r : ℝ} :
+    (r : EReal) ≤ (a : EReal) * z ↔ ((r / a : ℝ) : EReal) ≤ z := by
+  induction z with
+  | bot => simp [_root_.EReal.coe_mul_bot_of_pos ha]
+  | top => simp [_root_.EReal.coe_mul_top_of_pos ha]
+  | coe s =>
+    rw [coe_mul_coe, _root_.EReal.coe_le_coe_iff, _root_.EReal.coe_le_coe_iff, div_le_iff₀ ha,
+      mul_comm]
+
 variable {κ : Type*}
 
 /-- The coercion `ℝ → EReal` commutes with finite sums. -/
@@ -253,6 +264,31 @@ theorem coe_sub_le_comm {a : ℝ} {z w : EReal} : (a : EReal) - z ≤ w ↔ (a :
         _root_.EReal.coe_le_coe_iff]
       constructor <;> intro h <;> linarith
 
+/-- **The mirror of `Tdaf.EReal.coe_sub_le_comm`**, for the concave side of the theory:
+`z ≤ a - w ↔ w ≤ a - z` whenever `a` is a real number. It says that `z ↦ a - z` is an *antitone
+involution* of `EReal`, and, like its convex counterpart, it carries no side condition. -/
+theorem le_coe_sub_comm {a : ℝ} {z w : EReal} :
+    z ≤ (a : EReal) - w ↔ w ≤ (a : EReal) - z := by
+  induction z with
+  | bot => simp
+  | top =>
+    induction w with
+    | bot => simp
+    | top => simp
+    | coe s =>
+      rw [_root_.EReal.sub_top, le_bot_iff, top_le_iff, ← _root_.EReal.coe_sub]
+      exact iff_of_false (_root_.EReal.coe_ne_top _) (_root_.EReal.coe_ne_bot _)
+  | coe r =>
+    induction w with
+    | bot => simp
+    | top =>
+      rw [_root_.EReal.sub_top, le_bot_iff, top_le_iff, ← _root_.EReal.coe_sub]
+      exact iff_of_false (_root_.EReal.coe_ne_bot _) (_root_.EReal.coe_ne_top _)
+    | coe s =>
+      rw [← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub, _root_.EReal.coe_le_coe_iff,
+        _root_.EReal.coe_le_coe_iff]
+      constructor <;> intro h <;> linarith
+
 /-- Reflecting an `EReal` in two real numbers: `b - (a - z) = (b - a) + z`. In particular
 `a - (a - z) = z`, so `z ↦ a - z` is an involution of `EReal` for every *real* `a`. -/
 theorem coe_sub_coe_sub (a b : ℝ) (z : EReal) :
@@ -299,6 +335,18 @@ theorem coe_le_sub_div_iff {r m a : ℝ} (ha : 0 < a) (u : EReal) :
     _root_.EReal.le_sub_iff_add_le (.inl (_root_.EReal.coe_ne_bot r))
       (.inl (_root_.EReal.coe_ne_top r)), coe_mul_coe, ← _root_.EReal.coe_add,
     show (m * a + r : ℝ) = r + m * a from by ring]
+
+/-- **Negation exchanges suprema and infima.** Unlike addition, negation *is* an order-reversing
+involution of `EReal` with no exceptional values, so this needs no hypothesis. It is what turns
+every statement about `conj` into one about `concaveConj`. -/
+theorem neg_iSup {ι : Sort*} (u : ι → EReal) : -(⨆ i, u i) = ⨅ i, -(u i) :=
+  eq_of_forall_le_iff fun z => by
+    simp only [le_iInf_iff, _root_.EReal.le_neg, iSup_le_iff]
+
+/-- The companion of `Tdaf.EReal.neg_iSup`. -/
+theorem neg_iInf {ι : Sort*} (u : ι → EReal) : -(⨅ i, u i) = ⨆ i, -(u i) :=
+  eq_of_forall_ge_iff fun z => by
+    simp only [iSup_le_iff, _root_.EReal.neg_le, le_iInf_iff]
 
 /-- A positive real scalar commutes with a supremum. Mathlib has no `EReal.mul_iSup`; the proof is
 the standard one for an order isomorphism, run by hand because multiplication by `a` is not
@@ -359,6 +407,52 @@ theorem biSup_add_of_ne_bot {α : Type*} {s : Set α} {u : α → EReal} (hu : �
       calc (⊤ : EReal) = u a₀ + ⊤ := (_root_.EReal.add_top_of_ne_bot (hu a₀ ha₀)).symm
         _ ≤ ⨆ a ∈ s, (u a + (⊤ : EReal)) :=
           le_iSup₂ (f := fun a (_ : a ∈ s) => u a + (⊤ : EReal)) a₀ ha₀
+
+/-- **The supremum of a sum splits**, provided neither family takes `⊥`. Both degenerate cases work
+out: if either index set is empty both sides are `⊥`, because `⊥ + M = M + ⊥ = ⊥`.
+
+This is what turns "the epigraph of an infimal convolution is a sum of epigraphs" into
+"the conjugate of an infimal convolution is a sum of conjugates" (Rockafellar's Theorem 16.4). -/
+theorem biSup_add_biSup {α β : Type*} {s : Set α} {t : Set β} {u : α → EReal} {v : β → EReal}
+    (hu : ∀ a ∈ s, u a ≠ ⊥) (hv : ∀ b ∈ t, v b ≠ ⊥) :
+    (⨆ a ∈ s, u a) + (⨆ b ∈ t, v b) = ⨆ a ∈ s, ⨆ b ∈ t, (u a + v b) := by
+  rw [biSup_add_of_ne_bot hu]
+  refine iSup_congr fun a => iSup_congr fun _ => ?_
+  rw [add_comm (u a), biSup_add_of_ne_bot hv]
+  exact iSup_congr fun _ => iSup_congr fun _ => add_comm _ _
+
+/-- **A real summand slides out of a difference.** `(p + q) - u = (p - u) + q` for real `p`, `q`
+and arbitrary `u : EReal`.
+
+`EReal` is not a `SubNegMonoid`, so `sub_eq_add_neg` does not fire and `abel` cannot see the `-`;
+the proof unfolds `a - b` to `a + -b` by `rfl` and then rearranges (see `NOTES.md` gotcha 40). -/
+theorem coe_add_sub (p q : ℝ) (u : EReal) :
+    ((p + q : ℝ) : EReal) - u = (((p : ℝ) : EReal) - u) + ((q : ℝ) : EReal) := by
+  rw [_root_.EReal.coe_add]
+  change ((p : EReal) + (q : EReal)) + -u = ((p : EReal) + -u) + (q : EReal)
+  rw [add_assoc, add_assoc, add_comm ((q : ℝ) : EReal) (-u)]
+
+/-- **Two slack inequalities cannot compensate each other.** If `u` and `v` are bounded below by
+reals `p` and `q`, and their sum is bounded above by `p + q`, then each is pinned to its own
+bound.
+
+Stated one-sided; apply it again with `add_comm` for the other summand. The `≠ ⊥` and `≠ ⊤`
+bookkeeping that makes this true — and that makes the naive `linarith` reading of it false in
+`EReal` — is all inside the proof. Rockafellar's Theorem 23.8 is where it is needed: the exact-sum
+hypothesis delivers one *joint* equality in Fenchel's inequality, and this is what splits it into
+the two separate equalities that say `y₁ ∈ ∂f x` and `y₂ ∈ ∂g x`. -/
+theorem le_coe_of_add_le_coe_add {p q : ℝ} {u v : EReal} (hp : (p : EReal) ≤ u)
+    (hq : (q : EReal) ≤ v) (h : u + v ≤ ((p + q : ℝ) : EReal)) : u ≤ (p : EReal) := by
+  have hub : u ≠ ⊥ := ((_root_.EReal.bot_lt_coe p).trans_le hp).ne'
+  have hvb : v ≠ ⊥ := ((_root_.EReal.bot_lt_coe q).trans_le hq).ne'
+  have hsum : u + v ≠ ⊤ := fun hc =>
+    _root_.EReal.coe_ne_top _ (top_le_iff.1 (hc ▸ h))
+  obtain ⟨hut, hvt⟩ := (_root_.EReal.add_ne_top_iff_ne_top₂ hub hvb).1 hsum
+  obtain ⟨a, rfl⟩ := exists_coe_of_ne_bot_of_lt_top hub (lt_top_iff_ne_top.2 hut)
+  obtain ⟨b, rfl⟩ := exists_coe_of_ne_bot_of_lt_top hvb (lt_top_iff_ne_top.2 hvt)
+  rw [← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at h
+  rw [_root_.EReal.coe_le_coe_iff] at hp hq ⊢
+  linarith
 
 end EReal
 
