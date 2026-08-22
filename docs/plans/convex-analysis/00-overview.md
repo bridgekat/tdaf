@@ -322,9 +322,10 @@ the adjoint-pair datum of D3, since the transpose is not a function of `A`.
 
 **Placement (review finding C2).** `Duality/Exact.lean` holds the *interface* and its interface-only
 consequences, and imports only `Duality/Conjugate` and `Operations/InfConv`. Each
-`IsExactSum.of_*` is declared in the module that owns its hypothesis — `of_relint` in
-`RelativeInterior.lean`, `of_polyhedral` in `Polyhedral/Duality.lean`, `of_continuousAt` in a
-layer-B file. Putting them all in `Exact.lean` would make `Polyhedral/Duality.lean` and
+`IsExactSum.of_*` is declared in the module that owns its hypothesis — `of_polyhedral` in
+`Polyhedral/Duality.lean`, `of_continuousAt` in a layer-B file. `of_relint` turned out to own no
+single hypothesis: it needs §6, §9 and §13 at once, so it has its own file,
+`Duality/Relint.lean`, rather than living in `RelativeInterior.lean` as planned. Putting them all in `Exact.lean` would make `Polyhedral/Duality.lean` and
 `Exact.lean` mutually importing, since §20's theorems *are* `IsExactSum` statements.
 
 ### D6. Homogenisation is a first-class operation
@@ -463,6 +464,7 @@ Tdaf/
     Duality/
       Pairing.lean                    -- dual pairs, adjoint pairs, prodPairing/negFst
       Conjugate.lean                  -- conj B f, Fenchel inequality, Fenchel–Moreau; §12
+      ConcaveConj.lean                -- concaveConj, the sign dictionary (D2); §12 mirrored, §30
       Support.lean                    -- support functions; §13
       Polar.lean                      -- one-sided polar cone / polar set, gaugeFn; §14, §15
       Exact.lean                      -- IsExactSum / IsExactImage interfaces (D5)
@@ -604,20 +606,26 @@ the original size estimate.
 | §6 | done except Cor 6.8.1, Thms 6.7/6.9 |
 | §7 | done except the `ri` half of Thm 7.6 |
 | §8 | done (8.1–8.8) |
-| §9, §10 | not started — `Recession/Closedness.lean`, `Continuity.lean` |
-| §11–§13 | done |
+| §9 | **Thms 9.1, 9.2 and Cor 9.1.1 done** (`Recession/Closedness.lean`); Cors 9.1.2–9.1.3 and Thms 9.3–9.8 not started |
+| §10 | **Thm 10.1 done** (`Continuity.lean`, with the `ri`-to-`interior` chart Mathlib leaves as a `proof_wanted`); Thms 10.2–10.6 not started |
+| §11–§13 | done, including **Thm 13.3** (`Recession/Conjugate.lean`, which is where §13 and §8 meet) |
 | §14 | done up to Thm 14.5; §15 not started |
-| §16 | not started — `Duality/Ops.lean`, and blocked on `Duality/Exact.lean` (D5) |
+| §16 | **done** — `Duality/Exact.lean` (the D5 interfaces, the exact rows), `Duality/Ops.lean` (**Thms 16.1, 16.3, 16.4, 16.5**, unconditional rows plus `clFn` forms) and `Duality/Relint.lean` (**the `of_relint` constructors**, which populate both interfaces). Lemma 16.2 and Cor 16.2.1 are subsumed: they were the `ri`-to-recession bridge, and that bridge is now Thm 13.3 plus §6.4 inside the constructors |
 | §17–§22 | not started |
-| §23 | 23.1, 23.2, 23.3, 23.5 and corollaries done; **23.4, 23.6, 23.7 not stated**, and 23.8–23.10 wait on `Duality/Exact.lean` |
-| §24–§39 | not started |
+| §23 | 23.1, 23.2, 23.3, 23.5 and corollaries done; 23.8, 23.9 and Cor 23.8.1 done (`Subgradient/Calculus.lean`); **23.4, 23.6, 23.7 not stated**; 23.10 blocked on `PolyhedralFn` (§19) |
+| §24–§39 | not started, except `concaveConj` and its §12 mirror (`Duality/ConcaveConj.lean`), which §30–§31 need |
 
-Next, in dependency order: `Duality/Exact.lean` (`IsExactSum`/`IsExactImage`, D5), written as a
-hypothesis-only *interface* — the two structures plus their trivial consequences, with
-`of_relint`/`of_polyhedral`/`of_continuousAt` deferred — which unblocks §16 and §23.8–23.10; then
-`concaveConj` (D2), announced by §6.4 of [sub-plan 6](06-optimization.md) and the guard against
-§30's sign trap; then §9 (`Recession/Closedness.lean`), §10 (`Continuity.lean`), §16
-(`Duality/Ops.lean`), and §§17–22 and §§24–26.
+**The D5 interfaces are populated.** `Duality/Relint.lean` now proves `IsExactImage.of_relint`
+(Theorem 16.3) and `IsExactSum.of_relint` (Theorem 16.4), so §16's exact rows, §23.8, §23.9 and
+Cor 23.8.1 all have supplied instances and the whole chain §9 → §13 → §16 → §23 is closed. The two
+constructors are pure assemblies: Thm 9.2 (images) or Cor 9.1.1 (sums), plus Thm 13.3 to turn a
+recession hypothesis about `f*` into one about `dom f`, plus `eq_of_isMaxOn_of_mem_relint` /
+`eq_zero_of_nonpos_of_mem_relint` from §6 to turn that into Rockafellar's `ri` condition.
+
+Next, in dependency order: the rest of §9 (Cors 9.1.2–9.1.3, then Thms 9.3–9.5), the rest of §10
+(Thms 10.2–10.6, and `IsExactSum.of_continuousAt`, the *other* sufficient condition for the D5
+interfaces — valid in any TVS and not needing finite dimensions). After that, §§17–22 — which also
+supply `of_polyhedral` — and §§24–26.
 
 | module | contents |
 |---|---|
@@ -635,14 +643,22 @@ hypothesis-only *interface* — the two structures plus their trivial consequenc
 | `Closure.lean` | `lscHull`, `clFn`, `ClosedFn`, `ClosedProperConvexFn` (**§7** at layer B/C), incl. the Fenchel–Moreau keystone |
 | `Lattice.lean` | the convex functions as a `CompleteLattice` (§5) |
 | `Separation.lean` | §11 at layer C, plus the reusable non-vertical separation lemma |
+| `Continuity.lean` | **Thm 10.1** — continuity on `ri (dom f)`, plus the linear chart that reduces `ri` to `interior` |
 | `Recession/Cone.lean` | §8's set half, layered A/B/D |
+| `Recession/Closedness.lean` | **Thms 9.1, 9.2, Cor 9.1.1** — when a linear image is closed, the image of a function, and sums of sets |
+| `Recession/Conjugate.lean` | **Thm 13.3** — `(f*)0⁺ = δ*(· \| dom f)`, and `constancySpace_conj` |
 | `Duality/Pairing.lean` | dual pairs, adjoint pairs, product pairings, the dual of `E × ℝ` |
 | `Duality/Conjugate.lean` | **Theorems 12.1 and 12.2 — Fenchel–Moreau** |
+| `Duality/Exact.lean` | `IsExactSum`/`IsExactImage` (D5); the unconditional halves of **Thms 16.3, 16.4** and the exact halves derived from the interfaces |
+| `Duality/ConcaveConj.lean` | `concaveConj` (D2), the sign dictionary, §12 mirrored for concave functions |
+| `Duality/Ops.lean` | the §16 dual-operations table — **Thms 16.1, 16.3, 16.4, 16.5**, unconditional halves plus the `clFn` forms |
+| `Duality/Relint.lean` | **the `of_relint` constructors** — Rockafellar's own constraint qualification for **Thms 16.3 and 16.4**; the only file that *produces* a D5 interface |
 | `RelativeInterior.lean` | §6, and **every result stages 2–3 deferred to it** |
 | `Recession/Function.lean` | §8's function half — Theorems 8.5–8.8 |
 | `Duality/Support.lean` | §13, with `supportEquiv` for the one-to-one correspondence |
 | `Duality/Polar.lean` | §14 up to Theorem 14.5, polarity as a `GaloisConnection` |
 | `Subgradient/Defs.lean` | §23 — the first subgradient anywhere in the Lean ecosystem |
+| `Subgradient/Calculus.lean` | **Thms 23.8, 23.9**, Cor 23.8.1 — the sum and image rules, against the D5 interfaces |
 
 None of `RelativeInterior.lean`'s outstanding results blocks anything. `Duality/Compatible.lean`,
 budgeted as a file in §3, is a page of corollaries over Mathlib's `WeakSpace.lean`.
@@ -730,5 +746,63 @@ rather than about the book's exposition. Design decision D0 explains the recurri
   and so presupposes `IsContinuousPairing B`. `polarSet_polarSet` carries `[IsCompatiblePairing B]`
   and uses both halves — `geometric_hahn_banach_closed_point` for the topology, `exists_pairing_eq`
   for the surjectivity.
+* **`concaveConj` belongs under `Duality/`, not in `Concave.lean`.** §6.4 of
+  [sub-plan 6](06-optimization.md) assigned it to `Concave.lean`, but the concave conjugate needs a
+  pairing, and `Concave.lean` is a layer-A file importing only `Epigraph.lean`. Putting it there
+  would drag separation and Hahn–Banach into every future use of `hypo` or `ConcaveFn`. It is
+  `Duality/ConcaveConj.lean`, which imports `Concave.lean` and `Duality/Conjugate.lean`.
+* **Fenchel's inequality for *concave* functions needs no properness**, unlike its convex mirror.
+  `⟨x, y⟩ ≤ f x + f* y` fails at improper `f` because the right-hand side collapses to
+  `⊤ + ⊥ = ⊥`; the concave form `g x + g*(y) ≤ ⟨x, y⟩` puts that same collapse on the *smaller*
+  side, where `⊥` is harmless. Sign transfer reverses the order but not the arithmetic, and
+  `⊤ + ⊥ = ⊥` is not self-dual — so D2's "every statement mirrors" needs checking case by case, not
+  assuming.
+* **The `IsExactSum` interface is self-policing.** Properness of the two summands plus attainment
+  already forces `Proper (f + g)` (`IsExactSum.proper_add`), so the interface is unsatisfiable when
+  the effective domains miss each other. D5 predicted the unsatisfiability of the *equality* form;
+  the structure form turns it into a usable lemma instead.
+* **`Duality/Exact.lean` imports `Operations/Image.lean` as well.** §3.6 of
+  [sub-plan 3](03-relint-recession.md) listed only `Duality/Conjugate` and `Operations/InfConv`, but
+  `IsExactImage` is stated with `mapLin`/`compLin`.
 * **`∂δ(· ∣ C) x = N_C(x)` is false off `C`**: with the pointed-cone definition `0 ∈ N_C(x)` always,
   while `∂δ(· ∣ C) x = ∅` for `x ∉ C ≠ ∅`. The identity carries `x ∈ C`, as Rockafellar's usage does.
+* **§16's conditional rows are stateable without a constraint qualification after all.** §3.7 of
+  [sub-plan 3](03-relint-recession.md) planned two forms per row — unconditional, and exact under
+  `IsExactSum`/`IsExactImage`. Rockafellar's own form is a third: closed convex inputs and a `clFn`
+  on the dual side, which is *more general* than the exact form and costs three lines each
+  (`conj_add_eq_clFn_infConv`, `conj_iSup_eq_clFn_convFn`, `conj_compLin_eq_clFn_mapLin`). Every
+  row of the table now has three forms.
+* **§23's calculus is layer A.** §5.2 of [sub-plan 5](05-differential.md) placed the subgradient
+  calculus after the §23 duality, expecting to need topology. It does not: Theorem 23.5
+  (`mem_subgradient_iff_add_conj_le`, unconditional) reduces both Theorems 23.8 and 23.9 to
+  arithmetic on one inequality, and neither proof mentions an epigraph, a directional derivative or
+  a separating hyperplane. The only real content is `Tdaf.EReal.le_coe_of_add_le_coe_add`, for
+  splitting one joint Fenchel equality into two.
+* **The two D5 interfaces are now fully exploited *and* populated.** §16's exact rows and
+  §23.8/23.9 are proved against `IsExactSum`/`IsExactImage`, and `Duality/Relint.lean` supplies
+  both by Rockafellar's own constraint qualification. `of_continuousAt` (§10) and `of_polyhedral`
+  (§20) remain as alternative constructors, but nothing is blocked on them.
+* **`IsExactImage` as first stated forced `A'` to be surjective, and had to be fixed.** The field
+  read `∀ y : F, ∃ z : H, A' z = y ∧ g* z ≤ (g A)* y`, which demands a point of the fibre
+  `A' ⁻¹ {y}` at *every* `y` — so the interface was unsatisfiable whenever `A'` missed a point,
+  e.g. for `A = 0` between nonzero spaces, where Theorem 16.3's conclusion nevertheless holds
+  (both sides are `+∞` off `range A'`, by `mapLin_of_notMem_range`). The field now carries the
+  guard `(g A)* y < ⊤`, which is exactly what Theorem 9.2 delivers and exactly what every consumer
+  has available: `IsExactImage.subgradient_compLin` gets it from `g (A x) ≠ ⊥`, and
+  `exists_conj_compLin_eq` takes it as a hypothesis. `IsExactSum` has no such problem — every `y`
+  admits the splitting `y + 0` — so its field is unchanged.
+* **Lemma 16.2 and Corollary 16.2.1 never needed to be stated.** §6 of this plan and §3.7 of
+  [sub-plan 3](03-relint-recession.md) treated them as the missing `ri`-to-recession bridge that
+  `IsExactSum.of_relint` would consume. In the event the bridge is **Theorem 13.3** — `(f*)0⁺` is
+  the support function of `dom f` — composed with §6's `eq_of_isMaxOn_of_mem_relint`. Two
+  cancelling recession directions of `epi f*` and `epi g*` force the linear function `⟨·, z⟩` to
+  attain its bound over `dom f` at the common relative interior point, hence to be constant. That
+  is four lines inside the constructor, and no separate lemma survives.
+* **`IsExactSum.of_relint` comes from Corollary 9.1.1, not from a separable-sum construction.**
+  The textbook derivation of Theorem 16.4 from Theorem 16.3 goes through `h(x₁, x₂) = f(x₁) + g(x₂)`
+  on `E × E` and the diagonal map, which would need a product pairing, an `IsCompatiblePairing`
+  instance for it, and closedness of a separable sum. Applying **Corollary 9.1.1** directly to
+  `epi f*` and `epi g*` avoids all three: the sum of the two epigraphs is closed, hence
+  (`IsEpiLike.of_isClosed`) an epigraph, namely that of `f* □ g*`, and a point of that sum *is*
+  the splitting `exact_le` asks for. Separable sums and product pairings are still wanted for §16's
+  separable case and §38, but they are not on the critical path.

@@ -100,8 +100,70 @@ and becomes Corollary 7.5.1 (`cl f` along segments) applied to `hom f`.
 
 ## 3.4 `Tdaf/Analysis/Convex/Recession/Closedness.lean` — §9
 
-**Theorem 9.1 is the hardest single result in Parts I–III** and everything else in §9, §16 and §27
-depends on it.
+**Theorems 9.1, 9.2 and Corollary 9.1.1 are formalized.** Corollaries 9.1.2–9.1.3 and Theorems 9.3–9.8 are not yet.
+
+Five things the plan did not anticipate.
+
+(i) **The two halves of 9.1 share one argument.** Both closedness and the recession identity come
+from *the same* Cantor-intersection step: a decreasing sequence of nonempty closed convex sets with
+recession cone `{0}`, hence compact. For closedness the sets are
+`C ∩ A⁻¹(closedBall y (n+1)⁻¹)`; for the recession cone they are
+`{z | x₀ + (n+1) • z ∈ C} ∩ A⁻¹{v}`. The second family needed one new layer-A lemma,
+`recessionCone_preimage_affine` (the recession cone does not see `z ↦ x + c • z` for `c > 0`) —
+which is what makes that family *decreasing* rather than merely nonempty. The plan's suggested
+route through the recession-function machinery is not needed.
+
+(ii) **The reduction is packaged, not repeated.** `exists_reduction_of_recessionCone_inter_ker`
+produces the set `cl C ∩ M` with the same image, the same image of the recession cone, and the
+reduced hypothesis `0⁺ ∩ ker A ⊆ {0}`; both halves of 9.1 then consume it in three lines. This is
+what forced `eq_add_inter_of_isCompl_of_le` — the direct-sum decomposition had to be stated for an
+arbitrary subspace *of* the lineality space, since the relevant one is `lin (cl C) ∩ ker A`.
+
+(iii) **Corollary 8.3.3 already covered the prerequisites.** `recessionCone_inter`,
+`recessionCone_preimage_closedBall` and `isCompact_iff_recessionCone_eq_zero` were all in
+`Recession/Cone.lean` already; only `recessionCone_coe_submodule` and
+`convex_preimage_affine_smul` had to be added, both one-liners.
+
+(iv) **Theorem 9.2 gives properness for free.** Rockafellar assumes `A f` is not identically `+∞`;
+here `Proper (mapLin A f)` is *derived*, using the recession half of 9.1: a vertical line in the
+image would be a direction of recession `(0, -1)`, hence `(z, -1) ∈ 0⁺(epi f)` with `A z = 0`,
+contradicting the constancy hypothesis. So `closedProperConvexFn_mapLin` returns the epigraph
+identity (which *is* the attainment statement) together with `ClosedProperConvexFn (mapLin A f)`,
+and `exists_mapLin_eq` is the attainment reading.
+
+(v) **Corollary 9.1.1 is one line of set algebra on top of 9.1.** `C + D` is the image of
+`C ×ˢ D` under `LinearMap.id.coprod LinearMap.id`, so the corollary is Theorem 9.1 for that map
+once `recessionCone_prod` and `linealitySpace_prod` are available (both new, both three lines, both
+needing *nonempty* factors — `0⁺(C ×ˢ ∅) = univ`). No induction over `m` summands is needed for
+the binary case, which is the only one §16 uses.
+
+```lean
+theorem Convex.closure_image_eq (hC : Convex ℝ C) (A : E →ₗ[ℝ] G)
+    (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
+    closure (A '' C) = A '' closure C                                             -- **Thm 9.1**
+theorem Convex.recessionCone_image_closure (hC : Convex ℝ C) (hne : C.Nonempty) (A) (h) :
+    recessionCone (A '' closure C) = A '' recessionCone (closure C)               -- **Thm 9.1**
+theorem closedProperConvexFn_mapLin (hf : ConvexFn f) (hp : Proper f) (hc : IsClosed (epi f))
+    (A : E →ₗ[ℝ] G) (h : ∀ z, recessionFn f z ≤ 0 → A z = 0 → z ∈ constancySpace f) :
+    epi (mapLin A f) = A.prodMap LinearMap.id '' epi f ∧
+      ClosedProperConvexFn (mapLin A f)                                           -- **Thm 9.2**
+theorem Convex.isClosed_add (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
+    (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
+    (h : ∀ z ∈ recessionCone C, ∀ w ∈ recessionCone D, z + w = 0 →
+      z ∈ linealitySpace C ∧ w ∈ linealitySpace D) : IsClosed (C + D)             -- **Cor 9.1.1**
+theorem Convex.closure_add_eq … : closure (C + D) = closure C + closure D         -- **Cor 9.1.1**
+theorem Convex.recessionCone_add … :
+    recessionCone (closure C + closure D)
+      = recessionCone (closure C) + recessionCone (closure D)                     -- **Cor 9.1.1**
+```
+
+Rockafellar's Theorem 9.2 hypothesis transports to the epigraph through
+`mk_zero_mem_linealitySpace_epi_iff`: `(z, 0) ∈ lin (epi f) ↔ z ∈ constancySpace f` for proper `f`,
+and `Ẃ (z, ν) = 0` forces `ν = 0`, so the pairs Theorem 9.1 quantifies over are exactly the
+`(z, 0)`.
+
+**The original plan for §9 follows.** Theorem 9.1 is the hardest single result in Parts I–III and
+everything else in §9, §16 and §27 depends on it.
 
 ```lean
 theorem Convex.closure_image_eq (hC : Convex ℝ C) (hC' : C.Nonempty) (A : E →ₗ[ℝ] G)
@@ -130,8 +192,9 @@ Consequences, all mechanical once 9.1 is in place:
 
 | Lean name | book |
 |---|---|
-| `closure_sum_eq` , `recessionCone_sum` | Cor 9.1.1–9.1.3 |
-| `mapLin_closed_of_recession` (`Ah` closed, infimum attained) | **Thm 9.2** |
+| `Convex.isClosed_add`, `Convex.closure_add_eq`, `Convex.recessionCone_add` — **done** | Cor 9.1.1 |
+| the `m`-ary versions | Cor 9.1.2–9.1.3 |
+| `mapLin_closed_of_recession` (`Ah` closed, infimum attained) — **done**, as `closedProperConvexFn_mapLin` | **Thm 9.2** |
 | `infConv_closed_of_recession` | Cor 9.2.1, 9.2.2 |
 | `clFn_add_eq_add_clFn` (needs `ri (dom fᵢ)` to meet) | **Thm 9.3** |
 | `clFn_sSup_eq` | **Thm 9.4** |
@@ -142,9 +205,33 @@ Consequences, all mechanical once 9.1 is in place:
 
 ## 3.5 `Tdaf/Analysis/Convex/Continuity.lean` — §10
 
+**Theorem 10.1 is formalized.** Theorems 10.2–10.6 are not. Three things the plan did not
+anticipate.
+
+(i) **Mathlib supplies the hard half and stops one step short.** `ConvexOn.continuousOn_interior`
+(finite dimensions, via `ConvexOn.locallyLipschitzOn`) is the whole analytic content; the
+`intrinsicInterior` version is an explicit `proof_wanted` in
+`Mathlib/Analysis/Convex/Continuous.lean`, left open only because that file does not import
+`Mathlib/Analysis/Convex/Intrinsic.lean`. So §10.1 is a *reduction*, not an analysis proof.
+
+(ii) **The reduction must go through a linear subspace, not the affine hull.** `intrinsicInterior`
+is defined as an interior taken inside `↥(affineSpan ℝ C)` — which is an `AddTorsor`, and `Convex`,
+`ConvexOn` and every Mathlib continuity theorem need a *module*. Fixing `x₀ ∈ C` and charting `C`
+in a subspace `V` spanned by `C - x₀` costs one translation (`intrinsicInterior_vadd`, also new)
+and buys the whole module API. The chart identity is `relint_eq_vadd_image_interior`:
+`ri C = x₀ + ι (int (chart C x₀ V))`.
+
+(iii) **Carrying continuity back needs a retraction.** `ContinuousOn` on an image is not formally
+`ContinuousOn` upstairs. In finite dimensions `V` has a complement, so
+`LinearMap.linearProjOfIsCompl` supplies a continuous left inverse and `ContinuousOn.congr`
+finishes. This is also what makes the real-valued form
+(`ConvexFn.continuousOn_toReal_relint_dom`) the primary statement and the `EReal` form a
+three-line corollary.
+
 | Lean name | book | note |
 |---|---|---|
-| `ConvexFn.continuousOn_relint_dom` | **Thm 10.1**, Cor 10.1.1 | the only §10 result used elsewhere |
+| `ConvexFn.continuousOn_relint_dom`, `ConvexFn.continuousOn_toReal_relint_dom` — **done** | **Thm 10.1** | the only §10 result used elsewhere |
+| Cor 10.1.1 | Cor 10.1.1 | not stated |
 | `LocallySimplicial` (def) + `ConvexFn.upperSemicontinuousOn` | **Thm 10.2** | needs simplices |
 | `ConvexFn.exists_unique_continuous_extension` | Thm 10.3 | |
 | `ConvexFn.lipschitzOn_of_isCompact_subset_relint` | **Thm 10.4** | |
@@ -162,6 +249,11 @@ than reproved. Theorems 10.6–10.9 are only used in §24, §25 and §35 and can
 polyhedral convex set is locally simplicial), so define it here.
 
 ## 3.6 `Tdaf/Analysis/Convex/Duality/Exact.lean` — [D5](00-overview.md#d5)
+
+**Formalized.** Two adjustments were needed: the file also imports `Operations/Image.lean` (that is
+where `mapLin`/`compLin` live), and the interface gained two lemmas that turn D5's remark about
+unsatisfiability into working API — `IsExactSum.proper_add` and `IsExactImage.proper_compLin`,
+which say that the interface itself rules out disjoint effective domains.
 
 ```lean
 structure IsExactSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) : Prop where
@@ -186,10 +278,11 @@ together with `IsAdjointPair` (see `Duality/Pairing.lean`).
 Sufficient conditions, each proved once:
 
 ```lean
--- in RelativeInterior.lean
-theorem IsExactSum.of_relint (hf : Proper f) (hg : Proper g)
-    (h : (ri (dom f) ∩ ri (dom g)).Nonempty) : IsExactSum B f g                     -- Thm 16.4
-theorem IsExactImage.of_relint (hg : Proper g) (h : ∃ x, A x ∈ ri (dom g)) : …      -- Thm 16.3
+-- in Duality/Relint.lean (done — see §3.7; `ClosedProperConvexFn`, not just `Proper`)
+theorem IsExactSum.of_relint (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g   -- Thm 16.4
+theorem IsExactImage.of_relint (hA) (hg : ClosedProperConvexFn g)
+    {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) : …                                        -- Thm 16.3
 -- in Polyhedral/Duality.lean
 theorem IsExactSum.of_polyhedral (hf : PolyhedralFn f) (hg : Proper g)
     (h : (dom f ∩ ri (dom g)).Nonempty) : IsExactSum B f g                          -- Thm 20.1
@@ -204,8 +297,11 @@ interface-only consequences, importing `Duality/Conjugate` and `Operations/InfCo
 `PolyhedralFn` (functions), not `Polyhedral` (sets); applying the set-level predicate to a function
 is a type error.
 
-`of_relint` is proved from §9 (Theorem 9.2 / Corollary 9.2.1 give closedness and attainment, via
-Lemma 16.2 and Corollary 16.2.1) plus §6. `of_continuousAt` is a genuine generalisation valid in any
+`of_relint` is proved from §9 (Theorem 9.2 for images, Corollary 9.1.1 for sums) plus §13's
+Theorem 13.3 plus §6 — not via Lemma 16.2 and Corollary 16.2.1, which are never stated. It also
+needs the *closed* proper convex hypothesis, not just `Proper`, because Theorem 12.2 is what makes
+`f*` proper and Theorem 9.2 needs a closed epigraph. It lives in its own file, `Duality/Relint.lean`,
+since no one of §6/§9/§13 owns it. `of_continuousAt` is a genuine generalisation valid in any
 TVS, cheap to prove, and is the version practitioners actually use — worth having even though
 Rockafellar does not state it.
 
@@ -218,6 +314,32 @@ Downstream consumers, each reduced to `IsExactSum`/`IsExactImage` once and for a
 
 ## 3.7 `Tdaf/Analysis/Convex/Duality/Ops.lean` — §16
 
+**Formalized in full**, including the constraint qualification. Five adjustments.
+
+(i) The conditional halves are *stated here after all*, in Rockafellar's own form — with a `clFn`
+on the dual side rather than with a constraint qualification: `conj_add_eq_clFn_infConv`,
+`conj_iSup_eq_clFn_convFn`, `conj_compLin_eq_clFn_mapLin`. Each is three lines (apply the
+unconditional identity for the *dual* operation, then `biconj_eq_self` and `biconj_eq_clFn`), and
+each is genuinely more general than the `Exact.lean` form, which drops the closure but demands the
+qualification. So each row of the table now appears in three forms, not two.
+
+(ii) Two epigraph lemmas had to come first: `conj_ofEpi` (the conjugate of `ofEpi S` is
+`⨆ p ∈ S, ⟨p.1, y⟩ - p.2`) and its specialisation `conj_eq_biSup_epi`. `conj_infConv` is proved
+through them, because its right-hand side is a *sum* and so has no affine-minorant
+characterisation to compare against; every other unconditional row is proved by
+`Tdaf.EReal.eq_of_forall_le_coe_iff` + `conj_le_coe_iff`, i.e. by comparing affine minorants
+directly. This is also what made two new `Order/EReal.lean` lemmas necessary
+(`biSup_add_biSup`, `coe_le_coe_mul_iff`).
+
+(iii) `smulLeft` does not exist as a definition — ordinary scalar multiplication of an `EReal`-valued
+function is just `fun x => (a : EReal) * f x`, so **Thm 16.1** is stated that way
+(`conj_smul`, `conj_smulRight`).
+
+(iv) `sSupFn` likewise does not exist: the pointwise supremum is `⨆ i, f i` from the `Lattice.lean`
+`CompleteLattice` instance, so **Thm 16.5** is `conj_convFn` / `conj_iSup_eq_clFn_convFn`, with
+`conj_convHullFn` (a function and its convex hull have the same conjugate) and the binary
+`conj_convFn₂` alongside.
+
 The dual-operations table. Each row is one theorem, and each has an unconditional half (an identity)
 plus a conditional half (closure omitted, infimum attained) supplied by `Exact.lean`.
 
@@ -225,16 +347,34 @@ plus a conditional half (closure omitted, infimum attained) supplied by `Exact.l
 |---|---|---|
 | `smulLeft a f` ↔ `smulRight (conj f) a` | | **Thm 16.1**, Cor 16.1.1–2 |
 | `mapLin A f` ↔ `compLin (conj f) Aᵀ` | *unconditional* | **Thm 16.3** |
-| `compLin g A` ↔ `mapLin Aᵀ (conj g)` | *conditional* | **Thm 16.3** |
+| `compLin g A` ↔ `mapLin Aᵀ (conj g)` | *conditional*, discharged by `IsExactImage.of_relint` | **Thm 16.3** |
 | `infConv` ↔ `+` | *unconditional* | **Thm 16.4** |
-| `+` ↔ `infConv` | *conditional* | **Thm 16.4**, Cor 16.4.1 |
+| `+` ↔ `infConv` | *conditional*, discharged by `IsExactSum.of_relint` | **Thm 16.4**, Cor 16.4.1 |
 | `convFn` ↔ `sSupFn` | *unconditional* | **Thm 16.5** |
 | `sSupFn` ↔ `convFn` | *conditional* | **Thm 16.5**, Cor 16.5.1–2 |
 
 Set-level corollaries (support functions of sums/intersections, polars of hulls/intersections) come
-free by applying the function-level result to indicators. Lemma 16.2 and Corollary 16.2.1 are the
-technical bridge from the `ri` hypothesis to the recession hypothesis of §9; they live in
-`Exact.lean`, not here.
+free by applying the function-level result to indicators — and in the event `supportFn_add`,
+`supportFn_convexHull` and `supportFn_iUnion` were already proved directly in `Duality/Support.lean`
+when §13 was done, so nothing was re-derived here.
+
+(v) **Lemma 16.2 and Corollary 16.2.1 are never stated.** They were planned as the technical bridge
+from the `ri` hypothesis to the recession hypothesis of §9. That bridge turned out to be **Theorem
+13.3** (`constancySpace_conj`: the constancy space of `f*` is the annihilator of `dom f`) composed
+with §6's `eq_of_isMaxOn_of_mem_relint` / `eq_zero_of_nonpos_of_mem_relint`, and it is four lines
+inside each constructor rather than a lemma of its own. The constructors themselves live in a new
+file, `Duality/Relint.lean`, not in `Exact.lean` — `Exact.lean` is layer A and must stay that way,
+while `of_relint` needs finite dimensions, §9 and §13 all at once:
+
+```lean
+theorem IsExactImage.of_relint (hA : IsAdjointPair B B' A A') (hg : ClosedProperConvexFn g)
+    {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) : IsExactImage B B' A A' hA g          -- **Thm 16.3**
+theorem IsExactSum.of_relint (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g   -- **Thm 16.4**
+```
+
+The image rule runs on Theorem 9.2 and puts finite-dimensionality on `G` and `H`; the sum rule runs
+on Corollary 9.1.1 inside `F × ℝ` and puts it on `F` instead. Neither touches `E` beyond a norm.
 
 ## 3.8 Left to the surface
 

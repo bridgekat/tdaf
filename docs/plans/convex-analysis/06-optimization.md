@@ -142,7 +142,8 @@ two-line consequence, not a new proof. That is the whole point of [D8](00-overvi
 **Sign warning.** Theorem 30.2 is about the **concave** conjugate: the book (line 12487) says `F*0`
 is the conjugate of the *concave* function `−inf F`, and `g* ≠ −(−g)*`. `inf F` is convex; its
 convex conjugate is not `F*0`. Every §30 statement mixing the two must go through `concaveConj`,
-which `Concave.lean` must therefore define (D2).
+which `Duality/ConcaveConj.lean` defines (D2). Its `neg_concaveConj` is the dictionary to reach for;
+note that the reflection is on the *argument* as well as on the value.
 
 ## 6.5 `Optimization/Fenchel.lean` — §31
 
@@ -152,8 +153,10 @@ theorem fenchel_duality (hf : ConvexFn f) (hg : ConcaveFn g)
     (⨅ x, f x - g x) = ⨆ y, concaveConj B g y - conj B f y
 ```
 
-`concaveConj` (`g*(y) = ⨅ x, ⟨x,y⟩ - g x`) is announced in D2 but must actually be defined, in
-`Concave.lean`; likewise `prox` for Theorem 31.5, which needs an inner-product space and a real
+`concaveConj` (`g*(y) = ⨅ x, ⟨x,y⟩ - g x`) is **formalized**, in
+`Duality/ConcaveConj.lean` rather than in `Concave.lean`: it needs a pairing, and `Concave.lean` is
+a layer-A file that should not acquire separation and Hahn-Banach as dependencies. `prox` for
+Theorem 31.5 still has to be built, and needs an inner-product space and a real
 existence-and-uniqueness proof.
 
 Rockafellar's hypotheses — (a) `ri (dom f) ∩ ri (dom g) ≠ ∅`, and (b) `f, g` closed with

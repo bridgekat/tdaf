@@ -229,7 +229,7 @@ theorem supportFn_eq_conj_indicator : supportFn B s = conj B (indicatorFn s)
 | `posHomogeneous_closed_iff_isSupportFn` — the closed proper positively homogeneous convex functions *are* the support functions | **Thm 13.2** |
 | `clFn_eq_supportFn_of_posHomogeneous` | Cor 13.2.1 |
 | `isSupportFn_bounded_iff_finite` | Cor 13.2.2 |
-| `supportFn_dom_eq_recession_conj` : `δ*(·|dom f) = (conj B f) 0⁺` | **Thm 13.3** |
+| `recessionFn_conj` : `(conj B f) 0⁺ = δ*(·|dom f)` — **formalized**, in `Recession/Conjugate.lean`; with `constancySpace_conj` | **Thm 13.3** |
 | `conj_finite_iff_cofinite` | Cor 13.3.1 |
 | `lineality_conj_eq_orthogonal_aff_dom` | Thm 13.4 *(finite-dim)* |
 | `supportFn_level_eq_clFn_hom_conj` | **Thm 13.5** |
@@ -241,6 +241,24 @@ closed + proper ⟹ is a support function) is `biconj_eq_clFn` plus
 
 Theorems 13.3–13.5 need recession functions (§8) and so are finished in sub-plan 3; the statements
 belong here.
+
+**Theorem 13.3 is formalized**, in `Recession/Conjugate.lean` — a new file that is exactly the join
+of `Duality/Support.lean` and `Recession/Function.lean`, since neither can name both `f*` and
+`f 0⁺`. Four adjustments to the plan:
+
+* **The name is `recessionFn_conj`, and the equation runs the other way** (`(f*)0⁺ = δ*(·|dom f)`),
+  matching Rockafellar's own direction and the direction consumers rewrite in.
+* **The file is layer A.** Only *one* of the two inequalities needs anything: `(f*)0⁺ ≤ δ*(·|dom f)`
+  is a termwise bound on the supremum defining `f*` and holds for arbitrary `f`
+  (`recessionFn_conj_le_supportFn_dom`). The reverse needs a point where `f*` is finite — that is
+  `Proper (conj B f)`, i.e. **Theorem 12.2** — and it is taken as a *hypothesis* rather than derived,
+  so layer-C callers supply it from `proper_conj` and everybody else can still use the statement.
+* **`constancySpace_conj` is the form that gets used**, not Theorem 13.3 itself: the constancy space
+  of `f*` is the annihilator `{y | ∀ x ∈ dom f, ⟨x, y⟩ = 0}` of the effective domain. That is the
+  shape Theorem 9.2 and Theorem 16.3 consume — it converts "`f*` is constant along `y`" into a
+  statement about `dom f` that a relative-interior hypothesis can discharge.
+* **Corollary 13.3.1 and Theorems 13.4–13.5 remain unstated.** Nothing needs them yet; Theorem 13.4
+  is `constancySpace_conj` read as an orthogonal complement and should be cheap when wanted.
 
 ## 2.6 `Tdaf/Analysis/Convex/Duality/Polar.lean` — §14, §15
 

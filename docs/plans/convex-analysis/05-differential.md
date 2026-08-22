@@ -51,18 +51,54 @@ all — and Theorem 23.5 is layer C. Only Theorem 23.4 (nonemptiness) needs fini
 
 ## 5.2 `Subgradient/Calculus.lean` — §23.8–§23.10
 
+**Formalized**, except Theorem 23.10, which is blocked on `PolyhedralFn` (§19). The two main rules
+went in as planned, with the exact-sum/exact-image rules gaining the `IsExactSum`/`IsExactImage`
+namespaces:
+
 ```lean
-theorem subgradient_add_subset : ∂f₁ x + ∂f₂ x ⊆ ∂(f₁+f₂) x                       -- always
-theorem subgradient_add (h : IsExactSum B f₁ f₂) : ∂(f₁+f₂) x = ∂f₁ x + ∂f₂ x     -- **Thm 23.8**
-theorem subgradient_compLin (h : IsExactImage B B' A A' hA g) :
-    ∂(g ∘ A) x = A' '' ∂g (A x)                                                    -- **Thm 23.9**
-theorem PolyhedralFn.subgradient_nonempty …                                        -- **Thm 23.10**
+theorem subgradient_add_subset (B) (f g) (x) :
+    subgradient B f x + subgradient B g x ⊆ subgradient B (f + g) x                 -- always
+theorem IsExactSum.subgradient_add (h : IsExactSum B f g) (x : E) :
+    subgradient B (f + g) x = subgradient B f x + subgradient B g x                 -- **Thm 23.8**
+theorem image_subgradient_subset (hA : IsAdjointPair B B' A A') (g) (x) :
+    A' '' subgradient B' g (A x) ⊆ subgradient B (compLin g A) x                    -- always
+theorem IsExactImage.subgradient_compLin {hA} (h : IsExactImage B B' A A' hA g) (x : E) :
+    subgradient B (compLin g A) x = A' '' subgradient B' g (A x)                    -- **Thm 23.9**
 ```
 
 Both main rules are stated against the [`IsExactSum`/`IsExactImage`](03-relint-recession.md#36-tdafanalysisconvexdualityexactlean--d5)
 interface, so the `ri` version, the polyhedral version (Theorem 23.8's second half) and the
-continuity version all come from one proof. Corollary 23.8.1 (normal cone to an intersection) is the
-indicator instance.
+continuity version all come from one proof. Rockafellar's own `ri` versions are now available:
+compose these with `IsExactSum.of_relint` / `IsExactImage.of_relint` from `Duality/Relint.lean`.
+Corollary 23.8.1 (normal cone to an intersection) is the indicator instance.
+
+Five things worth recording.
+
+(i) **The whole file runs on Theorem 23.5 and nothing else.** `mem_subgradient_iff_add_conj_le`
+(`y ∈ ∂f x ↔ f x + f* y ≤ ⟨x, y⟩`, unconditional) turns both calculus rules into arithmetic on a
+single inequality. No epigraph, no directional derivative, no separating hyperplane appears — and
+the file is layer A, needing no topology, which the plan did not anticipate.
+
+(ii) **The two rules are not symmetric in what they cost.** For sums, exactness gives one *joint*
+equality in Fenchel's inequality and it has to be split into two; that is
+`Tdaf.EReal.le_coe_of_add_le_coe_add` (two slack inequalities whose sum is tight must each be
+tight), and it is the only place `IsExactSum`'s properness is spent. The image rule has nothing to
+split; it spends its properness on a single point instead, to see that `(g A)* y` is finite and so
+unlock the `< ⊤`-guarded `IsExactImage.exact_le`.
+
+(iii) Corollary 23.8.1 needed `indicatorFn_add` (`δ(·|C) + δ(·|D) = δ(·|C ∩ D)`, unconditional),
+which went into `Indicator.lean` where it belongs — `⊤` absorbs, so there is no side condition. The
+unconditional half `normalCone_add_subset` is proved *directly* rather than through indicators, so
+that it needs neither `x ∈ C` nor `x ∈ D`.
+
+(v) **`IsExactImage.exact_le` had to be re-stated while wiring 23.9 up.** As first written it
+demanded a point of the fibre `A' ⁻¹ {y}` at *every* `y`, which forces `A'` surjective and makes
+the interface unsatisfiable for e.g. `A = 0`. It now carries the guard `(g A)* y < ⊤` — exactly
+what Theorem 9.2 delivers. `subgradient_compLin` discharges the guard from `g (A x) ≠ ⊥`, which is
+where its one use of properness goes.
+
+(iv) Theorem 23.10 is a *nonemptiness* statement, not a calculus rule; it belongs with Theorem 23.4
+and should move there when §19 exists.
 
 ## 5.3 `Subgradient/Monotone.lean` — §24
 

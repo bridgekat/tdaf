@@ -22,7 +22,49 @@ theorem coe_mul_coe (a r : ℝ) : (a : EReal) * (r : EReal) = ((a * r : ℝ) : E
 theorem eq_bot_of_forall_le_coe {z : EReal} (h : ∀ r : ℝ, z ≤ (r : EReal)) : z = ⊥
 theorem exists_coe_of_ne_bot_of_lt_top {z : EReal} (h₁ : z ≠ ⊥) (h₂ : z < ⊤) :
     ∃ r : ℝ, z = (r : EReal)
+theorem coe_sub_le_comm {a : ℝ} {z w : EReal} : (a : EReal) - z ≤ w ↔ (a : EReal) - w ≤ z
+theorem le_coe_sub_comm {a : ℝ} {z w : EReal} : z ≤ (a : EReal) - w ↔ w ≤ (a : EReal) - z
+theorem neg_iSup {ι : Sort*} (u : ι → EReal) : -(⨆ i, u i) = ⨅ i, -(u i)
+theorem neg_iInf {ι : Sort*} (u : ι → EReal) : -(⨅ i, u i) = ⨆ i, -(u i)
 ```
+
+`coe_sub_le_comm` carries §12; `le_coe_sub_comm` is its mirror and carries the concave §12. Both are
+unconditional because `a` is finite. `neg_iSup`/`neg_iInf` are what make the sign dictionary of
+`Duality/ConcaveConj.lean` a one-line rewrite.
+
+The multiplication-and-supremum group, which §13 and §16 run on:
+
+```lean
+theorem coe_mul_le_coe_mul_iff {a : ℝ} (ha : 0 < a) {z w : EReal} :
+    (a : EReal) * z ≤ (a : EReal) * w ↔ z ≤ w
+theorem coe_mul_le_coe_iff {a : ℝ} (ha : 0 < a) {z : EReal} {r : ℝ} :
+    (a : EReal) * z ≤ (r : EReal) ↔ z ≤ ((r / a : ℝ) : EReal)
+theorem coe_le_coe_mul_iff {a : ℝ} (ha : 0 < a) {z : EReal} {r : ℝ} :
+    (r : EReal) ≤ (a : EReal) * z ↔ ((r / a : ℝ) : EReal) ≤ z
+theorem coe_mul_iSup {a : ℝ} (ha : 0 < a) {ι : Sort*} (u : ι → EReal) :
+    (a : EReal) * (⨆ i, u i) = ⨆ i, (a : EReal) * u i
+theorem coe_mul_iInf {ι : Sort*} {a : ℝ} (ha : 0 < a) (g : ι → EReal) :
+    (a : EReal) * (⨅ i, g i) = ⨅ i, (a : EReal) * g i
+theorem biSup_add_of_ne_bot {α : Type*} {s : Set α} {u : α → EReal} (hu : ∀ a ∈ s, u a ≠ ⊥)
+    (w : EReal) : (⨆ a ∈ s, u a) + w = ⨆ a ∈ s, (u a + w)
+theorem biSup_add_biSup {α β : Type*} {s : Set α} {t : Set β} {u : α → EReal} {v : β → EReal}
+    (hu : ∀ a ∈ s, u a ≠ ⊥) (hv : ∀ b ∈ t, v b ≠ ⊥) :
+    (⨆ a ∈ s, u a) + (⨆ b ∈ t, v b) = ⨆ a ∈ s, ⨆ b ∈ t, (u a + v b)
+theorem eq_of_forall_le_coe_iff {z w : EReal}
+    (h : ∀ r : ℝ, z ≤ (r : EReal) ↔ w ≤ (r : EReal)) : z = w
+theorem le_coe_of_add_le_coe_add {p q : ℝ} {u v : EReal} (hp : (p : EReal) ≤ u)
+    (hq : (q : EReal) ≤ v) (h : u + v ≤ ((p + q : ℝ) : EReal)) : u ≤ (p : EReal)
+```
+
+`coe_mul_le_coe_iff`/`coe_le_coe_mul_iff` are the two sides of "divide by `a > 0`", and are how
+**Thm 16.1** is proved without ever case-splitting on `⊤`/`⊥`. `biSup_add_biSup` is the sum of two
+suprema over sets — the shape `conj_infConv` lands in — and needs `≠ ⊥` on both families, since
+`⊥ + ⊤` would otherwise break the interchange. `eq_of_forall_le_coe_iff` is the workhorse of §16:
+it turns "these two `EReal`s are equal" into "these two functions have the same affine minorants",
+which is exactly what `conj_le_coe_iff` supplies. `le_coe_of_add_le_coe_add` says two slack
+inequalities cannot compensate: if `p ≤ u`, `q ≤ v` and `u + v ≤ p + q` with `p q : ℝ`, then each
+is tight. It is one-sided — apply it again with `add_comm` for the other summand — and it is what
+splits one joint equality in Fenchel's inequality into two (Theorem 23.8).
 
 Note the namespace clash: plain `EReal.foo` resolves to `Tdaf.EReal.foo` first, from anywhere under
 `namespace Tdaf`. Write `_root_.EReal.foo` for Mathlib's lemmas when the name exists in both, and
@@ -101,6 +143,8 @@ noncomputable def indicatorFn (s : Set E) : E → EReal := restrict s (fun _ => 
 @[simp] theorem indicatorFn_of_notMem (hx : x ∉ s) : indicatorFn s x = ⊤
 theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥
 @[simp] theorem dom_indicatorFn (s : Set E) : dom (indicatorFn s) = s
+@[simp] theorem indicatorFn_add (s t : Set E) :
+    indicatorFn s + indicatorFn t = indicatorFn (s ∩ t)
 theorem epi_indicatorFn (s : Set E) : epi (indicatorFn s) = s ×ˢ Set.Ici (0 : ℝ)
 @[simp] theorem convexFn_indicatorFn {s : Set E} : ConvexFn (indicatorFn s) ↔ Convex ℝ s
 theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
@@ -177,6 +221,19 @@ functions. `Lattice.lean` gets its `CompleteLattice` from `GaloisCoinsertion.lif
 `exists_affine_le_of_closed_proper` (**the Fenchel–Moreau keystone**),
 `tendsto_lscHull_along_segment` (**Thm 7.5**), `lscHullClosure`/`clFnClosure` as `ClosureOperator`s.
 
+### `Tdaf/Analysis/Convex/Continuity.lean`
+
+**Thm 10.1** as `ConvexFn.continuousOn_toReal_relint_dom` (real-valued, the working form) and
+`ConvexFn.continuousOn_relint_dom` (`EReal`-valued). The chart machinery is reusable:
+`intrinsicInterior_vadd` (translation invariance of `ri`, absent from Mathlib), `chart C x₀ V`,
+`image_chart`, `zero_mem_chart`, `convex_chart`, `affineSpan_chart`, and
+`relint_eq_vadd_image_interior` (`ri C = x₀ + ι (int (chart C x₀ V))`). Also
+`ConvexFn.convexOn_toReal_dom`, the bridge from `ConvexFn f` + `Proper f` to Mathlib's
+`ConvexOn ℝ (dom f) (·.toReal)`.
+
+The subspace `V` is always a *parameter* carrying `hV : V = span ℝ (C - x₀)`, never a definition —
+see gotcha 52.
+
 ### `Tdaf/Analysis/Convex/Lattice.lean`
 
 `ConvexFns E` (`abbrev` on the subtype) with `CompleteLattice` from
@@ -198,7 +255,10 @@ separation lemma that `Closure.lean` now consumes.
 `recessionCone`, `recessionPointedCone : PointedCone ℝ E` (**no hypothesis on `C`**),
 `linealitySpace`, `linealitySubmodule` (`= PointedCone.lineal`, so Thm 2.7 is two lines);
 Thm 8.1 (layer A), Thm 8.2/8.3 and Cors 8.3.2–8.3.4 (**layer B**), `isClosed_recessionCone`
-(**layer B**), Thm 8.4/Cor 8.4.1 (layer D); bridges to Mathlib's `asymptoticCone`.
+(**layer B**), Thm 8.4/Cor 8.4.1 (layer D); bridges to Mathlib's `asymptoticCone`. Also
+`eq_add_inter_of_isCompl_of_le`, `recessionCone_preimage_affine`, `recessionCone_coe_submodule`,
+and the product lemmas `prod_recessionCone_subset` / `recessionCone_prod` / `linealitySpace_prod`
+(the last two need both factors nonempty).
 
 ### `Tdaf/Analysis/Convex/Duality/Pairing.lean`
 
@@ -215,6 +275,150 @@ needs properness, see gotcha 23), `conj_le_iff` (the adjunction, unconditional),
 `gc_conj_conj`/`conjClosure`, and two instantiations, both in the space's *own* topology:
 `_topDual` (a locally convex space against its continuous dual — so, a Banach space in its norm
 topology) and `_inner` (Hilbert/`ℝⁿ`, via Fréchet–Riesz).
+
+### `Tdaf/Analysis/Convex/Duality/ConcaveConj.lean`
+
+`concaveConj B g y = ⨅ x, ⟨x,y⟩ - g x` and `biconcaveConj`; the sign dictionary
+`neg_concaveConj : -(concaveConj B g y) = conj B (-g) (-y)` with its two solved forms
+`concaveConj_eq_neg_conj_neg` and `conj_eq_neg_concaveConj_neg` (**note the reflection on the dual
+side** — `g* ≠ -(-g)*`); `concaveConj_le_sub` and `add_concaveConj_le` (**both unconditional**, see
+gotcha 40); `coe_le_concaveConj_iff`, `concaveConj_antitone`, `le_concaveConj_iff` (the adjunction),
+`le_biconcaveConj`; the improper cases `concaveConj_eq_top_iff`/`_of_eq_top`/`_bot`/`_top`/`_ne_top`;
+`concaveFn_concaveConj`; `biconcaveConj_eq_neg_biconj_neg` (**pure algebra — the two reflections
+cancel, so there is no sign on the argument**) and, at layer C,
+`biconcaveConj_eq_neg_clFn_neg`/`biconcaveConj_eq_self`.
+
+### `Tdaf/Analysis/Convex/Duality/Exact.lean`
+
+`IsExactSum B f g` (`proper_left`, `proper_right`, `exact_le`) and
+`IsExactImage B B' A A' hA g` (`proper`, `exact_le`) — the D5 interfaces. Unconditional halves:
+`conj_add_le_coe_add`, `epi_conj_add_epi_conj_subset`, `conj_add_le_infConv`,
+`conj_add_le_add_conj` (this last one needs nonempty domains), `conj_compLin_le_mapLin`.
+Consequences: `IsExactSum.{conj_left_ne_bot, conj_right_ne_bot, symm, proper_add,
+infConv_le_conj_add, conj_add, conj_add_apply, exists_conj_add_eq}` and
+`IsExactImage.{proper_compLin, mapLin_le_conj_compLin, conj_compLin, exists_conj_compLin_eq}`.
+The `of_relint`/`of_polyhedral`/`of_continuousAt` sufficient conditions are **not** here — see D5;
+`of_relint` is in `Duality/Relint.lean`.
+
+The two `exact_le` fields are **not** symmetric in shape:
+
+```lean
+IsExactSum.exact_le   : ∀ y : F, ∃ y₁ y₂ : F, y₁ + y₂ = y ∧
+                          conj B f y₁ + conj B g y₂ ≤ conj B (f + g) y
+IsExactImage.exact_le : ∀ y : F, conj B (compLin g A) y < ⊤ →
+                          ∃ z : H, A' z = y ∧ conj B' g z ≤ conj B (compLin g A) y
+```
+
+The `< ⊤` guard on the image side is load-bearing: without it the field demands a point of the
+fibre `A' ⁻¹ {y}` at every `y`, i.e. it forces `A'` surjective, and the interface becomes
+unsatisfiable for e.g. `A = 0`. The sum side needs no guard because `y = y + 0` always splits.
+
+### `Tdaf/Analysis/Convex/Duality/Relint.lean`
+
+The only file that *produces* a D5 interface. `IsExactImage.of_relint` (**Thm 16.3**) and
+`IsExactSum.of_relint` (**Thm 16.4**), plus the three steps they are assembled from:
+`mem_constancySpace_conj_of_relint`, `le_of_mk_mem_recessionCone_epi_conj`,
+`mk_mem_linealitySpace_epi_conj_of_relint`. Layers differ between the two: the image rule needs
+`FiniteDimensional ℝ G` and `ℝ H` (Thm 9.2 runs in `H`), the sum rule needs `FiniteDimensional ℝ F`
+(Cor 9.1.1 runs in `F × ℝ`); `E` is only ever a normed space.
+
+### `Tdaf/Analysis/Convex/Recession/Closedness.lean`
+
+**Thm 9.1** as `isClosed_image_of_recessionCone_inter_ker` /
+`recessionCone_image_of_recessionCone_inter_ker` (reduced hypothesis `0⁺C ∩ ker A ⊆ {0}`) and
+`Convex.{isClosed_image_closure, closure_image_eq, recessionCone_image_closure,
+closure_image_eq_and_recessionCone}` (Rockafellar's hypothesis), with the reduction packaged as
+`exists_reduction_of_recessionCone_inter_ker`. **Cor 9.1.1** as `Convex.{isClosed_add,
+closure_add_eq, recessionCone_add}`, via `image_coprod_id_prod` and
+`forall_mem_linealitySpace_prod`. **Thm 9.2** as `closedProperConvexFn_mapLin` (epigraph identity
+*and* `ClosedProperConvexFn`) with `exists_mapLin_eq` as the attainment reading, and
+`mk_zero_mem_linealitySpace_epi_iff` transporting the hypothesis to the epigraph.
+
+### `Tdaf/Analysis/Convex/Recession/Conjugate.lean`
+
+**Thm 13.3**: `recessionFn_conj_le_supportFn_dom` (unconditional half),
+`supportFn_dom_le_recessionFn_conj` (needs `Proper f` and `Proper (conj B f)`), `recessionFn_conj`,
+and `constancySpace_conj` — the form §9.2 and §16.3 actually consume. Layer A throughout:
+properness of `f*` is a hypothesis, not derived.
+
+### `Tdaf/Analysis/Convex/Duality/Ops.lean`
+
+The §16 table. Reading the epigraph:
+
+```lean
+theorem conj_ofEpi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (S : Set (E × ℝ)) (y : F) :
+    conj B (ofEpi S) y = ⨆ p ∈ S, ((B p.1 y - p.2 : ℝ) : EReal)
+theorem conj_eq_biSup_epi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (y : F) :
+    conj B f y = ⨆ p ∈ epi f, ((B p.1 y - p.2 : ℝ) : EReal)
+```
+
+The unconditional rows — no hypothesis on the functions, layer A on both spaces:
+
+```lean
+theorem conj_smul (ha : 0 < a) (B) (f) :                                          -- Thm 16.1
+    conj B (fun x => (a : EReal) * f x) = smulRight (conj B f) a
+theorem conj_smulRight (ha : 0 < a) (B) (f) :                                     -- Thm 16.1
+    conj B (smulRight f a) = fun y => (a : EReal) * conj B f y
+theorem conj_mapLin (hA : IsAdjointPair B B' A A') (f : E → EReal) :              -- Thm 16.3
+    conj B' (mapLin A f) = compLin (conj B f) A'
+theorem conj_infConv (B) (f g : E → EReal) :                                      -- Thm 16.4
+    conj B (infConv f g) = conj B f + conj B g
+theorem conj_convFn (B) (f : ι → E → EReal) :                                     -- Thm 16.5
+    conj B (convFn f) = ⨆ i, conj B (f i)
+theorem conj_convHullFn (B) (g) : conj B (convHullFn g) = conj B g
+theorem conj_convFn₂ (B) (f g) : conj B (convFn₂ f g) = conj B f ⊔ conj B g
+```
+
+The closure rows — layer C on **both** spaces, `[IsCompatiblePairing B] [IsCompatiblePairing B.flip]`,
+inputs closed convex:
+
+```lean
+theorem conj_add_eq_clFn_infConv (hf : ConvexFn f) (hfc : ClosedFn f) (hg : ConvexFn g)
+    (hgc : ClosedFn g) : conj B (f + g) = clFn (infConv (conj B f) (conj B g))    -- Thm 16.4
+theorem conj_iSup_eq_clFn_convFn {f : ι → E → EReal} (hf : ∀ i, ConvexFn (f i))
+    (hfc : ∀ i, ClosedFn (f i)) : conj B (⨆ i, f i) = clFn (convFn fun i => conj B (f i))
+theorem conj_compLin_eq_clFn_mapLin [IsCompatiblePairing B'] [IsCompatiblePairing B.flip]
+    (hA : IsAdjointPair B B' A A') (hg : ConvexFn g) (hgc : ClosedFn g) :         -- Thm 16.3
+    conj B (compLin g A) = clFn (mapLin A' (conj B' g))
+```
+
+So each row has three forms: unconditional (here), with a closure (here), and exact under a
+constraint qualification (`Exact.lean`). `Duality/Support.lean`'s `supportFn_add`,
+`supportFn_convexHull`, `supportFn_iUnion` are the indicator instances and were proved directly
+in §13.
+
+### `Tdaf/Analysis/Convex/Subgradient/Defs.lean`
+
+`subgradient`, `subgradientRel`, `normalCone`, `normalPointedCone`, `dirDeriv`, and §23.1–§23.7.
+The full name table is in [`05-differential.md` §5.1](05-differential.md); the four names the rest
+of the project reaches for are `mem_subgradient` (`Iff.rfl`), `mem_subgradient_iff_conj_eq`,
+`mem_subgradient_iff_add_conj_le` (Theorem 23.5, unconditional — `y ∈ ∂f x ↔ f x + f* y ≤ ⟨x, y⟩`)
+and `subgradient_indicatorFn` (carries `x ∈ C`).
+
+### `Tdaf/Analysis/Convex/Subgradient/Calculus.lean`
+
+Layer A throughout — no topology, because Theorem 23.5 does all the work:
+
+```lean
+theorem subgradient_add_subset (B) (f g) (x : E) :                                -- unconditional
+    subgradient B f x + subgradient B g x ⊆ subgradient B (f + g) x
+theorem IsExactSum.subgradient_add (h : IsExactSum B f g) (x : E) :               -- Thm 23.8
+    subgradient B (f + g) x = subgradient B f x + subgradient B g x
+theorem image_subgradient_subset (hA : IsAdjointPair B B' A A') (g) (x : E) :     -- unconditional
+    A' '' subgradient B' g (A x) ⊆ subgradient B (compLin g A) x
+theorem IsExactImage.subgradient_compLin {hA : IsAdjointPair B B' A A'}
+    (h : IsExactImage B B' A A' hA g) (x : E) :                                   -- Thm 23.9
+    subgradient B (compLin g A) x = A' '' subgradient B' g (A x)
+theorem normalCone_add_subset (B) (C D : Set E) (x : E) :                         -- unconditional
+    normalCone B C x + normalCone B D x ⊆ normalCone B (C ∩ D) x
+theorem IsExactSum.normalCone_inter (h : IsExactSum B (indicatorFn C) (indicatorFn D))
+    (hC : x ∈ C) (hD : x ∈ D) :                                                  -- Cor 23.8.1
+    normalCone B (C ∩ D) x = normalCone B C x + normalCone B D x
+```
+
+The sum rule spends `IsExactSum`'s properness on `Tdaf.EReal.le_coe_of_add_le_coe_add`; the image
+rule uses no properness at all. Theorem 23.10 is absent — it needs `PolyhedralFn` (§19), and it is
+a nonemptiness statement rather than a calculus rule.
 
 ---
 
@@ -499,6 +703,91 @@ here.
     second map), and "… so its linear part vanishes on the direction" is
     `AffineMap.linear_eqOn_vectorSpan` composed with `direction_affineSpan`. Building the level-set
     `AffineSubspace` by hand costs ~25 lines and is what `exists_lt_of_notMem_relint` used to do.
+
+40. **`EReal` is not a `SubNegMonoid`, so `sub_eq_add_neg` does not always fire — but `a - b` *is*
+    `a + -b` by `rfl`.** `EReal`'s `Sub` instance is literally `⟨fun x y => x + -y⟩`, so a goal that
+    `simp only [sub_eq_add_neg]` leaves as `a - b = a + -b` is closed by a bare `rfl`. The practical
+    recipe for a sign-transfer proof is: rewrite the coercions, `simp only [sub_eq_add_neg]` to
+    expose the sums, apply `EReal.neg_add` (whose two disjunctive side conditions are discharged by
+    `.inl (EReal.coe_ne_bot _)` and `.inl (EReal.coe_ne_top _)` whenever the first summand is a real
+    coercion), then `rfl`.
+
+41. **`EReal.le_sub_iff_add_le {a b c} (hb : b ≠ ⊥ ∨ c ≠ ⊥) (ht : b ≠ ⊤ ∨ c ≠ ⊤) : a ≤ c - b ↔
+    a + b ≤ c`** — note that `b` is the *subtrahend* and `c` the minuend, which is the opposite of
+    the reading the argument names suggest. Feeding it `.inl` where `.inr` is wanted produces an
+    "application type mismatch" naming a metavariable, not a helpful error.
+
+42. **Sign transfer reverses the order but not the arithmetic.** `⊤ + ⊥ = ⊥` is not self-dual, so a
+    convex statement of the form `a ≤ u + v` and its concave mirror `u + v ≤ a` need *different*
+    hypotheses: the first collapses to `⊥` on its large side and needs properness, the second
+    collapses on its small side and does not. Check each mirror rather than assuming D2's symmetry;
+    `add_concaveConj_le` is the case where it bit.
+
+43. **`forall_congr'` does not see through `≤` on a Pi type.** `f ≤ g` for `f g : E → EReal` is
+    *definitionally* `∀ x, f x ≤ g x`, but it is not *syntactically* a `∀`, so
+    `refine forall_congr' fun x => ?_` fails to unify against it. Rewrite with `Pi.le_def` first —
+    once per side. Both halves of Thm 16.1 need this, since their proofs reduce
+    `conj B f ≤ …` to a termwise comparison of affine minorants.
+
+44. **`ring` handles `a⁻¹` as an atom, `field_simp` is only needed when `a * a⁻¹` must cancel.**
+    `(t - c) / a = a⁻¹ * t - c / a` is a ring identity (both sides normalise to
+    `t * a⁻¹ - c * a⁻¹`) and `ring` closes it with no side condition; `(a * t - c) / a = t - c / a`
+    is *not*, and needs `field_simp` with `a ≠ 0` in context. The two appear side by side in
+    `conj_smul` and `conj_smulRight` — reaching for `field_simp` in the first case leaves a goal
+    `ring` would have closed outright.
+
+45. **A sum of two conjugates cannot be proved by comparing affine minorants.** `conj_le_coe_iff`
+    characterises `conj B f y ≤ (c : EReal)`, and with `Tdaf.EReal.eq_of_forall_le_coe_iff` that
+    settles every identity whose right-hand side is a `conj`, a `⨆`, or a `⊔`. It says nothing
+    about `conj B f y + conj B g y`, because `u + v ≤ c` is not a condition on `u` and `v`
+    separately. `conj_infConv` therefore goes the other way — through `conj_ofEpi` and
+    `Tdaf.EReal.biSup_add_biSup`, interchanging two suprema over the epigraphs. It is the only row
+    of §16 that does.
+
+46. **`add_le_add_left` adds on the *right*.** In current Mathlib
+    `add_le_add_left : b ≤ c → ∀ (a), b + a ≤ c + a` (with `AddRightMono`) — the "left" names the
+    side the *hypothesis's* operands sit on, not the side the constant is added to. Reaching for it
+    to get `a + b ≤ a + c` produces a type mismatch that reads like an instance failure. Use
+    `add_le_add le_rfl h`, which is unambiguous and works for `EReal` in both directions.
+
+47. **It is `push Not`, not `push_not`.** The tactic that pushes negations inwards is spelled with
+    a space and a capital `N` in this toolchain; `push_not` is an unknown identifier and the error
+    does not suggest the right form. `Closure.lean` already used `push Not`; grep for it before
+    reaching for `push_neg` (which exists but is about `¬ ∀`/`¬ ∃` in `Prop` only).
+
+48. **`omit [Inst] in` goes *before* the docstring, not between it and the theorem.** A doc comment
+    must be immediately followed by the declaration, so
+    `/-- … -/ omit [FiniteDimensional ℝ E] in theorem …` is a parse error ("unexpected token
+    'omit'"). The order is `omit … in`, then `/-- … -/`, then `theorem`. Also note the linter
+    reports only the *first* offending declaration per build, so fixing one can reveal the next.
+
+49. **Pointwise set addition beta-reduces in goals and breaks `rw [Prod.mk_add_mk]`.** Destructing
+    a membership in `s + t` (`Set.image2`) leaves goals of the shape
+    `(fun x1 x2 ↦ x1 + x2) (y₁, a) (y₂, b) = (y, μ)`, which no `+` lemma matches syntactically.
+    `change ((y₁, a) : F × ℝ) + (y₂, b) = (y, μ)` first — the two are defeq — and then rewrite.
+    `open Pointwise` is needed at all for `epi f + epi g` to elaborate.
+
+50. **`Convex.foo` from this project is not reachable by dot notation.** Given `hC : Convex ℝ C`,
+    `hC.isClosed_add …` fails: elaboration whnf's `Convex ℝ C` to a Pi type and looks for
+    `Function.isClosed_add`. Write `Convex.isClosed_add hC …` — inside `namespace
+    Tdaf.ConvexAnalysis` that resolves to the project lemma. Only declare a `_root_.Convex.*` name
+    when the lemma is a pure Mathlib gap.
+
+51. **Give a rewrite rule an explicit expected type when its implicit type argument is a subtype.**
+    `rw [foo h] at k` elaborates `foo h` with the target type unknown, so a lemma
+    `foo {E} [NormedAddCommGroup E] … {s : Set E} (h : … s …) : …` has to solve `?E` and `?s` by
+    unification. When the answer is `↥V` for a `Submodule`, that unification *diverges* — a
+    `maxHeartbeats 1000000` bump does not save it. Binding the instance first,
+    `have h2 : ri (chart C x₀ V) = interior (chart C x₀ V) := foo h`, and then `rw [h2] at k`,
+    elaborates instantly, because the expected type pins `?E` and `?s` before instance search
+    starts. This cost an hour on `intrinsicInterior_eq_interior` in `Continuity.lean`.
+
+52. **A subspace you will take `Set ↥V` over must be a variable, not a definition.** Defining
+    `chartSpace C x₀ := Submodule.span ℝ ((· - x₀) '' C)` and then working in
+    `Set ↥(chartSpace C x₀)` makes every instance query for `↥(chartSpace C x₀)` re-unfold the
+    `span`, and rewriting in that type times out. Take `V : Submodule ℝ E` as a variable with
+    `hV : V = Submodule.span ℝ …` as a hypothesis, and let the caller produce an opaque one with
+    `obtain ⟨V, hV⟩ : ∃ V, V = … := ⟨_, rfl⟩`. Same proofs, no timeouts.
 
 ---
 
