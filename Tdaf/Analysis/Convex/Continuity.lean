@@ -30,8 +30,11 @@ This file supplies it.
 * `exists_chart_retraction` — the chart packaged with a *continuous linear* retraction, which is
   what carries continuity and Lipschitz constants back from the chart to `E`.
 * `ConvexFn.continuous_of_dom_eq_univ` — **Corollary 10.1.1**.
-* `ConvexOn.exists_lipschitzOnWith_of_isCompact`, `ConvexFn.exists_lipschitzOnWith_of_isCompact` —
-  **Theorem 10.4**, in the `interior` and the `ri` form.
+* `ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset`,
+  `ConvexOn.exists_lipschitzOnWith_of_isCompact`, `ConvexFn.exists_lipschitzOnWith_of_isCompact` —
+  **Theorem 10.4**: the quantitative form with the constant `2M/ε` exhibited (which is what
+  Theorem 10.6 needs, and which needs no finite-dimensionality), then the `interior` and the `ri`
+  form.
 * `ConvexFn.uniformContinuous_toReal_iff` — **Theorem 10.5**, with
   `ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top` as its quantitative half and
   `ConvexFn.exists_lipschitzWith_of_frequently_le`, `ConvexFn.exists_lipschitzWith_of_le_lipschitz`
@@ -158,7 +161,8 @@ theorem relint_eq_vadd_image_interior (hC : Convex ℝ C) (hx₀ : x₀ ∈ C)
 
 /-- **The chart, packaged for reuse.** For a convex `C` and a point `x₀ ∈ C` there is a subspace
 `V` and a *continuous linear retraction* `r : E →L[ℝ] V` such that `x ↦ r (x - x₀)` carries `ri C`
-into `interior (chart C x₀ V)` and `x₀ + r (x - x₀) = x` there.
+into `interior (chart C x₀ V)` and `x₀ + r (x - x₀) = x` there, together with the chart identity
+`relint_eq_vadd_image_interior` for that `V`.
 
 This is everything Theorems 10.1 and 10.4 use: continuity transports along `r` because `r` is
 continuous, and Lipschitz constants transport because `r` is a *bounded* linear map. The subspace
@@ -166,6 +170,7 @@ continuous, and Lipschitz constants transport because `r` is a *bounded* linear 
 module docstring. -/
 theorem exists_chart_retraction (hC : Convex ℝ C) (hx₀ : x₀ ∈ C) :
     ∃ (V : Submodule ℝ E) (r : E →L[ℝ] V),
+      ri C = x₀ +ᵥ (V.subtype '' interior (chart C x₀ V)) ∧
       Set.MapsTo (fun x : E => r (x - x₀)) (ri C) (interior (chart C x₀ V)) ∧
       ∀ x ∈ ri C, x₀ + ((r (x - x₀) : V) : E) = x := by
   obtain ⟨V, hV⟩ : ∃ V : Submodule ℝ E, V = Submodule.span ℝ ((fun x => x - x₀) '' C) := ⟨_, rfl⟩
@@ -176,7 +181,7 @@ theorem exists_chart_retraction (hC : Convex ℝ C) (hx₀ : x₀ ∈ C) :
     LinearMap.linearProjOfIsCompl_apply_left W V.subtype V.injective_subtype hW' z
   have himg := relint_eq_vadd_image_interior hC hx₀ hV
   refine ⟨V, LinearMap.toContinuousLinearMap
-    (LinearMap.linearProjOfIsCompl W V.subtype V.injective_subtype hW'), ?_, ?_⟩
+    (LinearMap.linearProjOfIsCompl W V.subtype V.injective_subtype hW'), himg, ?_, ?_⟩
   · intro x hx
     rw [himg] at hx
     obtain ⟨w, ⟨z, hz, rfl⟩, rfl⟩ := hx
@@ -212,7 +217,7 @@ relative to the affine hull of its domain, at every relative interior point. -/
 theorem ConvexFn.continuousOn_toReal_relint_dom (hf : ConvexFn f) (hp : Proper f) :
     ContinuousOn (fun x => (f x).toReal) (ri (dom f)) := by
   obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
-  obtain ⟨V, r, hmaps, hid⟩ := exists_chart_retraction hf.convex_dom hx₀
+  obtain ⟨V, r, -, hmaps, hid⟩ := exists_chart_retraction hf.convex_dom hx₀
   have hconv : ConvexOn ℝ (dom f) (fun x => (f x).toReal) := hf.convexOn_toReal_dom hp
   have hshift : (AffineMap.const ℝ V x₀ + V.subtype.toAffineMap) ⁻¹' dom f
       = chart (dom f) x₀ V := rfl
@@ -269,29 +274,27 @@ section Thm104
 variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W] [FiniteDimensional ℝ W]
   {D : Set W} {ψ : W → ℝ}
 
-/-- **The interior form of Rockafellar's Theorem 10.4**: a function convex on `D` is Lipschitz on
-every compact subset of `interior D`.
+omit [FiniteDimensional ℝ W] in
+/-- **The quantitative core of Rockafellar's Theorem 10.4**: if `ψ` is convex on `D` and bounded by
+`M` in absolute value on the closed `ε`-collar of `S`, and that collar lies inside `D`, then `ψ` is
+Lipschitz on `S` with constant `2M/ε`.
 
-This is the whole analytic content, and it is Rockafellar's own argument. Compactness gives an
-`ε`-collar of `S` still inside `interior D`; continuity (Theorem 10.1 in Mathlib's `interior`
-form) bounds `ψ` on that collar; and for `x ≠ y` in `S` the point
-`z = y + (ε / ‖y - x‖) • (y - x)` sits in the collar and expresses `y` as a convex combination of
-`x` and `z` with weight `‖y - x‖ / (ε + ‖y - x‖)` on `z`. Convexity then bounds the increment by
-that weight times the oscillation.
+This is Rockafellar's own argument. For `x ≠ y` in `S` the point `z = y + (ε / ‖y - x‖) • (y - x)`
+sits in the collar and expresses `y` as a convex combination of `x` and `z` with weight
+`‖y - x‖ / (ε + ‖y - x‖)` on `z`. Convexity then bounds the increment by that weight times the
+oscillation of `ψ` over the collar.
+
+The constant is *exhibited* rather than existentially quantified because it depends on the data
+only through `ε` and `M`: a whole family of convex functions sharing one collar and one bound is
+therefore equi-Lipschitzian with a single constant, which is Rockafellar's Theorem 10.6.
 
 Mathlib has the two-sided ball version (`ConvexOn.lipschitzOnWith_of_abs_le`) but nothing for a
 general compact subset, and the collar argument does not follow from it. -/
-theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {S : Set W}
-    (hS : IsCompact S) (hSD : S ⊆ interior D) : ∃ K : ℝ≥0, LipschitzOnWith K ψ S := by
-  obtain ⟨ε, hε, hsub⟩ := hS.exists_cthickening_subset_open isOpen_interior hSD
-  obtain ⟨M, hM⟩ := (hS.cthickening (r := ε)).exists_bound_of_continuousOn
-    ((ConvexOn.continuousOn_interior hψ).mono hsub)
-  have hMabs : ∀ w ∈ Metric.cthickening ε S, |ψ w| ≤ |M| := by
-    intro w hw
-    have hw' := hM w hw
-    rw [Real.norm_eq_abs] at hw'
-    exact hw'.trans (le_abs_self M)
-  have key : ∀ x ∈ S, ∀ y ∈ S, ψ y - ψ x ≤ 2 * |M| / ε * ‖y - x‖ := by
+theorem ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset (hψ : ConvexOn ℝ D ψ) {S : Set W}
+    {ε M : ℝ} (hε : 0 < ε) (hM : 0 ≤ M) (hsub : Metric.cthickening ε S ⊆ D)
+    (hMabs : ∀ w ∈ Metric.cthickening ε S, |ψ w| ≤ M) :
+    LipschitzOnWith (Real.toNNReal (2 * M / ε)) ψ S := by
+  have key : ∀ x ∈ S, ∀ y ∈ S, ψ y - ψ x ≤ 2 * M / ε * ‖y - x‖ := by
     intro x hx y hy
     rcases eq_or_ne y x with rfl | hne
     · simp
@@ -305,8 +308,8 @@ theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {
       field_simp
     have hzT : y + (ε / ‖y - x‖) • (y - x) ∈ Metric.cthickening ε S :=
       Metric.mem_cthickening_of_dist_le _ _ _ _ hy hdist.le
-    have hzD : y + (ε / ‖y - x‖) • (y - x) ∈ D := interior_subset (hsub hzT)
-    have hxD : x ∈ D := interior_subset (hSD hx)
+    have hzD : y + (ε / ‖y - x‖) • (y - x) ∈ D := hsub hzT
+    have hxD : x ∈ D := hsub (Metric.self_subset_cthickening S hx)
     have hxT : x ∈ Metric.cthickening ε S := Metric.self_subset_cthickening S hx
     have hcombo : (1 - ‖y - x‖ / (ε + ‖y - x‖)) • x
         + (‖y - x‖ / (ε + ‖y - x‖)) • (y + (ε / ‖y - x‖) • (y - x)) = y := by
@@ -318,7 +321,7 @@ theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {
       (by ring)
     rw [hcombo] at hconv
     simp only [smul_eq_mul] at hconv
-    have hosc : ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x ≤ 2 * |M| := by
+    have hosc : ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x ≤ 2 * M := by
       have h1 := abs_le.1 (hMabs _ hzT)
       have h2 := abs_le.1 (hMabs x hxT)
       linarith [h1.2, h2.1]
@@ -330,20 +333,35 @@ theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {
     rcases le_or_gt (ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x) 0 with hneg | hpos
     · have hle0 : ψ y - ψ x ≤ 0 :=
         hstep.trans (mul_nonpos_of_nonneg_of_nonpos hlam0 hneg)
-      exact hle0.trans (by positivity)
+      exact hle0.trans (mul_nonneg (div_nonneg (by linarith) hε.le) (norm_nonneg _))
     · calc ψ y - ψ x
           ≤ (‖y - x‖ / (ε + ‖y - x‖)) * (ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x) := hstep
-        _ ≤ (‖y - x‖ / ε) * (2 * |M|) := mul_le_mul hlamt hosc hpos.le (by positivity)
-        _ = 2 * |M| / ε * ‖y - x‖ := by ring
-  obtain ⟨K, hKcoe⟩ : ∃ K : ℝ≥0, (K : ℝ) = 2 * |M| / ε :=
-    ⟨⟨2 * |M| / ε, by positivity⟩, rfl⟩
-  refine ⟨K, LipschitzOnWith.of_dist_le_mul fun x hx y hy => ?_⟩
-  rw [Real.dist_eq, dist_eq_norm, hKcoe]
+        _ ≤ (‖y - x‖ / ε) * (2 * M) := mul_le_mul hlamt hosc hpos.le (by positivity)
+        _ = 2 * M / ε * ‖y - x‖ := by ring
+  refine LipschitzOnWith.of_dist_le_mul fun x hx y hy => ?_
+  rw [Real.dist_eq, dist_eq_norm, Real.coe_toNNReal _ (div_nonneg (by linarith) hε.le)]
   rcases abs_cases (ψ x - ψ y) with ⟨h, -⟩ | ⟨h, -⟩
   · rw [h]
     exact key y hy x hx
   · rw [h, norm_sub_rev]
     linarith [key x hx y hy]
+
+/-- **The interior form of Rockafellar's Theorem 10.4**: a function convex on `D` is Lipschitz on
+every compact subset of `interior D`.
+
+Compactness supplies an `ε`-collar of `S` still inside `interior D`, and continuity (Theorem 10.1
+in Mathlib's `interior` form) bounds `ψ` on that collar; the quantitative form above does the
+rest. -/
+theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {S : Set W}
+    (hS : IsCompact S) (hSD : S ⊆ interior D) : ∃ K : ℝ≥0, LipschitzOnWith K ψ S := by
+  obtain ⟨ε, hε, hsub⟩ := hS.exists_cthickening_subset_open isOpen_interior hSD
+  obtain ⟨M, hM⟩ := (hS.cthickening (r := ε)).exists_bound_of_continuousOn
+    ((ConvexOn.continuousOn_interior hψ).mono hsub)
+  refine ⟨_, ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset hψ hε (abs_nonneg M)
+    (hsub.trans interior_subset) fun w hw => ?_⟩
+  have hw' := hM w hw
+  rw [Real.norm_eq_abs] at hw'
+  exact hw'.trans (le_abs_self M)
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
@@ -359,7 +377,7 @@ theorem ConvexFn.exists_lipschitzOnWith_of_isCompact (hf : ConvexFn f) (hp : Pro
     (hS : IsCompact S) (hSD : S ⊆ ri (dom f)) :
     ∃ K : ℝ≥0, LipschitzOnWith K (fun x => (f x).toReal) S := by
   obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
-  obtain ⟨V, r, hmaps, hid⟩ := exists_chart_retraction hf.convex_dom hx₀
+  obtain ⟨V, r, -, hmaps, hid⟩ := exists_chart_retraction hf.convex_dom hx₀
   have hconv : ConvexOn ℝ (dom f) (fun x => (f x).toReal) := hf.convexOn_toReal_dom hp
   have hshift : (AffineMap.const ℝ V x₀ + V.subtype.toAffineMap) ⁻¹' dom f
       = chart (dom f) x₀ V := rfl

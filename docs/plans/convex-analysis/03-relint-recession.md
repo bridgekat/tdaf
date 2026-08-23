@@ -239,9 +239,10 @@ this is flagged here so a later agent does not read the missing rows as a gap in
 
 ## 3.5 `Tdaf/Analysis/Convex/Continuity.lean` — §10
 
-**Theorems 10.1–10.5 are formalized**, across two files: `Continuity.lean` (10.1, Cor 10.1.1,
-10.4, 10.5 with Cors 10.5.1–10.5.2) and `Simplicial.lean` (`IsSimplex`, `LocallySimplicial`, 10.2,
-10.3). Theorems 10.6–10.9 are not; see the note at the end. Six things the plan did not anticipate.
+**All of §10 is formalized**, across three files: `Continuity.lean` (10.1, Cor 10.1.1, 10.4, 10.5
+with Cors 10.5.1–10.5.2), `Simplicial.lean` (`IsSimplex`, `LocallySimplicial`, 10.2, 10.3) and
+`Convergence.lean` (10.6–10.9 with Cor 10.8.1; see the note at the end). Six things the plan did
+not anticipate.
 
 (i) **Mathlib supplies the hard half and stops one step short.** `ConvexOn.continuousOn_interior`
 (finite dimensions, via `ConvexOn.locallyLipschitzOn`) is the whole analytic content of Theorem
@@ -301,17 +302,32 @@ metric, no finite dimension, no local convexity: §10.2 lives in a Hausdorff rea
 | `exists_closedFn_continuousOn_of_locallySimplicial`, `eqOn_of_continuousOn_of_eqOn_relint` — **done** | Thm 10.3 | existence and uniqueness stated separately |
 | `ConvexOn.exists_lipschitzOnWith_of_isCompact`, `ConvexFn.exists_lipschitzOnWith_of_isCompact` — **done** | **Thm 10.4** | `interior` and `ri` forms |
 | `ConvexFn.uniformContinuous_toReal_iff`, `.exists_lipschitzWith_of_recessionFn_ne_top`, `.exists_lipschitzWith_of_frequently_le`, `.exists_lipschitzWith_of_le_lipschitz` — **done** | **Thm 10.5**, Cor 10.5.1–2 | dualised in Cor 13.3.3 |
-| `equiLipschitz_of_pointwise_bounded` | **Thm 10.6** | deferred |
-| `continuous_of_convex_in_x_continuous_in_t` | Thm 10.7 | deferred |
-| `tendsto_uniformlyOn_of_pointwise` | **Thm 10.8**, Cor 10.8.1 | deferred |
-| `exists_subseq_tendsto_uniformlyOn` | Thm 10.9 | Arzelà–Ascoli-flavoured; deferred |
+| `exists_forall_abs_le_of_isCompact`(`_relint`), `exists_forall_lipschitzOnWith_of_isCompact`(`_relint`), `exists_forall_abs_le_and_lipschitzOnWith_of_isCompact_relint` — **done** | **Thm 10.6** | `Convergence.lean`; `interior` and `ri` forms plus the headline |
+| `continuousOn_prod_of_convexOn`(`_relint`) — **done** | Thm 10.7 | `T` an arbitrary locally compact space |
+| `exists_tendstoUniformlyOn_of_dense`(`_relint`), `tendstoUniformlyOn_of_tendsto`(`_relint`), `eventually_forall_le_add_of_eventually_le`(`_relint`) — **done** | **Thm 10.8**, Cor 10.8.1 | |
+| `exists_subseq_tendstoUniformlyOn`(`_relint`) — **done** | Thm 10.9 | Tychonoff + sequential compactness of `ℕ → ℝ`, not Mathlib's Ascoli |
 
-**On the deferrals.** Theorems 10.6–10.9 are the equi-Lipschitz and convergence results; §24, §25
-and §35 are their only consumers, and none of those has started. Theorem 10.6's proof is explicitly
-"the proof of Theorem 10.4 again, noting that the Lipschitz constant depends only on the given
-bounds", so when it is written it should reuse `ConvexOn.exists_lipschitzOnWith_of_isCompact` with
-the constant `2|M|/ε` exposed rather than existentially quantified — a small change to the existing
-statement now, a second proof later.
+**Theorems 10.6–10.9 are formalized**, in `Tdaf/Analysis/Convex/Convergence.lean`. The plan's
+prediction held: Theorem 10.6 *is* "the proof of Theorem 10.4 again, noting that the Lipschitz
+constant depends only on the given bounds", and the way to get it was to expose that constant.
+`Continuity.lean` therefore gained
+`ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset` — the collar argument with the constant
+`2M/ε` *exhibited*, and with no finite-dimensionality — and
+`ConvexOn.exists_lipschitzOnWith_of_isCompact` is now five lines on top of it.
+
+Four further things the plan did not anticipate. (a) Every one of the four theorems is proved
+first on an **open** convex set and then transported through the chart, exactly as Theorem 10.4
+was; `exists_chart_retraction` gained the chart identity
+`ri C = x₀ +ᵥ ι (int (chart C x₀ V))` as a third component, which is what lets the *hypotheses*
+(pointwise boundedness, density of `C'`) travel into the chart, not only the conclusions. (b) The
+functions are real-valued (`f : ι → E → ℝ` with `ConvexOn`), not `EReal`-valued `ConvexFn`s — §10.6–
+10.9 are about *finite* convex functions and every statement in them is about real numbers. (c) The
+lower bound in Theorem 10.6 is Rockafellar's continuous minorant, but written as the explicit
+estimate `f i x ≥ (δ + ‖x₀ - x‖)(β₁ - β₂)/δ`; no minorant function needs to be constructed. (d)
+Theorem 10.9 does **not** go through Mathlib's Arzelà–Ascoli, which produces compactness in a
+`UniformOnFun` topology from which a subsequence cannot be extracted without metrizability; it goes
+through `TopologicalSpace.IsSeparable.exists_countable_dense_subset` (Rockafellar's own "basic
+fact"), Tychonoff on a box in `ℕ → ℝ`, and Theorem 10.8.
 
 `LocallySimplicial` has, for now, no supply of instances beyond simplices themselves: **Theorem
 20.5** (every polyhedral convex set is locally simplicial) is what makes Theorems 10.2 and 10.3
