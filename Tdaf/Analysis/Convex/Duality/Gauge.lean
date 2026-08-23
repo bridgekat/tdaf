@@ -1280,4 +1280,77 @@ theorem polarFn_polarFn (hconv : ConvexFn f) (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 
 
 end Theorem154Main
 
+/-! ### Corollary 15.4.1
+
+The class on which `f ↦ f°` is an involution: Rockafellar's "non-negative closed convex functions
+which vanish at the origin". -/
+
+section PolarClass
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] {f : E → EReal}
+
+/-- **The class of Corollary 15.4.1**: the nonnegative closed convex functions vanishing at the
+origin. These are exactly the functions that arise as polars (`isPolarFn_polarFn` and
+`polarFn_polarFn`), and `f ↦ f°` is an involution on them. -/
+structure IsPolarFn (f : E → EReal) : Prop where
+  /-- A polar is nonnegative. -/
+  nonneg : ∀ x, 0 ≤ f x
+  /-- A polar vanishes at the origin. -/
+  map_zero : f 0 = 0
+  /-- A polar is convex. -/
+  convexFn : ConvexFn f
+  /-- A polar is closed. -/
+  closedFn : ClosedFn f
+
+/-- The hypothesis in which Theorem 15.4 states the vanishing at the origin. -/
+theorem IsPolarFn.map_zero_le (h : IsPolarFn f) : f 0 ≤ 0 := le_of_eq h.map_zero
+
+/-- A closed gauge belongs to the class of Corollary 15.4.1. -/
+theorem IsGauge.isPolarFn (h : IsGauge f) (hcl : ClosedFn f) : IsPolarFn f :=
+  ⟨h.nonneg, h.map_zero, h.convexFn, hcl⟩
+
+end PolarClass
+
+section Corollary1541
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
+  [Module ℝ F] [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B.flip]
+  {f : E → EReal}
+
+/-- **Rockafellar, Theorem 15.4**, first assertion, assembled: the polar of a member of the class
+is again a member of the class. -/
+theorem isPolarFn_polarFn (h : IsPolarFn f) : IsPolarFn (polarFn B f) where
+  nonneg y := polarFn_nonneg h.map_zero_le y
+  map_zero := polarFn_zero B f h.map_zero_le
+  convexFn := convexFn_polarFn h.nonneg
+  closedFn := closedFn_polarFn h.nonneg h.map_zero_le
+
+end Corollary1541
+
+section Corollary1541Equiv
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F] [TopologicalSpace F]
+  [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
+
+/-- **Rockafellar, Corollary 15.4.1**: the polarity operation `f ↦ f°` is a symmetric one-to-one
+correspondence on the nonnegative closed convex functions vanishing at the origin. -/
+noncomputable def polarFnEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] :
+    {f : E → EReal // IsPolarFn f} ≃ {g : F → EReal // IsPolarFn g} where
+  toFun f := ⟨polarFn B f.1, isPolarFn_polarFn f.2⟩
+  invFun g := ⟨polarFn B.flip g.1, isPolarFn_polarFn g.2⟩
+  left_inv f := Subtype.ext <| by
+    change polarFn B.flip (polarFn B f.1) = f.1
+    rw [polarFn_polarFn f.2.convexFn f.2.nonneg f.2.map_zero_le]
+    exact f.2.closedFn
+  right_inv g := Subtype.ext <| by
+    change polarFn B (polarFn B.flip g.1) = g.1
+    have h := polarFn_polarFn (B := B.flip) g.2.convexFn g.2.nonneg g.2.map_zero_le
+    rw [LinearMap.flip_flip] at h
+    rw [h]
+    exact g.2.closedFn
+
+end Corollary1541Equiv
+
 end Tdaf.ConvexAnalysis
