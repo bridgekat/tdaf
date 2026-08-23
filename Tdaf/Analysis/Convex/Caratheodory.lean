@@ -372,28 +372,33 @@ variable {E : Type*}
 
 /-- The homogenisation of a set of points and directions: `P` is lifted to height `1` and `D` to
 height `0` in `ℝ × E`. Rockafellar's `S'`. -/
-private def liftPD (P D : Set E) : Set (ℝ × E) :=
+def liftPD (P D : Set E) : Set (ℝ × E) :=
   (fun y : E => ((1 : ℝ), y)) '' P ∪ (fun y : E => ((0 : ℝ), y)) '' D
 
-private theorem mem_liftPD_one {P D : Set E} {y : E} (hy : y ∈ P) :
+/-- A point of `P` sits at height `1` in `liftPD P D`. -/
+theorem mem_liftPD_one {P D : Set E} {y : E} (hy : y ∈ P) :
     ((1 : ℝ), y) ∈ liftPD P D := Or.inl ⟨y, hy, rfl⟩
 
-private theorem mem_liftPD_zero {P D : Set E} {y : E} (hy : y ∈ D) :
+/-- A direction of `D` sits at height `0` in `liftPD P D`. -/
+theorem mem_liftPD_zero {P D : Set E} {y : E} (hy : y ∈ D) :
     ((0 : ℝ), y) ∈ liftPD P D := Or.inr ⟨y, hy, rfl⟩
 
-private theorem fst_eq_or_of_mem_liftPD {P D : Set E} {q : ℝ × E} (hq : q ∈ liftPD P D) :
+/-- Every element of `liftPD P D` sits at height `1` or at height `0`. -/
+theorem fst_eq_or_of_mem_liftPD {P D : Set E} {q : ℝ × E} (hq : q ∈ liftPD P D) :
     q.1 = 1 ∨ q.1 = 0 := by
   rcases hq with ⟨y, _, rfl⟩ | ⟨y, _, rfl⟩
   · exact Or.inl rfl
   · exact Or.inr rfl
 
-private theorem mem_of_mem_liftPD_of_fst_eq_one {P D : Set E} {q : ℝ × E}
+/-- An element of `liftPD P D` at height `1` is a point of `P`. -/
+theorem mem_of_mem_liftPD_of_fst_eq_one {P D : Set E} {q : ℝ × E}
     (hq : q ∈ liftPD P D) (h1 : q.1 = 1) : q.2 ∈ P := by
   rcases hq with ⟨y, hy, rfl⟩ | ⟨y, _, rfl⟩
   · exact hy
   · exact absurd h1 (by norm_num)
 
-private theorem mem_of_mem_liftPD_of_fst_eq_zero {P D : Set E} {q : ℝ × E}
+/-- An element of `liftPD P D` at height `0` is a direction of `D`. -/
+theorem mem_of_mem_liftPD_of_fst_eq_zero {P D : Set E} {q : ℝ × E}
     (hq : q ∈ liftPD P D) (h0 : q.1 = 0) : q.2 ∈ D := by
   rcases hq with ⟨y, _, rfl⟩ | ⟨y, hy, rfl⟩
   · exact absurd h0 (by norm_num)

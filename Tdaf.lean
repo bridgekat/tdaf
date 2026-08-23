@@ -20,6 +20,7 @@ import Tdaf.Analysis.Convex.Epigraph
 import Tdaf.Analysis.Convex.Face
 import Tdaf.Analysis.Convex.Homogeneous
 import Tdaf.Analysis.Convex.Homogenize
+import Tdaf.Analysis.Convex.HullDirections
 import Tdaf.Analysis.Convex.Indicator
 import Tdaf.Analysis.Convex.Lattice
 import Tdaf.Analysis.Convex.Operations.Basic
@@ -52,6 +53,7 @@ import Tdaf.Analysis.Convex.Recession.ConeHull
 import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Recession.Function
 import Tdaf.Analysis.Convex.RelativeInterior
+import Tdaf.Analysis.Convex.Representation
 import Tdaf.Analysis.Convex.Saddle.Closure
 import Tdaf.Analysis.Convex.Saddle.Correspondence
 import Tdaf.Analysis.Convex.Saddle.Defs
