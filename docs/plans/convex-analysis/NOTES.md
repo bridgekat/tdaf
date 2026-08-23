@@ -2072,12 +2072,35 @@ on the product.
 single convex set, and it is what turns "Lipschitz on every compact rectangle" into "continuous on
 `ri C ×ˢ ri D`".
 
-**Not here**: Theorems 35.3–35.5 (joint continuity in a parameter; the two convergence theorems).
-They are the saddle forms of Theorems 10.7–10.9 and want a *relative collar* lemma — for compact
-`S ⊆ ri C` there are `ε > 0` and a compact `S' ⊆ ri C` containing the `ε`-collar of `S` within
-`ri C` — which the `interior` proofs get from `IsCompact.exists_cthickening_subset_open`.
-Theorems 35.6–35.10 are the §23/§24/§25 half of the section; 35.9 and 35.10 additionally need
-Rademacher.
+**Theorems 35.3, 35.4 and 35.5 are here too**, with the two lemmas they run on:
+
+```lean
+theorem exists_isCompact_collar_relint (hC : Convex ℝ C) (hS : IsCompact S) (hSC : S ⊆ ri C) :
+    ∃ (ε : ℝ) (S' : Set E), 0 < ε ∧ IsCompact S' ∧ S ⊆ S' ∧ S' ⊆ ri C ∧
+      ∀ y ∈ ri C, ∀ x ∈ S, dist y x ≤ ε → y ∈ S'
+theorem uniformCauchySeqOn_of_equiLipschitz …     -- the metric core of Thms 10.8 and 35.4
+theorem continuousOn_prod_of_concaveConvexOn …    -- Thm 35.3 (and `…'`, the headline form)
+theorem uniformCauchySeqOn_prod_of_dense …
+theorem exists_tendstoUniformlyOn_prod_of_dense … -- Thm 35.4 (and `…'`, `tendstoUniformlyOn_…`)
+theorem exists_subseq_tendstoUniformlyOn_prod …   -- Thm 35.5
+```
+
+**§10 transports to `ri` by a chart; §35 cannot.** `Convergence.lean` proves each theorem for an
+*open* convex set and pulls it back along `exists_chart_retraction`. That route is closed here: the
+chart of `C ×ˢ D` is not the product of the charts of `C` and of `D`, and it is the product
+structure the concave-convex hypothesis lives on. So 35.3–35.5 are proved directly in `ri`, and
+what replaces `IsCompact.exists_cthickening_subset_open` is `exists_isCompact_collar_relint` —
+`cthickening ε S ⊆ U` is *false* relatively, since points off the affine hull of `C` are near `S`
+and not in `ri C`, so the collar has to be a set rather than a thickening. Its proof is the chart
+again, and it belongs in `RelativeInterior.lean` with the other one.
+
+**Theorem 35.4 takes an arbitrary dense `A ⊆ ri C ×ˢ ri D`, not a product `C' ×ˢ D'`.** Theorem 35.2
+does need a product — it bounds one variable at a time — but the diagonal extraction in Theorem 35.5
+produces a *countable* dense set, and a countable dense subset of a product is not a product.
+`exists_tendstoUniformlyOn_prod_of_dense'` recovers the book's form.
+
+**Not here**: Theorems 35.6–35.10, the §23/§24/§25 half of the section; 35.9 and 35.10 additionally
+need Rademacher.
 
 ## 1a. House style
 

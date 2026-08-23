@@ -267,7 +267,7 @@ group; all of Corollary 34.2.4 and the simple-extension value and domain lemmas 
 
 ## 7.3 `Saddle/Continuity.lean` — §35
 
-**Status: Theorems 35.1 and 35.2 are done.** Analogues of §10, §24, §25 for saddle-functions.
+**Status: Theorems 35.1–35.5 are done.** Analogues of §10, §24, §25 for saddle-functions.
 Layer D.
 
 ```lean
@@ -281,9 +281,11 @@ structure ConcaveConvexOn (C : Set U) (D : Set X) (K : U × X → ℝ) : Prop wh
 | `ConcaveConvexOn` | the section's hypothesis, bundled | done |
 | `ConcaveConvexOn.continuousOn`, `.exists_lipschitzOnWith_of_isCompact`, `.exists_forall_abs_le_of_isCompact` | **Thm 35.1** | done |
 | `exists_forall_abs_le_and_lipschitzOnWith_prod`, and its two halves `..._fst` / `exists_forall_lipschitzOnWith_snd` | **Thm 35.2** | done |
-| `exists_isCompact_mem_nhdsWithin_relint` | `ri C` is locally compact | done — belongs in `RelativeInterior.lean` |
-| — | Thm 35.3 | not done — the saddle form of Thm 10.7 |
-| — | Thms 35.4, 35.5 | not done — the saddle forms of Thms 10.8, 10.9 |
+| `exists_isCompact_mem_nhdsWithin_relint`, `exists_isCompact_collar_relint` | `ri C` is locally compact, and a compact subset of it has a compact relative collar | done — both belong in `RelativeInterior.lean` |
+| `uniformCauchySeqOn_of_equiLipschitz` | the metric core of Thms 10.8 and 35.4 | done |
+| `continuousOn_prod_of_concaveConvexOn`, `…'` | **Thm 35.3** | done |
+| `uniformCauchySeqOn_prod_of_dense`, `exists_tendstoUniformlyOn_prod_of_dense`, `…'`, `tendstoUniformlyOn_prod_of_tendsto` | **Thm 35.4** | done |
+| `exists_subseq_tendstoUniformlyOn_prod` | **Thm 35.5** | done |
 | — | **Thm 35.6**, Thm 35.7, Cor 35.7.1 | not done — directional derivatives |
 | — | **Thm 35.8**, Cor 35.8.1 | not done |
 | — | **Thm 35.9**, Thm 35.10 | not done — needs Rademacher |
@@ -294,10 +296,18 @@ to bound the family, once in each variable with the second consuming the first, 
 it equi-Lipschitz — with the families indexed by `ι × ↑T` and `ι × ↑S`. Theorem 35.1 is the
 one-element family. No §10 statement had to be reproved.
 
-**What 35.3–35.5 still need** is a *relative collar*: for compact `S ⊆ ri C`, an `ε > 0` and a
-compact `S' ⊆ ri C` containing the `ε`-collar of `S` within `ri C`. The `interior` proofs in
-`Convergence.lean` get this from `IsCompact.exists_cthickening_subset_open`, which has no relative
-analogue; `exists_isCompact_mem_nhdsWithin_relint` plus a finite subcover supplies it.
+**§10 transports to `ri` by a chart; §35 cannot.** `Convergence.lean` proves each theorem for an
+*open* convex set and pulls it back along `exists_chart_retraction`. The chart of `C ×ˢ D` is not
+the product of the charts of `C` and of `D`, and it is the product structure the concave-convex
+hypothesis lives on — so 35.3–35.5 are proved directly in `ri`. What replaces the `interior`
+proofs' `IsCompact.exists_cthickening_subset_open` is `exists_isCompact_collar_relint`:
+`cthickening ε S ⊆ U` is *false* relatively, since points off the affine hull of `C` are near `S`
+and not in `ri C`, so the collar must be a set rather than a thickening. Its proof is the chart
+again.
+
+**Theorem 35.4 takes an arbitrary dense `A ⊆ ri C ×ˢ ri D`, not a product.** Theorem 35.2 does need
+a product — it bounds one variable at a time — but Theorem 35.5's diagonal extraction produces a
+*countable* dense set, and a countable dense subset of a product is not a product.
 
 **The Lipschitz constant is `k₁ + k₂`, not the book's `2(α₁ + α₂)`** — Mathlib's product metric is
 the supremum metric.
