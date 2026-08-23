@@ -22,6 +22,9 @@ maximising `g* - f*`, where `g*` is the *concave* conjugate.
   attained.
 * `fenchel_duality_of_closed`, `exists_sub_eq_iInf` — **Theorem 31.1** under condition (b): the same
   equality, with the *infimum* attained.
+* `fenchel_duality_comp`, `exists_concaveConj_sub_conj_comp_eq` — **Theorem 31.2**: the same
+  equality with a linear transformation interposed, `inf (f - g A) = sup (g* - f* A')`, with the
+  supremum attained. `concaveConj_compLin` is the concave face of Theorem 16.3 that it runs on.
 * `sub_eq_concaveConj_sub_conj_iff` — **Theorem 31.3**, the Kuhn–Tucker conditions `y ∈ ∂f x` and
   `-y ∈ ∂(-g) x`, with `iInf_sub_eq_iff_exists_kuhnTucker` for **Corollary 31.3.1**.
 
@@ -43,9 +46,17 @@ needed here because the separation already happened, once, in Theorem 16.4.
 `f*` and `-g*`, together with Fenchel–Moreau, gives the same equality with the *infimum* attained;
 that is `exists_sub_eq_iSup_of_closed` below.
 
+**Theorem 31.2 splits condition (a) into two interfaces.** Rockafellar's condition (a) for the
+transformed problem is "there is an `x ∈ ri (dom f)` with `A x ∈ ri (dom g)`". That single
+condition does two jobs: it makes `f` and `-(g A)` add exactly (Theorem 16.4) and it makes `g` pull
+back exactly along `A` (Theorem 16.3). Here the two jobs are separate hypotheses, `IsExactSum` and
+`IsExactImage`, for the same reason that Theorem 31.1 takes `IsExactSum` rather than a constraint
+qualification: the polyhedral weakenings of (a) supply the same two interfaces.
+
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31 (Theorem 31.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31
+  (Theorems 31.1-31.5).
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -142,6 +153,129 @@ theorem isGreatest_concaveConj_sub_conj (hex : IsExactSum B f (-g)) :
   exact le_iSup (fun w : F => concaveConj B g w - conj B f w) z
 
 end Fenchel
+
+/-! ### Theorem 31.2: a linear transformation between the two functions -/
+
+section Comp
+
+/-- A constant slides out of a supremum as a subtrahend, provided it is not `-∞`.
+
+The hypothesis is exactly what rules out the disagreement at `c = ⊥`: there `(⨆ i, u i) - ⊥` is
+`⊤` as soon as the supremum is not `⊥`, while every `u i - ⊥` is `⊤` only where `u i ≠ ⊥`. -/
+private theorem iSup_sub_of_ne_bot {ι : Sort*} (u : ι → EReal) {c : EReal} (hc : c ≠ ⊥) :
+    (⨆ i, u i) - c = ⨆ i, (u i - c) := by
+  induction c with
+  | bot => exact absurd rfl hc
+  | coe r =>
+    rw [sub_eq_add_neg, ← _root_.EReal.coe_neg, Tdaf.EReal.iSup_add_coe]
+    exact iSup_congr fun i => by rw [sub_eq_add_neg, ← _root_.EReal.coe_neg]
+  | top =>
+    have h : ∀ x : EReal, x - (⊤ : EReal) = ⊥ := fun x => by
+      rw [sub_eq_add_neg, _root_.EReal.neg_top, _root_.EReal.add_bot]
+    simp only [h, iSup_bot]
+
+variable {E F G H : Type*}
+  [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [AddCommGroup G] [Module ℝ G] [AddCommGroup H] [Module ℝ H]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
+  {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {f : E → EReal} {g : G → EReal}
+
+/-- **The concave face of Rockafellar's Theorem 16.3.** The concave conjugate of an inverse image
+`g A` is the *supremum* of `g*` over the fibres of the transpose, where the convex statement
+(`IsExactImage.conj_compLin`) has an infimum.
+
+Both reflections of `neg_concaveConj` are at work: the fibre `A' z = -y` of the convex statement
+becomes the fibre `A' z = y` here, because `z` is reflected as well as the value. -/
+theorem concaveConj_compLin (hA : IsAdjointPair B B' A A')
+    (himg : IsExactImage B B' A A' hA fun w => -(g w)) (y : F) :
+    concaveConj B (compLin g A) y = ⨆ z : H, ⨆ _ : A' z = y, concaveConj B' g z := by
+  set k : H → EReal := conj B' (fun w => -(g w)) with hk
+  have hneg : ∀ z : H, -(concaveConj B' g z) = k (-z) := fun z => neg_concaveConj B' g z
+  have hmain : mapLin A' k (-y) = ⨅ z : H, ⨅ _ : A' z = y, k (-z) := by
+    refine le_antisymm (le_iInf fun z => le_iInf fun hz => mapLin_le ?_) (le_mapLin fun w hw => ?_)
+    · rw [map_neg, hz]
+    · refine le_trans (iInf₂_le (f := fun z (_ : A' z = y) => k (-z)) (-w) ?_) (le_of_eq ?_)
+      · rw [map_neg, hw, neg_neg]
+      · rw [neg_neg]
+  have hcomp : concaveConj B (compLin g A) y = -(mapLin A' k (-y)) := by
+    rw [concaveConj_eq_neg_conj_neg]
+    congr 1
+    exact congrFun (himg.conj_compLin) (-y)
+  rw [hcomp, hmain, Tdaf.EReal.neg_iInf]
+  refine iSup_congr fun z => ?_
+  rw [Tdaf.EReal.neg_iInf]
+  exact iSup_congr fun _ => (hneg z).symm ▸ neg_neg _
+
+/-- **Rockafellar, Theorem 31.2 (Fenchel's duality theorem with a linear transformation)**:
+`inf (f - g A) = sup (g* - f* A')`.
+
+Theorem 31.1 applied to `f` and `g A` gives the supremum over the *dual* space `F`; the concave
+face of Theorem 16.3 (`concaveConj_compLin`) rewrites each dual value as a supremum over the fibre
+of `A'`, and the two suprema collapse into one over `H`.
+
+The two hypotheses are Rockafellar's condition (a) split in two. `hex` is what makes `f` and
+`-(g A)` add exactly (Theorem 16.4), `himg` is what makes `g` pull back exactly along `A`
+(Theorem 16.3); `ri (dom f) ∩ A⁻¹ (ri (dom g)) ≠ ∅` delivers both. -/
+theorem fenchel_duality_comp (hA : IsAdjointPair B B' A A')
+    (hex : IsExactSum B f fun x => -(g (A x)))
+    (himg : IsExactImage B B' A A' hA fun w => -(g w)) :
+    (⨅ x, f x - g (A x)) = ⨆ z : H, concaveConj B' g z - conj B f (A' z) := by
+  have hex' : IsExactSum B f (-(compLin g A)) := hex
+  have h31 : (⨅ x, f x - g (A x)) = ⨆ y : F, concaveConj B (compLin g A) y - conj B f y :=
+    fenchel_duality hex'
+  have key : ∀ y : F, concaveConj B (compLin g A) y - conj B f y
+      = ⨆ z : H, ⨆ _ : A' z = y, (concaveConj B' g z - conj B f (A' z)) := by
+    intro y
+    rw [concaveConj_compLin hA himg y, iSup_sub_of_ne_bot _ (hex'.conj_left_ne_bot y)]
+    refine iSup_congr fun z => ?_
+    rw [iSup_sub_of_ne_bot _ (hex'.conj_left_ne_bot y)]
+    exact iSup_congr fun hz => by rw [hz]
+  rw [h31]
+  refine le_antisymm (iSup_le fun y => ?_) (iSup_le fun z => ?_)
+  · rw [key y]
+    exact iSup_le fun w => iSup_le fun _ =>
+      le_iSup (fun v : H => concaveConj B' g v - conj B f (A' v)) w
+  · refine le_trans ?_
+      (le_iSup (fun y : F => concaveConj B (compLin g A) y - conj B f y) (A' z))
+    rw [key (A' z)]
+    exact le_iSup₂ (f := fun w (_ : A' w = A' z) => concaveConj B' g w - conj B f (A' w)) z rfl
+
+/-- **Rockafellar, Theorem 31.2**, the attainment clause: under exact addition and exact pullback
+the supremum of `g* - f* A'` is attained.
+
+Two attainment statements are chained: Theorem 31.1 attains the supremum over `F` at some `y`, and
+Theorem 16.3 attains the infimum over the fibre `A' ⁻¹ {-y}` at some `z`. The second is available
+only where `(−g A)*(−y)` is finite, so the degenerate case — a common value of `-∞`, where every
+dual value already equals it — is taken separately. -/
+theorem exists_concaveConj_sub_conj_comp_eq (hA : IsAdjointPair B B' A A')
+    (hex : IsExactSum B f fun x => -(g (A x)))
+    (himg : IsExactImage B B' A A' hA fun w => -(g w)) :
+    ∃ z : H, concaveConj B' g z - conj B f (A' z) = ⨅ x, f x - g (A x) := by
+  have hex' : IsExactSum B f (-(compLin g A)) := hex
+  rcases eq_or_ne (⨅ x, f x - g (A x)) ⊥ with hb | hb
+  · have hle : concaveConj B' g 0 - conj B f (A' 0) ≤ ⨅ x, f x - g (A x) := by
+      rw [fenchel_duality_comp hA hex himg]
+      exact le_iSup (fun z : H => concaveConj B' g z - conj B f (A' z)) 0
+    exact ⟨0, le_antisymm hle (by rw [hb]; exact bot_le)⟩
+  obtain ⟨y, hy⟩ : ∃ y : F, concaveConj B (compLin g A) y - conj B f y = ⨅ x, f x - g (A x) :=
+    exists_concaveConj_sub_conj_eq hex'
+  have hyb : concaveConj B (compLin g A) y ≠ ⊥ := by
+    intro hc
+    exact hb (by rw [← hy, hc, sub_eq_add_neg, _root_.EReal.bot_add])
+  have hlt : conj B (compLin (fun w => -(g w)) A) (-y) < ⊤ := by
+    refine lt_of_le_of_ne le_top fun hc => hyb ?_
+    rw [concaveConj_eq_neg_conj_neg]
+    change -(conj B (compLin (fun w => -(g w)) A) (-y)) = ⊥
+    rw [hc, _root_.EReal.neg_top]
+  obtain ⟨z, hz, hzeq⟩ := himg.exists_conj_compLin_eq hlt
+  refine ⟨-z, ?_⟩
+  have hA'z : A' (-z) = y := by rw [map_neg, hz, neg_neg]
+  have hval : concaveConj B' g (-z) = concaveConj B (compLin g A) y := by
+    rw [concaveConj_eq_neg_conj_neg, neg_neg, hzeq, concaveConj_eq_neg_conj_neg]
+    rfl
+  rw [hA'z, hval, hy]
+
+end Comp
 
 /-! ### Condition (b): the closed case, with the infimum attained -/
 
