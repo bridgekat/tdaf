@@ -31,7 +31,9 @@ import Tdaf.Analysis.Convex.Optimization.Fenchel
 import Tdaf.Analysis.Convex.Optimization.Lagrangian
 import Tdaf.Analysis.Convex.Optimization.Minimum
 import Tdaf.Analysis.Convex.Optimization.Moreau
+import Tdaf.Analysis.Convex.Optimization.Normal
 import Tdaf.Analysis.Convex.Optimization.Perturbation
+import Tdaf.Analysis.Convex.Optimization.Program
 import Tdaf.Analysis.Convex.Optimization.Maximum
 import Tdaf.Analysis.Convex.Polyhedral.Closedness
 import Tdaf.Analysis.Convex.Polyhedral.Cone
