@@ -13,7 +13,80 @@ import Tdaf.Analysis.Convex.Recession.Cone
 /-!
 # Internal representation of a closed convex set
 
-The second half of Rockafellar's §18.
+The second half of Rockafellar's §18: the theorems that recover a closed convex set from its
+extremal structure. `Face.lean` supplies the faces themselves (Theorems 18.1 and 18.2), and
+`HullDirections.lean` supplies `convexHullPD`, the convex hull of a set of points together with a
+set of directions, which is what "`C = conv S`" means once `S` may contain directions.
+
+## Main definitions
+
+* `ContainsNoLine C` — no line is contained in `C`; Rockafellar's "`C` contains no lines", i.e.
+  lineality zero.
+* `IsExtremeDirection C y` — the direction of `y` is an *extreme direction* of `C`: some closed
+  half-line in the direction of `y` is a face of `C`. `extremeDirections C` is the set of such `y`.
+* `IsAffineHalf C` — `C` is an affine set or a closed half of one: the intersection of `aff C`
+  with a closed half-space. The degenerate functional `0` makes the affine case a special case, so
+  the two exceptional sets in Theorem 18.4 become a single predicate.
+
+## Main results
+
+* `exists_notMem_relint_mem_segment_of_not_isAffineHalf` — **Theorem 18.4** in general: in a
+  closed convex set that is not an affine set or a closed half of one, every relative interior
+  point lies on a segment joining two relative boundary points. The analytic core is
+  `exists_notMem_relint_mem_segment_of_isBounded` (a bounded line section has both endpoints in
+  the relative boundary), the geometric input is
+  `exists_notMem_relint_mem_segment_of_not_convex` (a non-convex relative boundary produces a
+  direction whose line sections are bounded, by Corollary 8.4.1), and
+  `isAffineHalf_of_convex_sdiff_relint` is the classification that identifies the exceptions.
+* `convexHullPD_extremePoints_extremeDirections` — **Theorem 18.5**, the Minkowski–Klee
+  representation: a closed convex set containing no lines is the convex hull of its extreme points
+  and extreme directions. `extremePoints_nonempty_of_containsNoLine` is **Corollary 18.5.3** and
+  `coneHull_extremeDirections_eq` is **Corollary 18.5.2**. **Corollary 18.5.1**, Minkowski's
+  theorem for compact sets, is `convexHull_extremePoints` in `Face.lean`, proved earlier and used
+  here as the base case of the induction.
+* `extremePoints_convexHullPD_subset` — **Corollary 18.3.1**, first half: an extreme point of
+  `conv S` is a point of `S`.
+* `extremePoints_subset_closure_exposedPoints` — **Theorem 18.6, Straszewicz's theorem**: the
+  exposed points of a closed convex set are dense in its extreme points. `Mathlib` does not have
+  this. `mem_exposedPoints_of_forall_norm_sub_le` is the geometric heart (a farthest point is
+  exposed) and `closure_exposedPoints_eq_closure_extremePoints` is the symmetric restatement.
+
+## What is not here
+
+* **Theorem 18.3** (a nonempty face of `conv S` is the hull of the points of `S` it contains and
+  the directions of `S` in which it recedes) and the second half of **Corollary 18.3.1** (about
+  extreme *directions*). Both need Rockafellar's Theorem 6.4 for points and directions: a
+  combination in which every coefficient is strictly positive lies in the relative interior of the
+  hull of the vectors used. That is a §6 statement about `intrinsicInterior (convexHullPD p d)` for
+  finite `p` and `d`, which this project does not yet have. The first half of Corollary 18.3.1 is
+  proved here directly, without Theorem 18.3.
+* **Theorem 18.7** (a closed convex set containing no lines is the closed hull of its *exposed*
+  points and exposed directions), **Corollary 18.7.1** and **Theorem 18.8** (an `n`-dimensional
+  closed convex set is the intersection of its tangent closed half-spaces). Rockafellar's proof of
+  18.7 extends an `(n-2)`-dimensional affine set inside a supporting hyperplane to a hyperplane
+  missing `int C` (his Theorem 11.2), and Theorem 18.8 then runs the whole argument on the
+  epigraph of the support function; neither prerequisite is available here. There is also no
+  definition of an *exposed direction* in this file, only of an extreme one.
+
+## Design notes
+
+**`IsAffineHalf` merges two of Rockafellar's cases.** He excludes "affine sets" and "closed halves
+of affine sets" separately in Theorem 18.4. Allowing the functional in the definition to vanish
+identically makes the affine case the case `φ = 0`, so the hypothesis of Theorem 18.4 is the single
+negation `¬ IsAffineHalf C`.
+
+**Theorem 18.5 avoids Rockafellar's "trivial" case analysis.** The induction here splits on
+`finrank ℝ (vectorSpan ℝ C)`: dimension `≤ 1` is settled by `exists_eq_halfLine`, which classifies
+an unbounded one-dimensional line-free closed convex set as a closed half-line, and the bounded
+case in every dimension is settled by Minkowski's theorem, already available from `Face.lean`.
+Only the unbounded case of dimension `≥ 2` uses Theorem 18.4 together with Theorem 18.2.
+
+**Straszewicz is proved in a Euclidean space and transported.** The farthest-point construction is
+genuinely inner-product geometry, so `section Euclidean` assumes `[InnerProductSpace ℝ E]`; the
+public statements are then obtained for an arbitrary finite-dimensional real normed space by
+pushing the set through `toEuclidean`, using `image_extremePoints` from `Mathlib` and
+`image_exposedPoints` proved here. `mem_exposedPoints_of_forall_norm_sub_le` stays in the
+inner-product layer, since its content is metric.
 
 ## References
 
