@@ -2,6 +2,7 @@ import Tdaf.Analysis.Convex.Caratheodory
 import Tdaf.Analysis.Convex.Closure
 import Tdaf.Analysis.Convex.Concave
 import Tdaf.Analysis.Convex.Continuity
+import Tdaf.Analysis.Convex.Convergence
 import Tdaf.Analysis.Convex.Helly
 import Tdaf.Analysis.Convex.Simplicial
 import Tdaf.Analysis.Convex.Duality.Barrier
