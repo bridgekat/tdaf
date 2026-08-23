@@ -489,6 +489,43 @@ instance instIsContinuousPairingTopDualNorm {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] : IsContinuousPairing (topDualPairing ℝ E) :=
   ⟨fun x => (ContinuousLinearMap.apply ℝ ℝ x).continuous⟩
 
+/-- **Every continuous linear functional on the dual of a finite-dimensional normed space is
+evaluation at a point.** This is reflexivity, in the elementary form that the half-space arguments
+of §18 and §25 need: an exposed point of a set of *functionals* is exposed by a functional on the
+dual, and this lemma turns that functional back into a point of `E`.
+
+It is `Module.evalEquiv` for the *continuous* dual, obtained by transporting along the
+finite-dimensional identification of `E →ₗ[ℝ] ℝ` with `E →L[ℝ] ℝ`. Equivalently it says that
+`topDualPairing ℝ E` — as opposed to its flip, `instIsCompatiblePairingTopDual` — is a compatible
+pairing when `E` is finite-dimensional. -/
+theorem exists_forall_apply_eq {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [FiniteDimensional ℝ E] (Λ : StrongDual ℝ (StrongDual ℝ E)) :
+    ∃ y : E, ∀ g : StrongDual ℝ E, Λ g = g y := by
+  set φ : Module.Dual ℝ (Module.Dual ℝ E) :=
+    (Λ : StrongDual ℝ E →ₗ[ℝ] ℝ).comp
+      (LinearMap.toContinuousLinearMap (𝕜 := ℝ) (E := E) (F' := ℝ)).toLinearMap with hφ
+  refine ⟨(Module.evalEquiv ℝ E).symm φ, fun g => ?_⟩
+  have h := Module.apply_evalEquiv_symm_apply (R := ℝ) (M := E) (g : E →ₗ[ℝ] ℝ) φ
+  have hg : LinearMap.toContinuousLinearMap (g : E →ₗ[ℝ] ℝ) = g :=
+    ContinuousLinearMap.ext fun x => rfl
+  rw [hφ] at h
+  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, hg, ContinuousLinearMap.coe_coe] at h
+  exact h.symm
+
+/-- A **finite-dimensional** normed space is compatibly paired with its continuous dual from the
+dual's side as well: by `exists_forall_apply_eq` every continuous linear functional on
+`StrongDual ℝ E` is evaluation at a point of `E`.
+
+Together with `instIsCompatiblePairingTopDual` this makes both `topDualPairing ℝ E` and its flip
+compatible pairings, which is what lets the duality theory be applied on the dual side — a
+conjugate `f*` treated as a function in its own right, with `f** = f`. -/
+instance instIsCompatiblePairingTopDualFinite {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] [FiniteDimensional ℝ E] : IsCompatiblePairing (topDualPairing ℝ E) where
+  continuous_left x := (ContinuousLinearMap.apply ℝ ℝ x).continuous
+  surjective_eval Λ := by
+    obtain ⟨y, hy⟩ := exists_forall_apply_eq Λ
+    exact ⟨y, ContinuousLinearMap.ext fun g => (hy g).symm⟩
+
 /-- A real Hilbert space is compatibly paired with itself by the inner product (Fréchet–Riesz). -/
 instance instIsCompatiblePairingInner {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [CompleteSpace E] : IsCompatiblePairing (innerₗ E) where
