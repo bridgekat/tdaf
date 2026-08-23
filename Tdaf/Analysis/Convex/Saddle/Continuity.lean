@@ -20,20 +20,30 @@ obtained here by applying the §10 result twice — once in each variable — an
   each point of `C`. Its two fields are exactly the two unbundled hypotheses that
   `Saddle/Kernel.lean`'s simple extensions take, so `hK.concave_fst` and `hK.convex_snd` feed them
   directly.
-* `exists_forall_abs_le_prod` and `exists_forall_lipschitzOnWith_prod` — **Theorem 35.2**, for a
-  family indexed by an arbitrary type: uniform boundedness and a single Lipschitz constant on
-  `S ×ˢ T` for compact `S ⊆ ri C`, `T ⊆ ri D`.
-* `ConcaveConvexOn.lipschitzOnWith_of_isCompact`, `.continuousOn` — **Theorem 35.1**, the singleton
-  case.
+* `exists_forall_abs_le_and_lipschitzOnWith_prod` — **Theorem 35.2**, for a family indexed by an
+  arbitrary type: uniform boundedness and a single Lipschitz constant on `S ×ˢ T` for compact
+  `S ⊆ ri C`, `T ⊆ ri D`. Its two halves are
+  `exists_forall_abs_le_and_lipschitzOnWith_fst` and `exists_forall_lipschitzOnWith_snd`.
+* `ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact`,
+  `ConcaveConvexOn.exists_forall_abs_le_of_isCompact` and `ConcaveConvexOn.continuousOn` —
+  **Theorem 35.1**, the one-element family.
+* `exists_isCompact_mem_nhdsWithin_relint` and `exists_isCompact_collar_relint` — `ri C` is locally
+  compact, and a compact subset of it has a compact *relative collar*. Both are about a single
+  convex set and belong in `RelativeInterior.lean`.
+* `uniformCauchySeqOn_of_equiLipschitz` — the metric core of Theorems 10.8 and 35.4 with the
+  convexity stripped out.
+* `continuousOn_prod_of_concaveConvexOn` and `continuousOn_prod_of_concaveConvexOn'` —
+  **Theorem 35.3**.
+* `exists_tendstoUniformlyOn_prod_of_dense`, `exists_tendstoUniformlyOn_prod_of_dense'` and
+  `tendstoUniformlyOn_prod_of_tendsto` — **Theorem 35.4**, on
+  `uniformCauchySeqOn_prod_of_dense`.
+* `exists_subseq_tendstoUniformlyOn_prod` — **Theorem 35.5**, Arzelà–Ascoli for saddle-functions.
 
 ## What is not here
 
-Theorems 35.3–35.5 (joint continuity in a parameter, and the two convergence theorems) are the
-saddle forms of Theorems 10.7–10.9; the §10 statements they consume are in `Convergence.lean` and
-the transfer is the same two-variable argument as below. Theorems 35.6–35.10 (directional
-derivatives, subgradients, differentiability almost everywhere) are the §23/§24/§25 half of the
-section and belong with the material they extend; §25's Rademacher half is not formalized yet, so
-35.9 and 35.10 are blocked in any case.
+Theorems 35.6–35.10 (directional derivatives, subgradients, differentiability almost everywhere)
+are the §23/§24/§25 half of the section and belong with the material they extend; §25's Rademacher
+half is not formalized yet, so 35.9 and 35.10 are blocked in any case.
 
 ## Implementation notes
 
@@ -48,10 +58,24 @@ takes `C` and `D` relatively open, where `C = ri C`; the results below are the s
 `ri C` and `ri D` written out, which is what §10 in this project already does
 (`exists_forall_abs_le_of_isCompact_relint`).
 
+**§10 transports to `ri` by a chart; §35 cannot.** `Convergence.lean` proves each theorem for an
+*open* convex set and then pulls it back along `exists_chart_retraction`. That route is closed here:
+the chart of `C ×ˢ D` is not the product of the charts of `C` and of `D`, and it is the product
+structure that the concave-convex hypothesis lives on. So Theorems 35.3–35.5 are proved directly in
+`ri`, and what replaces the `interior` proofs' `IsCompact.exists_cthickening_subset_open` is
+`exists_isCompact_collar_relint`: `cthickening ε S ⊆ U` is simply false relatively — points off the
+affine hull of `C` are near `S` and not in `ri C` — so the collar has to be a set, not a thickening.
+
+**The convergence theorems take an arbitrary dense `A ⊆ ri C ×ˢ ri D`, not a product `C' ×ˢ D'`.**
+The book takes a product, and Theorem 35.2 does need one, because it bounds one variable at a time.
+But the diagonal extraction in Theorem 35.5 produces a *countable* dense set, and a countable dense
+subset of a product is not a product; so the convergence hypothesis of Theorem 35.4 is stated for a
+general `A`, with `exists_tendstoUniformlyOn_prod_of_dense'` recovering the book's form.
+
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35
-  (Theorems 35.1, 35.2).
+  (Theorems 35.1–35.5).
 -/
 
 open Set Filter Topology Metric
@@ -427,5 +451,420 @@ theorem ConcaveConvexOn.continuousOn (hC : Convex ℝ C) (hD : Convex ℝ D)
   exact hcw.mono_of_mem_nhdsWithin (nhdsWithin_prod hSn hTn)
 
 end ContinuousOn
+
+/-! ### The relative collar
+
+Theorems 35.3–35.5 all need, for a compact `S ⊆ ri C`, a *slightly larger* compact subset of `ri C`
+containing every point of `ri C` near `S`. In the `interior` setting that is
+`IsCompact.exists_cthickening_subset_open`, whose conclusion `cthickening ε S ⊆ U` is false here:
+points off the affine hull of `C` are near `S` but are not in `ri C`. Intersecting with `ri C`
+repairs it, and the chart supplies the compactness. -/
+
+section Collar
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {C : Set E}
+
+/-- **A compact subset of `ri C` has a relative collar**: an `ε > 0` and a compact `S' ⊆ ri C`
+which contains `S` and every point of `ri C` within `ε` of `S`.
+
+This is the relative analogue of `IsCompact.exists_cthickening_subset_open`, and it is what makes
+the `interior` proofs of Theorems 10.7–10.9 run in `ri`. It is about a single convex set and
+belongs in `RelativeInterior.lean`; it lives here until a second consumer appears. -/
+theorem exists_isCompact_collar_relint (hC : Convex ℝ C) {S : Set E}
+    (hS : IsCompact S) (hSC : S ⊆ ri C) :
+    ∃ (ε : ℝ) (S' : Set E), 0 < ε ∧ IsCompact S' ∧ S ⊆ S' ∧ S' ⊆ ri C ∧
+      ∀ y ∈ ri C, ∀ x ∈ S, dist y x ≤ ε → y ∈ S' := by
+  rcases S.eq_empty_or_nonempty with rfl | ⟨x₀, hx₀S⟩
+  · exact ⟨1, ∅, one_pos, isCompact_empty, subset_rfl, empty_subset _,
+      fun _ _ x hx => absurd hx (notMem_empty x)⟩
+  obtain ⟨V, r, himg, hmaps, hid⟩ :=
+    exists_chart_retraction hC (intrinsicInterior_subset (hSC hx₀S))
+  have hρc : Continuous fun x : E => (r (x - x₀) : V) :=
+    r.continuous.comp (continuous_id.sub continuous_const)
+  have hcoe : ∀ y ∈ ri C, ((r (y - x₀) : V) : E) = y - x₀ := fun y hy =>
+    eq_sub_of_add_eq' (hid y hy)
+  have hS₀ : IsCompact ((fun x : E => (r (x - x₀) : V)) '' S) := hS.image hρc
+  have hS₀sub : (fun x : E => (r (x - x₀) : V)) '' S ⊆ interior (chart C x₀ V) := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact hmaps (hSC hx)
+  obtain ⟨ε, hε, hthick⟩ := hS₀.exists_cthickening_subset_open isOpen_interior hS₀sub
+  have hmemri : ∀ z ∈ cthickening ε ((fun x : E => (r (x - x₀) : V)) '' S),
+      x₀ + (z : E) ∈ ri C := by
+    intro z hz
+    rw [himg]
+    exact ⟨(z : E), ⟨z, hthick hz, rfl⟩, rfl⟩
+  refine ⟨ε, (fun z : V => x₀ + (z : E)) ''
+      cthickening ε ((fun x : E => (r (x - x₀) : V)) '' S), hε,
+    hS₀.cthickening.image (continuous_const.add continuous_subtype_val), ?_, ?_, ?_⟩
+  · intro x hx
+    exact ⟨r (x - x₀), self_subset_cthickening _ ⟨x, hx, rfl⟩, hid x (hSC hx)⟩
+  · rintro _ ⟨z, hz, rfl⟩
+    exact hmemri z hz
+  · intro y hy x hx hd
+    refine ⟨r (y - x₀), ?_, hid y hy⟩
+    refine mem_cthickening_of_dist_le _ (r (x - x₀)) ε _ ⟨x, hx, rfl⟩ ?_
+    have hdV : dist (r (y - x₀) : V) (r (x - x₀) : V) = dist y x := by
+      rw [Subtype.dist_eq, hcoe y hy, hcoe x (hSC hx), dist_eq_norm, dist_eq_norm]
+      congr 1
+      abel
+    rw [hdV]
+    exact hd
+
+end Collar
+
+/-! ### Equi-Lipschitz plus a dense Cauchy set
+
+The metric core of Theorems 10.8 and 35.4, with the convexity stripped out: on a compact `S`
+carrying a collar `S'` on which the whole sequence is equi-Lipschitz, pointwise Cauchy behaviour on
+a set `A` dense in `S` is already uniform Cauchy behaviour on `S`. -/
+
+section UniformCauchy
+
+variable {Ω : Type*} [PseudoMetricSpace Ω] {f : ℕ → Ω → ℝ} {A S S' : Set Ω} {ε : ℝ} {k : ℝ≥0}
+
+/-- **Equi-Lipschitz on a collar plus pointwise Cauchy on a dense subset gives uniform Cauchy.**
+
+`hcollar` is the only thing the ambient structure has to supply: every point of `A` within `ε` of
+`S` must lie in `S'`, the set on which the family is equi-Lipschitz. In the `interior` setting
+`S' = cthickening ε S`; in the relative setting it is `exists_isCompact_collar_relint`. -/
+theorem uniformCauchySeqOn_of_equiLipschitz (hS : IsCompact S) (hSS' : S ⊆ S') (hε : 0 < ε)
+    (hcollar : ∀ y ∈ A, ∀ x ∈ S, dist y x ≤ ε → y ∈ S')
+    (hdense : S ⊆ closure A) (hlip : ∀ i, LipschitzOnWith k (f i) S')
+    (hcau : ∀ z ∈ A, CauchySeq fun i => f i z) :
+    UniformCauchySeqOn f atTop S := by
+  classical
+  rw [Metric.uniformCauchySeqOn_iff]
+  intro δ hδ
+  have hknn : (0 : ℝ) ≤ (k : ℝ) := k.coe_nonneg
+  set ρ : ℝ := min ε (δ / (3 * ((k : ℝ) + 1))) with hρdef
+  have hρ : 0 < ρ := lt_min hε (by positivity)
+  have hkρ : (k : ℝ) * ρ < δ / 3 := by
+    have h1 : ρ ≤ δ / (3 * ((k : ℝ) + 1)) := min_le_right _ _
+    rw [le_div_iff₀ (by positivity : (0 : ℝ) < 3 * ((k : ℝ) + 1))] at h1
+    nlinarith [hρ]
+  have hcover : S ⊆ ⋃ z ∈ A ∩ S', ball z ρ := by
+    intro x hx
+    obtain ⟨z, hzA, hxz⟩ := Metric.mem_closure_iff.1 (hdense hx) ρ hρ
+    refine mem_biUnion ⟨hzA, hcollar z hzA x hx ?_⟩ (by rwa [mem_ball])
+    rw [dist_comm]
+    exact hxz.le.trans (min_le_left _ _)
+  obtain ⟨b, hbsub, hbfin, hbcover⟩ :=
+    hS.elim_finite_subcover_image (fun z (_ : z ∈ A ∩ S') => isOpen_ball) hcover
+  have hNex : ∀ z : Ω, ∃ N : ℕ, z ∈ b → ∀ m ≥ N, ∀ n ≥ N, dist (f m z) (f n z) < δ / 3 := by
+    intro z
+    by_cases hz : z ∈ b
+    · obtain ⟨N, hN⟩ := Metric.cauchySeq_iff.1 (hcau z (hbsub hz).1) (δ / 3) (by positivity)
+      exact ⟨N, fun _ => hN⟩
+    · exact ⟨0, fun h => absurd h hz⟩
+  choose Nf hNf using hNex
+  refine ⟨hbfin.toFinset.sup Nf, fun m hm n hn x hx => ?_⟩
+  obtain ⟨z, hzb, hxz⟩ := mem_iUnion₂.1 (hbcover hx)
+  have hNz : Nf z ≤ hbfin.toFinset.sup Nf := Finset.le_sup (hbfin.mem_toFinset.2 hzb)
+  have hmid : dist (f m z) (f n z) < δ / 3 := hNf z hzb m (hNz.trans hm) n (hNz.trans hn)
+  have hzS' : z ∈ S' := (hbsub hzb).2
+  have hxS' : x ∈ S' := hSS' hx
+  have hdxz : dist x z < ρ := by rwa [mem_ball] at hxz
+  have hkd : (k : ℝ) * dist x z ≤ (k : ℝ) * ρ := by
+    nlinarith [dist_nonneg (x := x) (y := z)]
+  have hd1 : dist (f m x) (f m z) ≤ (k : ℝ) * dist x z := (hlip m).dist_le_mul x hxS' z hzS'
+  have hd2 : dist (f n x) (f n z) ≤ (k : ℝ) * dist x z := (hlip n).dist_le_mul x hxS' z hzS'
+  have htri := dist_triangle4 (f m x) (f m z) (f n z) (f n x)
+  rw [dist_comm (f n z) (f n x)] at htri
+  linarith
+
+end UniformCauchy
+
+/-! ### Theorems 35.4 and 35.5: convergence
+
+Both are the §10 statements with the compact set replaced by a compact *rectangle*. Theorem 35.2
+supplies the equi-Lipschitz constant, `exists_isCompact_collar_relint` the room to move in, and
+`uniformCauchySeqOn_of_equiLipschitz` does the rest.
+
+The dense set on which the sequence is assumed to converge is an arbitrary `A ⊆ ri C ×ˢ ri D`, not
+a product `C' ×ˢ D'`. The book takes a product, and so does the equi-Lipschitz input; but the
+diagonal extraction in Theorem 35.5 produces a countable dense set that is *not* a product, so the
+convergence hypothesis has to be stated for a general `A`. -/
+
+section Convergence
+
+variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  {C C' : Set U} {D D' : Set X} {K : ℕ → U × X → ℝ}
+
+/-- **The uniform Cauchy property behind Theorems 35.4 and 35.5**: a sequence of finite
+concave-convex functions, pointwise bounded on `C' × D'` and pointwise Cauchy on a set `A` dense in
+`ri C × ri D`, is uniformly Cauchy on every compact rectangle inside `ri C × ri D`. -/
+theorem uniformCauchySeqOn_prod_of_dense (hC : Convex ℝ C) (hD : Convex ℝ D)
+    (hK : ∀ i, ConcaveConvexOn C D (K i))
+    (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
+    (hD' : D' ⊆ ri D) (hDdense : ri D ⊆ closure D')
+    (hbdd : ∀ u ∈ C', ∀ x ∈ D', Bornology.IsBounded (Set.range fun i => K i (u, x)))
+    {A : Set (U × X)} (hA : A ⊆ ri C ×ˢ ri D) (hAdense : ri C ×ˢ ri D ⊆ closure A)
+    (hcau : ∀ p ∈ A, CauchySeq fun i => K i p)
+    {S : Set U} (hS : IsCompact S) (hSC : S ⊆ ri C)
+    {T : Set X} (hT : IsCompact T) (hTD : T ⊆ ri D) :
+    UniformCauchySeqOn K atTop (S ×ˢ T) := by
+  obtain ⟨ε₁, S', hε₁, hS'cpt, hSS', hS'C, hcol₁⟩ := exists_isCompact_collar_relint hC hS hSC
+  obtain ⟨ε₂, T', hε₂, hT'cpt, hTT', hT'D, hcol₂⟩ := exists_isCompact_collar_relint hD hT hTD
+  obtain ⟨-, k, hk⟩ := exists_forall_abs_le_and_lipschitzOnWith_prod hC hD hK hC' hCdense hD'
+    hDdense hbdd hS'cpt hS'C hT'cpt hT'D
+  refine uniformCauchySeqOn_of_equiLipschitz (hS.prod hT) (Set.prod_mono hSS' hTT')
+    (lt_min hε₁ hε₂) ?_ (fun p hp => hAdense ⟨hSC hp.1, hTD hp.2⟩) hk hcau
+  rintro y hy x hx hd
+  simp only [Prod.dist_eq] at hd
+  obtain ⟨hy₁, hy₂⟩ := hA hy
+  exact ⟨hcol₁ y.1 hy₁ x.1 hx.1 ((le_max_left _ _).trans (hd.trans (min_le_left _ _))),
+    hcol₂ y.2 hy₂ x.2 hx.2 ((le_max_right _ _).trans (hd.trans (min_le_right _ _)))⟩
+
+/-- **Rockafellar, Theorem 35.4**: a sequence of finite concave-convex functions on `C × D`, whose
+values are bounded at every point of a product `C' × D'` dense in `ri C × ri D` and convergent at
+every point of a dense `A ⊆ ri C × ri D`, converges at every point of `ri C × ri D` to a finite
+concave-convex limit, uniformly on every compact rectangle.
+
+Taking `A = C' ×ˢ D'` — and `hbdd` from the convergence — gives the statement in the book. -/
+theorem exists_tendstoUniformlyOn_prod_of_dense (hC : Convex ℝ C) (hD : Convex ℝ D)
+    (hK : ∀ i, ConcaveConvexOn C D (K i))
+    (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
+    (hD' : D' ⊆ ri D) (hDdense : ri D ⊆ closure D')
+    (hbdd : ∀ u ∈ C', ∀ x ∈ D', Bornology.IsBounded (Set.range fun i => K i (u, x)))
+    {A : Set (U × X)} (hA : A ⊆ ri C ×ˢ ri D) (hAdense : ri C ×ˢ ri D ⊆ closure A)
+    (hcv : ∀ p ∈ A, ∃ L : ℝ, Tendsto (fun i => K i p) atTop (𝓝 L)) :
+    ∃ L : U × X → ℝ, ConcaveConvexOn (ri C) (ri D) L ∧
+      (∀ p ∈ ri C ×ˢ ri D, Tendsto (fun i => K i p) atTop (𝓝 (L p))) ∧
+      ∀ ⦃S : Set U⦄, IsCompact S → S ⊆ ri C → ∀ ⦃T : Set X⦄, IsCompact T → T ⊆ ri D →
+        TendstoUniformlyOn K L atTop (S ×ˢ T) := by
+  have hcau : ∀ p ∈ A, CauchySeq fun i => K i p := fun p hp => (hcv p hp).choose_spec.cauchySeq
+  have key : ∀ S : Set U, IsCompact S → S ⊆ ri C → ∀ T : Set X, IsCompact T → T ⊆ ri D →
+      UniformCauchySeqOn K atTop (S ×ˢ T) := fun S hS hSC T hT hTD =>
+    uniformCauchySeqOn_prod_of_dense hC hD hK hC' hCdense hD' hDdense hbdd hA hAdense hcau
+      hS hSC hT hTD
+  have hcauP : ∀ p ∈ ri C ×ˢ ri D, CauchySeq fun i => K i p := by
+    rintro ⟨u, x⟩ ⟨hu, hx⟩
+    exact (key {u} isCompact_singleton (singleton_subset_iff.2 hu) {x} isCompact_singleton
+      (singleton_subset_iff.2 hx)).cauchySeq ⟨rfl, rfl⟩
+  have htend : ∀ p ∈ ri C ×ˢ ri D,
+      Tendsto (fun i => K i p) atTop (𝓝 (limUnder atTop fun i => K i p)) :=
+    fun p hp => (hcauP p hp).tendsto_limUnder
+  refine ⟨fun p => limUnder atTop fun i => K i p, ⟨fun x hx => ⟨(Convex.relint hC), ?_⟩,
+    fun u hu => ⟨(Convex.relint hD), ?_⟩⟩, htend, fun S hS hSC T hT hTD =>
+      (key S hS hSC T hT hTD).tendstoUniformlyOn_of_tendsto fun p hp =>
+        htend p ⟨hSC hp.1, hTD hp.2⟩⟩
+  · intro u hu v hv a b ha hb hab
+    refine le_of_tendsto_of_tendsto' (((htend (u, x) ⟨hu, hx⟩).const_mul a).add
+      ((htend (v, x) ⟨hv, hx⟩).const_mul b))
+      (htend (a • u + b • v, x) ⟨(Convex.relint hC) hu hv ha hb hab, hx⟩) fun i => ?_
+    exact ((hK i).concave_fst x (intrinsicInterior_subset hx)).2 (intrinsicInterior_subset hu)
+      (intrinsicInterior_subset hv) ha hb hab
+  · intro x hx y hy a b ha hb hab
+    refine le_of_tendsto_of_tendsto'
+      (htend (u, a • x + b • y) ⟨hu, Convex.relint hD hx hy ha hb hab⟩)
+      (((htend (u, x) ⟨hu, hx⟩).const_mul a).add ((htend (u, y) ⟨hu, hy⟩).const_mul b)) fun i => ?_
+    exact ((hK i).convex_snd u (intrinsicInterior_subset hu)).2 (intrinsicInterior_subset hx)
+      (intrinsicInterior_subset hy) ha hb hab
+
+/-- **Rockafellar, Theorem 35.4** in the book's own form: pointwise convergence on a *product* of
+dense subsets. -/
+theorem exists_tendstoUniformlyOn_prod_of_dense' (hC : Convex ℝ C) (hD : Convex ℝ D)
+    (hK : ∀ i, ConcaveConvexOn C D (K i))
+    (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
+    (hD' : D' ⊆ ri D) (hDdense : ri D ⊆ closure D')
+    (hcv : ∀ u ∈ C', ∀ x ∈ D', ∃ L : ℝ, Tendsto (fun i => K i (u, x)) atTop (𝓝 L)) :
+    ∃ L : U × X → ℝ, ConcaveConvexOn (ri C) (ri D) L ∧
+      (∀ p ∈ ri C ×ˢ ri D, Tendsto (fun i => K i p) atTop (𝓝 (L p))) ∧
+      ∀ ⦃S : Set U⦄, IsCompact S → S ⊆ ri C → ∀ ⦃T : Set X⦄, IsCompact T → T ⊆ ri D →
+        TendstoUniformlyOn K L atTop (S ×ˢ T) := by
+  refine exists_tendstoUniformlyOn_prod_of_dense hC hD hK hC' hCdense hD' hDdense
+    (fun u hu x hx => isBounded_iff_bddBelow_bddAbove.2
+      ⟨(hcv u hu x hx).choose_spec.bddBelow_range,
+        (hcv u hu x hx).choose_spec.bddAbove_range⟩)
+    (A := C' ×ˢ D') (Set.prod_mono hC' hD') ?_ fun p hp => hcv p.1 hp.1 p.2 hp.2
+  rw [closure_prod_eq]
+  exact Set.prod_mono hCdense hDdense
+
+/-- **Rockafellar, Theorem 35.4**, with the limit supplied: pointwise convergence on all of
+`ri C × ri D` upgrades to uniform convergence on compact rectangles. -/
+theorem tendstoUniformlyOn_prod_of_tendsto (hC : Convex ℝ C) (hD : Convex ℝ D)
+    (hK : ∀ i, ConcaveConvexOn C D (K i)) {L : U × X → ℝ}
+    (hL : ∀ p ∈ ri C ×ˢ ri D, Tendsto (fun i => K i p) atTop (𝓝 (L p)))
+    {S : Set U} (hS : IsCompact S) (hSC : S ⊆ ri C)
+    {T : Set X} (hT : IsCompact T) (hTD : T ⊆ ri D) :
+    TendstoUniformlyOn K L atTop (S ×ˢ T) := by
+  obtain ⟨L', -, hL', huc⟩ := exists_tendstoUniformlyOn_prod_of_dense' hC hD hK
+    (subset_refl (ri C)) subset_closure (subset_refl (ri D)) subset_closure
+    fun u hu x hx => ⟨L (u, x), hL (u, x) ⟨hu, hx⟩⟩
+  exact (huc hS hSC hT hTD).congr_right fun p hp =>
+    tendsto_nhds_unique (hL' p ⟨hSC hp.1, hTD hp.2⟩) (hL p ⟨hSC hp.1, hTD hp.2⟩)
+
+/-- **Rockafellar, Theorem 35.5**: a sequence of finite concave-convex functions on `C × D` whose
+values are bounded at every point of a product `C' × D'` dense in `ri C × ri D` has a subsequence
+converging, uniformly on every compact rectangle inside `ri C × ri D`, to a finite concave-convex
+function.
+
+This is Arzelà–Ascoli for saddle-functions. As in Theorem 10.9 the subsequence comes from a
+countable dense subset — here of the *product* `C' ×ˢ D'`, which is why
+`exists_tendstoUniformlyOn_prod_of_dense` is stated for a general dense `A` — plus sequential
+compactness of a countable product of intervals. -/
+theorem exists_subseq_tendstoUniformlyOn_prod (hC : Convex ℝ C) (hD : Convex ℝ D)
+    (hK : ∀ i, ConcaveConvexOn C D (K i))
+    (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
+    (hD' : D' ⊆ ri D) (hDdense : ri D ⊆ closure D')
+    (hbdd : ∀ u ∈ C', ∀ x ∈ D', Bornology.IsBounded (Set.range fun i => K i (u, x))) :
+    ∃ (φ : ℕ → ℕ) (L : U × X → ℝ), StrictMono φ ∧ ConcaveConvexOn (ri C) (ri D) L ∧
+      (∀ p ∈ ri C ×ˢ ri D, Tendsto (fun i => K (φ i) p) atTop (𝓝 (L p))) ∧
+      ∀ ⦃S : Set U⦄, IsCompact S → S ⊆ ri C → ∀ ⦃T : Set X⦄, IsCompact T → T ⊆ ri D →
+        TendstoUniformlyOn (fun i => K (φ i)) L atTop (S ×ˢ T) := by
+  have hprod : ri C ×ˢ ri D ⊆ closure (C' ×ˢ D') := by
+    rw [closure_prod_eq]
+    exact Set.prod_mono hCdense hDdense
+  obtain ⟨A, hAsub, hAcnt, hAdense'⟩ :=
+    (TopologicalSpace.IsSeparable.of_separableSpace (C' ×ˢ D')).exists_countable_dense_subset
+  have hAdense : ri C ×ˢ ri D ⊆ closure A :=
+    hprod.trans (closure_minimal hAdense' isClosed_closure)
+  have hA : A ⊆ ri C ×ˢ ri D := hAsub.trans (Set.prod_mono hC' hD')
+  have hbddA : ∀ p ∈ A, Bornology.IsBounded (Set.range fun i => K i p) := fun p hp => by
+    have h := hAsub hp
+    exact hbdd p.1 h.1 p.2 h.2
+  rcases A.eq_empty_or_nonempty with rfl | hne
+  · rw [closure_empty] at hAdense
+    have hempty : ri C ×ˢ ri D = ∅ := Set.subset_empty_iff.1 hAdense
+    refine ⟨id, fun _ => 0, strictMono_id,
+      ⟨fun _ _ => concaveOn_const _ (Convex.relint hC),
+        fun _ _ => convexOn_const _ (Convex.relint hD)⟩,
+      fun p hp => absurd hp (hempty ▸ notMem_empty p), fun S hS hSC T hT hTD => ?_⟩
+    have : S ×ˢ T = ∅ :=
+      Set.subset_empty_iff.1 fun p hp => hempty ▸ Set.mem_prod.2 ⟨hSC hp.1, hTD hp.2⟩
+    rw [this]
+    exact fun u hu => Filter.Eventually.of_forall (by simp)
+  obtain ⟨e, he⟩ := hAcnt.exists_eq_range hne
+  have hmemA : ∀ n, e n ∈ A := fun n => he ▸ mem_range_self n
+  have hBex : ∀ n, ∃ B : ℝ, ∀ i, |K i (e n)| ≤ B := by
+    intro n
+    obtain ⟨B, hB⟩ := isBounded_iff_forall_norm_le.1 (hbddA (e n) (hmemA n))
+    exact ⟨B, fun i => by simpa [Real.norm_eq_abs] using hB _ (mem_range_self i)⟩
+  choose B hB using hBex
+  have hKcpt : IsCompact (Set.pi univ fun n => Icc (-(B n)) (B n)) :=
+    isCompact_univ_pi fun n => isCompact_Icc
+  have hmem : ∀ i, (fun n => K i (e n)) ∈ Set.pi univ fun n => Icc (-(B n)) (B n) :=
+    fun i n _ => Set.mem_Icc.2 (abs_le.1 (hB n i))
+  obtain ⟨w, -, φ, hφ, hlim⟩ := hKcpt.isSeqCompact hmem
+  have hptw : ∀ n, Tendsto (fun i => K (φ i) (e n)) atTop (𝓝 (w n)) :=
+    fun n => tendsto_pi_nhds.1 hlim n
+  obtain ⟨L, hLcc, hLtend, huc⟩ := exists_tendstoUniformlyOn_prod_of_dense hC hD
+    (fun i => hK (φ i)) hC' hCdense hD' hDdense
+    (fun u hu x hx => (hbdd u hu x hx).subset (by rintro _ ⟨i, rfl⟩; exact ⟨φ i, rfl⟩)) hA hAdense
+    fun p hp => by
+      rw [he] at hp
+      obtain ⟨n, rfl⟩ := hp
+      exact ⟨w n, hptw n⟩
+  exact ⟨φ, L, hφ, hLcc, hLtend, huc⟩
+
+end Convergence
+
+/-! ### Theorem 35.3: joint continuity in a parameter -/
+
+section JointContinuity
+
+variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  {C C' : Set U} {D D' : Set X} {T : Type*} [TopologicalSpace T] [LocallyCompactSpace T]
+
+/-- **Rockafellar, Theorem 35.3**: a real-valued function of `(u, x, t)` with `T` locally compact,
+concave-convex in `(u, x)` for each `t` and continuous in `t` for each `(u, x)`, is *jointly*
+continuous relative to `ri C × ri D × T`.
+
+As in the book — and as in Theorem 10.7, of which this is the two-variable form — continuity in `t`
+is only needed at the points of dense subsets `C'` and `D'`; `continuousOn_prod_of_concaveConvexOn'`
+is the headline statement. The proof is Rockafellar's: on a compact neighbourhood `T₀` of `t₀` the
+family `{F(·, t) | t ∈ T₀}` is pointwise bounded on `C' × D'`, so Theorem 35.2 makes it
+equi-Lipschitz on a compact relative neighbourhood of `(u₀, x₀)`, and the four-term estimate through
+a nearby point of `C' × D'` closes the argument. -/
+theorem continuousOn_prod_of_concaveConvexOn (hC : Convex ℝ C) (hD : Convex ℝ D)
+    {F : (U × X) × T → ℝ} (hF : ∀ t : T, ConcaveConvexOn C D fun p => F (p, t))
+    (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
+    (hD' : D' ⊆ ri D) (hDdense : ri D ⊆ closure D')
+    (hcont : ∀ u ∈ C', ∀ x ∈ D', Continuous fun t => F ((u, x), t)) :
+    ContinuousOn F ((ri C ×ˢ ri D) ×ˢ (univ : Set T)) := by
+  rintro ⟨⟨u₀, x₀⟩, t₀⟩ ⟨⟨hu₀, hx₀⟩, -⟩
+  obtain ⟨T₀, hT₀c, hT₀n⟩ := exists_compact_mem_nhds t₀
+  have ht₀T₀ : t₀ ∈ T₀ := mem_of_mem_nhds hT₀n
+  have hbdd : ∀ u ∈ C', ∀ x ∈ D',
+      Bornology.IsBounded (Set.range fun t : T₀ => F ((u, x), (t : T))) := by
+    intro u hu x hx
+    obtain ⟨M, hM⟩ := hT₀c.exists_bound_of_continuousOn (hcont u hu x hx).continuousOn
+    exact isBounded_iff_forall_norm_le.2 ⟨M, by rintro _ ⟨t, rfl⟩; exact hM (t : T) t.2⟩
+  obtain ⟨S, hScpt, hSC, hSn⟩ := exists_isCompact_mem_nhdsWithin_relint hC hu₀
+  obtain ⟨R, hRcpt, hRD, hRn⟩ := exists_isCompact_mem_nhdsWithin_relint hD hx₀
+  obtain ⟨-, k, hk⟩ := exists_forall_abs_le_and_lipschitzOnWith_prod
+    (K := fun t : T₀ => fun p : U × X => F (p, (t : T))) hC hD (fun t => hF (t : T))
+    hC' hCdense hD' hDdense hbdd hScpt hSC hRcpt hRD
+  have hknn : (0 : ℝ) ≤ (k : ℝ) := k.coe_nonneg
+  obtain ⟨δ₁, hδ₁, hδ₁S⟩ := Metric.mem_nhdsWithin_iff.1 hSn
+  obtain ⟨δ₂, hδ₂, hδ₂R⟩ := Metric.mem_nhdsWithin_iff.1 hRn
+  have hq₀ : ((u₀, x₀) : U × X) ∈ S ×ˢ R :=
+    ⟨mem_of_mem_nhdsWithin hu₀ hSn, mem_of_mem_nhdsWithin hx₀ hRn⟩
+  rw [ContinuousWithinAt, nhdsWithin_prod_eq, nhdsWithin_univ, Metric.tendsto_nhds]
+  intro ε hε
+  set δ : ℝ := min (min δ₁ δ₂) (ε / (4 * ((k : ℝ) + 1))) with hδdef
+  have hδ : 0 < δ := lt_min (lt_min hδ₁ hδ₂) (by positivity)
+  have hkδ : (k : ℝ) * δ < ε / 4 := by
+    have h1 : δ ≤ ε / (4 * ((k : ℝ) + 1)) := min_le_right _ _
+    rw [le_div_iff₀ (by positivity : (0 : ℝ) < 4 * ((k : ℝ) + 1))] at h1
+    nlinarith [hδ]
+  have hmem : ∀ q : U × X, q ∈ ri C ×ˢ ri D → dist q (u₀, x₀) < δ → q ∈ S ×ˢ R := by
+    rintro ⟨u, x⟩ ⟨hu, hx⟩ hd
+    rw [Prod.dist_eq] at hd
+    exact ⟨hδ₁S ⟨mem_ball.2 (((le_max_left _ _).trans_lt hd).trans_le
+        ((min_le_left _ _).trans (min_le_left _ _))), hu⟩,
+      hδ₂R ⟨mem_ball.2 (((le_max_right _ _).trans_lt hd).trans_le
+        ((min_le_left _ _).trans (min_le_right _ _))), hx⟩⟩
+  obtain ⟨u₁, hu₁C', hu₁d⟩ := Metric.mem_closure_iff.1 (hCdense hu₀) δ hδ
+  obtain ⟨x₁, hx₁D', hx₁d⟩ := Metric.mem_closure_iff.1 (hDdense hx₀) δ hδ
+  have hq₁d : dist ((u₁, x₁) : U × X) (u₀, x₀) < δ := by
+    rw [Prod.dist_eq]
+    exact max_lt (by rwa [dist_comm]) (by rwa [dist_comm])
+  have hq₁ : ((u₁, x₁) : U × X) ∈ S ×ˢ R :=
+    hmem _ ⟨hC' hu₁C', hD' hx₁D'⟩ hq₁d
+  have hlip : ∀ t ∈ T₀, ∀ p ∈ S ×ˢ R, ∀ q ∈ S ×ˢ R,
+      dist (F (p, t)) (F (q, t)) ≤ (k : ℝ) * dist p q :=
+    fun t ht p hp q hq => (hk ⟨t, ht⟩).dist_le_mul p hp q hq
+  have hnear : ∀ t ∈ T₀, dist (F (((u₁, x₁) : U × X), t)) (F (((u₀, x₀) : U × X), t)) < ε / 4 := by
+    intro t ht
+    refine lt_of_le_of_lt ((hlip t ht _ hq₁ _ hq₀).trans ?_) hkδ
+    exact mul_le_mul_of_nonneg_left hq₁d.le hknn
+  rw [Filter.eventually_prod_iff]
+  refine ⟨fun q => q ∈ ri C ×ˢ ri D ∧ dist q (u₀, x₀) < δ,
+    Filter.Eventually.and self_mem_nhdsWithin
+      (eventually_nhdsWithin_of_eventually_nhds
+        (Metric.eventually_nhds_iff.2 ⟨δ, hδ, fun {_} h => h⟩)),
+    fun t => t ∈ T₀ ∧ dist (F (((u₁, x₁) : U × X), t)) (F (((u₁, x₁) : U × X), t₀)) < ε / 4, ?_, ?_⟩
+  · filter_upwards [hT₀n, Metric.tendsto_nhds.1 (hcont u₁ hu₁C' x₁ hx₁D').continuousAt (ε / 4)
+      (by positivity)] with t h1 h2 using ⟨h1, h2⟩
+  · rintro q ⟨hqW, hqd⟩ t ⟨htT₀, htd⟩
+    have hqS : q ∈ S ×ˢ R := hmem q hqW hqd
+    have h1 : dist (F (q, t)) (F (((u₀, x₀) : U × X), t)) < ε / 4 :=
+      lt_of_le_of_lt ((hlip t htT₀ _ hqS _ hq₀).trans
+        (mul_le_mul_of_nonneg_left hqd.le hknn)) hkδ
+    have h2 : dist (F (((u₀, x₀) : U × X), t)) (F (((u₁, x₁) : U × X), t)) < ε / 4 := by
+      rw [dist_comm]
+      exact hnear t htT₀
+    have h4 : dist (F (((u₁, x₁) : U × X), t₀)) (F (((u₀, x₀) : U × X), t₀)) < ε / 4 :=
+      hnear t₀ ht₀T₀
+    have htri := dist_triangle4 (F (q, t)) (F (((u₀, x₀) : U × X), t))
+      (F (((u₁, x₁) : U × X), t)) (F (((u₀, x₀) : U × X), t₀))
+    have htri' := dist_triangle (F (((u₁, x₁) : U × X), t)) (F (((u₁, x₁) : U × X), t₀))
+      (F (((u₀, x₀) : U × X), t₀))
+    linarith
+
+/-- **Rockafellar, Theorem 35.3** as he first states it: continuity in the parameter at *every*
+point of `C × D`. -/
+theorem continuousOn_prod_of_concaveConvexOn' (hC : Convex ℝ C) (hD : Convex ℝ D)
+    {F : (U × X) × T → ℝ} (hF : ∀ t : T, ConcaveConvexOn C D fun p => F (p, t))
+    (hcont : ∀ u ∈ ri C, ∀ x ∈ ri D, Continuous fun t => F ((u, x), t)) :
+    ContinuousOn F ((ri C ×ˢ ri D) ×ˢ (univ : Set T)) :=
+  continuousOn_prod_of_concaveConvexOn hC hD hF (subset_refl _) subset_closure
+    (subset_refl _) subset_closure hcont
+
+end JointContinuity
 
 end Tdaf.ConvexAnalysis
