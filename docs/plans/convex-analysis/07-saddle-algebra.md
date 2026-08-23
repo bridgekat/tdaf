@@ -71,7 +71,8 @@ file's design note asked.
 
 ## 7.2 `Saddle/Defs.lean` — §33 (and `Saddle/{Closure,Correspondence,Equiv}.lean` — §33–§34)
 
-**Status: all of §34 is done, and §33 except Cors 33.1.2, 33.1.3, 33.2.1–33.2.2 and 33.3.2–33.3.3.**
+**Status: all of §34 is done, and all of §33 except Cors 33.1.3 and 33.2.2 — the two polyhedral
+ones.**
 Theorems 33.1, 33.2, 33.3, 34.1, 34.2 with Corollaries 33.1.1 and 33.3.1 are in
 `Saddle/{Defs,Closure,Correspondence,Equiv}.lean`; Theorem 34.2's `ri` and `dom` clauses,
 Corollaries 34.2.1–34.2.4, and Theorems 34.3–34.5 with Corollary 34.5.1 are in
@@ -108,15 +109,18 @@ noncomputable def bifunOfSaddle (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U ×
 | `adjointBifun_eq_concaveConj_bracket` | the §30 ↔ §33 bridge | done |
 | `concaveConj_adjointBifun_eq_partialCl₁`, `concaveBracket_adjointBifun_eq_partialCl₁` | **Thm 33.2**, first equation `⟨u, F*y⟩ = cl₁ ⟨Fu, y⟩` | done |
 | `concaveBracket`, `convexFn_concaveBracket`, `concaveAdjointBifun_eq_conj_concaveBracket` | the concave bracket `⟨u, G y⟩` and its **Thm 33.1** clauses | done |
-| — | **Cor 33.1.2** as an `Equiv` | not done — needs `ImageClosed` and a subtype |
+| `saddleOfBifun`, `saddleOfBifun_bifunOfSaddle`, `bifunOfSaddle_saddleOfBifun`, `bifunSaddleEquiv` | **Cor 33.1.2** as an `Equiv` | done (`Saddle/Correspondence.lean`) |
 | — | **Cor 33.1.3** (polyhedral) | not done — needs polyhedral bifunctions |
+| `domConcave_bracket`, `bracket_eq_concaveBracket_adjointBifun_of_mem_relint` | **Cor 33.2.1** | done (`Saddle/Kernel.lean`) |
+| — | **Cor 33.2.2** (polyhedral) | not done — needs polyhedral bifunctions |
 | `bracket_concaveAdjointBifun_eq_partialCl₂`, `partialCl₂_concaveBracket_adjointBifun` | **Thm 33.2**, second equation `cl₂ ⟨u, F*x*⟩ = ⟨(cl F)u, x*⟩` | done |
 | `lowerCl`, `upperCl`, `LowerClosedFn`, `UpperClosedFn`, `FullyClosedFn`, `fullyClosedFn_iff` | **§33–§34**, the closedness notions | done (`Saddle/Closure.lean`) |
 | `upperClosedFn_upperCl`, `lowerClosedFn_lowerCl` | **Thm 34.1** | done (`Saddle/Closure.lean`) |
 | `ImageClosedBifun`, `eq_of_bracket_eq` | the uniqueness half of the correspondence | done (`Optimization/Adjoint.lean`, `Saddle/Correspondence.lean`) |
 | `partialCl₁_bracket`, `partialCl₂_concaveBracket_adjoint`, `lowerClosedFn_bracket`, `exists_unique_convexBifun_bracket_eq` | **Thm 33.3** | done (`Saddle/Correspondence.lean`) |
 | `le_of_partialCl₂_eq`, `exists_unique_bifun_of_closure_pair` | **Cor 33.3.1** | done (`Saddle/Correspondence.lean`) |
-| — | **Cors 33.3.2–33.3.3** | not done |
+| `upperClosedFn_partialCl₁`, `lowerClosedFn_partialCl₂`, `lowerUpperClosedEquiv` | **Cor 33.3.2** | done (`Saddle/Correspondence.lean`) |
+| `lowerClosedFn_lowerSimpleExt`, `upperClosedFn_upperSimpleExt`, `exists_unique_bifun_of_simpleExt` | **Cor 33.3.3** | done (`Saddle/Kernel.lean`) |
 | `SaddleEquiv`, `ClosedSaddleFn`, `saddleClass`, `partialCl₂_eq_of_mem_saddleClass`, `partialCl₁_eq_of_mem_saddleClass`, `saddleEquiv_of_mem_saddleClass`, `closedSaddleFn_of_mem_saddleClass`, `exists_unique_bifun_of_closedSaddleFn` | **Thm 34.2** | done (`Saddle/Equiv.lean`) |
 | — | **Thm 34.2**'s `dom K = dom F × dom F*` and `ri` clauses, Cors 34.2.1–4 | not done — need `ri` |
 | `closedSaddleFn_iff_saddleStructure` | **Thm 34.3** | done (`Saddle/Kernel.lean`) |
@@ -242,6 +246,23 @@ matters; the `dom`/`ri` description of the class and the kernel characterisation
 **Theorem 34.1 needs no duality.** `Saddle/Closure.lean` derives it through Theorems 33.2 and 30.1,
 which costs two compatible pairings and locally convex partners. `lowerCl_idem` is four lines from
 monotonicity and idempotence of `cl₁`/`cl₂`, so Theorem 34.1 and its corollaries are layer B.
+
+**Corollary 33.3.2's two round trips are definitional.** `LowerClosedFn K` *is* `cl₂ cl₁ K = K` and
+`UpperClosedFn K` *is* `cl₁ cl₂ K = K`, so `left_inv` and `right_inv` of the `Equiv` are the
+hypotheses themselves; the only content of the corollary is that `cl₁` lands in the upper closed
+class and `cl₂` in the lower closed one, which is the same unfolding once more.
+
+**Corollary 33.2.1 is one lemma past Theorem 33.2.** Theorem 33.2 already says the two brackets
+differ by `cl₁`, and a concave function agrees with its closure on `ri` of its effective domain; the
+missing step is `domConcave_bracket`, that the concave domain of `u ↦ ⟨Fu, y⟩` is `dom F` on the
+nose, for *every* `y` — the bracket is `⊥` exactly where the slice `F u` is identically `⊤`.
+
+**Corollary 33.3.3 is Corollary 33.3.1 on a closure pair that is already proved.**
+`partialCl₁_lowerSimpleExt` and `partialCl₂_upperSimpleExt` are in `Saddle/Kernel.lean` for
+Corollary 34.2.4, so the corollary is their composition and nothing else. Its `dom F = C` and
+`dom F* = D` clauses are `dom₁_lowerSimpleExt` / `dom₂_lowerSimpleExt` read through Theorem 34.2,
+and the explicit formulas the book gives for `F` and `F*` are the definitions of the conjugate and
+the concave conjugate of the slices.
 
 **Corollary 34.2.4 does not need Corollary 33.3.3, nor joint continuity.** Separate continuity of
 `K` in each variable on the closed `C`, `D` suffices, and the proof is direct: closedness of the

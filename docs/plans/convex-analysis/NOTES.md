@@ -1581,8 +1581,9 @@ with `cl₁ K = K` and `cl₂ K = K`; backward is the idempotence of the two par
 
 ### `Tdaf/Analysis/Convex/Saddle/Correspondence.lean`
 
-§33: **Theorem 33.3** and **Corollary 33.3.1** — the one-to-one correspondence between closed
-convex bifunctions and lower closed concave-convex functions.
+§33: **Theorem 33.3** with **Corollaries 33.1.2, 33.3.1 and 33.3.2** — the one-to-one
+correspondence between closed convex bifunctions and lower closed concave-convex functions, and the
+two `Equiv`s that package it.
 
 ```lean
 theorem eq_of_bracket_eq (hF : ConvexBifun F) (hG : ConvexBifun G) (hFi : ImageClosedBifun F)
@@ -1599,7 +1600,35 @@ theorem exists_unique_convexBifun_bracket_eq … (hK : ConcaveConvexFn K) (hlc :
       (fun p : U × Y => bracket Bx F p.1 p.2) = K
 theorem exists_unique_bifun_of_closure_pair … (h1 : partialCl₁ Klow = Kup)
     (h2 : partialCl₂ Kup = Klow) : ∃! F : Bifun U X, …
+noncomputable def saddleOfBifun (Bx) (F : Bifun U X) : U × Y → EReal := fun p => bracket Bx F p.1 p.2
+theorem saddleOfBifun_bifunOfSaddle … ; theorem bifunOfSaddle_saddleOfBifun …
+noncomputable def bifunSaddleEquiv :                                          -- Cor 33.1.2
+  {F : Bifun U X // ConvexBifun F ∧ ImageClosedBifun F} ≃
+    {K : U × Y → EReal // ConcaveConvexFn K ∧ ConvexClosedFn K}
+theorem upperClosedFn_partialCl₁ … ; theorem lowerClosedFn_partialCl₂ …
+noncomputable def lowerUpperClosedEquiv (Bu) [IsCompatiblePairing Bu]         -- Cor 33.3.2
+    (Bx) [IsCompatiblePairing Bx.flip] :
+  {K : U × Y → EReal // ConcaveConvexFn K ∧ LowerClosedFn K} ≃
+    {K : U × Y → EReal // ConcaveConvexFn K ∧ UpperClosedFn K}
 ```
+
+**Corollary 33.3.2's two round trips are definitional.** `LowerClosedFn K` *is* `cl₂ cl₁ K = K` and
+`UpperClosedFn K` *is* `cl₁ cl₂ K = K`, so `left_inv` and `right_inv` of the `Equiv` are the
+hypotheses themselves. All the corollary contains is that `cl₁` lands in the upper closed class and
+`cl₂` in the lower closed one — the same unfolding once more, since
+`lowerCl = cl₂ ∘ cl₁` and `upperCl = cl₁ ∘ cl₂`.
+
+**Corollary 33.1.2 needs both closedness hypotheses named, one per side.** Its round trips are the
+two halves of Theorem 33.1: `cl (Fu) = ⟨Fu, ·⟩*` going one way (so `F` must be image-closed) and
+Fenchel–Moreau in the second variable going the other (so `K` must be convex-closed). Neither is
+free. `saddleOfBifun` is `bracket` uncurried, added only so that the corollary can be stated as a
+map.
+
+**Cut the `Cor3312` sections finely.** Each half of the correspondence uses instances on one side
+only — `saddleOfBifun` is closed for free on the `Y` side, `bifunOfSaddle` on the `X` side, and only
+the two round trips need Fenchel–Moreau — so a single wide `variable` block trips the
+unused-section-variable linter on three declarations at once. Six small sections, each carrying only
+what its proofs use, is the fix (cf. gotcha on `omit` in `Adjoint.lean`).
 
 **Uniqueness is Theorem 33.1's inversion formula, not a new argument.** `F u = cl (F u)` for an
 image-closed `F`, and `cl (F u) = ⟨Fu, ·⟩*` (`clFn_eq_conj_bracket`), so equal brackets force equal
@@ -1902,7 +1931,21 @@ def SimpleSaddleFn … ; theorem exists_unique_saddleEquiv_class_of_kernel …  
 noncomputable def lowerSimpleExt … ; noncomputable def upperSimpleExt …
 theorem exists_unique_saddleEquiv_class_of_finite …              -- Cor 34.5.1
 theorem mem_saddleClass_simpleExt_iff …                          -- Cor 34.2.4
+theorem domConcave_bracket (Bx) (F : Bifun U X) (y : Y) :
+    domConcave (fun u => bracket Bx F u y) = domBifun F
+theorem bracket_eq_concaveBracket_adjointBifun_of_mem_relint …   -- Cor 33.2.1
+theorem lowerClosedFn_lowerSimpleExt … ; theorem upperClosedFn_upperSimpleExt …
+theorem exists_unique_bifun_of_simpleExt …                       -- Cor 33.3.3
 ```
+
+**Two §33 corollaries land here rather than in `Correspondence.lean`**, because they need this
+file's machinery: Corollary 33.2.1 needs relative interiors, and Corollary 33.3.3 needs the simple
+extensions. Both are short. 33.2.1 is Theorem 33.2 (the two brackets differ by `cl₁`) plus "a
+concave function meets its closure on `ri` of its domain", once `domConcave_bracket` says the
+concave domain of `u ↦ ⟨Fu, y⟩` is `dom F` on the nose for *every* `y` — the bracket is `⊥`
+exactly where the slice `F u` is identically `⊤`. 33.3.3 is Corollary 33.3.1 applied to the closure
+pair `partialCl₁_lowerSimpleExt` / `partialCl₂_upperSimpleExt`, which this file already proves for
+Corollary 34.2.4.
 
 **The kernel is a total function, not a `Set.restrict`.** Equalities of subtype-restrictions are
 ill-typed unless the two rectangles are already known equal, so Theorem 34.4 would split into a
@@ -1930,8 +1973,7 @@ is not a hypothesis of `concaveConvexFn_lowerSimpleExt`: `ConvexOn ℝ D` alread
 (convexity of `C` *is* needed, for the slice over `x ∉ D`). OCR: in Theorem 34.3's proof the first
 two displayed relations print `K` where `K̲` is meant.
 
-**Not here**: Corollary 33.1.2 as an `Equiv`, and Corollaries 33.2.1–33.2.2 — they live in the
-bifunction/pairing layer, and 33.2.2 needs polyhedral bifunctions. Theorem 34.2's
+**Not here**: Corollary 33.2.2, which needs polyhedral bifunctions. Theorem 34.2's
 `dom K = dom F × dom F*` is formalized in saddle-function terms (`domSaddle`, invariant under both
 closures and under equivalence); the literal bifunction phrasing needs `domBifun`, which lives in
 `Optimization/Perturbation.lean` and is outside this module's import closure.
