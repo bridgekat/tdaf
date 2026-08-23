@@ -261,6 +261,15 @@ All of §6 and the §7 results whose proofs need `ri`. Four additions worth know
 `exists_affine_le_of_closed_proper` (**the Fenchel–Moreau keystone**),
 `tendsto_lscHull_along_segment` (**Thm 7.5**), `lscHullClosure`/`clFnClosure` as `ClosureOperator`s.
 
+**The liminf description** — `lscHull_eq_liminf` (`lscHull f x = liminf f (𝓝 x)`, *unconditional*),
+`clFn_eq_liminf` (under `∀ z, lscHull f z ≠ ⊥`) and `clFn_eq_liminf_or`, the Corollary 7.2.1
+dichotomy `clFn f x = liminf f (𝓝 x)` **or** (`clFn f x = ⊥` and `liminf f (𝓝 x) = ⊤`). Corollary
+30.2.3 consumes the last of these, and Rockafellar's "except in cases where the left side is `-∞`
+and the right `+∞`" is exactly its second branch — the exception is real, not an artefact of the
+formalization. The section is split into `Liminf` (topology only) and `LiminfHull`/`LiminfConvex`
+(which need `IsTopologicalAddGroup`, then `Module ℝ` and `ContinuousSMul`) because
+`lowerSemicontinuous_lscHull` already lives behind those instances — gotcha 92.
+
 ### `Tdaf/Analysis/Convex/Continuity.lean`
 
 **Thm 10.1** as `ConvexFn.continuousOn_toReal_relint_dom` (real-valued, the working form) and
@@ -968,7 +977,15 @@ if a second consumer appears.
 
 ### `Tdaf/Analysis/Convex/Optimization/Fenchel.lean`
 
-§31: **Theorem 31.1** (both of Rockafellar's conditions) and **Theorem 31.3** with `A = id`.
+§31: **Theorem 31.1** (both of Rockafellar's conditions), **Theorem 31.2**, and **Theorem 31.3**
+with `A = id`.
+
+**Theorem 31.2 does not need the `EReal` splitting lemma the plan said it did.**
+`06-optimization.md` recorded the blocker as "an `EReal` lemma splitting `⨅ (a,b) (u a + v b)` into
+`⨅ u + ⨅ v`". Going through the *concave* face of Theorem 16.3 instead — `concaveConj_compLin` —
+turns the dual value at `y` into a supremum over the fibre `A'⁻¹{y}`, and the only arithmetic left
+is `(⨆ i, u i) - c = ⨆ i, (u i - c)` for `c ≠ ⊥`, which `IsExactSum.conj_left_ne_bot` supplies.
+Theorem 31.3 for a general `A` is unblocked by the same route.
 
 **The hypothesis is `IsExactSum B f (-g)`, never a constraint qualification.** Rockafellar's (a),
 his (b), and their two polyhedral weakenings are four sufficient conditions for the same thing;
@@ -1278,8 +1295,24 @@ which sidesteps deciding `l i ≠ 0`.
 
 ### `Tdaf/Analysis/Convex/Optimization/Perturbation.lean`
 
-§29: **Theorem 29.1** in full, plus the closed-convex clause of Corollary 29.1.1 and the
-nonemptiness half of Corollary 29.1.4.
+§29: **Theorem 29.1** in full, **Corollaries 29.1.1–29.1.6** and **Theorem 29.2**.
+
+```lean
+theorem supportFn_kuhnTucker …    -- Cor 29.1.1: `δ*(u ∣ KT) = cl (inf F)'(0; -u)`
+theorem kuhnTucker_eq_empty_iff …                                     -- Cor 29.1.2
+theorem kuhnTucker_eq_singleton_of_dirDeriv_eq …                      -- Cor 29.1.3
+theorem dirDeriv_infBifun_eq …                                        -- Cor 29.1.4
+theorem proper_infBifun_of_stronglyConsistent …                       -- Cor 29.1.5
+theorem infBifun_eq_bot_of_mem_relint …                               -- Cor 29.1.6
+def PolyhedralBifun … ; theorem kuhnTucker_nonempty_of_polyhedralBifun …    -- Thm 29.2
+```
+
+**Corollary 29.1.1's derivative clause is the support function of `-(KT)`, not of `KT`.** The sign
+flip in `kuhnTucker_eq_neg_subgradient` propagates, which is what `supportFn_neg_set` is for.
+
+**Not here**: Corollary 29.1.4's compactness clause, and Theorem 29.2's "at least one optimal
+solution, and the minimum set is polyhedral" clause — the latter needs Corollary 27.3.2, i.e. Helly
+in the form of Theorem 21.5. Theorem 29.3 is in `Saddle/Minimax.lean`, with §36.
 
 ```lean
 abbrev Bifun (U X : Type*) := U → X → EReal
@@ -1534,8 +1567,15 @@ below any prescribed bound.
 
 ### `Tdaf/Analysis/Convex/Optimization/Normal.lean`
 
-§30 from Corollary 30.2.2 on: **Corollary 30.2.2** (both formulas), **Theorem 30.3** in full,
-**Theorem 30.4** clauses (a), (b), (c), and **Theorem 30.5**.
+§30 from Corollary 30.2.1 on: **Corollaries 30.2.1, 30.2.2** (both formulas) **and 30.2.3**,
+**Theorem 30.3** in full, **Theorem 30.4** clauses (a)–(f), and **Theorem 30.5**.
+`ConcaveKuhnTucker` and `ConcavePolyhedralBifun` are the two definitions clauses (d)–(f) need;
+`forall_conj_eq_top_iff` is the single lemma both halves of Corollary 30.2.1 run on. Corollary
+30.5.1 is in `Saddle/Minimax.lean`, with §36.
+
+**Not here**: Theorem 30.4 (g)–(j), which route through Theorem 27.1(d)/(f) — so they need
+Corollary 13.3.4 and Theorem 14.2, neither formalized — and additionally
+`int (dom (F 0)*) = int (domConcave F*)`, a Corollary 7.4.1-type result.
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -2926,6 +2966,30 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 108. **Bash heredocs here fail with "unexpected EOF while looking for matching `'`" once the body
      gets long** — roughly 120+ lines with heavy Unicode. Split the content into two or three
      shorter heredocs, or use the `Write` tool (which is what gotcha 81's rule already implies).
+
+109. **`lscHull` is `liminf` unconditionally; `clFn` is not.** `lscHull_eq_liminf` holds for every
+     `f`, but `clFn f x = liminf f (𝓝 x)` fails exactly when `clFn f x = ⊥` and `liminf = ⊤`. Use
+     `clFn_eq_liminf_or`, or `clFn_eq_liminf` under `∀ z, lscHull f z ≠ ⊥`. This is the source of
+     Rockafellar's "except in cases where…" in Corollary 30.2.3.
+
+110. **Do not name a theorem `Foo.bar` when `bar` appears in its own statement.**
+     `theorem PolyhedralFn.mapLin … : PolyhedralFn (mapLin A f)` makes the bare `mapLin` resolve to
+     the declaration being elaborated, and the error is a baffling "application type mismatch …
+     expected `PolyhedralFn f`". Rename to `polyhedralFn_mapLin`. Gotcha 94 is the same trap seen
+     from the other side.
+
+111. **Pulling a constant out of an `EReal` supremum as a *subtrahend* needs `c ≠ ⊥`, not
+     `c ≠ ⊤`.** `(⨆ i, u i) - c = ⨆ i, (u i - c)` holds for `c ≠ ⊥`; the `c = ⊤` and empty-index
+     cases both collapse to `⊥` on both sides, because `⊥` absorbs in `EReal` addition. This is
+     *not* the mirror of `Tdaf.EReal.biSup_add_biSup`, whose hypothesis dualises the other way.
+
+112. **`compLin (fun w => -(g w)) A` and `fun x => -(compLin g A x)` are defeq but not
+     syntactically equal**, and `rw`'s trailing `rfl` runs at reducible transparency, so it will
+     not unfold `compLin`. Close the gap with an explicit bare `rfl` after the rewrites.
+
+113. **`IsEpiLike.of_isClosed` is what feeds `epi_mapLin`.** For Corollary 19.3.1 the image
+     `A ×ₘ id '' epi f` is polyhedral hence closed, and closedness gives `IsEpiLike` directly —
+     much cheaper than exhibiting the epigraph condition by hand.
 
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State

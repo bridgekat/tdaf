@@ -126,9 +126,16 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
 | `mem_kuhnTucker_iff_neg_mem_subgradient` : `v ∈ KT ↔ -v ∈ ∂(inf F)(0)` | **Thm 29.1**, second assertion | done |
 | `kuhnTucker_eq_neg_subgradient`, `convex_kuhnTucker`, `isClosed_kuhnTucker` | **Cor 29.1.1**, the closed-convex clause | done |
 | `kuhnTucker_nonempty_of_stronglyConsistent` | **Cor 29.1.4**, nonemptiness half | done |
-| — | `dirDeriv_infBifun_eq` (Cor 29.1.1's derivative clause), Cors 29.1.2, 29.1.3, 29.1.5, 29.1.6 | not done |
+| `supportFn_neg_set`, `posHomogeneous_dirDeriv_infBifun`, `convexFn_dirDeriv_infBifun`, `supportFn_kuhnTucker` | **Cor 29.1.1**, the derivative clause | done |
+| `kuhnTucker_eq_empty_iff` | **Cor 29.1.2** | done |
+| `kuhnTucker_eq_singleton_of_dirDeriv_eq`, `kuhnTucker_eq_singleton_of_hasGradientAt` | **Cor 29.1.3** | done |
+| `dirDeriv_infBifun_eq` | **Cor 29.1.4**, the derivative formula | done |
+| `proper_infBifun_of_stronglyConsistent`, `continuousOn_infBifun_interior`, `bddAbove_kuhnTucker_of_strictlyConsistent`, `infBifun_ne_top_of_mem_domBifun` | **Cor 29.1.5** | done |
+| `infBifun_eq_top_of_notMem_domBifun`, `infBifun_eq_bot_of_mem_relint` | **Cor 29.1.6** | done |
 | — | **Cor 29.1.4**, compactness under strict consistency | not done — needs the boundedness half of Thm 23.4 |
-| — | **Thm 29.2** (polyhedral case) | not done |
+| `polyhedralFn_mapLin`, `PolyhedralFn.clFn_eq_of_mem_dom` | **Cor 19.3.1**, the prerequisite | done |
+| `PolyhedralBifun`, `polyhedralBifun_iff`, `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`, `polyhedral_kuhnTucker_of_polyhedralBifun` | **Thm 29.2** (polyhedral case) | done |
+| — | **Thm 29.2**, the optimal-solution clause | not done — needs Cor 27.3.2, i.e. Helly in the form of Thm 21.5 |
 | `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — in `Saddle/Minimax.lean`, where §36 is |
 | — | **Thm 29.4** | not done — needs saddle-point existence, Thm 37.6 |
 
@@ -380,9 +387,11 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 | `normal_of_kuhnTucker_nonempty` | **Thm 30.4(c)** | done |
 | `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup`, `kuhnTucker_eq_setOf_isMax`, `isGreatest_adjointBifun_zero_of_mem_kuhnTucker` | **Thm 30.5** | done |
 | `supBifun`, `domConcaveBifun`, `ConcaveConsistent`, `ConcaveStronglyConsistent`, `ConcaveNormal` | the concave mirrors of §29's vocabulary | done |
-| — | Cor 30.2.1 | not done |
-| — | Cor 30.2.3 (the `liminf` form) | not done — needs `cl f x = liminf f`, absent from `Closure.lean` |
-| — | Thm 30.4 (d)–(j) | not done — concave Kuhn–Tucker vectors, polyhedral bifunctions, bounded level sets |
+| `forall_conj_eq_top_iff`, `not_concaveConsistent_adjointBifun_iff`, `concaveConsistent_adjointBifun_iff`, `not_consistent_iff_exists_supBifun_eq_top`, `consistent_iff_forall_supBifun_ne_top` | **Cor 30.2.1**, both halves | done |
+| `le_limsup_nhds`, `clConcave_eq_limsup_or`, `liminf_infBifun_eq_iSup_adjointBifun`, `limsup_supBifun_adjointBifun_eq` | **Cor 30.2.3** (the `liminf` form) | done — on `clFn_eq_liminf_or`, now in `Closure.lean` |
+| `ConcaveKuhnTucker`, `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker`, `concaveNormal_of_concaveKuhnTucker_nonempty`, `normal_of_concaveKuhnTucker_adjointBifun_nonempty` | **Thm 30.4(d)** | done |
+| `PolyhedralBifun.normal`, `ConcavePolyhedralBifun`, `ConcavePolyhedralBifun.concaveNormal`, `normal_of_concavePolyhedral_adjointBifun` | **Thm 30.4(e), (f)** | done |
+| — | Thm 30.4 (g)–(j) | not done — they route through Thm 27.1(d)/(f), so they need Cor 13.3.4 and Thm 14.2, and additionally `int (dom (F 0)*) = int (domConcave F*)`, a Cor 7.4.1-type result |
 | `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | Cor 30.5.1 (saddle points of `L`) | done — in `Saddle/Minimax.lean` |
 
 ### What actually happened
@@ -424,14 +433,22 @@ Rockafellar's hypotheses — (a) `ri (dom f) ∩ ri (dom g) ≠ ∅`, and (b) `f
 attainment of the sup under (a) and of the inf under (b). Stating the theorem against `IsExactSum`
 gives all four variants, including both polyhedral ones, from one proof.
 
+**Theorem 31.2 did not need the `EReal` splitting lemma this section used to demand.** The row
+below said the blocker was "an `EReal` lemma splitting `⨅ (a, b) (u a + v b)` into `⨅ u + ⨅ v`".
+That route is unnecessary. Going through the *concave* face of Theorem 16.3 — `concaveConj_compLin`
+— turns the dual value at `y` into a supremum over the fibre `A'⁻¹{y}`, and the only arithmetic
+left is `(⨆ i, u i) - c = ⨆ i, (u i - c)` for `c ≠ ⊥`, which `IsExactSum.conj_left_ne_bot` already
+supplies.
+
 | Lean name | book | status |
 |---|---|---|
 | `concaveConj_sub_conj_le_sub` | weak duality (the first display of the proof of Thm 31.1) | done |
 | `fenchel_duality`, `exists_concaveConj_sub_conj_eq`, `isGreatest_concaveConj_sub_conj` | **Thm 31.1**, condition (a) | done |
 | `iInf_sub_eq_neg_iInf_conj_sub`, `fenchel_duality_of_closed`, `exists_sub_eq_iInf` | **Thm 31.1**, condition (b) | done |
-| `fenchel_duality_comp` (with a linear map interposed) | **Thm 31.2**, Cor 31.2.1 | unblocked, not done — `F** = cl F` and `Normal` are in place (§6.4, §6.4a); what is missing is an `EReal` lemma splitting `⨅ (a, b) (u a + v b)` into `⨅ u + ⨅ v`, valid when neither infimum is `⊤`. It is *not* the dual of `Tdaf.EReal.biSup_add_biSup`: that lemma-s pointwise `≠ ⊥` hypothesis dualises to `≠ ⊤`, which the two families here do not satisfy |
+| `concaveConj_compLin`, `fenchel_duality_comp`, `exists_concaveConj_sub_conj_comp_eq` | **Thm 31.2** | done |
+| — | **Cor 31.2.1** | not done — its exact statement was not verified against the source, and an unverified statement is not written |
 | `neg_mem_subgradient_neg_iff_add_concaveConj_eq`, `sub_eq_concaveConj_sub_conj_iff`, `iInf_sub_eq_of_sub_eq`, `iSup_sub_eq_of_sub_eq`, `iInf_sub_eq_iff_exists_kuhnTucker` | **Thm 31.3**, Cor 31.3.1, with `A = id` | done |
-| — | **Thm 31.3**, Cor 31.3.1, with a general `A` | not done — waits on Thm 31.2 |
+| — | **Thm 31.3**, Cor 31.3.1, with a general `A` | not done — **unblocked**: Thm 31.2 is proved, by the same route |
 | `iInf_add_indicatorFn_eq_neg_iInf_conj_add_indicatorFn`, `iInf_mem_eq_neg_iInf_mem_neg_polarCone`, `neg_conj_le_of_mem_neg_polarCone` | **Thm 31.4**, the duality equation | done |
 | `add_conj_eq_zero_iff_mem_subgradient_and_pairing_eq_zero`, `forall_le_of_mem_subgradient_of_pairing_eq_zero`, `conj_le_conj_of_mem_subgradient_of_pairing_eq_zero` | **Thm 31.4**, the optimality conditions | done |
 | — | **Cor 31.4.1** (the orthant), Cors 31.4.2–3 | not done — instances of Thm 31.4 in a coordinate space |
