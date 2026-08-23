@@ -44,7 +44,10 @@ Corollary 34.2.3 as `ClosedSaddleFn.eq_const_of_not_properSaddleFn` together wit
 
 **Two §33 corollaries** that need the machinery of this file rather than that of `Defs.lean`:
 **Corollary 33.2.1** as `bracket_eq_concaveBracket_adjointBifun_of_mem_relint` (it needs relative
-interiors) and **Corollary 33.3.3** as `lowerClosedFn_lowerSimpleExt`,
+interiors), its polyhedral sharpening **Corollary 33.2.2** as
+`bracket_eq_concaveBracket_adjointBifun_of_polyhedral` with
+`bracket_eq_bot_and_concaveBracket_eq_top` for the exceptional pairs, and **Corollary 33.3.3** as
+`lowerClosedFn_lowerSimpleExt`,
 `upperClosedFn_upperSimpleExt` and `exists_unique_bifun_of_simpleExt` (it needs the simple
 extensions and their closures, which are here for Corollary 34.2.4).
 
@@ -73,6 +76,9 @@ extensions and their closures, which are here for Corollary 34.2.4).
   Theorem 34.5.
 * `clFn_eq_of_eqOn_relint_dom`, `clConcave_eq_of_eqOn_relint_domConcave` — a closed convex function
   is determined by its values on `ri (dom f)`, in the form §34 consumes it.
+* `bracket_eq_concaveBracket_adjointBifun_of_polyhedral` — **Corollary 33.2.2**: for a proper
+  polyhedral convex bifunction the relative interior in Corollary 33.2.1 can be dropped, and the
+  two brackets agree except at the pairs with `u ∉ dom F` *and* `y ∉ dom F*`.
 * `domConcave_bracket` — the concave effective domain of `u ↦ ⟨Fu, y⟩` is `dom F`, for every `y`.
   This is the whole content of **Corollary 33.2.1**: Theorem 33.2 already says the two brackets
   differ by `cl₁`, and a concave function agrees with its closure on `ri` of its domain.
@@ -2218,6 +2224,114 @@ theorem bracket_eq_concaveBracket_adjointBifun_of_mem_relint (Bu : U →ₗ[ℝ]
     (by rw [domConcave_bracket]; exact hu)).symm
 
 end Cor3321
+
+/-! ### The two brackets of a polyhedral bifunction
+
+Corollary 33.2.1 puts the two brackets `⟨Fu, y⟩` and `⟨u, F* y⟩` together on the *relative
+interior* of an effective domain, because that is where a convex or concave function is forced to
+agree with its closure. A polyhedral function agrees with its closure on all of its effective
+domain, so for a polyhedral bifunction the equality extends to the domain itself — on the `u` side
+from polyhedral concavity of `⟨F·, y⟩`, and on the `y` side from polyhedral convexity of
+`⟨u, F*·⟩`. Between them the two halves leave uncovered only the pairs with `u ∉ dom F` *and*
+`y ∉ dom F*`, and there the two brackets are `-∞` and `+∞`.
+
+The `u`-side half needs no properness: `⟨F·, y⟩` is polyhedral concave for every polyhedral convex
+`F`. The `y`-side half does, because it runs through `F** = cl F = F`. -/
+
+section PolyhedralBrackets
+
+variable {U V X Y : Type*}
+  [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {F : Bifun U X}
+
+omit [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
+/-- Off `dom F` the bracket is `-∞`: there `F u` is identically `+∞`, and the conjugate of `+∞` is
+`-∞`. This is Rockafellar's first step in Corollary 33.2.1, isolated. -/
+theorem bracket_eq_bot_of_notMem_domBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) {u : U}
+    (hu : u ∉ domBifun F) (y : Y) : bracket Bx F u y = ⊥ := by
+  by_contra hne
+  refine hu ?_
+  rw [← domConcave_bracket Bx F y]
+  exact bot_lt_iff_ne_bot.2 hne
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ V] [NormedAddCommGroup Y]
+  [NormedSpace ℝ Y] [FiniteDimensional ℝ Y] in
+/-- Off `dom G` the concave bracket is `+∞`, the mirror of `bracket_eq_bot_of_notMem_domBifun`. -/
+theorem concaveBracket_eq_top_of_notMem_domConcaveBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (G : Bifun Y V) (u : U) {y : Y} (hy : y ∉ domConcaveBifun G) :
+    concaveBracket Bu G u y = ⊤ := by
+  by_contra hne
+  refine hy ?_
+  rw [← dom_concaveBracket Bu G u]
+  exact lt_top_iff_ne_top.2 hne
+
+omit [FiniteDimensional ℝ V] [FiniteDimensional ℝ Y] in
+/-- **Half of Rockafellar's Corollary 33.2.2**: for a polyhedral convex bifunction the two brackets
+agree at every `u` of `dom F`, not merely at the relative-interior points that
+`bracket_eq_concaveBracket_adjointBifun_of_mem_relint` asks for.
+
+Theorem 33.2 says the two differ by the concave closure in `u`; `⟨F·, y⟩` is polyhedral concave
+with effective domain `dom F`, and a polyhedral function agrees with its closure on all of its
+effective domain. Properness of `F` plays no part here. -/
+theorem bracket_eq_concaveBracket_adjointBifun_of_mem_domBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : PolyhedralBifun F) {u : U}
+    (hu : u ∈ domBifun F) (y : Y) :
+    bracket Bx F u y = concaveBracket Bu (adjointBifun Bu Bx F) u y := by
+  rw [congrFun (concaveBracket_adjointBifun_eq_partialCl₁ (Bu := Bu)
+      (PolyhedralBifun.convexBifun hF) y) u,
+    congrFun (partialCl₁_slice (fun p : U × Y => bracket Bx F p.1 p.2) y) u]
+  exact (clConcave_eq_of_mem_domConcave (polyhedralFn_neg_bracket hF Bx y)
+    (by rw [domConcave_bracket]; exact hu)).symm
+
+/-- **The other half of Rockafellar's Corollary 33.2.2**: for a *proper* polyhedral convex
+bifunction the two brackets agree at every `y` of `dom F*`, for every `u`.
+
+This is the first half read on the dual side. Theorem 33.2's second equation says the brackets
+differ by the convex closure in `y` once `cl F = F`, which properness plus polyhedrality supply;
+`⟨u, F*·⟩` is polyhedral convex with effective domain `dom F*`, so the closure changes nothing
+there. -/
+theorem bracket_eq_concaveBracket_adjointBifun_of_mem_domConcaveBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : PolyhedralBifun F) (hp : Proper (graphFn F)) (u : U)
+    {y : Y} (hy : y ∈ domConcaveBifun (adjointBifun Bu Bx F)) :
+    bracket Bx F u y = concaveBracket Bu (adjointBifun Bu Bx F) u y := by
+  have hcl : clFn (fun w => concaveBracket Bu (adjointBifun Bu Bx F) u w) y
+      = bracket Bx F u y :=
+    congrFun (partialCl₂_concaveBracket_adjoint Bu Bx (PolyhedralBifun.convexBifun hF)
+      (closedBifun_of_polyhedralBifun hF hp)) (u, y)
+  rw [← hcl]
+  refine PolyhedralFn.clFn_eq_of_mem_dom
+    (polyhedralFn_concaveBracket (polyhedralFn_neg_graphFn_adjointBifun Bu Bx hF) Bu u) ?_
+  rw [dom_concaveBracket]
+  exact hy
+
+/-- **Rockafellar, Corollary 33.2.2**: for a proper polyhedral convex bifunction the two brackets
+agree, `⟨Fu, y⟩ = ⟨u, F* y⟩`, at every pair `(u, y)` except those with `u ∉ dom F` and
+`y ∉ dom F*`. -/
+theorem bracket_eq_concaveBracket_adjointBifun_of_polyhedral (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : PolyhedralBifun F) (hp : Proper (graphFn F)) (u : U)
+    (y : Y) (h : u ∈ domBifun F ∨ y ∈ domConcaveBifun (adjointBifun Bu Bx F)) :
+    bracket Bx F u y = concaveBracket Bu (adjointBifun Bu Bx F) u y :=
+  h.elim (fun hu => bracket_eq_concaveBracket_adjointBifun_of_mem_domBifun Bu Bx hF hu y)
+    fun hy => bracket_eq_concaveBracket_adjointBifun_of_mem_domConcaveBifun Bu Bx hF hp u hy
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ V] [FiniteDimensional ℝ X]
+  [FiniteDimensional ℝ Y] in
+/-- **Rockafellar, Corollary 33.2.2**, the exceptional pairs: when `u ∉ dom F` and `y ∉ dom F*`
+one bracket is `-∞` and the other `+∞`. Neither polyhedrality nor properness is used. -/
+theorem bracket_eq_bot_and_concaveBracket_eq_top (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) {u : U} (hu : u ∉ domBifun F) {y : Y}
+    (hy : y ∉ domConcaveBifun (adjointBifun Bu Bx F)) :
+    bracket Bx F u y = ⊥ ∧ concaveBracket Bu (adjointBifun Bu Bx F) u y = ⊤ :=
+  ⟨bracket_eq_bot_of_notMem_domBifun Bx hu y,
+    concaveBracket_eq_top_of_notMem_domConcaveBifun Bu (adjointBifun Bu Bx F) u hy⟩
+
+end PolyhedralBrackets
 
 /-! ### Corollary 33.3.3
 

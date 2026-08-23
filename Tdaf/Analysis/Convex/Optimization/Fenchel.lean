@@ -27,6 +27,9 @@ maximising `g* - f*`, where `g*` is the *concave* conjugate.
   supremum attained. `concaveConj_compLin` is the concave face of Theorem 16.3 that it runs on.
 * `sub_eq_concaveConj_sub_conj_iff` — **Theorem 31.3**, the Kuhn–Tucker conditions `y ∈ ∂f x` and
   `-y ∈ ∂(-g) x`, with `iInf_sub_eq_iff_exists_kuhnTucker` for **Corollary 31.3.1**.
+* `sub_comp_eq_concaveConj_sub_conj_iff` — **Theorem 31.3** with a linear transformation: the
+  Kuhn–Tucker conditions `A' z ∈ ∂f x` and `-z ∈ ∂(-g)(A x)`, with
+  `iInf_sub_comp_eq_iff_exists_kuhnTucker` for **Corollary 31.3.1**.
 
 ## Design notes
 
@@ -80,6 +83,25 @@ private theorem iInf_neg_comp (ψ : F → EReal) : (⨅ y : F, ψ y) = ⨅ y : F
   le_antisymm (le_iInf fun y => iInf_le ψ (-y))
     (le_iInf fun y => le_trans (iInf_le (fun z => ψ (-z)) (-y)) (le_of_eq (by rw [neg_neg])))
 
+/-- **The arithmetic behind weak duality.** Two Fenchel inequalities sharing the same *finite*
+value `p` combine into a comparison of differences. No hypothesis on `a`, `b`, `c`, `d` is needed:
+both `∞ - ∞` collisions are already absorbed on the correct side. -/
+private theorem sub_le_sub_of_le_sub_of_sub_le {a b c d : EReal} {p : ℝ}
+    (h1 : a ≤ (p : EReal) - b) (h2 : (p : EReal) - c ≤ d) : a - d ≤ c - b := by
+  have hpb : ((p : ℝ) : EReal) ≠ ⊥ := _root_.EReal.coe_ne_bot _
+  have hpt : ((p : ℝ) : EReal) ≠ ⊤ := _root_.EReal.coe_ne_top _
+  have h3 : -d ≤ c - ((p : ℝ) : EReal) := by
+    refine le_trans (_root_.EReal.neg_le_neg_iff.2 h2) (le_of_eq ?_)
+    rw [_root_.EReal.neg_sub (.inl hpb) (.inl hpt), sub_eq_add_neg, add_comm]
+  have hsum : a + -d ≤ (((p : ℝ) : EReal) - b) + (c - ((p : ℝ) : EReal)) := add_le_add h1 h3
+  refine le_trans (le_of_eq (sub_eq_add_neg _ _)) (le_trans hsum (le_of_eq ?_))
+  rw [sub_eq_add_neg ((p : ℝ) : EReal) b, sub_eq_add_neg c ((p : ℝ) : EReal),
+    add_comm c (-((p : ℝ) : EReal)),
+    add_add_add_comm ((p : ℝ) : EReal) (-b) (-((p : ℝ) : EReal)) c]
+  have hpp : ((p : ℝ) : EReal) + -((p : ℝ) : EReal) = 0 := by
+    rw [← _root_.EReal.coe_neg, ← _root_.EReal.coe_add, add_neg_cancel, _root_.EReal.coe_zero]
+  rw [hpp, zero_add, add_comm (-b) c, sub_eq_add_neg]
+
 /-- **Weak duality**, pointwise: every dual value is below every primal value. This is Fenchel's
 inequality for `f` and Fenchel's inequality for `g` added together.
 
@@ -87,22 +109,8 @@ No hypothesis at all is needed. Both `∞ - ∞` collisions are already absorbed
 if `f x = ⊥` then `f* y = ⊤` and the left side is `⊥`, and if `g x = ⊤` then `g* y = ⊥` and the
 left side is `⊥` again. -/
 theorem concaveConj_sub_conj_le_sub (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) (x : E) (y : F) :
-    concaveConj B g y - conj B f y ≤ f x - g x := by
-  set p : EReal := ((B x y : ℝ) : EReal) with hp
-  have hpb : p ≠ ⊥ := _root_.EReal.coe_ne_bot _
-  have hpt : p ≠ ⊤ := _root_.EReal.coe_ne_top _
-  have h1 : concaveConj B g y ≤ p - g x := concaveConj_le_sub B g x y
-  have h2 : p - f x ≤ conj B f y := sub_le_conj B f x y
-  have h3 : -(conj B f y) ≤ f x - p := by
-    refine le_trans (_root_.EReal.neg_le_neg_iff.2 h2) (le_of_eq ?_)
-    rw [_root_.EReal.neg_sub (.inl hpb) (.inl hpt), sub_eq_add_neg, add_comm]
-  have hsum : concaveConj B g y + -(conj B f y) ≤ (p - g x) + (f x - p) := add_le_add h1 h3
-  refine le_trans (le_of_eq (sub_eq_add_neg _ _)) (le_trans hsum (le_of_eq ?_))
-  rw [sub_eq_add_neg p (g x), sub_eq_add_neg (f x) p, add_comm (f x) (-p),
-    add_add_add_comm p (-(g x)) (-p) (f x)]
-  have hpp : p + -p = 0 := by
-    rw [hp, ← _root_.EReal.coe_neg, ← _root_.EReal.coe_add, add_neg_cancel, _root_.EReal.coe_zero]
-  rw [hpp, zero_add, add_comm (-(g x)) (f x), sub_eq_add_neg]
+    concaveConj B g y - conj B f y ≤ f x - g x :=
+  sub_le_sub_of_le_sub_of_sub_le (concaveConj_le_sub B g x y) (sub_le_conj B f x y)
 
 /-- **Rockafellar, Theorem 31.1 (Fenchel's duality theorem)**: the infimum of `f - g` equals the
 supremum of `g* - f*`.
@@ -459,6 +467,101 @@ theorem iInf_sub_eq_iff_exists_kuhnTucker (hex : IsExactSum B f (-g)) (x : E) :
     exact iInf_sub_eq_of_sub_eq ((sub_eq_concaveConj_sub_conj_iff hpf hpg).2 hy)
 
 end Optimality
+
+/-! ### Optimality conditions for the transformed pair of problems
+
+A pair `(x, z)` is jointly optimal for `inf (f - g A)` and `sup (g* - f* A')` exactly when
+`A' z ∈ ∂f x` and `A x` lies in the superdifferential of `g*` at `z`. The superdifferential of a
+concave function is `-∂` of its negative, so the second condition reads `-z ∈ ∂(-g)(A x)` and no
+new notion is needed.
+
+These are Rockafellar's Kuhn–Tucker conditions for the pair of programs of Theorem 31.2. -/
+
+section OptimalityComp
+
+variable {E F G H : Type*}
+  [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [AddCommGroup G] [Module ℝ G] [AddCommGroup H] [Module ℝ H]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
+  {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {f : E → EReal} {g : G → EReal} {x : E} {z : H}
+
+/-- **Weak duality for the transformed problem**, pointwise: every value of `g* - f* A'` is below
+every value of `f - g A`.
+
+Like `concaveConj_sub_conj_le_sub` it needs no hypothesis beyond the adjointness datum, which is
+what identifies the two pairings `⟨A x, z⟩'` and `⟨x, A' z⟩` at which the two Fenchel inequalities
+are read. -/
+theorem concaveConj_sub_conj_comp_le_sub (hA : IsAdjointPair B B' A A') (x : E) (z : H) :
+    concaveConj B' g z - conj B f (A' z) ≤ f x - g (A x) := by
+  refine sub_le_sub_of_le_sub_of_sub_le (p := B x (A' z)) ?_ (sub_le_conj B f x (A' z))
+  rw [← hA x z]
+  exact concaveConj_le_sub B' g (A x) z
+
+/-- **Rockafellar, Theorem 31.3**: `x` and `z` are jointly optimal for the two programs of
+Theorem 31.2 exactly when they satisfy the Kuhn–Tucker conditions `A' z ∈ ∂f x` and
+`-z ∈ ∂(-g)(A x)`.
+
+The proof is the one at `A = id`, with the shared finite value `⟨x, A' z⟩ = ⟨A x, z⟩'`: the
+equality `f x - g (A x) = g*(z) - f*(A' z)` squeezes `⟨x, A' z⟩ ≤ f x + f*(A' z)` and
+`g (A x) + g*(z) ≤ ⟨A x, z⟩'` together, and each of the two squeezes being tight is Theorem 23.5
+for `f`, respectively for `-g`. -/
+theorem sub_comp_eq_concaveConj_sub_conj_iff (hA : IsAdjointPair B B' A A') (hpf : Proper f)
+    (hpg : Proper fun w => -(g w)) :
+    f x - g (A x) = concaveConj B' g z - conj B f (A' z) ↔
+      A' z ∈ subgradient B f x ∧ -z ∈ subgradient B' (fun w => -(g w)) (A x) := by
+  have hgt : g (A x) ≠ ⊤ := fun hc => hpg.ne_bot (A x) (by rw [hc, _root_.EReal.neg_top])
+  have hdc : (domConcave g).Nonempty := by
+    rw [domConcave_eq_dom_neg]
+    exact hpg.dom_nonempty
+  have hp : ((B' (A x) z : ℝ) : EReal) = ((B x (A' z) : ℝ) : EReal) := by rw [hA x z]
+  have h2 : g (A x) + concaveConj B' g z ≤ ((B x (A' z) : ℝ) : EReal) := by
+    rw [← hp]
+    exact add_concaveConj_le B' g (A x) z
+  rw [sub_eq_sub_iff_of_le (hpf.ne_bot x) hgt (concaveConj_ne_top hdc z)
+      (conj_ne_bot hpf.dom_nonempty (A' z)) (_root_.EReal.coe_ne_bot _)
+      (_root_.EReal.coe_ne_top _)
+      (le_add_conj (hpf.ne_bot x) hpf.dom_nonempty (A' z)) h2,
+    hpf.mem_subgradient_iff_add_conj_eq,
+    neg_mem_subgradient_neg_iff_add_concaveConj_eq (B := B') (g := g) (x := A x) (y := z) hpg, hp]
+
+/-- **Rockafellar, Theorem 31.3**, first consequence: a point where the primal and dual values
+agree already minimises `f - g A`. Only weak duality is used, so no hypothesis is needed. -/
+theorem iInf_sub_comp_eq_of_sub_eq (hA : IsAdjointPair B B' A A')
+    (h : f x - g (A x) = concaveConj B' g z - conj B f (A' z)) :
+    (⨅ w, f w - g (A w)) = f x - g (A x) :=
+  le_antisymm (iInf_le _ x) (le_iInf fun w => by
+    rw [h]; exact concaveConj_sub_conj_comp_le_sub hA w z)
+
+/-- **Rockafellar, Theorem 31.3**, second consequence: the same pair maximises `g* - f* A'`. -/
+theorem iSup_sub_comp_eq_of_sub_eq (hA : IsAdjointPair B B' A A')
+    (h : f x - g (A x) = concaveConj B' g z - conj B f (A' z)) :
+    (⨆ w : H, concaveConj B' g w - conj B f (A' w)) = concaveConj B' g z - conj B f (A' z) :=
+  le_antisymm (iSup_le fun w => by
+      rw [← h]; exact concaveConj_sub_conj_comp_le_sub hA x w)
+    (le_iSup (fun w : H => concaveConj B' g w - conj B f (A' w)) z)
+
+/-- **Rockafellar, Corollary 31.3.1**: under Theorem 31.2's two exactness hypotheses, `x`
+minimises `f - g A` exactly when it carries a Kuhn–Tucker pair.
+
+The two directions use the two hypotheses asymmetrically: the forward one needs the *attainment*
+clause of Theorem 31.2 (`exists_concaveConj_sub_conj_comp_eq`) to produce the multiplier, while
+the backward one is weak duality alone. Properness of `-g` is `IsExactImage.proper`; properness of
+`f` is `IsExactSum.proper_left`. -/
+theorem iInf_sub_comp_eq_iff_exists_kuhnTucker (hA : IsAdjointPair B B' A A')
+    (hex : IsExactSum B f fun w => -(g (A w)))
+    (himg : IsExactImage B B' A A' hA fun w => -(g w)) (x : E) :
+    (⨅ w, f w - g (A w)) = f x - g (A x) ↔
+      ∃ z : H, A' z ∈ subgradient B f x ∧ -z ∈ subgradient B' (fun w => -(g w)) (A x) := by
+  have hpf : Proper f := hex.proper_left
+  have hpg : Proper fun w => -(g w) := himg.proper
+  constructor
+  · intro hmin
+    obtain ⟨z, hz⟩ := exists_concaveConj_sub_conj_comp_eq hA hex himg
+    exact ⟨z, (sub_comp_eq_concaveConj_sub_conj_iff hA hpf hpg).1 (hmin.symm.trans hz.symm)⟩
+  · rintro ⟨z, hz⟩
+    exact iInf_sub_comp_eq_of_sub_eq hA ((sub_comp_eq_concaveConj_sub_conj_iff hA hpf hpg).2 hz)
+
+end OptimalityComp
 
 /-! ### Theorem 31.4: minimising over a convex cone -/
 
