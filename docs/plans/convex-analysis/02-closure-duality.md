@@ -298,7 +298,8 @@ noncomputable def gaugeFn (C : Set E) : E → EReal :=
 | `polarCone_of_level_sets` | Thm 14.3 |
 | `polar_of_epi_cone` (the `ℝ × E × ℝ` construction) | **Thm 14.4** |
 | `polarSet_polarSet`, `gaugeFn_eq_supportFn_polar` | **Thm 14.5**, Cor 14.5.1 |
-| `recessionCone_eq_polarCone_polarSet`, `polarCone_recessionCone`, `linealitySpace_eq_setOf_pairing_eq_zero`, `polarCone_linealitySpace` — **done** | **Thm 14.6** (needs only the bipolar theorem, not Cor 8.3.2); Cor 14.6.1 not done |
+| `recessionCone_eq_polarCone_polarSet`, `polarCone_recessionCone`, `linealitySpace_eq_setOf_pairing_eq_zero`, `polarCone_linealitySpace` — **done** | **Thm 14.6** (needs only the bipolar theorem, not Cor 8.3.2) |
+| `polarSubmodule`, `finrank_add_finrank_polarSubmodule`, `vectorSpan_eq_span_of_zero_mem`, `finrank_vectorSpan_polarSet_add_lineality`, `finrank_vectorSpan_add_lineality_polarSet` — **done**, in `Duality/Gauge.lean` | **Cor 14.6.1**. It cannot live in `Duality/Polar.lean`: it consumes `polarCone_linealitySpace`, which is in `Gauge.lean`, and `Gauge` imports `Polar`. The `finrank` API turned out to be six lines of rank–nullity. The third relation, `rank C° = rank C`, is the difference of the other two and is a docstring remark rather than a theorem |
 | `polarSet_setOf_le_subset_and_subset` — **done** | **Thm 14.7**, with no closedness and neither Thm 13.5 nor 9.7 |
 | `polarGauge`, `polarGauge_polarGauge`, `polarGaugeEquiv` — **done** | **Thm 15.1**, Cor 15.1.1–2 |
 | `isGauge_iff`, `gaugeEquiv` — **done** | the §15 gauge characterisation (the paragraph before Thm 15.1) |
