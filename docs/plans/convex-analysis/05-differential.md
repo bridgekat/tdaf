@@ -237,7 +237,8 @@ Theorem 25.2.**
 |---|---|---|
 | `le_of_hasFDerivAt`, `eq_of_mem_subgradient_of_hasFDerivAt`, `subgradient_eq_singleton_of_hasFDerivAt` | **Thm 25.1** | done |
 | `mem_interior_dom_of_eventuallyEq_coe`, `proper_of_eventuallyEq_coe` | **Cor 25.1.1** | done |
-| — | Cor 25.1.2, Cor 25.1.3 (exposed points of `epi f*`) | **not done** |
+| `mem_exposedPoints_prod_Ici_iff`, `Proper.eq_sub_of_mem_subgradient`, `mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff` | **Cor 25.1.2, Cor 25.1.3**, subgradient form | done — with `ClosedFn`, which the book does not assume |
+| — | Cor 25.1.2, Cor 25.1.3, differentiability form | **not done** — needs the converse half of Thm 25.1 |
 | `dirDeriv_eq_of_hasFDerivAt` | **Thm 25.2**, necessity | done |
 | `subgradient_eq_singleton_of_dirDeriv_eq`, `clFn_dirDeriv_eq_of_subgradient_eq_singleton` | **Thm 25.2**, the algebraic content of sufficiency | done |
 | — | **Thm 25.2**, sufficiency proper (linear `f'(x; ·)` ⇒ differentiable) | **not done** |
@@ -289,8 +290,15 @@ backbone yet.
 
 Theorem 25.3 is one-dimensional and rests on Theorem 24.1; Theorem 25.4 rests on Theorem 24.5;
 Theorems 25.6 and 25.7 rest on 25.5 and on §24's convergence theory (Theorems 10.6–10.9).
-Corollaries 25.1.2 and 25.1.3 are statements about exposed points and exposed faces of `epi f*` in
-`ℝ × E`, so they wait on §18 in the product picture.
+Corollaries 25.1.2 and 25.1.3 **need no §18 at all**, contrary to what this plan said: the proof is
+a direct supporting-hyperplane argument on `epi f*` — split the functional, show the vertical
+coefficient is negative, normalise — plus Theorem 23.5. What is done is the *subgradient* form,
+`∂f x = {x*}`; the *differentiability* form the book states needs the converse half of Theorem 25.1
+(unique subgradient ⇒ differentiable), which the project does not have. They also need `f` (resp.
+`g`) closed, which the book does not assume: Rockafellar's "we can assume `f` is closed" is only
+half available in the subgradient form, since "a singleton subdifferential forces
+relative-interiority" is missing. Corollary 25.1.3's "non-empty closed convex set `C`" is
+unnecessary — `C` is a support set, automatically closed and convex.
 
 Theorem 25.5 (a.e. differentiability) — check `Mathlib/Analysis/Calculus/Rademacher.lean` first:
 a finite convex function on an open set is locally Lipschitz (Theorem 10.4), so Rademacher applies

@@ -10,7 +10,8 @@ Lagrangian, dual program, Kuhn–Tucker vectors) is obtained from it by **partia
 
 ## 6.1 `Optimization/Minimum.lean` — §27
 
-**Status: Theorems 27.1(a), 27.1(b), 27.2, 27.4 and the non-polyhedral case of 27.3 are done.**
+**Status: Theorems 27.1(a), 27.1(b), 27.1(f), the first sentence of 27.1(i), 27.2, 27.4, the
+non-polyhedral case of 27.3 and Corollary 27.3.2 are done.**
 
 Theorem 27.1 is a summary: nine facts about `inf f` and `argmin f`, each a restatement of an earlier
 result in terms of `f*` at the origin. It is the ideal first theorem of this sub-plan because it
@@ -24,15 +25,16 @@ other seven turned out to be exactly the parts of the book that are still deferr
 | `argmin_eq_subgradient_conj_zero` | **Thm 27.1(b)** | done |
 | — | Thm 27.1(c), (d) | **not done** — need Thm 23.3 in full and Cor 13.3.4 |
 | — | Thm 27.1(e) | **not done** — `∂f*(0)` a singleton lives in `E**`, so a reflexive pairing is needed to state it |
-| — | Thm 27.1(f) | **not done** — needs Thm 14.2 |
+| `recessionCone_setOf_le_eq_polarCone_dom_conj`, `recessionCone_argmin_eq_polarCone_dom_conj` | **Thm 27.1(f)** | done — Thm 8.7 composed with Thm 14.2, which is now in `Recession/Conjugate.lean` |
 | — | Thm 27.1(g), (h) | **not done** — need Thm 13.5; Thm 23.6 is now done (`Subgradient/Approx.lean`) |
-| — | Thm 27.1(i) | **not done** — needs Cor 13.3.4 |
+| `zero_mem_closure_dom_conj_iff` (in `Duality/Level.lean`) | **Thm 27.1(i)**, first sentence | done — it is Cor 13.3.4(a) at the origin. The rest of (i) still needs Cor 13.3.4's other clauses |
 | `argmin_nonempty_of_recessionConeFn_eq_zero`, `isCompact_argmin_of_recessionConeFn_eq_zero`, `exists_pos_forall_exists_mem_argmin_dist_lt` | **Thm 27.2**, all three assertions | done |
 | `tendsto_infDist_argmin`, `isBounded_range_of_tendsto_iInf`, `mem_argmin_of_mapClusterPt` | Cor 27.2.1 | done |
 | `tendsto_of_argmin_eq_singleton` | Cor 27.2.2 | done |
 | `recessionConeFn_add_indicatorFn`, `exists_forall_le_of_recessionConeFn_inter_eq_zero` | **Thm 27.3**, non-polyhedral case | done |
 | — | **Thm 27.3**, polyhedral refinement | **not done** — needs Helly in the form of Thm 21.5 |
-| — | Cor 27.3.1, Cor 27.3.2 | **not done** — both rest on the polyhedral refinement |
+| `argmin_nonempty_of_polyhedralFn`, `exists_forall_le_of_polyhedralFn_of_polyhedral` | **Cor 27.3.2** | done — and it does **not** rest on the polyhedral refinement, see below |
+| — | Cor 27.3.1 | **not done** — rests on the polyhedral refinement |
 | `exists_forall_le_of_forall_le_zero` | Cor 27.3.3, non-polyhedral case | done |
 | `le_of_mem_subgradient_of_neg_mem_normalCone`, `exists_mem_subgradient_neg_mem_normalCone` | **Thm 27.4** | done |
 
@@ -90,12 +92,21 @@ because the second summand only takes the values `0` and `⊤` the sublevel cond
 minimises, which is what Rockafellar means by "if `f` is identically `+∞` the infimum is trivially
 attained throughout `C`".
 
-**The polyhedral refinement of Theorem 27.3 is blocked upstream of §27.** Rockafellar proves it
-from Helly's theorem in the form of Theorem 21.5, applied to the collection consisting of `C` and
-the level sets `lev_α h`, `α > inf`. Theorem 21.5 is not formalised — it descends from Theorem 21.3,
-which needs Theorem 13.5 and Corollary 17.1.3 (see `Helly.lean`) — and it also wants Theorem
-27.1(f), which needs Theorem 14.2. Corollaries 27.3.1 and 27.3.2 both route through it. Corollary
-27.3.3's non-polyhedral half needs none of that: the constraint set is
+**The polyhedral refinement of Theorem 27.3 is blocked upstream of §27, but Corollary 27.3.2 is
+not.** Rockafellar proves the refinement from Helly's theorem in the form of Theorem 21.5, applied
+to the collection consisting of `C` and the level sets `lev_α h`, `α > inf`. Theorem 21.5 is not
+formalised — and its real obstruction is not the one `Helly.lean` used to name; see that file's
+`NOTES.md` entry. Theorem 27.1(f), which the refinement also wants, **is** now available.
+
+**Corollary 27.3.2 does not need any of that.** The book derives it from 27.3.1;
+`argmin_nonempty_of_polyhedralFn` gets it directly from the finitely generated description of the
+epigraph (Theorem 19.1). A lower bound forces every generating *direction* upward, so the vertical
+coordinate is minimised over `epi f` at one of the finitely many generating *points* — no
+closedness, no properness, no Helly. Restricting `f` to `C` is then Rockafellar's own vertical
+prism. This is what lets Theorem 29.2's optimal-solution clause through as well. Corollary 27.3.1
+still routes through the refinement.
+
+Corollary 27.3.3's non-polyhedral half needs none of that either: the constraint set is
 `⋂ i {x | f i x ≤ 0}`, its recession cone is `⋂ i 0⁺f i` by Corollary 8.3.3 and Theorem 8.7, and
 Theorem 27.3 applies.
 
@@ -135,7 +146,7 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
 | — | **Cor 29.1.4**, compactness under strict consistency | not done — needs the boundedness half of Thm 23.4 |
 | `polyhedralFn_mapLin`, `PolyhedralFn.clFn_eq_of_mem_dom` | **Cor 19.3.1**, the prerequisite | done |
 | `PolyhedralBifun`, `polyhedralBifun_iff`, `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`, `polyhedral_kuhnTucker_of_polyhedralBifun` | **Thm 29.2** (polyhedral case) | done |
-| — | **Thm 29.2**, the optimal-solution clause | not done — needs Cor 27.3.2, i.e. Helly in the form of Thm 21.5 |
+| `argmin_nonempty_of_polyhedralBifun`, `polyhedral_argmin_of_polyhedralBifun` | **Thm 29.2**, the optimal-solution clause | done — on Cor 27.3.2, which turned out not to need Helly. It needs **less** than the book asks: `inf F 0 ≠ -∞` suffices for existence (an optimal value of `+∞` makes every point optimal); finiteness is needed only for polyhedrality of the minimum set |
 | `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — in `Saddle/Minimax.lean`, where §36 is |
 | — | **Thm 29.4** | not done — needs saddle-point existence, Thm 37.6 |
 
@@ -391,7 +402,7 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 | `le_limsup_nhds`, `clConcave_eq_limsup_or`, `liminf_infBifun_eq_iSup_adjointBifun`, `limsup_supBifun_adjointBifun_eq` | **Cor 30.2.3** (the `liminf` form) | done — on `clFn_eq_liminf_or`, now in `Closure.lean` |
 | `ConcaveKuhnTucker`, `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker`, `concaveNormal_of_concaveKuhnTucker_nonempty`, `normal_of_concaveKuhnTucker_adjointBifun_nonempty` | **Thm 30.4(d)** | done |
 | `PolyhedralBifun.normal`, `ConcavePolyhedralBifun`, `ConcavePolyhedralBifun.concaveNormal`, `normal_of_concavePolyhedral_adjointBifun` | **Thm 30.4(e), (f)** | done |
-| — | Thm 30.4 (g)–(j) | not done — they route through Thm 27.1(d)/(f), so they need Cor 13.3.4 and Thm 14.2, and additionally `int (dom (F 0)*) = int (domConcave F*)`, a Cor 7.4.1-type result |
+| — | Thm 30.4 (g)–(j) | not done — they route through Thm 27.1(d)/(f). **Thm 14.2 and with it Thm 27.1(f) are now done**, so what remains is Cor 13.3.4's clauses (b)–(d), which need Thm 13.1's `ri`/`int`/`aff` clauses, and `int (dom (F 0)*) = int (domConcave F*)`, a Cor 7.4.1-type result |
 | `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | Cor 30.5.1 (saddle points of `L`) | done — in `Saddle/Minimax.lean` |
 
 ### What actually happened

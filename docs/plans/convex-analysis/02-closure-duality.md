@@ -294,7 +294,8 @@ noncomputable def gaugeFn (C : Set E) : E → EReal :=
 | Lean name | book |
 |---|---|
 | `indicator_polarCone_eq_conj_indicator` , `polarCone_polarCone` | **Thm 14.1** |
-| `polarCone_cone_dom_eq_recession_conj` | Thm 14.2, Cor 14.2.1–2 |
+| `recessionConeFn_conj`, `recessionConeFn_conj_hull`, `recessionConeFn_eq_polarCone_dom_conj`, `polarCone_recessionConeFn`, `polarCone_coe_hull` — **done**, in `Recession/Conjugate.lean` | **Thm 14.2**. Half of it costs nothing: the recession cone of `f*` is the polar of `dom f` by Theorem 13.3 at the zero level set, with no closedness anywhere. The other half is that one fed `f** = f` |
+| `zero_mem_interior_iff_polarCone_eq_zero`, `isBounded_setOf_le_iff_zero_mem_interior_dom_conj` — **done**, in `Recession/Conjugate.lean` | **Cor 14.2.2**, via Theorems 8.7 and 8.4. The dictionary lemma's nonemptiness hypothesis is real: for `D = ∅` between trivial spaces the polar is `{0}` and the interior is empty. Both its directions run on **Cor 6.4.1**, `Convex.mem_interior_iff_absorbs`, which was a gap in Mathlib as well |
 | `polarCone_of_level_sets` | Thm 14.3 |
 | `polar_of_epi_cone` (the `ℝ × E × ℝ` construction) | **Thm 14.4** |
 | `polarSet_polarSet`, `gaugeFn_eq_supportFn_polar` | **Thm 14.5**, Cor 14.5.1 |
