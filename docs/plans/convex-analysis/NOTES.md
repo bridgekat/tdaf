@@ -2172,6 +2172,69 @@ From the repository `README.md` ("Reviewing a formalization"):
 
 ---
 
+### `Tdaf/Analysis/Convex/Saddle/Minimax.lean`
+
+Rockafellar §36 in full, and §37 through Corollary 37.1.1: saddle-points, the two iterated
+extrema, the Lagrangian of a closed convex bifunction, and the two conjugate saddle-functions.
+
+```lean
+def IsSaddlePoint (K : U × X → EReal) (p : U × X) : Prop
+def IsSaddlePointOn (C : Set U) (D : Set X) …
+noncomputable def maximin (K) : EReal := ⨆ u, ⨅ x, K (u, x)
+noncomputable def minimax (K) : EReal := ⨅ x, ⨆ u, K (u, x)
+def HasSaddleValue (K) : Prop := maximin K = minimax K
+noncomputable def saddleLagrangian (Bu) (F : Bifun U X) : V × X → EReal   -- Thm 36.5
+def flipBifun … ; noncomputable def inverseBifun …                     -- `F_*`
+noncomputable def lowerConjSaddle … ; noncomputable def upperConjSaddle … -- `K̲*`, `K̄*`
+def bifunSaddleClass …                                                 -- `Ω(F)`
+theorem maximin_le_minimax …                                           -- Lemma 36.1
+theorem isSaddlePoint_iff_attained …                                   -- Lemma 36.2
+theorem maximin_eq_biSup_biInf … ; theorem minimax_eq_biInf_biSup …     -- Thm 36.3
+theorem SaddleEquiv.maximin_eq … ; theorem SaddleEquiv.isSaddlePoint_iff …  -- Thm 36.4
+theorem exists_unique_closedBifun_saddleLagrangian_eq …                -- Thm 36.5
+theorem mem_argmin_iff_exists_isSaddlePoint_lagrangian …               -- Thm 36.6 = Cor 29.3.1
+theorem isSaddlePoint_lagrangian_iff …                                 -- **Thm 29.3**
+theorem isSaddlePoint_lagrangian_iff_normal_and_optimal …              -- **Cor 30.5.1**
+theorem upperConjSaddle_eq_saddleLagrangian …                          -- Thm 37.1, 1st equation
+theorem lowerConjSaddle_eq_bracket_inverseBifun …                      -- Thm 37.1, 2nd equation
+theorem concaveConvexFn_upperConjSaddle … ; theorem upperClosedFn_upperConjSaddle …  -- Cor 37.1.1
+```
+
+**Two items other modules list as blocked come out of this one.** `Optimization/Lagrangian.lean`
+records Theorem 29.3 as missing and `Optimization/Normal.lean` records Corollary 30.5.1 as
+"needs §36" — both are proved here.
+
+**`HasSaddleValue` must not build in finiteness.** The book calls the common value the saddle-value
+when the two iterated extrema are *equal*, and states finiteness separately (Cor 36.3.1, Cor 37.1.3,
+Thm 37.3). Folding finiteness into the definition would make Corollary 36.3.1 vacuous, so it stays a
+separate conclusion (`IsSaddlePoint.exists_maximin_eq_coe`).
+
+**The outer restriction in Theorem 36.3 is free; only the inner one costs anything.**
+`maximin_eq_biSup_dom₁` and `minimax_eq_biInf_dom₂` have *zero* hypotheses, because
+`u ∉ dom₁ K ↔ ∃ x, K (u, x) = ⊥`. The inner restriction to `ri` is what needs Corollary 7.3.1 and
+the Theorem 34.3 sandwich.
+
+**Rockafellar's `F_*` is a flip *composed with* a negation, and the two halves must stay
+separate.** `flipBifun` preserves convexity and closedness; `inverseBifun` swaps convex ↔ concave.
+Theorem 36.5 wants the first, Theorem 37.1 the second.
+
+**`(F_*)^* = (F^*)_*` is a definition here, not a lemma.** The backbone has no adjoint of a
+*concave* bifunction in the direction Rockafellar needs. Defining the object as
+`inverseBifun (adjointBifun Bu Bx F)` makes his commutation a triviality and lets Theorem 33.3
+(`lowerClosedFn_bracket`) apply to it verbatim. §38 should be planned the same way.
+
+**Not here**: Corollary 37.1.2 (and so 37.1.3), which needs `K̄*` exhibited as the `concaveBracket`
+of the adjoint of `F_*^*` — i.e. the biadjoint identity `(F_*^*)^* = F_*`, Theorem 30.2-flavoured
+work the backbone does not have; Theorem 37.2, which needs **Theorem 6.8**; and Theorems 37.3–37.6.
+The subgradient form of Kuhn–Tucker, `(0,0) ∈ ∂L(v̄, x̄)`, needs §35's `∂L = ∂₁L × ∂₂L`, which is
+also absent — `isSaddlePoint_lagrangian_iff` gives the equivalent "optimal solution plus
+Kuhn–Tucker vector" form instead.
+
+**Relocation candidates.** `ConvexFn.exists_mem_relint_dom_lt` and
+`ConvexFn.biInf_eq_iInf_of_relint_dom_subset` (Corollary 7.3.1) belong in `RelativeInterior.lean`;
+`iSup_clConcave_eq_iSup` and `concaveConj_clConcave` (Theorem 12.2's first half, concave side)
+belong in `Duality/ConcaveConj.lean`.
+
 ## 2. Lean/Mathlib gotchas
 
 Only what cost real time to find. Trivia that an error message explains on its own does not belong
@@ -2739,6 +2802,53 @@ whole declaration, doc comment included.
 **A definition that negates an `EReal` must be `noncomputable`.** `EReal.instNeg` is
 noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error names
 `EReal.instNeg` explicitly, which makes it easy to spot.
+
+94. **A bare identifier inside `theorem Foo.bar` resolves to `Foo.bar` itself, not to the top-level
+    `bar`.** During elaboration the current namespace already contains `Foo`, so
+    `rw [hasSaddleValue_iff]` inside `SaddleEquiv.hasSaddleValue_iff` rewrites with the theorem
+    being defined — and fails with *"fail to show termination"*, not with an ambiguity error. Write
+    `_root_.hasSaddleValue_iff`, or `change` to unfold the definition.
+
+95. **`saddleSwap_saddleSwap` is not `rfl`, and unification will not discover it.**
+    `lowerClosedFn_iff_upperClosedFn_saddleSwap.1 h` produces
+    `UpperClosedFn (saddleSwap (saddleSwap L))`; matching that against `UpperClosedFn L` sends
+    `isDefEq` into a deterministic timeout, because `EReal`'s `neg_neg` is propositional. Land the
+    term in a `have` and `rwa [saddleSwap_saddleSwap] at` it.
+
+96. **`ClosedFn` / `ClosedBifun` / `ConvexBifun` unfold to `Eq` / `ConvexFn`, so dot notation dies
+    behind a type ascription.** `(h : ClosedBifun G).imageClosedBifun` fails with *"the environment
+    does not contain `Eq.imageClosedBifun`"*, because the ascription is elaborated away. Bind it
+    with `have h : ClosedBifun G := …` first. Same family as gotcha 93.
+
+97. **`rw [← h]` where `h : f X = F` and `X` itself mentions `F` rewrites inside `X` too.** In
+    `bifunOfSaddle_eq_of_mem_bifunSaddleClass` the goal has `F` on both sides, so `rw [← hbase]`
+    mangles it. Use `calc` with the intermediate terms spelled out.
+
+98. **An underscore for a saddle-function argument surfaces as a stuck *instance* problem.**
+    `bifunOfSaddle_partialCl₂ Bx _` leaves the type `U` a metavariable, and the error reads
+    `typeclass instance problem is stuck: LocallyConvexSpace ℝ ?m`. Supply the function
+    explicitly, or put the term in a `calc` step whose expected type pins it down.
+
+99. **`omit […] in` is reported for *all* offending declarations in one build**, unlike the
+    unused-section-variable linter (gotcha 84). One grep-and-patch pass suffices — no N rebuild
+    cycles.
+
+100. **`sub_eq_add_neg` does apply to `EReal`.** `simp only [sub_eq_add_neg]` is the way to expose
+     `a - b` as `a + -b` before `add_assoc` / `add_comm` / `add_right_comm`; a plain
+     `rw [add_assoc]` will not match through the `HSub` head. But **`zero_sub` is not available**
+     — `EReal` is not a `SubtractionMonoid` — so use `change (0 : EReal) + -a = _` then `zero_add`.
+
+101. **`Tdaf.EReal.iSup_add_coe` / `iInf_add_coe` put the constant on the *right*.** Rearranging
+     `⟨u,v⟩ + ⟨x,y⟩ - K` into `(⟨x,y⟩ - K) + ⟨u,v⟩` first (via `EReal.coe_add` plus `add_assoc` /
+     `add_right_comm`) is what makes them fire.
+
+102. **`IsContinuousPairing (prodPairing Bu Bx).flip` is not found by instance search**, because
+     the flip is not syntactically a `prodPairing`. Bridge it with a theorem
+     (`rw [prodPairing_flip]; infer_instance`) introduced by `have` — it must not be an instance.
+
+103. **`linter.style.haveILetI` rejects `haveI` for Prop-valued goals.** Instance-producing steps
+     inside proofs use plain `have`, including for typeclass instances, since the classes here are
+     Props.
 
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State

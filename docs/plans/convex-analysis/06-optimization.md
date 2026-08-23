@@ -129,7 +129,8 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
 | — | `dirDeriv_infBifun_eq` (Cor 29.1.1's derivative clause), Cors 29.1.2, 29.1.3, 29.1.5, 29.1.6 | not done |
 | — | **Cor 29.1.4**, compactness under strict consistency | not done — needs the boundedness half of Thm 23.4 |
 | — | **Thm 29.2** (polyhedral case) | not done |
-| — | **Thms 29.3, 29.4** | not done — need §36 |
+| `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — in `Saddle/Minimax.lean`, where §36 is |
+| — | **Thm 29.4** | not done — needs saddle-point existence, Thm 37.6 |
 
 `Consistent`, `StronglyConsistent`, `StrictlyConsistent` are `0 ∈ dom F`, `0 ∈ ri (dom F)`,
 `0 ∈ int (dom F)` respectively. They are the constraint qualifications of Part VI and connect
@@ -382,7 +383,7 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 | — | Cor 30.2.1 | not done |
 | — | Cor 30.2.3 (the `liminf` form) | not done — needs `cl f x = liminf f`, absent from `Closure.lean` |
 | — | Thm 30.4 (d)–(j) | not done — concave Kuhn–Tucker vectors, polyhedral bifunctions, bounded level sets |
-| — | Cor 30.5.1 (saddle points of `L`) | not done — needs §36 |
+| `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | Cor 30.5.1 (saddle points of `L`) | done — in `Saddle/Minimax.lean` |
 
 ### What actually happened
 

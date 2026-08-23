@@ -344,20 +344,56 @@ def HasSaddleValue (K : U × X → EReal) : Prop :=
   (⨆ u, ⨅ x, K (u, x)) = (⨅ x, ⨆ u, K (u, x))
 ```
 
-| Lean name | book |
-|---|---|
-| `iSup_iInf_le_iInf_iSup` | **Lemma 36.1** |
-| `isSaddlePoint_iff_extrema_attained` | **Lemma 36.2** |
-| `saddleValue_of_closedProper` | **Thm 36.3**, Cor 36.3.1 |
-| `saddleEquiv_saddleValue_eq` | **Thm 36.4** |
-| `lagrangian_iff_upperClosed_concaveConvex` | **Thm 36.5** |
-| `kuhnTucker_theorem` (general form) | **Thm 36.6** |
-| `conjugateSaddle` and its involution | **Thm 37.1**, Cor 37.1.1–3 |
-| `supportFn_dom_conjugateSaddle` | **Thm 37.2**, Cor 37.2.1 |
-| `hasSaddleValue_of_recession` | **Thm 37.3**, Cor 37.3.1–2 |
-| `subgradient_saddle_iff_isSaddlePoint_shift` | **Thm 37.4**, Cor 37.4.1 |
-| `graph_subgradient_saddle_homeomorph` | **Thm 37.5**, Cor 37.5.1–3 |
-| `exists_isSaddlePoint` | **Thm 37.6**, Cor 37.6.1–2 |
+**Status: all of §36 is done, and §37 through Corollary 37.1.1.** The names below are the ones
+actually used; each plan entry above split into several statements, as usual.
+
+| Lean name | book | status |
+|---|---|---|
+| `IsSaddlePoint`, `IsSaddlePointOn`, `maximin`, `minimax`, `HasSaddleValue`, `saddleLagrangian`, `flipBifun` | the §36 vocabulary | done |
+| `maximin_le_minimax` | **Lemma 36.1** | done |
+| `isSaddlePoint_iff_attained`, `isSaddlePoint_iff_iSup_eq_iInf`, `IsSaddlePoint.maximin_eq`, `.minimax_eq`, `.hasSaddleValue` | **Lemma 36.2** | done |
+| `isSaddlePointOn_iff_biSup_eq_biInf`, `isSaddlePointOn_univ_univ` | the `C × D` ↔ `ℝᵐ × ℝⁿ` translation | done |
+| `maximin_eq_biSup_dom₁`, `minimax_eq_biInf_dom₂` | §36, the outer restriction | done — **no hypotheses at all** |
+| `biInf_dom₂_eq_iInf_slice`, `biSup_dom₁_eq_iSup_slice`, `maximin_eq_biSup_biInf`, `minimax_eq_biInf_biSup`, `isSaddlePoint_iff_isSaddlePointOn_dom` | **Thm 36.3** | done |
+| `IsSaddlePoint.mem_domSaddle`, `IsSaddlePoint.exists_maximin_eq_coe` | **Cor 36.3.1** | done — needs only `ProperSaddleFn` |
+| `SaddleEquiv.iInf_slice_eq`, `.iSup_slice_eq`, `.maximin_eq`, `.minimax_eq`, `.hasSaddleValue_iff`, `.isSaddlePoint_iff` | **Thm 36.4** | done — layer B |
+| `saddleSwap_saddleLagrangian`, `concaveConvexFn_saddleLagrangian`, `upperClosedFn_saddleLagrangian`, `exists_unique_closedBifun_saddleLagrangian_eq` | **Thm 36.5** | done |
+| `mem_argmin_iff_exists_isSaddlePoint_lagrangian`, `isSaddlePoint_lagrangian_iff_mem_kuhnTucker`, `…_of_stronglyConsistent` | **Thm 36.6** (= Cor 29.3.1) | done |
+| `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — `Optimization/Lagrangian.lean` lists it as missing |
+| `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | **Cor 30.5.1** | done — `Optimization/Normal.lean` lists it as "needs §36" |
+| `inverseBifun`, `inverseBifun_inverseBifun`, `convexBifun_inverseBifun`, `closedBifun_inverseBifun` | `F_*` and its involution | done |
+| `lowerConjSaddle`, `upperConjSaddle`, `bifunSaddleClass`, `lowerConjSaddle_le_upperConjSaddle` | the §37 vocabulary, and `K̲* ≤ K̄*` by Lemma 36.1 | done |
+| `minimax_eq_neg_lowerConjSaddle_zero`, `maximin_eq_neg_upperConjSaddle_zero`, `hasSaddleValue_iff_conjSaddle_zero_eq` | §37, the displays before Cor 37.1.3 | done |
+| `upperConjSaddle_eq_saddleLagrangian`, `lowerConjSaddle_eq_bracket_inverseBifun` | **Thm 37.1**, both equations | done |
+| `concaveConvexFn_upperConjSaddle`, `upperClosedFn_upperConjSaddle`, `concaveConvexFn_lowerConjSaddle`, `lowerClosedFn_lowerConjSaddle` | **Cor 37.1.1** | done |
+| — | **Cors 37.1.2–37.1.3** | not done — need the biadjoint identity `(F_*^*)^* = F_*` |
+| — | **Thm 37.2**, Cor 37.2.1 | not done — needs **Thm 6.8** |
+| — | **Thms 37.3–37.6** with their corollaries | not done |
+
+**`HasSaddleValue` must not build in finiteness.** The book calls the common value the saddle-value
+when the two iterated extrema are *equal*, and states finiteness separately (Cor 36.3.1, Cor 37.1.3,
+Thm 37.3). Folding it in would make Corollary 36.3.1 vacuous.
+
+**Three hypothesis corrections.** Corollary 36.3.1 needs only `ProperSaddleFn` — not closedness,
+not concave-convexity, not finite dimension; the book states it inside Theorem 36.3's closed-proper
+hypothesis, but it is strictly weaker. Theorem 36.4 needs only a topology on each factor (layer B,
+not C or D): its substance is `iInf_clFn_eq_iInf` and its concave mirror. And the *outer*
+restriction in Theorem 36.3 is free — `maximin_eq_biSup_dom₁` and `minimax_eq_biInf_dom₂` have
+zero hypotheses, since `u ∉ dom₁ K ↔ ∃ x, K (u, x) = ⊥`; only the *inner* restriction to `ri` needs
+Corollary 7.3.1 and the Theorem 34.3 sandwich.
+
+**Theorem 36.5 does not need a concave mirror of Theorem 33.3.** Reading the identity after
+`saddleSwap` turns it into the *convex* Theorem 33.3 for the pairing `-Bu`, at the price of two
+three-line lemmas (`isCompatiblePairing_neg`, `flip_neg`).
+
+**`F_*` is a flip composed with a negation, and the halves must stay separate.** `flipBifun`
+preserves convexity and closedness; `inverseBifun` swaps convex ↔ concave. Theorem 36.5 wants the
+first, Theorem 37.1 the second.
+
+**`(F_*)^* = (F^*)_*` should be a *definition*, not a lemma.** The backbone has no adjoint of a
+concave bifunction in the direction Rockafellar needs; defining the object as
+`inverseBifun (adjointBifun Bu Bx F)` makes his commutation a triviality and lets Theorem 33.3
+apply to it verbatim. §7.5 below needs the same object.
 
 Corollary 37.6.2 (a continuous finite concave-convex function on a product of compact convex sets
 has a saddle-point) is the classical minimax theorem — von Neumann's, in Kakutani/Ky Fan form — and
