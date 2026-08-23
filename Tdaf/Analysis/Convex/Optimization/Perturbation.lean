@@ -5,6 +5,7 @@ Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Continuity
 import Tdaf.Analysis.Convex.Operations.Image
+import Tdaf.Analysis.Convex.Optimization.Minimum
 import Tdaf.Analysis.Convex.Subgradient.Existence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
 
@@ -41,6 +42,12 @@ is worth buying.
   is a reflected subdifferential, hence closed and convex (part of Corollary 29.1.1).
 * `kuhnTucker_nonempty_of_stronglyConsistent` — Theorem 23.4 applied to `inf F`: a strongly
   consistent program has a Kuhn–Tucker vector.
+* `PolyhedralBifun` and, for a polyhedral convex program, `PolyhedralBifun.polyhedralFn_apply`,
+  `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`,
+  `polyhedral_kuhnTucker_of_polyhedralBifun`, `argmin_nonempty_of_polyhedralBifun` and
+  `polyhedral_argmin_of_polyhedralBifun` — **Theorem 29.2** in full: objective function and
+  perturbation function polyhedral, optimal solutions and Kuhn–Tucker vectors existing and forming
+  polyhedral convex sets.
 
 ## Design notes
 
@@ -60,17 +67,17 @@ inequality form `inf F 0 ≤ ⟨u, v⟩ + inf F u` is a two-line consequence
 
 ## What is not here
 
-**Corollaries 29.1.2, 29.1.3, 29.1.5 and 29.1.6, and Theorems 29.2, 29.3, 29.4.** The
+**Corollaries 29.1.2, 29.1.3, 29.1.5 and 29.1.6, and Theorems 29.3, 29.4.** The
 directional-derivative corollaries need §23's two-sided derivative and §25's differentiability
-criteria; Theorem 29.2 needs the polyhedral calculus of §19 applied to bifunctions; Theorems 29.3
-and 29.4 need §36's saddle-point correspondence on top of the Lagrangian
+criteria; Theorems 29.3 and 29.4 need §36's saddle-point correspondence on top of the Lagrangian
 (`Optimization/Lagrangian.lean`). Compactness of the Kuhn–Tucker set under *strict* consistency
 (Corollary 29.1.4) needs the boundedness half of Theorem 23.4, which
 `Subgradient/Existence.lean` does not have.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §29 (Theorem 29.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §29 (Theorems 29.1
+  and 29.2).
 -/
 
 open Pointwise
@@ -656,22 +663,53 @@ theorem PolyhedralBifun.polyhedralFn_infBifun (hF : PolyhedralBifun F) :
   exact polyhedralFn_mapLin hF _
 
 omit [FiniteDimensional ℝ V] in
-/-- **Rockafellar, Theorem 29.2**, third clause: a polyhedral convex program with a finite optimal
-value has at least one Kuhn–Tucker vector. This is Theorem 23.10 applied to `inf F` at the
-origin. -/
+/-- **Rockafellar, Theorem 29.2**, existence of a Kuhn–Tucker vector: a polyhedral convex program
+with a finite optimal value has at least one Kuhn–Tucker vector. This is Theorem 23.10 applied to
+`inf F` at the origin. -/
 theorem kuhnTucker_nonempty_of_polyhedralBifun [IsCompatiblePairing B] (hF : PolyhedralBifun F)
     (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) : (KuhnTucker B F).Nonempty := by
   obtain ⟨y, hy⟩ :=
     subgradient_nonempty_of_polyhedralFn (B := B) hF.polyhedralFn_infBifun ht hb
   exact ⟨-y, by rw [mem_kuhnTucker_iff_neg_mem_subgradient ht hb, neg_neg]; exact hy⟩
 
-/-- **Rockafellar, Theorem 29.2**, last clause: the Kuhn–Tucker vectors of a polyhedral convex
-program with a finite optimal value form a polyhedral convex set. -/
+/-- **Rockafellar, Theorem 29.2**, polyhedrality of the Kuhn–Tucker set: the Kuhn–Tucker vectors of
+a polyhedral convex program with a finite optimal value form a polyhedral convex set. -/
 theorem polyhedral_kuhnTucker_of_polyhedralBifun (hF : PolyhedralBifun F)
     (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) : Polyhedral (KuhnTucker B F) := by
   rw [kuhnTucker_eq_neg_subgradient ht hb]
   exact Polyhedral.neg
     (polyhedral_subgradient_of_polyhedralFn (B := B) hF.polyhedralFn_infBifun ht hb)
+
+omit [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] [FiniteDimensional ℝ U] in
+/-- **Rockafellar, Theorem 29.2**, existence of an optimal solution: a polyhedral convex program
+whose optimal value is not `-∞` has at least one **optimal solution**.
+
+This is `argmin_nonempty_of_polyhedralFn` applied to the objective function `F 0`, which is
+polyhedral by `PolyhedralBifun.polyhedralFn_apply`. Rockafellar assumes the optimal value finite;
+only `inf F 0 ≠ -∞` is used — an optimal value of `+∞` means every point is optimal. Finiteness is
+what the polyhedrality of the minimum set below needs. -/
+theorem argmin_nonempty_of_polyhedralBifun (hF : PolyhedralBifun F) (hb : infBifun F 0 ≠ ⊥) :
+    (argmin (F 0)).Nonempty := by
+  refine argmin_nonempty_of_polyhedralFn (hF.polyhedralFn_apply 0) ?_
+  have h : (⨅ x, F 0 x) = infBifun F 0 := (infBifun_apply F 0).symm
+  rw [h]
+  exact lt_of_le_of_ne bot_le (Ne.symm hb)
+
+omit [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] [FiniteDimensional ℝ U] in
+/-- **Rockafellar, Theorem 29.2**, polyhedrality of the minimum set: the optimal solutions of a
+polyhedral convex program with a finite optimal value form a polyhedral convex set — a sublevel set
+of `F 0`, at the optimal value. -/
+theorem polyhedral_argmin_of_polyhedralBifun (hF : PolyhedralBifun F) (ht : infBifun F 0 ≠ ⊤)
+    (hb : infBifun F 0 ≠ ⊥) : Polyhedral (argmin (F 0)) := by
+  obtain ⟨x, hx⟩ := argmin_nonempty_of_polyhedralBifun hF hb
+  have hval : F 0 x = infBifun F 0 := by
+    rw [infBifun_apply]
+    exact le_antisymm (le_iInf hx) (iInf_le _ x)
+  have hb' : F 0 x ≠ ⊥ := by rw [hval]; exact hb
+  have ht' : F 0 x < ⊤ := by rw [hval]; exact lt_top_iff_ne_top.2 ht
+  obtain ⟨μ, hμ⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hb' ht'
+  rw [argmin_eq_setOf_le hx hμ]
+  exact (hF.polyhedralFn_apply 0).polyhedral_sublevel μ
 
 end PolyhedralBifun
 
