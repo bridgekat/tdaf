@@ -29,10 +29,11 @@ is nonempty and compact.
 
 * `exists_lipschitz_forall_pairing_le_of_isCompact` — the three bounds above, with one constant,
   over an arbitrary pairing.
+* `exists_forall_norm_le_of_isCompact` — the same bound as `‖y‖ ≤ K`.
 * `image_subgradientRel_nonempty` — `∂f(S) ≠ ∅`.
-* `isCompact_image_subgradientRel` — `∂f(S)` is compact, hence closed and bounded. Stated for a
-  real inner-product space paired with itself, which is where the norm `‖y‖` of a subgradient has
-  a meaning.
+* `isCompact_subgradient`, `isCompact_image_subgradientRel` — `∂f x` and `∂f(S)` are compact, hence
+  closed and bounded. Stated for a real inner-product space paired with itself, which is where the
+  norm `‖y‖` of a subgradient has a meaning.
 
 ## Design notes
 
@@ -53,20 +54,14 @@ inner-product space, `real_inner_self_eq_norm_mul_norm` turns it into `‖y‖ �
 
 ## What is not here
 
-**The differential convergence theorems.** `limsup_i f_i'(x_i; y_i) ≤ f'(x; y)` for a pointwise
-convergent sequence of convex functions needs the equi-Lipschitz theory of `Convergence.lean`
-transported across the `ConvexFn`/`ConvexOn` boundary (that file is stated for families
-`ι → E → ℝ`, `dirDeriv` for `E → EReal`); the companion statement
-`∂f_i (x_i) ⊆ ∂f x + εB` needs `δ*(· | C₁) ≤ δ*(· | C₂) ↔ cl conv C₁ ⊆ cl conv C₂` together with
-`δ*(· | C + εB) = δ*(· | C) + ε‖·‖`. The refinement in which `x_i` approaches `x` from a single
-direction needs in addition the second-order directional derivative `f'(x; y; ·)`, local
-simpliciality of a polytope, and continuity of a convex function relative to a locally simplicial
-set.
+**The differential convergence theorems** — `limsup_i f_i'(x_i; y_i) ≤ f'(x; y)` and
+`∂f_i (x_i) ⊆ ∂f x + εB` for a pointwise convergent sequence of convex functions — are in
+`Tdaf.Analysis.Convex.Subgradient.Convergence`, which imports this file for the compactness of
+`∂f x`.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorem 24.7).
-  Theorems 24.5 and 24.6 are the convergence statements listed above.
 -/
 
 open Set Filter Topology
@@ -181,6 +176,36 @@ section Image
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
+/-- The norm form of the subgradient bound: on a compact `S ⊆ int (dom f)` a single constant
+bounds `‖y‖` for every subgradient `y` at every point of `S`.
+
+This is `exists_lipschitz_forall_pairing_le_of_isCompact` read at `z = y`, where
+`⟪y, y⟫ = ‖y‖²` turns the pairing bound into `‖y‖ ≤ K`. -/
+theorem exists_forall_norm_le_of_isCompact (hf : ConvexFn f) (hp : Proper f) {S : Set E}
+    (hS : IsCompact S) (hSD : S ⊆ interior (dom f)) :
+    ∃ K : ℝ, 0 ≤ K ∧ ∀ x ∈ S, ∀ y ∈ subgradient (innerₗ E) f x, ‖y‖ ≤ K := by
+  obtain ⟨K, -, hpair, -⟩ :=
+    exists_lipschitz_forall_pairing_le_of_isCompact (B := innerₗ E) hf hp hS hSD
+  refine ⟨K, K.coe_nonneg, fun x hx y hy => ?_⟩
+  rcases eq_or_ne y 0 with rfl | hy0
+  · simp
+  have h := hpair x hx y hy y
+  rw [innerₗ_apply_apply, real_inner_self_eq_norm_mul_norm] at h
+  exact le_of_mul_le_mul_right (by linarith) (norm_pos_iff.2 hy0)
+
+/-- **Rockafellar, Theorem 24.7** at a single point: `∂f x` is compact at every interior point of
+`dom f`. It is closed because it is an intersection of closed half-spaces, and bounded by the
+constant above. -/
+theorem isCompact_subgradient (hf : ConvexFn f) (hp : Proper f) {x : E}
+    (hx : x ∈ interior (dom f)) : IsCompact (subgradient (innerₗ E) f x) := by
+  have : IsContinuousPairing ((innerₗ E).flip) := by rw [flip_innerₗ]; infer_instance
+  obtain ⟨K, -, hK⟩ := exists_forall_norm_le_of_isCompact hf hp isCompact_singleton
+    (by simpa using hx)
+  refine IsCompact.of_isClosed_subset (isCompact_closedBall (0 : E) K)
+    (isClosed_subgradient _ _) fun y hy => ?_
+  rw [Metric.mem_closedBall, dist_zero_right]
+  exact hK x rfl y hy
+
 /-- **Rockafellar, Theorem 24.7**, nonemptiness: `∂f(S) ≠ ∅` for a nonempty
 `S ⊆ int (dom f)`. This is Theorem 23.4 applied at any point of `S`. -/
 theorem image_subgradientRel_nonempty (hf : ConvexFn f) (hp : Proper f) {S : Set E}
@@ -200,15 +225,7 @@ Boundedness is `exists_lipschitz_forall_pairing_le_of_isCompact` read at `z = y`
 theorem isCompact_image_subgradientRel (hf : ClosedProperConvexFn f) {S : Set E}
     (hS : IsCompact S) (hSD : S ⊆ interior (dom f)) :
     IsCompact ((subgradientRel (innerₗ E) f).image S) := by
-  obtain ⟨K, -, hpair, -⟩ :=
-    exists_lipschitz_forall_pairing_le_of_isCompact (B := innerₗ E) hf.convex hf.proper hS hSD
-  have hnorm : ∀ x ∈ S, ∀ y ∈ subgradient (innerₗ E) f x, ‖y‖ ≤ (K : ℝ) := by
-    intro x hx y hy
-    rcases eq_or_ne y 0 with rfl | hy0
-    · simp
-    have h := hpair x hx y hy y
-    rw [innerₗ_apply_apply, real_inner_self_eq_norm_mul_norm] at h
-    exact le_of_mul_le_mul_right (by linarith) (norm_pos_iff.2 hy0)
+  obtain ⟨K, -, hnorm⟩ := exists_forall_norm_le_of_isCompact hf.convex hf.proper hS hSD
   have hbox : IsCompact (S ×ˢ Metric.closedBall (0 : E) (K : ℝ)) :=
     IsCompact.prod hS (isCompact_closedBall 0 (K : ℝ))
   have hclosed : IsClosed (subgradientRel (innerₗ E) f) := by
