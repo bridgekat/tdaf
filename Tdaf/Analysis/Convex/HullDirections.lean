@@ -247,6 +247,19 @@ theorem mem_recessionCone_halfLine (x y : E) : y ∈ recessionCone (halfLine x y
   rw [← convexHullPD_singleton]
   exact subset_recessionCone_convexHullPD _ _ rfl
 
+/-- **The recession cone of a half-line is the ray of its direction.** -/
+theorem recessionCone_halfLine (x y : E) :
+    recessionCone (halfLine x y) = {z | ∃ a : ℝ, 0 ≤ a ∧ z = a • y} := by
+  ext z
+  constructor
+  · intro hz
+    have h := hz x (left_mem_halfLine x y) 1 zero_le_one
+    rw [one_smul] at h
+    obtain ⟨s, hs, hzs⟩ := h
+    exact ⟨s, hs, add_left_cancel hzs⟩
+  · rintro ⟨a, ha, rfl⟩
+    exact smul_mem_recessionCone ha (mem_recessionCone_halfLine x y)
+
 end Defs
 
 /-! ### The homogenisation dictionary -/
@@ -378,6 +391,31 @@ theorem mem_convexHullPD_iff_lift_mem {x : E} :
   exact Iff.rfl
 
 end Homogenize
+
+/-! ### Half-lines in a normed space -/
+
+section Normed
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- **A half-line in a nonzero direction is unbounded.** -/
+theorem not_isBounded_halfLine {x y : E} (hy : y ≠ 0) :
+    ¬ Bornology.IsBounded (halfLine x y) := by
+  intro hb
+  obtain ⟨r, hr⟩ := hb.subset_closedBall x
+  have hyn : 0 < ‖y‖ := norm_pos_iff.2 hy
+  have hyne : ‖y‖ ≠ 0 := ne_of_gt hyn
+  have hr0 : 0 ≤ r := by
+    have h := Metric.mem_closedBall.1 (hr (left_mem_halfLine x y))
+    simpa using h
+  have hcnn : 0 ≤ (r + 1) / ‖y‖ := div_nonneg (by linarith) hyn.le
+  have h := Metric.mem_closedBall.1 (hr (show x + ((r + 1) / ‖y‖) • y ∈ halfLine x y from
+    ⟨(r + 1) / ‖y‖, hcnn, rfl⟩))
+  rw [dist_eq_norm, show x + ((r + 1) / ‖y‖) • y - x = ((r + 1) / ‖y‖) • y by abel,
+    norm_smul, Real.norm_eq_abs, abs_of_nonneg hcnn, div_mul_cancel₀ _ hyne] at h
+  linarith
+
+end Normed
 
 /-! ### Carathéodory's theorem, and closedness -/
 

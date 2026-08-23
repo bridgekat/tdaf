@@ -45,8 +45,12 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
   `coneHull_extremeDirections_eq` is **Corollary 18.5.2**. **Corollary 18.5.1**, Minkowski's
   theorem for compact sets, is `convexHull_extremePoints` in `Face.lean`, proved earlier and used
   here as the base case of the induction.
-* `extremePoints_convexHullPD_subset` — **Corollary 18.3.1**, first half: an extreme point of
-  `conv S` is a point of `S`.
+* `IsFace.eq_convexHullPD` — **Theorem 18.3**: a nonempty face of `conv S` is the hull of the
+  points of `S` it contains and the directions of `S` in which it recedes.
+  `extremePoints_convexHullPD_subset` and `exists_mem_eq_smul_of_mem_extremeDirections` are the
+  two halves of **Corollary 18.3.1**: an extreme point of `conv S` is a point of `S`, and — when
+  no half-line meets the points of `S` in an unbounded set — an extreme direction of `conv S` is
+  the direction of a vector of `S`.
 * `extremePoints_subset_closure_exposedPoints` — **Theorem 18.6, Straszewicz's theorem**: the
   exposed points of a closed convex set are dense in its extreme points. `Mathlib` does not have
   this. `mem_exposedPoints_of_forall_norm_sub_le` is the geometric heart (a farthest point is
@@ -54,13 +58,6 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
 
 ## What is not here
 
-* **Theorem 18.3** (a nonempty face of `conv S` is the hull of the points of `S` it contains and
-  the directions of `S` in which it recedes) and the second half of **Corollary 18.3.1** (about
-  extreme *directions*). Both need Rockafellar's Theorem 6.4 for points and directions: a
-  combination in which every coefficient is strictly positive lies in the relative interior of the
-  hull of the vectors used. That is a §6 statement about `intrinsicInterior (convexHullPD p d)` for
-  finite `p` and `d`, which this project does not yet have. The first half of Corollary 18.3.1 is
-  proved here directly, without Theorem 18.3.
 * **Theorem 18.7** (a closed convex set containing no lines is the closed hull of its *exposed*
   points and exposed directions), **Corollary 18.7.1** and **Theorem 18.8** (an `n`-dimensional
   closed convex set is the intersection of its tangent closed half-spaces). Rockafellar's proof of
@@ -75,6 +72,15 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
 of affine sets" separately in Theorem 18.4. Allowing the functional in the definition to vanish
 identically makes the affine case the case `φ = 0`, so the hypothesis of Theorem 18.4 is the single
 negation `¬ IsAffineHalf C`.
+
+**Theorem 18.3 avoids Rockafellar's Theorem 6.4.** He puts the point of the face in the relative
+interior of the hull of the vectors actually used in one of its representations — which needs the
+positive-coefficient description of `ri (conv S)`, a §6 result this project does not have — and
+then applies Theorem 18.1. Here the point part is handled by
+`IsExtreme.mem_convexHull_inter`, which splits `P` into the part inside the face and the part
+outside and uses only the definition of an extreme set, and the direction part by
+`IsFace.mem_recessionCone_of_eq_add_smul`, an induction over the cone hull. Only Theorem 8.3 and
+Corollary 18.1.1 are needed, both of which are available.
 
 **Theorem 18.5 avoids Rockafellar's "trivial" case analysis.** The induction here splits on
 `finrank ℝ (vectorSpan ℝ C)`: dimension `≤ 1` is settled by `exists_eq_halfLine`, which classifies
@@ -1009,6 +1015,48 @@ theorem IsFace.eq_convexHullPD (hface : IsFace (convexHullPD P D) C') :
   have hvhull : v ∈ PointedCone.hull ℝ {y ∈ D | y ∈ recessionCone C'} :=
     mem_coneHull_filter_of_isFace hface v hv 1 one_pos x hx u huC (by rw [one_smul, huv])
   exact mem_convexHullPD.2 ⟨u, huhull, v, hvhull, huv⟩
+
+/-- **Corollary 18.3.1**, second half: if no half-line meets the points of `S` in an unbounded
+set, then every extreme direction of `conv S` is the direction of one of the vectors of `S`. -/
+theorem exists_mem_eq_smul_of_mem_extremeDirections (P D : Set E)
+    (hP : ∀ x z : E, IsBounded (P ∩ halfLine x z)) {y : E}
+    (hy : y ∈ extremeDirections (convexHullPD P D)) :
+    ∃ z ∈ D, ∃ a : ℝ, 0 < a ∧ y = a • z := by
+  obtain ⟨hy0, x, hface⟩ := hy
+  have heq := hface.eq_convexHullPD
+  by_contra hcon
+  push Not at hcon
+  -- under the assumption, no vector of `S` can recede along the half-line unless it is `0`
+  have hall : ∀ z ∈ {z ∈ D | z ∈ recessionCone (halfLine x y)}, z = 0 := by
+    rintro z ⟨hzD, hzr⟩
+    rw [recessionCone_halfLine] at hzr
+    obtain ⟨a, ha, rfl⟩ := hzr
+    rcases eq_or_lt_of_le ha with rfl | ha'
+    · rw [zero_smul]
+    · exact absurd (show y = a⁻¹ • (a • y) by
+        rw [smul_smul, inv_mul_cancel₀ ha'.ne', one_smul])
+        (hcon (a • y) hzD a⁻¹ (inv_pos.2 ha'))
+  have hbot : PointedCone.hull ℝ {z ∈ D | z ∈ recessionCone (halfLine x y)} = ⊥ := by
+    refine le_antisymm (Submodule.span_le.2 fun z hz => ?_) bot_le
+    rw [Submodule.bot_coe, Set.mem_singleton_iff]
+    exact hall z hz
+  have hsub : convexHullPD (P ∩ halfLine x y) {z ∈ D | z ∈ recessionCone (halfLine x y)}
+      ⊆ convexHull ℝ (P ∩ halfLine x y) := by
+    intro w hw
+    obtain ⟨u, hu, v, hv, huv⟩ := mem_convexHullPD.1 hw
+    rw [hbot, Submodule.bot_coe, Set.mem_singleton_iff] at hv
+    rw [← huv, hv, add_zero]
+    exact hu
+  refine not_isBounded_halfLine (x := x) hy0 ?_
+  rw [heq]
+  exact (isBounded_convexHull.2 (hP x y)).subset hsub
+
+/-- **Corollary 18.3.1**, second half, in the form Rockafellar highlights: if the points of `S`
+form a bounded set, every extreme direction of `conv S` is the direction of a vector of `S`. -/
+theorem exists_mem_eq_smul_of_mem_extremeDirections_of_isBounded (P D : Set E)
+    (hP : IsBounded P) {y : E} (hy : y ∈ extremeDirections (convexHullPD P D)) :
+    ∃ z ∈ D, ∃ a : ℝ, 0 < a ∧ y = a • z :=
+  exists_mem_eq_smul_of_mem_extremeDirections P D (fun _ _ => hP.subset inter_subset_left) hy
 
 end FaceHull
 
