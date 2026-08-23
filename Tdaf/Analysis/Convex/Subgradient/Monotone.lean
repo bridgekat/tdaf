@@ -8,7 +8,7 @@ import Tdaf.Analysis.Convex.Subgradient.Existence
 /-!
 # Monotonicity of the subdifferential
 
-Rockafellar's §24. The subdifferential of a proper convex function is not merely *monotone* —
+The subdifferential of a proper convex function is not merely *monotone* —
 `⟨x₁ - x₂, y₁ - y₂⟩ ≥ 0` whenever `yᵢ ∈ ∂f xᵢ` — but **cyclically monotone**: every finite cycle
 `(x₀, y₀), (x₁, y₁), …, (x_m, y_m)` in the graph satisfies
 
@@ -16,10 +16,19 @@ Rockafellar's §24. The subdifferential of a proper convex function is not merel
 ⟨x₁ - x₀, y₀⟩ + ⟨x₂ - x₁, y₁⟩ + ⋯ + ⟨x₀ - x_m, y_m⟩ ≤ 0.
 ```
 
-**Theorem 24.8** says this is the whole story: a multivalued mapping is contained in the
-subdifferential of a closed proper convex function exactly when it is cyclically monotone, and the
-function can be written down — it is the supremum of the telescoping sums above, read as affine
-functions of a free endpoint.
+Cyclic monotonicity is the whole story. A multivalued mapping is contained in the subdifferential
+of a closed proper convex function exactly when it is cyclically monotone, and the function can be
+written down: it is the supremum of the telescoping sums above, read as affine functions of a free
+endpoint. Sharpening "contained in" to "equal to" needs a *rigidity* statement in the other
+direction — a closed proper convex function is determined by its subdifferential up to an additive
+constant — and the two together identify the maximal cyclically monotone mappings as precisely the
+subdifferentials.
+
+The rigidity statement is proved here by subdivision. Along a segment in `ri (dom f)` cut into `N`
+equal steps, each step contributes the same increment to `f` and to `g` up to an error controlled
+by one subgradient difference; telescoping the `N` steps leaves an error of order `1/N`, so the
+increments agree exactly. Two functions with the same increments on `ri (dom f)` differ by a
+constant there, and closedness propagates the identity to all of `E`.
 
 ## Main definitions
 
@@ -40,6 +49,17 @@ functions of a free endpoint.
 * `exists_eq_subgradientRel_of_isMaximalCyclicallyMonotone` — **Theorem 24.9**, the half that
   follows from Theorem 24.8: a maximal cyclically monotone mapping *is* a subdifferential.
 * `isClosed_subgradientRel` — **Theorem 24.4**: the graph of `∂f` is closed.
+* `abs_sub_increment_le` — the subdivision estimate: if `∂f ⊆ ∂g`, the increments of `f` and of `g`
+  along `N` equal steps of a common displacement `d` differ by at most `⟨d, y_N - y_0⟩`.
+* `increment_eq_of_subgradientRel_subset` — the increments of `f` and `g` between two points of
+  `ri (dom f)` coincide.
+* `eq_add_coe_of_subgradientRel_subset` — **rigidity**: `∂f ⊆ ∂g` forces `g = f + α` for a real
+  constant `α` (**Theorem 24.9**, uniqueness).
+* `isMaximalCyclicallyMonotone_subgradientRel` and
+  `isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn` — **Theorem 24.9** in full: `∂f` is
+  maximal cyclically monotone, and maximal cyclic monotonicity characterises subdifferentials.
+* `conj_add_coe`, `subgradient_add_coe`, `subgradientRel_add_coe` — the effect of an additive
+  constant on the conjugate and on the subdifferential.
 
 ## Design notes
 
@@ -64,19 +84,24 @@ arguments move. In `ℝⁿ` the hypothesis is automatic; here it is an explicit
 
 ## What is not here
 
-**Theorems 24.1, 24.2, 24.3, 24.5, 24.6, 24.7 and the maximality half of 24.9 are not formalised.**
-Theorems 24.1–24.3 are the one-dimensional theory (`f'₊` and `f'₋` as nondecreasing functions, and
-complete nondecreasing curves), which needs one-sided derivatives on `ℝ` that §23 does not provide.
-Theorems 24.5–24.7 are the convergence and boundedness results, which rest on Theorems 10.6–10.9
-(the equi-Lipschitz theory, deferred). The remaining half of Theorem 24.9 — that `∂f` is *maximal*
-cyclically monotone — needs the uniqueness statement "`∂f ⊆ ∂g` implies `g = f + const`", which
-Rockafellar proves from Theorem 23.4, Theorem 23.2 and a one-dimensional argument along segments in
-`ri (dom f)`; the one-dimensional argument is the same material as Theorems 24.1–24.3.
+**Local boundedness of `∂f`** lives in `Tdaf.Analysis.Convex.Subgradient.Bounded`, which imports
+this file.
+
+**The one-dimensional theory is absent**: the description of the subdifferential of a closed proper
+convex function on `ℝ` as a complete nondecreasing curve, and the recovery of the function from that
+curve by integration. It needs one-sided derivatives `f'₊`, `f'₋` for `EReal`-valued functions on
+`ℝ` — including the conventions `f'₊ = +∞` past the right end of `dom f` and `f'₋ = -∞` before its
+left end, which are *not* the values `dirDeriv` takes there — together with a theory of the integral
+of a monotone `[-∞, +∞]`-valued function. Neither is in the project.
+
+**Convergence of subgradients** (`∂fᵢ → ∂f` for a pointwise-convergent sequence of finite convex
+functions, and the corresponding statement for one-sided directional derivatives) is also absent;
+see the discussion in `Tdaf.Analysis.Convex.Subgradient.Bounded`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorems 24.4, 24.8,
-  and half of 24.9).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorems 24.4, 24.8
+  and 24.9).
 * R. T. Rockafellar, *Characterization of the subdifferentials of convex functions*, Pacific J.
   Math. **17** (1966) 497–510.
 -/
