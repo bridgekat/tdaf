@@ -42,6 +42,12 @@ Corollary 34.2.3 as `ClosedSaddleFn.eq_const_of_not_properSaddleFn` together wit
 
 **Theorem 34.1** is reproved here as `lowerCl_idem` and `upperCl_idem`, with no duality at all.
 
+**Two §33 corollaries** that need the machinery of this file rather than that of `Defs.lean`:
+**Corollary 33.2.1** as `bracket_eq_concaveBracket_adjointBifun_of_mem_relint` (it needs relative
+interiors) and **Corollary 33.3.3** as `lowerClosedFn_lowerSimpleExt`,
+`upperClosedFn_upperSimpleExt` and `exists_unique_bifun_of_simpleExt` (it needs the simple
+extensions and their closures, which are here for Corollary 34.2.4).
+
 ## Main definitions
 
 * `kernelSet K` — the rectangle `ri (dom₁ K) ×ˢ ri (dom₂ K)`, which is `ri (dom K)`.
@@ -67,6 +73,11 @@ Corollary 34.2.3 as `ClosedSaddleFn.eq_const_of_not_properSaddleFn` together wit
   Theorem 34.5.
 * `clFn_eq_of_eqOn_relint_dom`, `clConcave_eq_of_eqOn_relint_domConcave` — a closed convex function
   is determined by its values on `ri (dom f)`, in the form §34 consumes it.
+* `domConcave_bracket` — the concave effective domain of `u ↦ ⟨Fu, y⟩` is `dom F`, for every `y`.
+  This is the whole content of **Corollary 33.2.1**: Theorem 33.2 already says the two brackets
+  differ by `cl₁`, and a concave function agrees with its closure on `ri` of its domain.
+* `exists_unique_bifun_of_simpleExt` — **Corollary 33.3.3**, which is Corollary 33.3.1 applied to
+  the closure pair `partialCl₁_lowerSimpleExt` / `partialCl₂_upperSimpleExt`.
 
 ## Design notes
 
@@ -2165,5 +2176,110 @@ theorem properSaddleFn_of_mem_saddleClass_simpleExt (hCne : C.Nonempty) (hDne : 
     exact hDne⟩
 
 end Cor3424
+
+/-! ### Corollary 33.2.1
+
+Theorem 33.2 says the two brackets differ by a concave closure in the first variable. A concave
+function agrees with its closure on the relative interior of its effective domain, and the
+effective domain of `u ↦ ⟨Fu, y⟩` is `dom F` on the nose — so on `ri (dom F)` the two brackets are
+simply equal. -/
+
+section DomBracket
+
+variable {U X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  {F : Bifun U X}
+
+/-- **The concave effective domain of `u ↦ ⟨Fu, y⟩` is `dom F`**, for every `y`. The bracket is
+`-∞` exactly where the slice `F u` is identically `+∞`, which is Rockafellar's first step in
+Corollary 33.2.1. -/
+theorem domConcave_bracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (y : Y) :
+    domConcave (fun u => bracket Bx F u y) = domBifun F := by
+  ext u
+  change ⊥ < conj Bx (F u) y ↔ ∃ x, F u x ≠ ⊤
+  rw [bot_lt_iff_ne_bot, ne_eq, conj_eq_bot_iff, not_forall]
+
+end DomBracket
+
+section Cor3321
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  {F : Bifun U X}
+
+/-- **Rockafellar, Corollary 33.2.1**: at a relative interior point of `dom F` the two brackets
+already agree — `⟨Fu, y⟩ = ⟨u, F* y⟩`, with no closure in sight. -/
+theorem bracket_eq_concaveBracket_adjointBifun_of_mem_relint (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F) {u : U}
+    (hu : u ∈ ri (domBifun F)) (y : Y) :
+    bracket Bx F u y = concaveBracket Bu (adjointBifun Bu Bx F) u y := by
+  rw [congrFun (concaveBracket_adjointBifun_eq_partialCl₁ (Bu := Bu) hF y) u,
+    congrFun (partialCl₁_slice (fun p : U × Y => bracket Bx F p.1 p.2) y) u]
+  exact ((concaveFn_bracket hF Bx y).clConcave_eq_of_mem_relint_domConcave
+    (by rw [domConcave_bracket]; exact hu)).symm
+
+end Cor3321
+
+/-! ### Corollary 33.3.3
+
+The two simple extensions of a finite continuous saddle-function on a closed `C × D` are a closure
+pair, which is exactly the hypothesis of Corollary 33.3.1. Both closure computations are already
+done — they are what Corollary 34.2.4 runs on — so the corollary is their composition. -/
+
+section Cor3333Closed
+
+variable {U Y : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
+  [TopologicalSpace Y] [AddCommGroup Y] [IsTopologicalAddGroup Y] {C : Set U} {D : Set Y}
+  {K : U × Y → ℝ}
+
+/-- **Rockafellar, Corollary 33.3.3**, first clause: the lower simple extension is lower closed. -/
+theorem lowerClosedFn_lowerSimpleExt (hCcl : IsClosed C) (hDcl : IsClosed D) (hCne : C.Nonempty)
+    (hDne : D.Nonempty) (hcontD : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D)
+    (hcontC : ∀ x ∈ D, ContinuousOn (fun u => K (u, x)) C) :
+    LowerClosedFn (lowerSimpleExt C D K) := by
+  rw [lowerClosedFn_iff, lowerCl_def, partialCl₁_lowerSimpleExt hCcl hCne hcontC,
+    partialCl₂_upperSimpleExt hDcl hDne hcontD]
+
+/-- **Rockafellar, Corollary 33.3.3**, second clause: the upper simple extension is upper
+closed. -/
+theorem upperClosedFn_upperSimpleExt (hCcl : IsClosed C) (hDcl : IsClosed D) (hCne : C.Nonempty)
+    (hDne : D.Nonempty) (hcontD : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D)
+    (hcontC : ∀ x ∈ D, ContinuousOn (fun u => K (u, x)) C) :
+    UpperClosedFn (upperSimpleExt C D K) := by
+  rw [upperClosedFn_iff, upperCl_def, partialCl₂_upperSimpleExt hDcl hDne hcontD,
+    partialCl₁_lowerSimpleExt hCcl hCne hcontC]
+
+end Cor3333Closed
+
+section Cor3333
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  {C : Set U} {D : Set Y} {K : U × Y → ℝ}
+
+/-- **Rockafellar, Corollary 33.3.3**: a finite continuous concave-convex function on a nonempty
+closed `C × D` has a unique closed convex bifunction `F` whose two brackets are its lower and upper
+simple extensions.
+
+`dom F = C` and `dom F* = D` are `dom₁_lowerSimpleExt` and `dom₂_lowerSimpleExt` read through
+`Theorem 34.2`; the explicit formulas the book gives for `F` and `F*` are the definitions of the
+conjugate and the concave conjugate of the slices. -/
+theorem exists_unique_bifun_of_simpleExt (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+    (hC : Convex ℝ C) (hCcl : IsClosed C) (hDcl : IsClosed D) (hCne : C.Nonempty)
+    (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
+    (hconc : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x))
+    (hDne : D.Nonempty) (hcontD : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D)
+    (hcontC : ∀ x ∈ D, ContinuousOn (fun u => K (u, x)) C) :
+    ∃! F : Bifun U X, ConvexBifun F ∧ ClosedBifun F ∧
+      (fun p : U × Y => bracket Bx F p.1 p.2) = lowerSimpleExt C D K ∧
+      (fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2)
+        = upperSimpleExt C D K :=
+  exists_unique_bifun_of_closure_pair Bu Bx (concaveConvexFn_lowerSimpleExt hC hconv hconc)
+    (partialCl₁_lowerSimpleExt hCcl hCne hcontC) (partialCl₂_upperSimpleExt hDcl hDne hcontD)
+
+end Cor3333
 
 end Tdaf.ConvexAnalysis

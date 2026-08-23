@@ -8,7 +8,8 @@ import Tdaf.Analysis.Convex.Saddle.Closure
 /-!
 # The correspondence between saddle-functions and bifunctions
 
-Rockafellar's §33, last part: **Theorem 33.3** and **Corollary 33.3.1**. The brackets
+Rockafellar's §33, last part: **Theorem 33.3** with **Corollaries 33.1.2, 33.3.1 and 33.3.2**.
+The brackets
 `⟨Fu, y⟩ = cl₂ K` and `⟨u, F* y⟩ = cl₁ K` set up a one-to-one correspondence between the *lower
 closed* concave-convex functions on `U × Y` and the *closed convex* bifunctions from `U` to `X`.
 This is the theorem Part VII is built on: it is to saddle-functions what "a bilinear function is a
@@ -25,6 +26,15 @@ linear transformation" is to linear algebra.
 * `exists_unique_bifun_of_closure_pair` — **Corollary 33.3.1**: a pair `(K̲, K̄)` with
   `cl₁ K̲ = K̄` and `cl₂ K̄ = K̲` is exactly a pair of brackets of a closed convex bifunction.
 * `le_of_partialCl₂_eq` — such a pair satisfies `K̲ ≤ K̄`.
+* `saddleOfBifun` — `⟨Fu, x*⟩` uncurried, so that Corollary 33.1.2 can be stated as a map.
+* `bifunSaddleEquiv` — **Corollary 33.1.2**: `K = ⟨Fu, x*⟩` and `Fu = K(u, ·)*` are inverse
+  bijections between the *image-closed convex bifunctions* and the *convex-closed* concave-convex
+  functions. The two round trips are `saddleOfBifun_bifunOfSaddle` and
+  `bifunOfSaddle_saddleOfBifun`.
+* `lowerUpperClosedEquiv` — **Corollary 33.3.2**: `cl₁` and `cl₂` are inverse bijections between
+  the lower closed and the upper closed concave-convex functions. Both round trips are the
+  definitions of `LowerClosedFn` and `UpperClosedFn`, so the only content is that each operator
+  lands in the other class (`upperClosedFn_partialCl₁`, `lowerClosedFn_partialCl₂`).
 
 ## Design notes
 
@@ -207,5 +217,175 @@ theorem exists_unique_bifun_of_closure_pair (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
   exact huniq F' ⟨hF'conv, hF'cl, hF'br⟩
 
 end Cor3331
+
+/-! ### Corollary 33.1.2
+
+`⟨Fu, x*⟩` and `K(u, ·)*` are inverse bijections. The two round trips are the two halves of
+Theorem 33.1: `cl (Fu) = ⟨Fu, ·⟩*` going one way, and Fenchel–Moreau in the second variable going
+the other. Each needs the closedness hypothesis on its own side — image-closedness of `F`,
+convex-closedness of `K` — which is why both have to be named.
+
+The sections below are cut finely so that each statement carries only the instances its own proof
+uses: `saddleOfBifun` is closed for free on the `Y` side, `bifunOfSaddle` on the `X` side, and only
+the two round trips need Fenchel–Moreau. -/
+
+section SaddleOfBifun
+
+variable {U X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- The saddle-function attached to a convex bifunction: Rockafellar's `⟨Fu, x*⟩`, read as a
+function of the pair. This is `bracket` uncurried; it is named because Corollary 33.1.2 is a
+statement about it as a map. -/
+noncomputable def saddleOfBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) : U × Y → EReal :=
+  fun p => bracket Bx F p.1 p.2
+
+theorem saddleOfBifun_apply (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (p : U × Y) :
+    saddleOfBifun Bx F p = bracket Bx F p.1 p.2 := rfl
+
+end SaddleOfBifun
+
+section SaddleOfBifunClosed
+
+variable {U X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsContinuousPairing Bx.flip] {F : Bifun U X}
+
+/-- The saddle-function of a bifunction is convex-closed: every slice is a conjugate. -/
+theorem convexClosedFn_saddleOfBifun : ConvexClosedFn (saddleOfBifun Bx F) :=
+  convexClosedFn_iff.2 fun u => closedFn_bracket u
+
+end SaddleOfBifunClosed
+
+section SaddleOfBifunConvex
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y] {F : Bifun U X}
+
+/-- The saddle-function of a *convex* bifunction is concave-convex — Theorem 33.1. -/
+theorem concaveConvexFn_saddleOfBifun (hF : ConvexBifun F) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) :
+    ConcaveConvexFn (saddleOfBifun Bx F) := concaveConvexFn_bracket hF Bx
+
+end SaddleOfBifunConvex
+
+section BifunOfSaddleImage
+
+variable {U X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsContinuousPairing Bx] {K : U × Y → EReal}
+
+/-- The bifunction of a saddle-function is image-closed: every slice is a conjugate. -/
+theorem imageClosedBifun_bifunOfSaddle : ImageClosedBifun (bifunOfSaddle Bx K) :=
+  fun u => closedFn_conj (B := Bx.flip) (f := fun y => K (u, y))
+
+end BifunOfSaddleImage
+
+section Cor3312Right
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+  [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx.flip] {K : U × Y → EReal}
+
+/-- **Corollary 33.1.2**, one round trip: a convex-closed concave-convex `K` is the saddle-function
+of the bifunction it defines. -/
+theorem saddleOfBifun_bifunOfSaddle (hK : ConcaveConvexFn K) (hcc : ConvexClosedFn K) :
+    saddleOfBifun Bx (bifunOfSaddle Bx K) = K :=
+  funext fun p => (bracket_bifunOfSaddle hK p).trans (congrFun hcc p)
+
+end Cor3312Right
+
+section Cor3312Left
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace X] [IsTopologicalAddGroup X]
+  [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] {F : Bifun U X}
+
+/-- **Corollary 33.1.2**, the other round trip: an image-closed convex bifunction is the
+bifunction of the saddle-function it defines. -/
+theorem bifunOfSaddle_saddleOfBifun (hF : ConvexBifun F) (hFi : ImageClosedBifun F) :
+    bifunOfSaddle Bx (saddleOfBifun Bx F) = F :=
+  funext fun u => (clFn_eq_conj_bracket hF u).symm.trans (hFi u)
+
+end Cor3312Left
+
+section Cor3312Equiv
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+
+/-- **Rockafellar, Corollary 33.1.2**: `K (u, x*) = ⟨Fu, x*⟩` and `Fu = K(u, ·)*` are inverse
+bijections between the image-closed convex bifunctions from `U` to `X` and the convex-closed
+concave-convex functions on `U × Y`. -/
+noncomputable def bifunSaddleEquiv :
+    {F : Bifun U X // ConvexBifun F ∧ ImageClosedBifun F} ≃
+      {K : U × Y → EReal // ConcaveConvexFn K ∧ ConvexClosedFn K} where
+  toFun F := ⟨saddleOfBifun Bx F.1,
+    concaveConvexFn_saddleOfBifun F.2.1 Bx, convexClosedFn_saddleOfBifun⟩
+  invFun K := ⟨bifunOfSaddle Bx K.1,
+    convexBifun_bifunOfSaddle K.2.1 Bx, imageClosedBifun_bifunOfSaddle⟩
+  left_inv F := Subtype.ext (bifunOfSaddle_saddleOfBifun F.2.1 F.2.2)
+  right_inv K := Subtype.ext (saddleOfBifun_bifunOfSaddle K.2.1 K.2.2)
+
+end Cor3312Equiv
+
+/-! ### Corollary 33.3.2
+
+`cl₁` and `cl₂` are inverse bijections between the lower closed and the upper closed
+concave-convex functions. The two round trips are `LowerClosedFn` and `UpperClosedFn` *by
+definition* — `lowerCl = cl₂ ∘ cl₁` and `upperCl = cl₁ ∘ cl₂` — so all the corollary needs is that
+each operator lands in the other class, which is the same definitional unfolding once more. -/
+
+section Cor3332
+
+variable {U Y : Type*} [TopologicalSpace U] [TopologicalSpace Y] {K : U × Y → EReal}
+
+/-- `cl₁` of a lower closed saddle-function is upper closed. -/
+theorem upperClosedFn_partialCl₁ (h : LowerClosedFn K) : UpperClosedFn (partialCl₁ K) := by
+  change partialCl₁ (partialCl₂ (partialCl₁ K)) = partialCl₁ K
+  rw [← lowerCl_def, lowerClosedFn_iff.1 h]
+
+/-- `cl₂` of an upper closed saddle-function is lower closed. -/
+theorem lowerClosedFn_partialCl₂ (h : UpperClosedFn K) : LowerClosedFn (partialCl₂ K) := by
+  change partialCl₂ (partialCl₁ (partialCl₂ K)) = partialCl₂ K
+  rw [← upperCl_def, upperClosedFn_iff.1 h]
+
+/-- `cl₂ cl₁ K = K` for a lower closed `K` — the definition, spelled out. -/
+theorem partialCl₂_partialCl₁_of_lowerClosedFn (h : LowerClosedFn K) :
+    partialCl₂ (partialCl₁ K) = K := h
+
+/-- `cl₁ cl₂ K = K` for an upper closed `K` — the definition, spelled out. -/
+theorem partialCl₁_partialCl₂_of_upperClosedFn (h : UpperClosedFn K) :
+    partialCl₁ (partialCl₂ K) = K := h
+
+end Cor3332
+
+section Cor3332Equiv
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+
+/-- **Rockafellar, Corollary 33.3.2**: `K̄ = cl₁ K̲` and `K̲ = cl₂ K̄` are inverse bijections
+between the lower closed and the upper closed concave-convex functions on `U × Y`.
+
+The two pairings are the ones Corollary 33.1.1 needs: `Bu` to know that `cl₁` preserves
+concave-convexity, `Bx` for `cl₂`. Neither appears in either closedness condition. -/
+noncomputable def lowerUpperClosedEquiv (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip] :
+    {K : U × Y → EReal // ConcaveConvexFn K ∧ LowerClosedFn K} ≃
+      {K : U × Y → EReal // ConcaveConvexFn K ∧ UpperClosedFn K} where
+  toFun K := ⟨partialCl₁ K.1, concaveConvexFn_partialCl₁ Bu K.2.1,
+    upperClosedFn_partialCl₁ K.2.2⟩
+  invFun K := ⟨partialCl₂ K.1, concaveConvexFn_partialCl₂ Bx K.2.1,
+    lowerClosedFn_partialCl₂ K.2.2⟩
+  left_inv K := Subtype.ext (partialCl₂_partialCl₁_of_lowerClosedFn K.2.2)
+  right_inv K := Subtype.ext (partialCl₁_partialCl₂_of_upperClosedFn K.2.2)
+
+end Cor3332Equiv
 
 end Tdaf.ConvexAnalysis
