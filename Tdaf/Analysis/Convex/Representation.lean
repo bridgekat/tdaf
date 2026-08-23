@@ -127,6 +127,7 @@ theorem ContainsNoLine.mono (h : ContainsNoLine C) (hC' : C' ⊆ C) : ContainsNo
   obtain ⟨t, ht⟩ := h x y hy
   exact ⟨t, fun hmem => ht (hC' hmem)⟩
 
+/-- The empty set contains no lines. -/
 @[simp]
 theorem containsNoLine_empty : ContainsNoLine (∅ : Set E) := fun x _ _ => ⟨0, by simp⟩
 
@@ -140,6 +141,7 @@ def IsExtremeDirection (C : Set E) (y : E) : Prop :=
 /-- The set of vectors that generate extreme directions of `C`. -/
 def extremeDirections (C : Set E) : Set E := {y | IsExtremeDirection C y}
 
+/-- Membership in `extremeDirections`, unfolded. -/
 theorem mem_extremeDirections : y ∈ extremeDirections C ↔ IsExtremeDirection C y := Iff.rfl
 
 /-- Extreme directions do not change under positive rescaling of the generator. -/

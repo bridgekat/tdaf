@@ -90,9 +90,12 @@ Directions are represented by vectors: only the *directions* of the elements of 
 def convexHullPD (P D : Set E) : Set E :=
   convexHull ℝ P + (PointedCone.hull ℝ D : Set E)
 
+/-- `conv S` unfolded: the Minkowski sum of the convex hull of the points and the cone hull of
+the directions. -/
 theorem convexHullPD_def (P D : Set E) :
     convexHullPD P D = convexHull ℝ P + (PointedCone.hull ℝ D : Set E) := rfl
 
+/-- Membership in `conv S`: a point of the convex hull of `P` plus a direction of `cone D`. -/
 theorem mem_convexHullPD :
     x ∈ convexHullPD P D ↔
       ∃ u ∈ convexHull ℝ P, ∃ v ∈ (PointedCone.hull ℝ D : Set E), u + v = x :=
@@ -217,6 +220,7 @@ theorem coe_coneHull_singleton (y : E) :
 faces, and with them the extreme and exposed directions of §18, are all phrased with it. -/
 def halfLine (x y : E) : Set E := {z | ∃ a : ℝ, 0 ≤ a ∧ z = x + a • y}
 
+/-- Membership in a half-line, unfolded. -/
 theorem mem_halfLine {x y z : E} : z ∈ halfLine x y ↔ ∃ a : ℝ, 0 ≤ a ∧ z = x + a • y := Iff.rfl
 
 /-- A half-line is the convex hull of one point and one direction. -/
@@ -330,6 +334,7 @@ def coneOverPD (P D : Set E) : PointedCone ℝ (ℝ × E) where
       · exact Or.inr ⟨by change (a : ℝ) * p.1 = 0; rw [hp1, mul_zero],
           Submodule.smul_mem _ a hp2⟩
 
+/-- Membership in `coneOverPD`, unfolded. -/
 @[simp]
 theorem mem_coneOverPD {p : ℝ × E} :
     p ∈ coneOverPD P D ↔ (0 < p.1 ∧ p.1⁻¹ • p.2 ∈ convexHullPD P D) ∨
