@@ -1936,6 +1936,149 @@ bifunction/pairing layer, and 33.2.2 needs polyhedral bifunctions. Theorem 34.2'
 closures and under equivalence); the literal bifunction phrasing needs `domBifun`, which lives in
 `Optimization/Perturbation.lean` and is outside this module's import closure.
 
+### `Tdaf/Analysis/Convex/HullDirections.lean`
+
+Rockafellar's `conv S` for a set `S` that mixes **points and directions** (§17), the object the
+rest of §18 is stated in.
+
+```lean
+def convexHullPD (P : Set E) (D : Set E) : Set E := convexHull ℝ P + PointedCone.hull ℝ D
+theorem isLeast_convexHullPD …    -- it *is* Rockafellar's operator: the least convex set
+                                  -- containing `P` and receding in every direction of `D`
+def halfLine (x y : E) : Set E    -- `conv` of one point and one direction
+def coneOverPD … ; theorem convexHullPD_eq_slice …   -- the D7 homogenisation dictionary
+theorem exists_of_mem_convexHullPD …                 -- Thm 17.1 in this vocabulary
+theorem IsCompact.isCompact_convexHullPD …
+```
+
+`convexHullPD_eq_slice` and `Polyhedral/Defs.lean`'s `slice_hull_union` are literally the same
+theorem — `liftPD P D` is definitionally `liftAt 1 P ∪ liftAt 0 D` — duplicated because
+`Polyhedral/Defs.lean` imports only `Polyhedral/Cone.lean` and would have to take on
+`Caratheodory` and `Recession/Cone` to reuse the §17 version. Arbitrate before adding a third.
+
+### `Tdaf/Analysis/Convex/Representation.lean`
+
+The rest of §18: **Theorem 18.3** (`IsFace.eq_convexHullPD`) and Corollary 18.3.1, **Theorem 18.4**
+in general, **Theorem 18.5** with Corollaries 18.5.2–18.5.3, and **Straszewicz's Theorem 18.6**,
+which Mathlib does not have.
+
+```lean
+def ContainsNoLine (C : Set E) : Prop
+def IsExtremeDirection (C : Set E) (y : E) : Prop ; def extremeDirections (C : Set E) : Set E
+def IsAffineHalf (C : Set E) : Prop
+theorem IsFace.eq_convexHullPD …                              -- Thm 18.3
+theorem convexHullPD_extremePoints_extremeDirections …         -- Thm 18.5
+theorem extremePoints_subset_closure_exposedPoints …           -- Thm 18.6
+theorem closure_exposedPoints_eq_closure_extremePoints …       -- Thm 18.6, the equality form
+```
+
+**Corrections.** Theorem 18.3 needs neither Theorem 6.4 nor the positive-coefficient description of
+`ri (conv S)`: the point half is `IsExtreme.mem_convexHull_inter` and uses only the definition of an
+extreme set; the direction half is an induction over the cone hull carrying a scaling parameter, and
+needs only Theorem 8.3 and Corollary 18.1.1. Theorem 18.4's two exceptions are one predicate —
+allowing the functional in `IsAffineHalf` to be `0` makes "affine set" the degenerate case of
+"closed half of an affine set". Theorem 18.5's `dim C ≤ 1` case is *not* trivial in Lean (the
+unbounded one-dimensional case needs `exists_eq_halfLine`), but the induction is simpler than the
+book's: Minkowski discharges the bounded case in every dimension. Straszewicz is cleaner with a
+nearest-point projection than with Rockafellar's `ε` — project `x` onto `conv (cl (exp C))`, set
+`d = x - v`, `λ = (r²+1)/(2‖d‖²)`, `y = x - λ•d`; no Hahn–Banach, no Riesz, no unit normalisation.
+
+**Layer deviation.** Straszewicz's core needs a genuine inner product; the public statements are
+recovered for arbitrary finite-dimensional real normed `E` by transporting through Mathlib's
+`toEuclidean`, so nothing downstream inherits the restriction.
+
+**Not here**: Theorems 18.7, 18.8 and Corollary 18.7.1. They need a definition of an *exposed
+direction* and dimension bookkeeping (an `(n-2)`-dimensional affine set inside a supporting
+hyperplane) that the project has no support for. **Theorem 11.2 is not the blocker** — it is
+`exists_separates_of_isOpen_of_disjoint_affine` in `Separation.lean`.
+
+### `Tdaf/Analysis/Convex/Duality/Gauge.lean`
+
+§15 in full except Theorem 15.3, plus **Theorems 14.6 and 14.7**, which are stated here because
+their content is §15's.
+
+```lean
+noncomputable def gaugeFn (C : Set E) : E → EReal :=
+  fun x => ⨅ a ∈ {a : ℝ | 0 ≤ a ∧ x ∈ a • C}, (a : EReal)
+def IsGauge … ; def IsNorm … ; def AbsorbsAll … ; def RayFree …
+noncomputable def polarGauge … ; noncomputable def polarFn … ; noncomputable def obverse …
+theorem polarGauge_polarGauge …  -- Thm 15.1, `k°° = cl k`
+theorem polarFn_polarFn …        -- Thm 15.4, `f°° = cl f`
+theorem obverse_obverse … ; theorem conj_eq_obverse_polarFn …   -- Thm 15.5
+def gaugeEquiv … ; def polarGaugeEquiv … ; def polarFnEquiv …  -- the three correspondences
+```
+
+**`gaugeFn` is a third gauge, deliberately.** Mathlib's `gauge` is `ℝ`-valued and returns
+`sInf ∅ = 0` off the absorbed set, where §15 needs `+∞`; `egauge ℝ≥0` *is* Rockafellar's gauge but is
+`ℝ≥0∞`-valued, and Mathlib has no lemma commuting `ENNReal.toEReal` with `iInf`, so reusing it
+would mean building that bridge plus `ℝ≥0`-vs-`ℝ` smul-set glue before §15 could start.
+`gaugeFn_eq_gauge` records the agreement under absorbency.
+
+**Corrections.** Theorem 14.7 needs no closedness and neither Theorem 13.5 nor 9.7 — scale
+`x ↦ (α/f x)•x` into the level set for one inclusion, Fenchel's inequality for the other; it holds
+for any nonnegative convex `f` with `f 0 ≤ 0`. Theorem 15.5 needs no cone in `R^(n+2)`: it
+collapses to `obverse f x = γ((x,1) | epi f)` plus one level-set comparison, the biggest
+simplification in the file. Theorem 15.1's `k°° = cl k` is the special case of Theorem 15.4 in which
+the `1 +` is invisible to a positively homogeneous function. Theorem 14.5's second assertion needs
+only `0 ∈ C`; `gaugeFn {k ≤ 1} = k` needs only nonnegativity, positive homogeneity and `k 0 = 0`;
+Theorem 14.6 needs only the bipolar theorem, via `0⁺C = (C°)°`. Rockafellar's admissible set for
+`f°` is **not closed in ℝ** — at `μ = 0` the convention `0·(+∞) = 0` imposes `⟨x,y⟩ ≤ 1` where
+`f x = +∞`, which nearby positive `μ` do not — so `polarFn` is defined in the epigraph form, with
+`polarFn_apply_eq` proving the infima agree.
+
+**Not here**: Theorem 15.3 and Corollaries 15.3.1–15.3.2, the one genuinely unbuilt piece of §15 —
+they need the nondecreasing lsc convex functions on `[0, +∞]` and their *monotone conjugate*, a
+one-dimensional theory the project does not have. Also Corollary 14.6.1 (dimension and lineality
+arithmetic on top of `polarCone_linealitySpace`).
+
+**Lemmas that belong in other files and will name-clash if added there**: `convex_polarSet`,
+`polarSet_closure` (→ `Duality/Polar.lean`); `nonneg_of_mem_closure_epi`, `lscHull_nonneg`,
+`clFn_eq_lscHull_of_nonneg`, `clFn_nonneg`, `epi_clFn_of_nonneg`, `isClosed_epi_of_closedFn`,
+`closedFn_of_isClosed_epi`, `closedFn_iff_isClosed_epi` (→ `Closure.lean`); `mk_mem_smul_epi_iff`,
+`mk_one_mem_epi_iff` (→ `Operations/Epi.lean`); `UpClosed`, `biInf_coe_le_coe_iff_forall_lt`,
+`biInf_coe_le_coe_iff`, `zero_le_biInf_coe`, `le_coe_of_forall_gt_le`, `biInf_coe_pos_ge_eq`,
+`eq_of_forall_pos_le_iff` (→ `Order/EReal.lean`); `mulPairing`, `epiPairing`, `epiPairing_flip`,
+`vNeg` (→ `Duality/Pairing.lean`).
+
+### `Tdaf/Analysis/Convex/Saddle/Continuity.lean`
+
+§35's continuity half: **Theorems 35.1 and 35.2**.
+
+```lean
+structure ConcaveConvexOn (C : Set U) (D : Set X) (K : U × X → ℝ) : Prop where
+  concave_fst : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x)
+  convex_snd  : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x)
+theorem exists_forall_abs_le_and_lipschitzOnWith_prod …        -- Thm 35.2
+theorem ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact …  -- Thm 35.1, Lipschitz clause
+theorem ConcaveConvexOn.continuousOn …                         -- Thm 35.1, continuity clause
+theorem exists_isCompact_mem_nhdsWithin_relint …               -- `ri C` is locally compact
+```
+
+`ConcaveConvexOn`'s two fields are exactly the two unbundled hypotheses `Saddle/Kernel.lean`'s
+`concaveConvexFn_lowerSimpleExt` takes, so `hK.concave_fst` and `hK.convex_snd` extend `K` to all
+of `U × X` when that is wanted.
+
+**Theorem 35.2 is Theorem 10.6 applied four times.** Twice to bound the family — once in each
+variable, the second time consuming the first — and twice to make it equi-Lipschitz; the families
+are indexed by `ι × ↑T` in the concave variable and `ι × ↑S` in the convex one. The concave variable
+reaches §10 through `-K`, which is what `bddAbove_range_neg_iff`, `bddBelow_range_neg_iff` and
+`lipschitzOnWith_neg_iff` are for.
+
+**The Lipschitz constant is `k₁ + k₂`, not the book's `2(α₁ + α₂)`.** Mathlib's product metric is the
+*supremum* metric, so no factor is paid passing between the coordinate distances and the distance
+on the product.
+
+**`exists_isCompact_mem_nhdsWithin_relint` belongs in `RelativeInterior.lean`**; it is about a
+single convex set, and it is what turns "Lipschitz on every compact rectangle" into "continuous on
+`ri C ×ˢ ri D`".
+
+**Not here**: Theorems 35.3–35.5 (joint continuity in a parameter; the two convergence theorems).
+They are the saddle forms of Theorems 10.7–10.9 and want a *relative collar* lemma — for compact
+`S ⊆ ri C` there are `ε > 0` and a compact `S' ⊆ ri C` containing the `ε`-collar of `S` within
+`ri C` — which the `interior` proofs get from `IsCompact.exists_cthickening_subset_open`.
+Theorems 35.6–35.10 are the §23/§24/§25 half of the section; 35.9 and 35.10 additionally need
+Rademacher.
+
 ## 1a. House style
 
 From the repository `README.md` ("Reviewing a formalization"):
@@ -2465,6 +2608,62 @@ here.
     opening. Recovery, when the file was clean at `HEAD`:
     `git show HEAD:<path> > <path>` — not `git checkout --`, which would also discard unrelated
     working-tree edits.
+
+82. **`Set.mem_setOf_eq` is deprecated in this Mathlib** in favour of `Set.mem_ofPred_eq`; the
+    simp lemma is `Set.mem_ofPred`. Likewise `le_or_lt` → `le_or_gt`, `Set.diff_eq_empty` →
+    `Set.sdiff_eq_empty`, `Set.inter_union_diff` → `Set.inter_union_sdiff`,
+    `continuous_mul_right` → `continuous_mul_const`. Deprecation warnings fail the "no warnings"
+    bar, so fix them rather than living with them.
+
+83. **`rintro ⟨p, -, hp⟩` on `x ∈ a • S` yields an un-beta-reduced `hp : (fun y => a • y) p = x`,**
+    against which `rw [zero_smul]` fails. `simpa using congrArg Prod.snd hp`, or a `simp only` that
+    beta-reduces first, works. The same happens to `Equiv`/`Subtype` field proofs
+    (`↑((fun f => ⟨…⟩) x) = ↑x`): `change` to the intended equation before rewriting.
+
+84. **The unused-section-variable linter reports only some offenders per build.** After adding
+    `omit`s, new ones surface; expect two or three rounds.
+
+85. **`PointedCone.hull ℝ s` is an `abbrev` for `Submodule.span {c : ℝ // 0 ≤ c} s`,** so
+    `induction hv using Submodule.span_induction` works directly. In the `smul` case the scalar is
+    `c : {r : ℝ // 0 ≤ r}` and `c • v` is *defeq* to `(c : ℝ) • v` — use `change` to convert;
+    `rw` on a `rfl` lemma between them fails.
+
+86. **`IsExtreme` is a structure with fields `subset` and `left_mem_of_mem_openSegment`** (use the
+    field names, not `.1`/`.2`), and `Set.extremePoints`'s condition concludes only `x₁ = x`; get
+    the other endpoint via `openSegment_symm`. `Submodule.coe_bot` does not exist — it is
+    `Submodule.bot_coe`. `isCompact_closedBall` is at root, not `Metric.isCompact_closedBall`.
+
+87. **`toEuclidean : E ≃L[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ E))`**
+    (`Mathlib.Analysis.InnerProductSpace.EuclideanDist`) is the tool for lifting an
+    inner-product-only proof to any finite-dimensional real normed space. Pair it with
+    `image_extremePoints`, `ContinuousLinearEquiv.coe_toHomeomorph` and `Homeomorph.image_closure`;
+    prove convexity of the image by hand rather than via `Convex.linear_image`, to dodge the
+    `⇑f` vs `⇑f.toLinearMap` coercion mismatch. The real inner-product notation `⟪·,·⟫` needs
+    `open scoped RealInnerProductSpace`.
+
+88. **Mixing layers causes `(deterministic) timeout at isDefEq`, not an instance error.** A layer-D
+    lemma used inside a layer-A section hangs rather than failing cleanly. So does a lemma stated
+    over `[NormedAddCommGroup E]` applied at a bare topological group — check the *cited* lemma's
+    `variable` line before optimizing the proof.
+
+89. **`refine f (fun n => g ?_) …` — a `?_` under a binder is rejected**; hoist the body into a
+    `have`. Similarly `fun ⟨a, ha⟩ => …` is not accepted in term mode for an `Exists` inside an
+    `exact ⟨_, _⟩` for an `Iff`; use `constructor` + `rintro`.
+
+90. **When a lemma's implicit argument appears only in a hypothesis you are not supplying, pass it
+    by name** — `not_isBounded_halfLine (x := x) hy0`.
+
+91. **`Tdaf.EReal.coe_mul_coe` is oriented `↑a * ↑r = ↑(a*r)`.** Forward combines, `←` splits;
+    getting it backwards produces "did not find an occurrence of the pattern `↑(?a * ?r)`".
+
+92. **`epi_lscHull` lives in a section requiring `[AddCommGroup E] [IsTopologicalAddGroup E]`** even
+    though `lscHull` needs only `[TopologicalSpace E]`. Split sections accordingly, or the linter
+    forces long `omit` lists.
+
+93. **Do not name a lemma `foo.negReal`-style and then use dot notation on a hypothesis whose type
+    is a `def` that unfolds to a `∀`.** `LipschitzOnWith` is such a def: with `h : LipschitzOnWith
+    k f S` in a position where the elaborator has already whnf'd the type, `h.negReal` resolves
+    against `Function`, not `LipschitzOnWith`. Apply the lemma explicitly.
 
 ---
 

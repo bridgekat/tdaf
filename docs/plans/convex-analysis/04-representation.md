@@ -150,23 +150,37 @@ relative boundary points (Theorem 18.4). The compact case of Theorem 18.4 is ele
 through `x` in a direction of `vectorSpan ℝ C` meets `C` in a compact set of parameters, whose
 largest and smallest elements are pushed out of `ri C` by prolongation.
 
-### Why the rest of §18 is deferred
+### 4.2a `HullDirections.lean` and `Representation.lean` — the rest of §18
 
-Theorems 18.3, 18.6, 18.7, 18.8 and the unbounded halves of 18.4 and 18.5 are all stated in terms of
-`conv S` where `S` mixes **points and directions**, and that object has no definition here yet:
-§17 delivers only the pointwise `exists_of_mem_convexHull_add_coneHull` about `conv P + cone D`.
-Building it is a §17 design task (see [§4.1](#41-caratheodorylean--17)); once it exists,
+**Status: done except Theorems 18.7, 18.8 and Corollary 18.7.1.** The `conv S` for a set mixing
+points and directions is `convexHullPD P D = convexHull ℝ P + PointedCone.hull ℝ D`
+(`HullDirections.lean`), and `isLeast_convexHullPD` proves it *is* Rockafellar's operator — the
+least convex set containing `P` and receding in every direction of `D`. `Representation.lean` then
+carries Theorem 18.3 (`IsFace.eq_convexHullPD`), Corollary 18.3.1, Theorem 18.4 in general,
+Theorem 18.5 with Corollaries 18.5.2–18.5.3, and **Straszewicz's Theorem 18.6**, which Mathlib does
+not have.
 
-* Theorem 18.3 additionally needs Rockafellar's Theorem 6.4 in its *positive-coefficients* form
-  (`ri (conv{x₀, …, x_m})`), which is not the prolongation form `Convex.mem_relint_iff_prolong`
-  that §6 provides;
-* Theorem 18.4 in general needs the classification of closed convex sets that are affine sets or
-  closed halves of affine sets, plus Corollary 8.4.1 (parallel lines meet a closed convex set in
-  bounded sets, or none do);
-* Theorem 18.6 (Straszewicz) needs the farthest-point construction, and 18.7/18.8 need both.
+**Three of this sub-plan's four stated blockers were not blockers.**
 
-Nothing downstream in this development consumes them: §19's polyhedral theory uses faces only
-through Theorems 18.1 and 18.2, and §25's exposed points use `IsExposed`.
+* **Theorem 18.3 does not need Theorem 6.4** in its positive-coefficients form, or at all. The point
+  half is `IsExtreme.mem_convexHull_inter` — split `P` into `P ∩ C'` and `P \ C'`, use
+  `convexHull_union` and `IsExtreme.convex_sdiff` — and uses only the *definition* of an extreme
+  set. The direction half is an induction over the cone hull carrying a scaling parameter, so that
+  the `smul` step reduces to the generator step, and needs only Theorem 8.3 and Corollary 18.1.1.
+* **Corollary 18.3.1's first half needs neither 18.3 nor 6.4**: a nonzero recession component at an
+  extreme point exhibits that point as the midpoint of `[u, x+v]`.
+* **Theorem 11.2, which this plan lists as blocking Theorem 18.7, is available** as
+  `exists_separates_of_isOpen_of_disjoint_affine` in `Separation.lean`. What actually blocks 18.7 is
+  the absence of a definition of an *exposed direction*, and of the dimension bookkeeping its proof
+  turns on — an `(n-2)`-dimensional affine set inside a supporting hyperplane meeting `C ∩ H` in
+  exactly one point. Theorem 18.8 sits behind 18.7.
+
+Theorem 18.4's two exceptions turned out to be one predicate: allowing the functional in
+`IsAffineHalf` to be `0` makes "affine set" the degenerate case of "closed half of an affine set".
+Theorem 18.5's `dim C ≤ 1` case, which the book calls trivial, needs an explicit classification of
+`C` as a closed half-line; conversely the induction is *simpler* than the book's, since Minkowski
+(Corollary 18.5.1) discharges the bounded case in every dimension, so only unbounded `dim ≥ 2` uses
+18.4 and 18.2. Straszewicz is cleaner with a nearest-point projection than with Rockafellar's `ε`.
 
 ## 4.3 `Polyhedral/Defs.lean` — §19
 

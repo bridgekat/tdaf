@@ -267,23 +267,40 @@ group; all of Corollary 34.2.4 and the simple-extension value and domain lemmas 
 
 ## 7.3 `Saddle/Continuity.lean` — §35
 
-Analogues of §10, §24, §25 for saddle-functions. Layer D.
+**Status: Theorems 35.1 and 35.2 are done.** Analogues of §10, §24, §25 for saddle-functions.
+Layer D.
 
-| Lean name | book |
-|---|---|
-| `ConcaveConvexFn.continuousOn_relint`, `.lipschitzOn` | **Thm 35.1** |
-| `equiLipschitz_of_pointwise_bounded` | Thm 35.2 |
-| `continuous_of_saddle_in_uv_continuous_in_t` | Thm 35.3 |
-| `tendsto_uniformlyOn_of_pointwise` | Thm 35.4, 35.5 |
-| `dirDeriv_saddle` | **Thm 35.6**, Thm 35.7, Cor 35.7.1 |
-| `differentiableAt_iff_unique_subgradient` | **Thm 35.8**, Cor 35.8.1 |
-| `ae_differentiableAt_saddle` | **Thm 35.9**, Thm 35.10 |
+```lean
+structure ConcaveConvexOn (C : Set U) (D : Set X) (K : U × X → ℝ) : Prop where
+  concave_fst : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x)
+  convex_snd  : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x)
+```
 
-Every one of these is the saddle version of a §10/§24/§25 statement; if those are written with the
-right generality (a statement about a family of convex functions depending on a parameter), most of
-§35 should be an application rather than a reproof. Worth checking before writing §10 and §25:
-**state the §10 convergence theorems for families indexed by an arbitrary set**, which is what §35
-consumes.
+| Lean name | book | status |
+|---|---|---|
+| `ConcaveConvexOn` | the section's hypothesis, bundled | done |
+| `ConcaveConvexOn.continuousOn`, `.exists_lipschitzOnWith_of_isCompact`, `.exists_forall_abs_le_of_isCompact` | **Thm 35.1** | done |
+| `exists_forall_abs_le_and_lipschitzOnWith_prod`, and its two halves `..._fst` / `exists_forall_lipschitzOnWith_snd` | **Thm 35.2** | done |
+| `exists_isCompact_mem_nhdsWithin_relint` | `ri C` is locally compact | done — belongs in `RelativeInterior.lean` |
+| — | Thm 35.3 | not done — the saddle form of Thm 10.7 |
+| — | Thms 35.4, 35.5 | not done — the saddle forms of Thms 10.8, 10.9 |
+| — | **Thm 35.6**, Thm 35.7, Cor 35.7.1 | not done — directional derivatives |
+| — | **Thm 35.8**, Cor 35.8.1 | not done |
+| — | **Thm 35.9**, Thm 35.10 | not done — needs Rademacher |
+
+**The plan's advice was right and paid off.** §10's convergence theorems were written for families
+indexed by an arbitrary type, and Theorem 35.2 is exactly Theorem 10.6 applied four times — twice
+to bound the family, once in each variable with the second consuming the first, and twice to make
+it equi-Lipschitz — with the families indexed by `ι × ↑T` and `ι × ↑S`. Theorem 35.1 is the
+one-element family. No §10 statement had to be reproved.
+
+**What 35.3–35.5 still need** is a *relative collar*: for compact `S ⊆ ri C`, an `ε > 0` and a
+compact `S' ⊆ ri C` containing the `ε`-collar of `S` within `ri C`. The `interior` proofs in
+`Convergence.lean` get this from `IsCompact.exists_cthickening_subset_open`, which has no relative
+analogue; `exists_isCompact_mem_nhdsWithin_relint` plus a finite subcover supplies it.
+
+**The Lipschitz constant is `k₁ + k₂`, not the book's `2(α₁ + α₂)`** — Mathlib's product metric is
+the supremum metric.
 
 ## 7.4 `Saddle/Minimax.lean` — §36, §37
 

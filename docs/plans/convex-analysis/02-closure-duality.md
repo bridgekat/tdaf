@@ -268,7 +268,11 @@ of `Duality/Support.lean` and `Recession/Function.lean`, since neither can name 
 * **Corollary 13.3.1 and Theorems 13.4–13.5 remain unstated.** Nothing needs them yet; Theorem 13.4
   is `constancySpace_conj` read as an orthogonal complement and should be cheap when wanted.
 
-## 2.6 `Tdaf/Analysis/Convex/Duality/Polar.lean` — §14, §15
+## 2.6 `Tdaf/Analysis/Convex/Duality/Polar.lean` — §14, and `Duality/Gauge.lean` — §14.6–14.7, §15
+
+**Status: §14 is done, and §15 is done except Theorem 15.3.** Theorems 14.6 and 14.7 and all of
+§15 live in `Duality/Gauge.lean`, not in `Polar.lean` — their content is §15's, and the middle set
+of Theorem 14.7 is literally `setOf_polarFn_le` from §15.
 
 **Rockafellar's polars are one-sided**; Mathlib's `LinearMap.polar` is the absolute polar.
 
@@ -294,12 +298,14 @@ noncomputable def gaugeFn (C : Set E) : E → EReal :=
 | `polarCone_of_level_sets` | Thm 14.3 |
 | `polar_of_epi_cone` (the `ℝ × E × ℝ` construction) | **Thm 14.4** |
 | `polarSet_polarSet`, `gaugeFn_eq_supportFn_polar` | **Thm 14.5**, Cor 14.5.1 |
-| `recession_polar_duality` | Thm 14.6, Cor 14.6.1 |
-| `conj_nonneg_vanishing` | Thm 14.7 |
-| `polarGauge`, `polarGauge_polarGauge` | **Thm 15.1**, Cor 15.1.1–2 |
-| `isGauge_iff` | Thm 15.2, 15.3 |
-| `polarFn`, `polarFn_polarFn` | **Thm 15.4**, Cor 15.4.1 |
-| `obverse`, `obverse_conj_polar` | **Thm 15.5**, Cor 15.5.1 |
+| `recessionCone_eq_polarCone_polarSet`, `polarCone_recessionCone`, `linealitySpace_eq_setOf_pairing_eq_zero`, `polarCone_linealitySpace` — **done** | **Thm 14.6** (needs only the bipolar theorem, not Cor 8.3.2); Cor 14.6.1 not done |
+| `polarSet_setOf_le_subset_and_subset` — **done** | **Thm 14.7**, with no closedness and neither Thm 13.5 nor 9.7 |
+| `polarGauge`, `polarGauge_polarGauge`, `polarGaugeEquiv` — **done** | **Thm 15.1**, Cor 15.1.1–2 |
+| `isGauge_iff`, `gaugeEquiv` — **done** | the §15 gauge characterisation (the paragraph before Thm 15.1) |
+| `IsNorm`, `isNorm_iff`, `isNorm_polarGauge_gaugeFn` — **done** | **Thm 15.2** |
+| — | Thm 15.3, Cors 15.3.1–15.3.2 | not done — needs the monotone conjugate on `[0, +∞]` |
+| `polarFn`, `polarFn_polarFn`, `polarFnEquiv` — **done** | **Thm 15.4**, Cor 15.4.1 |
+| `obverse`, `obverse_obverse`, `conj_eq_obverse_polarFn`, `polarFn_eq_obverse_conj`, `polarFn_obverse`, `conj_obverse`, `polarFn_conj_eq_conj_polarFn` — **done** | **Thm 15.5**, Cor 15.5.1 |
 
 Bridge lemmas to Mathlib:
 
@@ -309,8 +315,15 @@ theorem gaugeFn_eq_gauge (h : Absorbent ℝ C) (x) : gaugeFn C x = (gauge C x : 
 ```
 
 Rockafellar's own remark in §14 — that the general polarity of sets "is not mentioned subsequently"
-outside §15 — means §14 beyond Theorem 14.1, and all of §15, are **low priority**. Theorem 14.1
-(polar cones) is high priority: it is used in §23 (normal cones), §27 (optimality), §31.4 and §39.
+outside §15 — made §14 beyond Theorem 14.1, and all of §15, low priority. They are nonetheless done;
+see `NOTES.md` §1 under `Duality/Gauge.lean` for the design decisions and the corrections
+established while proving them.
+
+**`gaugeFn` is a third gauge, and the plan's suggestion to reuse `egauge` was rejected.** `egauge ℝ≥0`
+*is* Rockafellar's gauge, but it is `ℝ≥0∞`-valued while every function in this library is
+`EReal`-valued, and Mathlib has no lemma commuting `ENNReal.toEReal` with `iInf`. `gaugeFn` is
+literally the same infimum taken in `EReal`; `gaugeFn_eq_gauge` records the agreement with Mathlib's
+`gauge` under absorbency.
 
 ## 2.7 Ordering within this sub-plan
 
