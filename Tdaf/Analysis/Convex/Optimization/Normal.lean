@@ -66,6 +66,8 @@ inlines the two-line proof. Both copies want a common home: the `clConcave` bloc
 import, so the concave Theorem 7.4 can sit next to the convex one.
 -/
 
+open Filter Topology
+
 namespace Tdaf.ConvexAnalysis
 
 /-! ### The closure of a convex function at the origin -/
@@ -414,5 +416,445 @@ theorem normal_of_concaveStronglyConsistent_adjointBifun (hF : ConvexBifun F)
     (hs.concaveNormal (concaveBifun_adjointBifun Bu Bx F))
 
 end Thm304Dual
+
+/-! ### Corollary 30.2.1: consistency of the two programs -/
+
+section ConjTop
+
+variable {E G : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [AddCommGroup G] [Module ℝ G] {B : E →ₗ[ℝ] G →ₗ[ℝ] ℝ} [IsCompatiblePairing B]
+  {f : E → EReal}
+
+/-- **The dichotomy behind Corollary 30.2.1**: the conjugate of a convex function is identically
+`⊤` exactly when the function takes the value `⊥` somewhere.
+
+One direction is free — a single `⊥` value makes every difference `⟨x, y⟩ - f x` equal to `⊤`. The
+other is Theorem 12.2 read through Theorem 7.4: a proper convex function has a closed proper
+closure, whose conjugate is proper, and `(cl f)* = f*`. -/
+theorem forall_conj_eq_top_iff (hf : ConvexFn f) :
+    (∀ y : G, conj B f y = ⊤) ↔ ∃ x : E, f x = ⊥ := by
+  constructor
+  · intro h
+    by_contra hcon
+    push Not at hcon
+    by_cases hd : ∃ x : E, f x ≠ ⊤
+    · obtain ⟨x₀, hx₀⟩ := hd
+      have hp : Proper f := ⟨⟨x₀, mem_dom.2 (lt_of_le_of_ne le_top hx₀)⟩, hcon⟩
+      have hpc : Proper (conj B (clFn f)) :=
+        proper_conj ⟨convexFn_clFn hf, closedFn_clFn f, hf.proper_clFn hp⟩
+      rw [conj_clFn] at hpc
+      obtain ⟨y, hy⟩ := hpc.dom_nonempty
+      exact absurd (h y) (mem_dom.1 hy).ne
+    · push Not at hd
+      have hbot : conj B f 0 = ⊥ := conj_eq_bot_iff.2 hd
+      rw [h 0] at hbot
+      exact absurd hbot (by simp)
+  · rintro ⟨x, hx⟩ y
+    refine top_le_iff.1 ?_
+    rw [conj_apply]
+    refine le_trans (le_of_eq ?_) (le_iSup (fun z : E => ((B z y : ℝ) : EReal) - f z) x)
+    rw [hx]
+    simp
+
+end ConjTop
+
+section Cor3021Primal
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {F : Bifun U X}
+
+/-- Negating a sum whose first summand is finite. -/
+private theorem neg_coe_add {c : ℝ} {w : EReal} :
+    -(((c : ℝ) : EReal) + w) = ((-c : ℝ) : EReal) - w := by
+  rw [_root_.EReal.neg_add (.inl (_root_.EReal.coe_ne_bot _)) (.inl (_root_.EReal.coe_ne_top _)),
+    ← _root_.EReal.coe_neg]
+
+omit [FiniteDimensional ℝ U] [IsCompatiblePairing Bu] in
+/-- The dual objective, negated, is the conjugate of the perturbation function at the reflected
+point: `-(F* 0)(v) = (inf F)*(-v)`. -/
+theorem neg_adjointBifun_zero_apply (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (v : V) :
+    -(adjointBifun Bu Bx F 0 v) = conj Bu (infBifun F) (-v) := by
+  rw [adjointBifun_zero_apply, Tdaf.EReal.neg_iInf, conj_apply]
+  refine iSup_congr fun u => ?_
+  rw [neg_coe_add, map_neg]
+
+omit [FiniteDimensional ℝ U] [IsCompatiblePairing Bu] in
+/-- The dual objective is `-∞` at `v` exactly when the conjugate of the perturbation function is
+`+∞` at `-v`. -/
+theorem adjointBifun_zero_eq_bot_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (v : V) :
+    adjointBifun Bu Bx F 0 v = ⊥ ↔ conj Bu (infBifun F) (-v) = ⊤ := by
+  rw [← neg_adjointBifun_zero_apply (Bu := Bu) Bx (F := F) v, _root_.EReal.neg_eq_top_iff]
+
+/-- **Rockafellar, Corollary 30.2.1**, first half: the dual program `(P*)` is inconsistent exactly
+when some perturbation of `(P)` is unbounded below, i.e. when `inf F u = -∞` for some `u`.
+
+Rockafellar states the corollary for closed `F`; closedness is not used, because `F*` never sees
+the difference between `F` and `cl F` (`adjointBifun_clBifun`). -/
+theorem not_concaveConsistent_adjointBifun_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F) :
+    ¬ ConcaveConsistent (adjointBifun Bu Bx F) ↔ ∃ u, infBifun F u = ⊥ := by
+  rw [← forall_conj_eq_top_iff (B := Bu) (convexFn_infBifun hF), concaveConsistent_iff]
+  push Not
+  constructor
+  · intro h y
+    have hy := (adjointBifun_zero_eq_bot_iff (Bu := Bu) Bx (F := F) (-y)).1 (h (-y))
+    rwa [neg_neg] at hy
+  · intro h v
+    exact (adjointBifun_zero_eq_bot_iff (Bu := Bu) Bx (F := F) v).2 (h (-v))
+
+/-- **Rockafellar, Corollary 30.2.1**, first half, in the positive form. -/
+theorem concaveConsistent_adjointBifun_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F) :
+    ConcaveConsistent (adjointBifun Bu Bx F) ↔ ∀ u, infBifun F u ≠ ⊥ := by
+  rw [← not_iff_not, not_concaveConsistent_adjointBifun_iff Bx hF]
+  push Not
+  rfl
+
+end Cor3021Primal
+
+section Cor3021Dual
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X} {G : Bifun Y V}
+
+omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
+  [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
+  [LocallyConvexSpace ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bu]
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] in
+/-- The mirror of `adjointBifun_zero_apply`: the objective of the program associated with the
+concave adjoint is `(G* 0)(x) = ⨆ y (⟨x, y⟩ + sup G y)`. -/
+theorem concaveAdjointBifun_zero_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (G : Bifun Y V) (x : X) :
+    concaveAdjointBifun Bu Bx G 0 x = ⨆ y, (((Bx x y : ℝ) : EReal) + supBifun G y) := by
+  rw [concaveAdjointBifun_apply, iSup_prod]
+  refine iSup_congr fun y => ?_
+  have hzero : ∀ v : V, (Bx x y - Bu (0 : U) v : ℝ) = Bx x y := fun v => by
+    rw [map_zero, LinearMap.zero_apply, sub_zero]
+  simp only [hzero]
+  rw [supBifun_apply, add_comm, Tdaf.EReal.iSup_add_coe]
+
+omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
+  [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
+  [LocallyConvexSpace ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bu]
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] in
+/-- **Rockafellar, Theorem 30.2**, the first half of the second formula: `(-sup G)* = G* 0`, the
+objective of the program associated with the concave adjoint is the conjugate of the convex
+function `-sup G`. -/
+theorem concaveAdjointBifun_zero_eq_conj (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (G : Bifun Y V) :
+    concaveAdjointBifun Bu Bx G 0 = conj Bx.flip (fun y => -(supBifun G y)) := by
+  funext x
+  rw [concaveAdjointBifun_zero_apply, conj_apply]
+  exact iSup_congr fun y => by rw [LinearMap.flip_apply, sub_eq_add_neg, neg_neg]
+
+omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
+  [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
+  [LocallyConvexSpace ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bu]
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] in
+/-- `-sup G` is convex when `G` is a concave bifunction: it is `inf (-G)`. -/
+theorem convexFn_neg_supBifun (hG : ConcaveBifun G) : ConvexFn (fun y => -(supBifun G y)) := by
+  rw [neg_supBifun]
+  exact convexFn_infBifun (concaveFn_iff_convexFn_neg.1 hG)
+
+/-- **Rockafellar, Corollary 30.2.1**, second half: the primal program `(P)` is inconsistent
+exactly when some perturbation of `(P*)` is unbounded above, i.e. when `sup F* y = +∞` for some
+`y`.
+
+Unlike the first half this one really does need `F` closed: it is the first half read for the dual
+pair, and `F** = F` is what identifies the objective of `(P)` with the conjugate of `-sup F*`. -/
+theorem not_consistent_iff_exists_supBifun_eq_top (hF : ConvexBifun F) (hcl : ClosedBifun F) :
+    ¬ Consistent F ↔ ∃ y, supBifun (adjointBifun Bu Bx F) y = ⊤ := by
+  have hg : ConvexFn (fun y => -(supBifun (adjointBifun Bu Bx F) y)) :=
+    convexFn_neg_supBifun (concaveBifun_adjointBifun Bu Bx F)
+  have hF0 : ∀ x : X,
+      F 0 x = conj Bx.flip (fun y => -(supBifun (adjointBifun Bu Bx F) y)) x := by
+    intro x
+    rw [← concaveAdjointBifun_zero_eq_conj Bu Bx (adjointBifun Bu Bx F),
+      concaveAdjointBifun_adjointBifun_eq_self hF hcl]
+  rw [consistent_iff]
+  push Not
+  simp only [hF0]
+  rw [forall_conj_eq_top_iff (B := Bx.flip) hg]
+  exact exists_congr fun y => _root_.EReal.neg_eq_bot_iff
+
+/-- **Rockafellar, Corollary 30.2.1**, second half, in the positive form. -/
+theorem consistent_iff_forall_supBifun_ne_top (hF : ConvexBifun F) (hcl : ClosedBifun F) :
+    Consistent F ↔ ∀ y, supBifun (adjointBifun Bu Bx F) y ≠ ⊤ := by
+  rw [← not_iff_not, not_consistent_iff_exists_supBifun_eq_top (Bu := Bu) (Bx := Bx) hF hcl]
+  push Not
+  rfl
+
+end Cor3021Dual
+
+/-! ### Theorem 30.4(d): Kuhn–Tucker vectors of the dual program -/
+
+section ConcaveKuhnTucker
+
+variable {V X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  {B : Y →ₗ[ℝ] X →ₗ[ℝ] ℝ} {G : Bifun Y V} {x : X}
+
+/-- **Kuhn–Tucker vectors for a concave program**, the mirror of `KuhnTucker`: the `x` for which
+`⨆ y (⟨y, x⟩ + sup G y)` is finite and equal to the optimal value `sup G 0`. -/
+def ConcaveKuhnTucker (B : Y →ₗ[ℝ] X →ₗ[ℝ] ℝ) (G : Bifun Y V) : Set X :=
+  {x | supBifun G 0 ≠ ⊤ ∧ supBifun G 0 ≠ ⊥ ∧
+    (⨆ y, (((B y x : ℝ) : EReal) + supBifun G y)) = supBifun G 0}
+
+/-- The concave mirror is the reflection of the convex notion: `x` is a Kuhn–Tucker vector of the
+concave program `G` exactly when `-x` is one of the convex program `-G`. -/
+theorem mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker :
+    x ∈ ConcaveKuhnTucker B G ↔ -x ∈ KuhnTucker B (fun y v => -(G y v)) := by
+  have hinf : ∀ y : Y, infBifun (fun y' v => -(G y' v)) y = -(supBifun G y) := fun y =>
+    (congrFun (neg_supBifun G) y).symm
+  have hkey : (⨅ y : Y, (((B y (-x) : ℝ) : EReal) + infBifun (fun y' v => -(G y' v)) y))
+      = -(⨆ y : Y, (((B y x : ℝ) : EReal) + supBifun G y)) := by
+    rw [Tdaf.EReal.neg_iSup]
+    refine iInf_congr fun y => ?_
+    have hb : ((B y (-x) : ℝ) : EReal) = -(((B y x : ℝ)) : EReal) := by
+      rw [← _root_.EReal.coe_neg, map_neg]
+    rw [hinf y, hb, _root_.EReal.neg_add (.inl (_root_.EReal.coe_ne_bot _))
+      (.inl (_root_.EReal.coe_ne_top _))]
+    rfl
+  constructor
+  · rintro ⟨h1, h2, h3⟩
+    refine ⟨?_, ?_, ?_⟩
+    · rw [hinf 0, ne_eq, _root_.EReal.neg_eq_top_iff]
+      exact h2
+    · rw [hinf 0, ne_eq, _root_.EReal.neg_eq_bot_iff]
+      exact h1
+    · rw [hkey, hinf 0, h3]
+  · rintro ⟨h1, h2, h3⟩
+    rw [hinf 0, ne_eq, _root_.EReal.neg_eq_top_iff] at h1
+    rw [hinf 0, ne_eq, _root_.EReal.neg_eq_bot_iff] at h2
+    rw [hkey, hinf 0] at h3
+    exact ⟨h2, h1, neg_inj.1 h3⟩
+
+end ConcaveKuhnTucker
+
+section ConcaveKuhnTuckerNormal
+
+variable {V X Y : Type*} [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+  [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] {B : Y →ₗ[ℝ] X →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing B] {G : Bifun Y V}
+
+/-- The concave mirror of **Theorem 30.4(c)**: a concave program possessing a Kuhn–Tucker vector
+is normal.
+
+Read through `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker`, a Kuhn–Tucker vector is a
+supergradient of `sup G` at the origin, and Corollary 23.5.2 says a function is closed wherever it
+is subdifferentiable. -/
+theorem concaveNormal_of_concaveKuhnTucker_nonempty (hG : ConcaveBifun G)
+    (h : (ConcaveKuhnTucker B G).Nonempty) : ConcaveNormal G := by
+  obtain ⟨x, hx⟩ := h
+  rw [mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker] at hx
+  have ht := hx.1
+  have hb := hx.2.1
+  have hsub : -(-x) ∈ subgradient B (infBifun fun y v => -(G y v)) 0 :=
+    (mem_kuhnTucker_iff_neg_mem_subgradient ht hb).1 hx
+  rw [neg_neg] at hsub
+  have hclosed : clFn (infBifun fun y v => -(G y v)) 0 = infBifun (fun y v => -(G y v)) 0 :=
+    clFn_eq_of_mem_subgradient (B := B) (convexFn_infBifun (concaveFn_iff_convexFn_neg.1 hG)) hsub
+  have hinf0 : infBifun (fun y v => -(G y v)) 0 = -(supBifun G 0) :=
+    (congrFun (neg_supBifun G) 0).symm
+  rw [concaveNormal_iff, clConcave_apply, neg_supBifun, hclosed, hinf0, neg_neg]
+
+end ConcaveKuhnTuckerNormal
+
+section Thm304d
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
+
+/-- **Rockafellar, Theorem 30.4(d)**: if the *dual* program has a Kuhn–Tucker vector (its optimal
+value being finite, which is part of `ConcaveKuhnTucker`), then normality holds for the pair. -/
+theorem normal_of_concaveKuhnTucker_adjointBifun_nonempty (hF : ConvexBifun F)
+    (hcl : ClosedBifun F)
+    (h : (ConcaveKuhnTucker Bx.flip (adjointBifun Bu Bx F)).Nonempty) : Normal F :=
+  (normal_iff_concaveNormal_adjointBifun hF hcl).2
+    (concaveNormal_of_concaveKuhnTucker_nonempty (concaveBifun_adjointBifun Bu Bx F) h)
+
+end Thm304d
+
+/-! ### Theorem 30.4(e) and (f): polyhedral programs -/
+
+section Thm304Polyhedral
+
+variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {F : Bifun U X}
+
+/-- **Rockafellar, Theorem 30.4(e)**: a polyhedral convex program that is merely *consistent* is
+normal.
+
+Theorem 29.2 makes `inf F` a polyhedral convex function, and a polyhedral convex function agrees
+with its closure throughout its effective domain — which contains the origin, by consistency. -/
+theorem PolyhedralBifun.normal (hF : PolyhedralBifun F) (hc : Consistent F) : Normal F := by
+  have hdom : (0 : U) ∈ dom (infBifun F) := by
+    rw [dom_infBifun]
+    exact hc
+  exact PolyhedralFn.clFn_eq_of_mem_dom hF.polyhedralFn_infBifun hdom
+
+end Thm304Polyhedral
+
+section ConcavePolyhedral
+
+variable {V Y : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y] {G : Bifun Y V}
+
+/-- A concave bifunction is **polyhedral** when its negative is: the mirror of
+`PolyhedralBifun`. -/
+def ConcavePolyhedralBifun (G : Bifun Y V) : Prop := PolyhedralBifun fun y v => -(G y v)
+
+/-- The concave mirror of **Theorem 30.4(e)**: a consistent polyhedral concave program is
+normal. -/
+theorem ConcavePolyhedralBifun.concaveNormal (hG : ConcavePolyhedralBifun G)
+    (hc : ConcaveConsistent G) : ConcaveNormal G := by
+  have hne : supBifun G 0 ≠ ⊥ := by
+    have h0 : (0 : Y) ∈ domConcave (supBifun G) := by
+      rw [domConcave_supBifun]
+      exact hc
+    exact (mem_domConcave.1 h0).ne'
+  have hdom : (0 : Y) ∈ dom fun z => -(supBifun G z) := mem_dom.2 (by
+    rw [lt_top_iff_ne_top, ne_eq, _root_.EReal.neg_eq_top_iff]
+    exact hne)
+  have hpoly : PolyhedralFn fun z : Y => -(supBifun G z) := by
+    rw [neg_supBifun]
+    exact PolyhedralBifun.polyhedralFn_infBifun hG
+  rw [concaveNormal_iff, clConcave_apply, PolyhedralFn.clFn_eq_of_mem_dom hpoly hdom]
+  exact neg_neg _
+
+end ConcavePolyhedral
+
+section Thm304f
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
+
+/-- **Rockafellar, Theorem 30.4(f)**: if the *dual* program is polyhedral and consistent then
+normality holds for the pair. -/
+theorem normal_of_concavePolyhedral_adjointBifun (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hG : ConcavePolyhedralBifun (adjointBifun Bu Bx F))
+    (hc : ConcaveConsistent (adjointBifun Bu Bx F)) : Normal F :=
+  (normal_iff_concaveNormal_adjointBifun hF hcl).2
+    (ConcavePolyhedralBifun.concaveNormal hG hc)
+
+end Thm304f
+
+/-! ### Corollary 30.2.3: the two optimal values as a `liminf` and a `limsup` -/
+
+section ClConcaveLimsup
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] {g : E → EReal}
+
+omit [AddCommGroup E] [Module ℝ E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] in
+/-- The mirror of `liminf_nhds_le`: a function is at most its own `limsup` along the neighbourhood
+filter. -/
+theorem le_limsup_nhds (g : E → EReal) (x : E) : g x ≤ Filter.limsup g (𝓝 x) := by
+  have h := liminf_nhds_le (-g) x
+  rw [_root_.EReal.liminf_neg, Pi.neg_apply] at h
+  exact _root_.EReal.neg_le_neg_iff.1 h
+
+/-- The concave mirror of `clFn_eq_liminf_or`: for a concave `g` the concave closure at `x` is the
+`limsup` of `g` at `x`, except in the degenerate case where the left side is `+∞` and the right is
+`-∞`. -/
+theorem clConcave_eq_limsup_or (hg : ConcaveFn g) (x : E) :
+    clConcave g x = Filter.limsup g (𝓝 x)
+      ∨ (clConcave g x = ⊤ ∧ Filter.limsup g (𝓝 x) = ⊥) := by
+  have hkey : Filter.liminf (fun z => -(g z)) (𝓝 x) = -(Filter.limsup g (𝓝 x)) :=
+    _root_.EReal.liminf_neg
+  rcases clFn_eq_liminf_or (concaveFn_iff_convexFn_neg.1 hg) x with heq | ⟨hbot, htop⟩
+  · exact Or.inl (by rw [clConcave_apply, heq, hkey, neg_neg])
+  · refine Or.inr ⟨by rw [clConcave_apply, hbot, _root_.EReal.neg_bot], ?_⟩
+    rw [hkey] at htop
+    exact _root_.EReal.neg_eq_top_iff.1 htop
+
+end ClConcaveLimsup
+
+section Cor3023
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {F : Bifun U X}
+
+/-- **Rockafellar, Corollary 30.2.3**, first formula: unless *both* programs are inconsistent, the
+optimal value of the dual is the limit inferior of the optimal value of `(P)` under vanishing
+perturbations,
+
+`liminf_{u → 0} (inf F u) = sup F* 0`.
+
+The excluded case is exactly Rockafellar's: `cl (inf F)` and `liminf (inf F)` can differ only when
+the first is `-∞` — which says the dual is inconsistent — and the second is `+∞` — which forces
+`inf F 0 = +∞`, i.e. `(P)` inconsistent. -/
+theorem liminf_infBifun_eq_iSup_adjointBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F)
+    (h : Consistent F ∨ ConcaveConsistent (adjointBifun Bu Bx F)) :
+    Filter.liminf (infBifun F) (𝓝 (0 : U)) = ⨆ v : V, adjointBifun Bu Bx F 0 v := by
+  rcases clFn_eq_liminf_or (convexFn_infBifun hF) (0 : U) with heq | ⟨hbot, htop⟩
+  · rw [← heq, clFn_infBifun_zero_eq_iSup_adjointBifun (Bu := Bu) Bx hF]
+  · exfalso
+    have hsup : (⨆ v : V, adjointBifun Bu Bx F 0 v) = ⊥ := by
+      rw [← clFn_infBifun_zero_eq_iSup_adjointBifun (Bu := Bu) Bx hF]
+      exact hbot
+    have hinf : infBifun F 0 = ⊤ := by
+      have hle := liminf_nhds_le (infBifun F) (0 : U)
+      rw [htop] at hle
+      exact top_le_iff.1 hle
+    rw [infBifun_apply] at hinf
+    rcases h with hc | hc
+    · obtain ⟨x, hx⟩ := hc
+      exact hx (iInf_eq_top.1 hinf x)
+    · obtain ⟨v, hv⟩ := hc
+      exact hv (iSup_eq_bot.1 hsup v)
+
+end Cor3023
+
+section Cor3023Dual
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
+
+/-- **Rockafellar, Corollary 30.2.3**, second formula: unless both programs are inconsistent,
+
+`limsup_{y → 0} (sup F* y) = inf F 0`. -/
+theorem limsup_supBifun_adjointBifun_eq (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (h : Consistent F ∨ ConcaveConsistent (adjointBifun Bu Bx F)) :
+    Filter.limsup (supBifun (adjointBifun Bu Bx F)) (𝓝 (0 : Y)) = infBifun F 0 := by
+  rcases clConcave_eq_limsup_or (concaveFn_supBifun (concaveBifun_adjointBifun Bu Bx F))
+    (0 : Y) with heq | ⟨htop, hbot⟩
+  · rw [← heq, clConcave_supBifun_adjointBifun_zero_eq hF hcl]
+  · exfalso
+    have hinf : infBifun F 0 = ⊤ := by
+      rw [← clConcave_supBifun_adjointBifun_zero_eq (Bu := Bu) (Bx := Bx) hF hcl]
+      exact htop
+    have hsup : supBifun (adjointBifun Bu Bx F) 0 = ⊥ :=
+      le_bot_iff.1 (hbot ▸ le_limsup_nhds (supBifun (adjointBifun Bu Bx F)) (0 : Y))
+    rw [infBifun_apply] at hinf
+    rw [supBifun_apply] at hsup
+    rcases h with hc | hc
+    · obtain ⟨x, hx⟩ := hc
+      exact hx (iInf_eq_top.1 hinf x)
+    · obtain ⟨v, hv⟩ := hc
+      exact hv (iSup_eq_bot.1 hsup v)
+
+end Cor3023Dual
 
 end Tdaf.ConvexAnalysis

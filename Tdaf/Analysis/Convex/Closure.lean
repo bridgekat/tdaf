@@ -799,4 +799,89 @@ theorem tendsto_along_segment_of_closed_proper (hf : ClosedProperConvexFn f)
 
 end SegmentLimit
 
+/-! ### The lower semicontinuous hull as a `liminf`
+
+Rockafellar writes `(cl f)(x) = liminf_{y → x} f(y)` and uses it whenever the closure has to be
+computed at a single point (Corollary 30.2.3, for instance). In a complete lattice
+`liminf f (𝓝 x) = ⨆ s ∈ 𝓝 x, ⨅ y ∈ s, f y`, which is exactly the value of `lscHull` at `x`; the
+identity therefore needs no convexity and no hypothesis on `f`. -/
+
+section Liminf
+
+variable {E : Type*} [TopologicalSpace E] {f : E → EReal}
+
+/-- The pointwise `liminf` of `f` along the neighbourhood filter is a minorant of `f`: the
+neighbourhood filter contains the point itself. -/
+theorem liminf_nhds_le (f : E → EReal) (x : E) : liminf f (𝓝 x) ≤ f x := by
+  rw [liminf_eq_iSup_iInf]
+  exact iSup₂_le fun s hs => iInf₂_le x (mem_of_mem_nhds hs)
+
+/-- `x ↦ liminf_{y → x} f(y)` is lower semicontinuous: a neighbourhood witnessing the bound at `x`
+witnesses it, through its interior, at every nearby point. -/
+theorem lowerSemicontinuous_liminf_nhds (f : E → EReal) :
+    LowerSemicontinuous fun x => liminf f (𝓝 x) := by
+  intro x c hc
+  have hc' : c < liminf f (𝓝 x) := hc
+  rw [liminf_eq_iSup_iInf] at hc'
+  obtain ⟨s, hs⟩ := lt_iSup_iff.1 hc'
+  obtain ⟨hsmem, hlt⟩ := lt_iSup_iff.1 hs
+  filter_upwards [isOpen_interior.mem_nhds (mem_interior_iff_mem_nhds.2 hsmem)] with z hz
+  change c < liminf f (𝓝 z)
+  refine lt_of_lt_of_le hlt ?_
+  rw [liminf_eq_iSup_iInf]
+  refine le_trans ?_
+    (le_iSup₂ (f := fun t (_ : t ∈ 𝓝 z) => ⨅ a ∈ t, f a) (interior s)
+      (isOpen_interior.mem_nhds hz))
+  exact le_iInf₂ fun a ha => iInf₂_le a (interior_subset ha)
+
+end Liminf
+
+section LiminfHull
+
+variable {E : Type*} [TopologicalSpace E] [AddCommGroup E] [IsTopologicalAddGroup E]
+  {f : E → EReal}
+
+/-- **The lower semicontinuous hull is a `liminf`**: `(lsc f)(x) = liminf_{y → x} f(y)`.
+
+`lscHull f` is the greatest lower semicontinuous minorant of `f`; the `liminf` function is a lower
+semicontinuous minorant, and conversely a lower semicontinuous function is at most its own
+`liminf`. -/
+theorem lscHull_eq_liminf (f : E → EReal) (x : E) : lscHull f x = liminf f (𝓝 x) := by
+  refine le_antisymm ?_ (le_lscHull_of_le (lowerSemicontinuous_liminf_nhds f) (liminf_nhds_le f) x)
+  refine le_trans (LowerSemicontinuous.le_liminf (lowerSemicontinuous_lscHull f) x) ?_
+  rw [liminf_eq_iSup_iInf, liminf_eq_iSup_iInf]
+  exact iSup₂_mono fun s _ => iInf₂_mono fun a _ => lscHull_le f a
+
+/-- **Rockafellar's `cl f = liminf f`**, in the regular branch: as soon as the lower semicontinuous
+hull is nowhere `-∞`, the closure of `f` at `x` is the `liminf` of `f` at `x`. -/
+theorem clFn_eq_liminf (h : ∀ z, lscHull f z ≠ ⊥) (x : E) : clFn f x = liminf f (𝓝 x) := by
+  rw [clFn_of_forall_ne_bot h, lscHull_eq_liminf]
+
+end LiminfHull
+
+section LiminfConvex
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] {f : E → EReal}
+
+/-- **Rockafellar's `cl f = liminf f`, in full.** For a *convex* `f` the closure at `x` is the
+`liminf` of `f` at `x`, except in the single degenerate case where the left side is `-∞` and the
+right side is `+∞`.
+
+The two can only differ in the exceptional branch of `clFn`, where `cl f` is the constant `-∞`;
+and there `lscHull f` is a lower semicontinuous improper convex function, so by Corollary 7.2.1 it
+takes only the values `-∞` and `+∞`. -/
+theorem clFn_eq_liminf_or (hf : ConvexFn f) (x : E) :
+    clFn f x = liminf f (𝓝 x) ∨ (clFn f x = ⊥ ∧ liminf f (𝓝 x) = ⊤) := by
+  by_cases h : ∃ z, lscHull f z = ⊥
+  · have hcl : clFn f x = ⊥ := by rw [clFn_of_exists_eq_bot h]
+    rcases ConvexFn.eq_bot_or_eq_top (convexFn_lscHull hf) (lowerSemicontinuous_lscHull f) h x with
+      hb | ht
+    · exact Or.inl (by rw [hcl, ← lscHull_eq_liminf, hb])
+    · exact Or.inr ⟨hcl, by rw [← lscHull_eq_liminf]; exact ht⟩
+  · push Not at h
+    exact Or.inl (by rw [clFn_of_forall_ne_bot h, lscHull_eq_liminf])
+
+end LiminfConvex
+
 end Tdaf.ConvexAnalysis
