@@ -24,6 +24,7 @@ import Tdaf.Analysis.Convex.Homogenize
 import Tdaf.Analysis.Convex.HullDirections
 import Tdaf.Analysis.Convex.Indicator
 import Tdaf.Analysis.Convex.Lattice
+import Tdaf.Analysis.Convex.LinearInequalities
 import Tdaf.Analysis.Convex.Operations.Basic
 import Tdaf.Analysis.Convex.Operations.Closed
 import Tdaf.Analysis.Convex.Operations.Epi
