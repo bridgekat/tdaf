@@ -71,8 +71,11 @@ file's design note asked.
 
 ## 7.2 `Saddle/Defs.lean` — §33 (and `Saddle/{Closure,Correspondence,Equiv}.lean` — §33–§34)
 
-**Status: Theorems 33.1, 33.2, 33.3, 34.1 and 34.2 and Corollaries 33.1.1 and 33.3.1 are done.**
-§33's remaining corollaries and §34's kernels (Thms 34.3–34.5) are not.
+**Status: all of §34 is done, and §33 except Cors 33.1.2, 33.1.3, 33.2.1–33.2.2 and 33.3.2–33.3.3.**
+Theorems 33.1, 33.2, 33.3, 34.1, 34.2 with Corollaries 33.1.1 and 33.3.1 are in
+`Saddle/{Defs,Closure,Correspondence,Equiv}.lean`; Theorem 34.2's `ri` and `dom` clauses,
+Corollaries 34.2.1–34.2.4, and Theorems 34.3–34.5 with Corollary 34.5.1 are in
+`Saddle/Kernel.lean` — see §7.2b.
 
 ```lean
 structure ConcaveConvexFn (K : U × X → EReal) : Prop where
@@ -116,9 +119,9 @@ noncomputable def bifunOfSaddle (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U ×
 | — | **Cors 33.3.2–33.3.3** | not done |
 | `SaddleEquiv`, `ClosedSaddleFn`, `saddleClass`, `partialCl₂_eq_of_mem_saddleClass`, `partialCl₁_eq_of_mem_saddleClass`, `saddleEquiv_of_mem_saddleClass`, `closedSaddleFn_of_mem_saddleClass`, `exists_unique_bifun_of_closedSaddleFn` | **Thm 34.2** | done (`Saddle/Equiv.lean`) |
 | — | **Thm 34.2**'s `dom K = dom F × dom F*` and `ri` clauses, Cors 34.2.1–4 | not done — need `ri` |
-| `closed_iff_structural` | **Thm 34.3** | not started |
-| `saddleEquiv_iff_kernel_eq` | **Thm 34.4** | not started |
-| `exists_unique_saddleEquiv_class_of_kernel` | **Thm 34.5**, Cor 34.5.1 | not started |
+| `closedSaddleFn_iff_saddleStructure` | **Thm 34.3** | done (`Saddle/Kernel.lean`) |
+| `saddleEquiv_iff_kernel_eq` | **Thm 34.4** | done (`Saddle/Kernel.lean`) |
+| `exists_unique_saddleEquiv_class_of_kernel`, `exists_unique_saddleEquiv_class_of_finite` | **Thm 34.5**, Cor 34.5.1 | done (`Saddle/Kernel.lean`) |
 
 Theorem 33.3 is the "bilinear functions ↔ linear transformations" analogy made precise, and it is
 the theorem the whole of Part VII is built on. With §7.1 in place it is Fenchel–Moreau in the second
@@ -131,9 +134,17 @@ The §34 apparatus still to be written:
 ```lean
 /-- The kernel is the **restriction of `K`** to `ri (dom₁ K) × ri (dom₂ K)` (book, line 14887) —
 a *function*, not its domain. Defining it as the domain would make Theorem 34.4 refutable, since
-`K` and `K + 1` would share a kernel without being equivalent. -/
-noncomputable def kernel (K : U × X → EReal) : (ri (dom₁ K) ×ˢ ri (dom₂ K) : Set (U × X)) → EReal :=
-  (ri (dom₁ K) ×ˢ ri (dom₂ K)).restrict K
+`K` and `K + 1` would share a kernel without being equivalent.
+
+As formalized it is a **total** function rather than a `Set.restrict`: equalities of
+subtype-restrictions are ill-typed unless the two rectangles are already known equal, which would
+split Theorem 34.4 into a rectangle equality plus a transport. `⊤` off the rectangle is faithful,
+because a proper concave-convex `K` is finite on `ri (dom K)`, and `kernel_eq_iff` recovers exactly
+the book's pair "same rectangle ∧ `Set.EqOn` there". -/
+def kernelSet (K : U × X → EReal) : Set (U × X) := ri (dom₁ K) ×ˢ ri (dom₂ K)
+
+noncomputable def kernel (K : U × X → EReal) : U × X → EReal :=
+  fun p => if p ∈ kernelSet K then K p else ⊤
 ```
 
 ### What actually happened
@@ -206,8 +217,53 @@ representative when needed.
 two brackets of the corresponding closed convex bifunction, and `partialCl₂_eq_of_mem_saddleClass`
 and `partialCl₁_eq_of_mem_saddleClass` say the canonical representatives are computed by a single
 partial closure from *any* member. Corollary 34.2.2 is therefore already available in the form that
-matters; what is still missing is the `dom`/`ri` description of the class (Theorem 34.2's last
-clauses) and the kernel characterisation of Theorems 34.4–34.5.
+matters; the `dom`/`ri` description of the class and the kernel characterisation are §7.2b.
+
+## 7.2b `Saddle/Kernel.lean` — §34, the finite-dimensional half
+
+**Status: done.** Theorem 34.2's `ri` and `dom` clauses, Corollaries 34.2.1–34.2.4, Theorems
+34.3–34.5 and Corollary 34.5.1.
+
+| Lean name | book | status |
+|---|---|---|
+| `domSaddle`, `ProperSaddleFn`, `relint_domSaddle`, `ClosedSaddleFn.dom₂_partialCl₂`, `.dom₁_partialCl₁`, `.eq_partialCl₂_of_mem_relint_dom₁` | **Thm 34.2**, the `ri` and `dom` clauses | done |
+| `SaddleEquiv.dom₁_eq`, `.dom₂_eq`, `.domSaddle_eq`, `.eq_of_mem_relint_dom₁` | **Cor 34.2.1** | done — the `dom L = dom K` clause needs **no** closedness |
+| `LowerClosedFn.closedSaddleFn`, `SaddleEquiv.eq_partialCl₂_of_lowerClosedFn` | **Cor 34.2.2** | done |
+| `ClosedSaddleFn.eq_const_of_not_properSaddleFn`, `not_saddleEquiv_const_bot_const_top` | **Cor 34.2.3** | done |
+| `ConvexSliceStructure`, `SaddleStructure`, `closedSaddleFn_iff_saddleStructure` | **Thm 34.3** | done |
+| `kernelSet`, `kernel`, `kernel_eq_iff`, `SaddleEquiv.kernel_eq`, `saddleEquiv_iff_kernel_eq` | **Thm 34.4** | done |
+| `lowerCl_idem`, `upperCl_idem`, `closedSaddleFn_lowerCl` | **Thm 34.1**, reproved | done — no duality, layer B |
+| `SimpleSaddleFn`, `saddleEquiv_lowerCl_upperCl`, `exists_unique_saddleEquiv_class_of_kernel` | **Thm 34.5** | done |
+| `lowerSimpleExt`, `upperSimpleExt`, `exists_unique_saddleEquiv_class_of_finite` | **Cor 34.5.1** | done |
+| `mem_saddleClass_simpleExt_iff`, `mem_saddleClass_simpleExt_iff_saddleEquiv` | **Cor 34.2.4** | done — needs neither Cor 33.3.3 nor joint continuity |
+
+### What actually happened
+
+**Theorem 34.1 needs no duality.** `Saddle/Closure.lean` derives it through Theorems 33.2 and 30.1,
+which costs two compatible pairings and locally convex partners. `lowerCl_idem` is four lines from
+monotonicity and idempotence of `cl₁`/`cl₂`, so Theorem 34.1 and its corollaries are layer B.
+
+**Corollary 34.2.4 does not need Corollary 33.3.3, nor joint continuity.** Separate continuity of
+`K` in each variable on the closed `C`, `D` suffices, and the proof is direct: closedness of the
+slices plus `clFn`/`clConcave` of an improper slice.
+
+**A large §6/§7 block had to be built on the way**, and it wants relocating:
+`lscHull_eq_of_eqOn_relint_dom`, `clFn_eq_of_eqOn_relint_dom`, `clConcave_eq_of_eqOn_relint_domConcave`,
+`Convex.relint_eq_of_subset_of_subset_closure` (the Cor 6.3.1 sandwich),
+`ConcaveFn.clConcave_eq_of_mem_relint_domConcave` (Theorem 7.4's concave mirror, also proved
+independently in `Optimization/Normal.lean` — see gotcha 74), `clFn_eq_bot_of_eq_bot`,
+`clConcave_eq_top_of_eq_top`, `domConcave_neg`, and the `closedFn_restrict_coe` family. They belong
+in `RelativeInterior.lean`, `Closure.lean`, `Concave.lean` and `ConcaveConj.lean`; the blocker is
+that `ConcaveConj.lean` is layer C and does not import `RelativeInterior`. The fix is to split
+`ConcaveConj.lean`'s `clConcave` block — which needs only `Closure.lean` and `Concave.lean` — into
+a `ConcaveClosure.lean` that `RelativeInterior.lean` can import.
+
+**Most of §34 is not finite-dimensional.** Theorem 34.1 and its corollaries need only a topological
+group; all of Corollary 34.2.4 and the simple-extension value and domain lemmas use no `ri` at all;
+`dom₁_mono`, `dom₂_anti`, `domSaddle`, `ProperSaddleFn` and `ConcaveConvexFn.partialCl₂`/`.partialCl₁`
+(Cor 33.1.1 with the pairing supplied) are layer B or C. Only the kernel itself is layer D.
+
+**OCR**: in Theorem 34.3's proof the first two displayed relations print `K` where `K̲` is meant.
 
 ## 7.3 `Saddle/Continuity.lean` — §35
 
