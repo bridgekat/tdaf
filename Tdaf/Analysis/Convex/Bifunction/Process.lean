@@ -27,6 +27,7 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
 * `ConvexProcess.ofLinearMap` — a linear transformation as a convex process.
 * `ConvexProcess.indicatorBifun` — the indicator bifunction `(F u)(x) = δ(x | A u)` of a
   supremum-oriented process.
+* `ConvexProcess.comp`, and the `Add` instance — the product `B A` and the sum `A₁ + A₂`.
 * `ConvexProcess.adjointProcess`, `ConvexProcess.coadjointProcess` — the adjoint `A*` of a
   supremum-oriented process, and the adjoint of an infimum-oriented one (the same definition with
   the inequality reversed).
@@ -39,6 +40,9 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
   domain and bounded `A 0` is a linear transformation.
 * `ConvexProcess.graphFn_indicatorBifun`, `convexBifun_indicatorBifun`,
   `domBifun_indicatorBifun` — the dictionary between §39 and §38.
+* `ConvexProcess.dom_add`, `eval_comp`, `inv_comp`, `indicatorBifun_add`,
+  `indicatorBifun_comp` — the algebra of processes and its translation into §38: the indicator
+  bifunction of `A₁ + A₂` is `F₁ □ F₂` and that of `B A` is `G F`.
 * `ConvexProcess.adjointBifun_indicatorBifun` — **Theorem 39.2**, last assertion: the adjoint of
   the indicator bifunction of `A` is the indicator bifunction of `A*`.
 * `ConvexProcess.isClosed_graph_adjointProcess` — **Theorem 39.2**, first assertion: `A*` is
@@ -346,6 +350,141 @@ theorem smul_graph (A : ConvexProcess U X) {a : ℝ} (ha : 0 < a) :
 end ConvexProcess
 
 end Indicator
+
+/-! ### The algebra of convex processes, and its bifunction dictionary -/
+
+section Algebra
+
+variable {U X Z : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Z] [Module ℝ Z]
+
+omit [Module ℝ X] in
+/-- The infimal convolute of two indicator functions is the indicator function of the sum of the
+sets. Rockafellar makes this observation in §5; `Operations/InfConv.lean` has only the special case
+of a singleton, so it is proved here. -/
+theorem infConv_indicatorFn (S T : Set X) :
+    infConv (indicatorFn S) (indicatorFn T) = indicatorFn (S + T) := by
+  have hepi : epi (indicatorFn S) + epi (indicatorFn T) = epi (indicatorFn (S + T)) := by
+    rw [epi_indicatorFn, epi_indicatorFn, epi_indicatorFn]
+    ext p
+    constructor
+    · rintro ⟨q, ⟨hq, hq0⟩, r, ⟨hr, hr0⟩, rfl⟩
+      exact ⟨⟨q.1, hq, r.1, hr, rfl⟩,
+        Set.mem_Ici.2 (add_nonneg (Set.mem_Ici.1 hq0) (Set.mem_Ici.1 hr0))⟩
+    · rintro ⟨hw, hc⟩
+      obtain ⟨a, ha, b, hb, hab⟩ := hw
+      refine ⟨(a, p.2), ⟨ha, hc⟩, (b, 0), ⟨hb, Set.mem_Ici.2 (le_refl 0)⟩, ?_⟩
+      have hab2 : a + b = p.1 := hab
+      change ((a, p.2) : X × ℝ) + (b, 0) = p
+      rw [Prod.mk_add_mk, hab2, add_zero]
+  rw [infConv_def, hepi, ofEpi_epi]
+
+namespace ConvexProcess
+
+/-- **Rockafellar, §39**: the **sum** of two convex processes, `(A₁ + A₂) u = A₁ u + A₂ u`. -/
+instance : Add (ConvexProcess U X) where
+  add A₁ A₂ :=
+    { graph :=
+        { carrier := {p : U × X | ∃ x ∈ A₁.eval p.1, ∃ y ∈ A₂.eval p.1, p.2 = x + y}
+          zero_mem' := ⟨0, A₁.zero_mem_eval_zero, 0, A₂.zero_mem_eval_zero, (add_zero 0).symm⟩
+          add_mem' := by
+            rintro ⟨u₁, z₁⟩ ⟨u₂, z₂⟩ ⟨x₁, h₁, y₁, k₁, rfl⟩ ⟨x₂, h₂, y₂, k₂, rfl⟩
+            exact ⟨x₁ + x₂, add_mem_graph h₁ h₂, y₁ + y₂, add_mem_graph k₁ k₂,
+              add_add_add_comm x₁ y₁ x₂ y₂⟩
+          smul_mem' := by
+            rintro c ⟨u, z⟩ ⟨x, hx, y, hy, rfl⟩
+            exact ⟨(c : ℝ) • x, smul_mem_graph c.2 hx, (c : ℝ) • y, smul_mem_graph c.2 hy,
+              smul_add (c : ℝ) x y⟩ } }
+
+@[simp] theorem mem_graph_add {A₁ A₂ : ConvexProcess U X} {p : U × X} :
+    p ∈ (A₁ + A₂).graph ↔ ∃ x ∈ A₁.eval p.1, ∃ y ∈ A₂.eval p.1, p.2 = x + y := Iff.rfl
+
+@[simp] theorem eval_add (A₁ A₂ : ConvexProcess U X) (u : U) :
+    (A₁ + A₂).eval u = A₁.eval u + A₂.eval u := by
+  ext x
+  constructor
+  · rintro ⟨a, ha, b, hb, rfl⟩
+    exact ⟨a, ha, b, hb, rfl⟩
+  · rintro ⟨a, ha, b, hb, rfl⟩
+    exact ⟨a, ha, b, hb, rfl⟩
+
+/-- **Rockafellar, §39**: `dom (A₁ + A₂) = dom A₁ ∩ dom A₂`. -/
+@[simp] theorem dom_add (A₁ A₂ : ConvexProcess U X) : (A₁ + A₂).dom = A₁.dom ∩ A₂.dom := by
+  ext u
+  constructor
+  · rintro ⟨_, x, hx, y, hy, -⟩
+    exact ⟨⟨x, hx⟩, ⟨y, hy⟩⟩
+  · rintro ⟨⟨x, hx⟩, ⟨y, hy⟩⟩
+    exact ⟨x + y, x, hx, y, hy, rfl⟩
+
+/-- **Rockafellar, §39**: the **product** of convex processes, `(B A) u = B (A u)`. -/
+def comp (B : ConvexProcess X Z) (A : ConvexProcess U X) : ConvexProcess U Z where
+  graph :=
+    { carrier := {p : U × Z | ∃ x, (p.1, x) ∈ A.graph ∧ (x, p.2) ∈ B.graph}
+      zero_mem' := ⟨0, A.zero_mem_graph, B.zero_mem_graph⟩
+      add_mem' := by
+        rintro ⟨u₁, z₁⟩ ⟨u₂, z₂⟩ ⟨x₁, h₁, k₁⟩ ⟨x₂, h₂, k₂⟩
+        exact ⟨x₁ + x₂, add_mem_graph h₁ h₂, add_mem_graph k₁ k₂⟩
+      smul_mem' := by
+        rintro c ⟨u, z⟩ ⟨x, h, k⟩
+        exact ⟨(c : ℝ) • x, smul_mem_graph c.2 h, smul_mem_graph c.2 k⟩ }
+
+@[simp] theorem mem_graph_comp {B : ConvexProcess X Z} {A : ConvexProcess U X} {p : U × Z} :
+    p ∈ (B.comp A).graph ↔ ∃ x, (p.1, x) ∈ A.graph ∧ (x, p.2) ∈ B.graph := Iff.rfl
+
+@[simp] theorem eval_comp (B : ConvexProcess X Z) (A : ConvexProcess U X) (u : U) :
+    (B.comp A).eval u = B.image (A.eval u) := by
+  ext z
+  exact Iff.rfl
+
+/-- **Rockafellar, §39**: `(B A)⁻¹ = A⁻¹ B⁻¹`. -/
+theorem inv_comp (B : ConvexProcess X Z) (A : ConvexProcess U X) :
+    (B.comp A).inv = A.inv.comp B.inv := by
+  ext p
+  constructor <;> rintro ⟨x, h, k⟩ <;> exact ⟨x, k, h⟩
+
+/-- **Rockafellar, §39**: the indicator bifunction of `A₁ + A₂` is `F₁ □ F₂` (Theorem 38.1). -/
+theorem indicatorBifun_add (A₁ A₂ : ConvexProcess U X) :
+    (A₁ + A₂).indicatorBifun = infConvBifun A₁.indicatorBifun A₂.indicatorBifun := by
+  funext u
+  change indicatorFn ((A₁ + A₂).eval u)
+    = infConv (indicatorFn (A₁.eval u)) (indicatorFn (A₂.eval u))
+  rw [eval_add, infConv_indicatorFn]
+
+/-- **Rockafellar, §39**: the indicator bifunction of `B A` is `G F` (Theorem 38.5). -/
+theorem indicatorBifun_comp (B : ConvexProcess X Z) (A : ConvexProcess U X) :
+    (B.comp A).indicatorBifun = compBifun B.indicatorBifun A.indicatorBifun := by
+  funext u z
+  rw [compBifun_apply]
+  by_cases h : z ∈ (B.comp A).eval u
+  · rw [indicatorBifun_apply, indicatorFn_of_mem h]
+    obtain ⟨x₀, hx₀, hz₀⟩ := h
+    symm
+    refine le_antisymm ?_ (le_iInf fun x => ?_)
+    · refine le_of_le_of_eq (iInf_le _ x₀) ?_
+      rw [indicatorBifun_apply, indicatorFn_of_mem (show x₀ ∈ A.eval u from hx₀),
+        indicatorBifun_apply, indicatorFn_of_mem (show z ∈ B.eval x₀ from hz₀), add_zero]
+    · refine add_nonneg ?_ ?_
+      · rw [indicatorBifun_apply]
+        by_cases hx : x ∈ A.eval u <;> simp [hx]
+      · rw [indicatorBifun_apply]
+        by_cases hz : z ∈ B.eval x <;> simp [hz]
+  · rw [indicatorBifun_apply, indicatorFn_of_notMem h]
+    symm
+    refine le_antisymm le_top (le_iInf fun x => ?_)
+    by_cases hx : x ∈ A.eval u
+    · have hz : z ∉ B.eval x := fun hc => h ⟨x, hx, hc⟩
+      rw [indicatorBifun_apply, indicatorFn_of_mem hx, indicatorBifun_apply,
+        indicatorFn_of_notMem hz, zero_add]
+    · rw [indicatorBifun_apply, indicatorFn_of_notMem hx]
+      by_cases hz : z ∈ B.eval x
+      · rw [indicatorBifun_apply, indicatorFn_of_mem hz, add_zero]
+      · rw [indicatorBifun_apply, indicatorFn_of_notMem hz]
+        simp
+
+end ConvexProcess
+
+end Algebra
 
 /-! ### Theorem 39.2: the adjoint of a convex process -/
 
