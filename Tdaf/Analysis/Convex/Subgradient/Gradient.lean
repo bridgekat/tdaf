@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Mathlib.Analysis.Calculus.Deriv.Comp
+import Mathlib.Analysis.Convex.Exposed
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Tdaf.Analysis.Convex.Subgradient.Defs
@@ -28,11 +29,36 @@ subdifferential to be a single point.
 * `eq_of_mem_subgradient_of_hasFDerivAt` — the uniqueness half on its own; it needs no convexity.
 * `dirDeriv_eq_of_hasFDerivAt` — **Theorem 25.2**, necessity: `f'(x; v) = ⟨v, ∇f x⟩`.
 * `proper_of_eventuallyEq_coe`, `mem_interior_dom_of_eventuallyEq_coe` — **Corollary 25.1.1**.
+* `mem_exposedPoints_epi_conj_iff` — the exposed points of `epi f*` are the points `(y, f* y)`
+  such that `y` is the *only* subgradient of `f` at some point. **Corollary 25.1.2** in its
+  subgradient form.
+* `mem_exposedPoints_supportSet_iff` — **Corollary 25.1.3** in the same form: for a closed proper
+  convex positively homogeneous `g`, the exposed points of `{x | ⟨x, y⟩ ≤ g y for all y}` are
+  exactly the points that are the unique subgradient of `g` somewhere.
+* `mem_exposedPoints_prod_Ici_iff` — the exposed points of a half-cylinder `C ×ˢ [0, ∞)`, which is
+  what the epigraph of an indicator function looks like.
 * `HasGradientAt`, `DifferentiableAtFn` — `∇f x = f'` for an `EReal`-valued `f`, with the results
   above repackaged as `HasGradientAt.le`, `.subgradient_eq`, `.dirDeriv_eq`, `.mem_interior_dom`,
   `.proper` and `.unique`. This is the interface §26 uses.
 
 ## Design notes
+
+**Exposedness is dual to unique subdifferentiability, and that is where the corollaries stop.**
+A supporting hyperplane to `epi f*` that touches it at one point only is non-vertical, so it is
+the graph of `⟨x, ·⟩ - α`; supporting at `(y, μ)` says `x ∈ ∂f*(y)`, i.e. `y ∈ ∂f x`, and touching
+nowhere else says `∂f x = {y}`. That is `mem_exposedPoints_epi_conj_iff`. Rockafellar then
+*renames* the conclusion using both halves of Theorem 25.1, arriving at "`f` is differentiable at
+`x` with `∇f x = y`"; the half that is missing here is exactly the half of Theorem 25.1 that is
+missing here (see "What is not here" below), so the corollaries are stated in the subgradient
+form, which is the form the proof produces.
+
+**No finite-dimensionality, but two compatibility hypotheses.** The proof needs a continuous
+linear functional on `F` to be `⟨x, ·⟩` for some `x : E`, which for `F = StrongDual ℝ E` is
+reflexivity. Rather than assume `[FiniteDimensional ℝ E]` it is stated as
+`[IsCompatiblePairing B.flip]`, the pairing-level form of the same thing; `E` finite-dimensional
+paired with `StrongDual ℝ E` satisfies it through `instIsCompatiblePairingTopDualFinite`, and so
+does any pair of spaces in a compatible duality. The other hypothesis, `[IsCompatiblePairing B]`,
+is what makes `∂f*` the inverse of `∂f`.
 
 **Two layers, two pairings.** The directional-derivative statements are algebraic and hold over an
 arbitrary pairing `B`; uniqueness there needs the pairing to be separating in its second variable,
@@ -67,13 +93,17 @@ quotients over the compact unit sphere). `dirDeriv_eq_of_hasFDerivAt` gives the 
 Theorem 24.1; Theorem 25.4 rests on Theorem 24.5; Theorem 25.5 (a.e. differentiability) is
 Rademacher's theorem plus the continuity of `∇f`, which is Theorem 24.4 together with Theorem 25.1
 but needs the measure-theoretic statement first; Theorems 25.6 and 25.7 rest on 25.5 and on §24's
-convergence theory. Corollaries 25.1.2 and 25.1.3 are about exposed points of `epi f*` and need
-§18's exposed-face theory in the `ℝ × E` picture.
+convergence theory.
+
+**The differentiability reading of Corollaries 25.1.2 and 25.1.3 is not available**, for the same
+reason: turning `∂f x = {y}` into "`f` is differentiable at `x` with `∇f x = y`" is precisely the
+converse half of Theorem 25.1. The subgradient readings, which is what the geometry gives, are
+`mem_exposedPoints_epi_conj_iff` and `mem_exposedPoints_supportSet_iff`.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorem 25.1,
-  Corollary 25.1.1, and the necessity half of Theorem 25.2).
+  Corollaries 25.1.1, 25.1.2 and 25.1.3, and the necessity half of Theorem 25.2).
 -/
 
 open Set Filter Topology
@@ -358,5 +388,300 @@ theorem HasGradientAt.unique {f₁' f₂' : StrongDual ℝ E} (h₁ : HasGradien
   exact hd₁.unique (hd₂.congr_of_eventuallyEq hgg)
 
 end Frechet
+
+
+/-! ### Exposed points of a half-cylinder -/
+
+section HalfCylinder
+
+variable {X : Type*} [AddCommGroup X] [Module ℝ X] [TopologicalSpace X]
+
+/-- **The exposed points of a half-cylinder** `C ×ˢ [0, ∞)` are the points `(z, 0)` with `z` an
+exposed point of `C`.
+
+A functional exposing a point of the cylinder must be *strictly* decreasing in the vertical
+direction — otherwise the whole vertical ray attains the maximum — and that forces the height to
+be `0` and reduces the functional to one on `C`. This is the epigraph of an indicator function
+(`epi_indicatorFn`), so it is how a statement about `epi f*` becomes a statement about a convex
+set. -/
+theorem mem_exposedPoints_prod_Ici_iff {C : Set X} {z : X} {ν : ℝ} :
+    (z, ν) ∈ (C ×ˢ Ici (0 : ℝ)).exposedPoints ℝ ↔ ν = 0 ∧ z ∈ C.exposedPoints ℝ := by
+  constructor
+  · rintro ⟨⟨hzC, hν⟩, L, hL⟩
+    have hν0' : (0 : ℝ) ≤ ν := hν
+    set c : ℝ := L (0, 1) with hcdef
+    have hsplit : ∀ (w : X) (γ : ℝ), L (w, γ) = L (w, 0) + γ * c := by
+      intro w γ
+      have h1 : ((w, γ) : X × ℝ) = (w, 0) + (0, γ) := by
+        rw [Prod.mk_add_mk, add_zero, zero_add]
+      have h2 : ((0, γ) : X × ℝ) = γ • ((0 : X), (1 : ℝ)) := by
+        rw [Prod.smul_mk, smul_zero, smul_eq_mul, mul_one]
+      rw [h1, map_add, h2, map_smul, smul_eq_mul, ← hcdef, mul_comm]
+    have hmemup : ((z, ν + 1) : X × ℝ) ∈ C ×ˢ Ici (0 : ℝ) := ⟨hzC, by simp; linarith⟩
+    have hcneg : c < 0 := by
+      have hle : c ≤ 0 := by
+        have h := (hL _ hmemup).1
+        rw [hsplit z (ν + 1), hsplit z ν] at h
+        nlinarith
+      refine lt_of_le_of_ne hle fun h0 => ?_
+      have h := (hL _ hmemup).2 (by rw [hsplit z (ν + 1), hsplit z ν, h0]; simp)
+      have : ν + 1 = ν := congrArg Prod.snd h
+      linarith
+    have hν0 : ν = 0 := by
+      have h := (hL ((z, (0 : ℝ)) : X × ℝ) ⟨hzC, (mem_Ici.2 le_rfl)⟩).1
+      rw [hsplit z 0, hsplit z ν] at h
+      nlinarith
+    subst hν0
+    refine ⟨rfl, hzC, L.comp (ContinuousLinearMap.inl ℝ X ℝ), fun w hw => ⟨?_, fun hge => ?_⟩⟩
+    · have h := (hL ((w, (0 : ℝ)) : X × ℝ) ⟨hw, (mem_Ici.2 le_rfl)⟩).1
+      simpa using h
+    · refine congrArg Prod.fst ((hL ((w, (0 : ℝ)) : X × ℝ) ⟨hw, (mem_Ici.2 le_rfl)⟩).2 ?_)
+      simpa using hge
+  · rintro ⟨rfl, hzC, l, hl⟩
+    refine ⟨⟨hzC, (mem_Ici.2 le_rfl)⟩,
+      l.comp (ContinuousLinearMap.fst ℝ X ℝ) - ContinuousLinearMap.snd ℝ X ℝ, ?_⟩
+    have hval : ∀ (u : X) (δ : ℝ),
+        (l.comp (ContinuousLinearMap.fst ℝ X ℝ) - ContinuousLinearMap.snd ℝ X ℝ) (u, δ)
+          = l u - δ := by
+      intro u δ
+      simp
+    rintro ⟨w, γ⟩ ⟨hw, hγ⟩
+    have hγ0 : (0 : ℝ) ≤ γ := hγ
+    obtain ⟨h1, h2⟩ := hl w hw
+    refine ⟨by rw [hval, hval]; linarith, fun hge => ?_⟩
+    rw [hval, hval] at hge
+    have hγz : γ = 0 := le_antisymm (by linarith) hγ0
+    have hwz : w = z := h2 (by linarith)
+    rw [hwz, hγz]
+
+end HalfCylinder
+
+/-! ### Exposed points of the epigraph of a conjugate -/
+
+section Exposed
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
+
+/-- A subgradient pins down the value: if `y ∈ ∂f x` and `f* y = μ` is finite, then
+`f x = ⟨x, y⟩ - μ`. This is Fenchel's equality solved for `f x`, and in particular `f x` is
+finite. -/
+theorem Proper.eq_sub_of_mem_subgradient (hp : Proper f) {x : E} {y : F} {μ : ℝ}
+    (hy : y ∈ subgradient B f x) (hμ : conj B f y = (μ : EReal)) :
+    f x = ((B x y - μ : ℝ) : EReal) := by
+  have hfx : f x + conj B f y = ((B x y : ℝ) : EReal) :=
+    hp.mem_subgradient_iff_add_conj_eq.1 hy
+  rw [hμ] at hfx
+  have hxb : f x ≠ ⊥ := hp.ne_bot x
+  have hxt : f x ≠ ⊤ := by
+    intro h
+    rw [h, _root_.EReal.top_add_of_ne_bot (_root_.EReal.coe_ne_bot μ)] at hfx
+    exact absurd hfx (_root_.EReal.top_ne_coe _)
+  have hxc : f x = (((f x).toReal : ℝ) : EReal) := (_root_.EReal.coe_toReal hxt hxb).symm
+  rw [hxc, ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff] at hfx
+  rw [hxc, _root_.EReal.coe_eq_coe_iff]
+  linarith
+
+section Topology
+
+variable [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E]
+  [LocallyConvexSpace ℝ E] [TopologicalSpace F]
+
+/-- **The exposed points of the epigraph of a conjugate.** A point `(y, μ)` is an exposed point of
+`epi f*` exactly when `μ = f* y` and `y` is the *only* subgradient of `f` at some point `x`.
+
+Geometrically: a supporting hyperplane to `epi f*` that touches it in a single point is
+necessarily non-vertical, so it is the graph of an affine function `⟨x, ·⟩ - α`; that it supports
+`epi f*` at `(y, μ)` says `x ∈ ∂f*(y)`, i.e. `y ∈ ∂f x`, and that it touches nowhere else says
+`∂f x` is no larger than `{y}`.
+
+Only the forward direction uses closedness — through `∂f* = (∂f)⁻¹` — and neither direction uses
+finite-dimensionality: what replaces it is `IsCompatiblePairing B.flip`, which says that a
+continuous linear functional on `F` is `⟨x, ·⟩` for some `x : E`. -/
+theorem mem_exposedPoints_epi_conj_iff [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hf : ConvexFn f) (hp : Proper f) (hc : ClosedFn f) {y : F} {μ : ℝ} :
+    (y, μ) ∈ (epi (conj B f)).exposedPoints ℝ ↔
+      conj B f y = (μ : EReal) ∧ ∃ x : E, subgradient B f x = {y} := by
+  have hbot : ∀ z : F, conj B f z ≠ ⊥ := conj_ne_bot hp.dom_nonempty
+  constructor
+  · rintro ⟨hmem, L, hL⟩
+    have hmem' : conj B f y ≤ (μ : EReal) := hmem
+    -- Split `L` into a functional on `F` and a coefficient of the vertical direction.
+    obtain ⟨x₀, hx₀⟩ := exists_pairing_eq B.flip (L.comp (ContinuousLinearMap.inl ℝ F ℝ))
+    set c : ℝ := L (0, 1) with hcdef
+    have hsplit : ∀ (z : F) (β : ℝ), L (z, β) = B x₀ z + β * c := by
+      intro z β
+      have h1 : ((z, β) : F × ℝ) = (z, 0) + (0, β) := by
+        rw [Prod.mk_add_mk, add_zero, zero_add]
+      have h2 : ((0, β) : F × ℝ) = β • ((0 : F), (1 : ℝ)) := by
+        rw [Prod.smul_mk, smul_zero, smul_eq_mul, mul_one]
+      have h3 : L (z, 0) = B x₀ z := by
+        simpa [LinearMap.flip_apply] using hx₀ z
+      rw [h1, map_add, h3, h2, map_smul, smul_eq_mul, ← hcdef, mul_comm]
+    -- The vertical direction is a direction of recession of the epigraph.
+    have hup : ∀ t : ℝ, 0 ≤ t → (y, μ + t) ∈ epi (conj B f) := fun t ht =>
+      hmem'.trans (by exact_mod_cast le_add_of_nonneg_right ht)
+    have hcneg : c < 0 := by
+      have hle : c ≤ 0 := by
+        have h := (hL _ (hup 1 zero_le_one)).1
+        rw [hsplit, hsplit] at h
+        nlinarith
+      refine lt_of_le_of_ne hle fun h0 => ?_
+      have heq : L (y, μ) ≤ L (y, μ + 1) := by rw [hsplit, hsplit, h0]; simp
+      have := (hL _ (hup 1 zero_le_one)).2 heq
+      have hμ' : μ + 1 = μ := congrArg Prod.snd this
+      linarith
+    -- Normalise the functional so that the vertical coefficient is `-1`.
+    have hcne : c ≠ 0 := ne_of_lt hcneg
+    have hpos : (0 : ℝ) < (-c)⁻¹ := inv_pos.2 (neg_pos.2 hcneg)
+    set x : E := (-c)⁻¹ • x₀ with hxdef
+    have hBx : ∀ z : F, B x z = (-c)⁻¹ * B x₀ z := by
+      intro z
+      rw [hxdef, map_smul, LinearMap.smul_apply, smul_eq_mul]
+    have hmax : ∀ (z : F) (β : ℝ), conj B f z ≤ (β : EReal) → B x z - β ≤ B x y - μ := by
+      intro z β hzβ
+      have h := (hL (z, β) hzβ).1
+      rw [hsplit, hsplit] at h
+      have h' : (-c)⁻¹ * (B x₀ z + β * c) ≤ (-c)⁻¹ * (B x₀ y + μ * c) :=
+        mul_le_mul_of_nonneg_left h hpos.le
+      have e1 : (-c)⁻¹ * (β * c) = -β := by field_simp
+      have e2 : (-c)⁻¹ * (μ * c) = -μ := by field_simp
+      rw [mul_add, mul_add, e1, e2] at h'
+      rw [hBx, hBx]
+      linarith
+    have huniq : ∀ (z : F) (β : ℝ), conj B f z ≤ (β : EReal) →
+        B x y - μ ≤ B x z - β → (z, β) = (y, μ) := by
+      intro z β hzβ hge
+      refine (hL (z, β) hzβ).2 ?_
+      rw [hBx, hBx] at hge
+      have h' : (-c) * ((-c)⁻¹ * B x₀ y - μ) ≤ (-c) * ((-c)⁻¹ * B x₀ z - β) :=
+        mul_le_mul_of_nonneg_left hge (neg_nonneg.2 hcneg.le)
+      have e1 : (-c) * ((-c)⁻¹ * B x₀ y) = B x₀ y := by field_simp
+      have e2 : (-c) * ((-c)⁻¹ * B x₀ z) = B x₀ z := by field_simp
+      rw [mul_sub, mul_sub, e1, e2] at h'
+      rw [hsplit, hsplit]
+      nlinarith
+    -- The value at `y` is `μ`.
+    have hyt : conj B f y ≠ ⊤ := ne_top_of_le_ne_top (_root_.EReal.coe_ne_top μ) hmem'
+    have hyc : conj B f y = (((conj B f y).toReal : ℝ) : EReal) :=
+      (_root_.EReal.coe_toReal hyt (hbot y)).symm
+    have hνμ : (conj B f y).toReal ≤ μ := by
+      rw [hyc, _root_.EReal.coe_le_coe_iff] at hmem'
+      exact hmem'
+    have hμν : μ ≤ (conj B f y).toReal := by
+      have := hmax y _ (le_of_eq hyc)
+      linarith
+    have hμeq : conj B f y = (μ : EReal) := by
+      rw [hyc, _root_.EReal.coe_eq_coe_iff]
+      linarith
+    -- `y` is a subgradient at `x`, and the only one.
+    have hysub : y ∈ subgradient B f x := by
+      rw [← mem_subgradient_conj_iff_of_closedFn hf hc, mem_subgradient_iff_forall_sub_le]
+      intro z
+      rcases eq_or_ne (conj B f z) ⊤ with hz | hz
+      · rw [hz]
+        simp
+      · have hzc : conj B f z = (((conj B f z).toReal : ℝ) : EReal) :=
+          (_root_.EReal.coe_toReal hz (hbot z)).symm
+        have h := hmax z _ (le_of_eq hzc)
+        rw [LinearMap.flip_apply, LinearMap.flip_apply, hzc, hμeq, ← _root_.EReal.coe_sub,
+          ← _root_.EReal.coe_sub, _root_.EReal.coe_le_coe_iff]
+        exact h
+    refine ⟨hμeq, x, Set.eq_singleton_iff_unique_mem.2 ⟨hysub, fun z hz => ?_⟩⟩
+    have hfx : f x = ((B x y - μ : ℝ) : EReal) := hp.eq_sub_of_mem_subgradient hysub hμeq
+    have hzc : conj B f z = ((B x z : ℝ) : EReal) - f x := mem_subgradient_iff_conj_eq.1 hz
+    rw [hfx, ← _root_.EReal.coe_sub] at hzc
+    have := huniq z (B x z - (B x y - μ)) (le_of_eq hzc) (by simp)
+    exact congrArg Prod.fst this
+  · rintro ⟨hμ, x, hx⟩
+    have hy : y ∈ subgradient B f x := by rw [hx]; rfl
+    have hfx : f x = ((B x y - μ : ℝ) : EReal) := hp.eq_sub_of_mem_subgradient hy hμ
+    refine ⟨le_of_eq hμ, (evalCLM B.flip x).comp (ContinuousLinearMap.fst ℝ F ℝ) -
+      ContinuousLinearMap.snd ℝ F ℝ, ?_⟩
+    have hval : ∀ (w : F) (γ : ℝ),
+        ((evalCLM B.flip x).comp (ContinuousLinearMap.fst ℝ F ℝ) -
+          ContinuousLinearMap.snd ℝ F ℝ) (w, γ) = B x w - γ := by
+      intro w γ
+      simp [LinearMap.flip_apply]
+    rintro ⟨z, β⟩ hzβ
+    have hzβ' : conj B f z ≤ (β : EReal) := hzβ
+    have hzt : conj B f z ≠ ⊤ := ne_top_of_le_ne_top (_root_.EReal.coe_ne_top β) hzβ'
+    have hzc : conj B f z = (((conj B f z).toReal : ℝ) : EReal) :=
+      (_root_.EReal.coe_toReal hzt (hbot z)).symm
+    have hrβ : (conj B f z).toReal ≤ β := by
+      rw [hzc, _root_.EReal.coe_le_coe_iff] at hzβ'
+      exact hzβ'
+    have hfen := hp.le_add_conj (B := B) x z
+    rw [hfx, hzc, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at hfen
+    refine ⟨?_, fun hge => ?_⟩
+    · rw [hval, hval]
+      linarith
+    · rw [hval, hval] at hge
+      have hβr : β = (conj B f z).toReal := by linarith
+      have hzsub : z ∈ subgradient B f x := by
+        refine mem_subgradient_iff_conj_eq.2 ?_
+        rw [hzc, hfx, ← _root_.EReal.coe_sub, _root_.EReal.coe_eq_coe_iff]
+        linarith
+      have hzy : z = y := by rw [hx] at hzsub; exact hzsub
+      subst hzy
+      rw [hμ, _root_.EReal.toReal_coe] at hβr
+      rw [hβr]
+
+/-! ### Exposed points of a set cut out by a positively homogeneous function -/
+
+section Homogeneous
+
+variable [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
+
+omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] in
+/-- **The exposed points of a set are the values of the subdifferential of any positively
+homogeneous function that cuts it out.** If `g` is a closed proper convex positively homogeneous
+function and `C = {x | ⟨x, y⟩ ≤ g y for all y}` — for instance the support function of `C` — then
+`z` is an exposed point of `C` exactly when `z` is the *only* subgradient of `g` at some `y`.
+
+The conjugate of `g` is the indicator of `C` (`conj_eq_indicatorFn_of_posHomogeneous`), so
+`epi g*` is the half-cylinder `C ×ˢ [0, ∞)`, whose exposed points are the exposed points of `C`
+sitting at height `0` (`mem_exposedPoints_prod_Ici_iff`). The statement is then
+`mem_exposedPoints_epi_conj_iff` read at height `0`. -/
+theorem mem_exposedPoints_supportSet_iff [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    {g : F → EReal} (hgh : PosHomogeneous g) (hgc : ConvexFn g) (hgp : Proper g)
+    (hgcl : ClosedFn g) {z : E} :
+    z ∈ (supportSet B.flip g).exposedPoints ℝ ↔ ∃ y : F, subgradient B.flip g y = {z} := by
+  have hne : ∃ w, g w ≠ ⊤ := by
+    obtain ⟨w, hw⟩ := hgp.dom_nonempty
+    exact ⟨w, hw.ne⟩
+  have hind : conj B.flip g = indicatorFn (supportSet B.flip g) :=
+    conj_eq_indicatorFn_of_posHomogeneous hgh hne
+  have hepi : epi (conj B.flip g) = supportSet B.flip g ×ˢ Ici (0 : ℝ) := by
+    rw [hind, epi_indicatorFn]
+  constructor
+  · intro hz
+    have h1 : ((z, (0 : ℝ)) : E × ℝ) ∈ (epi (conj B.flip g)).exposedPoints ℝ := by
+      rw [hepi]
+      exact mem_exposedPoints_prod_Ici_iff.2 ⟨rfl, hz⟩
+    exact ((mem_exposedPoints_epi_conj_iff (B := B.flip) hgc hgp hgcl).1 h1).2
+  · rintro ⟨y, hy⟩
+    have hzsub : z ∈ subgradient B.flip g y := by rw [hy]; rfl
+    have hzt : conj B.flip g z ≠ ⊤ := by
+      intro htop
+      have heq := hgp.mem_subgradient_iff_add_conj_eq.1 hzsub
+      rw [htop, add_comm, _root_.EReal.top_add_of_ne_bot (hgp.ne_bot y)] at heq
+      exact absurd heq (_root_.EReal.top_ne_coe _)
+    have hzC : z ∈ supportSet B.flip g := by
+      by_contra hzn
+      rw [hind, indicatorFn_of_notMem hzn] at hzt
+      exact hzt rfl
+    have hz0 : conj B.flip g z = ((0 : ℝ) : EReal) := by
+      rw [hind, indicatorFn_of_mem hzC, _root_.EReal.coe_zero]
+    have h1 := (mem_exposedPoints_epi_conj_iff (B := B.flip) hgc hgp hgcl
+      (y := z) (μ := (0 : ℝ))).2 ⟨hz0, y, hy⟩
+    rw [hepi] at h1
+    exact (mem_exposedPoints_prod_Ici_iff.1 h1).2
+
+end Homogeneous
+
+end Topology
+
+end Exposed
 
 end Tdaf.ConvexAnalysis

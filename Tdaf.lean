@@ -20,6 +20,7 @@ import Tdaf.Analysis.Convex.Duality.Polar
 import Tdaf.Analysis.Convex.Duality.Relint
 import Tdaf.Analysis.Convex.Duality.Support
 import Tdaf.Analysis.Convex.Epigraph
+import Tdaf.Analysis.Convex.Exposed
 import Tdaf.Analysis.Convex.Face
 import Tdaf.Analysis.Convex.Homogeneous
 import Tdaf.Analysis.Convex.Homogenize
@@ -73,4 +74,5 @@ import Tdaf.Analysis.Convex.Subgradient.Existence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
 import Tdaf.Analysis.Convex.Subgradient.Legendre
 import Tdaf.Analysis.Convex.Subgradient.Monotone
+import Tdaf.Analysis.Convex.Tangent
 import Tdaf.Order.EReal
