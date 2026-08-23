@@ -13,6 +13,7 @@ import Tdaf.Analysis.Convex.Duality.Conjugate
 import Tdaf.Analysis.Convex.Duality.Continuity
 import Tdaf.Analysis.Convex.Duality.Exact
 import Tdaf.Analysis.Convex.Duality.Gauge
+import Tdaf.Analysis.Convex.Duality.GaugeLike
 import Tdaf.Analysis.Convex.Duality.Level
 import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Duality.Pairing
