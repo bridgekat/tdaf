@@ -9,7 +9,117 @@ import Tdaf.Analysis.Convex.Saddle.Equiv
 /-!
 # Kernels of saddle-functions
 
-Work in progress.
+Rockafellar's §34, finite-dimensional half. The **kernel** of a concave-convex function `K` is its
+restriction to `ri (dom₁ K) × ri (dom₂ K)`, and §34 says the kernel is a complete invariant:
+**Theorem 34.4**, two closed proper concave-convex functions are equivalent exactly when their
+kernels coincide; **Theorem 34.5**, every *simple* proper concave-convex function determines one
+equivalence class of closed proper functions with the same kernel, namely the order interval
+between its lower and upper closures. On the way, **Theorem 34.3** describes closedness of a proper
+`K` purely in terms of `C = dom₁ K` and `D = dom₂ K`, without mentioning the closure operations at
+all.
+
+## What is here
+
+**Theorem 34.2**, the clauses `Saddle/Equiv.lean` could not state without relative interiors:
+`ClosedSaddleFn.dom₂_partialCl₂`, `ClosedSaddleFn.dom₁_partialCl₁`,
+`ClosedSaddleFn.eq_partialCl₂_of_mem_relint_dom₁` and its mirror. Corollary 34.2.1 as
+`SaddleEquiv.domSaddle_eq` and `SaddleEquiv.eq_of_mem_relint_dom₁`; Corollary 34.2.2 as
+`LowerClosedFn.closedSaddleFn`, `ClosedSaddleFn.lowerClosedFn_partialCl₂` and mirrors;
+Corollary 34.2.3 as `ClosedSaddleFn.eq_const_of_not_properSaddleFn` together with
+`not_saddleEquiv_const_bot_const_top`; Corollary 34.2.4 as `mem_saddleClass_simpleExt_iff` and
+`mem_saddleClass_simpleExt_iff_saddleEquiv`.
+
+**Theorem 34.3** as `closedSaddleFn_iff_saddleStructure`, with the six clauses packaged as
+`SaddleStructure`.
+
+**Theorem 34.4** as `saddleEquiv_iff_kernel_eq`.
+
+**Theorem 34.5** as `saddleEquiv_lowerCl_upperCl`, `lowerCl_le_upperCl`,
+`closedSaddleFn_of_mem_saddleClass_lowerCl`, `kernel_of_mem_saddleClass_lowerCl` and
+`mem_saddleClass_lowerCl_of_kernel_eq`, summarised in
+`exists_unique_saddleEquiv_class_of_kernel`; Corollary 34.5.1 as
+`exists_unique_saddleEquiv_class_of_finite`.
+
+**Theorem 34.1** is reproved here as `lowerCl_idem` and `upperCl_idem`, with no duality at all.
+
+## Main definitions
+
+* `kernelSet K` — the rectangle `ri (dom₁ K) ×ˢ ri (dom₂ K)`, which is `ri (dom K)`.
+* `kernel K` — `K` on that rectangle and `⊤` off it.
+* `domSaddle K` — Rockafellar's `dom K = dom₁ K × dom₂ K`.
+* `ProperSaddleFn K` — both effective domains nonempty, i.e. `dom K ≠ ∅`.
+* `SaddleStructure K` — the six clauses (a)–(f) of Theorem 34.3, as `ConvexSliceStructure` for `K`
+  and for `saddleSwap K`.
+* `SimpleSaddleFn K` — Rockafellar's *simple*: over `ri (dom₁ K)` the convex slices stay inside
+  `cl (dom₂ K)`, and symmetrically.
+* `lowerSimpleExt C D K`, `upperSimpleExt C D K` — the two simple extensions (§33) of a finite
+  saddle-function on `C × D`.
+
+## Main results
+
+* `saddleEquiv_iff_kernel_eq` — **Theorem 34.4**.
+* `closedSaddleFn_iff_saddleStructure` — **Theorem 34.3**.
+* `exists_unique_saddleEquiv_class_of_kernel` — **Theorem 34.5** and its uniqueness half.
+* `exists_unique_saddleEquiv_class_of_finite` — **Corollary 34.5.1**.
+* `mem_saddleClass_simpleExt_iff_saddleEquiv` — **Corollary 34.2.4**.
+* `kernel_partialCl₂`, `kernel_partialCl₁`, `SimpleSaddleFn.partialCl₂`, `SimpleSaddleFn.partialCl₁`
+  — the operations `cl₁` and `cl₂` preserve simplicity, properness and the kernel: the engine of
+  Theorem 34.5.
+* `clFn_eq_of_eqOn_relint_dom`, `clConcave_eq_of_eqOn_relint_domConcave` — a closed convex function
+  is determined by its values on `ri (dom f)`, in the form §34 consumes it.
+
+## Design notes
+
+**Why `kernel` is a total function, not a `Set.restrict`.** The plan proposed
+`Set.restrict (ri (dom₁ K) ×ˢ ri (dom₂ K)) K`, a function on a dependent subtype. Equalities
+between such functions are unusable: the two sides have different types unless the rectangles are
+already known to be equal, so Theorem 34.4 would have to be stated as a pair of statements, and
+every application would have to transport along the first. Here `kernel K` is a plain
+`U × X → EReal`, equal to `K` on the rectangle and `⊤` off it, and `kernel K = kernel L` is a
+single honest equation. `kernel_eq_iff` unpacks it into "same rectangle, and `Set.EqOn K L` there",
+which is exactly the pair of facts the book uses.
+
+The choice of `⊤` off the rectangle is not arbitrary: on `ri (dom K)` a proper concave-convex
+function is finite (`lt_top_of_mem_kernelSet` and `bot_lt_of_mem_domSaddle`), so the constant `⊤`
+cannot be confused with a value the kernel actually takes, and the encoding loses nothing. Defining
+the kernel as its *domain* instead — the rectangle alone — would make Theorem 34.4 false: `K` and
+`K + 1` have the same rectangle and are not equivalent.
+
+**Finite-dimensionality is only where `ri` is.** The results in this file that mention `ri` are
+layer D. Several that do not are stated at weaker layers and are proved here only because this is
+where they were needed: `lowerCl_idem`/`upperCl_idem` (Theorem 34.1) need nothing beyond a
+topological group, `dom₁_mono`/`dom₂_anti` and the simple-extension domain computations need no
+structure at all, and Corollary 34.2.4 needs no relative interiors. `Saddle/Closure.lean` proves
+Theorem 34.1 through Theorems 33.2 and 30.1, which costs two compatible pairings and locally convex
+partners; the proof here is the two-line closure-operator argument.
+
+**No pairing arguments.** Corollary 33.1.1 — `cl₁` and `cl₂` preserve concavity-convexity — is the
+only input from the duality layer, and it is stated in `Saddle/Defs.lean` for an arbitrary
+compatible pairing. Over a normed space the continuous dual is such a partner
+(`instIsCompatiblePairingTopDual`), so `ConcaveConvexFn.partialCl₂` and `ConcaveConvexFn.partialCl₁`
+supply the pairing internally. That removes the two partner spaces and their pairings from every
+statement in this file.
+
+**Theorem 34.3 is stated as a structure.** The six clauses are related by the swap involution
+`saddleSwap` — (d), (e), (f) are (a), (b), (c) for `saddleSwap K` — so `SaddleStructure` is defined
+as `ConvexSliceStructure K ∧ ConvexSliceStructure (saddleSwap K)` and the concave restatements
+(`SaddleStructure.domConcave_slice`, …) are derived once. The clause "`K (u, ·)` is improper for
+`u ∉ C`" is recorded through the two `-∞` clauses, which is what the proofs use.
+
+## What is not here
+
+* Bifunctions. The bracket form of Theorem 34.2 lives in `Saddle/Equiv.lean`, where the pairings
+  already are; nothing in this file needs it.
+* Corollary 33.3.3, which the book uses to prove Corollary 34.2.4. It is not formalized, so
+  Corollary 34.2.4 is proved directly from the closedness of the slices of the two simple
+  extensions; the hypotheses are separate continuity in each variable rather than joint continuity.
+* The examples of §34 — the non-simple concave-convex function on `R × R`, and the claim that a
+  saddle-function whose effective domain has nonempty interior is simple.
+
+## References
+
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §33 (the simple
+  extensions) and §34 (Theorems 34.1–34.5 and their corollaries).
 -/
 
 namespace Tdaf.ConvexAnalysis
