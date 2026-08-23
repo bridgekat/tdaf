@@ -1822,4 +1822,241 @@ theorem setOf_polarFn_le (h : IsPolarFn f) {α : ℝ} (hα : 0 < α) :
 
 end Theorem155Main
 
+/-! ### Norms — Theorem 15.2
+
+Rockafellar calls a gauge a **norm** when it is finite everywhere, symmetric, and positive away
+from the origin, and states Theorem 15.2 as a correspondence with the *symmetric closed bounded
+convex sets `C` with `0 ∈ int C`*. Two of those three conditions on `C` are the finite-dimensional
+readings of conditions that make sense in general, and it is the general readings that are proved
+here:
+
+* "`0 ∈ int C`", which by Corollary 6.4.1 is his form of "`C` contains a positive multiple of every
+  vector", is `AbsorbsAll C`;
+* "`C` is bounded", which by Theorem 8.4 is his form of "`C` contains no half-line", is
+  `RayFree C`.
+
+Closedness is *not* part of the correspondence here. Rockafellar gets it from Theorem 10.1 (a
+finite convex function on `Rⁿ` is continuous), which is genuinely finite-dimensional; in an
+infinite-dimensional space a finite symmetric positive gauge need not be lower semicontinuous. -/
+
+section Norm
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C : Set E} {k : E → EReal}
+
+/-- `C` **absorbs every point**: every `x` lies in some nonnegative dilate of `C`. This is the
+elementary form in which absorbency enters the gauge; `absorbsAll_of_absorbent` relates it to
+Mathlib's `Absorbent`. -/
+def AbsorbsAll (C : Set E) : Prop := ∀ x : E, ∃ a : ℝ, 0 ≤ a ∧ x ∈ a • C
+
+/-- `C` **contains no ray**: for every `x ≠ 0` some positive multiple of `x` is outside `C`. -/
+def RayFree (C : Set E) : Prop := ∀ x : E, x ≠ 0 → ∃ l : ℝ, 0 < l ∧ l • x ∉ C
+
+/-- **A norm** in Rockafellar's sense (§15, before Theorem 15.2): a gauge that is finite
+everywhere, symmetric, and positive away from the origin. -/
+structure IsNorm (k : E → EReal) : Prop extends IsGauge k where
+  /-- A norm is finite. -/
+  ne_top : ∀ x, k x ≠ ⊤
+  /-- A norm is symmetric. -/
+  map_neg : ∀ x, k (-x) = k x
+  /-- A norm is positive away from the origin. -/
+  pos : ∀ x, x ≠ 0 → 0 < k x
+
+/-- The gauge of the reflected set (compare Mathlib's `gauge_neg_set_eq_gauge_neg`). -/
+theorem gaugeFn_neg_set (C : Set E) (x : E) : gaugeFn (-C) x = gaugeFn C (-x) := by
+  have hset : {a : ℝ | 0 ≤ a ∧ x ∈ a • (-C)} = {a : ℝ | 0 ≤ a ∧ -x ∈ a • C} := by
+    ext a
+    simp only [Set.mem_ofPred, Set.smul_set_neg, Set.mem_neg]
+  rw [gaugeFn_apply, gaugeFn_apply, hset]
+
+/-- A symmetric set has a symmetric gauge. -/
+theorem gaugeFn_map_neg (hsymm : -C = C) (x : E) : gaugeFn C (-x) = gaugeFn C x := by
+  rw [← gaugeFn_neg_set, hsymm]
+
+/-- The gauge is finite at `x` exactly when some dilate of `C` contains `x`. -/
+theorem gaugeFn_ne_top_iff (C : Set E) (x : E) :
+    gaugeFn C x ≠ ⊤ ↔ ∃ a : ℝ, 0 ≤ a ∧ x ∈ a • C := by
+  rw [← lt_top_iff_ne_top, gaugeFn_lt_iff]
+  constructor
+  · rintro ⟨a, ha0, hmem, -⟩
+    exact ⟨a, ha0, hmem⟩
+  · rintro ⟨a, ha0, hmem⟩
+    exact ⟨a, ha0, hmem, EReal.coe_lt_top a⟩
+
+/-- **The gauge vanishes exactly on the rays inside `C`.** -/
+theorem gaugeFn_eq_zero_iff (hC : Convex ℝ C) (h0 : (0 : E) ∈ C) (x : E) :
+    gaugeFn C x = 0 ↔ ∀ l : ℝ, 0 < l → l • x ∈ C := by
+  constructor
+  · intro h l hl
+    have hle : gaugeFn C x ≤ ((0 : ℝ) : EReal) := by rw [h, _root_.EReal.coe_zero]
+    rw [gaugeFn_le_coe_iff_forall_lt hC h0 le_rfl] at hle
+    have hmem := hle l⁻¹ (inv_pos.2 hl)
+    rwa [mem_smul_set_iff_inv_smul_mem₀ (inv_ne_zero hl.ne') C x, inv_inv] at hmem
+  · intro h
+    refine le_antisymm ?_ (gaugeFn_nonneg C x)
+    rw [← _root_.EReal.coe_zero, gaugeFn_le_coe_iff_forall_lt hC h0 le_rfl]
+    intro d hd
+    rw [mem_smul_set_iff_inv_smul_mem₀ hd.ne' C x]
+    exact h d⁻¹ (inv_pos.2 hd)
+
+/-- **Rockafellar, Theorem 15.2**, one direction: the gauge of a symmetric convex set that absorbs
+every point and contains no ray is a norm. -/
+theorem isNorm_gaugeFn (hC : Convex ℝ C) (h0 : (0 : E) ∈ C) (hsymm : -C = C)
+    (habs : AbsorbsAll C) (hray : RayFree C) : IsNorm (gaugeFn C) where
+  toIsGauge := isGauge_gaugeFn hC ⟨0, h0⟩
+  ne_top x := (gaugeFn_ne_top_iff C x).2 (habs x)
+  map_neg x := gaugeFn_map_neg hsymm x
+  pos x hx := by
+    refine lt_of_le_of_ne (gaugeFn_nonneg C x) fun hcon => ?_
+    obtain ⟨l, hl, hlx⟩ := hray x hx
+    exact hlx (((gaugeFn_eq_zero_iff hC h0 x).1 hcon.symm) l hl)
+
+/-- **Rockafellar, Theorem 15.2**, the other direction: the unit level set of a norm is a symmetric
+convex set that absorbs every point and contains no ray. -/
+theorem IsNorm.level_one (hk : IsNorm k) :
+    Convex ℝ {x : E | k x ≤ 1} ∧ (0 : E) ∈ {x : E | k x ≤ 1} ∧ -{x : E | k x ≤ 1} =
+      {x : E | k x ≤ 1} ∧ AbsorbsAll {x : E | k x ≤ 1} ∧ RayFree {x : E | k x ≤ 1} := by
+  refine ⟨hk.toIsGauge.convex_level_one, hk.toIsGauge.zero_mem_level_one, ?_, ?_, ?_⟩
+  · ext x
+    simp only [Set.mem_neg, Set.mem_ofPred, hk.map_neg]
+  · intro x
+    obtain ⟨c, hc⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hk.toIsGauge.ne_bot x)
+      (lt_top_iff_ne_top.2 (hk.ne_top x))
+    have hc0 : (0 : ℝ) ≤ c := by
+      have := hk.nonneg x; rw [hc] at this; exact EReal.coe_nonneg.1 this
+    refine ⟨max c 1, le_trans zero_le_one (le_max_right c 1), ?_⟩
+    have hmax : (0 : ℝ) < max c 1 := lt_of_lt_of_le zero_lt_one (le_max_right c 1)
+    rw [mem_smul_set_iff_inv_smul_mem₀ hmax.ne']
+    change k ((max c 1)⁻¹ • x) ≤ 1
+    rw [hk.posHomogeneous _ (inv_pos.2 hmax) x, hc, ← _root_.EReal.coe_one,
+      Tdaf.EReal.coe_mul_coe, EReal.coe_le_coe_iff, inv_mul_le_iff₀ hmax, mul_one]
+    exact le_max_left c 1
+  · intro x hx
+    obtain ⟨c, hc⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hk.toIsGauge.ne_bot x)
+      (lt_top_iff_ne_top.2 (hk.ne_top x))
+    have hcpos : (0 : ℝ) < c := by
+      have := hk.pos x hx; rw [hc, ← _root_.EReal.coe_zero, EReal.coe_lt_coe_iff] at this
+      exact this
+    refine ⟨2 / c, by positivity, ?_⟩
+    intro hmem
+    have hle : k ((2 / c) • x) ≤ 1 := hmem
+    rw [hk.posHomogeneous _ (by positivity) x, hc, ← _root_.EReal.coe_one,
+      Tdaf.EReal.coe_mul_coe, EReal.coe_le_coe_iff, div_mul_cancel₀ (2 : ℝ) hcpos.ne'] at hle
+    linarith
+
+/-- **Rockafellar, Theorem 15.2** as a characterisation: the norms are exactly the gauges of the
+symmetric convex sets that absorb every point and contain no ray. -/
+theorem isNorm_iff :
+    IsNorm k ↔ ∃ C : Set E, Convex ℝ C ∧ (0 : E) ∈ C ∧ -C = C ∧ AbsorbsAll C ∧ RayFree C ∧
+      k = gaugeFn C := by
+  constructor
+  · intro hk
+    obtain ⟨h1, h2, h3, h4, h5⟩ := hk.level_one
+    exact ⟨{x : E | k x ≤ 1}, h1, h2, h3, h4, h5,
+      (gaugeFn_level_one hk.nonneg hk.posHomogeneous hk.map_zero).symm⟩
+  · rintro ⟨C, hC, h0, hsymm, habs, hray, rfl⟩
+    exact isNorm_gaugeFn hC h0 hsymm habs hray
+
+end Norm
+
+/-! ### The polar of a norm -/
+
+section NormPolar
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C : Set E}
+
+/-- The polar of a symmetric set is symmetric. -/
+theorem polarSet_neg_eq (hsymm : -C = C) : -polarSet B C = polarSet B C := by
+  have hnegC : ∀ x ∈ C, -x ∈ C := fun x hx => by
+    rw [← hsymm]
+    exact Set.neg_mem_neg.2 hx
+  have hb : ∀ (x : E) (y : F), B (-x) (-y) = B x y := fun x y => by
+    simp only [map_neg, LinearMap.neg_apply, neg_neg]
+  have hb2 : ∀ (x : E) (y : F), B x (-y) = B (-x) y := fun x y => by
+    simp only [map_neg, LinearMap.neg_apply]
+  ext y
+  simp only [Set.mem_neg, mem_polarSet]
+  constructor
+  · intro h x hx
+    have hle := h (-x) (hnegC x hx)
+    rwa [hb] at hle
+  · intro h x hx
+    have hle := h (-x) (hnegC x hx)
+    rwa [← hb2] at hle
+
+/-- The polar of a set on which every `⟨·, y⟩` is bounded above absorbs every point. -/
+theorem absorbsAll_polarSet (hbdd : ∀ y : F, ∃ c : ℝ, ∀ x ∈ C, B x y ≤ c) :
+    AbsorbsAll (polarSet B C) := by
+  intro y
+  obtain ⟨c, hc⟩ := hbdd y
+  refine ⟨max c 1, le_trans zero_le_one (le_max_right c 1), ?_⟩
+  have hmax : (0 : ℝ) < max c 1 := lt_of_lt_of_le zero_lt_one (le_max_right c 1)
+  rw [mem_smul_set_iff_inv_smul_mem₀ hmax.ne']
+  intro x hx
+  rw [map_smul, smul_eq_mul, inv_mul_le_iff₀ hmax, mul_one]
+  exact le_trans (hc x hx) (le_max_left c 1)
+
+/-- If the pairing separates the points of `F` using `C` alone, the polar of `C` contains no
+ray. -/
+theorem rayFree_polarSet (hsymm : -C = C)
+    (hsep : ∀ y : F, y ≠ 0 → ∃ x ∈ C, B x y ≠ 0) : RayFree (polarSet B C) := by
+  intro y hy
+  obtain ⟨x, hx, hxy⟩ := hsep y hy
+  have hpos : ∃ z ∈ C, 0 < B z y := by
+    rcases lt_or_gt_of_ne hxy with hlt | hgt
+    · refine ⟨-x, by rw [← hsymm]; exact Set.neg_mem_neg.2 hx, ?_⟩
+      simp only [map_neg, LinearMap.neg_apply]
+      linarith
+    · exact ⟨x, hx, hgt⟩
+  obtain ⟨z, hz, hzy⟩ := hpos
+  refine ⟨2 / B z y, by positivity, fun hmem => ?_⟩
+  have h := hmem z hz
+  rw [map_smul, smul_eq_mul, div_mul_cancel₀ (2 : ℝ) hzy.ne'] at h
+  linarith
+
+/-- **Rockafellar, Theorem 15.2**, last assertion: the polar of a norm is a norm.
+
+The two hypotheses are the general forms of Rockafellar's "`C` is bounded" and "`0 ∈ int C`":
+boundedness in the pairing sense makes the polar absorbing, and separation of `F` by `C` makes the
+polar ray-free. -/
+theorem isNorm_polarGauge_gaugeFn (hC : Convex ℝ C) (h0 : (0 : E) ∈ C) (hsymm : -C = C)
+    (hbdd : ∀ y : F, ∃ c : ℝ, ∀ x ∈ C, B x y ≤ c)
+    (hsep : ∀ y : F, y ≠ 0 → ∃ x ∈ C, B x y ≠ 0) :
+    IsNorm (polarGauge B (gaugeFn C)) := by
+  rw [polarGauge_gaugeFn hC ⟨0, h0⟩]
+  exact isNorm_gaugeFn (convex_polarSet B C) (fun x _ => by simp) (polarSet_neg_eq hsymm)
+    (absorbsAll_polarSet hbdd) (rayFree_polarSet hsymm hsep)
+
+end NormPolar
+
+/-! ### Bridge to Mathlib's `gauge` -/
+
+section MathlibGauge
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C : Set E}
+
+/-- **`gaugeFn` is Mathlib's `gauge`, wherever the latter is meaningful.** Mathlib's `gauge` takes
+the infimum over *positive* scalars in `ℝ`, so on a set that does not absorb `x` it returns
+`sInf ∅ = 0` rather than `+∞`; under an absorbency hypothesis the two agree. -/
+theorem gaugeFn_eq_gauge (hC : Absorbent ℝ C) (x : E) : gaugeFn C x = (gauge C x : EReal) := by
+  refine le_antisymm (le_coe_of_forall_gt_le fun d hd => ?_) ?_
+  · obtain ⟨b, hb0, hbd, hbx⟩ := exists_lt_of_gauge_lt hC hd
+    exact le_trans (gaugeFn_le_of_mem_smul hb0.le hbx) (by exact_mod_cast hbd.le)
+  · rw [gaugeFn_apply]
+    refine le_iInf₂ (f := fun (a : ℝ) (_ : a ∈ {a : ℝ | 0 ≤ a ∧ x ∈ a • C}) => (a : EReal))
+      fun a ha => ?_
+    exact_mod_cast gauge_le_of_mem ha.1 ha.2
+
+/-- An absorbent set has a finite gauge. -/
+theorem gaugeFn_lt_top_of_absorbent (hC : Absorbent ℝ C) (x : E) : gaugeFn C x < ⊤ := by
+  rw [gaugeFn_eq_gauge hC]
+  exact EReal.coe_lt_top _
+
+/-- Mathlib's `Absorbent` implies the elementary absorbency used in Theorem 15.2. -/
+theorem absorbsAll_of_absorbent (hC : Absorbent ℝ C) : AbsorbsAll C := fun x => by
+  obtain ⟨r, hr0, hr⟩ := (hC x).exists_pos
+  exact ⟨r, hr0.le, hr r (Real.norm_of_nonneg hr0.le).ge rfl⟩
+
+end MathlibGauge
+
 end Tdaf.ConvexAnalysis
