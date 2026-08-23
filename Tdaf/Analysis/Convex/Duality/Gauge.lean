@@ -1483,4 +1483,202 @@ theorem polarSet_eq_iff_polarGauge_gaugeFn_eq (B : E →ₗ[ℝ] F →ₗ[ℝ] �
 
 end Corollary1511Sets
 
+/-! ### The obverse — Theorem 15.5
+
+`g(x) = inf {λ > 0 | (fλ)(x) ≤ 1}` (Rockafellar §15). The observation that replaces the geometric
+argument of the book is that this is a **gauge value one dimension higher**:
+`g(x) = γ((x, 1) | epi f)`. Everything about the obverse then follows from the gauge API. -/
+
+section Obverse
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal} {a : ℝ}
+
+/-- Membership in a positive dilate of an epigraph, unfolded. -/
+theorem mk_mem_smul_epi_iff (ha : 0 < a) (f : E → EReal) (x : E) (r : ℝ) :
+    (x, r) ∈ a • epi f ↔ f (a⁻¹ • x) ≤ ((a⁻¹ * r : ℝ) : EReal) := by
+  rw [mem_smul_set_iff_inv_smul_mem₀ ha.ne']
+  exact Iff.rfl
+
+omit [AddCommGroup E] [Module ℝ E] in
+/-- A point at height one lies in the epigraph exactly when the value is at most one. -/
+theorem mk_one_mem_epi_iff (f : E → EReal) (x : E) : (x, (1 : ℝ)) ∈ epi f ↔ f x ≤ 1 := by
+  rw [mem_epi]
+  exact_mod_cast Iff.rfl
+
+/-- **The obverse of `f`** (Rockafellar §15): `g(x) = inf {λ > 0 | (fλ)(x) ≤ 1}`. -/
+noncomputable def obverse (f : E → EReal) : E → EReal :=
+  fun x => ⨅ l ∈ {l : ℝ | 0 < l ∧ smulRight f l x ≤ 1}, (l : EReal)
+
+/-- The defining formula for the obverse. -/
+theorem obverse_apply (f : E → EReal) (x : E) :
+    obverse f x = ⨅ l ∈ {l : ℝ | 0 < l ∧ smulRight f l x ≤ 1}, (l : EReal) := rfl
+
+/-- The admissible set of the obverse is the admissible set of the gauge of `epi f` at height one:
+the scalar `0` is never admissible, because `(x, 1) ∉ 0 • S`. -/
+theorem obverseSet_eq (f : E → EReal) (x : E) :
+    {l : ℝ | 0 < l ∧ smulRight f l x ≤ 1} = {a : ℝ | 0 ≤ a ∧ (x, (1 : ℝ)) ∈ a • epi f} := by
+  ext l
+  constructor
+  · rintro ⟨hl, hle⟩
+    exact ⟨hl.le, by rw [← epi_smulRight hl]; exact (mk_one_mem_epi_iff _ x).2 hle⟩
+  · rintro ⟨hl0, hmem⟩
+    rcases eq_or_lt_of_le hl0 with hzero | hl
+    · exfalso
+      obtain ⟨p, -, hp⟩ := hmem
+      rw [← hzero] at hp
+      simpa using congrArg Prod.snd hp
+    · exact ⟨hl, (mk_one_mem_epi_iff _ x).1 (by rw [← epi_smulRight hl] at hmem; exact hmem)⟩
+
+/-- **The obverse is a gauge value one dimension up**: `g(x) = γ((x, 1) | epi f)`. -/
+theorem obverse_eq_gaugeFn (f : E → EReal) (x : E) :
+    obverse f x = gaugeFn (epi f) (x, (1 : ℝ)) := by
+  rw [obverse_apply, gaugeFn_apply, obverseSet_eq]
+
+/-- The epigraph of the obverse is a slice of the epigraph of the gauge of `epi f`. -/
+theorem epi_obverse (f : E → EReal) :
+    epi (obverse f) = (fun p : E × ℝ => ((p.1, (1 : ℝ)), p.2)) ⁻¹' epi (gaugeFn (epi f)) := by
+  ext p
+  simp only [Set.mem_preimage, mem_epi, obverse_eq_gaugeFn]
+
+/-- The obverse is nonnegative. -/
+theorem obverse_nonneg (f : E → EReal) (x : E) : 0 ≤ obverse f x := by
+  rw [obverse_eq_gaugeFn]
+  exact gaugeFn_nonneg _ _
+
+/-- The obverse never takes the value `⊥`. -/
+theorem obverse_ne_bot (f : E → EReal) (x : E) : obverse f x ≠ ⊥ := by
+  rw [obverse_eq_gaugeFn]
+  exact gaugeFn_ne_bot _ _
+
+end Obverse
+
+/-! ### Two `EReal` lemmas used for the obverse -/
+
+section ErealAux
+
+/-- An infimum over the positive reals above `z` is `z` itself, for `z ≥ 0`. -/
+theorem biInf_coe_pos_ge_eq {z : EReal} (hz : 0 ≤ z) :
+    (⨅ ν ∈ {ν : ℝ | 0 < ν ∧ z ≤ (ν : EReal)}, (ν : EReal)) = z := by
+  refine le_antisymm ?_ (le_iInf₂ fun ν hν => hν.2)
+  rcases eq_or_lt_of_le (le_top (a := z)) with htop | hlt
+  · rw [htop]
+    exact le_top
+  obtain ⟨r, hr⟩ :=
+    Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (fun hb => by simp [hb] at hz) hlt
+  have hr0 : (0 : ℝ) ≤ r := by rw [hr] at hz; exact EReal.coe_nonneg.1 hz
+  refine le_of_le_of_eq (le_coe_of_forall_gt_le fun d hd => ?_) hr.symm
+  refine iInf₂_le (f := fun (ν : ℝ) (_ : ν ∈ {ν : ℝ | 0 < ν ∧ z ≤ (ν : EReal)}) => (ν : EReal))
+    d ⟨lt_of_le_of_lt hr0 hd, ?_⟩
+  rw [hr]
+  exact_mod_cast hd.le
+
+/-- Two nonnegative extended reals with the same real upper bounds above zero are equal. -/
+theorem eq_of_forall_pos_le_iff {A B : EReal} (hA : 0 ≤ A) (hB : 0 ≤ B)
+    (h : ∀ ν : ℝ, 0 < ν → (A ≤ (ν : EReal) ↔ B ≤ (ν : EReal))) : A = B := by
+  refine le_antisymm ?_ ?_
+  · by_contra hcon
+    obtain ⟨ν, hBν, hνA⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 (not_le.1 hcon)
+    have hν0 : (0 : ℝ) < ν := by
+      have hlt : (0 : EReal) < (ν : EReal) := lt_of_le_of_lt hB hBν
+      rw [← _root_.EReal.coe_zero, EReal.coe_lt_coe_iff] at hlt
+      exact hlt
+    exact absurd ((h ν hν0).2 hBν.le) (not_le.2 hνA)
+  · by_contra hcon
+    obtain ⟨ν, hAν, hνB⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 (not_le.1 hcon)
+    have hν0 : (0 : ℝ) < ν := by
+      have hlt : (0 : EReal) < (ν : EReal) := lt_of_le_of_lt hA hAν
+      rw [← _root_.EReal.coe_zero, EReal.coe_lt_coe_iff] at hlt
+      exact hlt
+    exact absurd ((h ν hν0).1 hAν.le) (not_le.2 hνB)
+
+end ErealAux
+
+/-! ### The obverse of a nonnegative closed convex function -/
+
+section ObverseClosed
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [ContinuousSMul ℝ E]
+  [IsTopologicalAddGroup E] {f : E → EReal} {ν : ℝ}
+
+omit [ContinuousSMul ℝ E] in
+/-- The epigraph of a member of the class of Corollary 15.4.1 is convex, closed, and contains the
+origin — the hypotheses of the closed gauge theory. -/
+theorem IsPolarFn.epi_closed_convex_zero (h : IsPolarFn f) :
+    Convex ℝ (epi f) ∧ IsClosed (epi f) ∧ (0 : E × ℝ) ∈ epi f :=
+  ⟨h.convexFn.convex_epi, isClosed_epi_of_closedFn h.nonneg h.closedFn, by
+    rw [mem_epi]; simpa using h.map_zero.le⟩
+
+/-- **The defining inequality of the obverse**, for a member of the class of Corollary 15.4.1:
+`g(x) ≤ ν` exactly when `(fν)(x) ≤ 1`, for `ν > 0`. -/
+theorem obverse_le_coe_iff (h : IsPolarFn f) (hν : 0 < ν) (z : E) :
+    obverse f z ≤ (ν : EReal) ↔ f (ν⁻¹ • z) ≤ ((ν⁻¹ : ℝ) : EReal) := by
+  obtain ⟨hC, hCcl, hC0⟩ := h.epi_closed_convex_zero
+  rw [obverse_eq_gaugeFn, gaugeFn_le_coe_iff hC hC0 hCcl hν, mk_mem_smul_epi_iff hν, mul_one]
+
+/-- The obverse vanishes at the origin. -/
+@[simp] theorem obverse_zero (h : IsPolarFn f) : obverse f 0 = 0 := by
+  refine le_antisymm (le_coe_of_forall_gt_le fun d hd => ?_) (obverse_nonneg f 0)
+  have hd0 : (0 : ℝ) < d := by exact_mod_cast hd
+  rw [obverse_le_coe_iff h hd0, smul_zero, h.map_zero]
+  exact_mod_cast le_of_lt (inv_pos.2 hd0)
+
+omit [ContinuousSMul ℝ E] [IsTopologicalAddGroup E] in
+/-- The obverse is convex. -/
+theorem convexFn_obverse (h : IsPolarFn f) : ConvexFn (obverse f) := by
+  have hk : ConvexFn (gaugeFn (epi f)) := convexFn_gaugeFn h.convexFn.convex_epi
+  refine convexFn_iff_convex_epi.2 fun p hp q hq s t hs ht hst => ?_
+  rw [mem_epi, obverse_eq_gaugeFn] at hp hq ⊢
+  have hcomb := hk.convex_epi (show ((p.1, (1 : ℝ)), p.2) ∈ epi (gaugeFn (epi f)) from hp)
+    (show ((q.1, (1 : ℝ)), q.2) ∈ epi (gaugeFn (epi f)) from hq) hs ht hst
+  have hkey : s • (((p.1, (1 : ℝ))), p.2) + t • (((q.1, (1 : ℝ))), q.2)
+      = ((((s • p + t • q).1, (1 : ℝ))), (s • p + t • q).2) := by
+    simp [hst]
+  rw [hkey] at hcomb
+  exact hcomb
+
+/-- The obverse is closed. -/
+theorem closedFn_obverse (h : IsPolarFn f) : ClosedFn (obverse f) := by
+  obtain ⟨hC, hCcl, hC0⟩ := h.epi_closed_convex_zero
+  refine closedFn_of_isClosed_epi (obverse_nonneg f) ?_
+  rw [epi_obverse]
+  refine IsClosed.preimage ?_
+    (isClosed_epi_of_closedFn (gaugeFn_nonneg _) (closedFn_gaugeFn hC hC0 hCcl))
+  exact (continuous_fst.prodMk continuous_const).prodMk continuous_snd
+
+/-- **Rockafellar, Theorem 15.5**, first assertion: the obverse of a nonnegative closed convex
+function vanishing at the origin is another one. -/
+theorem isPolarFn_obverse (h : IsPolarFn f) : IsPolarFn (obverse f) where
+  nonneg := obverse_nonneg f
+  map_zero := obverse_zero h
+  convexFn := convexFn_obverse h
+  closedFn := closedFn_obverse h
+
+/-- **Rockafellar, Theorem 15.5**, second assertion: `f` is the obverse of its obverse. -/
+theorem obverse_obverse (h : IsPolarFn f) : obverse (obverse f) = f := by
+  funext z
+  rw [obverse_apply, obverseSet_eq]
+  have hset : {a : ℝ | 0 ≤ a ∧ (z, (1 : ℝ)) ∈ a • epi (obverse f)}
+      = {a : ℝ | 0 < a ∧ f z ≤ (a : EReal)} := by
+    ext a
+    constructor
+    · rintro ⟨ha0, hmem⟩
+      rcases eq_or_lt_of_le ha0 with hzero | ha
+      · exfalso
+        obtain ⟨p, -, hp⟩ := hmem
+        rw [← hzero] at hp
+        simpa using congrArg Prod.snd hp
+      refine ⟨ha, ?_⟩
+      rw [mk_mem_smul_epi_iff ha, mul_one, obverse_le_coe_iff h (inv_pos.2 ha), inv_inv,
+        smul_inv_smul₀ ha.ne'] at hmem
+      exact hmem
+    · rintro ⟨ha, hle⟩
+      refine ⟨ha.le, ?_⟩
+      rw [mk_mem_smul_epi_iff ha, mul_one, obverse_le_coe_iff h (inv_pos.2 ha), inv_inv,
+        smul_inv_smul₀ ha.ne']
+      exact hle
+  rw [hset]
+  exact biInf_coe_pos_ge_eq (h.nonneg z)
+
+end ObverseClosed
+
 end Tdaf.ConvexAnalysis
