@@ -58,9 +58,12 @@ is a point where the dual objective attains `inf F 0`, and weak duality
 (`iSup_adjointBifun_zero_le`) then pins the dual optimal value down, so normality is immediate from
 Theorem 30.3. This also removes the finite-dimensionality that the subgradient route would need.
 
-`ConcaveFn.clConcave_eq_of_mem_relint_domConcave` is the concave mirror of Theorem 7.4
-(`ConvexFn.clFn_eq_of_mem_relint_dom`) and would sit more naturally in `Duality/ConcaveConj.lean`;
-it lives here because that file is a layer-C module that does not import `RelativeInterior`.
+**The concave mirror of Theorem 7.4 is not proved here.** It is
+`ConcaveFn.clConcave_eq_of_mem_relint_domConcave` in `Saddle/Kernel.lean`, together with the rest
+of its family; `Normal.lean` cannot import that module, so `ConcaveStronglyConsistent.concaveNormal`
+inlines the two-line proof. Both copies want a common home: the `clConcave` block of
+`Duality/ConcaveConj.lean` split into a `ConcaveClosure.lean` that `RelativeInterior.lean` can
+import, so the concave Theorem 7.4 can sit next to the convex one.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -377,20 +380,6 @@ end Thm304Strong
 
 /-! ### The concave mirror of Theorem 7.4, and Theorem 30.4(b) -/
 
-section ConcaveRelint
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
-  {g : E → EReal}
-
-/-- The concave mirror of `ConvexFn.clFn_eq_of_mem_relint_dom` (**Theorem 7.4**): the concave
-closure agrees with `g` at every relative interior point of `domConcave g`. -/
-theorem ConcaveFn.clConcave_eq_of_mem_relint_domConcave (hg : ConcaveFn g) {x : E}
-    (hx : x ∈ ri (domConcave g)) : clConcave g x = g x := by
-  rw [domConcave_eq_dom_neg] at hx
-  rw [clConcave_apply, (concaveFn_iff_convexFn_neg.1 hg).clFn_eq_of_mem_relint_dom hx, neg_neg]
-
-end ConcaveRelint
-
 section ConcaveThm304
 
 variable {V Y : Type*} [AddCommGroup V] [Module ℝ V] [NormedAddCommGroup Y] [NormedSpace ℝ Y]
@@ -399,8 +388,11 @@ variable {V Y : Type*} [AddCommGroup V] [Module ℝ V] [NormedAddCommGroup Y] [N
 /-- The concave mirror of **Theorem 30.4(a)**: a strongly consistent concave program is normal. -/
 theorem ConcaveStronglyConsistent.concaveNormal (hs : ConcaveStronglyConsistent G)
     (hG : ConcaveBifun G) : ConcaveNormal G := by
-  have hri : (0 : Y) ∈ ri (domConcave (supBifun G)) := by rwa [domConcave_supBifun]
-  exact (concaveFn_supBifun hG).clConcave_eq_of_mem_relint_domConcave hri
+  have hri : (0 : Y) ∈ ri (dom fun z => -(supBifun G z)) := by
+    rw [← domConcave_eq_dom_neg, domConcave_supBifun]
+    exact hs
+  rw [ConcaveNormal, clConcave_apply,
+    (concaveFn_supBifun hG).convexFn_neg.clFn_eq_of_mem_relint_dom hri, neg_neg]
 
 end ConcaveThm304
 
