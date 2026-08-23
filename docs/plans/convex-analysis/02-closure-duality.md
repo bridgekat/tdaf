@@ -199,7 +199,7 @@ noncomputable abbrev biconj (B) (f : E → EReal) : E → EReal := conj B.flip (
 | `conjEquiv` | the induced involution on `ClosedProperConvexFn` | Cor 12.2.1 |
 | `conj_eq_iSup_relint` | the sup may be restricted to `ri (dom f)` | Cor 12.2.2 *(finite-dim)* |
 | `conj_comp_affine` | conjugate of `f ∘ T` for an affine `T` | Thm 12.3 |
-| `monotoneConj` | the monotone conjugate `g⁺` on the nonnegative orthant | Thm 12.4 *(surface)* |
+| `monotoneConj`, `monotoneConj_monotoneConj` — **done**, in `Duality/GaugeLike.lean` | the monotone conjugate `g⁺`, in one dimension | **Thm 12.4**. Stated as a genuine involution by *truncating* `g⁺` to `+∞` off the half-line; the proof is Fenchel–Moreau for `mulPairing`. There is no general-cone version: the `ℝⁿ` orthant proof uses `y ↦ max(y,0)`, which no general cone supplies |
 
 **Proof plan for `biconj_eq_clFn`.**
 
@@ -305,7 +305,7 @@ noncomputable def gaugeFn (C : Set E) : E → EReal :=
 | `polarGauge`, `polarGauge_polarGauge`, `polarGaugeEquiv` — **done** | **Thm 15.1**, Cor 15.1.1–2 |
 | `isGauge_iff`, `gaugeEquiv` — **done** | the §15 gauge characterisation (the paragraph before Thm 15.1) |
 | `IsNorm`, `isNorm_iff`, `isNorm_polarGauge_gaugeFn` — **done** | **Thm 15.2** |
-| — | Thm 15.3, Cors 15.3.1–15.3.2 | not done — needs the monotone conjugate on `[0, +∞]` |
+| `monotoneComp`, `conj_monotoneComp`, `closedProperConvexFn_monotoneComp`, `PosHomogeneousDeg`, `degGauge`, `posHomogeneousDeg_iff_exists_isGauge`, `conj_monotoneComp_powHalfLine`, `polarGauge_degGauge`, `pairing_le_rpow_mul_rpow`, `polarSet_setOf_le_inv` — **done**, in `Duality/GaugeLike.lean` | **Thm 15.3**'s first assertion and conjugacy formula `(g ∘ k)* = g⁺ ∘ k°`, and **Cors 15.3.1–15.3.2** in full, Hölder included. Beyond Thm 12.4 it needed the Thm 8.6 growth estimate for a non-constant convex function of the half-line and right-continuity at the origin — and, for the first assertion only, Fenchel–Moreau, hence a compatible pairing, a continuous flip and local convexity of `E`; the conjugacy formula needs none of those. **Not done**: the converse half of Thm 15.3 (gauge-like ⇒ `g ∘ k`), blocked on convexity of the reconstructed `g` |
 | `polarFn`, `polarFn_polarFn`, `polarFnEquiv` — **done** | **Thm 15.4**, Cor 15.4.1 |
 | `obverse`, `obverse_obverse`, `conj_eq_obverse_polarFn`, `polarFn_eq_obverse_conj`, `polarFn_obverse`, `conj_obverse`, `polarFn_conj_eq_conj_polarFn` — **done** | **Thm 15.5**, Cor 15.5.1 |
 

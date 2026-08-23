@@ -2382,6 +2382,84 @@ recovered for arbitrary finite-dimensional real normed `E` by transporting throu
 `Exposed.lean` below. **Theorem 11.2 was never the blocker** either — it is
 `exists_separates_of_isOpen_of_disjoint_affine` in `Separation.lean`.
 
+### `Tdaf/Analysis/Convex/Duality/GaugeLike.lean`
+
+**Theorem 12.4** in one dimension, and everything in **§15** that composes a nondecreasing convex
+function of the half-line with a gauge: **Theorem 15.3**'s first assertion and conjugacy formula,
+and **Corollaries 15.3.1–15.3.2** in full.
+
+```lean
+structure MonotoneHalfLineFn (g : ℝ → EReal) : Prop     -- +∞ on (-∞,0), monotone, convex, closed
+noncomputable def monotoneConj (g : ℝ → EReal) : ℝ → EReal            -- the monotone conjugate g⁺
+theorem monotoneConj_monotoneConj …                                  -- Thm 12.4: g⁺⁺ = g
+noncomputable def monotoneComp (g : ℝ → EReal) (k : E → EReal) : E → EReal        -- g ∘ k
+theorem conj_monotoneComp …                                         -- Thm 15.3: (g ∘ k)* = g⁺ ∘ k°
+theorem closedProperConvexFn_monotoneComp …                          -- Thm 15.3, first assertion
+def PosHomogeneousDeg … ; noncomputable def degGauge …
+theorem posHomogeneousDeg_iff_exists_isGauge …                       -- Cor 15.3.1
+theorem conj_monotoneComp_powHalfLine …                              -- Cor 15.3.1, the conjugate
+theorem polarGauge_degGauge … ; theorem pairing_le_rpow_mul_rpow …    -- Cor 15.3.2, Hölder
+theorem polarSet_setOf_le_inv …                                      -- Cor 15.3.2, the polar set
+```
+
+**Theorem 12.4 is stated as a genuine involution, not a bijection onto a smaller class.** The
+monotone conjugate is *truncated* — `+∞` off the half-line — and that is what makes
+`monotoneConj_monotoneConj` an identity. The whole proof reduces to Fenchel–Moreau for
+`mulPairing` plus `iSup_sub_monotoneConj`: the negative half-line contributes nothing at
+nonnegative arguments. **There is no general-cone version** — the `ℝⁿ` orthant proof uses the
+lattice operation `y ↦ max(y, 0)`, which has no analogue for a general cone.
+
+**"Non-constant" is not needed for the conjugacy formula, and is genuinely needed for the first
+assertion.** `conj_monotoneComp` is proved without it. What it is consumed by is *closedness* of
+`g ∘ k`, through `MonotoneHalfLineFn.exists_monotoneConj_ne_top` — which is what lets the formula
+be applied a *second* time, to `g⁺ ∘ k°`. The book does not remark on this, but for constant `g`
+the composite is `g(0)` on `dom k` and `+∞` off it, and `dom k` need not be closed even for a
+closed gauge: for `C = {(a,b) | b ≥ a²}` in `ℝ²`, `dom γ(·|C) = {b > 0} ∪ {0}`. Not an
+infinite-dimensional artefact.
+
+**"Finite at some `ζ > 0`" is used only in the `k°(y) = +∞` branch, and cannot be dropped there.**
+Same parabola: with `g = δ(·|{0})` the composite is `δ(·|{k ≤ 0})`, whose conjugate is the support
+function of `0⁺C`, while the right-hand side is `+∞` off the *barrier* cone of `C` — strictly
+smaller for the parabola. At `y = (1,0)` the left side is `0` and the right side is `+∞`.
+
+**The step "λ = sup{ζ ≥ 0 | g(ζ) ≤ α} is finite and positive" needs an argument the book does not
+give.** Finiteness is the Theorem 8.6 growth estimate (`bddAbove_setOf_le`); positivity is a
+right-continuity statement at the origin which is *false* for a nondecreasing closed convex `g`
+finite only at `0`, and needs exactly the finiteness-at-a-positive-level hypothesis already present
+(`MonotoneHalfLineFn.exists_pos_le`).
+
+**Corollary 15.3.1 does not need Theorem 15.3's characterisation**, which is why both corollaries
+survive the gap below. The book says "`f` is gauge-like, so the corollary follows"; the gauge can
+instead be written down directly as `(pf)^{1/p}`, whose unit level set is `{f ≤ 1/p}`, and
+`gaugeFn_level_one` + `convexFn_gaugeFn` + `closedFn_gaugeFn` finish it. Corollary 15.3.1 also
+silently uses `f(0) = 0` and `f ≥ 0`; closedness is genuinely required for the first, since
+`f = λᵖ` on a ray and `+∞` elsewhere is convex, proper and degree-`p` homogeneous with
+`f(0) = +∞` (`PosHomogeneousDeg.map_zero_eq_zero`).
+
+**Almost none of this needs a compatible pairing.** `conj_monotoneComp` holds for an arbitrary
+bilinear `B`; topology on `E` enters only through `ClosedFn k`, and only in the `≤` half, and
+`ClosedFn k` itself is used only through `x ∈ k(x) • {k ≤ 1}`. Compatibility, continuity and local
+convexity appear only in `closedFn_monotoneComp`, where Fenchel–Moreau is invoked.
+
+**Not here**: the *converse* half of Theorem 15.3 — gauge-like closed proper convex `f` implies
+`f = g ∘ k` — and with it an `IsGaugeLike` predicate. The forward half is complete
+(`setOf_monotoneComp_le_eq_smul` shows every `g ∘ k` is gauge-like). The blocker is not the
+level-set bookkeeping but *convexity* of the reconstructed `g`: defining `g(ζ) = inf{α | ζ ≤ λ_α}`
+gives monotonicity and closedness for free and says nothing about convexity, which has to come from
+transporting `f` along a ray, `g(ζ) = f(ζ • x₁)` for some `x₁` with `k(x₁) = 1`. That needs the
+book's own case split on whether `{f ≤ α₀}` is a cone, and a proof that `α ↦ λ_α` is a bijection
+onto its range in the non-cone case.
+
+**Relocation candidates**: `eq_top_or_exists_coe_of_nonneg` → `Tdaf/Order/EReal.lean`;
+`pairing_le_mul_of_gauge`, `pairing_nonpos_of_gauge_eq_zero` and `setOf_polarGauge_le_one` →
+`Duality/Gauge.lean` (all three are about a gauge and its polar, not about the composite);
+`PosHomogeneousDeg` and its basic lemmas → `Homogeneous.lean`; `ClosedFn.restrict` →
+`Operations/Basic.lean`; the two `mulPairing.flip` instances → beside `mulPairing` in
+`Duality/Gauge.lean`; `rpow_inv_rpow`, `rpow_rpow_inv`, `rpow_inv_le_one_iff` are Mathlib-shaped
+`Real.rpow` gaps and should be upstreamed or given a `Tdaf/Analysis/SpecialFunctions/` home.
+`convexFn_monotoneComp` is really Rockafellar's Theorem 5.1 and belongs in `Operations/` if a
+general composition module ever appears.
+
 ### `Tdaf/Analysis/Convex/Exposed.lean`
 
 **Theorem 18.7 and Corollary 18.7.1**, on the strength of a definition the book leaves informal.
@@ -3622,6 +3700,57 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      `ClosedProperConvexFn f` but is expected to have type `ConvexFn ?m`" — three files away from
      the new declaration. That is the third such collision on this project (gotcha 34's hazard,
      realised again); `grep -rn "theorem <name>" Tdaf/` costs one second.
+
+156. **`Filter.Tendsto.prodMk` lands in the product filter, not `𝓝` of a pair.**
+     `Tendsto (fun n => (u n, v n)) atTop (𝓝 (a, b))` is not what `Tendsto.prodMk h₁ h₂`
+     proves. `rw [nhds_prod_eq]` first, then `exact Filter.Tendsto.prodMk h₁ h₂`. (Cf. gotcha 71.)
+
+157. **A theorem whose *conclusion* does not mention the pairing does not receive the section's `B`
+     at all.** Automatic variable inclusion is driven by the statement, so a theorem concluding
+     `ClosedFn (monotoneComp g k)` silently loses `{B}` *and every instance attached to it*; the
+     symptom is "unknown identifier `B`" deep inside the proof. Make `B` an explicit argument of
+     the theorem — and per gotcha 105 it must then be *removed* from the `variable` line, not
+     shadowed, or you get "invalid argument name B". This is the flip side of gotcha 38.
+
+158. **`EReal.sub_le_sub` swaps its second argument.** The signature is
+     `(h : x ≤ y) (h' : t ≤ z) : x - z ≤ y - t` — the subtrahends cross over. To weaken
+     `a - u ≤ a - v` you pass `h' : v ≤ u`. Feeding it the other way round produces a unification
+     failure that names a metavariable rather than an obviously wrong direction. (Gotcha 41's
+     family.) Its named arguments are `{x y z t}`, so `(y := 0)` is how you pin the second one.
+
+159. **`rw [← Real.rpow_one s]` rewrites every `s` in the goal**, including the ones inside
+     `s ^ (q - 1)` and `s ^ q`, which makes the goal harder than before. Build the identity as
+     `have hadd := Real.rpow_add hs (q-1) 1`, `rw [Real.rpow_one] at hadd`, then `rw [← hadd]`.
+
+160. **There is no fixed-exponent `Real.rpow_le_rpow_iff`.** `Real.rpow_le_rpow` takes
+     base-nonnegativity first: `(h : 0 ≤ x) (h₁ : x ≤ y) (h₂ : 0 ≤ z) : x ^ z ≤ y ^ z`. Get the
+     converse direction from the round trip `(z ^ p⁻¹) ^ p = z` (`← Real.rpow_mul`, then
+     `inv_mul_cancel₀`) rather than hunting for an iff.
+     `Real.rpow_lt_rpow_of_exponent_gt (hx : 0 < x) (hx1 : x < 1) (hyz : z < y) : x ^ y < x ^ z` is
+     the smaller-base companion.
+
+161. **`Real.HolderConjugate p q` is the current packaging of `1/p + 1/q = 1`, `1 < p`.**
+     `Real.IsConjExponent` is gone; `HolderConjugate p q` is an `abbrev` for `HolderTriple p q 1`.
+     Useful projections: `h.lt : 1 < p`, `h.pos`, `h.symm`, `h.one_sub_inv : 1 - p⁻¹ = q⁻¹`,
+     `h.sub_one_mul_conj : (p - 1) * q = p`. `Real.young_inequality_of_nonneg` consumes it directly.
+
+162. **`⨅ t : ℝ, ⨅ _ : k x ≤ (t : EReal), g t` is the `Decidable`-free way to write a composite
+     `g ∘ k` extended by `g(+∞) = +∞`** — gotcha 8 applied to a *value* rather than a proposition.
+     Both defining equations are then one-liners (`iInf_eq_top` + `iInf_neg` for the `⊤` branch,
+     `le_antisymm (iInf_le_of_le c _) (le_iInf _)` for the finite one, where monotonicity of `g` is
+     what makes the infimum attained), and convexity falls straight out of `convexFn_iff_forall_lt`
+     with *no* monotonicity at all, because `iInf_lt_iff` hands back a witnessing level on each
+     side.
+
+163. **`ClosedFn h` will not `rw`.** `ClosedFn f` is a `def` unfolding to `clFn f = f`, so
+     `rw [hcl]` reports that `hcl` is not an equation. Bind `have hcl' : clFn f = f := hcl` first.
+     To *prove* a `ClosedFn` goal use `change clFn f = f` — not `show` (gotcha 59), not
+     `rw [ClosedFn]`. Gotcha 96's family.
+
+164. **`IsClosed.csSup_mem` is the clean route to "a nondecreasing lsc function attains its crossing
+     level".** `{t | 0 ≤ t ∧ g t ≤ α}` is `Ici 0 ∩ g ⁻¹' Iic α`, closed via
+     `lowerSemicontinuous_iff_isClosed_preimage`, and its `sSup` lies in it. That replaces an entire
+     `liminf`/sequence argument. (In `Mathlib/Topology/Order/Monotone.lean`.)
 
 
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
