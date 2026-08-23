@@ -104,7 +104,7 @@ end ERealAux
 
 section AuxTopological
 
-variable {E : Type*} [NormedAddCommGroup E] {f g : E → EReal}
+variable {E : Type*} [TopologicalSpace E] {f g : E → EReal}
 
 /-- A convex closure that reaches `-∞` anywhere is the constant `-∞`. -/
 theorem clFn_eq_bot_of_eq_bot {x₀ : E} (h : f x₀ = ⊥) : clFn f = fun _ => (⊥ : EReal) := by
@@ -1752,5 +1752,308 @@ theorem exists_unique_saddleEquiv_class_of_finite (hC : Convex ℝ C)
   rw [← huniq L hclL hCCL hpL, kernel_lowerSimpleExt hCne hDne]
 
 end LowerSimpleExtFD
+
+/-! ### Closedness of a finite continuous function on a closed set -/
+
+section ClosedRestrict
+
+variable {E : Type*} [TopologicalSpace E] [AddCommGroup E] [IsTopologicalAddGroup E]
+  {s : Set E} {g : E → ℝ}
+
+omit [AddCommGroup E] [IsTopologicalAddGroup E] in
+/-- The epigraph of a finite continuous function on a closed set, extended by `⊤`, is closed. -/
+theorem isClosed_epi_restrict_coe (hs : IsClosed s) (hg : ContinuousOn g s) :
+    IsClosed (epi (restrict s fun x => (g x : EReal))) := by
+  rw [epi_restrict_coe]
+  have hcont : ContinuousOn (fun p : E × ℝ => g p.1 - p.2) (s ×ˢ (Set.univ : Set ℝ)) :=
+    (hg.comp continuousOn_fst fun p hp => hp.1).sub continuousOn_snd
+  have h := hcont.preimage_isClosed_of_isClosed (hs.prod isClosed_univ)
+    (isClosed_Iic (a := (0 : ℝ)))
+  convert h using 1
+  ext p
+  simp [Set.mem_prod]
+
+/-- **Rockafellar, §7**: a finite continuous function on a closed set, extended by `⊤`, is a closed
+function. -/
+theorem closedFn_restrict_coe (hs : IsClosed s) (hg : ContinuousOn g s) :
+    ClosedFn (restrict s fun x => (g x : EReal)) := by
+  have hne : ∀ x, (restrict s fun x => (g x : EReal)) x ≠ ⊥ := by
+    intro x
+    by_cases hx : x ∈ s <;> simp [hx]
+  exact (closedFn_iff_lowerSemicontinuous hne).2
+    (lowerSemicontinuous_iff_isClosed_epi.2 (isClosed_epi_restrict_coe hs hg))
+
+/-- The concave mirror: a finite continuous function on a closed set, extended by `-∞`, is a closed
+concave function. -/
+theorem closedConcaveFn_restrictConcave_coe (hs : IsClosed s) (hg : ContinuousOn g s) :
+    ClosedConcaveFn (restrictConcave s fun x => (g x : EReal)) := by
+  rw [closedConcaveFn_iff, neg_restrictConcave]
+  simp only [← EReal.coe_neg]
+  exact closedFn_restrict_coe hs hg.neg
+
+end ClosedRestrict
+
+/-! ### The upper simple extension -/
+
+section UpperSimpleExt
+
+variable {U X : Type*} {C : Set U} {D : Set X} {K : U × X → ℝ}
+
+/-- Rockafellar's **upper simple extension** `K₂` of a finite saddle-function `K` on `C × D`
+(§33): `K` on `C × D`, `-∞` on `Cᶜ × D`, and `+∞` off `D`. -/
+noncomputable def upperSimpleExt (C : Set U) (D : Set X) (K : U × X → ℝ) : U × X → EReal :=
+  fun p => restrict D (fun x => restrictConcave C (fun u => (K (u, x) : EReal)) p.1) p.2
+
+@[simp] theorem upperSimpleExt_of_mem {p : U × X} (hu : p.1 ∈ C) (hx : p.2 ∈ D) :
+    upperSimpleExt C D K p = (K p : EReal) := by
+  simp [upperSimpleExt, hu, hx]
+
+@[simp] theorem upperSimpleExt_of_notMem_right {p : U × X} (hx : p.2 ∉ D) :
+    upperSimpleExt C D K p = ⊤ := by
+  simp [upperSimpleExt, hx]
+
+@[simp] theorem upperSimpleExt_of_notMem_left {p : U × X} (hu : p.1 ∉ C) (hx : p.2 ∈ D) :
+    upperSimpleExt C D K p = ⊥ := by
+  simp [upperSimpleExt, hu, hx]
+
+/-- Over `C` the convex slice of `K₂` agrees with that of `K₁`. -/
+theorem upperSimpleExt_slice₂_of_mem {u : U} (hu : u ∈ C) :
+    (fun x => upperSimpleExt C D K (u, x)) = restrict D fun x => (K (u, x) : EReal) := by
+  funext x
+  by_cases hx : x ∈ D <;> simp [upperSimpleExt, hu, hx]
+
+/-- Off `C` the convex slice of `K₂` is `-∞` on `D` and `+∞` elsewhere. -/
+theorem upperSimpleExt_slice₂_of_notMem {u : U} (hu : u ∉ C) :
+    (fun x => upperSimpleExt C D K (u, x)) = restrict D fun _ => (⊥ : EReal) := by
+  funext x
+  by_cases hx : x ∈ D <;> simp [upperSimpleExt, hu, hx]
+
+/-- Over `D` the concave slice of `K₂` agrees with that of `K₁`. -/
+theorem upperSimpleExt_slice₁_of_mem {x : X} (hx : x ∈ D) :
+    (fun u => upperSimpleExt C D K (u, x)) = restrictConcave C fun u => (K (u, x) : EReal) := by
+  funext u
+  by_cases hu : u ∈ C <;> simp [upperSimpleExt, hu, hx]
+
+/-- Off `D` the concave slice of `K₂` is the constant `+∞`. -/
+theorem upperSimpleExt_slice₁_of_notMem {x : X} (hx : x ∉ D) :
+    (fun u => upperSimpleExt C D K (u, x)) = fun _ => (⊤ : EReal) := by
+  funext u
+  simp [upperSimpleExt, hx]
+
+/-- **Rockafellar, §33**: the upper simple extension has `dom₁ K₂ = C`. -/
+theorem dom₁_upperSimpleExt (hD : D.Nonempty) : dom₁ (upperSimpleExt C D K) = C := by
+  obtain ⟨x₀, hx₀⟩ := hD
+  ext u
+  refine ⟨fun hu => ?_, fun hu x => ?_⟩
+  · by_contra h
+    have := hu x₀
+    rw [upperSimpleExt_of_notMem_left (p := (u, x₀)) h hx₀] at this
+    exact absurd this (lt_irrefl ⊥)
+  · by_cases hx : x ∈ D
+    · rw [upperSimpleExt_of_mem (p := (u, x)) hu hx]
+      exact EReal.bot_lt_coe _
+    · rw [upperSimpleExt_of_notMem_right (p := (u, x)) hx]
+      exact bot_lt_top
+
+/-- **Rockafellar, §33**: the upper simple extension has `dom₂ K₂ = D`. -/
+theorem dom₂_upperSimpleExt (hC : C.Nonempty) : dom₂ (upperSimpleExt C D K) = D := by
+  obtain ⟨u₀, hu₀⟩ := hC
+  ext x
+  refine ⟨fun hx => ?_, fun hx u => ?_⟩
+  · by_contra h
+    have := hx u₀
+    rw [upperSimpleExt_of_notMem_right (p := (u₀, x)) h] at this
+    exact absurd this (lt_irrefl ⊤)
+  · by_cases hu : u ∈ C
+    · rw [upperSimpleExt_of_mem (p := (u, x)) hu hx]
+      exact EReal.coe_lt_top _
+    · rw [upperSimpleExt_of_notMem_left (p := (u, x)) hu hx]
+      exact bot_lt_top
+
+/-- The interval between the two simple extensions is exactly the set of extensions of `K` with
+Rockafellar's prescribed infinite values off `C × D` — the class `Ω` of **Corollary 34.2.4**. The
+values on `Cᶜ × Dᶜ` are unconstrained. -/
+theorem mem_saddleClass_simpleExt_iff {L : U × X → EReal} :
+    L ∈ saddleClass (lowerSimpleExt C D K) (upperSimpleExt C D K) ↔
+      (∀ u ∈ C, ∀ x ∈ D, L (u, x) = (K (u, x) : EReal)) ∧
+        (∀ u ∈ C, ∀ x ∉ D, L (u, x) = ⊤) ∧ ∀ u ∉ C, ∀ x ∈ D, L (u, x) = ⊥ := by
+  rw [mem_saddleClass]
+  constructor
+  · rintro ⟨h1, h2⟩
+    refine ⟨fun u hu x hx => le_antisymm ?_ ?_, fun u hu x hx => ?_, fun u hu x hx => ?_⟩
+    · have := h2 (u, x)
+      rwa [upperSimpleExt_of_mem (p := (u, x)) hu hx] at this
+    · have := h1 (u, x)
+      rwa [lowerSimpleExt_of_mem (p := (u, x)) hu hx] at this
+    · have := h1 (u, x)
+      rw [lowerSimpleExt_of_notMem_right (p := (u, x)) hu hx] at this
+      exact top_le_iff.1 this
+    · have := h2 (u, x)
+      rw [upperSimpleExt_of_notMem_left (p := (u, x)) hu hx] at this
+      exact le_bot_iff.1 this
+  · rintro ⟨h1, h2, h3⟩
+    constructor
+    · rintro ⟨u, x⟩
+      by_cases hu : u ∈ C
+      · by_cases hx : x ∈ D
+        · rw [lowerSimpleExt_of_mem (p := (u, x)) hu hx, h1 u hu x hx]
+        · rw [lowerSimpleExt_of_notMem_right (p := (u, x)) hu hx, h2 u hu x hx]
+      · rw [lowerSimpleExt_of_notMem_left (p := (u, x)) hu]
+        exact bot_le
+    · rintro ⟨u, x⟩
+      by_cases hx : x ∈ D
+      · by_cases hu : u ∈ C
+        · rw [upperSimpleExt_of_mem (p := (u, x)) hu hx, h1 u hu x hx]
+        · rw [upperSimpleExt_of_notMem_left (p := (u, x)) hu hx, h3 u hu x hx]
+      · rw [upperSimpleExt_of_notMem_right (p := (u, x)) hx]
+        exact le_top
+
+end UpperSimpleExt
+
+section UpperSimpleExtConvex
+
+variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  {C : Set U} {D : Set X} {K : U × X → ℝ}
+
+/-- **Rockafellar, §33**: the upper simple extension of a finite concave-convex function on
+`C × D` is concave-convex on all of `U × X`. -/
+theorem concaveConvexFn_upperSimpleExt (hD : Convex ℝ D)
+    (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
+    (hconc : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x)) :
+    ConcaveConvexFn (upperSimpleExt C D K) := by
+  constructor
+  · intro x
+    by_cases hx : x ∈ D
+    · rw [upperSimpleExt_slice₁_of_mem hx]
+      exact (concaveOn_iff_concaveFn C fun u => K (u, x)).1 (hconc x hx)
+    · rw [upperSimpleExt_slice₁_of_notMem hx]
+      exact concaveFn_const ⊤
+  · intro u
+    by_cases hu : u ∈ C
+    · rw [upperSimpleExt_slice₂_of_mem hu]
+      exact (convexOn_iff_convexFn D fun x => K (u, x)).1 (hconv u hu)
+    · rw [upperSimpleExt_slice₂_of_notMem hu]
+      exact (convexFn_const ⊥).restrict hD
+
+end UpperSimpleExtConvex
+
+/-! ### Corollary 34.2.4 -/
+
+section Cor3424
+
+variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
+  [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X] {C : Set U} {D : Set X}
+  {K : U × X → ℝ} {L : U × X → EReal}
+
+omit [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U] in
+/-- The convex slices of the two simple extensions of a finite continuous saddle-function on a
+closed `C × D` are closed, so `cl₂` fixes the lower simple extension. -/
+theorem partialCl₂_lowerSimpleExt (hDcl : IsClosed D)
+    (hcont : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D) :
+    partialCl₂ (lowerSimpleExt C D K) = lowerSimpleExt C D K := by
+  funext p
+  obtain ⟨u, x⟩ := p
+  by_cases hu : u ∈ C
+  · have h : (fun x => partialCl₂ (lowerSimpleExt C D K) (u, x))
+        = restrict D fun x => (K (u, x) : EReal) := by
+      rw [partialCl₂_slice (lowerSimpleExt C D K) u, lowerSimpleExt_slice₂_of_mem hu]
+      exact closedFn_restrict_coe hDcl (hcont u hu)
+    rw [congrFun h x, ← congrFun (lowerSimpleExt_slice₂_of_mem (K := K) hu) x]
+  · have h : (fun x => partialCl₂ (lowerSimpleExt C D K) (u, x)) = fun _ => (⊥ : EReal) := by
+      rw [partialCl₂_slice (lowerSimpleExt C D K) u, lowerSimpleExt_slice₂_of_notMem hu]
+      exact clFn_const_bot
+    rw [congrFun h x, lowerSimpleExt_of_notMem_left (p := (u, x)) hu]
+
+omit [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X] in
+/-- `cl₁` carries the lower simple extension to the upper one. -/
+theorem partialCl₁_lowerSimpleExt (hCcl : IsClosed C) (hCne : C.Nonempty)
+    (hcont : ∀ x ∈ D, ContinuousOn (fun u => K (u, x)) C) :
+    partialCl₁ (lowerSimpleExt C D K) = upperSimpleExt C D K := by
+  funext p
+  obtain ⟨u, x⟩ := p
+  by_cases hx : x ∈ D
+  · have h : (fun u => partialCl₁ (lowerSimpleExt C D K) (u, x))
+        = restrictConcave C fun u => (K (u, x) : EReal) := by
+      rw [partialCl₁_slice (lowerSimpleExt C D K) x, lowerSimpleExt_slice₁_of_mem hx]
+      exact closedConcaveFn_restrictConcave_coe hCcl (hcont x hx)
+    rw [congrFun h u, ← congrFun (upperSimpleExt_slice₁_of_mem (K := K) hx) u]
+  · obtain ⟨u₀, hu₀⟩ := hCne
+    have h : (fun u => partialCl₁ (lowerSimpleExt C D K) (u, x)) = fun _ => (⊤ : EReal) := by
+      rw [partialCl₁_slice (lowerSimpleExt C D K) x, lowerSimpleExt_slice₁_of_notMem hx]
+      exact clConcave_eq_top_of_eq_top (x₀ := u₀) (by simp [hu₀])
+    rw [congrFun h u, upperSimpleExt_of_notMem_right (p := (u, x)) hx]
+
+omit [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U] in
+/-- `cl₂` carries the upper simple extension back to the lower one. -/
+theorem partialCl₂_upperSimpleExt (hDcl : IsClosed D) (hDne : D.Nonempty)
+    (hcont : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D) :
+    partialCl₂ (upperSimpleExt C D K) = lowerSimpleExt C D K := by
+  funext p
+  obtain ⟨u, x⟩ := p
+  by_cases hu : u ∈ C
+  · have h : (fun x => partialCl₂ (upperSimpleExt C D K) (u, x))
+        = restrict D fun x => (K (u, x) : EReal) := by
+      rw [partialCl₂_slice (upperSimpleExt C D K) u, upperSimpleExt_slice₂_of_mem hu]
+      exact closedFn_restrict_coe hDcl (hcont u hu)
+    rw [congrFun h x, ← congrFun (lowerSimpleExt_slice₂_of_mem (K := K) hu) x]
+  · obtain ⟨x₀, hx₀⟩ := hDne
+    have h : (fun x => partialCl₂ (upperSimpleExt C D K) (u, x)) = fun _ => (⊥ : EReal) := by
+      rw [partialCl₂_slice (upperSimpleExt C D K) u, upperSimpleExt_slice₂_of_notMem hu]
+      exact clFn_eq_bot_of_eq_bot (x₀ := x₀) (by simp [hx₀])
+    rw [congrFun h x, lowerSimpleExt_of_notMem_left (p := (u, x)) hu]
+
+/-- **Rockafellar, Corollary 34.2.4**: every member of `Ω` is a closed saddle-function. -/
+theorem closedSaddleFn_of_mem_saddleClass_simpleExt (hCcl : IsClosed C) (hDcl : IsClosed D)
+    (hCne : C.Nonempty) (hDne : D.Nonempty)
+    (hcontD : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D)
+    (hcontC : ∀ x ∈ D, ContinuousOn (fun u => K (u, x)) C)
+    (hL : L ∈ saddleClass (lowerSimpleExt C D K) (upperSimpleExt C D K)) : ClosedSaddleFn L :=
+  closedSaddleFn_of_mem_saddleClass (partialCl₁_lowerSimpleExt hCcl hCne hcontC)
+    (partialCl₂_upperSimpleExt hDcl hDne hcontD) hL
+
+/-- **Rockafellar, Corollary 34.2.4**: `Ω` is contained in a single equivalence class. -/
+theorem saddleEquiv_of_mem_saddleClass_simpleExt (hCcl : IsClosed C) (hDcl : IsClosed D)
+    (hCne : C.Nonempty) (hDne : D.Nonempty)
+    (hcontD : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D)
+    (hcontC : ∀ x ∈ D, ContinuousOn (fun u => K (u, x)) C)
+    (hL : L ∈ saddleClass (lowerSimpleExt C D K) (upperSimpleExt C D K)) :
+    SaddleEquiv (lowerSimpleExt C D K) L :=
+  saddleEquiv_of_mem_saddleClass (partialCl₁_lowerSimpleExt hCcl hCne hcontC)
+    (partialCl₂_upperSimpleExt hDcl hDne hcontD)
+    (mem_saddleClass_left (partialCl₂_upperSimpleExt hDcl hDne hcontD)) hL
+
+/-- **Rockafellar, Corollary 34.2.4**: `Ω` is *exactly* the equivalence class of the lower simple
+extension. Together with `mem_saddleClass_simpleExt_iff` this identifies the class of all
+extensions of `K` with the prescribed infinite values as one full equivalence class of closed
+saddle-functions. -/
+theorem mem_saddleClass_simpleExt_iff_saddleEquiv (hCcl : IsClosed C) (hDcl : IsClosed D)
+    (hCne : C.Nonempty) (hDne : D.Nonempty)
+    (hcontD : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D)
+    (hcontC : ∀ x ∈ D, ContinuousOn (fun u => K (u, x)) C) :
+    L ∈ saddleClass (lowerSimpleExt C D K) (upperSimpleExt C D K) ↔
+      SaddleEquiv (lowerSimpleExt C D K) L := by
+  refine ⟨saddleEquiv_of_mem_saddleClass_simpleExt hCcl hDcl hCne hDne hcontD hcontC, fun h => ?_⟩
+  have h2 : partialCl₂ L = lowerSimpleExt C D K := by
+    rw [← h.2, partialCl₂_lowerSimpleExt hDcl hcontD]
+  have h1 : partialCl₁ L = upperSimpleExt C D K := by
+    rw [← h.1, partialCl₁_lowerSimpleExt hCcl hCne hcontC]
+  have hmem := mem_saddleClass_self L
+  rw [h1, h2] at hmem
+  exact hmem
+
+omit [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U] [TopologicalSpace X]
+  [AddCommGroup X] [IsTopologicalAddGroup X] in
+/-- **Rockafellar, Corollary 34.2.4**: every member of `Ω` is proper. -/
+theorem properSaddleFn_of_mem_saddleClass_simpleExt (hCne : C.Nonempty) (hDne : D.Nonempty)
+    (hL : L ∈ saddleClass (lowerSimpleExt C D K) (upperSimpleExt C D K)) : ProperSaddleFn L :=
+  ⟨by
+    refine Set.Nonempty.mono (dom₁_mono hL.1) ?_
+    rw [dom₁_lowerSimpleExt (K := K) hDne]
+    exact hCne, by
+    refine Set.Nonempty.mono (dom₂_anti hL.2) ?_
+    rw [dom₂_upperSimpleExt (K := K) hCne]
+    exact hDne⟩
+
+end Cor3424
 
 end Tdaf.ConvexAnalysis
