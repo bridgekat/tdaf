@@ -22,6 +22,11 @@ lost and no quotient type is needed.
 
 * `convexHullPD P D` — the convex hull of the points `P` together with the directions of the
   vectors in `D`, defined as `conv P + cone D`.
+* `halfLine x y` — the closed half-line from `x` in the direction of `y`. It is `conv S` for the
+  one-point, one-direction `S`, and it is the shape of the faces that carry the extreme and
+  exposed directions of §18.
+* `coneOverPD P D` — the cone over `conv S` in `ℝ × E`, enlarged by its level-zero directions;
+  the auxiliary object in the proof of the homogenisation dictionary.
 
 ## Main results
 

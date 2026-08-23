@@ -60,11 +60,14 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
 
 * **Theorem 18.7** (a closed convex set containing no lines is the closed hull of its *exposed*
   points and exposed directions), **Corollary 18.7.1** and **Theorem 18.8** (an `n`-dimensional
-  closed convex set is the intersection of its tangent closed half-spaces). Rockafellar's proof of
-  18.7 extends an `(n-2)`-dimensional affine set inside a supporting hyperplane to a hyperplane
-  missing `int C` (his Theorem 11.2), and Theorem 18.8 then runs the whole argument on the
-  epigraph of the support function; neither prerequisite is available here. There is also no
-  definition of an *exposed direction* in this file, only of an extreme one.
+  closed convex set is the intersection of its tangent closed half-spaces). There is no definition
+  of an *exposed direction* here, only of an extreme one. Rockafellar's proof of 18.7 also turns
+  on dimension bookkeeping that nothing in this project supports yet: an `(n-2)`-dimensional
+  affine set inside a supporting hyperplane meeting `C ∩ H` only at one point, and the deduction
+  that the resulting exposed face is one-dimensional. Extending that affine set to a hyperplane
+  missing `int C` is Rockafellar's Theorem 11.2, and that *is* available, as
+  `exists_separates_of_isOpen_of_disjoint_affine` in `Separation.lean`. Theorem 18.8 needs 18.7
+  applied to the epigraph of the support function, so it is blocked behind 18.7.
 
 ## Design notes
 
