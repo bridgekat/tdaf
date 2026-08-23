@@ -1353,4 +1353,134 @@ noncomputable def polarFnEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatib
 
 end Corollary1541Equiv
 
+/-! ### Theorem 15.1, the involution `k°° = cl k`
+
+Rockafellar derives `k°° = cl k` from Theorem 14.5 applied to the unit level set. Here it is a
+special case of Theorem 15.4 instead: on a gauge the two polar operations agree
+(`polarFn_eq_polarGauge`), because the `1 +` in the definition of `f°` is invisible to a positively
+homogeneous function. -/
+
+section Theorem151
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {k : E → EReal}
+
+/-- **The two polar operations agree on gauges** (Rockafellar §15, the sentence introducing `f°`:
+"If `f` is a gauge, this definition reduces to the definition already given, because of the
+positive homogeneity of `f`").
+
+The admissible set of `polarGauge` is contained in that of `polarFn`, and the two differ at most
+at `0`; since both are up-sets in `[0, ∞)`, the infima agree. -/
+theorem polarFn_eq_polarGauge (hnn : ∀ x, 0 ≤ k x) (hph : PosHomogeneous k) (h0 : k 0 = 0) :
+    polarFn B k = polarGauge B k := by
+  funext y
+  refine le_antisymm ?_ ?_
+  · rw [polarGauge_apply]
+    refine le_iInf₂ fun μ hμ => ?_
+    refine (polarFn_le_coe_iff hnn).2 fun x ν hν => ?_
+    have h1 : ((B x y : ℝ) : EReal) ≤ ((μ * ν : ℝ) : EReal) := by
+      refine le_trans (hμ.2 x) ?_
+      rw [← Tdaf.EReal.coe_mul_coe]
+      exact mul_le_mul_of_nonneg_left hν (EReal.coe_nonneg.2 hμ.1)
+    rw [EReal.coe_le_coe_iff] at h1
+    linarith [mul_comm μ ν]
+  · rw [polarFn_apply]
+    refine le_iInf₂ fun μ hμ => ?_
+    have hμ0 : (0 : ℝ) ≤ μ := by
+      have hle : polarFn B k y ≤ (μ : EReal) :=
+        iInf₂_le (f := fun (μ : ℝ) (_ : μ ∈ polarFnSet B k y) => (μ : EReal)) μ hμ
+      exact EReal.coe_nonneg.1 (le_trans (polarFn_nonneg (le_of_eq h0) y) hle)
+    refine le_coe_of_forall_gt_le fun d hd => ?_
+    have hd0 : (0 : ℝ) < d := lt_of_le_of_lt hμ0 hd
+    have hdmem : d ∈ polarFnSet B k y := upClosed_polarFnSet hnn y hμ hd.le
+    refine polarGauge_le_of_forall hd0.le fun x => ?_
+    rcases eq_or_lt_of_le (le_top (a := k x)) with htopx | hltx
+    · rw [htopx, _root_.EReal.coe_mul_top_of_pos hd0]
+      exact le_top
+    obtain ⟨c, hc⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top
+      (fun h => by simpa [h] using hnn x) hltx
+    rw [hc, Tdaf.EReal.coe_mul_coe, EReal.coe_le_coe_iff]
+    by_contra hcon
+    rw [not_le] at hcon
+    have ha0 : (0 : ℝ) < B x y - d * c := by linarith
+    have ht : (0 : ℝ) < 2 / (B x y - d * c) := by positivity
+    have hkt : k ((2 / (B x y - d * c)) • x) ≤ (((2 / (B x y - d * c)) * c : ℝ) : EReal) :=
+      le_of_eq (by rw [hph _ ht x, hc, Tdaf.EReal.coe_mul_coe])
+    have hb := hdmem _ _ hkt
+    rw [map_smul, LinearMap.smul_apply, smul_eq_mul] at hb
+    have hexp : 2 / (B x y - d * c) * B x y - 2 / (B x y - d * c) * c * d
+        = 2 / (B x y - d * c) * (B x y - d * c) := by ring
+    rw [hexp, div_mul_cancel₀ (2 : ℝ) ha0.ne'] at hb
+    linarith
+
+end Theorem151
+
+section Theorem151Main
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {k : E → EReal}
+
+/-- **Rockafellar, Theorem 15.1**, second assertion: `k°° = cl k` for a gauge `k`. -/
+theorem polarGauge_polarGauge (hk : IsGauge k) :
+    polarGauge B.flip (polarGauge B k) = clFn k := by
+  have hpk : IsGauge (polarGauge B k) := isGauge_polarGauge hk.nonneg hk.posHomogeneous hk.map_zero
+  rw [← polarFn_eq_polarGauge hpk.nonneg hpk.posHomogeneous hpk.map_zero,
+    ← polarFn_eq_polarGauge hk.nonneg hk.posHomogeneous hk.map_zero]
+  exact polarFn_polarFn hk.convexFn hk.nonneg (le_of_eq hk.map_zero)
+
+end Theorem151Main
+
+/-! ### Corollary 15.1.1 -/
+
+section Corollary1511
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F] [TopologicalSpace F]
+  [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
+
+/-- **Rockafellar, Corollary 15.1.1**, first assertion: `k ↦ k°` is a symmetric one-to-one
+correspondence on the closed gauges. -/
+noncomputable def polarGaugeEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] :
+    {k : E → EReal // IsGauge k ∧ ClosedFn k} ≃ {j : F → EReal // IsGauge j ∧ ClosedFn j} where
+  toFun k := ⟨polarGauge B k.1,
+    isGauge_polarGauge k.2.1.nonneg k.2.1.posHomogeneous k.2.1.map_zero,
+    closedFn_polarGauge k.2.1.nonneg k.2.1.posHomogeneous k.2.1.map_zero⟩
+  invFun j := ⟨polarGauge B.flip j.1,
+    isGauge_polarGauge j.2.1.nonneg j.2.1.posHomogeneous j.2.1.map_zero,
+    closedFn_polarGauge j.2.1.nonneg j.2.1.posHomogeneous j.2.1.map_zero⟩
+  left_inv k := Subtype.ext <| by
+    change polarGauge B.flip (polarGauge B k.1) = k.1
+    rw [polarGauge_polarGauge k.2.1]
+    exact k.2.2
+  right_inv j := Subtype.ext <| by
+    change polarGauge B (polarGauge B.flip j.1) = j.1
+    have h := polarGauge_polarGauge (B := B.flip) j.2.1
+    rw [LinearMap.flip_flip] at h
+    rw [h]
+    exact j.2.2
+
+end Corollary1511
+
+section Corollary1511Sets
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [TopologicalSpace F] [ContinuousSMul ℝ F]
+
+/-- **Rockafellar, Corollary 15.1.1**, second assertion: two closed convex sets containing the
+origin are polar to each other exactly when their gauges are. -/
+theorem polarSet_eq_iff_polarGauge_gaugeFn_eq (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
+    [IsContinuousPairing B.flip] {C : Set E} {D : Set F}
+    (hC : Convex ℝ C) (h0 : (0 : E) ∈ C) (hD : Convex ℝ D) (hDcl : IsClosed D)
+    (hD0 : (0 : F) ∈ D) :
+    polarSet B C = D ↔ polarGauge B (gaugeFn C) = gaugeFn D := by
+  rw [polarGauge_gaugeFn hC ⟨0, h0⟩]
+  refine ⟨fun h => by rw [h], fun h => ?_⟩
+  have hpc : {y : F | gaugeFn (polarSet B C) y ≤ 1} = {y : F | gaugeFn D y ≤ 1} := by rw [h]
+  rwa [setOf_gaugeFn_le_one (convex_polarSet B C) (fun x _ => by simp) isClosed_polarSet,
+    setOf_gaugeFn_le_one hD hD0 hDcl] at hpc
+
+end Corollary1511Sets
+
 end Tdaf.ConvexAnalysis
