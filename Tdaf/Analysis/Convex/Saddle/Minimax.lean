@@ -9,9 +9,10 @@ import Tdaf.Analysis.Convex.Optimization.Normal
 import Tdaf.Analysis.Convex.Saddle.Kernel
 
 /-!
-# Minimax problems
+# Minimax problems and conjugate saddle-functions
 
-Rockafellar's §36. A function `K` of two variables has two iterated extrema,
+Rockafellar's §36 and the first part of §37. A function `K` of two variables has two iterated
+extrema,
 
 `maximin K = ⨆ u, ⨅ x, K (u, x)`  and  `minimax K = ⨅ x, ⨆ u, K (u, x)`,
 
@@ -19,6 +20,11 @@ the first is never above the second (Lemma 36.1), and when they agree their comm
 **saddle-value** of `K`. A **saddle-point** is a point `p` at which `K (·, p.2)` is maximised and
 `K (p.1, ·)` is minimised; Lemma 36.2 says that a saddle-point is exactly a pair of optimal
 strategies together with the existence of the saddle-value.
+
+§37 turns the two iterated extrema into a *conjugacy correspondence*: the lower and upper
+conjugates `K̲*`, `K̄*` of a saddle-function are again saddle-functions, `-K̲* (0, 0)` and
+`-K̄* (0, 0)` are the two iterated extrema of `K`, and Theorem 37.1 identifies both conjugates of
+every member of an equivalence class `Ω (F)` in terms of the inverse of `F`.
 
 ## Main definitions
 
@@ -29,6 +35,11 @@ strategies together with the existence of the saddle-value.
 * `saddleLagrangian Bu F` — the Lagrangian of `(P)` read as a function on `V × X`, i.e. as a
   saddle-function.
 * `flipBifun F` — the bifunction with its two arguments exchanged.
+* `inverseBifun F` — Rockafellar's `F_*`, `(F_* x) u = -(Fu)(x)`.
+* `lowerConjSaddle Bu Bx K`, `upperConjSaddle Bu Bx K` — the lower and upper conjugates `K̲*`,
+  `K̄*` of a saddle-function.
+* `bifunSaddleClass Bu Bx F` — the equivalence class `Ω (F)`, the saddle-functions between the two
+  brackets of `F`.
 
 ## Main results
 
@@ -58,8 +69,24 @@ strategies together with the existence of the saddle-value.
 * `ConvexFn.exists_mem_relint_dom_lt`, `ConvexFn.biInf_eq_iInf_of_relint_dom_subset` —
   **Corollary 7.3.1**, the tool Theorem 36.3 runs on; a relocation candidate for
   `RelativeInterior.lean`.
-* `iSup_clConcave_eq_iSup` — the concave mirror of `iInf_clFn_eq_iInf`; a relocation candidate for
+* `iSup_clConcave_eq_iSup`, `concaveConj_clConcave` — the concave mirrors of `iInf_clFn_eq_iInf`
+  and of `conj_clFn` (**Theorem 12.2**, first half); relocation candidates for
   `Duality/ConcaveConj.lean`.
+* `lowerConjSaddle_le_upperConjSaddle` — **§37**: `K̲* ≤ K̄*`, Lemma 36.1 again.
+* `minimax_eq_neg_lowerConjSaddle_zero`, `maximin_eq_neg_upperConjSaddle_zero`,
+  `hasSaddleValue_iff_conjSaddle_zero_eq` — **§37**, the displays before Corollary 37.1.3: the two
+  iterated extrema of `K` are the two conjugates evaluated at the origin, so the saddle-value
+  exists exactly when the conjugates agree there.
+* `upperConjSaddle_eq_saddleLagrangian`, `lowerConjSaddle_eq_bracket_inverseBifun` —
+  **Theorem 37.1**: `K̄* = ⟨u*, F_* x⟩` is the Lagrangian of `F` and `K̲* = ⟨F_*^* u*, x⟩` is the
+  bracket of the inverse adjoint, for *every* `K` in `Ω (F)`.
+* `concaveConvexFn_upperConjSaddle`, `upperClosedFn_upperConjSaddle`,
+  `concaveConvexFn_lowerConjSaddle`, `lowerClosedFn_lowerConjSaddle` — **Corollary 37.1.1**: the
+  lower conjugate is lower closed concave-convex and the upper conjugate is upper closed
+  concave-convex, and both depend only on the class.
+* `bifunOfSaddle_eq_of_mem_bifunSaddleClass`, `concaveConj_slice_eq_adjointBifun` — the two
+  computations Theorem 37.1 rests on, each saying that one partial conjugate of `K` sees only one
+  of the two partial closures and is therefore constant on `Ω (F)`.
 
 ## Design notes
 
@@ -90,6 +117,21 @@ identity read after `saddleSwap` — which negates and exchanges the variables �
 `isCompatiblePairing_neg` and `flip_neg`, both three lines: negating a pairing preserves
 continuity, and `g = ⟨·, y⟩` for `-B` exactly when `-g = ⟨·, y⟩` for `B`.
 
+**`(F_*)^* = (F^*)_*` is taken as a definition, not proved.** Rockafellar writes the bifunction
+behind the lower conjugate as `F_*^*`, the adjoint of the *concave* inverse, and then observes
+that it agrees with `(F^*)_*`. The backbone has no concave adjoint of a concave bifunction, so
+`inverseBifun (adjointBifun Bu Bx F)` is used throughout; the commutation is then a triviality
+rather than a lemma, and `convexBifun_inverseBifun_adjointBifun` /
+`closedBifun_inverseBifun_adjointBifun` supply the two facts Theorem 33.3 needs about it.
+
+**Both conjugates are stated for an arbitrary member of `Ω (F)`, which is where their content
+lies.** `upperConjSaddle` and `lowerConjSaddle` are defined for any `K` whatever; Theorem 37.1
+says that on a class they do not see the representative, and that is exactly the statement that
+makes minimax theory a theory of equivalence classes. The proofs are two sandwich arguments: the
+partial conjugate in one variable sees only the partial closure in that variable
+(`bifunOfSaddle_partialCl₂`, `concaveConj_clConcave`), and Theorem 33.2 says the two brackets are
+each other's partial closures.
+
 ## What is not here
 
 **The subgradient form of the Kuhn–Tucker condition** `(0, 0) ∈ ∂L (v̄, x̄)` needs §35's
@@ -97,12 +139,18 @@ continuity, and `g = ⟨·, y⟩` for `-B` exactly when `-g = ⟨·, y⟩` for `
 "optimal solution plus Kuhn–Tucker vector" form, which is what Rockafellar's Theorem 36.6 is a
 restatement of.
 
-**§37.** `conjugateSaddle`, Theorem 37.1 and the minimax existence theorems belong in a file of
-their own and are not written.
+**The rest of §37.** Corollary 37.1.2 (the two conjugates are a closure pair with the Theorem 34.3
+structure), Corollary 37.1.3 (the origin in the relative interior forces the saddle-value),
+Theorem 37.2 (the support functions of `C*` and `D*`) and the existence theorems 37.3–37.6 are not
+written. Corollary 37.1.2 needs the biadjoint identity `(F_*^*)^* = F_*` to put `K̲*` and `K̄*` into
+the *same* class the way `partialCl₁_bracket` and `partialCl₂_concaveBracket_adjoint` do for `F`;
+Theorem 37.2 needs Theorem 6.8 (relative interiors of images), which is not formalized. Corollary
+37.6.2, the classical minimax theorem, should come from Mathlib's `Mathlib/Topology/Sion.lean`
+rather than be reproved.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §36.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §36, §37.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -866,5 +914,444 @@ theorem exists_unique_closedBifun_saddleLagrangian_eq (Bu : U →ₗ[ℝ] V →�
     rw [← hHG, flipBifun_flipBifun]
 
 end Thm365
+
+/-! ## Conjugate saddle-functions -/
+
+/-! ### The inverse of a bifunction -/
+
+section InverseBifun
+
+variable {U X : Type*}
+
+/-- **The inverse `F_*` of a bifunction** (Rockafellar, §36, last part): `(F_* x) u = -(Fu)(x)`.
+Unlike `flipBifun` it also changes the sign, so it carries convex bifunctions to concave ones and
+back. It is involutory, and it is the operation §37 is built on. -/
+noncomputable def inverseBifun (F : Bifun U X) : Bifun X U := fun x u => -(F u x)
+
+@[simp] theorem inverseBifun_apply (F : Bifun U X) (x : X) (u : U) :
+    inverseBifun F x u = -(F u x) := rfl
+
+/-- The inverse is `flipBifun` composed with a change of sign. -/
+theorem inverseBifun_eq_flipBifun_neg (F : Bifun U X) :
+    inverseBifun F = flipBifun fun u x => -(F u x) := rfl
+
+/-- **The inverse operation is involutory**: `(F_*)_* = F`. -/
+@[simp] theorem inverseBifun_inverseBifun (F : Bifun U X) :
+    inverseBifun (inverseBifun F) = F :=
+  funext fun u => funext fun x => neg_neg (F u x)
+
+theorem graphFn_inverseBifun (F : Bifun U X) (q : X × U) :
+    graphFn (inverseBifun F) q = -(graphFn F (q.2, q.1)) := rfl
+
+end InverseBifun
+
+section InverseBifunConvex
+
+variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  {G : Bifun U X}
+
+/-- **The inverse of a concave bifunction is convex.** -/
+theorem convexBifun_inverseBifun (hG : ConcaveBifun G) : ConvexBifun (inverseBifun G) := by
+  have h : ConvexBifun fun u x => -(G u x) := hG.convexFn_neg
+  exact convexBifun_flipBifun h
+
+end InverseBifunConvex
+
+section InverseBifunClosed
+
+variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
+  [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X] {G : Bifun U X}
+
+/-- **The inverse of a concave-closed bifunction is closed.** -/
+theorem closedBifun_inverseBifun (hG : ClosedConcaveFn (graphFn G)) :
+    ClosedBifun (inverseBifun G) := by
+  have h : ClosedBifun fun u x => -(G u x) := closedConcaveFn_iff.1 hG
+  exact closedBifun_flipBifun h
+
+end InverseBifunClosed
+
+/-! ### The concave conjugate sees only the concave closure -/
+
+section ConcaveConjClosure
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [TopologicalSpace E] [IsTopologicalAddGroup E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B]
+
+/-- **Rockafellar, Theorem 12.2** (first half) for concave functions: `(cl g)* = g*`, with `cl` the
+concave closure. This is `conj_clFn` read through the sign dictionary, and it is the step that
+makes the *lower* half of Theorem 37.1 independent of which member of the equivalence class is
+used. A relocation candidate for `Duality/ConcaveConj.lean`. -/
+theorem concaveConj_clConcave (g : E → EReal) :
+    concaveConj B (clConcave g) = concaveConj B g := by
+  funext y
+  rw [concaveConj_eq_neg_conj_neg, concaveConj_eq_neg_conj_neg]
+  congr 1
+  have h : (fun x => -(clConcave g x)) = clFn fun z => -(g z) := funext fun x => neg_clConcave g x
+  rw [h, conj_clFn]
+
+end ConcaveConjClosure
+
+/-! ### The lower and upper conjugates of a saddle-function -/
+
+section ConjugateSaddle
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- **The lower conjugate `K̲*`** of a saddle-function (Rockafellar, §37):
+`K̲* (u*, x) = ⨆ y, ⨅ u, {⟨u, u*⟩ + ⟨x, y⟩ - K (u, y)}`. -/
+noncomputable def lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (K : U × Y → EReal) : V × X → EReal :=
+  fun q => ⨆ y, ⨅ u, (((Bu u q.1 + Bx q.2 y : ℝ) : EReal) - K (u, y))
+
+/-- **The upper conjugate `K̄*`** of a saddle-function (Rockafellar, §37):
+`K̄* (u*, x) = ⨅ u, ⨆ y, {⟨u, u*⟩ + ⟨x, y⟩ - K (u, y)}`. -/
+noncomputable def upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (K : U × Y → EReal) : V × X → EReal :=
+  fun q => ⨅ u, ⨆ y, (((Bu u q.1 + Bx q.2 y : ℝ) : EReal) - K (u, y))
+
+theorem lowerConjSaddle_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (K : U × Y → EReal) (q : V × X) :
+    lowerConjSaddle Bu Bx K q = ⨆ y, ⨅ u, (((Bu u q.1 + Bx q.2 y : ℝ) : EReal) - K (u, y)) := rfl
+
+theorem upperConjSaddle_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (K : U × Y → EReal) (q : V × X) :
+    upperConjSaddle Bu Bx K q = ⨅ u, ⨆ y, (((Bu u q.1 + Bx q.2 y : ℝ) : EReal) - K (u, y)) := rfl
+
+/-- **Rockafellar, §37**, the sentence after the definition: `K̲* ≤ K̄*` by Lemma 36.1. -/
+theorem lowerConjSaddle_le_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U × Y → EReal) :
+    lowerConjSaddle Bu Bx K ≤ upperConjSaddle Bu Bx K := fun q =>
+  maximin_le_minimax fun p : Y × U => (((Bu p.2 q.1 + Bx q.2 p.1 : ℝ) : EReal) - K (p.2, p.1))
+
+/-- The equivalence class `Ω (F)` of saddle-functions attached to a convex bifunction
+(Rockafellar, §34): the concave-convex functions squeezed between the two brackets of `F`. -/
+noncomputable def bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) : Set (U × Y → EReal) :=
+  saddleClass (fun p : U × Y => bracket Bx F p.1 p.2)
+    (fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2)
+
+theorem mem_bifunSaddleClass {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X}
+    {K : U × Y → EReal} : K ∈ bifunSaddleClass Bu Bx F ↔
+      ((fun p : U × Y => bracket Bx F p.1 p.2) ≤ K ∧
+        K ≤ fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2) := Iff.rfl
+
+end ConjugateSaddle
+
+/-! ### The saddle-value is a value of the conjugate at the origin -/
+
+section ConjugateSaddleZero
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- **Rockafellar, §37**, the display before Corollary 37.1.3: `inf sup K = -K̲* (0, 0)`. -/
+theorem minimax_eq_neg_lowerConjSaddle_zero (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U × Y → EReal) :
+    minimax K = -(lowerConjSaddle Bu Bx K 0) := by
+  have h : lowerConjSaddle Bu Bx K 0 = -(minimax K) := by
+    rw [lowerConjSaddle_apply, minimax_apply, Tdaf.EReal.neg_iInf]
+    refine iSup_congr fun y => ?_
+    rw [Tdaf.EReal.neg_iSup]
+    refine iInf_congr fun u => ?_
+    have h0 : (Bu u (0 : V × X).1 + Bx (0 : V × X).2 y : ℝ) = 0 := by simp
+    rw [h0, _root_.EReal.coe_zero]
+    change (0 : EReal) + -(K (u, y)) = -(K (u, y))
+    rw [zero_add]
+  rw [h, neg_neg]
+
+/-- **Rockafellar, §37**, the display before Corollary 37.1.3: `sup inf K = -K̄* (0, 0)`. -/
+theorem maximin_eq_neg_upperConjSaddle_zero (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U × Y → EReal) :
+    maximin K = -(upperConjSaddle Bu Bx K 0) := by
+  have h : upperConjSaddle Bu Bx K 0 = -(maximin K) := by
+    rw [upperConjSaddle_apply, maximin_apply, Tdaf.EReal.neg_iSup]
+    refine iInf_congr fun u => ?_
+    rw [Tdaf.EReal.neg_iInf]
+    refine iSup_congr fun y => ?_
+    have h0 : (Bu u (0 : V × X).1 + Bx (0 : V × X).2 y : ℝ) = 0 := by simp
+    rw [h0, _root_.EReal.coe_zero]
+    change (0 : EReal) + -(K (u, y)) = -(K (u, y))
+    rw [zero_add]
+  rw [h, neg_neg]
+
+/-- **Rockafellar, §37**: the saddle-value of `K` exists exactly when the two conjugates agree at
+the origin. This is the reduction of minimax theory to the position of the origin relative to the
+effective domain of the conjugate class. -/
+theorem hasSaddleValue_iff_conjSaddle_zero_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U × Y → EReal) :
+    HasSaddleValue K ↔ upperConjSaddle Bu Bx K 0 = lowerConjSaddle Bu Bx K 0 := by
+  rw [hasSaddleValue_iff, maximin_eq_neg_upperConjSaddle_zero Bu Bx K,
+    minimax_eq_neg_lowerConjSaddle_zero Bu Bx K, _root_.neg_inj]
+
+end ConjugateSaddleZero
+
+/-! ### The structure of the inverse adjoint -/
+
+section AdjointStructure
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- The negated adjoint is a convex bifunction: this is the concavity half of Theorem 30.1, read
+through the sign dictionary. -/
+theorem convexBifun_neg_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) : ConvexBifun fun y v => -(adjointBifun Bu Bx F y v) :=
+  concaveFn_iff_convexFn_neg.1 (concaveBifun_adjointBifun Bu Bx F)
+
+/-- Each slice of the adjoint is a concave function. -/
+theorem concaveFn_adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) (y : Y) : ConcaveFn (adjointBifun Bu Bx F y) :=
+  concaveFn_iff_convexFn_neg.2 ((convexBifun_neg_adjointBifun Bu Bx F).convexFn_apply y)
+
+/-- **The inverse of the adjoint is a convex bifunction.** Rockafellar writes it `F_*^*`, using the
+commutation `(F_*)^* = (F^*)_*`; taking `(F^*)_*` as the definition makes that commutation a
+triviality, and this is the bifunction the lower conjugate turns out to be the bracket of. -/
+theorem convexBifun_inverseBifun_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) :
+    ConvexBifun (inverseBifun (adjointBifun Bu Bx F)) :=
+  convexBifun_flipBifun (convexBifun_neg_adjointBifun Bu Bx F)
+
+end AdjointStructure
+
+section AdjointClosed
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+
+omit [IsTopologicalAddGroup V] [IsTopologicalAddGroup Y] in
+/-- The pairing of the two dual factors is continuous whenever each of its two halves is. The
+statement is not an instance because `(prodPairing Bu Bx).flip` is not syntactically a
+`prodPairing`; `prodPairing_flip` is what turns it into one. -/
+theorem isContinuousPairing_prodPairing_flip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsContinuousPairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] :
+    IsContinuousPairing (prodPairing Bu Bx).flip := by
+  rw [prodPairing_flip]
+  infer_instance
+
+/-- Each slice of the negated adjoint is a closed convex function: the closedness half of
+Theorem 30.1, sliced. -/
+theorem closedFn_neg_adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsContinuousPairing Bu.flip]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] (F : Bifun U X) (y : Y) :
+    ClosedFn fun v => -(adjointBifun Bu Bx F y v) := by
+  have := isContinuousPairing_prodPairing_flip Bu Bx
+  have h : ClosedBifun fun y v => -(adjointBifun Bu Bx F y v) :=
+    closedConcaveFn_iff.1 closedConcaveFn_graphFn_adjointBifun
+  exact h.imageClosedBifun y
+
+/-- **The inverse of the adjoint is a closed bifunction.** -/
+theorem closedBifun_inverseBifun_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsContinuousPairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip]
+    (F : Bifun U X) : ClosedBifun (inverseBifun (adjointBifun Bu Bx F)) := by
+  have := isContinuousPairing_prodPairing_flip Bu Bx
+  exact closedBifun_flipBifun (closedConcaveFn_iff.1 closedConcaveFn_graphFn_adjointBifun)
+
+end AdjointClosed
+
+/-! ### Theorem 37.1 -/
+
+section Thm371
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V] [LocallyConvexSpace ℝ V]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  {F : Bifun U X} {K : U × Y → EReal}
+
+omit [AddCommGroup U] [Module ℝ U] [TopologicalSpace U] [IsTopologicalAddGroup U]
+  [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X]
+  [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+  [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] in
+/-- `bifunOfSaddle` is antitone: it is a conjugate in disguise. -/
+theorem bifunOfSaddle_antitone (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) {K L : U × Y → EReal} (h : K ≤ L) :
+    bifunOfSaddle Bx L ≤ bifunOfSaddle Bx K :=
+  fun u x => conj_antitone Bx.flip (fun y => h (u, y)) x
+
+omit [AddCommGroup U] [Module ℝ U] [TopologicalSpace U] [IsTopologicalAddGroup U]
+  [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X]
+  [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X] [ContinuousSMul ℝ Y]
+  [LocallyConvexSpace ℝ Y] in
+/-- **The convex bifunction attached to a saddle-function sees only its `cl₂` closure.** This is
+`conj_clFn` on each slice. -/
+theorem bifunOfSaddle_partialCl₂ (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip]
+    (K : U × Y → EReal) : bifunOfSaddle Bx (partialCl₂ K) = bifunOfSaddle Bx K :=
+  funext fun u => conj_clFn (B := Bx.flip) fun y => K (u, y)
+
+omit [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V]
+  [LocallyConvexSpace ℝ V] in
+/-- **Every member of the class `Ω (F)` has the same associated bifunction, namely `F` itself.**
+The two brackets have equal `bifunOfSaddle` — one is the `cl₂` of the other, and `bifunOfSaddle`
+sees only `cl₂` — so the sandwich collapses. This is the half of Theorem 37.1 that produces the
+upper conjugate. -/
+theorem bifunOfSaddle_eq_of_mem_bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hK : K ∈ bifunSaddleClass Bu Bx F) : bifunOfSaddle Bx K = F := by
+  obtain ⟨hlow, hup⟩ := hK
+  have hbase : bifunOfSaddle Bx (fun p : U × Y => bracket Bx F p.1 p.2) = F := by
+    funext u
+    have h : bifunOfSaddle Bx (fun p : U × Y => bracket Bx F p.1 p.2) u
+        = conj Bx.flip (bracket Bx F u) := rfl
+    rw [h, ← clFn_eq_conj_bracket hF u]
+    exact hcl.imageClosedBifun u
+  have h2 : partialCl₂ (fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2)
+      = fun p : U × Y => bracket Bx F p.1 p.2 :=
+    partialCl₂_concaveBracket_adjoint Bu Bx hF hcl
+  have hupper : bifunOfSaddle Bx
+      (fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2) = F :=
+    calc bifunOfSaddle Bx (fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2)
+        = bifunOfSaddle Bx
+            (partialCl₂ fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2) :=
+          (bifunOfSaddle_partialCl₂ Bx _).symm
+      _ = bifunOfSaddle Bx (fun p : U × Y => bracket Bx F p.1 p.2) := by rw [h2]
+      _ = F := hbase
+  refine le_antisymm ?_ ?_
+  · rw [← hbase]
+    exact bifunOfSaddle_antitone Bx hlow
+  · rw [← hupper]
+    exact bifunOfSaddle_antitone Bx hup
+
+omit [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
+  [LocallyConvexSpace ℝ X] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] in
+/-- **The concave conjugate of a slice of `K` is a slice of the adjoint `F*`,** for every `K` in
+the class `Ω (F)`. This is the mirror of `bifunOfSaddle_eq_of_mem_bifunSaddleClass`: the concave
+conjugate sees only `cl₁`, and `cl₁` of the lower bracket is the upper bracket (Theorem 33.2). It
+is the half of Theorem 37.1 that produces the lower conjugate. -/
+theorem concaveConj_slice_eq_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip]
+    (hF : ConvexBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) (y : Y) :
+    concaveConj Bu (fun u => K (u, y)) = adjointBifun Bu Bx F y := by
+  obtain ⟨hlow, hup⟩ := hK
+  have hcl1 : (fun u => concaveBracket Bu (adjointBifun Bu Bx F) u y)
+      = clConcave fun u => bracket Bx F u y := by
+    funext u
+    have h1 : partialCl₁ (fun p : U × Y => bracket Bx F p.1 p.2) (u, y)
+        = concaveBracket Bu (adjointBifun Bu Bx F) u y :=
+      congrFun (partialCl₁_bracket Bu Bx hF) (u, y)
+    rw [← h1]
+    exact congrFun (partialCl₁_slice (fun p : U × Y => bracket Bx F p.1 p.2) y) u
+  have hends : concaveConj Bu (fun u => concaveBracket Bu (adjointBifun Bu Bx F) u y)
+      = concaveConj Bu fun u => bracket Bx F u y := by
+    rw [hcl1, concaveConj_clConcave]
+  have hA : concaveConj Bu (fun u => concaveBracket Bu (adjointBifun Bu Bx F) u y)
+      ≤ concaveConj Bu fun u => K (u, y) :=
+    concaveConj_antitone Bu fun u => hup (u, y)
+  have hB : concaveConj Bu (fun u => K (u, y))
+      ≤ concaveConj Bu fun u => bracket Bx F u y :=
+    concaveConj_antitone Bu fun u => hlow (u, y)
+  have hKeq : concaveConj Bu (fun u => K (u, y))
+      = concaveConj Bu fun u => concaveBracket Bu (adjointBifun Bu Bx F) u y :=
+    le_antisymm (by rw [hends]; exact hB) hA
+  rw [hKeq, concaveBracket_eq_concaveConj Bu (adjointBifun Bu Bx F) y]
+  exact biconcaveConj_eq_self (B := Bu.flip) (concaveFn_adjointBifun_apply Bu Bx F y)
+    (closedFn_neg_adjointBifun_apply Bu Bx F y)
+
+omit [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V]
+  [LocallyConvexSpace ℝ V] in
+/-- **Rockafellar, Theorem 37.1**, first equation: the *upper* conjugate of any `K` in the class
+`Ω (F)` of a closed convex bifunction `F` is the Lagrangian of `F`,
+`K̄* (u*, x) = ⟨u*, F_* x⟩ = ⨅ u, {⟨u, u*⟩ + (Fu)(x)}`.
+
+In particular the upper conjugate depends only on the class, not on the representative. -/
+theorem upperConjSaddle_eq_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    upperConjSaddle Bu Bx K = saddleLagrangian Bu F := by
+  have hB := bifunOfSaddle_eq_of_mem_bifunSaddleClass Bu Bx hF hcl hK
+  funext q
+  rw [upperConjSaddle_apply, saddleLagrangian_apply, lagrangian_apply]
+  refine iInf_congr fun u => ?_
+  have h1 : ∀ y, (((Bu u q.1 + Bx q.2 y : ℝ) : EReal) - K (u, y))
+      = (((Bx q.2 y : ℝ) : EReal) - K (u, y)) + ((Bu u q.1 : ℝ) : EReal) := by
+    intro y
+    rw [_root_.EReal.coe_add]
+    simp only [sub_eq_add_neg]
+    rw [add_assoc, add_comm]
+  simp only [h1]
+  rw [← Tdaf.EReal.iSup_add_coe]
+  have h2 : (⨆ y, (((Bx q.2 y : ℝ) : EReal) - K (u, y))) = F u q.2 := by
+    rw [← congrFun (congrFun hB u) q.2, bifunOfSaddle_apply]
+  rw [h2, add_comm]
+
+omit [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
+  [LocallyConvexSpace ℝ X] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] in
+/-- **Rockafellar, Theorem 37.1**, second equation: the *lower* conjugate of any `K` in the class
+`Ω (F)` is the bracket of the inverse adjoint, `K̲* (u*, x) = ⟨F_*^* u*, x⟩`.
+
+Like the upper conjugate it depends only on the class. -/
+theorem lowerConjSaddle_eq_bracket_inverseBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    lowerConjSaddle Bu Bx K
+      = fun q : V × X => bracket Bx.flip (inverseBifun (adjointBifun Bu Bx F)) q.1 q.2 := by
+  funext q
+  rw [lowerConjSaddle_apply, bracket_apply]
+  refine iSup_congr fun y => ?_
+  have h1 : ∀ u, (((Bu u q.1 + Bx q.2 y : ℝ) : EReal) - K (u, y))
+      = (((Bu u q.1 : ℝ) : EReal) - K (u, y)) + ((Bx q.2 y : ℝ) : EReal) := by
+    intro u
+    rw [_root_.EReal.coe_add]
+    simp only [sub_eq_add_neg]
+    rw [add_right_comm]
+  simp only [h1]
+  rw [← Tdaf.EReal.iInf_add_coe]
+  have h2 : (⨅ u, (((Bu u q.1 : ℝ) : EReal) - K (u, y))) = adjointBifun Bu Bx F y q.1 :=
+    congrFun (concaveConj_slice_eq_adjointBifun Bu Bx hF hK y) q.1
+  rw [h2]
+  have h3 : ((Bx.flip y q.2 : ℝ) : EReal) - inverseBifun (adjointBifun Bu Bx F) q.1 y
+      = ((Bx q.2 y : ℝ) : EReal) + adjointBifun Bu Bx F y q.1 := by
+    rw [inverseBifun_apply]
+    simp only [sub_eq_add_neg, neg_neg]
+    rfl
+  rw [h3, add_comm]
+
+/-! ### Corollary 37.1.1 -/
+
+omit [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V]
+  [LocallyConvexSpace ℝ V] in
+/-- **Rockafellar, Corollary 37.1.1**, upper half: the upper conjugate of a member of `Ω (F)` is a
+concave-convex function. -/
+theorem concaveConvexFn_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    ConcaveConvexFn (upperConjSaddle Bu Bx K) := by
+  rw [upperConjSaddle_eq_saddleLagrangian Bu Bx hF hcl hK]
+  exact concaveConvexFn_saddleLagrangian Bu hF
+
+/-- **Rockafellar, Corollary 37.1.1**, upper half: the upper conjugate of a member of `Ω (F)` is
+*upper closed*. This is Theorem 36.5 applied to the identification in Theorem 37.1. -/
+theorem upperClosedFn_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hK : K ∈ bifunSaddleClass Bu Bx F) : UpperClosedFn (upperConjSaddle Bu Bx K) := by
+  rw [upperConjSaddle_eq_saddleLagrangian Bu Bx hF hcl hK]
+  exact upperClosedFn_saddleLagrangian Bu Bx hF hcl
+
+omit [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
+  [LocallyConvexSpace ℝ X] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] in
+/-- **Rockafellar, Corollary 37.1.1**, lower half: the lower conjugate of a member of `Ω (F)` is a
+concave-convex function. -/
+theorem concaveConvexFn_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip]
+    (hF : ConvexBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    ConcaveConvexFn (lowerConjSaddle Bu Bx K) := by
+  rw [lowerConjSaddle_eq_bracket_inverseBifun Bu Bx hF hK]
+  exact concaveConvexFn_bracket (convexBifun_inverseBifun_adjointBifun Bu Bx F) Bx.flip
+
+/-- **Rockafellar, Corollary 37.1.1**, lower half: the lower conjugate of a member of `Ω (F)` is
+*lower closed*. This is Theorem 33.3 applied to the closed convex bifunction `F_*^*`. -/
+theorem lowerClosedFn_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    LowerClosedFn (lowerConjSaddle Bu Bx K) := by
+  have : IsCompatiblePairing Bx.flip.flip := by rw [LinearMap.flip_flip]; infer_instance
+  rw [lowerConjSaddle_eq_bracket_inverseBifun Bu Bx hF hK]
+  exact lowerClosedFn_bracket Bu.flip Bx.flip (convexBifun_inverseBifun_adjointBifun Bu Bx F)
+    (closedBifun_inverseBifun_adjointBifun Bu Bx F)
+
+end Thm371
 
 end Tdaf.ConvexAnalysis
