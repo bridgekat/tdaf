@@ -33,8 +33,9 @@ notation "ri" => intrinsicInterior ℝ
 | `Convex.relint_image`, `.closure_image_subset` | `ri (A C) = A (ri C)` | **Thm 6.6** |
 | `Convex.relint_add` | `ri (C₁+C₂) = ri C₁ + ri C₂` | **Cor 6.6.2** |
 | `Convex.relint_preimage`, `.closure_preimage` — **done** | `ri (A⁻¹ C) = A⁻¹ (ri C)` | **Thm 6.7** |
-| `Convex.mem_relint_prod_iff` | slices | **Thm 6.8**, Cor 6.8.1 |
-| `Convex.relint_convexHull_iUnion` | Thm 6.9 |
+| `Convex.mem_relint_prod_iff` | slices | **Thm 6.8** |
+| `Convex.relint_cone_prodMk_one`, `Convex.mem_relint_iff_mk_one_mem_relint_cone` | | **Cor 6.8.1** — done |
+| `cone_prodMk_one_convexHull_union`, `Convex.relint_convexHull_union` | | **Thm 3.8** for these cones, **Thm 6.9** — done for two sets |
 
 Theorem 6.1 is the engine; everything else is an application of it plus Theorem 6.4. Rockafellar's
 own proof of 6.1 reduces to the full-dimensional case by an affine transformation carrying `aff C`
@@ -50,7 +51,7 @@ Also here (they are §7 results whose proofs need `ri`, deferred from sub-plan 2
 - `clFn_eq_of_mem_relint_dom` (**Thm 7.4**) and Cor 7.4.1–7.4.2;
 - `ConvexFn.tendsto_lscHull_along_segment_relint` (**Thm 7.5**, the `ri` form — the layer-B
   `interior` form is in `Closure.lean`) and its `clFn` companion;
-- Theorem 7.6 on level sets.
+- Theorem 7.6 on level sets — **done**, as `ConvexFn.relint_setOf_le` and its eight companions.
 
 **Theorem 6.7 was the last missing prerequisite of §9.** It is proved exactly as in the book: with
 `M` the graph of `A` and `P` the projection to the first factor, `A⁻¹ C = P (M ∩ (univ ×ˢ C))`, so

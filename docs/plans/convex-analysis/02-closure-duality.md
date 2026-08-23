@@ -52,7 +52,7 @@ The surface then owes a proof that for convex `f` on `ℝⁿ` this agrees with t
 | `ClosedFn.proper_of_proper` : `Proper f → Proper (clFn f)` | **Thm 7.4** *(finite-dim)* |
 | `clFn_eq_of_mem_relint_dom` | Thm 7.4 *(finite-dim)* |
 | `tendsto_lscHull_along_segment`, `clFn_eq_limit_along_segment`, `tendsto_along_segment_of_closed_proper` | **Thm 7.5**, Cor 7.5.1 |
-| `relint_lt_level`, `closure_level_eq` | Thm 7.6 |
+| `ConvexFn.relint_setOf_le`, `.closure_setOf_le`, `.relint_setOf_lt`, `.closure_setOf_lt`, `.closure_setOf_le_clFn`, `.relint_setOf_le_of_relint_dom_eq`, `.closure_setOf_lt_of_closedFn` | Thm 7.6, Cor 7.6.1 — done in `RelativeInterior.lean` |
 
 **Theorem 7.5 has two forms, and only one of them lives here.** The layer-B form proved in this
 file starts the segment at an *interior* point of `epi f`, because relative interiors are

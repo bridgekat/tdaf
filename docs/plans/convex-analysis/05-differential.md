@@ -41,8 +41,8 @@ def normalCone (B) (C : Set E) (x : E) : Set F := {y | ∀ z ∈ C, B (z - x) y 
 | `subgradient_indicatorFn` (carries `x ∈ C`, see §9 of the overview), `subgradient_indicatorFn_of_notMem`, `mem_subgradient_indicatorFn_iff` | `∂δ(·|C) x = N_C(x)` | §23 |
 | `subgradient_supportFn`, `subgradient_conj_indicatorFn` | `∂δ*(·|C) y` = argmax of `⟨·,y⟩` over `C` | Cor 23.5.3 |
 | `mem_subgradient_indicatorFn_pointedCone` (delivered **without** the closedness Rockafellar assumes) | `y ∈ ∂δ(·|K)(x) ↔ x ∈ K, y ∈ K°, ⟨x,y⟩ = 0` | Cor 23.5.4 |
-| `epsSubgradient` and `dirDeriv_eq_limit_eps` — **not written**; deferred with Thm 13.5 | ε-subgradients | Thm 23.6 |
-| `normalCone_level_eq_cone_subgradient` — **not written**; blocked, see §5.1a | | Thm 23.7, Cor 23.7.1 |
+| `epsSubgradient`, `shiftFn`, `epsSubgradient_eq_supportSet`, `epsSubgradient_eq_setOf_conj_le`, `supportFn_epsSubgradient`, `dirDeriv_eq_iInf_supportFn_epsSubgradient` | ε-subgradients | **Thm 23.6** — done, `Subgradient/Approx.lean` |
+| `subgradient_subset_normalCone_setOf_le`, `polarCone_subgradient`, `normalCone_setOf_le_eq_closure_coe_hull_subgradient`, `normalCone_setOf_le_eq_coe_hull_subgradient` | | **Thm 23.7, Cor 23.7.1** — done, `Subgradient/Existence.lean` |
 
 `Proper.mem_subgradient_iff_add_conj_eq` (Theorem 23.5) is the pivot: it identifies `∂f` with the
 equality case of Fenchel's inequality, hence with a purely conjugacy-level notion, hence gives
@@ -97,10 +97,16 @@ topology.
 `conj_dirDeriv` says `(f'(x; ·))* = δ(· | ∂f x)`; `PolyhedralFn.conj` says that conjugate is
 polyhedral; `PolyhedralFn.polyhedral_dom` reads `∂f x` off as its effective domain.
 
-(iv) **Theorem 23.7 stays open, and not for want of §23.** Its proof needs the `ri` half of
-Theorem 7.6 (`cl {z | f z < f x} = cl {z | f z ≤ f x}` when `f x > inf f`), which §7 leaves
-undone, and Corollary 23.7.1 needs Corollary 9.6.1, which is scheduled with §15. Theorem 23.6
-(ε-subgradients) remains deferred with Theorem 13.5.
+(iv) **Theorems 23.6 and 23.7 are done.** Theorem 23.7 runs on the `ri` half of Theorem 7.6
+(`cl {z | f z < f x} = cl {z | f z ≤ f x}` when `f x > inf f`), which §7 now has, and Corollary
+23.7.1 on Corollary 9.6.1 — which was already in place as `isClosed_coe_hull_of_isBounded`, so the
+plan's claim that it "is scheduled with §15" was stale. Two hypothesis corrections: neither result
+needs `f` closed, and properness is not assumed separately (it follows from `∂f x ≠ ∅` through
+`proper_of_subgradient_nonempty`). `∂f x ≠ ∅` itself *is* in the book — "`f` is subdifferentiable
+at `x`" — and cannot be dropped; `-√y` at `0` is the counterexample. Corollary 23.7.1 is the one
+place the book's statement is not matched: it asks for `x ∈ int (dom f)`, and the version here asks
+for `Bornology.IsBounded (∂f x)`, because `bddAbove_subgradient_iff_mem_interior_dom` supplies only
+the pairing form of boundedness.
 
 ## 5.2 `Subgradient/Calculus.lean` — §23.8, §23.9
 

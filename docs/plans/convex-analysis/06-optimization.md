@@ -25,7 +25,7 @@ other seven turned out to be exactly the parts of the book that are still deferr
 | — | Thm 27.1(c), (d) | **not done** — need Thm 23.3 in full and Cor 13.3.4 |
 | — | Thm 27.1(e) | **not done** — `∂f*(0)` a singleton lives in `E**`, so a reflexive pairing is needed to state it |
 | — | Thm 27.1(f) | **not done** — needs Thm 14.2 |
-| — | Thm 27.1(g), (h) | **not done** — need Thm 13.5 and Thm 23.6 |
+| — | Thm 27.1(g), (h) | **not done** — need Thm 13.5; Thm 23.6 is now done (`Subgradient/Approx.lean`) |
 | — | Thm 27.1(i) | **not done** — needs Cor 13.3.4 |
 | `argmin_nonempty_of_recessionConeFn_eq_zero`, `isCompact_argmin_of_recessionConeFn_eq_zero`, `exists_pos_forall_exists_mem_argmin_dist_lt` | **Thm 27.2**, all three assertions | done |
 | `tendsto_infDist_argmin`, `isBounded_range_of_tendsto_iInf`, `mem_argmin_of_mapClusterPt` | Cor 27.2.1 | done |
