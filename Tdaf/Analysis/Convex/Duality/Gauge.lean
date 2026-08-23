@@ -43,6 +43,10 @@ with it. Four correspondences live here, all of them involutions on a characteri
 * `isGauge_iff` — a function is a gauge exactly when it is the gauge of a nonempty convex set.
 * `recessionCone_eq_polarCone_polarSet`, `polarCone_recessionCone`, `polarCone_linealitySpace` —
   **Theorem 14.6**.
+* `finrank_vectorSpan_polarSet_add_lineality`, `finrank_vectorSpan_add_lineality_polarSet` —
+  **Corollary 14.6.1**, the dimension relations `dim C° = n - lin C` and `lin C° = n - dim C`,
+  stated without truncated subtraction. `finrank_add_finrank_polarSubmodule` is the underlying
+  fact that the polar of a subspace has the complementary dimension.
 * `polarSet_setOf_le_subset_and_subset` — **Theorem 14.7**.
 * `polarGauge_eq_supportFn`, `isGauge_polarGauge`, `polarGauge_gaugeFn`, `polarGauge_polarGauge`,
   `polarGaugeEquiv`, `polarSet_eq_iff_polarGauge_gaugeFn_eq` — **Theorem 15.1**, **Cor 15.1.1**.
@@ -115,10 +119,6 @@ invisible to a positively homogeneous function — and Theorem 15.4 does the res
 
 ## What is not here
 
-* **Corollary 14.6.1**, the dimension relations `dim C° = n - lin C` and so on. They are
-  finite-dimensional arithmetic on top of the orthogonality proved here
-  (`polarCone_linealitySpace`), and would need a `finrank` API for polar annihilators that does
-  not belong in this file.
 * **Theorem 15.3** and its corollaries, on gauge-like closed proper convex functions
   `f = g ∘ k`. The statement quantifies over the nondecreasing lower semicontinuous convex
   functions on `[0, +∞]` and their *monotone conjugates* `g⁺`; that is a one-dimensional theory
@@ -130,7 +130,7 @@ invisible to a positively homogeneous function — and Theorem 15.4 does the res
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §14 (Theorems 14.6,
-  14.7) and §15.
+  14.7, Corollary 14.6.1) and §15.
 -/
 
 open Set Pointwise
@@ -735,6 +735,117 @@ theorem polarCone_linealitySpace [TopologicalSpace F] [IsTopologicalAddGroup F]
   rwa [LinearMap.flip_flip] at h
 
 end Theorem146
+
+/-! ### Corollary 14.6.1
+
+The dimension relations `dim C° = n - lin C` and `lin C° = n - dim C`. They are the orthogonality
+of Theorem 14.6 read through `finrank`: the polar of a *subspace* is its annihilator, and the
+annihilator of a subspace of a finite-dimensional space has the complementary dimension. -/
+
+section PolarSubmodule
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+
+/-- The polar of a **subspace**, bundled as a submodule of `F`: the annihilator of `M` pulled back
+along `B.flip`. Its carrier is `polarCone B M`, which for a subspace is Rockafellar's "orthogonally
+complementary subspace" (`polarCone_coe_submodule`). -/
+noncomputable def polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) : Submodule ℝ F :=
+  M.dualAnnihilator.comap B.flip
+
+@[simp] theorem coe_polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) :
+    (polarSubmodule B M : Set F) = polarCone B (M : Set E) :=
+  (polarCone_coe_submodule B M).symm
+
+/-- For a set containing the origin the affine hull and the linear hull agree — **Rockafellar,
+Theorem 1.1**, in the form Corollary 14.6.1 uses it. -/
+theorem vectorSpan_eq_span_of_zero_mem {C : Set E} (h0 : (0 : E) ∈ C) :
+    vectorSpan ℝ C = Submodule.span ℝ C := by
+  rw [vectorSpan_eq_span_vsub_set_right ℝ h0]
+  congr 1
+  ext x
+  simp
+
+end PolarSubmodule
+
+section Corollary1461
+
+variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C : Set E}
+
+/-- **The polar of a subspace has the complementary dimension.** This is rank–nullity for the map
+`F → M*` that a compatible pairing induces: it is onto because `B.flip` is onto `E*` (compatibility,
+plus the automatic continuity of a functional in finite dimensions) and restriction `E* → M*` is
+onto, and its kernel is the polar of `M`. -/
+theorem finrank_add_finrank_polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    (M : Submodule ℝ E) :
+    Module.finrank ℝ M + Module.finrank ℝ (polarSubmodule B M) = Module.finrank ℝ F := by
+  classical
+  have hflip : Function.Surjective (B.flip : F →ₗ[ℝ] Module.Dual ℝ E) := by
+    intro g
+    obtain ⟨y, hy⟩ := exists_pairing_eq B (LinearMap.toContinuousLinearMap g)
+    refine ⟨y, LinearMap.ext fun x => ?_⟩
+    have h := hy x
+    simp only [LinearMap.coe_toContinuousLinearMap'] at h
+    rw [LinearMap.flip_apply, ← h]
+  have hsurj : Function.Surjective ((Submodule.subtype M).dualMap.comp B.flip) :=
+    (LinearMap.dualMap_surjective_of_injective (Submodule.injective_subtype M)).comp hflip
+  have hker : LinearMap.ker ((Submodule.subtype M).dualMap.comp B.flip) = polarSubmodule B M := by
+    ext y
+    simp only [LinearMap.mem_ker, LinearMap.comp_apply, polarSubmodule, Submodule.mem_comap,
+      Submodule.mem_dualAnnihilator, LinearMap.flip_apply]
+    constructor
+    · intro h w hw
+      have hval := congrArg (fun g : Module.Dual ℝ M => g ⟨w, hw⟩) h
+      simpa using hval
+    · intro h
+      ext m
+      simpa using h (m : E) m.2
+  have hrk := LinearMap.finrank_range_add_finrank_ker ((Submodule.subtype M).dualMap.comp B.flip)
+  rw [LinearMap.range_eq_top.2 hsurj, hker, finrank_top, Subspace.dual_finrank_eq] at hrk
+  exact hrk
+
+/-- **Rockafellar, Corollary 14.6.1**, first relation: `dim C° = n - lin C` for a closed convex set
+containing the origin. Stated without truncated subtraction, as `dim C° + lin C = n`.
+
+The subspace generated by `C°` is the polar of the lineality space of `C` (Theorem 14.6, in the
+form `polarCone_linealitySpace`; the closure there is redundant in finite dimensions), and the
+affine hull of `C°` is its linear hull because `0 ∈ C°`. -/
+theorem finrank_vectorSpan_polarSet_add_lineality [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
+    Module.finrank ℝ (vectorSpan ℝ (polarSet B C)) + lineality C = Module.finrank ℝ F := by
+  have hspan : vectorSpan ℝ (polarSet B C) = Submodule.span ℝ (polarSet B C) :=
+    vectorSpan_eq_span_of_zero_mem (zero_mem_polarSet B C)
+  have hpol : polarSubmodule B (linealitySubmodule C) = Submodule.span ℝ (polarSet B C) := by
+    refine SetLike.coe_injective ?_
+    rw [coe_polarSubmodule, coe_linealitySubmodule,
+      polarCone_linealitySpace (B := B) hconv hcl h0,
+      (Submodule.closed_of_finiteDimensional (Submodule.span ℝ (polarSet B C))).closure_eq]
+  rw [hspan, ← hpol, lineality, add_comm]
+  exact finrank_add_finrank_polarSubmodule B (linealitySubmodule C)
+
+/-- **Rockafellar, Corollary 14.6.1**, second relation: `lin C° = n - dim C`, again without
+truncated subtraction. It is the first relation applied to the polar pair the other way round,
+using `C°° = C` (Theorem 14.5).
+
+Rockafellar's third relation, `rank C° = rank C`, is the difference of the two: both
+`dim C° + lin C` and `dim C + lin C°` equal `n`. -/
+theorem finrank_vectorSpan_add_lineality_polarSet [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
+    Module.finrank ℝ (vectorSpan ℝ C) + lineality (polarSet B C) = Module.finrank ℝ E := by
+  have hcvx : Convex ℝ (polarSet B C) := by
+    intro y hy z hz s t hs ht hst x hx
+    have h1 : B x y ≤ 1 := hy x hx
+    have h2 : B x z ≤ 1 := hz x hx
+    have hval : B x (s • y + t • z) = s * B x y + t * B x z := by
+      rw [map_add, map_smul, map_smul, smul_eq_mul, smul_eq_mul]
+    rw [hval]
+    nlinarith
+  have h := finrank_vectorSpan_polarSet_add_lineality (B := B.flip) (C := polarSet B C)
+    hcvx isClosed_polarSet (zero_mem_polarSet B C)
+  rwa [polarSet_polarSet (B := B) hconv hcl h0] at h
+
+end Corollary1461
 
 /-! ### Theorem 14.7
 
@@ -2176,5 +2287,6 @@ theorem absorbsAll_of_absorbent (hC : Absorbent ℝ C) : AbsorbsAll C := fun x =
   exact ⟨r, hr0.le, hr r (Real.norm_of_nonneg hr0.le).ge rfl⟩
 
 end MathlibGauge
+
 
 end Tdaf.ConvexAnalysis
