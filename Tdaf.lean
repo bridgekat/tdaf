@@ -53,6 +53,7 @@ import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Recession.Function
 import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Saddle.Closure
+import Tdaf.Analysis.Convex.Saddle.Continuity
 import Tdaf.Analysis.Convex.Saddle.Correspondence
 import Tdaf.Analysis.Convex.Saddle.Defs
 import Tdaf.Analysis.Convex.Saddle.Equiv
