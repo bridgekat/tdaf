@@ -1681,4 +1681,145 @@ theorem obverse_obverse (h : IsPolarFn f) : obverse (obverse f) = f := by
 
 end ObverseClosed
 
+/-! ### Theorem 15.5: the polar, the conjugate and the obverse
+
+Rockafellar obtains Theorem 15.5 from the symmetry of a closed convex cone in `R^(n+2)` under
+exchanging two coordinates. Here the single computation `f* = (f°)ᵒ` (`conj_eq_obverse_polarFn`)
+does the work: it is a level-set comparison, and everything else follows from it together with
+`obverse_obverse` and Theorem 15.4. -/
+
+section Theorem155Aux
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {y : F}
+
+/-- `f*(y) ≤ ν` read off the epigraph of `f`: the `⊤` value of `f` imposes no condition. -/
+theorem conj_le_coe_iff_epi (hnn : ∀ x, 0 ≤ f x) {ν : ℝ} :
+    conj B f y ≤ (ν : EReal) ↔ ∀ (x : E) (α : ℝ), f x ≤ (α : EReal) → B x y - α ≤ ν := by
+  rw [conj_apply, iSup_le_iff]
+  constructor
+  · intro h x α hα
+    have h2 : ((B x y : ℝ) : EReal) - (α : EReal) ≤ ((B x y : ℝ) : EReal) - f x :=
+      _root_.EReal.sub_le_sub le_rfl hα
+    have h3 := le_trans h2 (h x)
+    rw [← _root_.EReal.coe_sub, EReal.coe_le_coe_iff] at h3
+    exact h3
+  · intro h x
+    rcases eq_or_lt_of_le (le_top (a := f x)) with htop | hlt
+    · rw [htop, _root_.EReal.sub_top]
+      exact bot_le
+    obtain ⟨c, hc⟩ :=
+      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (fun hb => by simpa [hb] using hnn x) hlt
+    rw [hc, ← _root_.EReal.coe_sub, EReal.coe_le_coe_iff]
+    exact h x c (le_of_eq hc)
+
+end Theorem155Aux
+
+section Theorem155Conj
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
+  [Module ℝ F] [TopologicalSpace F] [IsTopologicalAddGroup F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
+  [IsContinuousPairing B.flip] {f : E → EReal}
+
+/-- The conjugate of a member of the class of Corollary 15.4.1 is again a member of the class —
+Rockafellar's observation that `f*` "has these same properties, as is apparent from its
+definition". -/
+theorem isPolarFn_conj (h : IsPolarFn f) : IsPolarFn (conj B f) where
+  nonneg := zero_le_conj h.map_zero.le
+  map_zero := conj_zero_eq_zero h.nonneg h.map_zero.le
+  convexFn := convexFn_conj B f
+  closedFn := closedFn_conj
+
+end Theorem155Conj
+
+section Theorem155Obverse
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
+  [Module ℝ F] [TopologicalSpace F] [ContinuousSMul ℝ F] [IsTopologicalAddGroup F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B.flip] {f : E → EReal}
+
+/-- **Rockafellar, Theorem 15.5**, the computation: the conjugate is the obverse of the polar,
+`f* = (f°)ᵒ`.
+
+Both sides are nonnegative, so it suffices to compare them against the positive reals, and there
+the statement unwinds to `⟨x, y⟩ - α ≤ ν` for every `(x, α) ∈ epi f`. -/
+theorem conj_eq_obverse_polarFn (h : IsPolarFn f) : conj B f = obverse (polarFn B f) := by
+  funext y
+  refine eq_of_forall_pos_le_iff (zero_le_conj h.map_zero.le y) (obverse_nonneg _ y) fun ν hν => ?_
+  rw [obverse_le_coe_iff (isPolarFn_polarFn h) hν, polarFn_le_coe_iff h.nonneg,
+    conj_le_coe_iff_epi h.nonneg]
+  refine forall_congr' fun x => forall_congr' fun α => imp_congr_right fun _ => ?_
+  rw [map_smul, smul_eq_mul]
+  have hrw : ν⁻¹ * B x y - α * ν⁻¹ = ν⁻¹ * (B x y - α) := by ring
+  rw [hrw, inv_mul_le_iff₀ hν, mul_one]
+
+/-- **Rockafellar, Theorem 15.5**, the dual computation: the polar is the obverse of the
+conjugate, `f° = (f*)ᵒ`. Together with `conj_eq_obverse_polarFn` this is the last assertion of
+Theorem 15.5: `f°` and `f*` are the obverses of each other. -/
+theorem polarFn_eq_obverse_conj (h : IsPolarFn f) : polarFn B f = obverse (conj B f) := by
+  rw [conj_eq_obverse_polarFn h, obverse_obverse (isPolarFn_polarFn h)]
+
+end Theorem155Obverse
+
+section Theorem155Main
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F] [TopologicalSpace F]
+  [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {f : E → EReal}
+
+omit [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F] in
+/-- **Rockafellar, Theorem 15.5**: the obverse of `f` is `f*°`, the expression from which
+Rockafellar derives the formula `g(x) = inf {λ > 0 | (fλ)(x) ≤ 1}`. -/
+theorem obverse_eq_polarFn_conj (h : IsPolarFn f) :
+    obverse f = polarFn B.flip (conj B f) := by
+  rw [polarFn_eq_obverse_conj (B := B.flip) (isPolarFn_conj (B := B) h)]
+  have h2 : conj B.flip (conj B f) = f := by
+    change biconj B f = f
+    rw [biconj_eq_clFn h.convexFn]
+    exact h.closedFn
+  rw [h2]
+
+/-- **Rockafellar, Theorem 15.5**: `g° = f*`, where `g` is the obverse of `f`. -/
+theorem polarFn_obverse (h : IsPolarFn f) : polarFn B (obverse f) = conj B f := by
+  have hc : IsPolarFn (conj B f) := isPolarFn_conj (B := B) h
+  rw [obverse_eq_polarFn_conj (B := B) h]
+  have h3 := polarFn_polarFn (B := B.flip) hc.convexFn hc.nonneg hc.map_zero_le
+  rw [LinearMap.flip_flip] at h3
+  rw [h3]
+  exact hc.closedFn
+
+/-- **Rockafellar, Theorem 15.5**: `f° = g*`, where `g` is the obverse of `f`. -/
+theorem conj_obverse (h : IsPolarFn f) : conj B (obverse f) = polarFn B f := by
+  rw [conj_eq_obverse_polarFn (isPolarFn_obverse h), polarFn_obverse (B := B) h,
+    ← polarFn_eq_obverse_conj (B := B) h]
+
+omit [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F] in
+/-- **Rockafellar, Corollary 15.5.1**: `f*° = f°*`. -/
+theorem polarFn_conj_eq_conj_polarFn (h : IsPolarFn f) :
+    polarFn B.flip (conj B f) = conj B.flip (polarFn B f) := by
+  rw [← obverse_eq_polarFn_conj (B := B) h,
+    conj_eq_obverse_polarFn (B := B.flip) (isPolarFn_polarFn (B := B) h),
+    polarFn_polarFn h.convexFn h.nonneg h.map_zero_le, h.closedFn]
+
+omit [LocallyConvexSpace ℝ E] in
+/-- **Rockafellar §15**, the level sets of the obverse: `{g ≤ α} = α {f ≤ α⁻¹}` for `α > 0`. -/
+theorem setOf_obverse_le (h : IsPolarFn f) {α : ℝ} (hα : 0 < α) :
+    {x : E | obverse f x ≤ (α : EReal)} = α • {x : E | f x ≤ ((α⁻¹ : ℝ) : EReal)} := by
+  ext z
+  rw [Set.mem_ofPred_eq, obverse_le_coe_iff h hα, mem_smul_set_iff_inv_smul_mem₀ hα.ne']
+  exact Iff.rfl
+
+omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
+  [LocallyConvexSpace ℝ F] [IsCompatiblePairing B] in
+/-- **Rockafellar §15**, the last display of the section: `{f° ≤ α⁻¹} = α⁻¹ {f* ≤ α}` for `α > 0`.
+This set is the middle set of the inclusions of Theorem 14.7. -/
+theorem setOf_polarFn_le (h : IsPolarFn f) {α : ℝ} (hα : 0 < α) :
+    {y : F | polarFn B f y ≤ ((α⁻¹ : ℝ) : EReal)}
+      = α⁻¹ • {y : F | conj B f y ≤ (α : EReal)} := by
+  rw [polarFn_eq_obverse_conj (B := B) h,
+    setOf_obverse_le (isPolarFn_conj (B := B) h) (inv_pos.2 hα), inv_inv]
+
+end Theorem155Main
+
 end Tdaf.ConvexAnalysis
