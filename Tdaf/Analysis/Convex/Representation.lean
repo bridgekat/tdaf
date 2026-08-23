@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Mathlib.Analysis.InnerProductSpace.EuclideanDist
 import Mathlib.Analysis.InnerProductSpace.LinearMap
 import Mathlib.Analysis.InnerProductSpace.Projection.Minimal
 import Tdaf.Analysis.Convex.Face
@@ -929,9 +930,9 @@ theorem coneHull_extremeDirections_eq (hC : Convex ℝ C) (hCcl : IsClosed C) (h
 end Representation
 
 
-/-! ### Theorem 18.6: Straszewicz's theorem -/
+/-! ### Theorem 18.6: Straszewicz's theorem, the Euclidean core -/
 
-section Straszewicz
+section Euclidean
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {C : Set E}
 
@@ -962,66 +963,25 @@ theorem mem_exposedPoints_of_forall_norm_sub_le (y : E) {p : E} (hp : p ∈ C)
   exact sub_eq_zero.1 (norm_eq_zero.1 hzero)
 
 /-- A nonempty compact set has at least one exposed point: any point farthest from the origin. -/
-theorem exposedPoints_nonempty_of_isCompact (hC : IsCompact C) (hne : C.Nonempty) :
+private theorem exposedPoints_nonempty_aux (hC : IsCompact C) (hne : C.Nonempty) :
     (C.exposedPoints ℝ).Nonempty := by
   obtain ⟨p, hp, hmax⟩ :=
     hC.exists_isMaxOn (f := fun z : E => ‖z - (0 : E)‖) hne (by fun_prop)
   exact ⟨p, mem_exposedPoints_of_forall_norm_sub_le 0 hp fun z hz => isMaxOn_iff.1 hmax z hz⟩
 
-/-- **Exposedness is a local property of a convex set.** A point exposed in the truncation
-`C ∩ closedBall c r` that lies in the *open* ball is already exposed in `C`.
-
-This is the reduction to the bounded case in Rockafellar's proof of Theorem 18.6. -/
-theorem mem_exposedPoints_of_mem_exposedPoints_inter_closedBall (hC : Convex ℝ C) {c : E} {r : ℝ}
-    {p : E} (hp : p ∈ (C ∩ Metric.closedBall c r).exposedPoints ℝ) (hlt : dist p c < r) :
-    p ∈ C.exposedPoints ℝ := by
-  obtain ⟨⟨hpC, hpB⟩, l, hl⟩ := hp
-  refine ⟨hpC, l, fun z hz => ?_⟩
-  set t : ℝ := min 1 ((r - dist p c) / (‖z - p‖ + 1)) with ht
-  have hm : (0 : ℝ) ≤ ‖z - p‖ := norm_nonneg _
-  have hden : (0 : ℝ) < ‖z - p‖ + 1 := by linarith
-  have ha : (0 : ℝ) < r - dist p c := by linarith
-  have htpos : 0 < t := lt_min one_pos (div_pos ha hden)
-  have htle : t ≤ 1 := min_le_left _ _
-  have htbound : t * ‖z - p‖ < r - dist p c := by
-    have h2 : t ≤ (r - dist p c) / (‖z - p‖ + 1) := min_le_right _ _
-    have h3 := mul_le_mul_of_nonneg_right h2 hm
-    have h4 : (r - dist p c) / (‖z - p‖ + 1) * ‖z - p‖ < r - dist p c := by
-      rw [div_mul_eq_mul_div, div_lt_iff₀ hden]
-      nlinarith
-    linarith
-  -- the point `w` moves from `p` a little towards `z`, staying inside the ball
-  have hwsub : (1 - t) • p + t • z - p = t • (z - p) := by module
-  have hwC : (1 - t) • p + t • z ∈ C := hC hpC hz (by linarith) htpos.le (by ring)
-  have hwB : (1 - t) • p + t • z ∈ Metric.closedBall c r := by
-    have hdw : dist ((1 - t) • p + t • z) p = t * ‖z - p‖ := by
-      rw [dist_eq_norm, hwsub, norm_smul, Real.norm_eq_abs, abs_of_pos htpos]
-    have := dist_triangle ((1 - t) • p + t • z) p c
-    rw [hdw] at this
-    exact Metric.mem_closedBall.2 (by linarith)
-  obtain ⟨hlw, hlwu⟩ := hl _ ⟨hwC, hwB⟩
-  have hlval : l ((1 - t) • p + t • z) = (1 - t) * l p + t * l z := by
-    simp [map_add, map_smul, smul_eq_mul]
-  rw [hlval] at hlw hlwu
-  refine ⟨by nlinarith, fun hle => ?_⟩
-  have hwp : (1 - t) • p + t • z = p := hlwu (by nlinarith)
-  have : t • (z - p) = 0 := by rw [← hwsub, hwp, sub_self]
-  have := (smul_eq_zero.1 this).resolve_left (ne_of_gt htpos)
-  exact sub_eq_zero.1 this
-
 variable [FiniteDimensional ℝ E]
 
-/-- Straszewicz's theorem for a *compact* convex set: every extreme point is a limit of exposed
-points. This is the substance of Rockafellar's Theorem 18.6. -/
-theorem extremePoints_subset_closure_exposedPoints_of_isCompact
+/-- Straszewicz's theorem for a *compact* convex set in a Euclidean space. This is the substance
+of Rockafellar's Theorem 18.6; the general statements below are obtained from it by transport
+along `toEuclidean` and by truncating an unbounded set with a ball. -/
+private theorem extremePoints_subset_closure_exposedPoints_aux
     (hC : Convex ℝ C) (hCcomp : IsCompact C) :
     C.extremePoints ℝ ⊆ closure (C.exposedPoints ℝ) := by
   intro x hx
   by_contra hxS
   have hxC : x ∈ C := hx.1
   have hSC : C.exposedPoints ℝ ⊆ C := exposedPoints_subset
-  have hclSC : closure (C.exposedPoints ℝ) ⊆ C :=
-    closure_minimal hSC hCcomp.isClosed
+  have hclSC : closure (C.exposedPoints ℝ) ⊆ C := closure_minimal hSC hCcomp.isClosed
   have hclScomp : IsCompact (closure (C.exposedPoints ℝ)) :=
     hCcomp.of_isClosed_subset isClosed_closure hclSC
   -- `C₀`, the convex hull of the closure of the exposed points, is compact, and misses `x`
@@ -1032,7 +992,7 @@ theorem extremePoints_subset_closure_exposedPoints_of_isCompact
   have hxC₀ : x ∉ convexHull ℝ (closure (C.exposedPoints ℝ)) := fun hmem =>
     hxS (extremePoints_convexHull_subset (mem_extremePoints_of_subset hx hC₀C hmem))
   have hC₀ne : (convexHull ℝ (closure (C.exposedPoints ℝ))).Nonempty := by
-    obtain ⟨s, hs⟩ := exposedPoints_nonempty_of_isCompact hCcomp ⟨x, hxC⟩
+    obtain ⟨s, hs⟩ := exposedPoints_nonempty_aux hCcomp ⟨x, hxC⟩
     exact ⟨s, subset_convexHull ℝ _ (subset_closure hs)⟩
   -- separate `x` from `C₀` by the nearest-point projection
   obtain ⟨v, hvC₀, hv⟩ :=
@@ -1089,10 +1049,120 @@ theorem extremePoints_subset_closure_exposedPoints_of_isCompact
     nlinarith
   nlinarith [hlamid, hn, hlampos]
 
+end Euclidean
+
+/-! ### Transport of exposed points along a linear homeomorphism -/
+
+section Transport
+
+variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F]
+
+/-- Exposed points are preserved by a linear homeomorphism. The `Mathlib` counterpart for extreme
+points is `image_extremePoints`; the proof here is the same idea, composing the exposing functional
+with the inverse map. -/
+theorem image_exposedPoints (f : E ≃L[ℝ] F) (s : Set E) :
+    f '' s.exposedPoints ℝ = (f '' s).exposedPoints ℝ := by
+  ext b
+  constructor
+  · rintro ⟨a, ⟨haS, l, hl⟩, rfl⟩
+    refine ⟨⟨a, haS, rfl⟩, l.comp (f.symm : F →L[ℝ] E), ?_⟩
+    rintro _ ⟨z, hz, rfl⟩
+    obtain ⟨h1, h2⟩ := hl z hz
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearEquiv.coe_coe,
+      ContinuousLinearEquiv.symm_apply_apply]
+    exact ⟨h1, fun h => congrArg f (h2 h)⟩
+  · rintro ⟨⟨a, haS, rfl⟩, l, hl⟩
+    refine ⟨a, ⟨haS, l.comp (f : E →L[ℝ] F), ?_⟩, rfl⟩
+    intro z hz
+    obtain ⟨h1, h2⟩ := hl (f z) ⟨z, hz, rfl⟩
+    exact ⟨h1, fun h => f.injective (h2 h)⟩
+
+end Transport
+
+/-! ### Theorem 18.6 in a general finite-dimensional space -/
+
+section Straszewicz
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {C : Set E}
+
+/-- **Exposedness is a local property of a convex set.** A point exposed in the truncation
+`C ∩ closedBall c r` that lies in the *open* ball is already exposed in `C`.
+
+This is the reduction to the bounded case in Rockafellar's proof of Theorem 18.6. -/
+theorem mem_exposedPoints_of_mem_exposedPoints_inter_closedBall (hC : Convex ℝ C) {c : E} {r : ℝ}
+    {p : E} (hp : p ∈ (C ∩ Metric.closedBall c r).exposedPoints ℝ) (hlt : dist p c < r) :
+    p ∈ C.exposedPoints ℝ := by
+  obtain ⟨⟨hpC, hpB⟩, l, hl⟩ := hp
+  refine ⟨hpC, l, fun z hz => ?_⟩
+  set t : ℝ := min 1 ((r - dist p c) / (‖z - p‖ + 1)) with ht
+  have hm : (0 : ℝ) ≤ ‖z - p‖ := norm_nonneg _
+  have hden : (0 : ℝ) < ‖z - p‖ + 1 := by linarith
+  have ha : (0 : ℝ) < r - dist p c := by linarith
+  have htpos : 0 < t := lt_min one_pos (div_pos ha hden)
+  have htle : t ≤ 1 := min_le_left _ _
+  have htbound : t * ‖z - p‖ < r - dist p c := by
+    have h2 : t ≤ (r - dist p c) / (‖z - p‖ + 1) := min_le_right _ _
+    have h3 := mul_le_mul_of_nonneg_right h2 hm
+    have h4 : (r - dist p c) / (‖z - p‖ + 1) * ‖z - p‖ < r - dist p c := by
+      rw [div_mul_eq_mul_div, div_lt_iff₀ hden]
+      nlinarith
+    linarith
+  -- the point `w` moves from `p` a little towards `z`, staying inside the ball
+  have hwsub : (1 - t) • p + t • z - p = t • (z - p) := by module
+  have hwC : (1 - t) • p + t • z ∈ C := hC hpC hz (by linarith) htpos.le (by ring)
+  have hwB : (1 - t) • p + t • z ∈ Metric.closedBall c r := by
+    have hdw : dist ((1 - t) • p + t • z) p = t * ‖z - p‖ := by
+      rw [dist_eq_norm, hwsub, norm_smul, Real.norm_eq_abs, abs_of_pos htpos]
+    have := dist_triangle ((1 - t) • p + t • z) p c
+    rw [hdw] at this
+    exact Metric.mem_closedBall.2 (by linarith)
+  obtain ⟨hlw, hlwu⟩ := hl _ ⟨hwC, hwB⟩
+  have hlval : l ((1 - t) • p + t • z) = (1 - t) * l p + t * l z := by
+    simp [map_add, map_smul, smul_eq_mul]
+  rw [hlval] at hlw hlwu
+  refine ⟨by nlinarith, fun hle => ?_⟩
+  have hwp : (1 - t) • p + t • z = p := hlwu (by nlinarith)
+  have hzp : t • (z - p) = 0 := by rw [← hwsub, hwp, sub_self]
+  exact sub_eq_zero.1 ((smul_eq_zero.1 hzp).resolve_left (ne_of_gt htpos))
+
+variable [FiniteDimensional ℝ E]
+
+/-- A nonempty compact set in a finite-dimensional real normed space has an exposed point. -/
+theorem exposedPoints_nonempty_of_isCompact (hC : IsCompact C) (hne : C.Nonempty) :
+    (C.exposedPoints ℝ).Nonempty := by
+  obtain ⟨b, hb⟩ :=
+    exposedPoints_nonempty_aux (hC.image (toEuclidean (E := E)).continuous) (hne.image _)
+  rw [← image_exposedPoints] at hb
+  exact ⟨_, hb.choose_spec.1⟩
+
+/-- **Straszewicz's theorem for a compact convex set** (Rockafellar, Theorem 18.6): every extreme
+point is a limit of exposed points. -/
+theorem extremePoints_subset_closure_exposedPoints_of_isCompact
+    (hC : Convex ℝ C) (hCcomp : IsCompact C) :
+    C.extremePoints ℝ ⊆ closure (C.exposedPoints ℝ) := by
+  intro x hx
+  have hconv : Convex ℝ (toEuclidean (E := E) '' C) := by
+    rintro _ ⟨a, ha, rfl⟩ _ ⟨b, hb, rfl⟩ s t hs ht hst
+    exact ⟨s • a + t • b, hC ha hb hs ht hst, by simp⟩
+  have himg : toEuclidean (E := E) x ∈ (toEuclidean (E := E) '' C).extremePoints ℝ := by
+    rw [← image_extremePoints]
+    exact ⟨x, hx, rfl⟩
+  have h2 : toEuclidean (E := E) x ∈ closure ((toEuclidean (E := E) '' C).exposedPoints ℝ) :=
+    extremePoints_subset_closure_exposedPoints_aux hconv
+      (hCcomp.image (toEuclidean (E := E)).continuous) himg
+  have hcl : toEuclidean (E := E) '' closure (C.exposedPoints ℝ)
+      = closure (toEuclidean (E := E) '' C.exposedPoints ℝ) := by
+    simpa only [ContinuousLinearEquiv.coe_toHomeomorph] using
+      (toEuclidean (E := E)).toHomeomorph.image_closure (C.exposedPoints ℝ)
+  rw [← image_exposedPoints, ← hcl] at h2
+  obtain ⟨y, hy, hfy⟩ := h2
+  rwa [(toEuclidean (E := E)).injective hfy] at hy
+
 /-- **Straszewicz's theorem** (Rockafellar, Theorem 18.6). For a closed convex set `C`, every
 extreme point of `C` is a limit of exposed points of `C`. Together with
-`Set.exposedPoints_subset_extremePoints` this says that the exposed points form a dense subset
-of the extreme points. -/
+`Set.exposedPoints_subset_extremePoints` this says that the exposed points of `C` form a dense
+subset of its extreme points. -/
 theorem extremePoints_subset_closure_exposedPoints (hC : Convex ℝ C) (hCcl : IsClosed C) :
     C.extremePoints ℝ ⊆ closure (C.exposedPoints ℝ) := by
   intro x hx
