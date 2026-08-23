@@ -428,6 +428,42 @@ real `a`, which is on the `Order/EReal.lean` list.
 depending on it is layer D. Rockafellar's `ri`-flavoured constraint qualifications are handled by D5
 so that the duality theorems themselves stay in layer C.
 
+### D10. **The backbone is not tied to Rockafellar**
+
+*Convex Analysis* is the source of the material and the order of work; it is **not** part of the
+backbone's interface. A second textbook on the same topic, or a research paper, must be able to sit
+on top of this library without the seams showing. Concretely:
+
+* **Names are mathematical, not bibliographic.** `polarCone_polarCone`, `fenchel_duality`,
+  `alternative_linear_system`, `subgradient_maximalMonotone` — never `thm_14_1`, and never a name
+  whose only justification is that the book puts two facts in one numbered statement. Where the
+  book's terminology is idiosyncratic, prefer the term the wider literature uses and note the
+  book's word in the docstring: `maximin`/`minimax` rather than "the saddle-value pair",
+  `ConvexProcess` rather than "positively homogeneous multifunction".
+* **Statements are the natural general ones**, per D9 — which is already the reason a Rockafellar
+  theorem often splits into several backbone lemmas with different hypotheses. When the book's
+  statement bundles clauses that have different natural homes, split them; when the book's
+  hypotheses are stronger than the proof needs, weaken them. Every such divergence is recorded as a
+  correction in `NOTES.md`.
+* **Module docstrings lead with the mathematics.** "Gauges, polars of convex functions, and
+  obverses — four correspondences, each an involution on a characterised class" is a docstring;
+  "Rockafellar's §15" is a *reference*, and belongs in the `## References` section at the bottom
+  together with the theorem numbers. Per-declaration doc comments may and should cite
+  "**Rockafellar, Theorem 23.4**" — that is a citation for the reader, not a dependency — but the
+  statement above it has to read as mathematics on its own.
+* **File and namespace layout follows the mathematics.** `Saddle/Continuity.lean`,
+  `Bifunction/Algebra.lean`, `Polyhedral/Separation.lean` are named for their content; nothing is
+  named for a chapter, and nothing is organized "one module per §" except where the section happens
+  to be a coherent topic.
+* **Book-specific packaging goes to the surface.** A theorem stated exactly as the book states it,
+  in `ℝⁿ`, with the book's numbering and bundling, is a *surface* result whose proof is a
+  specialization of backbone lemmas. That is what the surface layer is for.
+
+This is a design goal, not yet a finished refactor: parts of the existing docstrings and a few
+names still read as §-by-§ commentary, and a pass over them is scheduled after the first surface
+library exists — the surface is what will show which backbone interfaces are actually load-bearing.
+New work should not add to the debt.
+
 ---
 
 ## 3. Module hierarchy

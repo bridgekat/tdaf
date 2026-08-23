@@ -424,15 +424,40 @@ noncomputable def fenchelPairing (f : E → EReal) (g : E → EReal) : EReal :=
   ⨅ x, f x - g x     -- when it equals ⨆ y, g* y - f* y; existence is part of the theory
 ```
 
-| Lean name | book |
-|---|---|
-| `convexBifun_infConv`, `dom_infConv` | Thm 38.1 |
-| `adjoint_infConv` | **Thm 38.2**, Cor 38.2.1 |
-| `adjoint_smulRight` | Thm 38.3 |
-| `adjoint_apply_fn` | **Thm 38.4**, Cor 38.4.1 |
-| `adjoint_comp` | **Thm 38.5**, Cor 38.5.1 |
-| `fenchelPairing_conj` | Lemma 38.6 |
-| `fenchelPairing_adjoint` : the four-way identity `⟨Ff, g*⟩ = ⟨f, F*g*⟩ = -⟨f*, F_* g⟩ = -⟨F_*^* f*, g⟩`, for proper concave `g` and the *lower* adjoint `F_*` | **Thm 38.7**, Cor 38.7.1 |
+**Status: done except Theorem 38.2 with Corollary 38.2.1, and Corollaries 38.4.1 and 38.5.1.**
+The operations are `infConvBifun`, `smulRightBifun`, `imageBifun` / `concaveImageBifun`,
+`compBifun` / `concaveCompBifun`, `invBifun` (`F⫶`) and `lowerAdjointBifun` (`F⫶*`); the inner
+product is `fenchelSup` / `fenchelInf` with `HasFenchelPairing` and `fenchelPairing`.
+
+| Lean name | book | status |
+|---|---|---|
+| `domBifun_infConvBifun`, `convexBifun_infConvBifun`, `graphFn_infConvBifun`, `bracket_infConvBifun` | **Thm 38.1** | done |
+| — | **Thm 38.2**, Cor 38.2.1 | not done — needs the *concave* orientation of Thm 16.4, and a concave `supConv` that does not exist |
+| `convexBifun_smulRightBifun`, `graphFn_smulRightBifun`, `bracket_smulRightBifun` | **Thm 38.3** | done |
+| `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq`, `conj_imageBifun_eq_iSup`, `conj_imageBifun_of_bracket_eq_top`, `lowerAdjointBifun_eq_concaveAdjointBifun`, `convexBifun_lowerAdjointBifun` | **Thm 38.4** | done, against `IsExactSum` |
+| `convexBifun_compBifun`, `invBifun_compBifun` | **Thm 38.5** | done |
+| — | Cors 38.4.1, 38.5.1 | not done — both need "closure commutes with `imageBifun`/`compBifun`", which is Thm 38.2's argument again |
+| `hasFenchelPairing_conj`, `fenchelPairing_conj`, `fenchelSup_le_fenchelInf`, `hasFenchelPairing_of_le` | **Lemma 38.6** | done |
+| `hasFenchelPairing_adjointBifun`, `conj_imageBifun_eq_fenchelPairing` | **Cor 38.7.1** | done |
+| `fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun` and its supports | **Thm 38.7** | done |
+
+**Rockafellar's `⟨f, g⟩` is not §31's Fenchel setup.** His inner product pairs a convex `f` on `E`
+with a concave `g` on the *paired* space `F`; §31 has both on `E`. The two differ by a concave
+closure, so Lemma 38.6 **cannot** be derived from `fenchel_duality` and is proved from scratch.
+
+**Weak duality for `⟨f, g⟩` is unconditional.** `fenchelSup B f g ≤ fenchelInf B f g` needs neither
+properness nor exactness — both `∞ - ∞` collisions land on the correct side. That is why every
+"the extremum is attained" claim in §38 reduces to a single inequality, and why Corollary 38.7.1's
+existence half is free.
+
+**Theorem 38.4 needs no case split.** The book splits on whether `y ∈ dom F*`; `IsExactSum`'s
+`proper_right` field already excludes the degenerate branch, and that branch is stated separately
+and unconditionally as `conj_imageBifun_of_bracket_eq_top`.
+
+**`(F* g*)(v) ≠ ⊤` is not automatic** — a supremum of finite terms can be `⊤` — but it *is* bounded
+uniformly in `y`, because the two `⟨x₀, y⟩` terms cancel. That is
+`concaveImageBifun_adjointBifun_ne_top`, under "`F` finite at `(u₀, x₀)` and `g` finite at `x₀`",
+which Theorem 38.7's `ri`-hypothesis implies.
 
 Theorem 38.7 is the payoff — "adjoints move across the inner product", exactly as in linear algebra
 — and Rockafellar calls it "remarkable and non-trivial". Its hypotheses are again `ri`-intersection
@@ -448,14 +473,37 @@ structure ConvexProcess (U X : Type*) [AddCommGroup U] [Module ℝ U] … where
   zero_mem : (0, 0) ∈ graph
 ```
 
-| Lean name | book |
-|---|---|
-| `isLinearMap_of_dom_univ_of_isBounded` | **Thm 39.1** |
-| `adjoint_adjoint_eq_cl` | **Thm 39.2** |
-| `bracket_posHomogeneous` | **Thm 39.3**, Thm 39.4 |
-| `adjoint_infConv` | Thm 39.5, Thm 39.6 |
-| `adjoint_apply_fn` | **Thm 39.7**, Cor 39.7.1 (closedness of `A C`) |
-| `adjoint_comp` | Thm 39.8 |
+**Status: Theorems 39.1, 39.2 and Corollary 39.7.1 are done.** `ConvexProcess U X` wraps a
+`PointedCone ℝ (U × X)` — not a raw `Set` with side conditions, as this plan sketched — with
+`eval`, `dom`, `range`, `image`, `inv`, `ofLinearMap`, `comp`, an `Add` instance,
+`indicatorBifun`, `adjointProcess` and `coadjointProcess`.
+
+| Lean name | book | status |
+|---|---|---|
+| `convex_eval`, `convex_dom`, `convex_range`, `convex_image`, `add_eval_zero_subset`, `inv_inv`, `dom_inv`, `range_inv`, `smul_graph` | §39's elementary theory | done |
+| `exists_linearMap_of_isBounded`, `eval_zero_eq_zero_of_isBounded`, `exists_eval_eq_singleton`, `eval_ofLinearMap`, `dom_ofLinearMap` | **Thm 39.1**, both directions | done |
+| `adjointBifun_indicatorBifun`, `isClosed_graph_adjointProcess`, `graph_coadjointProcess_adjointProcess_eq_closure`, `coadjointProcess_adjointProcess_eq_self_iff` | **Thm 39.2** | done |
+| `isClosed_image`, `isClosed_image_of_isBounded`, `image_eq_image_snd` | **Cor 39.7.1** | done |
+| `graphFn_indicatorBifun`, `convexBifun_indicatorBifun`, `domBifun_indicatorBifun`, `indicatorBifun_add`, `indicatorBifun_comp`, `dom_add`, `eval_comp`, `inv_comp` | the §38 ↔ §39 dictionary | done |
+| — | Thms 39.3, 39.4 | not done — they specialize Thms 33.1–33.3 and Cor 33.2.1 to processes, which are now available, so they should be short |
+| — | Thms 39.5–39.8 | not done |
+
+**Corollary 39.7.1 is Theorem 9.1, not Theorem 39.7.** Rockafellar derives it by specializing
+Theorem 39.7 and separating the barrier cone of `C` from the range of `A*`. But `A C` is the
+projection of `graph A ∩ (C × X)` onto the second factor; a pointed convex cone is its own recession
+cone, so `0⁺(graph A ∩ (C × X)) = graph A ∩ (0⁺C × X)`, and its intersection with the projection's
+kernel is exactly `{(v, 0) | v ∈ A⁻¹0 ∩ 0⁺C}` — which is Theorem 9.1's hypothesis. **The §39.7 and
+barrier-cone prerequisite can be dropped from the plan entirely**: 39.7.1 needs no duality at all,
+only `isClosed_image_of_recessionCone_inter_ker`, `recessionCone_inter`,
+`recessionCone_coe_pointedCone` and `recessionCone_prod`.
+
+**Orientation in §39 hides a real sign trap.** Rockafellar carries "supremum- or infimum-oriented"
+as informal side data and says the adjoint of an infimum-oriented process is defined "in the same
+way, except the inequality is reversed". That sentence is load-bearing: using the
+supremum-oriented definition twice gives `{p | ∀ w ∈ K°, 0 ≤ ⟨p, w⟩}` instead of the bipolar `K°°`,
+and `A** = cl A` becomes **false**. Two separate definitions — `adjointProcess` and
+`coadjointProcess` — is the right formalization; a boolean orientation field would double every
+statement.
 
 Convex processes are exactly `ConvexCone ℝ (U × X)` viewed as relations, so Mathlib's `ConvexCone`
 should carry most of the structure. Corollary 39.7.1 (`A C` closed when `A` is a closed convex

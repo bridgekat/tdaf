@@ -2345,6 +2345,13 @@ From the repository `README.md` ("Reviewing a formalization"):
   `PosHomogeneous.epiCone` (`Homogeneous.lean`) bundles the epigraph of a positively homogeneous
   convex function as a `ConvexCone ℝ (E × ℝ)`, which §13 and §14 want.
 * Code should be idiomatic and pleasant to read, not merely correct.
+* **Nothing in the backbone may depend on Rockafellar** (design decision D10 in `00-overview.md`).
+  Names are mathematical, never bibliographic; statements are the natural general ones rather than
+  the book's packaging; a module docstring leads with what the module is *about* and puts
+  "Rockafellar §35" in its `## References` section. Per-declaration doc comments should still cite
+  "**Rockafellar, Theorem 23.4**" — that is a citation, not a dependency — but the statement has to
+  read as mathematics without it. A theorem worth having in the book's own packaging is a
+  *surface* theorem, proved by specializing backbone lemmas.
 
 ---
 
@@ -2410,6 +2417,91 @@ Kuhn–Tucker vector" form instead.
 `ConvexFn.biInf_eq_iInf_of_relint_dom_subset` (Corollary 7.3.1) belong in `RelativeInterior.lean`;
 `iSup_clConcave_eq_iSup` and `concaveConj_clConcave` (Theorem 12.2's first half, concave side)
 belong in `Duality/ConcaveConj.lean`.
+
+### `Tdaf/Analysis/Convex/Bifunction/Algebra.lean`
+
+The **convex algebra** of bifunctions: the operations that mirror the linear algebra of linear
+maps, and the inner product that adjoints move across. §38, except Theorem 38.2 with Corollary
+38.2.1 and Corollaries 38.4.1 and 38.5.1.
+
+```lean
+noncomputable def infConvBifun …    -- `F₁ □ F₂`, the analogue of `A₁ + A₂`
+noncomputable def smulRightBifun …  -- `Fλ`
+noncomputable def imageBifun … ; noncomputable def concaveImageBifun …   -- `Ff`
+noncomputable def compBifun … ; noncomputable def concaveCompBifun …     -- `GF`
+def invBifun … ; noncomputable def lowerAdjointBifun …                   -- `F⫶`, `F⫶*`
+noncomputable def fenchelSup … ; noncomputable def fenchelInf …
+def HasFenchelPairing … ; noncomputable def fenchelPairing …             -- `⟨f, g⟩`
+theorem bracket_infConvBifun …                                           -- Thm 38.1
+theorem conj_imageBifun …                                                -- Thm 38.4
+theorem invBifun_compBifun …                                             -- Thm 38.5
+theorem fenchelPairing_conj …                                            -- Lemma 38.6
+theorem fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun …           -- **Thm 38.7**
+```
+
+**Rockafellar's `⟨f, g⟩` is not §31's Fenchel setup.** His inner product pairs a convex `f` on `E`
+with a concave `g` on the *paired* space `F`; §31 has both on `E`. The two differ by a concave
+closure, so Lemma 38.6 cannot be derived from `fenchel_duality` and is proved from scratch.
+
+**Weak duality is unconditional.** `fenchelSup B f g ≤ fenchelInf B f g` needs neither properness
+nor exactness — both `∞ - ∞` collisions land on the correct side — which is why every "the
+extremum is attained" claim in §38 reduces to one inequality, and Corollary 38.7.1's existence half
+is free.
+
+**Theorem 38.4 needs no case split.** The book splits on `y ∈ dom F*`; `IsExactSum.proper_right`
+already excludes the degenerate branch, which is stated separately and unconditionally as
+`conj_imageBifun_of_bracket_eq_top`.
+
+**`(F* g*)(v) ≠ ⊤` is not automatic** — a supremum of finite terms can be `⊤` — but it is bounded
+uniformly in `y`, because the two `⟨x₀, y⟩` terms cancel (`concaveImageBifun_adjointBifun_ne_top`).
+
+**Not here**: Theorem 38.2 and Corollary 38.2.1 (`(F₁ □ F₂)* = F₁* □ F₂*`), which need the *concave*
+orientation of Theorem 16.4 — `Duality/Exact.lean` has only the convex `IsExactSum.conj_add`, and
+per design decision D2 the concave transfer is hand-written, which here also needs a concave
+`supConv` that does not exist. Corollaries 38.4.1 and 38.5.1 assert closedness of `Ff` / `GF`
+*together with* `(Ff)* = cl (F⫶* f*)`; the missing piece is "closure commutes with
+`imageBifun` / `compBifun`", which is Theorem 38.2's argument again.
+
+**Relocation candidate**: `infConv_indicatorFn` (`δ(·∣S) □ δ(·∣T) = δ(·∣S+T)`) belongs in
+`Operations/InfConv.lean`, which currently has only the singleton case.
+
+### `Tdaf/Analysis/Convex/Bifunction/Process.lean`
+
+**Convex processes** — multivalued maps whose graph is a pointed convex cone — and the dictionary
+that identifies them with indicator bifunctions. §39's Theorems 39.1, 39.2 and Corollary 39.7.1.
+
+```lean
+structure ConvexProcess (U X : Type*) … where graph : PointedCone ℝ (U × X)
+def eval … ; def dom … ; def range … ; def image … ; def inv …
+def ofLinearMap … ; def comp … ; instance : Add …
+noncomputable def indicatorBifun … ; def adjointProcess … ; def coadjointProcess …
+theorem exists_linearMap_of_isBounded …                    -- Thm 39.1
+theorem coadjointProcess_adjointProcess_eq_self_iff …       -- Thm 39.2, `A** = cl A`
+theorem isClosed_image …                                    -- Cor 39.7.1
+```
+
+**The graph is a `PointedCone`, not a `Set` with side conditions.** The plan sketched a structure
+carrying `Convex`, `∀ a > 0, a • graph = graph` and `(0,0) ∈ graph` as fields; `PointedCone ℝ (U × X)`
+is all three, and brings `Submodule` machinery with it.
+
+**Corollary 39.7.1 is Theorem 9.1, not Theorem 39.7.** Rockafellar specializes Theorem 39.7 and
+separates the barrier cone of `C` from the range of `A*`. But `A C` is the projection of
+`graph A ∩ (C × X)` onto the second factor; a pointed convex cone is its own recession cone, so
+`0⁺(graph A ∩ (C × X)) = graph A ∩ (0⁺C × X)`, whose intersection with the projection's kernel is
+`{(v, 0) | v ∈ A⁻¹0 ∩ 0⁺C}` — exactly Theorem 9.1's hypothesis. No duality is involved; the
+ingredients are `isClosed_image_of_recessionCone_inter_ker`, `recessionCone_inter`,
+`recessionCone_coe_pointedCone` and `recessionCone_prod`.
+
+**Orientation is a real sign trap, and it needs two definitions.** Rockafellar carries
+"supremum- or infimum-oriented" as informal side data and says the adjoint of an infimum-oriented
+process is defined "in the same way, except the inequality is reversed". Using the
+supremum-oriented definition twice gives `{p | ∀ w ∈ K°, 0 ≤ ⟨p, w⟩}` rather than the bipolar `K°°`,
+and `A** = cl A` becomes false. `adjointProcess` and `coadjointProcess` are separate; a boolean
+orientation field would double every statement.
+
+**Not here**: Theorems 39.3–39.6 and 39.8. 39.3 and 39.4 specialize Theorems 33.1–33.3 and
+Corollary 33.2.1 to processes, all of which are now in `Saddle/Correspondence.lean` and
+`Saddle/Kernel.lean`, so they should be short.
 
 ## 2. Lean/Mathlib gotchas
 
@@ -3114,6 +3206,59 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      residual `(some i).elim g f x = f i x`, or an unsolved `ClosedProperConvexFn (none.elim g f)`,
      is closed by binding the branch value as a `have` and finishing with `exact` — which unifies
      up to delta — not by `rw` or `simp`.
+
+123. **`EReal.neg_add` produces the `Sub` form.** `-(x + y)` rewrites to `-x - y`, never to
+     `-x + -y`. The two are defeq (gotcha 40), but `rw [add_comm (-a) (-b)]`, `rw [neg_neg]` and
+     `rw [← EReal.coe_neg]` then all fail with "did not find an occurrence". Bind the result to an
+     explicitly typed `have h : -(x + y) = -x + -y := _root_.EReal.neg_add …` — the elaborator
+     accepts it up to defeq — and rewrite with `h`.
+
+124. **`Function.Surjective.iSup_comp` leaves the reindexing visible.** After reindexing
+     `⨆ p : U × X` along `Prod.swap`, the body still reads `q.swap.1` / `q.swap.2` and every later
+     `rw` misses. Clear it with `simp only [Prod.fst_swap, Prod.snd_swap]` immediately.
+
+125. **`A.graph.smul_mem c h` is `PointedCone.smul_mem`, not `Submodule.smul_mem`.** It wants a
+     bare real and `0 ≤ c`; the `Submodule` form over `{c : ℝ // 0 ≤ c}` is
+     `Submodule.smul_mem A.graph ⟨a, ha⟩ hx` (cf. gotcha 62). Wrap it once as
+     `smul_mem_graph (ha : 0 ≤ a) (hp : p ∈ A.graph) : a • p ∈ A.graph` and never touch the subtype
+     again.
+
+126. **A one-field structure gets no usable `ext`.**
+     `structure ConvexProcess where graph : PointedCone ℝ (U × X)` leaves `ext` failing on
+     `A.inv.inv = A`. Add `@[ext] theorem ext (h : A.graph = B.graph) : A = B` by hand, and reach
+     set-level extensionality through `SetLike.ext'`.
+
+127. **`Prod.swap ⁻¹' s` as a `Submodule` carrier breaks `Iff.rfl`.** Membership unfolds to
+     `Prod.swap p ∈ …`, the obvious `mem_…` lemmas stop being `Iff.rfl`, and `Set` versus `SetLike`
+     membership instances then mismatch under `exact ⟨u, hu⟩`. Spell the carrier as
+     `{p : X × U | (p.2, p.1) ∈ A.graph}`.
+
+128. **`x ∈ Ici 0` is not reducibly `0 ≤ x`.** Anonymous constructors for `s ×ˢ Ici (0 : ℝ)` fail
+     with "has type `0 ≤ ?a` but is expected to have type `p.2 ∈ Ici 0`". Go through
+     `Set.mem_Ici.1` / `Set.mem_Ici.2`.
+
+129. **Pointwise set addition eta-expands its operator.** Destructuring `x ∈ S + T` yields
+     `hab : (fun x₁ x₂ => x₁ + x₂) a b = x`, and `rw [hab]` then finds nothing in a goal containing
+     `a + b`; copy it with `have hab' : a + b = x := hab`. The same eta form appears in the *goal*
+     after `rintro ⟨q, hq, r, hr, rfl⟩`, where a `change` is needed before `rw [Prod.mk_add_mk]`.
+
+130. **`a • s = s` for a set-level cone is not `smul_smul` away.** In the `⊇` direction the goal
+     after `refine ⟨a⁻¹ • p, _, ?_⟩` reads `(fun x => a • x) (a⁻¹ • p) = p` — the image form of
+     `Set.smul_set` — and `rw [smul_smul]` finds no pattern. Insert `change a • a⁻¹ • p = p` first.
+
+131. **`omit` cannot remove an instance a *definition* genuinely takes.**
+     `def infConvBifun (F₁ F₂ : Bifun U X)` picks up `[AddCommGroup U] [Module ℝ U]` because
+     `Bifun U X` mentions `U`, and `omit` then breaks the definition rather than silencing the
+     linter. Split the section and give the definitions their own `variable` line.
+
+132. **`rw [h]` rewrites only one of two differently-instantiated occurrences.**
+     `rw [fenchelPairing_eq_fenchelInf]` fires on one instantiation and leaves the other; run
+     `simp only [h]` first, then `rw`.
+
+133. **`add_right_comm _ _ _` does not see through `EReal` subtraction.** On
+     `↑t - g y - f x = ↑t - f x - g y` it is a type mismatch; `change ↑(B x y) + -(g y) + -(f x) =
+     ↑(B x y) + -(f x) + -(g y)` first, then `exact add_right_comm _ _ _`.
+
 
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State
