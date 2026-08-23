@@ -66,9 +66,9 @@ every member of an equivalence class `Ω (F)` in terms of the inverse of `F`.
 * `upperClosedFn_saddleLagrangian`, `exists_unique_closedBifun_saddleLagrangian_eq` —
   **Theorem 36.5**: the Lagrangians of closed convex programs are exactly the upper closed
   concave-convex functions.
-* `ConvexFn.exists_mem_relint_dom_lt`, `ConvexFn.biInf_eq_iInf_of_relint_dom_subset` —
-  **Corollary 7.3.1**, the tool Theorem 36.3 runs on; a relocation candidate for
-  `RelativeInterior.lean`.
+* `ConvexFn.biInf_eq_iInf_of_relint_dom_subset` — **Corollary 7.3.1** in the form Theorem 36.3
+  runs on; a relocation candidate for `RelativeInterior.lean`, where
+  `ConvexFn.exists_mem_relint_dom_lt` that it rests on already lives.
 * `iSup_clConcave_eq_iSup`, `concaveConj_clConcave` — the concave mirrors of `iInf_clFn_eq_iInf`
   and of `conj_clFn` (**Theorem 12.2**, first half); relocation candidates for
   `Duality/ConcaveConj.lean`.
@@ -419,35 +419,12 @@ theorem IsSaddlePoint.exists_maximin_eq_coe (hp : ProperSaddleFn K) (h : IsSaddl
 
 end Cor3631
 
-/-! ### Corollary 7.3.1, the tool Theorem 36.3 runs on -/
+/-! ### Corollary 7.3.1, in the form Theorem 36.3 runs on -/
 
 section Cor731
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
-
-/-- **Rockafellar, Corollary 7.3.1**: a convex function that is somewhere below a real level `α`
-is already below `α` at some relative interior point of its effective domain. The proof is the
-book's: the open half-space `{(x, μ) | μ < α}` meets `epi f`, hence meets `ri (epi f)`
-(Corollary 6.3.2), and `ri (epi f)` sits over `ri (dom f)` (Lemma 7.3).
-
-This belongs in `RelativeInterior.lean` next to `ConvexFn.relint_epi`; it lives here until
-something else needs it. -/
-theorem ConvexFn.exists_mem_relint_dom_lt (hf : ConvexFn f) {α : ℝ} {x : E}
-    (hx : f x < (α : EReal)) : ∃ z ∈ ri (dom f), f z < (α : EReal) := by
-  obtain ⟨μ, hμ₁, hμ₂⟩ : ∃ μ : ℝ, f x ≤ (μ : EReal) ∧ μ < α := by
-    rcases eq_or_ne (f x) ⊥ with hb | hb
-    · exact ⟨α - 1, by rw [hb]; exact bot_le, by linarith⟩
-    · obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hb (hx.trans_le le_top)
-      refine ⟨r, le_of_eq hr, ?_⟩
-      rw [hr] at hx
-      exact_mod_cast hx
-  have hU : IsOpen {q : E × ℝ | q.2 < α} := isOpen_lt continuous_snd continuous_const
-  obtain ⟨q, hqU, hq⟩ := Convex.relint_inter_nonempty_of_isOpen hf.convex_epi hU
-    ⟨(x, μ), hμ₂, subset_closure (show (x, μ) ∈ epi f from hμ₁)⟩
-  rw [hf.relint_epi] at hq
-  have hcast : ((q.2 : ℝ) : EReal) < (α : EReal) := by exact_mod_cast hqU
-  exact ⟨q.1, hq.1, hq.2.trans hcast⟩
 
 /-- **Rockafellar, Corollary 7.3.1**, in the form Theorem 36.3 uses it: minimising a convex
 function over any set containing `ri (dom f)` gives the global infimum. -/
@@ -458,7 +435,7 @@ theorem ConvexFn.biInf_eq_iInf_of_relint_dom_subset (hf : ConvexFn f) {S : Set E
   refine Tdaf.EReal.le_coe_of_forall_lt fun q hq => ?_
   have hqc : ((s : ℝ) : EReal) < (q : EReal) := by exact_mod_cast hq
   obtain ⟨x, hx⟩ := iInf_lt_iff.1 (lt_of_le_of_lt hs hqc)
-  obtain ⟨z, hz, hzq⟩ := hf.exists_mem_relint_dom_lt hx
+  obtain ⟨z, hz, hzq⟩ := hf.exists_mem_relint_dom_lt ⟨x, hx⟩
   exact lt_of_le_of_lt (iInf₂_le (f := fun x (_ : x ∈ S) => f x) z (hS hz)) hzq
 
 end Cor731
