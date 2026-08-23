@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Recession.Closedness
+import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Subgradient.Calculus
 
 /-!
@@ -183,6 +184,25 @@ theorem argmin_eq_subgradient_conj_zero (hf : ConvexFn f) (hc : ClosedFn f) :
   rw [mem_argmin_iff_le_iInf, iInf_eq_neg_conj_zero B, mem_subgradient_iff_add_conj_le, hbi,
     hpair, ← _root_.EReal.le_sub_iff_add_le (.inr (by simp)) (.inr (by simp)), zero_sub,
     _root_.EReal.le_neg]
+
+/-- **Rockafellar, Theorem 27.1(f)**: every nonempty level set of a closed proper convex function
+has the same recession cone, namely the polar of the effective domain of the conjugate.
+
+Theorem 8.7 identifies all the level-set recession cones with the recession cone of `f`, and
+Theorem 14.2 identifies that with the polar of `dom f*`. -/
+theorem recessionCone_setOf_le_eq_polarCone_dom_conj (hf : ConvexFn f) (hc : ClosedFn f)
+    (hp : Proper f) {α : ℝ} (hne : {z : E | f z ≤ (α : EReal)}.Nonempty) :
+    recessionCone {z : E | f z ≤ (α : EReal)} = polarCone B.flip (dom (conj B f)) := by
+  rw [recessionCone_setOf_le hf (ClosedProperConvexFn.isClosed_epi ⟨hf, hc, hp⟩) hne,
+    recessionConeFn_eq_polarCone_dom_conj (B := B) hf hc hp]
+
+/-- **Rockafellar, Theorem 27.1(f)**, for the minimum set: when the infimum is attained the minimum
+set is a level set, so it too has the polar of `dom f*` as its recession cone. -/
+theorem recessionCone_argmin_eq_polarCone_dom_conj (hf : ConvexFn f) (hc : ClosedFn f)
+    (hp : Proper f) {a : E} (ha : a ∈ argmin f) {μ : ℝ} (hμ : f a = (μ : EReal)) :
+    recessionCone (argmin f) = polarCone B.flip (dom (conj B f)) := by
+  rw [argmin_eq_setOf_le ha hμ]
+  exact recessionCone_setOf_le_eq_polarCone_dom_conj hf hc hp ⟨a, le_of_eq hμ⟩
 
 end FenchelMoreau
 

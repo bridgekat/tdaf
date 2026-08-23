@@ -64,6 +64,8 @@ therefore developed here, since §13.5 is its first consumer.
 * `recessionFn_eq_supportFn_dom_conj` — **Theorem 13.3**, second assertion.
 * `closure_dom_conj_eq_univ_iff` — the infinite-dimensional form: `dom f*` is *dense* iff `f` is
   co-finite.
+* `zero_mem_closure_dom_conj_iff` — **Corollary 13.3.4(a)** at the origin, which is the first
+  sentence of **Theorem 27.1(i)**.
 * `dom_conj_eq_univ_iff`, `cofinite_iff_dom_conj_eq_univ`, `cofinite_iff_forall_conj_lt_top` — the
   book's form, under `FiniteDimensional ℝ F`.
 
@@ -745,6 +747,18 @@ theorem closure_dom_conj_eq_univ_iff [SeparatingDual ℝ E] (hf : ClosedProperCo
       exact fun w hw => (hy w).symm ▸ hbnd w hw
     rw [h y hy0] at hle
     exact absurd hle (by simp)
+
+/-- **Rockafellar, Corollary 13.3.4(a)** at the origin — the first sentence of **Theorem 27.1(i)**:
+the origin lies in the closure of `dom f*` exactly when `f` recedes nowhere at a negative rate.
+
+Theorem 13.1 for `dom f*` says that a point lies in the closure exactly when it satisfies every
+inequality the support function records, and Theorem 13.3 says that support function is `f 0⁺`. -/
+theorem zero_mem_closure_dom_conj_iff (hf : ClosedProperConvexFn f) :
+    (0 : F) ∈ closure (dom (conj B f)) ↔ ∀ y : E, 0 ≤ recessionFn f y := by
+  have hconv : Convex ℝ (dom (conj B f)) := (convexFn_conj B f).convex_dom
+  have hpair : ∀ y : E, ((B.flip (0 : F) y : ℝ) : EReal) = 0 := by simp
+  rw [← hconv.convexHull_eq, mem_closure_convexHull_iff_le_supportFn (B := B.flip)]
+  simp only [hpair, ← recessionFn_eq_supportFn_dom_conj (B := B) hf]
 
 end CofiniteMain
 

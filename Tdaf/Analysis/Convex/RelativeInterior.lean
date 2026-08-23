@@ -424,6 +424,43 @@ theorem Convex.mem_relint_iff_prolong (hC : Convex ℝ C) (hne : C.Nonempty) {z 
     exact Convex.segment_mem_relint hC hx (subset_closure hy) (inv_nonneg.2 (by linarith))
       (by rw [inv_lt_one_iff₀]; exact Or.inr hμ)
 
+/-- **Rockafellar, Corollary 6.4.1**: a point is *interior* to a convex set exactly when the set
+absorbs every direction at that point.
+
+Theorem 6.4 gives the relative-interior version; what upgrades it to the interior is that absorbing
+every direction forces the affine hull to be everything, and `ri` and `int` agree there. -/
+theorem Convex.mem_interior_iff_absorbs (hC : Convex ℝ C) {z : E} :
+    z ∈ interior C ↔ ∀ y : E, ∃ ε : ℝ, 0 < ε ∧ z + ε • y ∈ C := by
+  constructor
+  · intro hz y
+    obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.1 isOpen_interior z hz
+    rcases eq_or_ne y 0 with rfl | hy
+    · exact ⟨1, one_pos, by simpa using interior_subset hz⟩
+    have hy0 : (0 : ℝ) < ‖y‖ := norm_pos_iff.2 hy
+    refine ⟨δ / (2 * ‖y‖), by positivity, interior_subset (hball ?_)⟩
+    have hlt : ‖(δ / (2 * ‖y‖)) • y‖ < δ := by
+      rw [norm_smul, Real.norm_eq_abs, abs_of_pos (by positivity)]
+      have hval : δ / (2 * ‖y‖) * ‖y‖ = δ / 2 := by field_simp
+      rw [hval]; linarith
+    simpa [Metric.mem_ball, dist_eq_norm] using hlt
+  · intro h
+    have hzC : z ∈ C := by simpa using (h 0).choose_spec.2
+    have hspan : affineSpan ℝ C = ⊤ := by
+      rw [eq_top_iff]
+      rintro w -
+      obtain ⟨ε, hε, hmem⟩ := h (w - z)
+      have hp : z + ε • (w - z) ∈ affineSpan ℝ C := subset_affineSpan ℝ C hmem
+      have hz' : z ∈ affineSpan ℝ C := subset_affineSpan ℝ C hzC
+      have hcomb := AffineSubspace.smul_vsub_vadd_mem (affineSpan ℝ C) ε⁻¹ hp hz' hz'
+      simpa [smul_smul, inv_mul_cancel₀ hε.ne'] using hcomb
+    rw [← intrinsicInterior_eq_interior hspan]
+    refine (Convex.mem_relint_iff_prolong hC ⟨z, hzC⟩).2 fun x hx => ?_
+    obtain ⟨ε, hε, hmem⟩ := h (z - x)
+    refine ⟨1 + ε, by linarith, ?_⟩
+    have hrw : (1 - (1 + ε)) • x + (1 + ε) • z = z + ε • (z - x) := by module
+    rw [hrw]
+    exact hmem
+
 /-! ### Theorem 6.5: intersections -/
 
 /-- The technical core of Theorem 6.5: from a common relative interior point, every point common
