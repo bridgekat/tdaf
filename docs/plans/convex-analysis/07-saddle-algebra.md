@@ -71,8 +71,7 @@ file's design note asked.
 
 ## 7.2 `Saddle/Defs.lean` — §33 (and `Saddle/{Closure,Correspondence,Equiv}.lean` — §33–§34)
 
-**Status: all of §34 is done, and all of §33 except Cors 33.1.3 and 33.2.2 — the two polyhedral
-ones.**
+**Status: all of §33 and all of §34 are done.**
 Theorems 33.1, 33.2, 33.3, 34.1, 34.2 with Corollaries 33.1.1 and 33.3.1 are in
 `Saddle/{Defs,Closure,Correspondence,Equiv}.lean`; Theorem 34.2's `ri` and `dom` clauses,
 Corollaries 34.2.1–34.2.4, and Theorems 34.3–34.5 with Corollary 34.5.1 are in
@@ -110,9 +109,9 @@ noncomputable def bifunOfSaddle (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U ×
 | `concaveConj_adjointBifun_eq_partialCl₁`, `concaveBracket_adjointBifun_eq_partialCl₁` | **Thm 33.2**, first equation `⟨u, F*y⟩ = cl₁ ⟨Fu, y⟩` | done |
 | `concaveBracket`, `convexFn_concaveBracket`, `concaveAdjointBifun_eq_conj_concaveBracket` | the concave bracket `⟨u, G y⟩` and its **Thm 33.1** clauses | done |
 | `saddleOfBifun`, `saddleOfBifun_bifunOfSaddle`, `bifunOfSaddle_saddleOfBifun`, `bifunSaddleEquiv` | **Cor 33.1.2** as an `Equiv` | done (`Saddle/Correspondence.lean`) |
-| — | **Cor 33.1.3** (polyhedral) | not done — needs polyhedral bifunctions |
+| `polyhedralFn_bracket`, `polyhedralFn_neg_bracket`, `polyhedralFn_concaveBracket`, `imageClosedBifun_of_polyhedralBifun`, `eq_conj_bracket_of_polyhedralBifun`, `eq_iSup_sub_bracket_of_polyhedralBifun` | **Cor 33.1.3** (polyhedral) | done (`Saddle/Correspondence.lean`). Clause 1 is Thm 19.2, clause 2 is Cor 19.3.1, clause 3 is Thm 33.1 once the bifunction is image-closed. Clause 1 needs finite dimension only on `X` |
 | `domConcave_bracket`, `bracket_eq_concaveBracket_adjointBifun_of_mem_relint` | **Cor 33.2.1** | done (`Saddle/Kernel.lean`) |
-| — | **Cor 33.2.2** (polyhedral) | not done — needs polyhedral bifunctions |
+| `bracket_eq_concaveBracket_adjointBifun_of_mem_domBifun`, `bracket_eq_concaveBracket_adjointBifun_of_mem_domConcaveBifun`, `bracket_eq_concaveBracket_adjointBifun_of_polyhedral`, `bracket_eq_bot_and_concaveBracket_eq_top`, `closedBifun_of_polyhedralBifun`, `polyhedralFn_neg_graphFn_adjointBifun` | **Cor 33.2.2** (polyhedral) | done (`Saddle/Kernel.lean`, with the polyhedral support in `Correspondence.lean`). The `u`-side half needs no properness at all; the `y`-side half needs `V` and `Y` finite-dimensional as well as `U` and `X`, since the concave bracket is a partial minimisation over `V`. The exceptional pair is always the same way round — `⟨Fu, y⟩ = -∞` and `⟨u, F*y⟩ = +∞` — and that needs neither polyhedrality nor properness |
 | `bracket_concaveAdjointBifun_eq_partialCl₂`, `partialCl₂_concaveBracket_adjointBifun` | **Thm 33.2**, second equation `cl₂ ⟨u, F*x*⟩ = ⟨(cl F)u, x*⟩` | done |
 | `lowerCl`, `upperCl`, `LowerClosedFn`, `UpperClosedFn`, `FullyClosedFn`, `fullyClosedFn_iff` | **§33–§34**, the closedness notions | done (`Saddle/Closure.lean`) |
 | `upperClosedFn_upperCl`, `lowerClosedFn_lowerCl` | **Thm 34.1** | done (`Saddle/Closure.lean`) |
@@ -121,6 +120,24 @@ noncomputable def bifunOfSaddle (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U ×
 | `le_of_partialCl₂_eq`, `exists_unique_bifun_of_closure_pair` | **Cor 33.3.1** | done (`Saddle/Correspondence.lean`) |
 | `upperClosedFn_partialCl₁`, `lowerClosedFn_partialCl₂`, `lowerUpperClosedEquiv` | **Cor 33.3.2** | done (`Saddle/Correspondence.lean`) |
 | `lowerClosedFn_lowerSimpleExt`, `upperClosedFn_upperSimpleExt`, `exists_unique_bifun_of_simpleExt` | **Cor 33.3.3** | done (`Saddle/Kernel.lean`) |
+
+**Corollary 33.2.2's second half is asserted in the book, not proved.** Rockafellar's proof covers
+only the `u`-side — "the proof of Corollary 33.2.1 may be sharpened accordingly" — but the
+statement's "except when **both**" needs the dual-side sharpening as well, i.e. that the adjoint
+of a polyhedral convex bifunction is polyhedral concave. The book never states that;
+`polyhedralFn_neg_graphFn_adjointBifun` is it, and it is the only genuinely new mathematics in the
+two corollaries. Two smaller slips in the same proof: "the function `u ↦ ⟨Fu, x*⟩` is polyhedral
+by **Theorem 33.1**" should cite **Corollary 33.1.3** (Theorem 33.1 gives concavity, not
+polyhedrality), and "since `F` is polyhedral, `cl F = F`" is false without properness — an
+improper polyhedral convex function has `cl f ≡ -∞`. The corollary does assume properness, so it
+is the sentence that is loose, and `closedBifun_of_polyhedralBifun` carries both hypotheses.
+
+**No `PolyhedralConcaveBifun` was introduced.** Both corollaries are stated in the book "for a
+convex *or concave*" bifunction, and Cor 33.2.2's second half genuinely needs "`F*` is polyhedral
+concave". That is written out as `PolyhedralFn fun q => -(graphFn G q)`, the definition unwound; a
+named predicate would buy one line and cost a duplicated API, since D2's negation transfers are
+hand-written. If §38–§39 ever needs concave polyhedral bifunctions in bulk, that is when to add
+it.
 | `SaddleEquiv`, `ClosedSaddleFn`, `saddleClass`, `partialCl₂_eq_of_mem_saddleClass`, `partialCl₁_eq_of_mem_saddleClass`, `saddleEquiv_of_mem_saddleClass`, `closedSaddleFn_of_mem_saddleClass`, `exists_unique_bifun_of_closedSaddleFn` | **Thm 34.2** | done (`Saddle/Equiv.lean`) |
 | — | **Thm 34.2**'s `dom K = dom F × dom F*` and `ri` clauses, Cors 34.2.1–4 | not done — need `ri` |
 | `closedSaddleFn_iff_saddleStructure` | **Thm 34.3** | done (`Saddle/Kernel.lean`) |

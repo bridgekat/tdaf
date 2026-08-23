@@ -1001,14 +1001,21 @@ if a second consumer appears.
 ### `Tdaf/Analysis/Convex/Optimization/Fenchel.lean`
 
 §31: **Theorem 31.1** (both of Rockafellar's conditions), **Theorem 31.2**, and **Theorem 31.3**
-with `A = id`.
+with **Corollary 31.3.1**, for a general linear map `A`.
 
 **Theorem 31.2 does not need the `EReal` splitting lemma the plan said it did.**
 `06-optimization.md` recorded the blocker as "an `EReal` lemma splitting `⨅ (a,b) (u a + v b)` into
 `⨅ u + ⨅ v`". Going through the *concave* face of Theorem 16.3 instead — `concaveConj_compLin` —
 turns the dual value at `y` into a supremum over the fibre `A'⁻¹{y}`, and the only arithmetic left
 is `(⨆ i, u i) - c = ⨆ i, (u i - c)` for `c ≠ ⊥`, which `IsExactSum.conj_left_ne_bot` supplies.
-Theorem 31.3 for a general `A` is unblocked by the same route.
+
+**Theorem 31.3 consumes nothing from Theorem 31.2.** The general-`A` form
+`sub_comp_eq_concaveConj_sub_conj_iff` needs only the `IsAdjointPair` datum, to identify
+`⟨A x, z⟩'` with `⟨x, A' z⟩`; it is Corollary 31.3.1's attainment clause alone
+(`iInf_sub_comp_eq_iff_exists_kuhnTucker`) that calls `exists_concaveConj_sub_conj_comp_eq`, and
+hence Theorem 31.2. That corollary also needs `Proper (-g)` on all of `G`, which
+`IsExactSum.proper_right` does **not** give — it gives properness of `-(g ∘ A)` — so the
+`IsExactImage` hypothesis is load-bearing for more than attainment.
 
 **The hypothesis is `IsExactSum B f (-g)`, never a constraint qualification.** Rockafellar's (a),
 his (b), and their two polyhedral weakenings are four sufficient conditions for the same thing;
@@ -1789,6 +1796,27 @@ Fenchel–Moreau in the second variable going the other (so `K` must be convex-c
 free. `saddleOfBifun` is `bracket` uncurried, added only so that the corollary can be stated as a
 map.
 
+**Corollary 33.1.3 and the polyhedral support for Corollary 33.2.2** also live here:
+`polyhedralFn_bracket` (clause 1, Thm 19.2), `polyhedralFn_neg_bracket` and
+`polyhedralFn_concaveBracket` (clause 2, Cor 19.3.1, each factored through a `private` auxiliary
+that takes the linear functional and its defining equation as arguments — gotcha 139),
+`imageClosedBifun_of_polyhedralBifun` and `eq_conj_bracket_of_polyhedralBifun` (clause 3), plus
+`closedBifun_of_polyhedralBifun` and `polyhedralFn_neg_graphFn_adjointBifun` — the last being the
+fact the book asserts without proof, that the adjoint of a polyhedral convex bifunction is
+polyhedral concave. Support lemmas `PolyhedralFn.add_linear`, `polyhedralFn_compLin` and
+`clConcave_eq_of_mem_domConcave` came with them.
+
+**Relocation candidates.** `PolyhedralFn.add_linear` belongs in `Polyhedral/Function.lean` beside
+`PolyhedralFn.add` (its proof is layer A — only `Polyhedral.comap`); `polyhedralFn_compLin` and
+`clConcave_eq_of_mem_domConcave` belong in `Optimization/Perturbation.lean` beside
+`polyhedralFn_mapLin` and `PolyhedralFn.clFn_eq_of_mem_dom`; `dom_concaveBracket` — and the
+pre-existing `domConcave_bracket`, currently in `Saddle/Kernel.lean` — belong in `Saddle/Defs.lean`,
+since neither has anything to do with relative interiors, and it is `domConcave_bracket`'s absence
+from `Correspondence.lean`'s reach that forced Corollary 33.2.2 into `Kernel.lean`;
+`closedBifun_of_polyhedralBifun` and `polyhedralFn_neg_graphFn_adjointBifun` belong in
+`Optimization/Adjoint.lean`, which would then have to import `Polyhedral/Conjugate.lean` — already
+reached transitively through `Lagrangian → Perturbation → Subgradient/Existence`.
+
 **Cut the `Cor3312` sections finely.** Each half of the correspondence uses instances on one side
 only — `saddleOfBifun` is closed for free on the `Y` side, `bifunOfSaddle` on the `X` side, and only
 the two round trips need Fenchel–Moreau — so a single wide `variable` block trips the
@@ -2080,7 +2108,22 @@ Also here: `posHomogeneous_ofEpi` (a cone's `ofEpi` is positively homogeneous �
 Rockafellar §34's finite-dimensional half: Theorem 34.2's `ri` and `dom` clauses, Corollaries
 34.2.1–34.2.4, Theorems 34.3–34.5 and Corollary 34.5.1. It also **reproves Theorem 34.1 without
 duality** (`lowerCl_idem`, `upperCl_idem` — four lines from monotonicity and idempotence of
-`cl₁`/`cl₂`), which drops it from layer C to layer B.
+`cl₁`/`cl₂`), which drops it from layer C to layer B. §33's Corollaries 33.2.1 and **33.2.2** are
+here too, because `domConcave_bracket` is — see the relocation note under
+`Saddle/Correspondence.lean`.
+
+**Corollary 33.2.2 splits into two halves with different hypotheses.**
+`bracket_eq_concaveBracket_adjointBifun_of_mem_domBifun` (the `u`-side) needs only
+`PolyhedralBifun F`, no properness: Theorem 33.2's first equation needs only convexity,
+`⟨F·, y⟩` is polyhedral concave for any polyhedral convex `F`, and
+`PolyhedralFn.clFn_eq_of_mem_dom` covers the improper branch.
+`bracket_eq_concaveBracket_adjointBifun_of_mem_domConcaveBifun` (the `y`-side) runs through
+`F** = cl F = F`, so it needs properness — and it needs `V` and `Y` finite-dimensional as well as
+`U` and `X`, since the concave bracket is a partial minimisation over `V` and Corollary 19.3.1
+wants both factors finite-dimensional. In `ℝⁿ` that hypothesis is invisible; this is D0 again.
+`bracket_eq_bot_and_concaveBracket_eq_top` pins the book's vague "one of the quantities is `+∞`
+and the other `-∞`": it is always `⟨Fu, y⟩ = -∞` with `⟨u, F*y⟩ = +∞`, and that needs neither
+polyhedrality nor properness.
 
 ```lean
 def domSaddle (K : U × X → EReal) : Set (U × X) := dom₁ K ×ˢ dom₂ K
@@ -3258,6 +3301,48 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 133. **`add_right_comm _ _ _` does not see through `EReal` subtraction.** On
      `↑t - g y - f x = ↑t - f x - g y` it is a type mismatch; `change ↑(B x y) + -(g y) + -(f x) =
      ↑(B x y) + -(f x) + -(g y)` first, then `exact add_right_comm _ _ _`.
+
+134. **`EReal.neg_sub` concludes `-x + y`, not `y - x`.**
+     `EReal.neg_sub (h₁ : x ≠ ⊥ ∨ y ≠ ⊥) (h₂ : x ≠ ⊤ ∨ y ≠ ⊤) : -(x - y) = -x + y`. A follow-up
+     `rw [sub_eq_add_neg]` aimed at the result fails with "did not find an occurrence of the
+     pattern `?a - ?b`" — the subtraction is already gone. The uses in `Fenchel.lean` compensate
+     with a trailing `add_comm`, which reads as if the lemma had produced `y - x`. To reach
+     `y + ↑(-c)` from `-(↑c - y)` the chain is `EReal.neg_sub`, `add_comm`, `← EReal.coe_neg`.
+
+135. **`PolyhedralFn` and `PolyhedralBifun` do *not* carry `[FiniteDimensional ℝ E]`.** They are
+     declared inside sections whose `variable` line has it, but auto-inclusion drops it from the
+     definitions, so the predicates need only `[NormedAddCommGroup E] [NormedSpace ℝ E]`.
+     Consumers split: `PolyhedralFn.conj`, `polyhedralFn_mapLin` and `PolyhedralFn.closedFn` need
+     finite dimension, `PolyhedralFn.convexFn` and `PolyhedralBifun.polyhedralFn_apply` do not —
+     so a lemma about polyhedral functions on a non-finite-dimensional dual space typechecks and
+     then fails three lines later. `#check @PolyhedralFn` before guessing.
+
+136. **`add_coe_le_coe_iff` exists three times.** Public in `Subgradient/Approx.lean`, private in
+     `Saddle/Defs.lean`, private in `Saddle/Correspondence.lean`, all with the statement
+     `a + ↑c ≤ ↑m ↔ a ≤ ↑(m - c)` and no import path between them — gotcha 34's near-duplicate
+     hazard, realised. It belongs in `Tdaf/Order/EReal.lean`; the proof is two lines,
+     `rw [EReal.coe_sub, EReal.le_sub_iff_add_le (.inl (EReal.coe_ne_bot c))
+     (.inl (EReal.coe_ne_top c))]`, with no `induction a` case split.
+
+137. **`rw [mapLin_fst_apply]` leaves a beta-redex that blocks the next `rw`.** The result is
+     `⨅ z, (fun p => …) (y, z)`, so a later `rw [h (y, z)]` cannot find its pattern under the
+     binder. State the pointwise identity as a separate `have hval : ∀ y, (⨅ z, …) = …` in
+     already-projected form and finish with `exact (hval y).symm`; `exact` beta-reduces, `rw`
+     does not.
+
+138. **`-(B x y)` with `B x : Y →ₗ[ℝ] ℝ` elaborates as `(-(B x)) y`** — negation of the *linear
+     map*, not `Neg.neg` at `ℝ` — and a type ascription `(-(B x y : ℝ))` does not change it
+     (checked with `pp.explicit`). Usually a convenience: `hφ : ∀ p, φ p = -(B p.2 y)` is closed by
+     `fun _ => rfl` for `φ = (-(B.flip y)).comp (LinearMap.snd ℝ U X)`, both sides being the same
+     linear-map negation. But the head under a coercion is then `DFunLike.coe`, so do not plan a
+     `rw` that expects a syntactic `↑(-r)`.
+
+139. **Abstract a linear functional into a `private` auxiliary rather than fighting `set`.** A
+     proof that must mention a `(U × X) →ₗ[ℝ] ℝ` twice cannot use `set … with h` (the unused `h`
+     trips the linter) and cannot use `set` alone (the statement has no occurrence to abstract).
+     Give the auxiliary lemma the functional and its defining equation as arguments and discharge
+     them at the call site with `fun _ => rfl`; the map is then written exactly once.
+     `polyhedralFn_neg_bracket_aux` and `polyhedralFn_concaveBracket_aux` are both this shape.
 
 
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
