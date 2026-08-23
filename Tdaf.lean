@@ -48,6 +48,7 @@ import Tdaf.Analysis.Convex.Polyhedral.Separation
 import Tdaf.Analysis.Convex.Polyhedral.Simplicial
 import Tdaf.Analysis.Convex.Recession.Closedness
 import Tdaf.Analysis.Convex.Recession.Cone
+import Tdaf.Analysis.Convex.Recession.ConeHull
 import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Recession.Function
 import Tdaf.Analysis.Convex.RelativeInterior

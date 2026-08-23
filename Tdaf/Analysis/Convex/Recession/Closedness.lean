@@ -5,6 +5,7 @@ Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Operations.Basic
 import Tdaf.Analysis.Convex.Operations.Image
+import Tdaf.Analysis.Convex.Operations.InfConv
 import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Recession.Function
 
@@ -552,6 +553,142 @@ theorem exists_mapLin_eq (hf : ConvexFn f) (hp : Proper f) (hc : IsClosed (epi f
   exact h₂ ▸ mk_mem_epi.1 hxρ
 
 end Fn
+
+/-! ### Corollaries 9.2.1 and 9.2.2: infimal convolution -/
+
+section InfConvFn
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f g : E → EReal}
+
+omit [FiniteDimensional ℝ E] in
+/-- Rockafellar's hypothesis in **Corollary 9.2.2**, transported to the epigraphs: a direction of
+recession of `epi f` whose opposite recedes from `epi g` has to be zero.
+
+The vertical coordinate is what makes this more than a restatement: at `z = 0` the hypothesis says
+nothing, and it is properness — `f0⁺ 0 = g0⁺ 0 = 0` — that pins the vertical coordinate to `0`. -/
+theorem forall_eq_zero_of_recessionFn_add_pos (hpf : Proper f) (hpg : Proper g)
+    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
+    ∀ q ∈ recessionCone (epi f), -q ∈ recessionCone (epi g) → q = 0 := by
+  rintro ⟨z, ν⟩ hq hnq
+  have hnq' : ((-z, -ν) : E × ℝ) ∈ recessionCone (epi g) := hnq
+  have h₁ : recessionFn f z ≤ (ν : EReal) := recessionFn_le_coe_iff.2 hq
+  have h₂ : recessionFn g (-z) ≤ ((-ν : ℝ) : EReal) := recessionFn_le_coe_iff.2 hnq'
+  rcases eq_or_ne z 0 with rfl | hz
+  · rw [recessionFn_apply_zero hpf] at h₁
+    rw [neg_zero, recessionFn_apply_zero hpg] at h₂
+    have e₁' : (0 : ℝ) ≤ ν := by exact_mod_cast h₁
+    have e₂' : (0 : ℝ) ≤ -ν := by exact_mod_cast h₂
+    have hν0 : ν = 0 := le_antisymm (by linarith) e₁'
+    rw [hν0]
+    exact Prod.mk_zero_zero
+  · exfalso
+    have hsum : recessionFn f z + recessionFn g (-z) ≤ (ν : EReal) + ((-ν : ℝ) : EReal) :=
+      add_le_add h₁ h₂
+    rw [← _root_.EReal.coe_add, add_neg_cancel, _root_.EReal.coe_zero] at hsum
+    exact absurd hsum (not_le.2 (h z hz))
+
+/-- **Rockafellar, Corollary 9.2.2** (which is Corollary 9.2.1 for `m = 2`). If `f` and `g` are
+closed proper convex functions with `(f0⁺) z + (g0⁺) (-z) > 0` for every `z ≠ 0`, then `f □ g` is a
+closed proper convex function, the infimum defining it is attained, and
+`(f □ g)0⁺ = f0⁺ □ g0⁺`.
+
+The three conclusions come from one application of Corollary 9.1.2 to `epi f` and `epi g`: the
+epigraph identity `epi (f □ g) = epi f + epi g` *is* the attainment statement, since a sum of
+epigraphs is an epigraph exactly when every infimum defining `f □ g` is achieved.
+
+Stated for two functions; the `m`-function version, Corollary 9.2.1, is the evident induction, and
+no backbone result asks for it. -/
+theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
+    epi (infConv f g) = epi f + epi g ∧ ClosedProperConvexFn (infConv f g) ∧
+      recessionFn (infConv f g) = infConv (recessionFn f) (recessionFn g) := by
+  have hfne : (epi f).Nonempty := (epi_nonempty_iff f).2 hf.proper.dom_nonempty
+  have hgne : (epi g).Nonempty := (epi_nonempty_iff g).2 hg.proper.dom_nonempty
+  have hkey := forall_eq_zero_of_recessionFn_add_pos hf.proper hg.proper h
+  have hclosed : IsClosed (epi f + epi g) :=
+    Convex.isClosed_add_of_neg_notMem_recessionCone hf.convex.convex_epi hf.isClosed_epi hfne
+      hg.convex.convex_epi hg.isClosed_epi hgne hkey
+  have hrecset : recessionCone (epi f + epi g) = recessionCone (epi f) + recessionCone (epi g) :=
+    Convex.recessionCone_add_of_neg_notMem_recessionCone hf.convex.convex_epi hf.isClosed_epi hfne
+      hg.convex.convex_epi hg.isClosed_epi hgne hkey
+  have hepi : epi (infConv f g) = epi f + epi g :=
+    epi_infConv (IsEpiLike.of_isClosed (fun _ _ _ hμ hμν => mem_epi_add_epi_of_le hμ hμν) hclosed)
+  -- properness: a vertical line in `epi f + epi g` cancels two directions of recession
+  have hnebot : ∀ x : E, infConv f g x ≠ ⊥ := by
+    intro x hbot
+    have hline : ∀ μ : ℝ, ((x, μ) : E × ℝ) ∈ epi f + epi g := by
+      intro μ
+      rw [← hepi]
+      exact mk_mem_epi.2 (le_of_eq_of_le hbot bot_le)
+    have hray : (((0 : E), (-1 : ℝ)) : E × ℝ) ∈ recessionCone (epi f + epi g) := by
+      refine mem_recessionCone_of_exists_ray (hf.convex.convex_epi.add hg.convex.convex_epi)
+        hclosed ⟨((x, (0 : ℝ)) : E × ℝ), fun a ha => ?_⟩
+      have heq : ((x, (0 : ℝ)) : E × ℝ) + a • (((0 : E), (-1 : ℝ)) : E × ℝ)
+          = ((x, -a) : E × ℝ) := by simp [Prod.smul_mk, Prod.mk_add_mk]
+      rw [heq]
+      exact hline (-a)
+    rw [hrecset] at hray
+    obtain ⟨q, hq, r, hr, hqr⟩ := hray
+    have hqr' : q + r = (((0 : E), (-1 : ℝ)) : E × ℝ) := hqr
+    have hz : q.1 + r.1 = (0 : E) := congrArg Prod.fst hqr'
+    have hν : q.2 + r.2 = (-1 : ℝ) := congrArg Prod.snd hqr'
+    have hrq : r = ((-q.1, r.2) : E × ℝ) :=
+      Prod.ext (eq_neg_of_add_eq_zero_right hz) rfl
+    have h₁ : recessionFn f q.1 ≤ ((q.2 : ℝ) : EReal) := recessionFn_le_coe_iff.2 hq
+    have h₂ : recessionFn g (-q.1) ≤ ((r.2 : ℝ) : EReal) := by
+      refine recessionFn_le_coe_iff.2 ?_
+      rwa [hrq] at hr
+    rcases eq_or_ne q.1 0 with hq1 | hq1
+    · rw [hq1, recessionFn_apply_zero hf.proper] at h₁
+      rw [hq1, neg_zero, recessionFn_apply_zero hg.proper] at h₂
+      have e₁' : (0 : ℝ) ≤ q.2 := by exact_mod_cast h₁
+      have e₂' : (0 : ℝ) ≤ r.2 := by exact_mod_cast h₂
+      linarith
+    · have hsum : recessionFn f q.1 + recessionFn g (-q.1)
+          ≤ ((q.2 : ℝ) : EReal) + ((r.2 : ℝ) : EReal) := add_le_add h₁ h₂
+      rw [← _root_.EReal.coe_add, hν] at hsum
+      have hpos := h q.1 hq1
+      have hneg : (((-1 : ℝ)) : EReal) < 0 := by
+        rw [← _root_.EReal.coe_zero]
+        exact_mod_cast (by norm_num : (-1 : ℝ) < 0)
+      exact absurd (lt_of_lt_of_le hpos hsum) (not_lt.2 hneg.le)
+  have hproper : Proper (infConv f g) := by
+    refine ⟨?_, hnebot⟩
+    rw [dom_infConv]
+    exact hf.proper.dom_nonempty.add hg.proper.dom_nonempty
+  refine ⟨hepi, ClosedProperConvexFn.of_isClosed_epi (convexFn_infConv hf.convex hg.convex)
+    (by rw [hepi]; exact hclosed) hproper, ?_⟩
+  -- the recession function of an infimal convolute
+  have hepilike₂ : IsEpiLike (epi (recessionFn f) + epi (recessionFn g)) := by
+    rw [epi_recessionFn, epi_recessionFn, ← hrecset, ← hepi]
+    exact isEpiLike_recessionCone_epi _
+  refine epi_injective ?_
+  have h₁ : epi (recessionFn (infConv f g)) = recessionCone (epi f) + recessionCone (epi g) := by
+    rw [epi_recessionFn, hepi, hrecset]
+  have h₂ : epi (infConv (recessionFn f) (recessionFn g))
+      = recessionCone (epi f) + recessionCone (epi g) := by
+    rw [epi_infConv hepilike₂, epi_recessionFn, epi_recessionFn]
+  rw [h₁, h₂]
+
+/-- **Rockafellar, Corollary 9.2.2**, the attainment statement on its own. -/
+theorem exists_add_eq_of_infConv_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) {x : E} {μ : ℝ}
+    (hμ : infConv f g x ≤ (μ : EReal)) :
+    ∃ (y : E) (ν ρ : ℝ), y + (x - y) = x ∧ ν + ρ = μ ∧ f y ≤ (ν : EReal) ∧
+      g (x - y) ≤ (ρ : EReal) := by
+  obtain ⟨hepi, -, -⟩ := closedProperConvexFn_infConv hf hg h
+  have hmem : ((x, μ) : E × ℝ) ∈ epi f + epi g := hepi ▸ mk_mem_epi.2 hμ
+  obtain ⟨q, hq, r, hr, hqr⟩ := hmem
+  have hqr' : q + r = ((x, μ) : E × ℝ) := hqr
+  have hx : q.1 + r.1 = x := congrArg Prod.fst hqr'
+  have hν : q.2 + r.2 = μ := congrArg Prod.snd hqr'
+  refine ⟨q.1, q.2, r.2, by rw [← hx]; abel, hν, hq, ?_⟩
+  have hr1 : x - q.1 = r.1 := by rw [← hx]; abel
+  rw [hr1]
+  exact hr
+
+end InfConvFn
 
 /-! ### Theorem 9.3: sums of functions -/
 
