@@ -34,7 +34,8 @@ constant there, and closedness propagates the identity to all of `E`.
 
 * `chainVal B s l x` — Rockafellar's telescoping sum along the chain that starts at `s`, runs
   through the list `l`, and ends at `x`.
-* `IsMonotoneRel B ρ`, `IsCyclicallyMonotone B ρ`, `IsMaximalCyclicallyMonotone B ρ`.
+* `IsMonotoneRel B ρ`, `IsMaximalMonotoneRel B ρ`, `IsCyclicallyMonotone B ρ`,
+  `IsMaximalCyclicallyMonotone B ρ`.
 * `cyclicPotential B ρ s` — the function Rockafellar constructs in Theorem 24.8.
 
 ## Main results
@@ -179,10 +180,18 @@ non-positive telescoping sum. Rockafellar's definition, with the cycle written a
 def IsCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
   ∀ s ∈ ρ, ∀ l : List (E × F), (∀ q ∈ l, q ∈ ρ) → chainVal B s l s.1 ≤ 0
 
+/-- A monotone mapping is **maximal** when no strictly larger monotone mapping contains it. -/
+def IsMaximalMonotoneRel (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
+  IsMonotoneRel B ρ ∧ ∀ σ : SetRel E F, IsMonotoneRel B σ → ρ ⊆ σ → σ ⊆ ρ
+
 /-- A cyclically monotone mapping is **maximal** when no strictly larger cyclically monotone
 mapping contains it. Theorem 24.9 identifies these with the subdifferentials. -/
 def IsMaximalCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
   IsCyclicallyMonotone B ρ ∧ ∀ σ : SetRel E F, IsCyclicallyMonotone B σ → ρ ⊆ σ → σ ⊆ ρ
+
+/-- Monotonicity passes to sub-mappings. -/
+theorem IsMonotoneRel.mono (h : IsMonotoneRel B σ) (hsub : ρ ⊆ σ) : IsMonotoneRel B ρ :=
+  fun p hp q hq => h p (hsub hp) q (hsub hq)
 
 /-- Cyclic monotonicity passes to sub-mappings. -/
 theorem IsCyclicallyMonotone.mono (h : IsCyclicallyMonotone B σ) (hsub : ρ ⊆ σ) :

@@ -34,10 +34,20 @@ So `f'₊` is right-continuous, `f'₋` is left-continuous, and either one deter
 consequence any nondecreasing `φ` with `f'₋ ≤ φ ≤ f'₊` determines `∂f`, and hence determines `f`
 itself up to an additive constant.
 
+One dimension also collapses the two monotonicity notions of `Subgradient/Monotone.lean` into one.
+A monotone relation on `ℝ` is exactly a set totally ordered by the coordinatewise order of `ℝ × ℝ`
+— a *non-decreasing curve* — and any cycle through such a set may be rotated to start at its
+largest pair, which dominates the cycle in both coordinates and may therefore be deleted without
+decreasing the telescoping sum. So monotone and cyclically monotone agree on the line, and the
+maximal monotone relations — the *complete non-decreasing curves* — are precisely the graphs of the
+subdifferentials of the closed proper convex functions.
+
 ## Main definitions
 
 * `rightDeriv f x`, `leftDeriv f x` — the two one-sided derivatives, extended by `+∞` to the right
   of `dom f` and by `-∞` to its left.
+* `cycleVal B L` — the telescoping sum around the cycle through a list `L` of pairs, a repackaging
+  of `chainVal` that makes rotation invariance expressible.
 
 ## Main results
 
@@ -58,6 +68,13 @@ itself up to an additive constant.
 * `tendsto_nhdsWithin_Ioi_of_monotone`, `tendsto_nhdsWithin_Iio_of_monotone` — the general fact
   that a monotone map into a complete linear order has one-sided limits, equal to the obvious
   infimum and supremum.
+* `cycleVal_append_comm` — the sum around a cycle is invariant under rotation.
+* `isMonotoneRel_iff_forall_le_or_le`, `IsMonotoneRel.isCyclicallyMonotone`,
+  `isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone` — on the line, monotone means totally
+  ordered, and coincides with cyclically monotone.
+* `isMaximalMonotoneRel_iff_exists_closedProperConvexFn` — the maximal monotone relations on `ℝ`
+  are exactly the subdifferentials of the closed proper convex functions, and
+  `mem_subgradientRel_iff` describes each of them as the region between two one-sided derivatives.
 
 ## Design notes
 
@@ -78,24 +95,38 @@ redefined. The sign in `f'₋` is because the increment `z - x` is negative ther
 affine function of slope `μ` on the segment approaching `x`, and closedness (Corollary 7.5.1)
 carries that bound to `x` itself.
 
+**Cycles are lists, and rotation is `cycleVal_append_comm`.** `IsCyclicallyMonotone` presents a
+cycle as a head pair `s` and a list `l`, which is the convenient form for the potential
+construction but not for rotating. `cycleVal B L = chainVal B p l p.1` for `L = p :: l` puts the
+cycle in a single list, and then `cycleVal B (A ++ C) = cycleVal B (C ++ A)` is a two-line
+induction on `A` from the one-step case `cycleVal B (p :: l) = cycleVal B (l ++ [p])`.
+
+**Deleting a pair from a cycle needs the sharpened affineness lemma.** `exists_chainVal_eq` says a
+chain is an affine function `⟨x, y⟩ - c` of its free endpoint; to see that the edge left behind
+when the head is deleted has the right sign, one needs `y` to be the second coordinate of a pair
+*of the cycle*, which is `exists_chainVal_eq_mem`.
+
 **Monotonicity is cheaper than it looks.** `f'₊(y) ≤ f'₋(z)` for `y < z` needs only properness:
 `dirDeriv` is an *infimum* of difference quotients, and the two quotients across `[y, z]` bound it
 whatever `f` is. Convexity enters only in `f'₋(x) ≤ f'₊(x)` at a single point.
 
 ## What is not here
 
-**The construction of `f` from `φ` by integration**, `f(x) = ∫ₐˣ φ(t) dt`, and with it the
-identification of the graphs of one-dimensional subdifferentials as the *complete nondecreasing
-curves*. It needs the integral of a nondecreasing `[-∞, +∞]`-valued function, improper at the two
-ends of the interval where `φ` is finite, together with the fact that the resulting function is
-closed there — real-analysis machinery the project does not have. Only the uniqueness half of that
-correspondence is proved here, and it does not go through the integral at all: it goes through
-`∂f = ∂g` and the rigidity theorem of `Subgradient/Monotone.lean`.
+**The construction of `f` from `φ` by integration**, `f(x) = ∫ₐˣ φ(t) dt`: given a nondecreasing
+`φ : ℝ → [-∞, +∞]`, exhibiting *some* closed proper convex `f` with `f'₋ ≤ φ ≤ f'₊`. It needs the
+integral of a nondecreasing `[-∞, +∞]`-valued function, improper at the two ends of the interval
+where `φ` is finite, together with the fact that the resulting function is closed there —
+real-analysis machinery the project does not have. The uniqueness half of that statement is proved
+here and does not go through the integral at all: it goes through `∂f = ∂g` and the rigidity
+theorem of `Subgradient/Monotone.lean`. Nor is the integral needed for the description of the
+complete non-decreasing curves, which comes instead from maximal monotonicity together with the
+identification of the maximal cyclically monotone relations.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorem 24.1, the
-  remark following it, and the uniqueness clause of Theorem 24.2); §23 (Theorems 23.1, 23.2).
+  remark following it, the uniqueness clause of Theorem 24.2, and Theorem 24.3); §23 (Theorems
+  23.1, 23.2).
 -/
 
 open Set Filter Topology
@@ -689,7 +720,7 @@ theorem iSup_rightDeriv_Iio (hf : ClosedProperConvexFn f) (x : ℝ) :
   rw [← iSup_leftDeriv_Iio hf x]
   exact iSup₂_mono fun z _ => leftDeriv_le_rightDeriv hf.convex hf.proper z
 
-/-! ### Rockafellar's four limit formulas, as limits -/
+/-! ### The four limit formulas -/
 
 /-- `lim_{z ↓ x} f'₊(z) = f'₊(x)`. -/
 theorem tendsto_rightDeriv_nhdsWithin_Ioi (hf : ClosedProperConvexFn f) (x : ℝ) :
@@ -782,5 +813,232 @@ theorem exists_eq_add_coe_of_le_le (hf : ClosedProperConvexFn f) (hg : ClosedPro
     (fun x => by rw [← iSup_Iio_eq_leftDeriv hf hf₁ hf₂ x, iSup_Iio_eq_leftDeriv hg hg₁ hg₂ x])
 
 end Determination
+
+/-! ### Cycles as lists, and rotation -/
+
+section Cycle
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
+
+/-- The telescoping sum around the closed cycle through a list of pairs: `chainVal` with the head
+of the list as both the start and the free endpoint. The empty cycle has sum `0`. -/
+def cycleVal (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : List (E × F) → ℝ
+  | [] => 0
+  | p :: l => chainVal B p l p.1
+
+@[simp] theorem cycleVal_nil : cycleVal B [] = 0 := rfl
+
+@[simp] theorem cycleVal_singleton (p : E × F) : cycleVal B [p] = 0 := by
+  simp [cycleVal]
+
+/-- Cyclic monotonicity in terms of `cycleVal`. -/
+theorem isCyclicallyMonotone_iff_cycleVal (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) :
+    IsCyclicallyMonotone B ρ ↔ ∀ L : List (E × F), (∀ q ∈ L, q ∈ ρ) → cycleVal B L ≤ 0 := by
+  constructor
+  · intro h L hL
+    match L with
+    | [] => simp
+    | p :: l => exact h p (hL p (by simp)) l fun q hq => hL q (by simp [hq])
+  · intro h s hs l hl
+    exact h (s :: l) fun q hq => by
+      rcases List.mem_cons.1 hq with rfl | hq
+      · exact hs
+      · exact hl q hq
+
+/-- **A cycle may be rotated by one step** without changing its sum: the last edge of the rotated
+cycle is the first edge of the original. -/
+theorem cycleVal_cons (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (p : E × F) (l : List (E × F)) :
+    cycleVal B (p :: l) = cycleVal B (l ++ [p]) := by
+  match l with
+  | [] => simp
+  | q :: l' =>
+    change chainVal B p (q :: l') p.1 = chainVal B q (l' ++ [p]) q.1
+    rw [chainVal_cons, chainVal_append_singleton]
+    ring
+
+/-- **A cycle may be rotated arbitrarily**, in the form `cycleVal (A ++ C) = cycleVal (C ++ A)`. -/
+theorem cycleVal_append_comm (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (A C : List (E × F)) :
+    cycleVal B (A ++ C) = cycleVal B (C ++ A) := by
+  induction A generalizing C with
+  | nil => simp
+  | cons a A' ih =>
+    calc cycleVal B ((a :: A') ++ C)
+        = cycleVal B (a :: (A' ++ C)) := by rw [List.cons_append]
+      _ = cycleVal B ((A' ++ C) ++ [a]) := cycleVal_cons B a _
+      _ = cycleVal B (A' ++ (C ++ [a])) := by rw [List.append_assoc]
+      _ = cycleVal B ((C ++ [a]) ++ A') := ih _
+      _ = cycleVal B (C ++ ([a] ++ A')) := by rw [List.append_assoc]
+      _ = cycleVal B (C ++ (a :: A')) := by rw [List.singleton_append]
+
+/-- A chain is affine in its free endpoint, with the slope realised by a pair *of the chain*. This
+sharpens `exists_chainVal_eq`, and it is what makes the last edge of a cycle land on a pair to
+which monotonicity applies. -/
+theorem exists_chainVal_eq_mem (l : List (E × F)) (s : E × F) :
+    ∃ (r : E × F) (c : ℝ), r ∈ s :: l ∧ ∀ x, chainVal B s l x = B x r.2 - c := by
+  induction l generalizing s with
+  | nil => exact ⟨s, B s.1 s.2, by simp, fun x => by rw [chainVal_nil, map_sub,
+      LinearMap.sub_apply]⟩
+  | cons q l ih =>
+    obtain ⟨r, c, hmem, h⟩ := ih q
+    refine ⟨r, c - B (q.1 - s.1) s.2, ?_, fun x => ?_⟩
+    · rcases List.mem_cons.1 hmem with rfl | hmem
+      · simp
+      · simp [hmem]
+    · rw [chainVal_cons, h x]; ring
+
+/-- **Deleting the head of a cycle** changes the sum by one product. This is the induction step of
+the one-dimensional theorem: if the head dominates the rest of the cycle in both coordinates, the
+product is `≤ 0`. -/
+theorem exists_cycleVal_cons_eq (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (p q : E × F) (l : List (E × F)) :
+    ∃ r ∈ q :: l, cycleVal B (p :: q :: l)
+      = cycleVal B (q :: l) + B (q.1 - p.1) (p.2 - r.2) := by
+  obtain ⟨r, c, hmem, h⟩ := exists_chainVal_eq_mem (B := B) l q
+  refine ⟨r, hmem, ?_⟩
+  change chainVal B p (q :: l) p.1 = chainVal B q l q.1 + B (q.1 - p.1) (p.2 - r.2)
+  rw [chainVal_cons, h p.1, h q.1]
+  simp only [map_sub, LinearMap.sub_apply]
+  ring
+
+end Cycle
+
+/-! ### Monotone relations on the line -/
+
+section Line
+
+variable {ρ : SetRel ℝ ℝ} {f : ℝ → EReal}
+
+/-- The pairing of the line with itself is multiplication. -/
+theorem innerₗ_real_apply (a b : ℝ) : (innerₗ ℝ) a b = a * b := by
+  simp [innerₗ_apply_apply, mul_comm]
+
+/-- A finite nonempty list attains the maximum of a real-valued function along the list. -/
+theorem exists_max_mem_of_ne_nil {α : Type*} (g : α → ℝ) :
+    ∀ l : List α, l ≠ [] → ∃ a ∈ l, ∀ b ∈ l, g b ≤ g a := by
+  intro l
+  induction l with
+  | nil => exact fun h => absurd rfl h
+  | cons a t ih =>
+    intro _
+    rcases eq_or_ne t [] with rfl | ht
+    · exact ⟨a, by simp, by simp⟩
+    obtain ⟨c, hc, hmax⟩ := ih ht
+    rcases le_total (g c) (g a) with h | h
+    · refine ⟨a, by simp, fun b hb => ?_⟩
+      rcases List.mem_cons.1 hb with rfl | hb
+      · exact le_rfl
+      · exact (hmax b hb).trans h
+    · refine ⟨c, by simp [hc], fun b hb => ?_⟩
+      rcases List.mem_cons.1 hb with rfl | hb
+      · exact h
+      · exact hmax b hb
+
+/-- **On the line, monotonicity is total ordering**: a mapping is monotone exactly when its graph
+is a chain for the coordinatewise order on `ℝ × ℝ`, that is, a *non-decreasing curve*. -/
+theorem isMonotoneRel_iff_forall_le_or_le :
+    IsMonotoneRel (innerₗ ℝ) ρ ↔ ∀ p ∈ ρ, ∀ q ∈ ρ, p ≤ q ∨ q ≤ p := by
+  constructor
+  · intro h p hp q hq
+    have hnn := h p hp q hq
+    rw [innerₗ_real_apply] at hnn
+    rcases mul_nonneg_iff.1 hnn with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩
+    · exact Or.inr (Prod.le_def.2 ⟨by linarith, by linarith⟩)
+    · exact Or.inl (Prod.le_def.2 ⟨by linarith, by linarith⟩)
+  · intro h p hp q hq
+    rw [innerₗ_real_apply]
+    rcases h p hp q hq with hle | hle
+    · rw [Prod.le_def] at hle
+      nlinarith [hle.1, hle.2]
+    · rw [Prod.le_def] at hle
+      nlinarith [hle.1, hle.2]
+
+/-- **Deleting a dominating head of a cycle** does not decrease its sum. On the line this is the
+whole content of the passage from monotonicity to cyclic monotonicity: the deleted edge runs
+backwards in the first coordinate and forwards in the second. -/
+theorem cycleVal_cons_le_cycleVal {M : ℝ × ℝ} {L : List (ℝ × ℝ)}
+    (hdom : ∀ q ∈ L, q.1 ≤ M.1 ∧ q.2 ≤ M.2) :
+    cycleVal (innerₗ ℝ) (M :: L) ≤ cycleVal (innerₗ ℝ) L := by
+  match L with
+  | [] => simp
+  | q :: l =>
+    obtain ⟨r, hr, heq⟩ := exists_cycleVal_cons_eq (innerₗ ℝ) M q l
+    rw [heq, innerₗ_real_apply]
+    have h₁ : q.1 - M.1 ≤ 0 := sub_nonpos.2 (hdom q (by simp)).1
+    have h₂ : 0 ≤ M.2 - r.2 := sub_nonneg.2 (hdom r hr).2
+    nlinarith
+
+/-- **On the line, monotone mappings are cyclically monotone.** A cycle may be rotated so that the
+pair maximizing `x + y` comes first; monotonicity makes that pair dominate the whole cycle in both
+coordinates, so deleting it does not decrease the sum, and induction on the length finishes.
+
+In higher dimensions this fails: cyclic monotonicity is strictly stronger. -/
+theorem IsMonotoneRel.isCyclicallyMonotone (h : IsMonotoneRel (innerₗ ℝ) ρ) :
+    IsCyclicallyMonotone (innerₗ ℝ) ρ := by
+  rw [isCyclicallyMonotone_iff_cycleVal]
+  have hord := isMonotoneRel_iff_forall_le_or_le.1 h
+  suffices H : ∀ n (L : List (ℝ × ℝ)), L.length ≤ n → (∀ q ∈ L, q ∈ ρ) →
+      cycleVal (innerₗ ℝ) L ≤ 0 from fun L hL => H L.length L le_rfl hL
+  intro n
+  induction n with
+  | zero =>
+    intro L hlen _
+    rw [List.length_eq_zero_iff.1 (Nat.le_zero.1 hlen)]
+    simp
+  | succ n ih =>
+    intro L hlen hL
+    rcases eq_or_ne L [] with rfl | hne
+    · simp
+    obtain ⟨M, hM, hmax⟩ := exists_max_mem_of_ne_nil (fun p : ℝ × ℝ => p.1 + p.2) L hne
+    have hdom : ∀ q ∈ L, q.1 ≤ M.1 ∧ q.2 ≤ M.2 := by
+      intro q hq
+      have hsum : q.1 + q.2 ≤ M.1 + M.2 := hmax q hq
+      rcases hord q (hL q hq) M (hL M hM) with hle | hle
+      · exact Prod.le_def.1 hle
+      · rw [Prod.le_def] at hle
+        exact ⟨by linarith [hle.1, hle.2], by linarith [hle.1, hle.2]⟩
+    obtain ⟨A, T, rfl⟩ := List.append_of_mem hM
+    have hmem : ∀ q ∈ T ++ A, q ∈ A ++ M :: T := by
+      intro q hq
+      rcases List.mem_append.1 hq with hq | hq
+      · exact List.mem_append.2 (Or.inr (List.mem_cons_of_mem M hq))
+      · exact List.mem_append.2 (Or.inl hq)
+    have hlen' : (T ++ A).length ≤ n := by
+      simp only [List.length_append, List.length_cons] at hlen ⊢
+      omega
+    rw [cycleVal_append_comm, List.cons_append]
+    exact (cycleVal_cons_le_cycleVal fun q hq => hdom q (hmem q hq)).trans
+      (ih (T ++ A) hlen' fun q hq => hL q (hmem q hq))
+
+/-- **On the line the two maximality notions agree**, since the two monotonicity notions do. -/
+theorem isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone :
+    IsMaximalMonotoneRel (innerₗ ℝ) ρ ↔ IsMaximalCyclicallyMonotone (innerₗ ℝ) ρ := by
+  constructor
+  · rintro ⟨h₁, h₂⟩
+    exact ⟨h₁.isCyclicallyMonotone, fun σ hσ hsub => h₂ σ hσ.isMonotoneRel hsub⟩
+  · rintro ⟨h₁, h₂⟩
+    exact ⟨h₁.isMonotoneRel, fun σ hσ hsub => h₂ σ hσ.isCyclicallyMonotone hsub⟩
+
+/-- **Rockafellar, Theorem 24.3**: on the line the maximal monotone mappings — the graphs that are
+maximal chains for the coordinatewise order, Rockafellar's *complete non-decreasing curves* — are
+exactly the subdifferentials of the closed proper convex functions.
+
+Combined with `mem_subgradientRel_iff` this says that a complete non-decreasing curve is always the
+region `f'₋(x) ≤ y ≤ f'₊(x)` between the two one-sided derivatives of a closed proper convex `f`,
+and conversely. -/
+theorem isMaximalMonotoneRel_iff_exists_closedProperConvexFn :
+    IsMaximalMonotoneRel (innerₗ ℝ) ρ ↔
+      ∃ f : ℝ → EReal, ClosedProperConvexFn f ∧ ρ = subgradientRel (innerₗ ℝ) f := by
+  have : IsCompatiblePairing ((innerₗ ℝ).flip) := by rw [flip_innerₗ]; infer_instance
+  rw [isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone,
+    isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn]
+
+/-- The graph of the subdifferential of a proper convex function on the line is the region between
+the two one-sided derivatives. -/
+theorem mem_subgradientRel_iff (hp : Proper f) {x y : ℝ} :
+    ((x, y) : ℝ × ℝ) ∈ subgradientRel (innerₗ ℝ) f ↔
+      leftDeriv f x ≤ (y : EReal) ∧ (y : EReal) ≤ rightDeriv f x :=
+  mem_subgradient_iff_le_rightDeriv hp
+
+end Line
 
 end Tdaf.ConvexAnalysis
