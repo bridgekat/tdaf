@@ -30,6 +30,8 @@ the two powers are exchanged is Young's inequality, read as a conjugacy.
   be `+∞` for `s < 0`.
 * `monotoneComp g k` — the composite `g ∘ k` of such a `g` with a `[0, +∞]`-valued `k`, under the
   convention `g (+∞) = +∞`.
+* `levelSup g α` — the crossing level `sup {ζ ≥ 0 ∣ g ζ ≤ α}`, the dilation factor of the sublevel
+  set `{g ∘ k ≤ α}`.
 * `powHalfLine p` — the function `ζ ↦ ζ^p / p` of the half-line.
 * `PosHomogeneousDeg p f` — `f (λ x) = λ^p f x` for `λ > 0`.
 * `degGauge p f` — the gauge `(p f)^{1/p}` attached to such an `f`.
@@ -38,6 +40,9 @@ the two powers are exchanged is Young's inequality, read as a conjugacy.
 
 * `monotoneHalfLineFn_monotoneConj`, `monotoneConj_monotoneConj` — the class is stable under
   `monotoneConj`, and `g⁺⁺ = g`.
+* `closedProperConvexFn_monotoneComp` — `g ∘ k` is a closed proper convex function, for a
+  non-constant `g`.
+* `setOf_monotoneComp_le_eq_smul` — its sublevel sets are all dilates of `{k ≤ 1}`.
 * `conj_monotoneComp` — `(g ∘ k)* = g⁺ ∘ k°` for a closed gauge `k`.
 * `monotoneConj_powHalfLine` — `(ζ ↦ ζ^p / p)⁺ = (σ ↦ σ^q / q)`.
 * `posHomogeneousDeg_iff_exists_isGauge` — a closed proper convex function is positively
@@ -49,14 +54,18 @@ the two powers are exchanged is Young's inequality, read as a conjugacy.
 
 ## What is not here
 
-The **characterisation** half of Rockafellar's Theorem 15.3 — that every gauge-like closed proper
-convex function is of the form `g ∘ k` — is absent; only the conjugacy formula and the corollaries
-that flow from it are proved. Corollary 15.3.1 does not depend on the characterisation: the gauge
-is exhibited directly as `degGauge p f`, whose unit level set is `{f ≤ 1/p}`.
+The **converse** half of Rockafellar's Theorem 15.3 — that every gauge-like closed proper convex
+function is of the form `g ∘ k`, and with it a predicate `IsGaugeLike` — is absent. What is proved
+of that theorem is the forward half: `g ∘ k` is closed proper convex
+(`closedProperConvexFn_monotoneComp`), its sublevel sets are dilates of a single set
+(`setOf_monotoneComp_le_eq_smul`), and the conjugacy formula. Corollary 15.3.1 does not depend on
+the converse: the gauge is exhibited directly as `degGauge p f`, whose unit level set is
+`{f ≤ 1/p}`.
 
-Note also that a `MonotoneHalfLineFn` may be constant, and then `g ∘ k` need **not** be closed:
-its sublevel sets are `dom k`, which for a closed gauge can fail to be closed. That is what
-Rockafellar's "non-constant" hypothesis buys. The conjugacy formula itself does not need it.
+Note that a `MonotoneHalfLineFn` may be constant, and then `g ∘ k` need **not** be closed: its
+sublevel sets are `dom k`, which for a closed gauge can fail to be closed. That is what
+Rockafellar's "non-constant" hypothesis buys, and it is used here only through
+`MonotoneHalfLineFn.exists_monotoneConj_ne_top`. The conjugacy formula itself does not need it.
 
 ## References
 
@@ -341,6 +350,255 @@ theorem eq_top_or_exists_coe_of_nonneg {z : EReal} (hz : 0 ≤ z) :
 end MonotoneComp
 
 
+/-! ### Convexity and properness of the composite -/
+
+section MonotoneCompConvex
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {g : ℝ → EReal} {k : E → EReal}
+
+/-- **Composing preserves convexity.** No monotonicity of `g` is needed: the infimum over the real
+levels above `k x` already builds it in, and the strict form of convexity
+(`convexFn_iff_forall_lt`) supplies a level for each side to be combined. -/
+theorem convexFn_monotoneComp (hg : ConvexFn g) (hk : ConvexFn k) :
+    ConvexFn (monotoneComp g k) := by
+  refine (convexFn_iff_forall_lt _).2 fun x y a b ha hb hab α β hx hy => ?_
+  rw [monotoneComp_apply, iInf_lt_iff] at hx hy
+  obtain ⟨t, ht⟩ := hx
+  rw [iInf_lt_iff] at ht
+  obtain ⟨hkt, hgt⟩ := ht
+  obtain ⟨s, hs⟩ := hy
+  rw [iInf_lt_iff] at hs
+  obtain ⟨hks, hgs⟩ := hs
+  exact lt_of_le_of_lt (monotoneComp_le (hk.epi_combo hkt hks ha.le hb.le hab))
+    ((convexFn_iff_forall_lt g).1 hg t s a b ha hb hab α β hgt hgs)
+
+/-- **The composite is proper**: it takes the value `g 0` at the origin, which is finite, and it is
+bounded below by `g 0` everywhere. -/
+theorem proper_monotoneComp (hg : MonotoneHalfLineFn g) (hk : IsGauge k) :
+    Proper (monotoneComp g k) where
+  dom_nonempty := ⟨0, by
+    have h : monotoneComp g k (0 : E) = g 0 :=
+      monotoneComp_of_eq_coe hg.monotoneOn le_rfl (by rw [hk.map_zero, _root_.EReal.coe_zero])
+    change monotoneComp g k (0 : E) < ⊤
+    rw [h]
+    exact lt_top_iff_ne_top.2 hg.zero_ne_top⟩
+  ne_bot x := by
+    have h : g 0 ≤ monotoneComp g k x := le_iInf fun t => le_iInf fun _ => hg.zero_le t
+    intro hc
+    rw [hc, le_bot_iff] at h
+    exact hg.ne_bot 0 h
+
+end MonotoneCompConvex
+
+/-! ### Growth of a non-constant function of the half-line
+
+A convex nondecreasing function of the half-line that is not constant grows at least linearly, so
+its monotone conjugate is finite at small positive arguments. That is the exact content of
+Rockafellar's "non-constant" hypothesis in Theorem 15.3: it is what makes `g ∘ k` closed. -/
+
+section Growth
+
+variable {g : ℝ → EReal} {c₀ r t₂ : ℝ}
+
+/-- **A convex function of the half-line lies above the secant through the origin, extended.**
+If `g 0 ≤ c₀` and `r ≤ g t₂` with `t₂ > 0`, then `g t ≥ c₀ + ((r - c₀) / t₂) t` for `t ≥ t₂`. -/
+theorem coe_add_mul_le_of_convex (hg : ConvexFn g) (hnb : ∀ z, g z ≠ ⊥) (h0 : g 0 ≤ (c₀ : EReal))
+    (ht₂ : 0 < t₂) (hr : (r : EReal) ≤ g t₂) {t : ℝ} (ht : t₂ ≤ t) :
+    ((c₀ + (r - c₀) / t₂ * t : ℝ) : EReal) ≤ g t := by
+  have ht0 : 0 < t := lt_of_lt_of_le ht₂ ht
+  rcases eq_or_lt_of_le (le_top (a := g t)) with htop | hlt
+  · rw [htop]; exact le_top
+  obtain ⟨v, hv⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hnb t) hlt
+  set l : ℝ := t₂ / t with hl
+  have hl0 : 0 < l := by positivity
+  have hl1 : l ≤ 1 := by rw [hl, div_le_one ht0]; exact ht
+  have hcombo := hg.epi_combo (x := (0 : ℝ)) (y := t) (μ := c₀) (ν := v) h0 (le_of_eq hv)
+    (by linarith : (0 : ℝ) ≤ 1 - l) hl0.le (by ring)
+  rw [smul_zero, zero_add, smul_eq_mul, hl, div_mul_cancel₀ _ ht0.ne'] at hcombo
+  have hb : r ≤ (1 - l) * c₀ + l * v := by
+    have h := le_trans hr hcombo
+    exact EReal.coe_le_coe_iff.1 h
+  rw [hv, EReal.coe_le_coe_iff]
+  have hlv : l * v = t₂ / t * v := by rw [hl]
+  have hkey : (r - c₀) * t ≤ t₂ * (v - c₀) := by
+    have h1 : (1 - l) * c₀ + l * v - c₀ = l * (v - c₀) := by ring
+    have h2 : r - c₀ ≤ l * (v - c₀) := by linarith [hb]
+    have h3 : (r - c₀) * t ≤ l * (v - c₀) * t := by nlinarith
+    have h4 : l * (v - c₀) * t = t₂ * (v - c₀) := by
+      rw [hl]; field_simp
+    linarith [h3, h4.le, h4.ge]
+  rw [div_mul_eq_mul_div, ← sub_nonneg]
+  have h5 : v - (c₀ + (r - c₀) * t / t₂) = (t₂ * (v - c₀) - (r - c₀) * t) / t₂ := by
+    field_simp; ring
+  rw [h5]
+  positivity
+
+/-- **A non-constant convex nondecreasing function of the half-line has an affine minorant of
+positive slope**, beyond the point where it first rises. This is the quantitative form of
+"`g (ζ) → +∞`". -/
+theorem MonotoneHalfLineFn.exists_affine_minorant (hg : MonotoneHalfLineFn g)
+    (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) :
+    ∃ m c₀ t₂ : ℝ, 0 < m ∧ 0 < t₂ ∧ g 0 = (c₀ : EReal) ∧
+      ∀ t : ℝ, t₂ ≤ t → ((c₀ + m * t : ℝ) : EReal) ≤ g t := by
+  obtain ⟨t₂, ht₂, hlt⟩ := hne
+  obtain ⟨c₀, hc₀⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hg.ne_bot 0)
+    (lt_top_iff_ne_top.2 hg.zero_ne_top)
+  obtain ⟨r, hrc, hrg⟩ : ∃ r : ℝ, c₀ < r ∧ (r : EReal) ≤ g t₂ := by
+    rcases eq_or_lt_of_le (le_top (a := g t₂)) with htop | hlt'
+    · exact ⟨c₀ + 1, by linarith, by rw [htop]; exact le_top⟩
+    · obtain ⟨v, hv⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hg.ne_bot t₂) hlt'
+      exact ⟨v, by rw [hc₀, hv] at hlt; exact_mod_cast hlt, le_of_eq hv.symm⟩
+  exact ⟨(r - c₀) / t₂, c₀, t₂, by positivity, ht₂, hc₀,
+    fun t ht => coe_add_mul_le_of_convex hg.convex hg.ne_bot (le_of_eq hc₀) ht₂ hrg ht⟩
+
+/-- **The monotone conjugate of a non-constant function of the half-line is finite somewhere on
+the positive axis** — it is finite at every `ζ` below the slope of the affine minorant. -/
+theorem MonotoneHalfLineFn.exists_monotoneConj_ne_top (hg : MonotoneHalfLineFn g)
+    (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) : ∃ ζ : ℝ, 0 < ζ ∧ monotoneConj g ζ ≠ ⊤ := by
+  obtain ⟨m, c₀, t₂, hm0, ht₂, hc₀, hmin⟩ := MonotoneHalfLineFn.exists_affine_minorant hg hne
+  refine ⟨m / 2, by positivity, ?_⟩
+  have hbound : monotoneConj g (m / 2) ≤ ((t₂ * (m / 2) - c₀ : ℝ) : EReal) := by
+    rw [monotoneConj_of_nonneg g (by positivity)]
+    refine iSup_le fun t => iSup_le fun ht => ?_
+    rcases le_or_gt t₂ t with hcase | hcase
+    · refine le_trans (EReal.sub_le_sub (le_refl ((t * (m / 2) : ℝ) : EReal))
+        (hmin t hcase)) ?_
+      rw [← _root_.EReal.coe_sub, EReal.coe_le_coe_iff]
+      nlinarith
+    · refine le_trans (EReal.sub_le_sub (le_refl ((t * (m / 2) : ℝ) : EReal))
+        (show ((c₀ : ℝ) : EReal) ≤ g t by rw [← hc₀]; exact hg.zero_le t)) ?_
+      rw [← _root_.EReal.coe_sub, EReal.coe_le_coe_iff]
+      nlinarith
+  exact ne_top_of_le_ne_top (EReal.coe_ne_top _) hbound
+
+/-- The set of levels at which a non-constant function of the half-line is below a given real
+bound is bounded above: past the affine minorant, `c₀ + m t ≤ α` caps `t`. -/
+theorem MonotoneHalfLineFn.bddAbove_setOf_le (hg : MonotoneHalfLineFn g)
+    (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) (α : ℝ) :
+    BddAbove {t : ℝ | 0 ≤ t ∧ g t ≤ (α : EReal)} := by
+  obtain ⟨m, c₀, t₂, hm0, ht₂, hc₀, hmin⟩ := MonotoneHalfLineFn.exists_affine_minorant hg hne
+  refine ⟨max t₂ ((α - c₀) / m), fun t ht => ?_⟩
+  obtain ⟨-, htα⟩ := ht
+  rcases le_or_gt t t₂ with h | h
+  · exact le_trans h (le_max_left _ _)
+  · refine le_trans ?_ (le_max_right t₂ ((α - c₀) / m))
+    have hb := le_trans (hmin t h.le) htα
+    rw [EReal.coe_le_coe_iff] at hb
+    rw [le_div_iff₀ hm0]
+    linarith
+
+/-- **A convex function of the half-line finite at some positive level is continuous from the right
+at the origin**, in the form needed here: every real level strictly above `g 0` is already attained
+at some positive argument. Without finiteness at a positive level `g` may jump to `+∞` at once. -/
+theorem MonotoneHalfLineFn.exists_pos_le (hg : MonotoneHalfLineFn g)
+    (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤) {α : ℝ} (hα : g 0 < (α : EReal)) :
+    ∃ t : ℝ, 0 < t ∧ g t ≤ (α : EReal) := by
+  obtain ⟨ζ, hζ, hζt⟩ := hfin
+  obtain ⟨c₀, hc₀⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hg.ne_bot 0)
+    (lt_top_iff_ne_top.2 hg.zero_ne_top)
+  obtain ⟨v, hv⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hg.ne_bot ζ)
+    (lt_top_iff_ne_top.2 hζt)
+  have hcα : c₀ < α := by rw [hc₀] at hα; exact_mod_cast hα
+  set d : ℝ := max (v - c₀) 1 with hd
+  have hd0 : (0 : ℝ) < d := lt_of_lt_of_le zero_lt_one (le_max_right _ _)
+  set l : ℝ := min 1 ((α - c₀) / d) with hl
+  have hl0 : 0 < l := lt_min zero_lt_one (by positivity)
+  have hl1 : l ≤ 1 := min_le_left _ _
+  have hkey : (1 - l) * c₀ + l * v ≤ α := by
+    have h1 : l * (v - c₀) ≤ l * d :=
+      mul_le_mul_of_nonneg_left (le_max_left _ _) hl0.le
+    have h2 : l * d ≤ α - c₀ := by
+      have := min_le_right (1 : ℝ) ((α - c₀) / d)
+      calc l * d ≤ ((α - c₀) / d) * d := by nlinarith
+        _ = α - c₀ := by field_simp
+    nlinarith
+  refine ⟨l * ζ, by positivity, ?_⟩
+  have hcombo := hg.convex.epi_combo (x := (0 : ℝ)) (y := ζ) (μ := c₀) (ν := v)
+    (le_of_eq hc₀) (le_of_eq hv) (by linarith : (0 : ℝ) ≤ 1 - l) hl0.le (by ring)
+  rw [smul_zero, zero_add, smul_eq_mul] at hcombo
+  exact le_trans hcombo (EReal.coe_le_coe_iff.2 hkey)
+
+/-- The **crossing level** `sup {ζ ≥ 0 ∣ g ζ ≤ α}` of a function of the half-line. It is the
+dilation factor of the sublevel set `{g ∘ k ≤ α}`. -/
+noncomputable def levelSup (g : ℝ → EReal) (α : ℝ) : ℝ :=
+  sSup {t : ℝ | 0 ≤ t ∧ g t ≤ (α : EReal)}
+
+/-- The crossing level is attained: the set of levels below `α` is closed and bounded. -/
+theorem levelSup_mem (hg : MonotoneHalfLineFn g) (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) {α : ℝ}
+    (hα : g 0 ≤ (α : EReal)) : 0 ≤ levelSup g α ∧ g (levelSup g α) ≤ (α : EReal) := by
+  have hset : {t : ℝ | 0 ≤ t ∧ g t ≤ (α : EReal)} = Set.Ici 0 ∩ g ⁻¹' Set.Iic (α : EReal) := rfl
+  have hcl : IsClosed {t : ℝ | 0 ≤ t ∧ g t ≤ (α : EReal)} := by
+    rw [hset]
+    exact isClosed_Ici.inter
+      (lowerSemicontinuous_iff_isClosed_preimage.1 (ClosedFn.lowerSemicontinuous hg.closed) _)
+  exact hcl.csSup_mem ⟨0, le_rfl, hα⟩ (MonotoneHalfLineFn.bddAbove_setOf_le hg hne α)
+
+/-- Any level below `α` is below the crossing level. -/
+theorem le_levelSup (hg : MonotoneHalfLineFn g) (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) {α t : ℝ}
+    (ht : 0 ≤ t) (htα : g t ≤ (α : EReal)) : t ≤ levelSup g α :=
+  le_csSup (MonotoneHalfLineFn.bddAbove_setOf_le hg hne α) ⟨ht, htα⟩
+
+/-- The crossing level is positive as soon as `α` is strictly above `g 0` and `g` is finite
+somewhere on the positive axis. -/
+theorem levelSup_pos (hg : MonotoneHalfLineFn g) (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t)
+    (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤) {α : ℝ} (hα : g 0 < (α : EReal)) : 0 < levelSup g α := by
+  obtain ⟨t, ht0, htα⟩ := MonotoneHalfLineFn.exists_pos_le hg hfin hα
+  exact lt_of_lt_of_le ht0 (le_levelSup hg hne ht0.le htα)
+
+end Growth
+
+/-! ### The sublevel sets of `g ∘ k` are dilates of one another
+
+This is the geometric content of Rockafellar's "gauge-like": every sublevel set `{g ∘ k ≤ α}` with
+`α` above the minimum is the dilate `λ • {k ≤ 1}`, with `λ` the crossing level of `g` at `α`. -/
+
+section GaugeLikeLevels
+
+variable {E : Type*} {g : ℝ → EReal} {k : E → EReal} {α : ℝ}
+
+/-- The sublevel sets of `g ∘ k` are the sublevel sets of `k`, at the crossing level. -/
+theorem monotoneComp_le_coe_iff (hg : MonotoneHalfLineFn g) (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t)
+    (hknn : ∀ z, 0 ≤ k z) (hα : g 0 ≤ (α : EReal)) (x : E) :
+    monotoneComp g k x ≤ (α : EReal) ↔ k x ≤ ((levelSup g α : ℝ) : EReal) := by
+  obtain ⟨hl0, hlα⟩ := levelSup_mem hg hne hα
+  constructor
+  · intro h
+    rcases eq_top_or_exists_coe_of_nonneg (hknn x) with hx | ⟨c, hc0, hx⟩
+    · rw [monotoneComp_of_eq_top g hx] at h
+      exact absurd (top_le_iff.1 h) (EReal.coe_ne_top α)
+    · rw [monotoneComp_of_eq_coe hg.monotoneOn hc0 hx] at h
+      rw [hx, EReal.coe_le_coe_iff]
+      exact le_levelSup hg hne hc0 h
+  · intro h
+    obtain ⟨c, hc0, hx⟩ : ∃ c : ℝ, 0 ≤ c ∧ k x = (c : EReal) := by
+      rcases eq_top_or_exists_coe_of_nonneg (hknn x) with hx | h'
+      · exact absurd (hx ▸ h) (by simp)
+      · exact h'
+    rw [monotoneComp_of_eq_coe hg.monotoneOn hc0 hx]
+    rw [hx, EReal.coe_le_coe_iff] at h
+    exact le_trans (hg.monotoneOn (Set.mem_Ici.2 hc0) (Set.mem_Ici.2 hl0) h) hlα
+
+variable [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E]
+
+/-- **The sublevel sets of `g ∘ k` are dilates of `{k ≤ 1}`** — Rockafellar's "gauge-like", for
+the composite of a closed gauge with a non-constant nondecreasing closed convex function of the
+half-line finite at some positive level. -/
+theorem setOf_monotoneComp_le_eq_smul (hk : IsGauge k) (hkc : ClosedFn k)
+    (hg : MonotoneHalfLineFn g)
+    (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤)
+    (hα : g 0 < (α : EReal)) :
+    {x : E | monotoneComp g k x ≤ (α : EReal)} = levelSup g α • {x : E | k x ≤ 1} := by
+  have hpos : 0 < levelSup g α := levelSup_pos hg hne hfin hα
+  have hkC : gaugeFn {z : E | k z ≤ 1} = k :=
+    gaugeFn_level_one hk.nonneg hk.posHomogeneous hk.map_zero
+  rw [← setOf_gaugeFn_le_pos (IsGauge.convex_level_one hk) (IsGauge.zero_mem_level_one hk)
+    (isClosed_setOf_le_one hkc) hpos, hkC]
+  ext x
+  exact monotoneComp_le_coe_iff hg hne hk.nonneg hα.le x
+
+end GaugeLikeLevels
+
 /-! ### The conjugate of a gauge composed with a function on the half-line
 
 The composite `g ∘ k` of a closed gauge with a nondecreasing closed convex function on the
@@ -533,6 +791,58 @@ theorem conj_monotoneComp (hk : IsGauge k) (hkc : ClosedFn k) (hg : MonotoneHalf
       (monotoneConj_le_conj_monotoneComp hk hg hc)
 
 end GaugeComp
+
+/-! ### `g ∘ k` is a closed proper convex function — Theorem 15.3, first assertion
+
+Closedness is obtained the way Rockafellar obtains it: by applying the conjugacy formula twice.
+`(g ∘ k)** = g⁺⁺ ∘ k°° = g ∘ k`, and a convex function equal to its own biconjugate is closed. The
+second application needs `g⁺` to be finite somewhere on the positive axis, which is exactly what
+`g` non-constant provides. -/
+
+section MonotoneCompClosed
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
+  [AddCommGroup F] [Module ℝ F] [TopologicalSpace F] [IsTopologicalAddGroup F]
+  [ContinuousSMul ℝ F] {g : ℝ → EReal} {k : E → EReal}
+
+/-- **Rockafellar, Theorem 15.3**, first assertion: `g ∘ k` is closed, for a closed gauge `k` and a
+non-constant nondecreasing closed convex `g` on the half-line finite at some positive level.
+
+Non-constancy is essential and is exactly what the proof consumes, through
+`MonotoneHalfLineFn.exists_monotoneConj_ne_top`: for constant `g` the composite is `g 0` on
+`dom k` and `+∞` off it, and `dom k` need not be closed. -/
+theorem closedFn_monotoneComp (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [IsContinuousPairing B.flip] (hk : IsGauge k) (hkc : ClosedFn k) (hg : MonotoneHalfLineFn g)
+    (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤) (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) :
+    ClosedFn (monotoneComp g k) := by
+  have hpk : IsGauge (polarGauge B k) :=
+    isGauge_polarGauge hk.nonneg hk.posHomogeneous hk.map_zero
+  have hpkc : ClosedFn (polarGauge B k) :=
+    closedFn_polarGauge hk.nonneg hk.posHomogeneous hk.map_zero
+  have hkc' : clFn k = k := hkc
+  have h1 : conj B (monotoneComp g k) = monotoneComp (monotoneConj g) (polarGauge B k) :=
+    conj_monotoneComp hk hkc hg hfin
+  have h2 : conj B.flip (monotoneComp (monotoneConj g) (polarGauge B k))
+      = monotoneComp (monotoneConj (monotoneConj g)) (polarGauge B.flip (polarGauge B k)) :=
+    conj_monotoneComp hpk hpkc (monotoneHalfLineFn_monotoneConj hg)
+      (MonotoneHalfLineFn.exists_monotoneConj_ne_top hg hne)
+  have hbi : biconj B (monotoneComp g k) = monotoneComp g k := by
+    change conj B.flip (conj B (monotoneComp g k)) = monotoneComp g k
+    rw [h1, h2, monotoneConj_monotoneConj hg, polarGauge_polarGauge hk, hkc']
+  change clFn (monotoneComp g k) = monotoneComp g k
+  rw [← biconj_eq_clFn (B := B) (convexFn_monotoneComp hg.convex hk.convexFn), hbi]
+
+/-- **Rockafellar, Theorem 15.3**, first assertion in full: `g ∘ k` is a closed proper convex
+function. -/
+theorem closedProperConvexFn_monotoneComp (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [IsContinuousPairing B.flip] (hk : IsGauge k) (hkc : ClosedFn k)
+    (hg : MonotoneHalfLineFn g) (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤)
+    (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) : ClosedProperConvexFn (monotoneComp g k) :=
+  ⟨convexFn_monotoneComp hg.convex hk.convexFn,
+    closedFn_monotoneComp B hk hkc hg hfin hne, proper_monotoneComp hg hk⟩
+
+end MonotoneCompClosed
 
 /-! ### The powers of the half-line
 
