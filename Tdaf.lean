@@ -9,6 +9,7 @@ import Tdaf.Analysis.Convex.Duality.ConcaveConj
 import Tdaf.Analysis.Convex.Duality.Conjugate
 import Tdaf.Analysis.Convex.Duality.Continuity
 import Tdaf.Analysis.Convex.Duality.Exact
+import Tdaf.Analysis.Convex.Duality.Gauge
 import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Duality.Pairing
 import Tdaf.Analysis.Convex.Duality.Polar

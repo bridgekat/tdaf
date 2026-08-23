@@ -1108,4 +1108,176 @@ theorem polarFn_apply_eq (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 ≤ 0) (y : F) :
 
 end PolarFn
 
+/-! ### Two facts about `polarSet`
+
+`Duality/Polar.lean` proves both of these for `polarCone` but not for `polarSet`. They are needed
+for Theorem 15.4 and belong in that file; they are stated here so that this module can be merged
+on its own. -/
+
+section PolarSetAux
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+
+/-- The polar of any set is convex — the `polarSet` companion of `convex_polarCone`. -/
+theorem convex_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) : Convex ℝ (polarSet B C) := by
+  intro y hy z hz a b ha hb hab x hx
+  have h1 := hy x hx
+  have h2 := hz x hx
+  simp only [map_add, map_smul, smul_eq_mul]
+  nlinarith
+
+/-- **The polar does not see the closure** — the `polarSet` companion of `polarCone_closure`. -/
+theorem polarSet_closure [TopologicalSpace E] (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B]
+    (C : Set E) : polarSet B (closure C) = polarSet B C := by
+  refine subset_antisymm (polarSet_anti subset_closure) fun y hy x hx => ?_
+  exact closure_minimal (fun z hz => hy z hz)
+    (isClosed_le (continuous_pairing B y) continuous_const) hx
+
+end PolarSetAux
+
+/-! ### Closures of nonnegative functions
+
+A nonnegative function has a nonnegative lower semicontinuous hull, so the exceptional `⊥` branch
+of `clFn` never fires and `cl f` is computed by the closure of the epigraph. -/
+
+section NonnegClosure
+
+variable {E : Type*} [TopologicalSpace E] {f : E → EReal}
+
+/-- The closure of the epigraph of a nonnegative function stays in the upper half-space. -/
+theorem nonneg_of_mem_closure_epi (hnn : ∀ x, 0 ≤ f x) {p : E × ℝ} (hp : p ∈ closure (epi f)) :
+    0 ≤ p.2 := by
+  refine closure_minimal (fun q hq => ?_) (isClosed_le continuous_const continuous_snd) hp
+  have h : (0 : EReal) ≤ (q.2 : EReal) := le_trans (hnn q.1) hq
+  exact_mod_cast h
+
+/-- The lower semicontinuous hull of a nonnegative function is nonnegative. -/
+theorem lscHull_nonneg (hnn : ∀ x, 0 ≤ f x) (x : E) : 0 ≤ lscHull f x := by
+  refine le_ofEpi fun μ hμ => ?_
+  have h := nonneg_of_mem_closure_epi hnn hμ
+  exact_mod_cast h
+
+/-- For a nonnegative function the closure is the lower semicontinuous hull: the exceptional
+branch of `clFn` cannot fire. -/
+theorem clFn_eq_lscHull_of_nonneg (hnn : ∀ x, 0 ≤ f x) : clFn f = lscHull f :=
+  clFn_of_forall_ne_bot fun x h => by
+    have h0 := lscHull_nonneg hnn x
+    rw [h, le_bot_iff] at h0
+    exact absurd h0 (by simp)
+
+/-- The closure of a nonnegative function is nonnegative. -/
+theorem clFn_nonneg (hnn : ∀ x, 0 ≤ f x) (x : E) : 0 ≤ clFn f x := by
+  rw [clFn_eq_lscHull_of_nonneg hnn]
+  exact lscHull_nonneg hnn x
+
+/-- A nonnegative function with a closed epigraph is closed. -/
+theorem closedFn_of_isClosed_epi (hnn : ∀ x, 0 ≤ f x) (hcl : IsClosed (epi f)) : ClosedFn f := by
+  rw [ClosedFn, clFn_eq_lscHull_of_nonneg hnn]
+  exact le_antisymm (lscHull_le f)
+    (le_lscHull_of_le (lowerSemicontinuous_iff_isClosed_epi.2 hcl) le_rfl)
+
+end NonnegClosure
+
+section NonnegClosureGroup
+
+variable {E : Type*} [TopologicalSpace E] [AddCommGroup E] [IsTopologicalAddGroup E]
+  {f : E → EReal}
+
+/-- For a nonnegative function the epigraph of the closure is the closure of the epigraph. -/
+theorem epi_clFn_of_nonneg (hnn : ∀ x, 0 ≤ f x) : epi (clFn f) = closure (epi f) := by
+  rw [clFn_eq_lscHull_of_nonneg hnn, epi_lscHull]
+
+/-- A nonnegative closed function has a closed epigraph. -/
+theorem isClosed_epi_of_closedFn (hnn : ∀ x, 0 ≤ f x) (hcl : ClosedFn f) : IsClosed (epi f) := by
+  have h : epi f = closure (epi f) := by rw [← epi_clFn_of_nonneg hnn, hcl]
+  rw [h]
+  exact isClosed_closure
+
+/-- Closedness of a nonnegative function, as a statement about its epigraph. -/
+theorem closedFn_iff_isClosed_epi (hnn : ∀ x, 0 ≤ f x) : ClosedFn f ↔ IsClosed (epi f) :=
+  ⟨isClosed_epi_of_closedFn hnn, closedFn_of_isClosed_epi hnn⟩
+
+end NonnegClosureGroup
+
+/-! ### Theorem 15.4
+
+The epigraph of `f°` is the vertical reflection of the polar of the epigraph of `f`, so the
+bipolar theorem of `Duality/Polar.lean`, applied in `E × ℝ`, gives `f°° = cl f` at once. -/
+
+section Theorem154
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
+
+/-- **The epigraph of the polar** (Rockafellar, proof of Theorem 15.4):
+`epi f° = A ((epi f)°)`, where `A` is the vertical reflection `vNeg`. -/
+theorem epi_polarFn (hnn : ∀ x, 0 ≤ f x) :
+    epi (polarFn B f) = vNeg F '' polarSet (epiPairing B) (epi f) := by
+  rw [image_vNeg_eq_preimage]
+  ext q
+  simp only [Set.mem_preimage, mem_epi, mem_polarSet, vNeg_apply, epiPairing_apply,
+    polarFn_le_coe_iff hnn]
+  constructor
+  · rintro h ⟨x, ν⟩ hp
+    have h2 := h x ν hp
+    simp only
+    linarith
+  · intro h x ν hν
+    have h2 := h (x, ν) hν
+    simp only at h2
+    linarith
+
+/-- **Rockafellar, Theorem 15.4**, first assertion (convexity): the polar of a nonnegative
+function is convex, being cut out by a polar set. -/
+theorem convexFn_polarFn (hnn : ∀ x, 0 ≤ f x) : ConvexFn (polarFn B f) := by
+  rw [convexFn_iff_convex_epi, epi_polarFn hnn, image_vNeg_eq_preimage]
+  exact (convex_polarSet _ _).linear_preimage (vNeg F)
+
+end Theorem154
+
+section Theorem154Closed
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B.flip] {f : E → EReal}
+
+/-- **Rockafellar, Theorem 15.4**, first assertion (closedness): the polar of a nonnegative
+function vanishing at the origin is closed, because polar sets are closed. -/
+theorem closedFn_polarFn (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 ≤ 0) : ClosedFn (polarFn B f) := by
+  have : IsContinuousPairing (epiPairing B).flip := by
+    rw [epiPairing_flip]
+    infer_instance
+  refine closedFn_of_isClosed_epi (fun y => polarFn_nonneg h0 y) ?_
+  rw [epi_polarFn hnn, image_vNeg_eq_preimage]
+  have hc : Continuous fun p : F × ℝ => ((p.1, -p.2) : F × ℝ) :=
+    continuous_fst.prodMk continuous_snd.neg
+  exact isClosed_polarSet.preimage hc
+
+end Theorem154Closed
+
+section Theorem154Main
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
+
+/-- **Rockafellar, Theorem 15.4**, second assertion: for a nonnegative convex function vanishing
+at the origin, `f°° = cl f`.
+
+The outer polar is taken with respect to `B.flip`, since `f°` lives on `F`. -/
+theorem polarFn_polarFn (hconv : ConvexFn f) (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 ≤ 0) :
+    polarFn B.flip (polarFn B f) = clFn f := by
+  have hnn' : ∀ y, 0 ≤ polarFn B f y := fun y => polarFn_nonneg h0 y
+  have hmem : (0 : E × ℝ) ∈ closure (epi f) := by
+    refine subset_closure ?_
+    rw [mem_epi]
+    simpa using h0
+  have hepi : epi (polarFn B.flip (polarFn B f)) = closure (epi f) := by
+    rw [epi_polarFn hnn', epi_polarFn hnn, polarSet_image_vNeg B.flip, image_vNeg_image_vNeg,
+      ← epiPairing_flip B, ← polarSet_closure (epiPairing B) (epi f)]
+    exact polarSet_polarSet hconv.convex_epi.closure isClosed_closure hmem
+  have hof := congrArg ofEpi hepi
+  rwa [ofEpi_epi, ← epi_clFn_of_nonneg hnn, ofEpi_epi] at hof
+
+end Theorem154Main
+
 end Tdaf.ConvexAnalysis
