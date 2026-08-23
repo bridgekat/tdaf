@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Tdaf.Analysis.Convex.Optimization.Normal
 import Tdaf.Analysis.Convex.Saddle.Closure
 
 /-!
@@ -35,8 +36,25 @@ linear transformation" is to linear algebra.
   the lower closed and the upper closed concave-convex functions. Both round trips are the
   definitions of `LowerClosedFn` and `UpperClosedFn`, so the only content is that each operator
   lands in the other class (`upperClosedFn_partialCl₁`, `lowerClosedFn_partialCl₂`).
+* `polyhedralFn_bracket`, `polyhedralFn_neg_bracket`,
+  `imageClosedBifun_of_polyhedralBifun`, `eq_conj_bracket_of_polyhedralBifun`,
+  `eq_iSup_sub_bracket_of_polyhedralBifun` — **Corollary 33.1.3**, the polyhedral form of
+  Corollary 33.1.2: `⟨Fu, ·⟩` is polyhedral convex, `⟨F·, y⟩` is polyhedral concave, and a
+  *proper* polyhedral convex bifunction is image-closed, hence recovered from its bracket.
+* `polyhedralFn_neg_graphFn_adjointBifun`, `polyhedralFn_concaveBracket`, `dom_concaveBracket`,
+  `closedBifun_of_polyhedralBifun` — the same facts for the adjoint side, which
+  `Saddle/Kernel.lean` uses for **Corollary 33.2.2**.
+* `PolyhedralFn.add_linear`, `polyhedralFn_compLin`, `clConcave_eq_of_mem_domConcave` — three
+  general polyhedral lemmas proved here for want of a better home; see the design notes.
 
 ## Design notes
+
+**Three polyhedral lemmas are proved here that do not belong here.** `PolyhedralFn.add_linear`
+(adding a linear functional preserves polyhedrality) belongs beside `PolyhedralFn.add` in
+`Polyhedral/Function.lean`; `polyhedralFn_compLin` and `clConcave_eq_of_mem_domConcave` belong
+beside `polyhedralFn_mapLin` and `PolyhedralFn.clFn_eq_of_mem_dom` in
+`Optimization/Perturbation.lean`. They are here because Corollary 33.1.3 is the first place that
+needs them.
 
 **Image-closedness is the right notion of "determined by the bracket".** `bracket Bx F u` is
 `conj Bx (F u)`, which sees only `cl (F u)`; two bifunctions with the same bracket therefore have
@@ -332,6 +350,257 @@ noncomputable def bifunSaddleEquiv :
 
 end Cor3312Equiv
 
+/-! ### The bracket of a polyhedral bifunction
+
+For a polyhedral convex bifunction `F` both variables of the bracket sharpen from convex to
+polyhedral. `⟨Fu, ·⟩` is polyhedral convex, being the conjugate of the polyhedral convex function
+`F u`; `⟨F·, y⟩` is polyhedral *concave*, its negative `⨅ x ((Fu)(x) - ⟨x, y⟩)` being the image of
+a polyhedral convex function on `U × X` under the projection `(u, x) ↦ u`. That is the proof of
+concavity in the first variable, with "convex" replaced by "polyhedral" throughout.
+
+Properness then does the work closedness does in the general correspondence: a proper polyhedral
+convex bifunction is image-closed, because a polyhedral epigraph is closed and properness keeps the
+slice from taking `-∞`. So `F` is recovered from its bracket, `Fu = ⟨Fu, ·⟩*`, with no closedness
+hypothesis at all — the polyhedral form of `bifunSaddleEquiv`'s left inverse.
+
+**"Polyhedral concave" is spelled `PolyhedralFn (fun u => -(⟨Fu, y⟩))`.** The library has no
+predicate for a function whose *hypograph* is polyhedral, and one is not worth introducing for a
+single clause: the negation is the definition. -/
+
+section PolyhedralLinear
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → EReal}
+
+/-- Adding a finite constant to an `EReal`, read as a condition on epigraph height.
+
+The same statement is `Subgradient/Approx.lean`'s `add_coe_le_coe_iff` and `Saddle/Defs.lean`'s
+private twin; none of the three files imports the others, and the lemma really belongs in
+`Tdaf/Order/EReal.lean`. -/
+private theorem add_coe_le_coe_iff {a : EReal} {c m : ℝ} :
+    a + (c : EReal) ≤ (m : EReal) ↔ a ≤ ((m - c : ℝ) : EReal) := by
+  rw [_root_.EReal.coe_sub, _root_.EReal.le_sub_iff_add_le (.inl (_root_.EReal.coe_ne_bot c))
+    (.inl (_root_.EReal.coe_ne_top c))]
+
+/-- **Adding a linear functional preserves polyhedrality.** The epigraph of `f + φ` is the preimage
+of `epi f` under the shear `(x, μ) ↦ (x, μ - φ x)`, and `Polyhedral.comap` asks for nothing beyond
+a real vector space — no finite dimension, no topology.
+
+This belongs beside `PolyhedralFn.add` in `Polyhedral/Function.lean`; it is here because
+Corollary 33.1.3 is the first place that needs it. -/
+theorem PolyhedralFn.add_linear (hf : PolyhedralFn f) (φ : E →ₗ[ℝ] ℝ) :
+    PolyhedralFn (fun x => f x + ((φ x : ℝ) : EReal)) := by
+  have hepi : epi (fun x => f x + ((φ x : ℝ) : EReal))
+      = (LinearMap.prod (LinearMap.fst ℝ E ℝ)
+          (LinearMap.snd ℝ E ℝ - φ.comp (LinearMap.fst ℝ E ℝ))) ⁻¹' epi f := by
+    ext q
+    exact add_coe_le_coe_iff
+  change Polyhedral (epi _)
+  rw [hepi]
+  exact Polyhedral.comap hf _
+
+/-- **Composing with a linear map preserves polyhedrality.** `epi (g A)` is `epi g` pulled back
+along `(x, μ) ↦ (A x, μ)`, and a preimage of a polyhedral set under a linear map is polyhedral.
+
+This belongs beside `polyhedralFn_mapLin` in `Optimization/Perturbation.lean`, next to the image
+half; it is here because the adjoint bifunction is the first place that needs it. -/
+theorem polyhedralFn_compLin {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    {g : G → EReal} (hg : PolyhedralFn g) (A : E →ₗ[ℝ] G) : PolyhedralFn (compLin g A) := by
+  change Polyhedral (epi (compLin g A))
+  rw [epi_compLin]
+  exact Polyhedral.comap hg _
+
+end PolyhedralLinear
+
+section PolyhedralBracket
+
+variable {U X Y : Type*}
+  [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X}
+
+omit [FiniteDimensional ℝ U] in
+/-- **Rockafellar, Corollary 33.1.3**, first clause: `⟨Fu, ·⟩` is a polyhedral convex function of
+`y` for each `u`. This is Theorem 19.2 applied to the slice `F u`, which Theorem 29.2 says is
+polyhedral. -/
+theorem polyhedralFn_bracket (hF : PolyhedralBifun F) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (u : U) :
+    PolyhedralFn (bracket Bx F u) := by
+  rw [bracket_eq_conj]
+  exact PolyhedralFn.conj (B := Bx) (PolyhedralBifun.polyhedralFn_apply hF u)
+
+/-- The bookkeeping of Corollary 33.1.3's concavity clause, with the linear functional
+`(u, x) ↦ -⟨x, y⟩` abstracted so that it can be written down once. -/
+private theorem polyhedralFn_neg_bracket_aux (hF : PolyhedralBifun F)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (y : Y) (φ : (U × X) →ₗ[ℝ] ℝ)
+    (hφ : ∀ p : U × X, φ p = -(Bx p.2 y : ℝ)) :
+    PolyhedralFn (fun u => -(bracket Bx F u y)) := by
+  have hval : ∀ u : U, (⨅ x : X, (graphFn F (u, x) + ((φ (u, x) : ℝ) : EReal)))
+      = -(bracket Bx F u y) := by
+    intro u
+    rw [bracket_apply, Tdaf.EReal.neg_iSup]
+    refine iInf_congr fun x => ?_
+    rw [_root_.EReal.neg_sub (.inl (_root_.EReal.coe_ne_bot _))
+        (.inl (_root_.EReal.coe_ne_top _)), hφ (u, x), _root_.EReal.coe_neg,
+      add_comm (graphFn F (u, x))]
+    rfl
+  have hfun : (fun u => -(bracket Bx F u y))
+      = mapLin (LinearMap.fst ℝ U X) (fun p : U × X => graphFn F p + ((φ p : ℝ) : EReal)) := by
+    funext u
+    rw [mapLin_fst_apply]
+    exact (hval u).symm
+  rw [hfun]
+  exact polyhedralFn_mapLin (PolyhedralFn.add_linear hF φ) _
+
+/-- **Rockafellar, Corollary 33.1.3**, second clause: `⟨F·, y⟩` is a polyhedral *concave* function
+of `u` for each `y`, i.e. its negative is polyhedral convex.
+
+`-⟨Fu, y⟩ = ⨅ x ((Fu)(x) - ⟨x, y⟩)` is the image of a polyhedral convex function on `U × X` under
+the projection `(u, x) ↦ u`, and Corollary 19.3.1 says such an image is polyhedral. -/
+theorem polyhedralFn_neg_bracket (hF : PolyhedralBifun F) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (y : Y) :
+    PolyhedralFn (fun u => -(bracket Bx F u y)) :=
+  polyhedralFn_neg_bracket_aux hF Bx y ((-(Bx.flip y)).comp (LinearMap.snd ℝ U X)) fun _ => rfl
+
+omit [FiniteDimensional ℝ U] in
+/-- **Rockafellar, Corollary 33.1.3**, third clause, first half: a *proper* polyhedral convex
+bifunction is image-closed. Each slice `F u` is polyhedral, hence has a closed epigraph, and
+properness of the graph function keeps it from taking `-∞`; `ClosedFn` follows.
+
+This is the polyhedral substitute for the closedness hypothesis of Corollary 33.1.2. -/
+theorem imageClosedBifun_of_polyhedralBifun (hF : PolyhedralBifun F) (hp : Proper (graphFn F)) :
+    ImageClosedBifun F := fun u =>
+  PolyhedralFn.closedFn (PolyhedralBifun.polyhedralFn_apply hF u) fun x => hp.ne_bot (u, x)
+
+omit [FiniteDimensional ℝ U] in
+/-- **Rockafellar, Corollary 33.1.3**, third clause: a proper polyhedral convex bifunction is
+recovered from its bracket, `Fu = ⟨Fu, ·⟩*`. -/
+theorem eq_conj_bracket_of_polyhedralBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    (hF : PolyhedralBifun F) (hp : Proper (graphFn F)) (u : U) :
+    F u = conj Bx.flip (bracket Bx F u) :=
+  (imageClosedBifun_of_polyhedralBifun hF hp u).symm.trans
+    (clFn_eq_conj_bracket (PolyhedralBifun.convexBifun hF) u)
+
+omit [FiniteDimensional ℝ U] in
+/-- **Rockafellar, Corollary 33.1.3**, third clause in the book's own notation:
+`(Fu)(x) = sup_y {⟨x, y⟩ - ⟨Fu, y⟩}`. -/
+theorem eq_iSup_sub_bracket_of_polyhedralBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] (hF : PolyhedralBifun F) (hp : Proper (graphFn F)) (u : U) (x : X) :
+    F u x = ⨆ y : Y, ((Bx x y : ℝ) : EReal) - bracket Bx F u y :=
+  congrFun (eq_conj_bracket_of_polyhedralBifun Bx hF hp u) x
+
+end PolyhedralBracket
+
+/-! ### The bracket of the adjoint of a polyhedral bifunction
+
+The adjoint `F*` of a polyhedral convex bifunction is polyhedral concave: its negated graph
+function is a conjugate composed with the linear reflection `(y, v) ↦ (-v, y)`, and both operations
+preserve polyhedrality. The concave bracket `⟨u, F* y⟩` is then polyhedral convex in `y` for each
+`u`, by the same partial-minimisation argument that makes `⟨Fu, y⟩` polyhedral concave in `u`.
+
+Those two facts, with the observation that a polyhedral function agrees with its closure on the
+whole of its effective domain, are what push the equality of the two brackets out from the relative
+interior of an effective domain to all of it. -/
+
+section PolyhedralConcaveClosure
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {g : E → EReal}
+
+/-- **A polyhedral concave function agrees with its closure throughout its effective domain**, not
+merely on the relative interior of it. Mirror of `PolyhedralFn.clFn_eq_of_mem_dom`, obtained from
+it by negating twice.
+
+This belongs beside `PolyhedralFn.clFn_eq_of_mem_dom` in `Optimization/Perturbation.lean`. -/
+theorem clConcave_eq_of_mem_domConcave (hg : PolyhedralFn fun z => -(g z)) {x : E}
+    (hx : x ∈ domConcave g) : clConcave g x = g x := by
+  have hmem : x ∈ dom fun z => -(g z) := by
+    rw [← domConcave_eq_dom_neg]
+    exact hx
+  rw [clConcave_apply, PolyhedralFn.clFn_eq_of_mem_dom hg hmem, neg_neg]
+
+end PolyhedralConcaveClosure
+
+section PolyhedralAdjoint
+
+variable {U V X Y : Type*}
+  [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X}
+
+/-- **A proper polyhedral convex bifunction is closed.** Its graph function has a polyhedral, hence
+closed, epigraph, and properness rules out the `-∞` branch of `clFn`. -/
+theorem closedBifun_of_polyhedralBifun (hF : PolyhedralBifun F) (hp : Proper (graphFn F)) :
+    ClosedBifun F := PolyhedralFn.closedFn hF hp.ne_bot
+
+/-- **The adjoint of a polyhedral convex bifunction is polyhedral concave.** `-F*` is the conjugate
+of the graph function composed with the reflection `(y, v) ↦ (-v, y)`: Theorem 19.2 makes the
+conjugate polyhedral, and `polyhedralFn_compLin` carries it through the reflection.
+
+Neither properness nor closedness is needed, exactly as in the concavity half of Theorem 30.1. -/
+theorem polyhedralFn_neg_graphFn_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : PolyhedralBifun F) :
+    PolyhedralFn fun q : Y × V => -(graphFn (adjointBifun Bu Bx F) q) := by
+  have h : (fun q : Y × V => -(graphFn (adjointBifun Bu Bx F) q))
+      = compLin (conj (prodPairing Bu Bx) (graphFn F)) (adjointSwap V Y) := by
+    funext q
+    rw [graphFn_adjointBifun, neg_neg]
+  rw [h]
+  exact polyhedralFn_compLin (PolyhedralFn.conj (B := prodPairing Bu Bx) hF) _
+
+end PolyhedralAdjoint
+
+section ConcaveBracketDom
+
+variable {U V Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+
+/-- **The effective domain of `y ↦ ⟨u, G y⟩` is `dom G`**, for every `u`. The concave bracket is
+`+∞` exactly where the slice `G y` is identically `-∞`; this is the mirror of
+`domConcave_bracket`. -/
+theorem dom_concaveBracket (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (G : Bifun Y V) (u : U) :
+    dom (fun y => concaveBracket Bu G u y) = domConcaveBifun G := by
+  ext y
+  change concaveConj Bu.flip (G y) u < ⊤ ↔ ∃ v, G y v ≠ ⊥
+  rw [lt_top_iff_ne_top, ne_eq, concaveConj_eq_top_iff, not_forall]
+
+end ConcaveBracketDom
+
+section PolyhedralConcaveBracket
+
+variable {U V Y : Type*} [AddCommGroup U] [Module ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y] {G : Bifun Y V}
+
+/-- The bookkeeping of `polyhedralFn_concaveBracket`, with the linear functional `(y, v) ↦ ⟨u, v⟩`
+abstracted so that it can be written down once. -/
+private theorem polyhedralFn_concaveBracket_aux
+    (hG : PolyhedralFn fun q : Y × V => -(graphFn G q)) (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (u : U)
+    (ψ : (Y × V) →ₗ[ℝ] ℝ) (hψ : ∀ q : Y × V, ψ q = (Bu u q.2 : ℝ)) :
+    PolyhedralFn (fun y => concaveBracket Bu G u y) := by
+  have hval : ∀ y : Y, (⨅ v : V, (-(graphFn G (y, v)) + ((ψ (y, v) : ℝ) : EReal)))
+      = concaveBracket Bu G u y := by
+    intro y
+    rw [concaveBracket_apply]
+    refine iInf_congr fun v => ?_
+    rw [hψ (y, v), sub_eq_add_neg, add_comm ((Bu u v : ℝ) : EReal) (-(G y v))]
+    rfl
+  have hfun : (fun y => concaveBracket Bu G u y)
+      = mapLin (LinearMap.fst ℝ Y V)
+        (fun q : Y × V => -(graphFn G q) + ((ψ q : ℝ) : EReal)) := by
+    funext y
+    rw [mapLin_fst_apply]
+    exact (hval y).symm
+  rw [hfun]
+  exact polyhedralFn_mapLin (PolyhedralFn.add_linear hG ψ) _
+
+/-- **The concave bracket of a polyhedral concave bifunction is polyhedral convex** in its second
+variable: `⟨u, G y⟩ = ⨅ v (⟨u, v⟩ - (G y)(v))` is the image of a polyhedral convex function on
+`Y × V` under the projection `(y, v) ↦ y`, and Corollary 19.3.1 says such an image is
+polyhedral. -/
+theorem polyhedralFn_concaveBracket (hG : PolyhedralFn fun q : Y × V => -(graphFn G q))
+    (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (u : U) : PolyhedralFn (fun y => concaveBracket Bu G u y) :=
+  polyhedralFn_concaveBracket_aux hG Bu u ((Bu u).comp (LinearMap.snd ℝ Y V)) fun _ => rfl
+
+end PolyhedralConcaveBracket
+
 /-! ### Corollary 33.3.2
 
 `cl₁` and `cl₂` are inverse bijections between the lower closed and the upper closed
@@ -389,3 +658,4 @@ noncomputable def lowerUpperClosedEquiv (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [
 end Cor3332Equiv
 
 end Tdaf.ConvexAnalysis
+
