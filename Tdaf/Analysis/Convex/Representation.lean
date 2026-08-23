@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Mathlib.Analysis.Convex.Join
 import Mathlib.Analysis.InnerProductSpace.EuclideanDist
 import Mathlib.Analysis.InnerProductSpace.LinearMap
 import Mathlib.Analysis.InnerProductSpace.Projection.Minimal
@@ -165,6 +166,53 @@ theorem mem_extremePoints_of_subset (hx : x ∈ C.extremePoints ℝ) (hKC : K �
     x ∈ K.extremePoints ℝ :=
   ⟨hxK, fun _ h₁ _ h₂ h => hx.2 (hKC h₁) (hKC h₂) h⟩
 
+
+/-- **An extreme set absorbs the vertices of a convex combination it contains.** If `u` lies in an
+extreme subset `C'` of `C` and is a convex combination of points of `P ⊆ C`, then `u` is already a
+convex combination of those points of `P` that lie in `C'`.
+
+This is the mechanism behind Rockafellar's Theorem 18.3. His proof instead puts `u` in the
+relative interior of the hull of the points actually used and appeals to Theorem 18.1; splitting
+`P` into the part inside `C'` and the part outside avoids that, and avoids Theorem 6.4 with it. -/
+theorem IsExtreme.mem_convexHull_inter {C C' P : Set E} (h : IsExtreme ℝ C C')
+    (hCconv : Convex ℝ C) (hPC : P ⊆ C) {u : E} (hu : u ∈ C')
+    (huP : u ∈ convexHull ℝ P) : u ∈ convexHull ℝ (P ∩ C') := by
+  have hAC : convexHull ℝ P ⊆ C := convexHull_min hPC hCconv
+  have hAconv : Convex ℝ (convexHull ℝ P) := convex_convexHull ℝ P
+  have hAext : IsExtreme ℝ (convexHull ℝ P) (C' ∩ convexHull ℝ P) :=
+    ⟨inter_subset_right, fun _ h₁ _ h₂ _ hz hopen =>
+      ⟨h.left_mem_of_mem_openSegment (hAC h₁) (hAC h₂) hz.1 hopen, h₁⟩⟩
+  have hdiff : Convex ℝ (convexHull ℝ P \ (C' ∩ convexHull ℝ P)) :=
+    IsExtreme.convex_sdiff hAconv hAext
+  rcases eq_empty_or_nonempty (P \ C') with hPD | hPD
+  · rwa [Set.inter_eq_self_of_subset_left (Set.sdiff_eq_empty.1 hPD)]
+  rcases eq_empty_or_nonempty (P ∩ C') with hPI | hPI
+  · exfalso
+    have hsub : P ⊆ convexHull ℝ P \ (C' ∩ convexHull ℝ P) := by
+      intro z hz
+      refine ⟨subset_convexHull ℝ P hz, fun hcon => ?_⟩
+      exact absurd (show z ∈ P ∩ C' from ⟨hz, hcon.1⟩) (by rw [hPI]; exact notMem_empty z)
+    exact (convexHull_min hsub hdiff huP).2 ⟨hu, huP⟩
+  · have huA : u ∈ convexHull ℝ P := huP
+    have hsplit : convexHull ℝ P
+        = convexJoin ℝ (convexHull ℝ (P ∩ C')) (convexHull ℝ (P \ C')) := by
+      rw [← convexHull_union hPI hPD, Set.inter_union_sdiff]
+    rw [hsplit] at huP
+    obtain ⟨a, ha, b, hb, hseg⟩ := mem_convexJoin.1 huP
+    have hbdiff : b ∈ convexHull ℝ P \ (C' ∩ convexHull ℝ P) := by
+      refine convexHull_min ?_ hdiff hb
+      rintro z ⟨hzP, hzC'⟩
+      exact ⟨subset_convexHull ℝ P hzP, fun hcon => hzC' hcon.1⟩
+    have haA : a ∈ convexHull ℝ P :=
+      convexHull_min (fun z hz => subset_convexHull ℝ P hz.1) hAconv ha
+    rw [← insert_endpoints_openSegment, Set.mem_insert_iff, Set.mem_insert_iff] at hseg
+    rcases hseg with hua | hub | hopen
+    · rw [hua]; exact ha
+    · exfalso; rw [hub] at hu; exact hbdiff.2 ⟨hu, hbdiff.1⟩
+    · exfalso
+      rw [openSegment_symm] at hopen
+      exact hbdiff.2 (hAext.left_mem_of_mem_openSegment hbdiff.1 haA ⟨hu, huA⟩ hopen)
+
 end ExtremeSubset
 
 /-! ### Convex cones, and Corollary 18.3.1 -/
@@ -236,6 +284,48 @@ theorem extremePoints_convexHullPD_subset (P D : Set E) :
     (mem_extremePoints_of_subset hx (convexHull_subset_convexHullPD P D) (hux ▸ hu))
 
 end ConeExtreme
+
+/-! ### Faces and directions of recession -/
+
+section FaceRecession
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C C' : Set E}
+
+/-- **Splitting off a direction of recession at a point of a face.** If a point `x` of the face
+`C'` is obtained from a point `w` of `C` by adding a direction of recession `v` of `C`, then both
+`w` and `x + v` lie in `C'`, because `x` is the midpoint of the segment from `w` to `x + v`. -/
+theorem IsFace.mem_and_add_mem (hface : IsFace C C') {x w v : E} (hx : x ∈ C') (hw : w ∈ C)
+    (hv : v ∈ recessionCone C) (hxwv : x = w + v) : w ∈ C' ∧ x + v ∈ C' := by
+  have hxv : x + v ∈ C := add_mem_of_mem_recessionCone hv (hface.subset hx)
+  rcases eq_or_ne v 0 with rfl | hv0
+  · rw [add_zero] at hxwv
+    exact ⟨by rw [← hxwv]; exact hx, by rw [add_zero]; exact hx⟩
+  · have hopen : x ∈ openSegment ℝ w (x + v) := by
+      refine ⟨1 / 2, 1 / 2, by norm_num, by norm_num, by norm_num, ?_⟩
+      rw [hxwv]; module
+    refine ⟨hface.left_mem_of_mem_openSegment hw hxv hx hopen, ?_⟩
+    rw [openSegment_symm] at hopen
+    exact hface.left_mem_of_mem_openSegment hxv hw hx hopen
+
+/-- Iterating `IsFace.mem_and_add_mem`: the face contains every point `x + n * t • y`. -/
+theorem IsFace.add_nsmul_mem (hface : IsFace C C') {x w y : E} (hx : x ∈ C') (hw : w ∈ C)
+    (hy : y ∈ recessionCone C) {t : ℝ} (ht : 0 ≤ t) (hxwv : x = w + t • y) :
+    ∀ n : ℕ, x + ((n : ℝ) * t) • y ∈ C' := by
+  intro n
+  induction n with
+  | zero => simpa using hx
+  | succ n ih =>
+    have hwn : w + ((n : ℝ) * t) • y ∈ C :=
+      add_smul_mem_of_mem_recessionCone hy hw (mul_nonneg (Nat.cast_nonneg n) ht)
+    have heq : x + ((n : ℝ) * t) • y = w + ((n : ℝ) * t) • y + t • y := by
+      rw [hxwv]; module
+    have h := (hface.mem_and_add_mem ih hwn (smul_mem_recessionCone ht hy) heq).2
+    have hcast : x + ((n : ℝ) * t) • y + t • y = x + (((n + 1 : ℕ) : ℝ) * t) • y := by
+      push_cast; module
+    rwa [hcast] at h
+
+end FaceRecession
+
 
 
 section DirectionsTopology
@@ -832,6 +922,95 @@ theorem halfLine_subset_convexHullPD (x y : E) (hy : y ≠ 0) :
   rwa [convexHullPD_singleton] at h
 
 end HalfLine
+
+/-! ### Theorem 18.3 -/
+
+section FaceHull
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {C C' P D : Set E}
+
+/-- A direction of recession of `C` that carries a point of `C` into the face `C'` is a direction
+of recession of `C'` itself. This is the delicate step inside Rockafellar's proof of Theorem 18.3:
+the face contains a whole half-line in that direction, so `cl C'` recedes in it by Theorem 8.3,
+and `C' = C ∩ cl C'` by Corollary 18.1.1. -/
+theorem IsFace.mem_recessionCone_of_eq_add_smul (hCconv : Convex ℝ C) (hface : IsFace C C')
+    {x w y : E} (hx : x ∈ C') (hw : w ∈ C) (hy : y ∈ recessionCone C) {t : ℝ} (ht : 0 < t)
+    (hxwv : x = w + t • y) : y ∈ recessionCone C' := by
+  have hray := hface.add_nsmul_mem hx hw hy ht.le hxwv
+  have hu : ∀ n : ℕ, x + ((n : ℝ) + 1) • (t • y) ∈ closure C' := by
+    intro n
+    refine subset_closure ?_
+    have h := hray (n + 1)
+    rwa [show (((n + 1 : ℕ) : ℝ) * t) = ((n : ℝ) + 1) * t by push_cast; ring, mul_smul] at h
+  have hty : t • y ∈ recessionCone (closure C') :=
+    mem_recessionCone_of_tendsto (Convex.closure hface.convex) isClosed_closure
+      (l := fun n : ℕ => ((n : ℝ) + 1)⁻¹) hu (fun n => by positivity)
+      tendsto_inv_nat_add_one_atTop_nhds_zero (tendsto_inv_smul_ray x (t • y))
+  have hyc : y ∈ recessionCone (closure C') := by
+    have h := smul_mem_recessionCone (le_of_lt (inv_pos.2 ht)) hty
+    rwa [smul_smul, inv_mul_cancel₀ ht.ne', one_smul] at h
+  rw [hface.eq_inter_closure hCconv]
+  exact fun z hz a ha => ⟨hy z hz.1 a ha, hyc z hz.2 a ha⟩
+
+/-- The directions used by a point of a face of `conv S` are directions of recession of that
+face. Proved by induction over the cone hull; the scaling parameter `t` is carried through the
+induction so that the `smul` step can be reduced to the `mem` step. -/
+private theorem mem_coneHull_filter_of_isFace (hface : IsFace (convexHullPD P D) C') :
+    ∀ v ∈ PointedCone.hull ℝ D, ∀ t : ℝ, 0 < t → ∀ x ∈ C', ∀ w ∈ convexHullPD P D,
+      x = w + t • v → v ∈ PointedCone.hull ℝ {y ∈ D | y ∈ recessionCone C'} := by
+  have hCconv : Convex ℝ (convexHullPD P D) := convex_convexHullPD P D
+  intro v hv
+  induction hv using Submodule.span_induction with
+  | mem y hy =>
+    intro t ht x hx w hw hxwv
+    have hyrec : y ∈ recessionCone (convexHullPD P D) := subset_recessionCone_convexHullPD P D hy
+    exact PointedCone.subset_hull
+      ⟨hy, hface.mem_recessionCone_of_eq_add_smul hCconv hx hw hyrec ht hxwv⟩
+  | zero => exact fun _ _ _ _ _ _ _ => zero_mem _
+  | add v₁ v₂ hv₁ hv₂ ih₁ ih₂ =>
+    intro t ht x hx w hw hxwv
+    have hr₁ : t • v₁ ∈ recessionCone (convexHullPD P D) :=
+      smul_mem_recessionCone ht.le (coneHull_subset_recessionCone_convexHullPD P D hv₁)
+    have hr₂ : t • v₂ ∈ recessionCone (convexHullPD P D) :=
+      smul_mem_recessionCone ht.le (coneHull_subset_recessionCone_convexHullPD P D hv₂)
+    refine add_mem (ih₁ t ht x hx (w + t • v₂) (add_mem_of_mem_recessionCone hr₂ hw) ?_)
+      (ih₂ t ht x hx (w + t • v₁) (add_mem_of_mem_recessionCone hr₁ hw) ?_)
+    · rw [hxwv]; module
+    · rw [hxwv]; module
+  | smul c v₁ hv₁ ih₁ =>
+    intro t ht x hx w hw hxwv
+    rcases eq_or_lt_of_le c.2 with hc | hc
+    · have hz : c • v₁ = (0 : E) := by
+        change (c : ℝ) • v₁ = (0 : E)
+        rw [← hc, zero_smul]
+      rw [hz]
+      exact zero_mem _
+    · refine Submodule.smul_mem _ c (ih₁ (t * (c : ℝ)) (mul_pos ht hc) x hx w hw ?_)
+      rw [hxwv]
+      change w + t • ((c : ℝ) • v₁) = w + (t * (c : ℝ)) • v₁
+      rw [smul_smul]
+
+/-- **Rockafellar, Theorem 18.3**: a face of a convex hull of points and directions is itself the
+convex hull of the points it contains and the directions in which it recedes. -/
+theorem IsFace.eq_convexHullPD (hface : IsFace (convexHullPD P D) C') :
+    C' = convexHullPD (P ∩ C') {y ∈ D | y ∈ recessionCone C'} := by
+  have hCconv : Convex ℝ (convexHullPD P D) := convex_convexHullPD P D
+  refine Subset.antisymm (fun x hx => ?_)
+    (convexHullPD_min hface.convex inter_subset_right fun y hy => hy.2)
+  have hxC : x ∈ convexHullPD P D := hface.subset hx
+  obtain ⟨u, hu, v, hv, huv⟩ := mem_convexHullPD.1 hxC
+  have hvrec : v ∈ recessionCone (convexHullPD P D) :=
+    coneHull_subset_recessionCone_convexHullPD P D hv
+  have huC : u ∈ convexHullPD P D := convexHull_subset_convexHullPD P D hu
+  have huC' : u ∈ C' := (hface.mem_and_add_mem hx huC hvrec huv.symm).1
+  have huhull : u ∈ convexHull ℝ (P ∩ C') :=
+    IsExtreme.mem_convexHull_inter hface.toIsExtreme hCconv (subset_convexHullPD P D) huC' hu
+  have hvhull : v ∈ PointedCone.hull ℝ {y ∈ D | y ∈ recessionCone C'} :=
+    mem_coneHull_filter_of_isFace hface v hv 1 one_pos x hx u huC (by rw [one_smul, huv])
+  exact mem_convexHullPD.2 ⟨u, huhull, v, hvhull, huv⟩
+
+end FaceHull
 
 /-! ### Theorem 18.5 -/
 
