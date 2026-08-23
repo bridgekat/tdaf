@@ -1542,4 +1542,215 @@ theorem exists_unique_saddleEquiv_class_of_kernel (hK : ConcaveConvexFn K)
 
 end Thm345
 
+/-! ### Corollary 34.5.1: the simple extensions of a finite saddle-function on `C × D` -/
+
+section SimpleExt
+
+variable {E : Type*}
+
+/-- The effective domain of a finite function extended by `⊤` is the set it was given on. -/
+theorem dom_restrict_coe (s : Set E) (g : E → ℝ) : dom (restrict s fun x => (g x : EReal)) = s := by
+  ext x
+  by_cases hx : x ∈ s <;> simp [hx]
+
+/-- The concave effective domain of a finite function extended by `⊥` is the set it was given
+on. -/
+theorem domConcave_restrictConcave_coe (s : Set E) (g : E → ℝ) :
+    domConcave (restrictConcave s fun x => (g x : EReal)) = s := by
+  ext x
+  by_cases hx : x ∈ s <;> simp [hx]
+
+end SimpleExt
+
+section SimpleExtConvex
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E]
+
+/-- Constant functions are concave; the mirror of `convexFn_const`. -/
+theorem concaveFn_const (c : EReal) : ConcaveFn (fun _ : E => c) :=
+  concaveFn_iff_convexFn_neg.2 (convexFn_const (-c))
+
+/-- Restricting a concave function to a convex set — extending by `⊥` off it — gives a concave
+function; the mirror of `ConvexFn.restrict`. -/
+theorem ConcaveFn.restrictConcave {g : E → EReal} {s : Set E} (hg : ConcaveFn g)
+    (hs : Convex ℝ s) : ConcaveFn (Tdaf.ConvexAnalysis.restrictConcave s g) := by
+  refine concaveFn_iff_convexFn_neg.2 ?_
+  rw [neg_restrictConcave]
+  exact hg.convexFn_neg.restrict hs
+
+end SimpleExtConvex
+
+section LowerSimpleExt
+
+variable {U X : Type*} {C : Set U} {D : Set X} {K : U × X → ℝ}
+
+/-- Rockafellar's **lower simple extension** `K₁` of a finite saddle-function `K` on `C × D`
+(§33): `K` on `C × D`, `+∞` on `C × Dᶜ`, and `-∞` off `C`. -/
+noncomputable def lowerSimpleExt (C : Set U) (D : Set X) (K : U × X → ℝ) : U × X → EReal :=
+  fun p => restrictConcave C (fun u => restrict D (fun x => (K (u, x) : EReal)) p.2) p.1
+
+@[simp] theorem lowerSimpleExt_of_mem {p : U × X} (hu : p.1 ∈ C) (hx : p.2 ∈ D) :
+    lowerSimpleExt C D K p = (K p : EReal) := by
+  simp [lowerSimpleExt, hu, hx]
+
+@[simp] theorem lowerSimpleExt_of_notMem_left {p : U × X} (hu : p.1 ∉ C) :
+    lowerSimpleExt C D K p = ⊥ := by
+  simp [lowerSimpleExt, hu]
+
+@[simp] theorem lowerSimpleExt_of_notMem_right {p : U × X} (hu : p.1 ∈ C) (hx : p.2 ∉ D) :
+    lowerSimpleExt C D K p = ⊤ := by
+  simp [lowerSimpleExt, hu, hx]
+
+/-- Over `C` the convex slice of `K₁` is `K (u, ·)` extended by `⊤` off `D`. -/
+theorem lowerSimpleExt_slice₂_of_mem {u : U} (hu : u ∈ C) :
+    (fun x => lowerSimpleExt C D K (u, x)) = restrict D fun x => (K (u, x) : EReal) := by
+  funext x
+  by_cases hx : x ∈ D <;> simp [lowerSimpleExt, hu, hx]
+
+/-- Off `C` the convex slice of `K₁` is the constant `-∞`. -/
+theorem lowerSimpleExt_slice₂_of_notMem {u : U} (hu : u ∉ C) :
+    (fun x => lowerSimpleExt C D K (u, x)) = fun _ => (⊥ : EReal) := by
+  funext x
+  simp [lowerSimpleExt, hu]
+
+/-- Over `D` the concave slice of `K₁` is `K (·, x)` extended by `-∞` off `C`. -/
+theorem lowerSimpleExt_slice₁_of_mem {x : X} (hx : x ∈ D) :
+    (fun u => lowerSimpleExt C D K (u, x)) = restrictConcave C fun u => (K (u, x) : EReal) := by
+  funext u
+  by_cases hu : u ∈ C <;> simp [lowerSimpleExt, hu, hx]
+
+/-- Off `D` the concave slice of `K₁` is the indicator-like function that is `+∞` on `C` and `-∞`
+off it. -/
+theorem lowerSimpleExt_slice₁_of_notMem {x : X} (hx : x ∉ D) :
+    (fun u => lowerSimpleExt C D K (u, x)) = restrictConcave C fun _ => (⊤ : EReal) := by
+  funext u
+  by_cases hu : u ∈ C <;> simp [lowerSimpleExt, hu, hx]
+
+/-- **Rockafellar, §33**: the lower simple extension has `dom₁ K₁ = C`. -/
+theorem dom₁_lowerSimpleExt (hD : D.Nonempty) : dom₁ (lowerSimpleExt C D K) = C := by
+  obtain ⟨x₀, hx₀⟩ := hD
+  ext u
+  refine ⟨fun hu => ?_, fun hu x => ?_⟩
+  · by_contra h
+    have := hu x₀
+    rw [lowerSimpleExt_of_notMem_left (p := (u, x₀)) h] at this
+    exact absurd this (lt_irrefl ⊥)
+  · by_cases hx : x ∈ D
+    · rw [lowerSimpleExt_of_mem (p := (u, x)) hu hx]
+      exact EReal.bot_lt_coe _
+    · rw [lowerSimpleExt_of_notMem_right (p := (u, x)) hu hx]
+      exact bot_lt_top
+
+/-- **Rockafellar, §33**: the lower simple extension has `dom₂ K₁ = D`. -/
+theorem dom₂_lowerSimpleExt (hC : C.Nonempty) : dom₂ (lowerSimpleExt C D K) = D := by
+  obtain ⟨u₀, hu₀⟩ := hC
+  ext x
+  refine ⟨fun hx => ?_, fun hx u => ?_⟩
+  · by_contra h
+    have := hx u₀
+    rw [lowerSimpleExt_of_notMem_right (p := (u₀, x)) hu₀ h] at this
+    exact absurd this (lt_irrefl ⊤)
+  · by_cases hu : u ∈ C
+    · rw [lowerSimpleExt_of_mem (p := (u, x)) hu hx]
+      exact EReal.coe_lt_top _
+    · rw [lowerSimpleExt_of_notMem_left (p := (u, x)) hu]
+      exact bot_lt_top
+
+end LowerSimpleExt
+
+section LowerSimpleExtConvex
+
+variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  {C : Set U} {D : Set X} {K : U × X → ℝ}
+
+/-- **Rockafellar, §33**: the lower simple extension of a finite concave-convex function on
+`C × D` is concave-convex on all of `U × X`. -/
+theorem concaveConvexFn_lowerSimpleExt (hC : Convex ℝ C)
+    (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
+    (hconc : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x)) :
+    ConcaveConvexFn (lowerSimpleExt C D K) := by
+  constructor
+  · intro x
+    by_cases hx : x ∈ D
+    · rw [lowerSimpleExt_slice₁_of_mem hx]
+      exact (concaveOn_iff_concaveFn C fun u => K (u, x)).1 (hconc x hx)
+    · rw [lowerSimpleExt_slice₁_of_notMem hx]
+      exact (concaveFn_const ⊤).restrictConcave hC
+  · intro u
+    by_cases hu : u ∈ C
+    · rw [lowerSimpleExt_slice₂_of_mem hu]
+      exact (convexOn_iff_convexFn D fun x => K (u, x)).1 (hconv u hu)
+    · rw [lowerSimpleExt_slice₂_of_notMem hu]
+      exact convexFn_const ⊥
+
+omit [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X] in
+/-- **Rockafellar, §33**: the lower simple extension of a finite saddle-function on a nonempty
+`C × D` is proper. -/
+theorem properSaddleFn_lowerSimpleExt (hCne : C.Nonempty) (hDne : D.Nonempty) :
+    ProperSaddleFn (lowerSimpleExt C D K) :=
+  ⟨by rw [dom₁_lowerSimpleExt hDne]; exact hCne, by rw [dom₂_lowerSimpleExt hCne]; exact hDne⟩
+
+end LowerSimpleExtConvex
+
+section LowerSimpleExtFD
+
+variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  {C : Set U} {D : Set X} {K : U × X → ℝ}
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
+/-- **Rockafellar, §34**: the lower simple extension of a finite saddle-function is simple. Its
+slices have effective domains exactly `D` and `C`, so they do not even reach the boundary. -/
+theorem simpleSaddleFn_lowerSimpleExt (hCne : C.Nonempty) (hDne : D.Nonempty) :
+    SimpleSaddleFn (lowerSimpleExt C D K) := by
+  constructor
+  · intro u hu
+    rw [dom₁_lowerSimpleExt (K := K) hDne] at hu
+    rw [dom₂_lowerSimpleExt (K := K) hCne,
+      lowerSimpleExt_slice₂_of_mem (intrinsicInterior_subset hu), dom_restrict_coe]
+    exact subset_closure
+  · intro x hx
+    rw [dom₂_lowerSimpleExt (K := K) hCne] at hx
+    rw [dom₁_lowerSimpleExt (K := K) hDne,
+      lowerSimpleExt_slice₁_of_mem (intrinsicInterior_subset hx), domConcave_restrictConcave_coe]
+    exact subset_closure
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
+/-- **Rockafellar, §34**: the kernel of the lower simple extension is the restriction of `K` to
+`ri (C × D)`, which is exactly the object Corollary 34.5.1 starts from. -/
+theorem kernel_lowerSimpleExt (hCne : C.Nonempty) (hDne : D.Nonempty) :
+    kernel (lowerSimpleExt C D K) = restrict (ri (C ×ˢ D)) fun p => (K p : EReal) := by
+  have hset : kernelSet (lowerSimpleExt C D K) = ri (C ×ˢ D) := by
+    rw [kernelSet, dom₁_lowerSimpleExt (K := K) hDne, dom₂_lowerSimpleExt (K := K) hCne,
+      intrinsicInterior_prod_eq]
+  funext p
+  by_cases hp : p ∈ ri (C ×ˢ D)
+  · have hp' : p ∈ kernelSet (lowerSimpleExt C D K) := by rw [hset]; exact hp
+    rw [kernel_of_mem hp', restrict_of_mem hp,
+      lowerSimpleExt_of_mem (intrinsicInterior_subset (hset ▸ hp')).1
+        (intrinsicInterior_subset (hset ▸ hp')).2]
+  · have hp' : p ∉ kernelSet (lowerSimpleExt C D K) := by rw [hset]; exact hp
+    rw [kernel_of_notMem hp', restrict_of_notMem hp]
+
+/-- **Rockafellar, Corollary 34.5.1**: a finite concave-convex function `K` on a nonempty product
+`C × D` of convex sets is the kernel of exactly one equivalence class of closed proper
+concave-convex functions on `U × X`. The class is the one attached to the lower simple extension
+of `K`. -/
+theorem exists_unique_saddleEquiv_class_of_finite (hC : Convex ℝ C)
+    (hCne : C.Nonempty) (hDne : D.Nonempty)
+    (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
+    (hconc : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x)) :
+    ∃ M : U × X → EReal, (ClosedSaddleFn M ∧ ConcaveConvexFn M ∧ ProperSaddleFn M ∧
+      kernel M = restrict (ri (C ×ˢ D)) fun p => (K p : EReal)) ∧
+      ∀ L : U × X → EReal, ClosedSaddleFn L → ConcaveConvexFn L → ProperSaddleFn L →
+        (kernel L = restrict (ri (C ×ˢ D)) (fun p => (K p : EReal)) ↔ SaddleEquiv M L) := by
+  obtain ⟨M, ⟨hclM, hCCM, hpM, hkerM⟩, huniq⟩ :=
+    exists_unique_saddleEquiv_class_of_kernel (concaveConvexFn_lowerSimpleExt hC hconv hconc)
+      (properSaddleFn_lowerSimpleExt hCne hDne) (simpleSaddleFn_lowerSimpleExt hCne hDne)
+  rw [kernel_lowerSimpleExt hCne hDne] at hkerM
+  refine ⟨M, ⟨hclM, hCCM, hpM, hkerM⟩, fun L hclL hCCL hpL => ?_⟩
+  rw [← huniq L hclL hCCL hpL, kernel_lowerSimpleExt hCne hDne]
+
+end LowerSimpleExtFD
+
 end Tdaf.ConvexAnalysis
