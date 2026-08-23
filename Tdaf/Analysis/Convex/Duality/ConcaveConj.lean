@@ -28,6 +28,8 @@ through it.
 
 ## Main results
 
+* `clConcave`, `ClosedConcaveFn` — the **concave closure** `-(cl (-g))` and the functions fixed
+  by it, delivering the concave mirror of `Closure.lean`.
 * `neg_concaveConj`, `concaveConj_eq_neg_conj_neg`, `conj_eq_neg_concaveConj_neg` — the sign
   dictionary, in both directions. These carry no side condition: negation, unlike addition, is an
   order-reversing involution of `EReal` with no exceptional values.
@@ -56,10 +58,12 @@ right-hand side collapses to `⊤ + ⊥ = ⊥`. Its concave mirror `g x + g* y �
 collapsing sum on the *small* side, where `⊥` is harmless, so it holds for every `g`. Sign transfer
 on `EReal` reverses the order but not the arithmetic, and `⊤ + ⊥ = ⊥` is not self-dual.
 
-**The concave closure is not yet a definition.** Rockafellar's `cl g` for concave `g` is the upper
-semicontinuous hull, which is `-(cl (-g))`; the concave mirror of `Closure.lean` is not needed
-until §34, so `biconcaveConj_eq_neg_clFn_neg` is stated through `clFn (-g)`. When `clConcave`
-arrives it should be *defined* as `-(cl (-g))` and this theorem restated against it.
+**The concave closure lives here.** Rockafellar's `cl g` for concave `g` is the upper
+semicontinuous hull, `-(cl (-g))`, and that is exactly how `clConcave` is defined below. This is
+the first file that has both `ConcaveFn` and `clFn` in scope, so the concave mirror of
+`Closure.lean` — `clConcave`, `ClosedConcaveFn`, and the transfer lemmas — sits next to the concave
+conjugate rather than in a file of its own; §33's partial closures (`Saddle/Defs.lean`) are its
+first consumer.
 
 ## References
 
@@ -236,6 +240,78 @@ theorem biconcaveConj_eq_neg_biconj_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (g
 
 end Defs
 
+/-! ### The concave closure -/
+
+section Closure
+
+variable {E : Type*} [TopologicalSpace E] {g : E → EReal}
+
+/-- The **concave closure**: the concave counterpart of `clFn`, obtained by conjugating `clFn` with
+negation. Rockafellar writes `cl g` for it too (§7 for convex functions, §12 and §34 for concave
+ones); here it needs a name of its own. -/
+noncomputable def clConcave (g : E → EReal) : E → EReal := fun x => -(clFn (fun z => -(g z)) x)
+
+theorem clConcave_apply (g : E → EReal) (x : E) :
+    clConcave g x = -(clFn (fun z => -(g z)) x) := rfl
+
+@[simp] theorem neg_clConcave (g : E → EReal) (x : E) :
+    -(clConcave g x) = clFn (fun z => -(g z)) x := neg_neg _
+
+theorem clConcave_neg (f : E → EReal) (x : E) : clConcave (fun z => -(f z)) x = -(clFn f x) := by
+  rw [clConcave_apply]
+  simp only [neg_neg]
+
+/-- The concave closure is monotone, like the convex one. -/
+theorem clConcave_mono {g₁ g₂ : E → EReal} (h : g₁ ≤ g₂) : clConcave g₁ ≤ clConcave g₂ := by
+  intro x
+  rw [clConcave_apply, clConcave_apply, _root_.EReal.neg_le_neg_iff]
+  exact clFn_mono (fun z => _root_.EReal.neg_le_neg_iff.2 (h z)) x
+
+/-- `g` is **concave-closed** when it equals its concave closure. -/
+def ClosedConcaveFn (g : E → EReal) : Prop := clConcave g = g
+
+theorem closedConcaveFn_iff : ClosedConcaveFn g ↔ ClosedFn (fun z => -(g z)) := by
+  constructor
+  · intro h
+    funext x
+    rw [← neg_clConcave g x, h]
+  · intro h
+    funext x
+    rw [clConcave_apply, congrFun h x, neg_neg]
+
+/-- The concave closure lies *above* the function, since `clFn` lies below. -/
+theorem le_clConcave (g : E → EReal) : g ≤ clConcave g := by
+  intro x
+  rw [← _root_.EReal.neg_le_neg_iff, neg_clConcave]
+  exact clFn_le _ x
+
+end Closure
+
+section ClosureIdem
+
+variable {E : Type*} [TopologicalSpace E] [AddCommGroup E] [IsTopologicalAddGroup E]
+
+theorem closedConcaveFn_clConcave (g : E → EReal) : ClosedConcaveFn (clConcave g) := by
+  rw [closedConcaveFn_iff]
+  simpa only [neg_clConcave] using closedFn_clFn (fun z => -(g z))
+
+theorem clConcave_idem (g : E → EReal) : clConcave (clConcave g) = clConcave g :=
+  closedConcaveFn_clConcave g
+
+end ClosureIdem
+
+section ClosureConcave
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E] {g : E → EReal}
+
+/-- The concave closure of a concave function is concave — `convexFn_clFn` under negation. -/
+theorem concaveFn_clConcave (hg : ConcaveFn g) : ConcaveFn (clConcave g) := by
+  rw [concaveFn_iff_convexFn_neg]
+  simpa only [neg_clConcave] using convexFn_clFn hg.convexFn_neg
+
+end ClosureConcave
+
 /-! ### Fenchel–Moreau for concave functions -/
 
 section FenchelMoreau
@@ -245,8 +321,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {g : E → EReal}
 
 /-- **Rockafellar's Theorem 12.2 for concave functions.** The concave biconjugate of a concave
-function is its *concave closure*, the upper semicontinuous hull — which, until `Concave.lean`
-grows a closure of its own, is spelled `-(cl (-g))`.
+function is its *concave closure*, the upper semicontinuous hull, spelled out as `-(cl (-g))`.
 
 By `biconcaveConj_eq_neg_biconj_neg` this is the convex Fenchel–Moreau theorem read through the
 sign dictionary, and needs no separate argument. -/
@@ -254,6 +329,11 @@ theorem biconcaveConj_eq_neg_clFn_neg (hg : ConcaveFn g) :
     biconcaveConj B g = fun x => -(clFn (fun x' => -(g x')) x) := by
   funext x
   rw [biconcaveConj_eq_neg_biconj_neg, biconj_eq_clFn hg.convexFn_neg]
+
+/-- **Rockafellar's Theorem 12.2 for concave functions**, stated against `clConcave`: `g** = cl g`
+for concave `g`, with `cl` the concave closure. -/
+theorem biconcaveConj_eq_clConcave (hg : ConcaveFn g) : biconcaveConj B g = clConcave g :=
+  biconcaveConj_eq_neg_clFn_neg hg
 
 /-- A closed concave function — one whose negative is a closed convex function — is its own concave
 biconjugate. This is the concave half of Rockafellar's Corollary 12.2.1. -/

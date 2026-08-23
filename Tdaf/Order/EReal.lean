@@ -384,6 +384,23 @@ theorem iSup_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
     _ = ⨆ i, (u i + (r : EReal)) := by
         rw [_root_.EReal.coe_neg, ← sub_eq_add_neg, _root_.EReal.sub_add_cancel]
 
+/-- A *real* constant may be moved in and out of an infimum. This is the dual of
+`Tdaf.EReal.iSup_add_coe` and, like it, needs no hypothesis: the constant is finite, so no `∞ - ∞`
+arises, and the empty index set works too, since `⊤ + r = ⊤`. -/
+theorem iInf_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
+    (⨅ i, u i) + (r : EReal) = ⨅ i, (u i + (r : EReal)) := by
+  have key : ∀ (c : ℝ) (v : ι → EReal), (⨅ i, v i) + (c : EReal) ≤ ⨅ i, (v i + (c : EReal)) :=
+    fun c v => le_iInf fun i => add_le_add (iInf_le v i) le_rfl
+  refine le_antisymm (key r u) ?_
+  have h := key (-r) fun i => u i + (r : EReal)
+  have hid : ∀ i, u i + (r : EReal) + ((-r : ℝ) : EReal) = u i := fun i => by
+    rw [_root_.EReal.coe_neg, ← sub_eq_add_neg, _root_.EReal.add_sub_cancel_right]
+  simp only [hid] at h
+  calc (⨅ i, (u i + (r : EReal)))
+      = ((⨅ i, (u i + (r : EReal))) + ((-r : ℝ) : EReal)) + (r : EReal) := by
+        rw [_root_.EReal.coe_neg, ← sub_eq_add_neg, _root_.EReal.sub_add_cancel]
+    _ ≤ (⨅ i, u i) + (r : EReal) := add_le_add h le_rfl
+
 /-- The set-indexed form of `Tdaf.EReal.iSup_add_coe`. -/
 theorem biSup_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
     (⨆ a ∈ s, u a) + (r : EReal) = ⨆ a ∈ s, (u a + (r : EReal)) := by

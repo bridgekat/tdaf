@@ -266,6 +266,21 @@ theorem recessionCone_eq_add_subset (hC : Convex ℝ C) :
   rw [mem_recessionCone_iff_forall_add_mem hC]
   exact (add_singleton_subset_iff_forall C y).symm
 
+/-- Reflecting a set reflects its recession cone. -/
+theorem recessionCone_neg (C : Set E) : recessionCone (-C) = -recessionCone C := by
+  ext v
+  simp only [Set.mem_neg, mem_recessionCone]
+  constructor
+  · intro h x hx a ha
+    have hmem : -(-x) ∈ C := by rw [neg_neg]; exact hx
+    have hstep := h (-x) hmem a ha
+    have heq : -(-x + a • v) = x + a • (-v) := by module
+    rwa [heq] at hstep
+  · intro h x hx a ha
+    have hstep := h (-x) hx a ha
+    have heq : -x + a • (-v) = -(x + a • v) := by module
+    rwa [heq] at hstep
+
 /-- The lineality space of `C`: the directions in which `C` is linear. -/
 def linealitySpace (C : Set E) : Set E := recessionCone C ∩ (-recessionCone C)
 

@@ -108,6 +108,19 @@ epigraphs need not be an epigraph. See the module docstring. -/
 theorem epi_infConv (h : IsEpiLike (epi f + epi g)) : epi (infConv f g) = epi f + epi g :=
   epi_ofEpi h
 
+/-- The vertical sections of a sum of epigraphs are upward closed. This is the half of
+`IsEpiLike` that holds unconditionally; the other half is what closedness of `epi f + epi g` has
+to supply before `epi_infConv` applies. -/
+theorem mem_epi_add_epi_of_le {x : E} {μ ν : ℝ} (h : ((x, μ) : E × ℝ) ∈ epi f + epi g)
+    (hμν : μ ≤ ν) : ((x, ν) : E × ℝ) ∈ epi f + epi g := by
+  obtain ⟨⟨y', a⟩, h₁, ⟨z', b⟩, h₂, heq⟩ := h
+  have hy : y' + z' = x := congrArg Prod.fst heq
+  have hab : a + b = μ := congrArg Prod.snd heq
+  refine ⟨(y', a), h₁, (z', b + (ν - μ)), mk_mem_epi.2 ?_, ?_⟩
+  · exact (mk_mem_epi.1 h₂).trans (by exact_mod_cast (by linarith : b ≤ b + (ν - μ)))
+  · change ((y', a) : E × ℝ) + (z', b + (ν - μ)) = (x, ν)
+    rw [Prod.mk_add_mk, hy, show a + (b + (ν - μ)) = ν by linarith]
+
 /-- The basic upper bound, phrased entirely inside the epigraphs so that no `∞ - ∞` can arise:
 a point of `epi f` over `y` and a point of `epi g` over `z` bound `f □ g` at `y + z`. This is
 `ofEpi_apply_le` specialised to a sum of epigraphs. -/

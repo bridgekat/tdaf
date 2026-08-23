@@ -540,6 +540,19 @@ theorem conj_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs₂ : I
 
 omit [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F]
   [LocallyConvexSpace ℝ F] in
+/-- **Rockafellar, Theorem 13.2** with the closedness hypothesis dropped: the conjugate of a
+support function is the indicator of the *closure* of the set.
+
+`conj_supportFn` is the case where the closure does nothing. This form is what a closedness
+*conclusion* is read off from: `dom` of the left side is `cl s`. -/
+theorem conj_supportFn_of_convex [IsCompatiblePairing B] (hs₁ : Convex ℝ s) :
+    conj B.flip (supportFn B s) = indicatorFn (closure s) := by
+  rw [supportFn_eq_conj_indicatorFn]
+  change biconj B (indicatorFn s) = indicatorFn (closure s)
+  rw [biconj_eq_clFn (convexFn_indicatorFn.2 hs₁), clFn_indicatorFn]
+
+omit [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F]
+  [LocallyConvexSpace ℝ F] in
 /-- **Theorem 13.1 for a closed convex set**: `s` is recovered from its support function. -/
 theorem supportSet_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
     supportSet B.flip (supportFn B s) = s := by

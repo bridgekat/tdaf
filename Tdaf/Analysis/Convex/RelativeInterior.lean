@@ -41,6 +41,7 @@ theory that Mathlib's `Mathlib.Analysis.Convex.Intrinsic` does not carry.
 * `Convex.mem_relint_prod_iff` — Theorem 6.8, the description of `ri S` for `S` in a product
   by a projection and a slice.
 * `ConvexFn.relint_epi` — Lemma 7.3, the relative interior of an epigraph.
+* `ConvexFn.le_of_mem_closure` — Corollary 7.3.3.
 * `ConvexFn.proper_clFn`, `ConvexFn.clFn_eq_of_mem_relint_dom` — Theorem 7.4.
 * `ConvexFn.tendsto_lscHull_along_segment_relint` — Theorem 7.5, the `ri` form.
 * `exists_separatesProperly_iff_disjoint_relint` — Theorem 11.3, proper separation in terms of
@@ -361,6 +362,13 @@ theorem Convex.relint_closure (hC : Convex ℝ C) : ri (closure C) = ri C := by
     obtain ⟨hzA, ε, hε, hball⟩ := hz
     rw [affineSpan_closure]
     exact ⟨hzA, ε, hε, fun y hy hd => subset_closure (hball y hy hd)⟩
+
+/-- **Rockafellar, Corollary 6.3.1**, the idempotence form: `ri (ri C) = ri C`, so `ri C` is a
+relatively open set. -/
+theorem Convex.relint_relint (hC : Convex ℝ C) : ri (ri C) = ri C := by
+  calc ri (ri C) = ri (closure (ri C)) := (Convex.relint_closure (Convex.relint hC)).symm
+    _ = ri (closure C) := by rw [Convex.closure_relint hC]
+    _ = ri C := Convex.relint_closure hC
 
 /-- **Rockafellar, Corollary 6.3.1**: two convex sets have the same closure exactly when they have
 the same relative interior. -/
@@ -932,6 +940,38 @@ theorem ConvexFn.closedFn_of_dom_eq_coe (hf : ConvexFn f) (hp : Proper f)
   · refine hf.clFn_eq_of_notMem_closure_dom hp ?_
     rw [hdom, M.closed_of_finiteDimensional.closure_eq]
     rwa [hdom] at hx
+
+/-- **Rockafellar, Corollary 7.3.3**: a convex function bounded below by a real constant on a
+convex set on which it is finite is bounded below by that same constant on the closure of the set.
+
+The proof is the line segment principle plus one limit: from a relative interior point `y` of `D`
+the whole half-open segment towards `x ∈ cl D` stays in `ri D ⊆ D`, so the affine bound
+`(1 - t) g y + t g x` is `≥ c` for every `t < 1`, and letting `t ↑ 1` gives `g x ≥ c`.
+
+Rockafellar carries no hypothesis at `−∞`; here `g` is asked never to take that value, which is how
+the corollary is used and what makes the statement true as it stands. -/
+theorem ConvexFn.le_of_mem_closure (hf : ConvexFn f) (hbot : ∀ z, f z ≠ ⊥) {D : Set E}
+    (hD : Convex ℝ D) (hfin : ∀ z ∈ D, f z ≠ ⊤) {c : ℝ} (h : ∀ z ∈ D, (c : EReal) ≤ f z)
+    {x : E} (hx : x ∈ closure D) : (c : EReal) ≤ f x := by
+  by_cases hxt : f x = ⊤
+  · rw [hxt]; exact le_top
+  obtain ⟨y, hy⟩ := Convex.relint_nonempty hD (Set.Nonempty.of_closure ⟨x, hx⟩)
+  have hyD : y ∈ D := intrinsicInterior_subset hy
+  obtain ⟨a, hay⟩ :=
+    EReal.exists_coe_of_ne_bot_of_lt_top (hbot y) (lt_top_iff_ne_top.2 (hfin y hyD))
+  obtain ⟨b, hbx⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hbot x) (lt_top_iff_ne_top.2 hxt)
+  have key : ∀ t : ℝ, 0 ≤ t → t < 1 → c ≤ (1 - t) * a + t * b := by
+    intro t ht0 ht1
+    have hmem : (1 - t) • y + t • x ∈ ri D := Convex.segment_mem_relint hD hy hx ht0 ht1
+    have hle : f ((1 - t) • y + t • x) ≤ (((1 - t) * a + t * b : ℝ) : EReal) :=
+      hf.epi_combo (le_of_eq hay) (le_of_eq hbx) (by linarith) ht0 (by ring)
+    exact_mod_cast (h _ (intrinsicInterior_subset hmem)).trans hle
+  rw [hbx]
+  have hcb : c ≤ b := by
+    refine ge_of_tendsto (tendsto_affine_nhdsLT_one a b) ?_
+    filter_upwards [eventually_mem_Ico_nhdsLT_one] with t ht
+    exact key t ht.1 ht.2
+  exact_mod_cast hcb
 
 end Functions
 

@@ -187,7 +187,9 @@ extractor — the infimum is not attained, so this is the only way in), `subset_
 `∀ x, f x ≠ ⊥` on *both*), `dom_infConv : dom (f □ g) = dom f + dom g` (**no** hypothesis),
 `infConv_comm`, `infConv_assoc` (needs `epi_ofEpi_add_subset`, *not* set `add_assoc`),
 `infConv_indicatorFn_zero` (identity), `convexFn_infConv` (Thm 5.4), and the type synonym
-`InfConvFn E` carrying `AddCommMonoid`, whose `nsmul` is n-fold infimal convolution.
+`InfConvFn E` carrying `AddCommMonoid`, whose `nsmul` is n-fold infimal convolution. Also
+`mem_epi_add_epi_of_le` — `epi f + epi g` is upward closed in the vertical coordinate, which is one
+of the two halves of `IsEpiLike` and the reason Corollary 19.3.4 is short.
 
 ### `Tdaf/Analysis/Convex/Operations/Hull.lean`
 
@@ -224,6 +226,14 @@ worth knowing about:
   companion. `Closure.lean` has the layer-B form with `interior (epi f)`; this one uses Lemma 7.3
   and Theorem 6.1 instead of `Convex.combo_interior_closure_mem_interior`, and is Rockafellar's
   own statement. Theorem 9.3 is its main consumer.
+* **Cor 7.3.3** — `ConvexFn.le_of_mem_closure`: a convex function bounded below by a real constant
+  on a convex set on which it is finite keeps that bound on the closure. The proof runs the bound
+  along the segment from a relative interior point (`Convex.segment_mem_relint`) and lets the
+  parameter tend to `1`; the finiteness hypothesis is only used at the two endpoints, so it asks
+  `∀ z ∈ D, f z ≠ ⊤` rather than properness. Theorem 21.1 is the reason it exists, and it is what
+  moves that theorem's conclusion from `ri C` to `C`.
+* **Cor 6.3.1, idempotence form** — `Convex.relint_relint` (`ri (ri C) = ri C`). It used to live in
+  `Simplicial.lean`; §18's Theorem 18.2 needs it too, and it is a §6 fact, so it moved here.
 
 ### `Tdaf/Analysis/Convex/Closure.lean`
 
@@ -248,6 +258,45 @@ worth knowing about:
 
 The subspace `V` is always a *parameter* carrying `hV : V = span ℝ (C - x₀)`, never a definition —
 see gotcha 52.
+
+`exists_chart_retraction` is the reusable packaging: it hands back `V` together with a *continuous
+linear* `r : E →L[ℝ] V` such that `x ↦ r (x - x₀)` maps `ri C` into `interior (chart C x₀ V)` and
+`x₀ + r (x - x₀) = x` there. Both Theorem 10.1 and Theorem 10.4 are three lines on top of it; a
+bounded linear map transports Lipschitz constants exactly as it transports continuity.
+
+**Cor 10.1.1** as `ConvexFn.continuous_of_dom_eq_univ` / `.continuous_toReal_of_dom_eq_univ`.
+
+**Thm 10.4** as `ConvexOn.exists_lipschitzOnWith_of_isCompact` (the `interior` form, and the whole
+analytic content: Rockafellar's `ε`-collar argument, which Mathlib has only for balls) and
+`ConvexFn.exists_lipschitzOnWith_of_isCompact` (the `ri` form).
+
+**Thm 10.5** as `ConvexFn.uniformContinuous_toReal_iff`, split into
+`.exists_lipschitzWith_of_recessionFn_ne_top` (sufficiency, quantitative) and
+`.recessionFn_ne_top_of_uniformContinuous` (necessity), with
+`exists_recessionFn_le_of_forall_ne_top` — `f0⁺ y ≤ M ‖y‖` — as the piece that carries Rockafellar's
+`α = sup {f0⁺ z | ‖z‖ = 1}`. **Cor 10.5.1** is `.exists_lipschitzWith_of_frequently_le`, whose
+hypothesis `∃ᶠ a in atTop, f (a • y) ≤ c a` is Rockafellar's `liminf f(λy)/λ < ∞`; **Cor 10.5.2** is
+`.exists_lipschitzWith_of_le_lipschitz`, stated for an arbitrary Lipschitz `g : E → ℝ` because the
+proof never uses convexity of the dominating function. Service lemmas:
+`coe_toReal_of_dom_eq_univ` and `ConvexFn.isClosed_epi_of_dom_eq_univ`.
+
+### `Tdaf/Analysis/Convex/Simplicial.lean`
+
+`IsSimplex` (convex hull of a finite affinely independent family) and `LocallySimplicial`
+(Rockafellar's §10 definition), with `IsSimplex.isCompact`.
+
+Weights: `weightPt v w = ∑ i, w i • v i`, `weightPt_eq_affineCombination`, `weightPt_combo` (the
+weight map is affine), and `convexHull_range_eq_image_stdSimplex`.
+
+**Thm 10.2** as `ConvexFn.upperSemicontinuousWithinAt_convexHull_range` (the analytic core, at
+*every* point of a simplex — no triangulation, see gotcha 57),
+`ConvexFn.upperSemicontinuousOn_of_locallySimplicial`, and
+`ConvexFn.continuousOn_of_locallySimplicial` for the closed case. **Thm 10.3** as
+`exists_closedFn_continuousOn_of_locallySimplicial` (existence, `g = clFn f`) and
+`eqOn_of_continuousOn_of_eqOn_relint` (uniqueness, which is just `C ⊆ cl (ri C)`).
+
+The whole of §10.2 is layer B plus `T2Space`: no metric, no finite dimension, no local convexity.
+Only §10.3 is finite-dimensional, and only because Theorems 7.4 and 7.5 are.
 
 ### `Tdaf/Analysis/Convex/Lattice.lean`
 
@@ -276,7 +325,8 @@ and the product lemmas `prod_recessionCone_subset` / `recessionCone_prod` / `lin
 (the last two need both factors nonempty). `zero_mem_linealitySpace`, and
 `recessionCone_coe_pointedCone` / `recessionCone_closure_coe_pointedCone` — a pointed convex cone,
 and the closure of one, is its own recession cone, which is what makes Corollary 9.1.3 an instance
-of Corollary 9.1.1.
+of Corollary 9.1.1. `recessionCone_neg : 0⁺(-C) = -0⁺C` is what lets Corollary 20.3.1 read
+Theorem 20.3's one-sided hypothesis off a difference of sets.
 
 ### `Tdaf/Analysis/Convex/Duality/Pairing.lean`
 
@@ -306,6 +356,25 @@ gotcha 40); `coe_le_concaveConj_iff`, `concaveConj_antitone`, `le_concaveConj_if
 cancel, so there is no sign on the argument**) and, at layer C,
 `biconcaveConj_eq_neg_clFn_neg`/`biconcaveConj_eq_self`.
 
+Since §33, this file also carries the **concave closure**:
+
+```lean
+noncomputable def clConcave (g : E → EReal) : E → EReal := fun x => -(clFn (fun z => -(g z)) x)
+def ClosedConcaveFn (g : E → EReal) : Prop := clConcave g = g
+@[simp] theorem neg_clConcave (g) (x) : -(clConcave g x) = clFn (fun z => -(g z)) x
+theorem closedConcaveFn_iff : ClosedConcaveFn g ↔ ClosedFn (fun z => -(g z))
+theorem le_clConcave (g) : g ≤ clConcave g          -- note the direction: closure *raises*
+theorem closedConcaveFn_clConcave (g) : ClosedConcaveFn (clConcave g)
+theorem concaveFn_clConcave (hg : ConcaveFn g) : ConcaveFn (clConcave g)
+theorem biconcaveConj_eq_clConcave (hg : ConcaveFn g) : biconcaveConj B g = clConcave g
+```
+
+It lives here rather than in `Closure.lean` or a file of its own because this is the first module
+with both `ConcaveFn` (from `Concave.lean`) and `clFn` (from `Closure.lean`) in scope. The three
+sections it needs have different instance requirements — `clFn` wants only `[TopologicalSpace E]`,
+`closedFn_clFn` adds `[AddCommGroup E] [IsTopologicalAddGroup E]`, and `convexFn_clFn` adds
+`[Module ℝ E] [ContinuousSMul ℝ E]` — so they are three sections, not one.
+
 ### `Tdaf/Analysis/Convex/Duality/Exact.lean`
 
 `IsExactSum B f g` (`proper_left`, `proper_right`, `exact_le`) and
@@ -316,7 +385,7 @@ Consequences: `IsExactSum.{conj_left_ne_bot, conj_right_ne_bot, symm, proper_add
 infConv_le_conj_add, conj_add, conj_add_apply, exists_conj_add_eq}` and
 `IsExactImage.{proper_compLin, mapLin_le_conj_compLin, conj_compLin, exists_conj_compLin_eq}`.
 The `of_relint`/`of_polyhedral`/`of_continuousAt` sufficient conditions are **not** here — see D5;
-`of_relint` is in `Duality/Relint.lean`.
+`of_relint` is in `Duality/Relint.lean`, `of_continuousAt` in `Duality/Continuity.lean`.
 
 The two `exact_le` fields are **not** symmetric in shape:
 
@@ -339,6 +408,237 @@ The only file that *produces* a D5 interface. `IsExactImage.of_relint` (**Thm 16
 `mk_mem_linealitySpace_epi_conj_of_relint`. Layers differ between the two: the image rule needs
 `FiniteDimensional ℝ G` and `ℝ H` (Thm 9.2 runs in `H`), the sum rule needs `FiniteDimensional ℝ F`
 (Cor 9.1.1 runs in `F × ℝ`); `E` is only ever a normed space.
+
+### `Tdaf/Analysis/Convex/Duality/Continuity.lean`
+
+The second producer of a D5 interface, and the one that survives into infinite dimensions.
+`IsExactSum.of_continuousAt` — `f`, `g` proper convex, both finite at `x₀`, and `f` continuous at
+`x₀` — is layer B: the only topological input is `geometric_hahn_banach_open`, which wants a
+nonempty *open* convex set and no local convexity at all. Also `ConvexFn.convex_strictEpi`
+(Theorem 4.2 as a statement about `{p : E × ℝ | f p.1 < p.2}`), which belongs to §4 but had no
+consumer before.
+
+The proof separates the strict epigraph of `f` from the *hypograph*
+`{(x, μ) | g x ≤ ⟨x, y⟩ - a - μ}`, with `a = (f + g)* y`; those two sets are disjoint exactly when
+the inequality to be proved holds. Three moves worth reusing: continuity gives `V ×ˢ Ioi r` inside
+the strict epigraph and hence a nonempty interior;
+`Convex.closure_interior_eq_closure_of_nonempty_interior` carries the strict estimate off the
+interior onto the whole set; and `exists_unique_dual_prod` + `exists_pairing_eq` turn the separating
+functional into the `y₁ : F` that `exact_le` asks for.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Cone.lean`
+
+`PolyhedralCone K` (`∃ s : Finset (E →ₗ[ℝ] ℝ), K = {x | ∀ φ ∈ s, φ x ≤ 0}`) and
+`FinitelyGeneratedCone K` (`∃ s : Finset E, K = ↑(PointedCone.hull ℝ ↑s)`), with `convex`,
+`zero_mem`, `smul_mem` for both.
+
+`halfSpaceConeₗ θ` is `Separation.lean`'s `halfSpaceCone` for a *linear* functional (Weyl's half
+uses no topology), and `forall_nonpos_of_mem_hull` — a functional nonpositive on a set is
+nonpositive on the cone it generates — is the workhorse, used once in `E` and once in its dual.
+
+**Minkowski–Weyl** as `polyhedralCone_iff_finitelyGeneratedCone`, split into
+`FinitelyGeneratedCone.polyhedralCone` (Weyl, algebraic, by induction over the generators from
+`polyhedralCone_zero` through `PolyhedralCone.add_ray`) and
+`PolyhedralCone.finitelyGeneratedCone` (Minkowski, by separation in the dual). `add_ray` is the
+Fourier–Motzkin step. `PolyhedralCone.isClosed` and `FinitelyGeneratedCone.isClosed` follow.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Defs.lean`
+
+`Polyhedral C` (`∃ s : Finset ((E →ₗ[ℝ] ℝ) × ℝ), C = {x | ∀ q ∈ s, q.1 x ≤ q.2}`; the `⋂` form is
+`Polyhedral.eq_biInter`) and `FinitelyGenerated C` (`∃ P D : Finset E,
+C = convexHull ℝ ↑P + ↑(PointedCone.hull ℝ ↑D)` — needs `open scoped Pointwise`).
+
+Homogenisation lives here: `liftAt a S` is the copy of `S` at height `a` in `ℝ × E`, `inrₙ` is the
+height-zero lift as an `ℝ≥0`-linear map (built by hand — see gotcha 62), `coneOver C hC` is the
+cone over a convex set, and the dictionary is
+`slice_hull_union : {x | (1,x) ∈ cone (liftAt 1 P ∪ liftAt 0 D)} = convexHull ℝ P + cone D`,
+proved from `coe_hull_liftZero` and `slice_hull_liftOne`.
+
+**Thm 19.1** as `polyhedral_iff_finitelyGenerated`, from `Polyhedral.exists_polyhedralCone` (the
+explicit homogenising cone) and `exists_liftOne_liftZero` (splitting a generating set into points
+and directions) in one direction, and `Polyhedral.of_slice` in the other. **Cor 19.1.1** is
+`polyhedral_convexHull_finset`; `Polyhedral.isClosed` and `FinitelyGenerated.isClosed` are part of
+Cor 19.1.2.
+
+### `Tdaf/Analysis/Convex/Caratheodory.lean`
+
+`sum_ite_lt` (a sum over `Fin N` cut off after `m` indices is a sum over `Fin m`) is the padding
+lemma. **Thm 17.1** for points is `mem_convexHull_iff_exists_fin_finrank_succ`, which fixes the
+index type at `Fin (finrank ℝ E + 1)`; that is what makes `IsCompact.isCompact_convexHull`
+(**Cor 17.2.1**, a genuine Mathlib gap) and `Bornology.IsBounded.closure_convexHull` (**Thm 17.2**)
+short.
+
+**Carathéodory for cones** — `exists_linearIndepOn_of_mem_coneHull` — is the other Mathlib gap, and
+the algebraic core of Theorem 17.1:
+
+```lean
+theorem exists_linearIndepOn_of_mem_coneHull {S : Set E} {x : E} (hx : x ∈ PointedCone.hull ℝ S) :
+    ∃ (t : Finset E) (w : E → ℝ), ↑t ⊆ S ∧ (∀ y ∈ t, 0 < w y) ∧
+      LinearIndepOn ℝ id (t : Set E) ∧ ∑ y ∈ t, w y • y = x
+```
+
+Layer A — no topology, no finite-dimensionality. The recursion (`exists_linearIndepOn_coneRepr_aux`,
+private) is an induction on a cardinality *bound* rather than Mathlib's minimum-cardinality trick,
+and the elimination step is Rockafellar's: normalise a dependency `∑ μ y • y = 0` so some
+`μ y > 0`, subtract `min (w y / μ y)` times it, and keep `t.filter (0 < w' ·)` — which drops every
+coefficient that vanished, not only the engineered one. `linearDepOn_iff` is what turns "not
+linearly independent" into a `Finsupp` relation without any coe-sort gymnastics; stating the
+conclusion as `LinearIndepOn ℝ id ↑t` is also what makes
+`LinearIndependent.finset_card_le_finrank` apply verbatim.
+
+**Thm 17.1 for points and directions** is `exists_of_mem_convexHull_add_coneHull`, proved in `ℝ × E`
+against `liftPD P D = {1} × P ∪ {0} × D`. Splitting the Carathéodory subset by its first coordinate
+gives the points and the directions simultaneously; the first coordinate of `∑ w q • q = (1, x)` is
+the statement `∑ λ = 1`, and the bound `n + 1` is `finrank ℝ (ℝ × E)`. The homogenisation is
+duplicated from `Polyhedral/Defs.lean`'s `liftAt`/`slice_hull_union` on purpose — §17 precedes §19
+and must not import it.
+
+**Corollaries 17.1.1–17.1.6 are not done.** All of them require the generators to come from
+*different* members of a family, which needs a coalescing step (merge two generators from the same
+`Cᵢ`, then re-establish independence) that Carathéodory does not supply. Their consumers are
+Theorem 21.3 and Corollary 21.3.1, blocked on Theorem 13.5 regardless.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Ops.lean`
+
+The polyhedral calculus. Layer A: `polyhedral_univ`, `polyhedral_halfSpace`, `Polyhedral.inter`,
+`Polyhedral.comap`, `Polyhedral.comap_affine` — all proved on the inequality side, so no
+finite-dimensionality. Layer D, through the generator side: `FinitelyGenerated.image`,
+`FinitelyGenerated.add`, and then **Thm 19.3** as `Polyhedral.image` / `Polyhedral.add`, with
+`.neg`, `.sub`, `.smul`. Plumbing: `toNNLinear` (an `ℝ`-linear map read over `ℝ≥0`),
+`image_coe_hull`, `coe_hull_union`.
+
+Also layer A: `PolyhedralCone.polyhedral` (a cone system is a system with zero right-hand sides)
+and `Polyhedral.prod`; `polyhedral_zero` needs finite dimensions, through `polyhedralCone_zero`.
+
+**Thm 19.5** as `recessionCone_polyhedral_system` — derived from `Recession/Cone.lean`'s
+`recessionCone_setOf_forall_le` by turning the inequalities around, which is where the `neg`s in
+its statement come from — and `Polyhedral.polyhedralCone_recessionCone`. **Cor 19.3.3** as
+`separatesStrongly_of_polyhedral`, straight off Theorem 11.4, because `C - D` is polyhedral hence
+already closed.
+
+For §20: `polyhedral_singleton`, `polyhedral_coe_submodule` and `polyhedral_coe_affineSubspace`
+(a subspace is the preimage of `{0}` under its own quotient map; an affine set is a translate of
+its direction), `coe_hull_coe_submodule`, `FinitelyGeneratedCone.add` (`hull S + hull T =
+hull (S ∪ T)`), and **Cor 19.7.1** as `finitelyGeneratedCone_hull_of_zero_mem` — the cone generated
+by a polyhedral set containing the origin is generated by the *same* points and directions, with
+`finitelyGeneratedCone_coe_submodule` as its subspace case. `coe_hull_of_convex_zero_mem` is the
+lemma that makes any of that usable pointwise: for convex `S ∋ 0`, `hull S = ⋃_{t ≥ 0} t • S`, so a
+property invariant under positive scaling transfers from `S` to the whole cone. Without it there is
+no induction principle for `hull`, since `Submodule.span_induction`'s `add` case knows nothing about
+the summands individually.
+
+Three one-line lemmas read a finitely generated presentation `C = conv P + cone D` back off itself:
+`coe_subset_of_finitelyGenerated` (`P ⊆ C`, since `0 ∈ cone D`),
+`coe_hull_subset_recessionCone_of_finitelyGenerated` (`cone D ⊆ 0⁺C`, the easy half of Thm 19.5)
+and `subset_coe_hull_of_finitelyGenerated` (`C ⊆ hull (P ∪ D)`). They were extracted from the middle
+of Cor 19.7.1's proof and are what makes **Thms 19.6 and 19.7** short.
+
+The last section of the file, `Generated`, holds those two. Both are conjunctions —
+`FinitelyGenerated (closure …) ∧ closure … = …` — because the proof is a *three-set sandwich*
+(`cl ⊆ A ⊆ repaired ⊆ cl`, with `A` the finitely generated set built from the pooled generators),
+which establishes both halves in one circle; splitting them would mean proving the circle twice.
+`recessionCone` enters through Theorem 8.3, `mem_recessionCone_of_exists_ray`: a single ray inside
+the closure is enough, and that ray issues from a point of `Cᵢ`, which is why both statements insist
+the sets are nonempty. Rockafellar's `⋃ {λ₁C₁ + λ₂C₂}`-with-`0⁺`-substituted description is not
+formalised — `conv (C₁ ∪ C₂) + (0⁺C₁ + 0⁺C₂)` says the same thing without a convention.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Function.lean`
+
+`PolyhedralFn f := Polyhedral (epi f)`, with `convexFn`, `isClosed_epi`, `lowerSemicontinuous`,
+and `closedFn` (which needs `∀ x, f x ≠ ⊥`: `f ≡ ⊥` has epigraph `E × ℝ`, polyhedral by the empty
+system, and `ClosedFn` has a `⊥` branch). `polyhedral_dom` and `polyhedral_sublevel` are the
+calculus applied to the epigraph — a linear image and an affine preimage. `polyhedralFn_indicatorFn`
+turns a polyhedral *set* into a polyhedral *function*, which is the bridge §20 will need.
+
+**Thm 19.4** as `PolyhedralFn.add`, via the auxiliary linear maps `addEpiMap`
+(`((x, α), (y, β)) ↦ (x, α + β)`) and `diagMap` (`((x, α), (y, β)) ↦ x - y`): the epigraph of the
+sum is the image under the first of `(epi f ×ˢ epi g) ∩ diagMap ⁻¹' {0}`. It carries
+`∀ x, f x ≠ ⊥` and the same for `g`, which is exactly what makes the `EReal` splitting
+`f x + g x ≤ μ ↔ ∃ α β, f x ≤ α ∧ g x ≤ β ∧ α + β = μ` valid — the `⊤ + ⊥` case is the one that
+would break it.
+
+**Cor 19.3.4** as `PolyhedralFn.infConv`, with `epi_infConv_of_polyhedralFn` as the content:
+`epi (f □ g) = epi f + epi g` needs `IsEpiLike (epi f + epi g)`, and polyhedrality gives the
+closedness half for free while `mem_epi_add_epi_of_le` gives the other.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Conjugate.lean`
+
+**Thm 19.2.** The functionals `epiFunctional B x = ⟨·, x⟩ - (vertical)`, `dirFunctional`,
+`recFunctional` name the three linear forms on `F × ℝ` / `E × ℝ` that the system uses.
+`mem_epi_conj_iff` is the whole idea: `q ∈ epi (conj B f)` iff `⟨p.1, q.1⟩ - q.2 ≤ p.2` for every
+`p ∈ epi f`, i.e. iff a single linear functional is bounded on `epi f`. Feeding `epi f = conv P +
+cone D` in gives one inequality per element of `P ∪ D`, so `epi (conj B f)` is cut out by a finite
+system. `P = ∅` is the one case split: then `epi f = ∅`, `conj B f ≡ ⊥`, and the *empty* system
+describes its epigraph. No properness hypothesis is needed — `EReal.lt_iff_exists_real_btwn` covers
+the `⊥`/`⊤` values uniformly.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Duality.lean`
+
+**Thm 20.1** as `IsExactSum.of_polyhedral`, with `of_polyhedral_pair` (both functions polyhedral,
+so only `dom f ∩ dom g ≠ ∅` is asked) as the base case. `of_polyhedral_pair` is `of_relint`'s proof
+with Corollary 9.1.1 replaced by polyhedrality: both proofs need only that `epi f* + epi g*` is
+closed. `of_polyhedral` follows Rockafellar — put `δ = δ(· | aff (dom g))`, apply `of_relint` to
+`δ + f` and `g`, the pair case to `δ` and `f`, and re-absorb `δ*` using `δ + g = g`
+(`indicatorFn_add_eq_self`). The step he states in a clause is
+`relint_inter_relint_nonempty_of_subset_affineSpan`: if `D₁ ⊆ aff D₂`, `x₀ ∈ D₁ ∩ ri D₂`, then
+`ri D₁ ∩ ri D₂ ≠ ∅` — prolong the segment from a point of `ri D₁` *through* `x₀` to land in `D₂`
+beyond `x₀`, then apply the line-segment principle on both sides with `s = min (t/2) 1`.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Separation.lean`
+
+**Thm 20.2** as `exists_separates_not_subset_iff_disjoint_relint`, with
+`disjoint_relint_of_separates_of_not_subset` (no polyhedrality) as the easy half. `levelSet f c` is
+`{x | f x = c}` bundled as an `AffineSubspace`, used only through `affineSpan_le` to turn "constant
+on `C₂`" into "constant on `aff C₂`". The proof is Rockafellar's, translated by hand rather than by
+moving the origin: `K = hull (C₁ - x₀)`, `M₀ = (aff C₂).direction ⊓ ker f`, and `C₁' = K + ↑M₀` is
+finitely generated, hence a polyhedral *cone*, so its representation has zero right-hand sides —
+which is exactly why the cone hull cannot be replaced by `(C₁ - x₀) + ↑M₀`. The separating
+functional is any `φ` in that representation with `φ w > 0` at a `w` of the translated `ri C₂'`
+outside `C₁'`; `φ ≥ 0` on the rest of `C₂'` follows because `z - (f z / f w) • w ∈ M₀` and `φ`
+vanishes on `M₀`. `ri C₂'` itself is never computed — the translated description
+`{y | y + x₀ ∈ aff C₂ ∧ f (y + x₀) > c}` is all the argument uses.
+
+**Cor 20.2.1** as `nonempty_inter_relint_iff_forall_supportFn`, on top of
+`supportFn_le_neg_supportFn_neg_iff : δ*(y | s) ≤ -δ*(-y | t) ↔ ∀ x₁ ∈ s, ∀ x₂ ∈ t, ⟨x₁,y⟩ ≤ ⟨x₂,y⟩`
+(unconditional — an empty `s` sends the left side to `⊥`, an empty `t` the right side to `⊤`). Both
+directions of the corollary go through Theorem 20.2 rewritten with
+`Set.not_disjoint_iff_nonempty_inter`; the forward one builds the hyperplane at level
+`(δ*(y | C₁)).toReal`, which is a *real* number precisely because the pointwise separation bounds
+`δ*(y | C₁)` above by `⟨x₂, y⟩` for any `x₂ ∈ C₂`.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Closedness.lean`
+
+**Thm 20.3** as `isClosed_add_of_polyhedral` and **Cor 20.3.1** as
+`separatesStrongly_of_polyhedral_of_recession`. The constraint qualification
+`nonempty_dom_supportFn_inter_relint` is Theorem 20.2 applied to the two *barrier* cones
+`dom δ*(· | Cᵢ)`, with `polyhedral_dom_supportFn` (Thm 19.2 then Thm 19.1) making the first one
+polyhedral and Corollary 14.2.1 turning a separating functional into a `v` with `v ∈ 0⁺C₁`,
+`-v ∈ 0⁺C₂`, `v ∉ 0⁺C₂` — a counterexample to the hypothesis. Closedness is then read off effective
+domains: `IsExactSum.of_polyhedral` gives `(δ*(·|C₁) + δ*(·|C₂))* = δ(·|C₁) □ δ(·|C₂)`, whose left
+side is `δ(· | cl (C₁ + C₂))` (`conj_supportFn_of_convex`) and whose right side has domain
+`C₁ + C₂` (`dom_infConv`). The infimal convolution is never evaluated.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Simplicial.lean`
+
+**Thm 20.5** as `Polyhedral.locallySimplicial`, which is what discharges Theorem 10.2's hypothesis
+for polyhedral sets, and **Thm 20.4** as `exists_polyhedral_between`. Both rest on
+`exists_polyhedral_mem_nhds_subset_ball`: the coordinate cube `{y | ∀ i, |bᵢ*(y - x)| ≤ c}` of a
+basis is polyhedral by inspection, bounded by `‖z‖ ≤ c ∑ ‖bᵢ‖`, and a neighbourhood because the
+strict cube is a finite intersection of open sets. Rockafellar uses simplices; nothing in either
+proof needs simplex-ness. `Polyhedral.exists_finset_convexHull` is Cor 19.1.2 — a bounded polyhedral
+set is a polytope, since boundedness forces every generating direction to be `0` — and
+`isSimplex_convexHull_coe` turns an affinely independent `Finset` into an `IsSimplex`. **Thm 20.4
+is proved without convexity or nonemptiness of `C`**; only compactness is used, and the departure
+from the book's statement is recorded in the file.
+
+### `Tdaf/Analysis/Convex/Duality/Barrier.lean`
+
+**Cor 14.2.1** as `polarCone_dom_supportFn : (dom δ*(· | C))° = 0⁺C` for nonempty closed convex `C`.
+Rockafellar derives it from Theorem 14.2, which quantifies over recession *functions*; this proof
+goes straight through Theorem 13.1 instead, so `Polar.lean`'s deferral of Theorems 14.2/14.3 stands.
+`⊇` is "a linear function bounded above on a half-line has nonpositive slope"; `⊆` is
+`mem_closure_convexHull_iff_le_supportFn`, since a recession direction leaves every inequality
+`⟨·, y⟩ ≤ δ*(y | C)` intact.
 
 ### `Tdaf/Analysis/Convex/Recession/Closedness.lean`
 
@@ -438,6 +738,33 @@ of the project reaches for are `mem_subgradient` (`Iff.rfl`), `mem_subgradient_i
 `mem_subgradient_iff_add_conj_le` (Theorem 23.5, unconditional — `y ∈ ∂f x ↔ f x + f* y ≤ ⟨x, y⟩`)
 and `subgradient_indicatorFn` (carries `x ∈ C`).
 
+### `Tdaf/Analysis/Convex/Subgradient/Existence.lean`
+
+**Theorems 23.4 and 23.10**, which are one theorem asked twice. `clFn_dirDeriv` (Thm 23.2) gives
+`cl (f'(x; ·)) = δ*(· | ∂f x)` for free, so both reduce to *is `f'(x; ·)` closed?*, and the two
+shared endings — `dirDeriv_eq_supportFn_of_closedFn` and
+`subgradient_nonempty_of_closedFn_dirDeriv` — take that closedness as a hypothesis. Nonemptiness is
+then one line: `δ*(· | ∅)` is the constant `⊥` and `f'(x; 0) = 0`.
+
+Theorem 23.4 supplies the closedness through the effective domain:
+`dom_dirDeriv_of_mem_relint_dom` identifies `dom (f'(x; ·))` with `(affineSpan ℝ (dom f)).direction`
+— `⊆` because a finite difference quotient exhibits a point of `dom f`, `⊇` because
+`mem_intrinsicInterior_iff` moves `x` a little in any direction of the affine hull — and then
+Corollary 7.4.2 (`ConvexFn.closedFn_of_dom_eq_coe`) applies. Properness has to be argued, not
+assumed: `f'(x; ·)` genuinely can be `−∞` somewhere (take `f y = -√y` on `[0, ∞)` at `x = 0`), and
+what rules it out here is that a subspace is its own relative interior, so Theorem 7.2 would place
+the `−∞` at the origin.
+
+Theorem 23.10 supplies it through the epigraph: `epi (f'(x; ·))` is the convex cone generated by
+`epi f − (x, f x)`, *provided that cone is closed*. Both inclusions are proved separately, because
+only one of them needs the hypothesis — for `f y = y²` at `x = 0` the cone is the open upper half
+plane plus the origin while the epigraph is the closed one. **Corollary 19.7.1** closes the cone in
+the polyhedral case. `polyhedral_subgradient_of_polyhedralFn` then reads `∂f x` off as
+`dom ((f'(x; ·))*)` using `conj_dirDeriv` and **Theorem 19.2**.
+
+Theorem 23.7 is *not* here: it needs the `ri` half of Theorem 7.6, and Corollary 23.7.1 needs
+Corollary 9.6.1, both still undone.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Calculus.lean`
 
 Layer A throughout — no topology, because Theorem 23.5 does all the work:
@@ -462,6 +789,860 @@ theorem IsExactSum.normalCone_inter (h : IsExactSum B (indicatorFn C) (indicator
 The sum rule spends `IsExactSum`'s properness on `Tdaf.EReal.le_coe_of_add_le_coe_add`; the image
 rule uses no properness at all. Theorem 23.10 is absent — it needs `PolyhedralFn` (§19), and it is
 a nonemptiness statement rather than a calculus rule.
+
+### `Tdaf/Analysis/Convex/Subgradient/Monotone.lean`
+
+§24's characterisation of subdifferentials: **Theorems 24.4 and 24.8**, and the half of
+**Theorem 24.9** that follows from 24.8.
+
+```lean
+def chainVal (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : E × F → List (E × F) → E → ℝ
+  | s, [], x => B (x - s.1) s.2
+  | s, q :: l, x => B (q.1 - s.1) s.2 + chainVal B q l x
+
+def IsCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
+  ∀ s ∈ ρ, ∀ l : List (E × F), (∀ q ∈ l, q ∈ ρ) → chainVal B s l s.1 ≤ 0
+```
+
+**Cycles are lists.** Rockafellar's cycle `(x₀,y₀), …, (x_m,y_m)` is a starting pair plus a
+`List (E × F)`, and the free endpoint comes *last* in `chainVal`. Three consequences, and they are
+the whole file:
+
+* `exists_chainVal_eq : ∃ y c, ∀ x, chainVal B s l x = B x y - c` — a chain is affine in its free
+  endpoint, so `cyclicPotential` is a supremum of `affineFn`s and is closed convex by Theorem 5.5
+  and `closedFn_affineFn`.
+* `chainVal_append_singleton : chainVal B s (l ++ [q]) z = chainVal B s l q.1 + B (z - q.1) q.2` —
+  adding the last edge, which is the whole content of `ρ ⊆ ∂(cyclicPotential …)`.
+* `chainVal B s l s.1 ≤ 0` is "come back to where you started", so the cycle condition needs no
+  index arithmetic.
+
+**Necessity is stated additively.** `le_of_chain_mem_subgradientRel : f s.1 + chainVal B s l x ≤ f x`
+rather than `chainVal ≤ f x - f s.1`, which keeps `EReal` subtraction out of the induction
+entirely. Properness is used exactly once, at the end, to know `f` is finite at the base point.
+
+**`cyclicPotential B ρ s`** is Rockafellar's `f`. `cyclicPotential_eq_zero` is the only place cyclic
+monotonicity is used, and it is what makes the function proper; `cyclicPotential_ne_bot` is the
+empty chain.
+
+**Theorem 24.4 asks for a jointly continuous pairing.** `IsContinuousPairing B` gives `⟨·, y⟩`
+continuous for fixed `y`, which is not enough when both arguments move, so `isClosed_subgradientRel`
+takes `Continuous fun p : E × F => B p.1 p.2` explicitly (automatic in `ℝⁿ`). The proof writes the
+graph as `⋂ z, {p | f p.1 + ⟨z - p.1, p.2⟩ ≤ f z}` and each slice, where `f z` is finite, as a
+preimage of `epi f`.
+
+**Not done**: Thms 24.1–24.3 (one-dimensional: `f'₊`, `f'₋`, complete nondecreasing curves — §23
+gives `dirDeriv` but no one-sided derivatives on `ℝ`), Thms 24.5–24.7 (they rest on Thms 10.6–10.9,
+deferred), and the maximality half of Thm 24.9 (needs `∂f ⊆ ∂g → g = f + const`, which runs through
+Thm 23.4, Thm 23.2 and the one-dimensional material of 24.1–24.3). Corollary 31.5.2 — `∂f` is
+maximal *monotone* — is a different, easier statement and does not wait on any of this.
+
+### `Tdaf/Analysis/Convex/Subgradient/Gradient.lean`
+
+§25's differentiability theory: **Theorem 25.1** in full, **Corollary 25.1.1**, and the necessity
+half of **Theorem 25.2**.
+
+**Differentiability of an `EReal`-valued function is a local real representative.** `HasFDerivAt`
+needs a normed target, so every Fréchet statement in the file carries
+
+```lean
+(hfg : f =ᶠ[𝓝 x] fun z => ((g z : ℝ) : EReal)) (hd : HasFDerivAt g f' x)
+```
+
+with `f : E → EReal`, `g : E → ℝ` and `f' : E →L[ℝ] ℝ` — Rockafellar's own hypothesis, since his
+`∇f x` presupposes `f x` finite. Do **not** restate the file for `f : E → ℝ`: §26's functions are
+`+∞` off an open set. Two immediate consequences are **Corollary 25.1.1**:
+`mem_interior_dom_of_eventuallyEq_coe` (`mem_interior_iff_mem_nhds` applied to `hfg`; needs neither
+convexity nor differentiability) and `proper_of_eventuallyEq_coe` (`ConvexFn.eq_bot_of_lt_one` along
+`[u, x)` against local finiteness at the limit — the piece of Thm 7.2 that §25 needs, valid in any
+topological vector space).
+
+**One calculus lemma serves the whole file.** `tendsto_slope_ray_of_hasFDerivAt` gives
+`(g (x + t • v) - g x) / t → f' v` along `𝓝[>] 0`; `tendsto_ray_nhdsGT` transports `hfg` onto that
+filter. Everything else is filter bookkeeping:
+
+* `le_of_hasFDerivAt` (the gradient inequality) bounds the quotient above by `f z - f x` using
+  `ConvexFn.epi_combo` on `Ioc 0 1`;
+* `eq_of_mem_subgradient_of_hasFDerivAt` bounds it below by `⟨v, y⟩` and applies that to `v` and
+  `-v`. **It uses neither convexity nor properness.**
+
+**`dirDeriv_eq_of_hasFDerivAt` is Theorem 25.2's necessity half**, done directly on the defining
+infimum: `EReal.coe_le_sub_div_iff` for the lower bound, and `EReal.lt_iff_exists_real_btwn` plus
+`EReal.sub_div_le_coe_iff` for the upper one, so no `EReal` division is ever computed. Sufficiency
+proper (linear `f'(x; ·)` ⇒ Fréchet differentiable) is **not** done and is not a transcription: it
+is Gâteaux ⇒ Fréchet, which needs `[FiniteDimensional ℝ E]` and compactness of the unit sphere.
+What sufficiency gets used for is available algebraically as
+`subgradient_eq_singleton_of_dirDeriv_eq`, over an arbitrary pairing with `Function.Injective B.flip`.
+
+**`HasGradientAt f f' x` packages the hypothesis pair.** It is `∃ g : E → ℝ, f =ᶠ[𝓝 x] (g · : EReal)
+∧ HasFDerivAt g f' x`, with `DifferentiableAtFn f x := ∃ f', HasGradientAt f f' x`. Use the dot
+lemmas — `.le`, `.subgradient_eq`, `.mem_subgradient`, `.dirDeriv_eq`, `.mem_interior_dom`,
+`.proper`, `.unique`, `.exists_coe` — rather than the `_of_hasFDerivAt` workhorses; §26 is written
+entirely against them. `.unique` is `HasFDerivAt.unique` on the representatives and needs no
+convexity.
+
+**Not done**: Thms 25.3–25.7 (25.3 rests on Thm 24.1; 25.4 on Thm 24.5; 25.5 is Rademacher plus
+Thm 24.4; 25.6 and 25.7 rest on 25.5 and Thms 10.6–10.9), and Cors 25.1.2–25.1.3 (exposed points and
+faces of `epi f*` in `ℝ × E`, so they wait on §18 in the product picture).
+
+### `Tdaf/Analysis/Convex/Subgradient/Legendre.lean`
+
+§26's Legendre transformation, reduced to what is reachable: **Theorem 26.4**.
+
+**§26 is not self-contained**, contrary to sub-plan 5's guess. Theorem 26.1 needs Theorem 25.6 in
+one direction and the sufficiency half of Theorem 25.2 in the other; Theorems 26.3, 26.5, 26.6 and
+Corollaries 26.3.1–26.3.3 and 26.4.1 all route through 26.1. Theorem 26.4 needs only Theorem 25.1
+and Theorem 23.5 (d), so it is here in full:
+
+```lean
+theorem HasGradientAt.add_conj_eq (hf : ConvexFn f) (h : HasGradientAt f y x) :
+    f x + conj (topDualPairing ℝ E).flip f y = ((y x : ℝ) : EReal)
+```
+
+`conj_eq_of_hasGradientAt` turns this into `f* (∇f x) = ⟨x, ∇f x⟩ - f x`, which *is* Rockafellar's
+"`g` is the restriction of `f*` to `D`"; `sub_eq_sub_of_hasGradientAt` is his remark that `∇f` need
+not be one-to-one for `g` to be single-valued; `legendreDom_subset_dom_conj` is `D ⊆ dom f*`.
+
+**Two things are deliberately *not* defined.** `EssentiallySmooth`, `EssentiallyStrictlyConvex` and
+`LegendreType` have no provable theorem until 26.1 is reachable, and an untestable definition is
+exactly what cost §18 a rewrite (`IsExtreme` is not Rockafellar's face). And `legendreConj` itself
+would need a choice function for `(∇f)⁻¹` and would then have to be proved equal to `conj B f` on
+`D` — `conj_eq_of_hasGradientAt` states that equality without the detour.
+
+The file's one private helper, `eq_coe_of_coe_add_eq_coe`, solves `(r : EReal) + c = (s : EReal)`
+for `c`; the two infinities are excluded by the equation itself. Promote it to `Tdaf/Order/EReal.lean`
+if a second consumer appears.
+
+### `Tdaf/Analysis/Convex/Optimization/Fenchel.lean`
+
+§31: **Theorem 31.1** (both of Rockafellar's conditions) and **Theorem 31.3** with `A = id`.
+
+**The hypothesis is `IsExactSum B f (-g)`, never a constraint qualification.** Rockafellar's (a),
+his (b), and their two polyhedral weakenings are four sufficient conditions for the same thing;
+supply the instance from `Duality/Relint.lean` (Thm 16.4) or `Polyhedral/Duality.lean` (Thm 20.1).
+
+**No separation.** Theorem 31.1 is `conj_zero_eq_neg_iInf` (Thm 27.1(a)) at `h = f + (-g)`, then
+`IsExactSum.conj_add_apply` at `0`, then `neg_concaveConj` to turn `(-g)*(-y)` into `-g*(y)`. The
+reindexing `y' ↦ -y'` under the infimum is the private `iInf_neg_comp`.
+
+**Weak duality is unconditional.** `concaveConj_sub_conj_le_sub` takes no hypotheses: when
+`f x = ⊥` the conjugate `f* y` is `⊤` and the dual value collapses to `⊥`, and when `g x = ⊤` the
+concave conjugate `g* y` is `⊥` and it collapses again. Do not add properness hypotheses back.
+
+**Two `∞ - ∞` helpers, not one.** `-(a - b) = b - a` needs *either* (`a ≠ ⊥` and `b ≠ ⊤`) *or*
+(`a ≠ ⊤` and `b ≠ ⊥`), because `EReal.neg_sub` asks for two disjunctions and each pair discharges
+them through different disjuncts. Both are private in the file (`neg_sub_comm`, `neg_sub_comm'`);
+promote them to `Tdaf/Order/EReal.lean` if a third caller appears.
+
+**A closed proper concave `g` is spelled `ClosedProperConvexFn fun x => -(g x)`.** That is the sign
+dictionary applied to the bundled interface, and it saves §31 from defining a concave twin of
+`ClosedProperConvexFn`. `concaveFn_iff_convexFn_neg` and `domConcave_eq_dom_neg` are the two
+projections needed.
+
+**The concave subgradient is `-∂(-g)`, and that is why §31 does not define one.** Rockafellar's
+Kuhn–Tucker condition `x ∈ ∂g*(y)` is `-y ∈ subgradient B (fun z => -(g z)) x` here, and
+`neg_mem_subgradient_neg_iff_add_concaveConj_eq` turns it into `g x + g*(y) = ⟨x, y⟩`. If a
+superdifferential ever gets defined, define it as `-∂(-g)` and keep this lemma as the bridge.
+
+**The `EReal` finiteness bookkeeping is a case bash, deliberately.** `finite_of_sub_eq`,
+`finite_of_add_eq` and `finite_of_add_eq'` are proved by
+`induction a <;> induction b <;> … <;> simp_all`. Keep `simp_all` *terminal* in those lemmas: the
+`flexible` linter fires if anything modifies a goal after it, which is why the arithmetic core
+`sub_eq_sub_iff_of_le` reduces to reals via `EReal.exists_coe_of_ne_bot_of_lt_top` and finishes
+with `linarith` instead of continuing the bash.
+
+**Theorem 31.4 lives here too, and it does not use Theorem 31.1.** `g = -δ(· | K)` is a concave
+function, but `-g = δ(· | K)` is an ordinary convex one, so the section goes straight to Theorem
+27.1(a) on `f + δ(· | K)` plus `IsExactSum.conj_add_apply` at the origin plus
+`conj_indicatorFn_eq_indicatorFn_polarCone`.
+
+**Rockafellar's `K*` is `-(polarCone B K)`, with `Set` negation.** `Set.neg` is a *preimage*, so
+`y ∈ -K°` unfolds to `-y ∈ K°`; `mem_neg_polarCone` states the useful form `∀ z ∈ K, 0 ≤ B z y`,
+and `indicatorFn_neg_set` moves the negation onto the indicator's argument. Write `-(polarCone B K)`
+with the parentheses: bare `-polarCone B K` makes the elaborator try to auto-bind `polarCone`.
+
+**`IsExactSum.conj_add_apply y` splits as `conj B f (y - w) + conj B g w`, not the other way
+round.** The variable that survives is attached to the *second* summand. That is why both the
+Theorem 31.1 proof and the Theorem 31.4 proof reindex by `y ↦ -y` (`iInf_neg_comp`) — and the
+reindexing is not bookkeeping, it is exactly the step that converts `K°` into `K*`.
+
+**`a • K` for `K : Set E` needs `open Pointwise`.** The cone hypothesis
+`∀ a : ℝ, 0 < a → a • K = K` fails to elaborate without it, with a
+`failed to synthesize HSMul ℝ (Set E)` error that does not mention the missing `open`.
+
+**Not done**: Thm 31.2 and Cors 31.2.1, 31.4.1. Thm 31.2 is stated for bifunctions and waits on
+§§29–30; Cor 31.2.1 (a linear map interposed) needs `conj (f ∘ A)` as an image, the sup-analogue of
+`mapLin`; Cor 31.4.1 is Thm 31.4 for the non-negative orthant of a coordinate space and belongs to
+the surface layer.
+
+### `Tdaf/Analysis/Convex/Optimization/Moreau.lean`
+
+§31's Theorem 31.5, minus its existence-and-uniqueness half.
+
+**The real inner product notation is `⟪x, y⟫`, not `⟪x, y⟫_ℝ`.** The `_ℝ`-suffixed form is a
+*local* notation inside Mathlib's `InnerProductSpace/Basic.lean`; the scoped notation exported by
+`open RealInnerProductSpace` has no suffix. Writing `⟪x, y⟫_ℝ` gives the unhelpful
+`unexpected identifier; expected ':=' or '|'`.
+
+**`innerₗ E x y` is the pairing; `innerₗ_apply_apply` is the bridge.** Everything bilinear —
+`⟪u - z, y⟫ = ⟪u, y⟫ - ⟪z, y⟫`, `⟪z, -y⟫ = -⟪z, y⟫` — is cheapest as
+`rw [← innerₗ_apply_apply, …, map_sub, LinearMap.sub_apply]` rather than by hunting for the
+`real_inner_*` lemma with the right shape.
+
+**`w` is `fun z => ((‖z‖ ^ 2 / 2 : ℝ) : EReal)`, and `E` is explicit in `quadFn E`.** Most of the
+elementary lemmas about it use only `[NormedAddCommGroup E]`, so they need
+`omit [InnerProductSpace ℝ E] in` — and the `omit` line must come *before* the doc-comment, not
+between it and the `theorem`.
+
+**Both self-conjugacy proofs are `le_antisymm` with a `linarith`/`nlinarith` defect.** For
+`conj_quadFn` the defect is `½‖x - y‖²`; for `conj_quadFn_sub` it is `½‖(x - z) - y‖²`. Feed
+`norm_sub_sq_real` and `sq_nonneg` of the right vector; and note that `‖z - x‖ = ‖x - z‖` is not
+enough — `nlinarith` needs the *squared* form `‖z - x‖ ^ 2 = ‖x - z‖ ^ 2`, after which plain
+`linarith` closes it.
+
+**One `rw [quadFn_apply]` covers both sides when the arguments coincide.** `rw` rewrites every
+occurrence of the instance it matched first, so listing `quadFn_apply` twice fails with
+"did not find an occurrence" as soon as the two `quadFn` terms are the same.
+
+**The constraint qualification is `IsExactSum.of_continuousAt`, and its arguments are ordered with
+the continuous function first.** Apply it with the quadratic as the left summand and take `.symm`.
+
+**Cancelling at the end forces a finiteness argument.** `moreau_add` ends with
+`-(D + ↑c) + D = ↑(-c)`, which needs `D` to be a real number: bounded above by evaluating at a
+point of `dom f*` (`proper_conj`, Theorem 12.2) and bounded below because `conj B (f + w(z - ·)) 0`
+dominates `-(f x₀ + w(z - x₀))` at any `x₀ ∈ dom f`. `infConv_quadFn_ne_top` and its three
+companions then follow from `moreau_add` itself.
+
+**`Tdaf.EReal.iInf_add_coe` was added for this file** (`Tdaf/Order/EReal.lean`, next to
+`iSup_add_coe`): a real constant moves in and out of an infimum with no hypothesis, including over
+an empty index type.
+
+**Not done**: the existence and uniqueness of the splitting `z = x + x*`, `prox`, the gradient
+formulas `x = ∇(f* □ w) z`, and Cor 31.5.2. Existence is Theorem 27.2 in a Hilbert space —
+`Optimization/Minimum.lean` proves it only in finite dimensions — uniqueness is strict convexity of
+`w`, and the gradient formulas need Theorem 26.3.
+
+### `Tdaf/Analysis/Convex/Optimization/Minimum.lean`
+
+§27: **Theorems 27.1(a), 27.1(b), 27.2 with Corollaries 27.2.1–27.2.2, the non-polyhedral case of
+Theorem 27.3 with Corollary 27.3.3, and Theorem 27.4**.
+
+```lean
+def argmin (f : E → EReal) : Set E := {x | ∀ z, f x ≤ f z}
+```
+
+**Use `argmin`, not `IsMinOn f Set.univ`.** It unfolds to exactly the subgradient inequality at
+`y = 0`, so `mem_argmin_iff_zero_mem_subgradient` is a `simp` and `§27 = §23 at the origin` is
+literally true. `mem_argmin_iff_isMinOn` and `mem_argmin_iff_le_iInf` are the bridges.
+
+**Two theorems have fewer hypotheses than the book.** `conj_zero_eq_neg_iInf` (Thm 27.1(a)) has
+*none* — `f*(0) = ⨆ x (0 - f x) = -(⨅ x, f x)` for any `f` — and `argmin_eq_subgradient_conj_zero`
+(Thm 27.1(b)) needs only `ConvexFn` and `ClosedFn`, no properness: the `EReal` step is
+`EReal.le_sub_iff_add_le` with `c = 0`, and `0` is neither `⊥` nor `⊤`, so both side conditions are
+discharged by `.inr`.
+
+**Theorem 27.4 is two theorems.** `le_of_mem_subgradient_of_neg_mem_normalCone` (sufficiency) needs
+nothing at all — the subgradient inequality and the normality inequality add — and
+`exists_mem_subgradient_neg_mem_normalCone` (necessity) is `IsExactSum.subgradient_add` applied to
+`h + δ(· | C)` together with `subgradient_indicatorFn`. Supply the `IsExactSum` from
+`Duality/Relint.lean` for Rockafellar's `ri` hypothesis, or from the polyhedral constructors.
+
+**Theorem 27.2 uses Mathlib's lsc extreme value theorem.** `LowerSemicontinuousOn.exists_isMinOn`
+(`Mathlib/Topology/Semicontinuity/Basic.lean`) works for any `LinearOrder` codomain, `EReal`
+included; the compactness of the level set is `recessionCone_setOf_le` (Thm 8.7) followed by
+`isCompact_iff_recessionCone_eq_zero` (Thm 8.4). The ε–δ clause
+(`exists_pos_forall_exists_mem_argmin_dist_lt`) uses the *same* theorem once more instead of
+Rockafellar's nest of closed bounded sets: minimise `f` over the compact
+`lev_{inf f + 1} f \ (M + ε·int B)`, and the minimum value is `> inf f` because the minimiser is
+not in `M`.
+
+**Corollaries 27.2.1 and 27.2.2 go through `Metric.infDist`, and take an arbitrary filter.**
+`tendsto_infDist_argmin` is the single content-bearing lemma; `mem_argmin_of_mapClusterPt` and
+`tendsto_of_argmin_eq_singleton` are corollaries of it, and only
+`isBounded_range_of_tendsto_iInf` — whose conclusion is about `Set.range u` — needs `ℕ` and
+`atTop`. Corollary 27.2.2 carries no recession hypothesis: `argmin_eq_setOf_le` exhibits a
+singleton minimum set as a level set, and Theorem 8.7 then forces `0⁺f = {0}`.
+
+**Theorem 27.3's recession lemma is stated for indicators, not for sums.**
+`recessionConeFn_add_indicatorFn` is `recessionFn_add` (Thm 9.3) plus the fact that
+`δ(· | 0⁺C)` only takes the values `0` and `⊤`. There is no general
+`recessionConeFn (f + g) = recessionConeFn f ∩ recessionConeFn g`: on `ℝ`, `f x = -x` and
+`g x = x` have `0⁺f ∩ 0⁺g = {0}` while `f + g = 0` recedes in every direction.
+
+**Not done**: Thm 27.1(c)–(i) — (c), (d) and (i) need Thm 23.3 in full and Cor 13.3.4, (e) needs a
+reflexive pairing (`∂f*(0)` lives in `E**`), (f) needs Thm 14.2, (g) and (h) need Thm 13.5 and
+Thm 23.6 — and the polyhedral refinement of Thm 27.3, which needs Helly in the form of Thm 21.5
+(blocked on Thm 21.3, itself blocked on Thm 13.5 and Cor 17.1.3), together with Cors 27.3.1–27.3.2
+and the polyhedral half of Cor 27.3.3.
+
+### `Tdaf/Analysis/Convex/Optimization/Maximum.lean`
+
+§32: **Theorems 32.1, 32.2 and 32.4** with Corollaries 32.1.1, 32.4.1 and the compact case of
+Corollary 32.3.2.
+
+**Maximisation is `∀ z ∈ C, f z ≤ f x`, not `IsMaxOn`.** Every proof here applies the hypothesis at
+one specific point, and the unfolded form is what `ConvexFn.epi_combo` and the subgradient
+inequality want. `isMaxOn_iff` is the bridge if a caller arrives with `IsMaxOn`.
+
+**Theorem 32.1 is `exists_one_lt_smul_mem_of_mem_relint` + `combo_prolong` + `epi_combo`.** The
+prolongation factor `t > 1` gives `y := (1 - t) • x + t • z ∈ C`, and `combo_prolong x z ht0.ne'`
+rewrites `(1 - t⁻¹) • x + t⁻¹ • y` back to `z`. Note the argument order: `combo_prolong` takes the
+*endpoints* `x z` explicitly and the factor implicitly, so it is `combo_prolong x z ht0.ne'`, not
+`combo_prolong x y _`.
+
+**`ht0.ne'` not `ht0.ne`.** `combo_prolong` and `mul_inv_cancel₀` both want `t ≠ 0`, and from
+`ht0 : 0 < t` that is `ht0.ne'` (`.ne` gives `0 ≠ t`).
+
+**`mul_lt_mul_right` does not fire on `ℝ` here.** `(mul_lt_mul_right htinv0).2 ht` fails with
+"failed to synthesize `MulLeftStrictMono ℝ`" — the name resolves to the ordered-monoid version.
+For `t⁻¹ < 1` from `1 < t`, the robust route is `have hcancel : t * t⁻¹ = 1 := mul_inv_cancel₀ …`
+followed by `nlinarith`.
+
+**Theorem 32.2 is `convexHull_min` twice, over `Module ℝ E`.** `ConvexFn.convex_le` gives the
+sublevel set for the supremum clause and `ConvexFn.convex_lt` the strict one for the attainment
+clause; neither needs a topology or a dimension bound. Keeping the section algebraic is what lets
+`ConvexFn.iSup_extremePoints` reuse it verbatim in finite dimensions.
+
+**`le_iSup₂` needs the motive spelled out.** For `⨆ x ∈ S, f x` the family is
+`fun w (_ : w ∈ S) => f w`, and it has to be supplied as `le_iSup₂ (f := …) z hz`; elaboration does
+not find it from the goal.
+
+**`IsFace`'s subset field is `hface.toIsExtreme.1`.** `IsFace` extends Mathlib's `IsExtreme ℝ C C'`,
+whose first component is `C' ⊆ C`. There is no `IsFace.subset`.
+
+**Theorem 32.4 does not go through Theorem 23.7.** The subgradient inequality at `z` and maximality
+at `z` sandwich `⟨z - x, y⟩` between `f x` and `f x`; extracting `f x` as a real with
+`EReal.exists_coe_of_ne_bot_of_lt_top` and cancelling is the whole proof. Corollary 32.4.1
+(`le_of_mem_normalCone`) is `map_sub` plus `LinearMap.sub_apply` plus `linarith`, with no convexity
+hypothesis at all.
+
+**Not done**: Thm 32.3 and Cors 32.2.1, 32.3.1, 32.3.3, 32.3.4, all blocked on Theorems 18.4–18.5
+for *unbounded* closed convex sets (extreme directions), which `Face.lean` has only in the compact
+case; and the "supremum is attained" clause of Cor 32.3.2, which needs Thm 10.1.
+
+### `Tdaf/Analysis/Convex/Face.lean`
+
+§18's facial structure: **Theorems 18.1 and 18.2** in full, and **Theorems 18.4 and 18.5** for
+compact sets.
+
+```lean
+structure IsFace (C C' : Set E) : Prop extends IsExtreme ℝ C C' where
+  convex : Convex ℝ C'
+```
+
+**Rockafellar's face is not Mathlib's `IsExtreme`, even for convex `C`.** `{0, 1}` is an extreme
+subset of `[0, 1]` and is not convex, so it is not a face. The convexity field is therefore real,
+and everything else is inherited: `IsFace.trans`, `.inter`, `.mono`, `isFace_sInter`,
+`isFace_singleton : IsFace C {x} ↔ x ∈ C.extremePoints ℝ`, `IsExposed.isFace`.
+
+The rest of the file:
+
+* `IsFace.subset_of_relint_inter_nonempty` — **Thm 18.1**. Stated *without* `Convex ℝ D`: the proof
+  only uses `exists_one_lt_smul_mem_of_mem_relint`, which needs nothing about `D`. The `x = z` case
+  needs no separate treatment because that lemma already covers it.
+* `IsFace.eq_inter_closure` (**Cor 18.1.1**) and `IsFace.isClosed`.
+* `IsFace.eq_of_relint_inter_nonempty` — **Cor 18.1.2**.
+* `IsFace.disjoint_relint`, `IsFace.subset_intrinsicFrontier`, `IsFace.affineSpan_ne`,
+  `IsFace.finrank_vectorSpan_lt` — **Cor 18.1.3**. The dimension half is proved directly rather
+  than through Corollary 6.3.3: equal `finrank` of the direction spaces plus a shared point makes
+  the affine hulls equal, and then `ri C'` would sit inside `ri C`.
+* `exists_isFace_subset_relint` — the engine of **Thm 18.2**; `exists_isFace_mem_relint`,
+  `eq_iUnion_relint_isFace`, `IsFace.relint_pairwise_disjoint`, `IsFace.relint_maximal` are the
+  four halves of the statement. `Convex.isFace_inter_setOf_eq` (an exposed face is a face) and
+  `notMem_relint_iff_exists_isMaxOn` (**Cor 11.6.2**) are what make the smallest face containing a
+  relatively open convex `D` meet `ri C'`; Corollary 6.5.2 finishes.
+* `exists_notMem_relint_mem_segment` — **Thm 18.4** for compact `C`, with no convexity hypothesis.
+  `T = {t | x + t • d ∈ C}` is compact, and prolongation pushes `max T` and `min T` out of `ri C`.
+* `convexHull_extremePoints` — **Cor 18.5.1**, Minkowski's theorem, `conv (ext C) = C` for compact
+  convex `C`. **Mathlib does not have this**: `closure_convexHull_extremePoints` only gives the
+  closed convex hull, and the closure cannot be dropped in general because `ext C` need not be
+  closed. Rockafellar's induction on `dim C`, via Theorems 18.2 and 18.4.
+* `extremePoints_nonempty` — **Cor 18.5.3** for compact `C`, from Minkowski plus
+  `convexHull_empty`.
+
+**Not done**: Thms 18.3, 18.6 (Straszewicz), 18.7, 18.8, Cor 18.5.2, and the unbounded halves of
+18.4 and 18.5. They all speak of `conv S` for `S` a set of points *and directions*, which has no
+definition here yet — §17 only has the pointwise `exists_of_mem_convexHull_add_coneHull`. See the
+"What is not here" block in the module docstring for the individual extra obstructions.
+
+### `Tdaf/Analysis/Convex/Helly.lean`
+
+§21's *unblocked* half: **Theorems 21.1, 21.2, 21.6 and Corollaries 21.6.1, 21.6.2**.
+
+```lean
+theorem alternative_of_convex_system [Nonempty ι] (hC : Convex ℝ C)                 -- Thm 21.1
+    (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i)) (hdom : ∀ i, ri C ⊆ dom (f i)) :
+    (∃ x ∈ C, ∀ i, f i x < 0) ∨
+      ∃ l : ι → ℝ, (∀ i, 0 ≤ l i) ∧ l ≠ 0 ∧
+        ∀ x ∈ C, (0 : EReal) ≤ ∑ i, (l i : EReal) * f i x
+theorem alternative_of_convex_system_affine (hC : Convex ℝ C) …                     -- Thm 21.2
+    (hfeas : ∃ x ∈ ri C, ∀ j, a j x ≤ 0) :
+    (∃ x ∈ C, (∀ i, f i x < 0) ∧ ∀ j, a j x ≤ 0) ∨
+      ∃ (l : ι → ℝ) (μ : κ → ℝ), (∀ i, 0 ≤ l i) ∧ (∀ j, 0 ≤ μ j) ∧ l ≠ 0 ∧
+        ∀ x ∈ C, (0 : EReal) ≤ (∑ i, (l i : EReal) * f i x) + ((∑ j, μ j * a j x : ℝ) : EReal)
+```
+
+The weighted sum is read in `EReal`, where `0 · (+∞) = 0` already implements Rockafellar's
+convention that a vanishing multiplier drops its constraint — no `0⁺` bookkeeping is needed
+anywhere in §21.
+
+**Both proofs are the book's, with `R^m` read as `ι → ℝ` (resp. `(ι ⊕ κ) → ℝ`).** The set
+`C₁ = {z | ∃ x ∈ C, ∀ i, fᵢ x < zᵢ}` misses the non-positive orthant exactly when the strict system
+is unsolvable, and the separating functional's coordinates `l i = g (Pi.single i 1)` are the
+multipliers. The orthant forces `l ≥ 0` (feed it `Pi.single i (-(c+1)/(-l i))`), and the *properness*
+of the separation forces `l ≠ 0`. Separation only gives the inequality where every `fᵢ` is finite —
+that is, on `ri C` — so **Corollary 7.3.3** (`ConvexFn.le_of_mem_closure`) carries it to
+`cl (ri C) = cl C ⊇ C`; the ε in `fᵢ x < (fᵢ x).toReal + ε` is removed by a one-line
+`ε := δ/(L+1)` contradiction rather than by a limit.
+
+**Theorem 21.2 splits the index type instead of the index range.** Rockafellar cuts `1, …, m` at
+`k`; here `ι` indexes the convex constraints and `κ` the affine ones. The affine constraints enter
+`C₁` as *equations*, and they are `E →ᵃ[ℝ] ℝ` rather than `EReal`-valued: `combo_affine_sum`,
+`convexFn_coe_affine_sum` and `eq_zero_of_nonneg_of_mem_relint_affine_sum` are the three lemmas the
+proof needs, and none of them requires the `AffineMap` module structure (a finite combination of
+affine maps is handled pointwise). `polyhedral_nonpos_orthant` supplies the polyhedrality that
+**Theorem 20.2** wants; its `¬(C₁ ⊆ hyperplane)` clause is what rules out `l = 0`, via the
+observation that a combination of affine functions attaining its minimum over `C` at a point of
+`ri C` is constant on `C`.
+
+**Theorem 21.1 is not derived from Theorem 21.2** even though it is the case `κ = Empty`. Rockafellar
+notes that §21 can be read without §20 provided 21.2, 21.4 and 21.5 are skipped, and Corollary
+28.2.1 takes exactly that cheaper route — 21.1 uses only Theorem 11.3.
+
+**Theorem 21.6 comes from Mathlib.** `helly_finite` is an alias for `Convex.helly_theorem'`, which
+Mathlib proves from Radon's theorem. Rockafellar derives 21.6 from Corollary 21.3.2; taking
+Mathlib's route means Corollaries 21.6.1 and 21.6.2 do *not* wait on Theorem 21.3. Corollary 21.6.1
+applies Helly to `C` together with the sublevel sets; the only fiddly step is the counting lemma
+`S.card + T.card ≤ I.card`, done by injecting `S` and `T` into `I` along `some ∘ inl` and
+`some ∘ inr`. Corollary 21.6.2 states the sparsity as `∃ S l, S.card ≤ n + 1 ∧ (∀ i ∉ S, l i = 0)`,
+which sidesteps deciding `l i ≠ 0`.
+
+**What §21 still owes.** Theorems 21.3, 21.4, 21.5 and Corollaries 21.3.1, 21.3.2 are blocked
+*upstream*: Theorem 21.3 goes through the positively homogeneous function generated by
+`conv {fᵢ* | i ∈ I}`, whose conjugate is **Theorem 13.5** (deferred), and extracts the multipliers by
+**Corollary 17.1.3**, the directions half of Carathéodory (§17, not yet done). 21.4/21.5 weaken
+21.3's recession hypothesis using §20, and 21.3.1/21.3.2 are its corollaries.
+
+### `Tdaf/Analysis/Convex/Optimization/Perturbation.lean`
+
+§29: **Theorem 29.1** in full, plus the closed-convex clause of Corollary 29.1.1 and the
+nonemptiness half of Corollary 29.1.4.
+
+```lean
+abbrev Bifun (U X : Type*) := U → X → EReal
+def graphFn (F : Bifun U X) : U × X → EReal := fun p => F p.1 p.2
+noncomputable def infBifun (F : Bifun U X) : U → EReal := fun u => ⨅ x, F u x
+def domBifun (F : Bifun U X) : Set U := {u | ∃ x, F u x ≠ ⊤}
+def ConvexBifun (F : Bifun U X) : Prop := ConvexFn (graphFn F)
+def Consistent (F) : Prop := (0 : U) ∈ domBifun F
+def StronglyConsistent (F) : Prop := (0 : U) ∈ ri (domBifun F)
+def StrictlyConsistent (F) : Prop := (0 : U) ∈ interior (domBifun F)
+def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
+  {v | infBifun F 0 ≠ ⊤ ∧ infBifun F 0 ≠ ⊥ ∧
+    (⨅ u, (((B u v : ℝ) : EReal) + infBifun F u)) = infBifun F 0}
+theorem convexFn_infBifun (hF : ConvexBifun F) : ConvexFn (infBifun F)
+theorem dom_infBifun (F : Bifun U X) : dom (infBifun F) = domBifun F
+theorem iInf_add_infBifun_le (B) (F) (v) :
+    (⨅ u, (((B u v : ℝ) : EReal) + infBifun F u)) ≤ infBifun F 0
+theorem mem_kuhnTucker_iff_neg_mem_subgradient (ht) (hb) :
+    v ∈ KuhnTucker B F ↔ -v ∈ subgradient B (infBifun F) 0
+theorem kuhnTucker_eq_neg_subgradient (ht) (hb) :
+    KuhnTucker B F = -(subgradient B (infBifun F) 0)
+theorem kuhnTucker_nonempty_of_stronglyConsistent [IsCompatiblePairing B] [FiniteDimensional ℝ U]
+    (hF : ConvexBifun F) (hp : Proper (infBifun F)) (hs : StronglyConsistent F)
+    (ht : infBifun F 0 ≠ ⊤) : (KuhnTucker B F).Nonempty
+```
+
+**`KuhnTucker` is Rockafellar's definition, and that is the point.** The plan's draft used the
+inequality `inf F 0 ≤ ⟨u, v⟩ + inf F u`, which would have made Theorem 29.1 an `Iff.rfl` — the cheat
+`08-surface.md` §8.4 item 4 forbids. The book (≈ line 11740) says "finite and equal to `inf F 0`",
+so the file says that, and `mem_kuhnTucker_iff_forall_le` derives the inequality form from
+`iInf_add_infBifun_le` (evaluate the infimum at `u = 0`, where `B 0 v = 0`).
+
+**`domBifun` is `{u | ∃ x, F u x ≠ ⊤}`, not `{u | F u ≠ fun _ => ⊤}`.** The two agree, but the
+existential form is what `dom_iInf_right` states and what `Set.mem_setOf` unfolds to in one step.
+
+**Theorem 29.1's convexity is `convexFn_iInf_right`, unmodified.** `infBifun F` is definitionally
+`fun u => ⨅ x, graphFn F (u, x)`, which is that lemma's exact shape; there is nothing to massage.
+
+**The `EReal` rearrangement in the subgradient equivalence is one private lemma.**
+`(c : EReal) + ((-p : ℝ) : EReal) ≤ w ↔ (c : EReal) ≤ (p : EReal) + w` (`coe_add_neg_le_iff`) is all
+that separates `-v ∈ ∂(inf F)(0)` from the Kuhn–Tucker inequality. Both sides of the coercion are
+real, so no `∞ - ∞` case arises and the proof is `induction w`.
+
+**Set negation is a preimage, so every property transfers.** With
+`KuhnTucker B F = -(∂(inf F)(0))`, convexity is `(convex_subgradient …).neg` and closedness is
+`(isClosed_subgradient …).neg`; nonemptiness is cheaper still — take the `y` that Theorem 23.4
+supplies and exhibit `-y` through `mem_kuhnTucker_iff_neg_mem_subgradient` plus `neg_neg`.
+Remember that `open Pointwise` is needed at file scope for `-(S : Set V)` to elaborate.
+
+**`StronglyConsistent` matches Theorem 23.4 exactly.** `0 ∈ ri (domBifun F)` plus
+`dom (infBifun F) = domBifun F` is literally the hypothesis of
+`subgradient_nonempty_of_mem_relint_dom`; no `ri`-commutation lemma is involved.
+
+### `Tdaf/Analysis/Convex/Optimization/Lagrangian.lean`
+
+§§28–29, the Lagrangian half: the definition, its identification with a concave conjugate, the
+infimum identity and the Lagrangian description of Kuhn–Tucker vectors.
+
+```lean
+noncomputable def lagrangian (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : V → X → EReal :=
+  fun v x => ⨅ u, ((B u v : ℝ) : EReal) + F u x
+theorem lagrangian_eq_concaveConj (B) (F) (v) (x) :
+    lagrangian B F v x = concaveConj B (fun u => -(F u x)) v
+theorem iInf_lagrangian (B) (F) (v) :
+    (⨅ x, lagrangian B F v x) = ⨅ u, (((B u v : ℝ) : EReal) + infBifun F u)
+theorem mem_kuhnTucker_iff_iInf_lagrangian :
+    v ∈ KuhnTucker B F ↔ infBifun F 0 ≠ ⊤ ∧ infBifun F 0 ≠ ⊥ ∧
+      (⨅ x, lagrangian B F v x) = infBifun F 0
+theorem concaveFn_lagrangian (B) (F) (x) : ConcaveFn (fun v => lagrangian B F v x)
+```
+
+**`L` is `concaveConj` on the nose, with no reflected argument.** `concaveConj B g v` is
+`⨅ u (⟨u, v⟩ - g u)`, so `L(v, x) = concaveConj B (fun u => -(F u x)) v` needs only
+`sub_eq_add_neg` and `neg_neg`. The plan's `-(conj B (fun u => -(F u x)) (-v))` is the same
+function, but going through `concaveConj` keeps `Duality/ConcaveConj.lean`'s lemmas applicable
+verbatim — in particular `concaveFn_concaveConj`, which proves concavity of `L(·, x)` **with no
+hypothesis on `F`**.
+
+**`Tdaf.EReal.iInf_add_coe` is the lemma `iInf_lagrangian` needs, and it had to be written.**
+`(⨅ i, u i) + (r : EReal) = ⨅ i, (u i + r)` for a *real* `r` is not in Mathlib and is not a
+`Monotone`/`Galois` consequence, because `iInf` does not commute with `EReal` addition in general.
+The proof is the standard "add `-r` back": `≤` is `le_iInf ∘ add_le_add`, and the reverse direction
+applies that same bound to `fun i => u i + r` at `-r` and cancels with
+`EReal.add_sub_cancel_right` / `EReal.sub_add_cancel`. It lives in `Order/EReal.lean` next to
+`biSup_add_coe`, and `Optimization/Adjoint.lean` reuses it.
+
+**The two infima swap with `iInf_comm`, but only after `add_comm`.** `⨅ x ⨅ u (c + F u x)` has the
+constant on the *left*, and `iInf_add_coe` wants it on the right; the file does
+`rw [infBifun_apply, add_comm, Tdaf.EReal.iInf_add_coe]` and that single `add_comm` rewrites both
+occurrences at once, so a trailing `iInf_congr fun x => add_comm _ _` is "No goals to be solved".
+
+**`mem_kuhnTucker_iff_iInf_lagrangian` is `rw [KuhnTucker, Set.mem_ofPred_eq, iInf_lagrangian]`.**
+`Set.mem_ofPred_eq` is the unfolding lemma for a set given by `{v | P v}` in this Mathlib version;
+`Set.mem_setOf_eq` also works but leaves the conjunction in a shape `rw` cannot enter.
+
+### `Tdaf/Analysis/Convex/Optimization/Adjoint.lean`
+
+§30: **Theorem 30.1** in full, **Theorem 30.2**, **Corollary 30.2.2**, and the normality-free
+half of Theorem 30.5.
+
+```lean
+noncomputable def adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) : Bifun Y V :=
+  fun y v => ⨅ p : U × X, (F p.1 p.2 + ((Bu p.1 v - Bx p.2 y : ℝ) : EReal))
+theorem adjointBifun_eq_neg_conj_graphFn (Bu) (Bx) (F) (y) (v) :
+    adjointBifun Bu Bx F y v = -(conj (prodPairing Bu Bx) (graphFn F) (-v, y))
+def adjointSwap (V Y) : (Y × V) →ₗ[ℝ] (V × Y) :=
+  LinearMap.prod (-LinearMap.snd ℝ Y V) (LinearMap.fst ℝ Y V)
+theorem concaveFn_graphFn_adjointBifun (Bu) (Bx) (F) :
+    ConcaveFn (graphFn (adjointBifun Bu Bx F))
+theorem adjointBifun_zero_eq_concaveConj (Bu) (Bx) (F) :
+    adjointBifun Bu Bx F 0 = concaveConj Bu (fun u => -(infBifun F u))
+theorem adjointBifun_zero_le (Bu) (Bx) (F) (v) : adjointBifun Bu Bx F 0 v ≤ infBifun F 0
+theorem mem_kuhnTucker_iff_adjointBifun_zero_eq (Bx) : …
+theorem iSup_adjointBifun_zero_le (Bu) (Bx) (F) : (⨆ v, adjointBifun Bu Bx F 0 v) ≤ infBifun F 0
+noncomputable def concaveAdjointBifun (Bu) (Bx) (G : Bifun Y V) : Bifun U X :=
+  fun u x => ⨆ q : Y × V, (G q.1 q.2 + ((Bx x q.1 - Bu u q.2 : ℝ) : EReal))
+noncomputable def clBifun (F : Bifun U X) : Bifun U X := fun u x => clFn (graphFn F) (u, x)
+def ClosedBifun (F : Bifun U X) : Prop := ClosedFn (graphFn F)
+def ConcaveBifun (G : Bifun U X) : Prop := ConcaveFn (graphFn G)
+theorem surjective_adjointSwap : Function.Surjective (adjointSwap V Y)
+theorem concaveAdjointBifun_adjointBifun_eq_biconj (Bu) (Bx) (F) (u) (x) :
+    concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) u x
+      = biconj (prodPairing Bu Bx) (graphFn F) (u, x)
+theorem concaveAdjointBifun_adjointBifun_eq_clBifun (hF : ConvexBifun F) :
+    concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) = clBifun F
+theorem adjointBifun_clBifun : adjointBifun Bu Bx (clBifun F) = adjointBifun Bu Bx F
+```
+
+**`F** = cl F` is one reindexing.** Both adjoints are conjugates read at the reflected point
+`adjointSwap q = (-v, y)`, so `F**` is a supremum over `Y × V` of exactly the summands the
+biconjugate takes over `V × Y`, evaluated at `adjointSwap q`. `adjointSwap` is onto — given
+`(v, y)` take `q = (y, -v)` — and `Function.Surjective.iSup_comp` closes the gap. No sign lemma is
+involved; the whole proof of `concaveAdjointBifun_adjointBifun_eq_biconj` is the reindexing plus
+`add_comm`, and Fenchel–Moreau does the rest.
+
+**The blocker was a missing instance, not a missing theorem.** `biconj_eq_clFn` on `U × X` asks for
+`IsCompatiblePairing (prodPairing Bu Bx)`, and `Duality/Pairing.lean` had no product instance, so
+it would have had to be carried as a hypothesis at every use site. It is derivable:
+continuity is componentwise, and surjectivity is the splitting `g (u, x) = g (u, 0) + g (0, x)`
+through `ContinuousLinearMap.inl`/`inr`. `instIsContinuousPairingProd` and
+`instIsCompatiblePairingProd` now live next to the other pairing instances, and Theorem 30.1 needs
+no hypothesis mentioning `U × X` at all.
+
+**`cl F` is the *joint* closure, not the slice-wise one.** `clBifun F u x = cl (graph F) (u, x)`,
+which is *not* `cl (F u) x`; the bracket `⟨Fu, y⟩` sees only the slice-wise closure, which is
+exactly why `⟨(cl F) u, y⟩` and `⟨Fu, y⟩` differ and why Theorem 33.2 has two equations rather
+than one. Mixing the two up makes Theorem 33.2's second equation look trivial and false.
+
+**`(cl F)* = F*` is what makes §34 terminate.** `adjointBifun_clBifun` is `conj_clFn` applied to
+the graph function, two lines; without it the closure operations of §34 would keep producing new
+functions.
+
+**The sign flip goes on the argument, not on the pairing.** `negFst (prodPairing Bu Bx)` exists in
+`Duality/Pairing.lean` and the plan expected §30 to use it. Reading `⟨u, -v⟩ + ⟨x, y⟩` as the
+pairing of `(u, x)` with `(-v, y)` keeps `conj` for the *plain* `prodPairing`, so `convexFn_conj`,
+`closedFn_conj` and the rest apply unchanged; the reflection becomes a linear map
+(`adjointSwap`) and concavity of `F*` is `convexFn_compLin _ (convexFn_conj _ _)` after
+`concaveFn_iff_convexFn_neg`. No hypothesis on `F` is needed anywhere in Theorem 30.1's concavity
+clause.
+
+**Group the finite terms inside one coercion.** Writing
+`F u x + ((⟨u, v⟩ - ⟨x, y⟩ : ℝ) : EReal)` — one `EReal` addition, one real subtraction — is
+strictly better than `F u x - ⟨x, y⟩ + ⟨u, v⟩`, which is two `EReal` operations and can hit `∞ - ∞`
+where the first form cannot. The private lemma `neg_coe_sub`,
+`-(((-c : ℝ) : EReal) - w) = w + (c : EReal)`, is the only sign bookkeeping the file needs; it goes
+through `Tdaf.EReal.neg_add` with `.inl (EReal.coe_ne_bot _)`.
+
+**`[IsContinuousPairing (prodPairing Bu Bx)]` does not elaborate.** `IsContinuousPairing B` demands
+a `TopologicalSpace` on `B`'s *domain*, i.e. on `U × X`, which nothing in §30 supplies; the usable
+form is `[IsContinuousPairing (prodPairing Bu Bx).flip]`, matching `closedFn_conj`'s own context
+(`Duality/Conjugate.lean`, `section ConjClosed`). With that and `closedFn_compLin`
+(`Operations/Closed.lean`) the closedness half of Theorem 30.1 is
+`closedFn_compLin closedFn_conj continuous_adjointSwap`.
+
+**An explicit argument silently shadows the section variable an instance binder refers to.**
+`theorem closedConcaveFn_graphFn_adjointBifun [IsContinuousPairing (prodPairing Bu Bx).flip]
+(Bu : …) (Bx : …)` type-checks its *statement* but then fails instance search, because the binder
+saw the section's `Bu`/`Bx` and the conclusion sees the explicit ones. Any statement whose
+hypotheses mention the pairing must leave the pairing implicit.
+
+**Theorem 30.2 is `iInf_lagrangian`'s swap again.** `adjointBifun_zero_apply` uses
+`Tdaf.EReal.iInf_add_coe` exactly as `Lagrangian.lean` does (and hits the same "No goals" trap from
+`add_comm` rewriting both occurrences). The result must be phrased with `concaveConj`, not `conj`:
+`inf F` is convex, its *convex* conjugate is not `F* 0`, and `g* ≠ -(-g)*`.
+
+**Weak duality is free.** `adjointBifun_zero_le` is `iInf_add_infBifun_le` from
+`Perturbation.lean`, and `iSup_adjointBifun_zero_le` is `iSup_le` over it.
+
+**`ImageClosedBifun` is the predicate §33 runs on, and it is strictly weaker than `ClosedBifun`.**
+`ClosedBifun F` is closedness of the graph function on `U × X`; `ImageClosedBifun F` is closedness
+of every slice `F u`. `ClosedBifun.imageClosedBifun` is the implication — take the two cases of
+`closedFn_iff` and push each through `x ↦ (u, x)`, using `lowerSemicontinuous_comp` for the
+semicontinuity one — and there is no converse. The definition needs only `[TopologicalSpace X]`
+while the slice lemma needs `AddCommGroup` and `IsTopologicalAddGroup` on both factors (it unfolds
+`closedFn_iff`, whose properness clause is stated over a topological group), so the two live in
+separate sections; putting them together makes instance search fail on `AddCommGroup (U × X)`.
+
+### `Tdaf/Analysis/Convex/Saddle/Closure.lean`
+
+§34: **Theorem 34.1**, both halves, with the closedness vocabulary of §33–§34.
+
+```lean
+noncomputable def lowerCl (K : U × X → EReal) : U × X → EReal := partialCl₂ (partialCl₁ K)
+noncomputable def upperCl (K : U × X → EReal) : U × X → EReal := partialCl₁ (partialCl₂ K)
+def LowerClosedFn (K) : Prop := lowerCl K = K
+def UpperClosedFn (K) : Prop := upperCl K = K
+def FullyClosedFn (K) : Prop := ConvexClosedFn K ∧ ConcaveClosedFn K
+noncomputable def saddleSwap (K : U × X → EReal) : X × U → EReal := fun q => -(K (q.2, q.1))
+theorem fullyClosedFn_iff : FullyClosedFn K ↔ LowerClosedFn K ∧ UpperClosedFn K
+theorem partialCl₁_saddleSwap (K) : partialCl₁ (saddleSwap K) = saddleSwap (partialCl₂ K)
+theorem upperClosedFn_upperCl (Bu) [IsCompatiblePairing Bu] (Bx) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hK : ConcaveConvexFn K) : UpperClosedFn (upperCl K)
+theorem lowerClosedFn_lowerCl … : LowerClosedFn (lowerCl K)
+```
+
+**Theorem 34.1 is Theorem 33.2 twice and Theorem 30.1 once.** For `F = bifunOfSaddle Bx K`,
+Theorem 33.1 gives `⟨Fu, y⟩ = cl₂ K`; Theorem 33.2's first equation turns `cl₁ cl₂ K` into
+`⟨u, F* y⟩`; its second equation turns `cl₂ cl₁ cl₂ K` into `⟨(cl F) u, y⟩`; the first equation
+again turns `cl₁ cl₂ cl₁ cl₂ K` into `⟨u, (cl F)* y⟩`, and `(cl F)* = F*` closes the loop. Nothing
+in the argument is specific to the upper closure except the order of the two closures.
+
+**The lower half is the upper half at the swap.** `saddleSwap K = -K` with the arguments
+exchanged satisfies `cl₁ ∘ swap = swap ∘ cl₂` and `cl₂ ∘ swap = swap ∘ cl₁` — both are one
+application of `clConcave_neg` / `neg_clConcave` — so `upperCl (saddleSwap K) = saddleSwap
+(lowerCl K)` and lower closedness of `K` *is* upper closedness of `saddleSwap K`. The swapped
+pairings are `Bx.flip` and `Bu.flip`, so the lower half needs `IsCompatiblePairing Bu.flip` and a
+topology on `V` on top of what the upper half needs, and `Bu.flip.flip` needs
+`instIsCompatiblePairingFlipFlip` (added to `Duality/Pairing.lean` for exactly this).
+
+**The auxiliary spaces have to be explicit arguments.** `upperCl K` mentions only `U`, `Y` and
+`K`; the pairings `Bu` and `Bx` appear only in the hypotheses, so nothing can infer them and they
+are taken as explicit arguments with their instance binders attached *to the theorem* rather than
+to the section. Putting the instances on a `variable` line and the pairings in the theorem's own
+binder list is the shadowing trap recorded under `Adjoint.lean`.
+
+**Fully closed = lower closed and upper closed, in three lines each way.** Forward is rewriting
+with `cl₁ K = K` and `cl₂ K = K`; backward is the idempotence of the two partial closures
+(Corollary 33.1.1), which the file already has as `convexClosedFn_partialCl₂` and
+`concaveClosedFn_partialCl₁`.
+
+### `Tdaf/Analysis/Convex/Saddle/Correspondence.lean`
+
+§33: **Theorem 33.3** and **Corollary 33.3.1** — the one-to-one correspondence between closed
+convex bifunctions and lower closed concave-convex functions.
+
+```lean
+theorem eq_of_bracket_eq (hF : ConvexBifun F) (hG : ConvexBifun G) (hFi : ImageClosedBifun F)
+    (hGi : ImageClosedBifun G) (h : bracket Bx F = bracket Bx G) : F = G
+theorem partialCl₁_bracket (Bu) [IsCompatiblePairing Bu] (Bx) (hF : ConvexBifun F) :
+    partialCl₁ (fun p : U × Y => bracket Bx F p.1 p.2)
+      = fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2
+theorem partialCl₂_concaveBracket_adjoint … (hF) (hcl : ClosedBifun F) :
+    partialCl₂ (fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2)
+      = fun p : U × Y => bracket Bx F p.1 p.2
+theorem lowerClosedFn_bracket … : LowerClosedFn (fun p : U × Y => bracket Bx F p.1 p.2)
+theorem exists_unique_convexBifun_bracket_eq … (hK : ConcaveConvexFn K) (hlc : LowerClosedFn K) :
+    ∃! F : Bifun U X, ConvexBifun F ∧ ClosedBifun F ∧
+      (fun p : U × Y => bracket Bx F p.1 p.2) = K
+theorem exists_unique_bifun_of_closure_pair … (h1 : partialCl₁ Klow = Kup)
+    (h2 : partialCl₂ Kup = Klow) : ∃! F : Bifun U X, …
+```
+
+**Uniqueness is Theorem 33.1's inversion formula, not a new argument.** `F u = cl (F u)` for an
+image-closed `F`, and `cl (F u) = ⟨Fu, ·⟩*` (`clFn_eq_conj_bracket`), so equal brackets force equal
+bifunctions in five rewriting steps. This is why the correspondence is stated against
+`ImageClosedBifun` rather than `ClosedBifun`: the bracket cannot see the joint closure.
+
+**The existence half produces a *closed* bifunction, it does not assume one.** The candidate is
+`bifunOfSaddle Bx K`; its bracket is `cl₂ K = K` by Theorem 33.1 plus `hlc.convexClosedFn`, and its
+slices are conjugates hence closed. Joint closedness then comes from `eq_of_bracket_eq` applied to
+`clBifun F` and `F`: both are convex and image-closed, and `adjointBifun_clBifun` plus Theorem 33.2
+show their brackets agree.
+
+**The two brackets of a closed convex bifunction are a closure pair.** Splitting
+`lowerClosedFn_bracket` into `partialCl₁_bracket` and `partialCl₂_concaveBracket_adjoint` is what
+makes Corollary 33.3.1 and Theorem 34.2 available: the pair `(⟨Fu, y⟩, ⟨u, F*y⟩)` satisfies
+`cl₁ K̲ = K̄` and `cl₂ K̄ = K̲` on the nose, which is Corollary 33.3.1's hypothesis verbatim.
+
+**`(Bx := Bx)` has to be supplied when the pairing appears only in an instance binder.**
+`bracket_concaveAdjointBifun_eq_partialCl₂` and `partialCl₂_concaveBracket_adjointBifun` take `Bx`
+implicitly; calling them leaves `IsCompatiblePairing (LinearMap.flip ?m)` stuck. Naming the pairing
+in the call is the fix — the same shadowing/inference trap as in `Adjoint.lean`, seen from the other
+side.
+
+### `Tdaf/Analysis/Convex/Saddle/Equiv.lean`
+
+§34: **Theorem 34.2** — the equivalence classes of closed saddle-functions are the order intervals
+between the two brackets of a closed convex bifunction.
+
+```lean
+def SaddleEquiv (K L : U × X → EReal) : Prop :=
+  partialCl₁ K = partialCl₁ L ∧ partialCl₂ K = partialCl₂ L
+def ClosedSaddleFn (K : U × X → EReal) : Prop :=
+  partialCl₁ (partialCl₂ K) = partialCl₁ K ∧ partialCl₂ (partialCl₁ K) = partialCl₂ K
+def saddleClass (Klow Kup : U × X → EReal) : Set (U × X → EReal) := {K | Klow ≤ K ∧ K ≤ Kup}
+theorem partialCl₂_eq_of_mem_saddleClass (h2 : partialCl₂ Kup = Klow)
+    (hK : K ∈ saddleClass Klow Kup) : partialCl₂ K = Klow
+theorem saddleEquiv_of_mem_saddleClass / closedSaddleFn_of_mem_saddleClass
+theorem exists_unique_bifun_of_closedSaddleFn … (hK : ConcaveConvexFn K) (hcl : ClosedSaddleFn K)
+```
+
+**The whole theorem is a squeeze.** If `cl₂ K̄ = K̲` then `cl₂ K̲ = cl₂ cl₂ K̄ = cl₂ K̄ = K̲`, so for
+`K̲ ≤ K ≤ K̄` monotonicity gives `K̲ = cl₂ K̲ ≤ cl₂ K ≤ cl₂ K̄ = K̲`. Both closures are therefore
+constant on the interval, and everything else — one equivalence class, every member closed, the
+ends are the lower and upper closed representatives — is a corollary of that one fact. The only new
+lemmas needed were `partialCl₁_mono`, `partialCl₂_mono` (`Saddle/Defs.lean`) and `clConcave_mono`
+(`Duality/ConcaveConj.lean`).
+
+**Closed is not lower closed.** `ClosedSaddleFn` asks the two closures to be *equivalent* to `K`,
+which is Rockafellar's definition and is what allows a whole interval of closed functions with only
+two distinguished members. Stating it as the two equations `cl₁ cl₂ K = cl₁ K` and
+`cl₂ cl₁ K = cl₂ K` makes it match Corollary 33.3.1's closure-pair hypothesis literally, so the
+converse half of Theorem 34.2 is a one-line call with `K̲ := cl₂ K` and `K̄ := cl₁ K`.
+
+**The interval lemmas need no pairing at all.** `partialCl₂_eq_of_mem_saddleClass` uses only
+monotonicity and idempotence of `cl₂`, so it lives in a section with topology on `X` alone; the
+`cl₁` version needs topology on `U` alone. Keeping the two apart (rather than one section carrying
+both) avoids a dozen `omit` lines, and only the last four theorems — the ones that mention a
+bifunction — carry the compatible-pairing instances.
+
+### `Tdaf/Analysis/Convex/Operations/Closed.lean`
+
+The layer-B companion to `Operations/Image.lean`, added for §30's Theorem 30.1.
+
+```lean
+theorem lowerSemicontinuous_comp (hg : LowerSemicontinuous g) {φ : E → G} (hφ : Continuous φ) :
+    LowerSemicontinuous (g ∘ φ)
+theorem closedFn_compLin (hg : ClosedFn g) (hA : Continuous A) : ClosedFn (compLin g A)
+```
+
+**Mathlib has the other composition.** `Continuous.comp_lowerSemicontinuous` is `g ∘ f` with `f`
+lower semicontinuous and `g` continuous *and monotone*; what convex analysis needs is
+precomposition, `g ∘ φ` with `φ` continuous. It is three lines from
+`lowerSemicontinuous_iff_isOpen_preimage`, and `LowerSemicontinuous.isOpen_preimage` is the form to
+reach for.
+
+**`ClosedFn` is not `LowerSemicontinuous`, so `closedFn_iff` has to be split.** The constant-`⊥`
+branch survives precomposition definitionally (`(fun _ => ⊥) ∘ A` is again the constant), and the
+other branch is the lemma above plus `hne (A x)`. `closedFn_iff` itself lives in `Closure.lean`'s
+`section Hull`, so it needs `[AddCommGroup E] [IsTopologicalAddGroup E]` — which
+`lowerSemicontinuous_compLin` does *not*, hence the `omit` in front of it.
+
+### `Tdaf/Analysis/Convex/Saddle/Defs.lean`
+
+§33: **Theorem 33.1** in both directions, **Corollary 33.1.1**, and §34's two effective domains.
+
+```lean
+structure ConcaveConvexFn (K : U × X → EReal) : Prop where
+  concave_fst : ∀ x, ConcaveFn fun u => K (u, x)
+  convex_snd : ∀ u, ConvexFn fun x => K (u, x)
+def SaddleFn (K : U × X → EReal) : Prop := ConcaveConvexFn K ∨ ConvexConcaveFn K
+def dom₁ (K : U × X → EReal) : Set U := {u | ∀ x, ⊥ < K (u, x)}
+def dom₂ (K : U × X → EReal) : Set X := {x | ∀ u, K (u, x) < ⊤}
+noncomputable def partialConj₂ (Bx) (f : U × X → EReal) : U × Y → EReal :=
+  fun p => conj Bx (fun x => f (p.1, x)) p.2
+noncomputable def partialCl₂ [TopologicalSpace X] (K : U × X → EReal) : U × X → EReal :=
+  fun p => clFn (fun x => K (p.1, x)) p.2
+noncomputable def partialCl₁ [TopologicalSpace U] (K : U × X → EReal) : U × X → EReal :=
+  fun p => clConcave (fun u => K (u, p.2)) p.1
+noncomputable def bracket (Bx) (F : Bifun U X) : U → Y → EReal := fun u y => conj Bx (F u) y
+noncomputable def bifunOfSaddle (Bx) (K : U × Y → EReal) : Bifun U X :=
+  fun u x => conj Bx.flip (fun y => K (u, y)) x
+theorem concaveFn_bracket (hF : ConvexBifun F) (Bx) (y) : ConcaveFn fun u => bracket Bx F u y
+theorem clFn_eq_conj_bracket (hF : ConvexBifun F) (u) : clFn (F u) = conj Bx.flip (bracket Bx F u)
+theorem convexBifun_bifunOfSaddle (hK : ConcaveConvexFn K) (Bx) : ConvexBifun (bifunOfSaddle Bx K)
+theorem bracket_bifunOfSaddle (hK : ConcaveConvexFn K) (p : U × Y) :
+    bracket Bx (bifunOfSaddle Bx K) p.1 p.2 = partialCl₂ K p
+theorem adjointBifun_eq_concaveConj_bracket (Bu) (Bx) (F) (y) (v) :
+    adjointBifun Bu Bx F y v = concaveConj Bu (fun u => bracket Bx F u y) v
+```
+
+**`dom₁` and `dom₂` are `∀`, not `∃`.** Rockafellar §34: `dom₁ K = {u | K(u, v) > -∞, ∀ v}`, and
+he says in the next sentence that it is *the intersection* of the effective domains of the concave
+functions `K(·, v)`. `07-saddle-algebra.md` had recorded the existential version, under which
+`dom₁ K` is a union of convex sets and need not be convex. With the universal reading
+`ConcaveConvexFn.convex_dom₁` is `convex_iInter` over `ConcaveFn.convex_domConcave`.
+
+**`cl₁` closes concavely.** `partialCl₁` is *not* `partialCl₂` with the factors swapped: for a
+concave-convex `K`, `cl₂` closes `K(u, ·)` as a convex function and `cl₁` closes `K(·, y)` as a
+concave one. The concave closure `clConcave g = -(cl (-g))` therefore had to exist first; it lives
+in `Duality/ConcaveConj.lean`, the first file with both `ConcaveFn` and `clFn` in scope.
+
+**Two supporting lemmas do most of the work.**
+`ConvexBifun.convexFn_apply` (added to `Optimization/Perturbation.lean`) says each slice `F u` of a
+convex bifunction is convex; it is *not* an instance of `convexFn_compLin`, because `x ↦ (u, x)` is
+affine and not linear, so it is `epi_combo` by hand with `a • u + b • u = u`. The file-private
+`convexFn_add_coe` says a convex function plus a real-valued affine coordinate is convex; it is
+stated against the combination law `l (a • x + b • y) = a * l x + b * l y` rather than against
+`LinearMap`, which lets one lemma serve both `p ↦ ⟨p.2, y⟩` and a product projection.
+
+**Higher-order unification bites twice here.** `convexFn_iSup` states its conclusion as
+`ConvexFn fun x => ⨆ i, f i x`; leaving `f` implicit makes Lean unfold `iSup` to `sSup (range …)`
+and try `ι := ↑(Set.range …)`, which fails with a confusing "application type mismatch". Pass
+`(f := fun y p => …)`. Worse, `closedFn_clFn _` against a goal stated through `partialCl₂` sends
+`isDefEq` into `clFn`'s `if ∃ x, lscHull f x = ⊥` branch and **times out at 200 000 heartbeats**;
+so does `convexFn_clFn` there. Both are fixed by giving the argument explicitly, and the file adds
+the `rfl` lemmas `partialCl₂_slice` and `partialCl₁_slice` so `rw` performs the reduction instead
+of unification. If a proof mentioning `clFn` or `clConcave` times out, this is the first thing to
+suspect.
+
+**Section variables must be minimal or the unused-variable linter fires.** `bracket`, `partialCl₂`
+and friends need much less than the usual `[AddCommGroup _] [Module ℝ _]` block — `clFn` needs only
+`[TopologicalSpace E]`, `closedFn_clFn` additionally `[AddCommGroup E] [IsTopologicalAddGroup E]`,
+and `bracket` needs nothing at all on `U`. The file is therefore cut into many small sections
+rather than carrying `omit … in` on half the declarations.
+
+**Instance binders mentioning a section variable cannot be shadowed by an explicit argument.**
+`theorem closedFn_bracket [IsContinuousPairing Bx.flip] (Bx : …)` silently refers to *two different*
+`Bx`; the instance binder sees the section variable and the body sees the explicit one. Where a
+hypothesis mentions the pairing (`closedFn_bracket`, `clFn_eq_conj_bracket`,
+`bracket_bifunOfSaddle`) the pairing stays implicit and the instances go on the section's `variable`
+line.
+
+**`⟨Fu, ·⟩` is closed and convex with no hypothesis on `F`.** `bracket Bx F u = conj Bx (F u)`, so
+`convexFn_conj` and `closedFn_conj` apply directly — properness and convexity of `F` are not
+needed. Only `concaveFn_bracket` uses `ConvexBifun F`, and only through `convexFn_iInf_right`.
 
 ---
 
@@ -852,7 +2033,103 @@ here.
     only when the operation is *not* a set operation on epigraphs, which among §9's cases means
     only the sum.
 
+56. **State `[Finite ι]`, recover `Fintype` in the proof.** `linter.unusedFintypeInType` fires
+    whenever `[Fintype ι]` is a hypothesis that the *statement* does not mention — which is the
+    normal situation for a theorem about `convexHull ℝ (range v)`, since the finiteness is only
+    needed to build `stdSimplex ℝ ι` inside the proof. Declare `[Finite ι]` and open with
+    `obtain ⟨hι⟩ := nonempty_fintype ι`. A bare `obtain` is enough: a local hypothesis whose type
+    is a class is used by instance search. Do *not* write `letI := hι` — that trips
+    `linter.style.haveILetI`.
+
+57. **Look for the fixed-`ε` decomposition before formalising a "triangulate around `x`" step.**
+    Rockafellar's Theorem 10.2 reduces to a vertex of the simplex by triangulating; the reduction
+    is more expensive in Lean than the theorem. The general point is reachable directly because the
+    weights satisfy an identity — `w = (1-ε) • μ + ε • ((w - (1-ε) • μ)/ε)` — that exhibits `z` as
+    `(1-ε) x + ε y` with `y` in the same simplex, *for an `ε` fixed in advance* rather than one
+    shrinking with `z`. The same shape (fix the small parameter from the target bound, then use
+    compactness to find the neighbourhood) is worth trying wherever a proof reads "for `z` close
+    enough to `x`, `x` is an interior point of the piece containing `z`".
+
+58. **`Set.mem_setOf_eq` is deprecated in favour of `Set.mem_ofPred_eq`.** It still fires inside
+    `simp only` lists copied from older files, as a deprecation warning that the verification
+    standard forbids ignoring.
+
+59. **`show` that *changes* the goal trips `linter.style.show`; use `change`.** The linter's rule
+    is that `show` is for readability — restating a goal you are already looking at — and `change`
+    is for defeq conversion. Every "unfold a `Set` membership to the underlying inequality" step is
+    a `change`.
+
+60. **Pointwise `+` on sets needs `open scoped Pointwise`.** Without it `convexHull ℝ P + K` fails
+    with `failed to synthesize HAdd (Set E) (Set E) ?m`, which reads like a coercion problem and
+    is not one.
+
+61. **`rw [← h]` with `h : p.1 = 1` rewrites *every* `1`.** Including the `1` inside `liftAt 1 P`,
+    turning it into `liftAt p.1 P`. Build the equation you actually want — `Prod.ext h rfl :
+    p = (1, p.2)` — and rewrite with that instead.
+
+62. **`PointedCone ℝ E` is `Submodule {c : ℝ // 0 ≤ c} E`, and the coercion bites twice.**
+    (a) Write `Submodule.smul_mem p (⟨a, ha⟩ : {c : ℝ // 0 ≤ c}) hx`, not
+    `p.smul_mem ⟨a, ha⟩ hx`: with dot notation the anonymous constructor is elaborated against the
+    wrong expected type and the error mentions `Real.le✝`. (b) Inside a `PointedCone` structure
+    field, `a • x` for `a : ℝ≥0` is defeq to `(a : ℝ) • x` but not syntactically equal, so each
+    field proof opens with a `change`. (c) To push a cone hull along a linear map, define the map
+    over `{c : ℝ // 0 ≤ c}` by hand (as `inrₙ` does) and use `Submodule.map_span`;
+    `LinearMap.restrictScalars` drags in an `IsScalarTower` search that is not worth the trouble.
+
+63. **`IsCompact` is a `def` with a `∀`-body, so dot notation on it silently resolves to
+    `Function.*`.** `hK.prod hL` becomes `Function.prod` and the error talks about
+    `(i : ?) → ? i × ? i`; `hK.image hf` and `hK.isClosed` fail the same way. Write
+    `IsCompact.prod hK hL`, `IsCompact.image hK hf`, `IsCompact.isClosed hK`. This is gotcha 50
+    (`Convex`) again, in a second guise — the pattern is: *if the "structure" is really a def
+    unfolding to a Pi type, dot notation is unavailable*.
+
+64. **`if_pos`, `if_neg`, `dif_pos`, `dif_neg` are all deprecated.** Their suggested replacements
+    (`ite_eq_left`, `dite_eq_right`, …) are iff-statements, not substitution rules, so they do not
+    drop in. Use the `split` tactic and discharge the impossible branch with
+    `exact absurd h ‹_›`.
+
+65. **`isCompact_stdSimplex` takes `ι` explicit and `𝕜` by instances.** `isCompact_stdSimplex _`
+    therefore feeds the underscore to `ι` and leaves `𝕜` a metavariable that instance search cannot
+    pin down. Pass `(𝕜 := ℝ)`.
+
+66. **`AffineSubspace`'s structure field is `smul_vsub_vadd_mem'`, with the three points
+    implicit.** `smul_vsub_vadd_mem t p₁ p₂ p₃ h₁ h₂ h₃ := …` fails twice over — wrong name, and
+    the points cannot be named positionally. Write `smul_vsub_vadd_mem' := by intro t p₁ p₂ p₃ h₁
+    h₂ h₃; …`. Inside the proof, membership in the `carrier` set and the predicate are defeq, and
+    so are `-ᵥ`/`-` and `+ᵥ`/`+` in a vector space, so the body can be a plain `have h : f (t • (p₁
+    - p₂) + p₃) = c := …; exact h`.
+
+67. **`IsCompatiblePairing B.flip.flip` is not found by instance search.** `Pairing.lean` provides
+    `instIsContinuousPairingFlipFlip` for the *base* class only, deliberately. Any two-sided result
+    (`IsExactSum.of_polyhedral` and friends ask for both `B` and `B.flip`) applied at `B.flip`
+    therefore needs `have : IsCompatiblePairing B.flip.flip := ‹IsCompatiblePairing B›` first —
+    the two are definitionally equal, so the term-level bridge always typechecks.
+
+68. **`StrongDual ℝ E` is an `abbrev` for `E →L[ℝ] ℝ`, and `LinearMap.toContinuousLinearMap φ x = φ x`
+    is `rfl`.** So `evalCLM B y` can be handed directly to anything expecting `E →L[ℝ] ℝ` (such as
+    `Separates`), and in finite dimensions a bare `E →ₗ[ℝ] ℝ` obtained from a cone representation is
+    promoted with `LinearMap.toContinuousLinearMap` and used without a single rewrite.
+
+69. **`EReal.le_neg` and `EReal.neg_le` are `protected`, and `neg_le_neg_iff` needs the `_root_`
+    prefix.** `a ≤ -b ↔ b ≤ -a` is `EReal.le_neg`; inside `namespace Tdaf.ConvexAnalysis` it must be
+    written `_root_.EReal.le_neg`, like every other `EReal` lemma (gotcha at the top of §1). These
+    two are the whole toolkit for `δ*(y | s) ≤ -δ*(-y | t)`-style statements: rewrite with
+    `EReal.le_neg` to move the negation across, then use `supportFn_le_iff` /
+    `supportFn_le_coe_iff`.
+
 ---
+
+**`omit … in` goes before the doc comment, not after it.** `/-- … -/ omit [Inst] in theorem foo`
+is a parse error (`unexpected token 'omit'; expected 'lemma'`); the modifier has to precede the
+whole declaration, doc comment included.
+
+**A definition that negates an `EReal` must be `noncomputable`.** `EReal.instNeg` is
+noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error names
+`EReal.instNeg` explicitly, which makes it easy to spot.
+
+**`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
+will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State
+`have`s in the contracted form and let `funext` introduce the point.
 
 ## 3. Build and verification
 

@@ -11,58 +11,124 @@ a single `partialConj` / `partialClosure` API applied twice, once in each variab
 
 ## 7.1 The one abstraction
 
-```lean
-variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] …
-variable (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+**Status: `partialConj₂`, `partialCl₁`, `partialCl₂` and the concave closure they need are done**
+(`Saddle/Defs.lean`, and `clConcave` in `Duality/ConcaveConj.lean`).
 
+```lean
 /-- Conjugate in the second variable only. -/
-noncomputable def partialConj₂ (f : U × X → EReal) : U × Y → EReal :=
+noncomputable def partialConj₂ (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (f : U × X → EReal) : U × Y → EReal :=
   fun p => conj Bx (fun x => f (p.1, x)) p.2
 
-/-- Close in the second variable only (Rockafellar's `cl₂`). -/
-noncomputable def partialCl₂ (f : U × X → EReal) : U × X → EReal :=
-  fun p => clFn (fun x => f (p.1, x)) p.2
-```
+/-- Close in the second variable only, convexly (Rockafellar's `cl₂`). -/
+noncomputable def partialCl₂ [TopologicalSpace X] (K : U × X → EReal) : U × X → EReal :=
+  fun p => clFn (fun x => K (p.1, x)) p.2
 
-with `partialConj₁`, `partialCl₁` the mirror images — and, from `Duality/Pairing.lean`, the product
-pairing `prodPairing Bu Bx` with its sign-flip `negFst`, plus the composition law
-`conj (prodPairing Bu Bx) = partialConj₁ Bu ∘ partialConj₂ Bx`. That law is the entire technical
-content of [D8](00-overview.md#d8); see D8's sign
-table for which of {bracket, Lagrangian, adjoint, `cl₁`, `cl₂`} uses which convention.
+/-- Close in the first variable only, **concavely** (Rockafellar's `cl₁`). -/
+noncomputable def partialCl₁ [TopologicalSpace U] (K : U × X → EReal) : U × X → EReal :=
+  fun p => clConcave (fun u => K (u, p.2)) p.1
+```
 
 Facts to prove once:
 
 - `partialConj₂` preserves convexity in the second variable and *reverses* it in the first
-  (Theorem 33.1: `⟨Fu, x*⟩` is concave-convex);
-- `partialConj₂ ∘ partialConj₂` (with the flipped pairing) is `partialCl₂`;
-- `partialCl₁` and `partialCl₂` commute up to equivalence (this is the substance of §34).
+  (Theorem 33.1: `⟨Fu, x*⟩` is concave-convex) — **done** (`convexFn_bracket`, `concaveFn_bracket`);
+- `partialConj₂ ∘ partialConj₂` (with the flipped pairing) is `partialCl₂` — **done**
+  (`bracket_bifunOfSaddle`);
+- `partialCl₁` and `partialCl₂` commute up to equivalence (this is the substance of §34) —
+  **done** (`upperClosedFn_upperCl`, `lowerClosedFn_lowerCl`, and Theorem 34.2's constancy of both
+  closures on an interval).
 
-Rockafellar's bracket `⟨Fu, x*⟩ = (Fu)*(x*)` is `partialConj₂ (graphFn F)`, and the Lagrangian of
+Rockafellar's bracket `⟨Fu, x*⟩ = (Fu)*(x*)` is `partialConj₂ (graphFn F)` (`bracket`, with
+`partialConj₂_graphFn` recording that they agree), and the Lagrangian of
 [sub-plan 6](06-optimization.md#63-optimizationlagrangianlean--2829-via-partial-conjugation) is
-`-partialConj₁`. Naming these once collapses §33, §34, §36 and §37 substantially.
+the *concave conjugate* in the first variable. Naming these once collapses §33, §34, §36 and §37
+substantially.
 
-## 7.2 `Saddle/Defs.lean` — §33, §34
+### What actually happened
+
+**The composition law in the plan had the wrong sign, and the right one goes through the concave
+conjugate.** `conj (prodPairing Bu Bx)` is a supremum over `U × X`, whereas
+`partialConj₁ ∘ partialConj₂` is a sup-of-inf: the two are not equal, and no amount of `negFst`
+bookkeeping makes them so. What *is* true, and is what §30 and §33 both use, is
 
 ```lean
-/-- `K` is concave-convex on `U × X`: concave in the first argument, convex in the second. -/
+adjointBifun Bu Bx F y v = concaveConj Bu (fun u => bracket Bx F u y) v
+```
+
+(`adjointBifun_eq_concaveConj_bracket`): the adjoint is the partial conjugate in `x`, taken
+convexly, followed by the partial conjugate in `u`, taken **concavely**. That is D8's real content.
+The proof is `iInf_prod` plus `Tdaf.EReal.iInf_add_coe`, the same real-constant-through-an-infimum
+lemma §29 and §30 needed. With it in hand Theorem 33.2's first equation
+`⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩` is one rewrite followed by concave Fenchel–Moreau
+(`concaveConj_adjointBifun_eq_partialCl₁`), which is the payoff the design predicted.
+
+**`cl₁` is not `cl₂` conjugated by `Prod.swap`.** `cl₂` closes convexly, `cl₁` closes concavely, so
+`partialCl₁` needs the concave closure. `Duality/ConcaveConj.lean` had recorded that
+`clConcave = -(cl (-g))` "should arrive with §34"; it arrives now, and lives there rather than in
+`Saddle/Defs.lean`, because `Duality/ConcaveConj.lean` is the first file with both `ConcaveFn` and
+`clFn` in scope. `biconcaveConj_eq_clConcave` restates concave Fenchel–Moreau against it, as that
+file's design note asked.
+
+## 7.2 `Saddle/Defs.lean` — §33 (and `Saddle/{Closure,Correspondence,Equiv}.lean` — §33–§34)
+
+**Status: Theorems 33.1, 33.2, 33.3, 34.1 and 34.2 and Corollaries 33.1.1 and 33.3.1 are done.**
+§33's remaining corollaries and §34's kernels (Thms 34.3–34.5) are not.
+
+```lean
 structure ConcaveConvexFn (K : U × X → EReal) : Prop where
-  concave_fst : ∀ x, ConcaveFn (fun u => K (u, x))
-  convex_snd  : ∀ u, ConvexFn (fun x => K (u, x))
+  concave_fst : ∀ x, ConcaveFn fun u => K (u, x)
+  convex_snd  : ∀ u, ConvexFn fun x => K (u, x)
 
-def SaddleFn (K : U × X → EReal) : Prop := ConcaveConvexFn K ∨ ConcaveConvexFn (fun p => -(K p))
+def SaddleFn (K : U × X → EReal) : Prop := ConcaveConvexFn K ∨ ConvexConcaveFn K
 
-/-- The effective domains of a saddle-function. These are **not** projections of a single `dom`,
-and they must be defined before anything in §34 can even be stated. Rockafellar §34:
-`dom₁ K = {u | K (u, ·) ≢ -∞}`, `dom₂ K = {v | K (·, v) ≢ +∞}` for concave-convex `K`. -/
-def dom₁ (K : U × X → EReal) : Set U := {u | ∃ x, K (u, x) ≠ ⊥}
-def dom₂ (K : U × X → EReal) : Set X := {x | ∃ u, K (u, x) ≠ ⊤}
+/-- The effective domains of a saddle-function (Rockafellar §34): **intersections**, not unions. -/
+def dom₁ (K : U × X → EReal) : Set U := {u | ∀ x, ⊥ < K (u, x)}
+def dom₂ (K : U × X → EReal) : Set X := {x | ∀ u, K (u, x) < ⊤}
 
-/-- Two saddle-functions are equivalent when their partial closures agree.
-Rockafellar (line 14641) uses the **single** partial closures, not the doubled ones: `K` and `L` are
-equivalent iff `cl₁ K = cl₁ L` and `cl₂ K = cl₂ L`. Theorem 34.4's proof concludes exactly that. -/
-def SaddleEquiv (K L : U × X → EReal) : Prop :=
-  partialCl₁ K = partialCl₁ L ∧ partialCl₂ K = partialCl₂ L
+/-- Rockafellar's `⟨Fu, y⟩`. -/
+noncomputable def bracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) : U → Y → EReal :=
+  fun u y => conj Bx (F u) y
 
+/-- The bifunction attached to a saddle-function, `F u = K(u, ·)*`. -/
+noncomputable def bifunOfSaddle (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U × Y → EReal) : Bifun U X :=
+  fun u x => conj Bx.flip (fun y => K (u, y)) x
+```
+
+| Lean name | book | status |
+|---|---|---|
+| `convexFn_bracket`, `closedFn_bracket`, `concaveFn_bracket`, `concaveConvexFn_bracket` | **Thm 33.1**, first half | done |
+| `clFn_eq_conj_bracket` | **Thm 33.1**, the inversion formula `cl (Fu) = ⟨Fu, ·⟩*` | done |
+| `convexBifun_bifunOfSaddle`, `bracket_bifunOfSaddle` | **Thm 33.1**, converse half | done |
+| `convexFn_partialCl₂`, `convexClosedFn_partialCl₂`, `concaveFn_partialCl₁`, `concaveClosedFn_partialCl₁` | **Cor 33.1.1**, the pointwise clauses | done |
+| `concaveConvexFn_partialCl₂`, `concaveConvexFn_partialCl₁` | **Cor 33.1.1**, the clauses that need the correspondence | done |
+| `ConcaveConvexFn.convex_dom₁`, `.convex_dom₂` | **§34**, convexity of the effective domains | done |
+| `adjointBifun_eq_concaveConj_bracket` | the §30 ↔ §33 bridge | done |
+| `concaveConj_adjointBifun_eq_partialCl₁`, `concaveBracket_adjointBifun_eq_partialCl₁` | **Thm 33.2**, first equation `⟨u, F*y⟩ = cl₁ ⟨Fu, y⟩` | done |
+| `concaveBracket`, `convexFn_concaveBracket`, `concaveAdjointBifun_eq_conj_concaveBracket` | the concave bracket `⟨u, G y⟩` and its **Thm 33.1** clauses | done |
+| — | **Cor 33.1.2** as an `Equiv` | not done — needs `ImageClosed` and a subtype |
+| — | **Cor 33.1.3** (polyhedral) | not done — needs polyhedral bifunctions |
+| `bracket_concaveAdjointBifun_eq_partialCl₂`, `partialCl₂_concaveBracket_adjointBifun` | **Thm 33.2**, second equation `cl₂ ⟨u, F*x*⟩ = ⟨(cl F)u, x*⟩` | done |
+| `lowerCl`, `upperCl`, `LowerClosedFn`, `UpperClosedFn`, `FullyClosedFn`, `fullyClosedFn_iff` | **§33–§34**, the closedness notions | done (`Saddle/Closure.lean`) |
+| `upperClosedFn_upperCl`, `lowerClosedFn_lowerCl` | **Thm 34.1** | done (`Saddle/Closure.lean`) |
+| `ImageClosedBifun`, `eq_of_bracket_eq` | the uniqueness half of the correspondence | done (`Optimization/Adjoint.lean`, `Saddle/Correspondence.lean`) |
+| `partialCl₁_bracket`, `partialCl₂_concaveBracket_adjoint`, `lowerClosedFn_bracket`, `exists_unique_convexBifun_bracket_eq` | **Thm 33.3** | done (`Saddle/Correspondence.lean`) |
+| `le_of_partialCl₂_eq`, `exists_unique_bifun_of_closure_pair` | **Cor 33.3.1** | done (`Saddle/Correspondence.lean`) |
+| — | **Cors 33.3.2–33.3.3** | not done |
+| `SaddleEquiv`, `ClosedSaddleFn`, `saddleClass`, `partialCl₂_eq_of_mem_saddleClass`, `partialCl₁_eq_of_mem_saddleClass`, `saddleEquiv_of_mem_saddleClass`, `closedSaddleFn_of_mem_saddleClass`, `exists_unique_bifun_of_closedSaddleFn` | **Thm 34.2** | done (`Saddle/Equiv.lean`) |
+| — | **Thm 34.2**'s `dom K = dom F × dom F*` and `ri` clauses, Cors 34.2.1–4 | not done — need `ri` |
+| `closed_iff_structural` | **Thm 34.3** | not started |
+| `saddleEquiv_iff_kernel_eq` | **Thm 34.4** | not started |
+| `exists_unique_saddleEquiv_class_of_kernel` | **Thm 34.5**, Cor 34.5.1 | not started |
+
+Theorem 33.3 is the "bilinear functions ↔ linear transformations" analogy made precise, and it is
+the theorem the whole of Part VII is built on. With §7.1 in place it is Fenchel–Moreau in the second
+variable, uniformly in the first — which is exactly what `bracket_bifunOfSaddle` delivers
+pointwise; the packaging into a bijection is `exists_unique_convexBifun_bracket_eq`, and
+Theorem 34.2 upgrades it from lower closed representatives to whole equivalence classes.
+
+The §34 apparatus still to be written:
+
+```lean
 /-- The kernel is the **restriction of `K`** to `ri (dom₁ K) × ri (dom₂ K)` (book, line 14887) —
 a *function*, not its domain. Defining it as the domain would make Theorem 34.4 refutable, since
 `K` and `K + 1` would share a kernel without being equivalent. -/
@@ -70,20 +136,62 @@ noncomputable def kernel (K : U × X → EReal) : (ri (dom₁ K) ×ˢ ri (dom₂
   (ri (dom₁ K) ×ˢ ri (dom₂ K)).restrict K
 ```
 
-| Lean name | book |
-|---|---|
-| `concaveConvex_bracket` : `⟨Fu, y⟩` is concave-convex and convex-closed | **Thm 33.1**, Cor 33.1.1–3 |
-| `bracket_relint_eq` | **Thm 33.2**, Cor 33.2.1–2 |
-| `bifun_saddle_correspondence` : closed convex bifunctions ↔ **lower closed** concave-convex functions (and closed concave bifunctions ↔ **upper closed** ones) | **Thm 33.3**, Cor 33.3.1–3 |
-| `saddleFn_partialCl` | **Thm 34.1** |
-| `saddleEquiv_class_of_closed_bifun` — the *equivalence-class* form of the correspondence | **Thm 34.2**, Cor 34.2.1–4 |
-| `closed_iff_structural` | **Thm 34.3** |
-| `saddleEquiv_iff_kernel_eq` | **Thm 34.4** |
-| `exists_unique_saddleEquiv_class_of_kernel` | **Thm 34.5**, Cor 34.5.1 |
+### What actually happened
 
-Theorem 33.3 is the "bilinear functions ↔ linear transformations" analogy made precise, and it is
-the theorem the whole of Part VII is built on. With §7.1 in place it is Fenchel–Moreau in the second
-variable, uniformly in the first.
+**The correspondence is about slices, and needed a predicate weaker than `ClosedBifun`.** The
+bracket `⟨Fu, y⟩` is `conj Bx (F u)`, so it depends on `F` only through the *slice-wise* closures
+`cl (F u)`; two convex bifunctions with the same bracket agree as soon as each slice is closed
+(`eq_of_bracket_eq`, via Theorem 33.1's inversion formula `F u = ⟨Fu, ·⟩*`). `ImageClosedBifun`
+is that predicate; `ClosedBifun.imageClosedBifun` is the one implication, and there is no converse.
+Uniqueness in Theorem 33.3 then follows from existence: the candidate is `bifunOfSaddle Bx K`, and
+its closedness comes from Theorem 33.2 rather than being assumed.
+
+**Theorem 34.2 is an order argument on top of Theorem 33.2, with no new duality.** Read the two
+equations of Theorem 33.2 as saying that the brackets `K̲ = ⟨Fu, y⟩` and `K̄ = ⟨u, F*y⟩` of a
+closed convex bifunction form a *closure pair* — `cl₁ K̲ = K̄` and `cl₂ K̄ = K̲`. Then for any `K`
+with `K̲ ≤ K ≤ K̄`, monotonicity of `cl₂` gives `K̲ = cl₂ K̲ ≤ cl₂ K ≤ cl₂ K̄ = K̲`, so `cl₂ K = K̲`
+identically, and symmetrically `cl₁ K = K̄`. Constancy of the two closures on the interval *is*
+Theorem 34.2: it gives at once that the interval lies in a single equivalence class, that every
+member is closed, and that the two ends are the unique lower and upper closed representatives.
+Only `partialCl₁_mono` and `partialCl₂_mono` had to be added (and `clConcave_mono` under them).
+
+**`ClosedSaddleFn` is weaker than `LowerClosedFn` and `UpperClosedFn`.** Rockafellar's closedness
+asks that `cl₁ K` and `cl₂ K` be *equivalent* to `K`, not equal — which is what lets a whole
+interval be closed while only its two ends are lower and upper closed. Stating it as the two
+equations `cl₁ cl₂ K = cl₁ K` and `cl₂ cl₁ K = cl₂ K` makes `exists_unique_bifun_of_closedSaddleFn`
+a direct call to Corollary 33.3.1 with `K̲ := cl₂ K` and `K̄ := cl₁ K`.
+
+**Corollary 33.1.1 was half-finished and the missing half needed the correspondence.** That `cl₂ K`
+is convex in the second variable is pointwise (`convexFn_partialCl₂`); that it is *concave in the
+first* is not — it is Theorem 33.1 applied to `bifunOfSaddle`, since `cl₂ K` is a bracket. The
+mirror clause for `cl₁` comes from `saddleSwap`, the same involution §34 uses.
+
+**The plan's `dom₁`/`dom₂` were existentials; the book's are universals.** Rockafellar (§34) defines
+`dom₁ K = {u | K(u, v) > -∞ for all v}` and remarks that it is *the intersection* of the effective
+domains of the concave functions `K(·, v)`. The plan had written `{u | ∃ x, K (u, x) ≠ ⊥}`, under
+which `dom₁ K` need not be convex at all — the convexity claim in the plan's own next sentence would
+have been false. With the universal reading, `ConcaveConvexFn.convex_dom₁` is `convex_iInter` over
+`ConcaveFn.convex_domConcave`, three lines.
+
+**Theorem 33.1's easy direction is genuinely free.** `bracket Bx F u = conj Bx (F u)`, so convexity
+and closedness in `y` are `convexFn_conj` and `closedFn_conj` with *no* hypothesis on `F` — not
+convexity, not properness. Only concavity in `u` uses `ConvexBifun F`, and it is Theorem 5.7 at the
+projection `(u, x) ↦ u` once `-⨆ = ⨅ -` has been applied: `-⟨Fu, y⟩ = ⨅ x (f(u, x) - ⟨x, y⟩)`.
+
+**Two small lemmas carried most of the weight and had to be written.**
+`ConvexBifun.convexFn_apply` — each slice `F u` of a convex bifunction is convex — is not a
+`compLin` instance, because `x ↦ (u, x)` is affine rather than linear; it is `epi_combo` applied by
+hand, using `a • u + b • u = u`. And `convexFn_add_coe` — a convex function plus a real-valued
+"affine coordinate" is convex — is the workhorse of both halves of Theorem 33.1; it is stated
+against the combination law `l (a • x + b • y) = a * l x + b * l y` rather than linearity, so that
+one lemma covers a pairing coordinate and a product projection alike.
+
+**Beware higher-order unification against `iSup` and `clFn`.** `convexFn_iSup` states its
+conclusion as `ConvexFn fun x => ⨆ i, f i x`; leaving `f` to be inferred makes Lean guess
+`ι := ↑(Set.range …)` and fail. Worse, `closedFn_clFn _` against a goal mentioning
+`partialCl₂` sends `isDefEq` into `clFn`'s `if ∃ x, lscHull f x = ⊥` and times out at 200 000
+heartbeats. Both are fixed by supplying the function explicitly; the file adds `partialCl₂_slice`
+and `partialCl₁_slice` (`rfl` lemmas) so that `rw` can do the reduction instead of unification.
 
 ## 7.2a Why the equivalence classes are unavoidable
 
@@ -93,6 +201,13 @@ the equivalence class, which has a least and a greatest member — is the right 
 formalised as stated, not worked around. Corollary 34.2.2 (each class has a unique lower closed and
 a unique upper closed member) makes the class computationally usable: pick a canonical
 representative when needed.
+
+**This is exactly how `saddleClass` came out.** The class is an order interval, its ends are the
+two brackets of the corresponding closed convex bifunction, and `partialCl₂_eq_of_mem_saddleClass`
+and `partialCl₁_eq_of_mem_saddleClass` say the canonical representatives are computed by a single
+partial closure from *any* member. Corollary 34.2.2 is therefore already available in the form that
+matters; what is still missing is the `dom`/`ri` description of the class (Theorem 34.2's last
+clauses) and the kernel characterisation of Theorems 34.4–34.5.
 
 ## 7.3 `Saddle/Continuity.lean` — §35
 

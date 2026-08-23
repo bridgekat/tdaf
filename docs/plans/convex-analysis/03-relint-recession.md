@@ -239,12 +239,13 @@ this is flagged here so a later agent does not read the missing rows as a gap in
 
 ## 3.5 `Tdaf/Analysis/Convex/Continuity.lean` — §10
 
-**Theorem 10.1 is formalized.** Theorems 10.2–10.6 are not. Three things the plan did not
-anticipate.
+**Theorems 10.1–10.5 are formalized**, across two files: `Continuity.lean` (10.1, Cor 10.1.1,
+10.4, 10.5 with Cors 10.5.1–10.5.2) and `Simplicial.lean` (`IsSimplex`, `LocallySimplicial`, 10.2,
+10.3). Theorems 10.6–10.9 are not; see the note at the end. Six things the plan did not anticipate.
 
 (i) **Mathlib supplies the hard half and stops one step short.** `ConvexOn.continuousOn_interior`
-(finite dimensions, via `ConvexOn.locallyLipschitzOn`) is the whole analytic content; the
-`intrinsicInterior` version is an explicit `proof_wanted` in
+(finite dimensions, via `ConvexOn.locallyLipschitzOn`) is the whole analytic content of Theorem
+10.1; the `intrinsicInterior` version is an explicit `proof_wanted` in
 `Mathlib/Analysis/Convex/Continuous.lean`, left open only because that file does not import
 `Mathlib/Analysis/Convex/Intrinsic.lean`. So §10.1 is a *reduction*, not an analysis proof.
 
@@ -262,25 +263,60 @@ finishes. This is also what makes the real-valued form
 (`ConvexFn.continuousOn_toReal_relint_dom`) the primary statement and the `EReal` form a
 three-line corollary.
 
+(iv) **The retraction is the whole of Theorem 10.4 as well.** `exists_chart_retraction` packages
+(ii) and (iii) as "there is a subspace `V` and a *continuous linear* `r : E →L[ℝ] V` carrying
+`ri C` into `interior (chart C x₀ V)`, with `x₀ + r (x - x₀) = x` there". A bounded linear map
+transports Lipschitz constants exactly as it transports continuity, so the `ri` form of Theorem
+10.4 is the `interior` form (`ConvexOn.exists_lipschitzOnWith_of_isCompact` — Rockafellar's own
+collar argument, which Mathlib has only for balls, not for a general compact set) read through the
+chart.
+
+(v) **Theorem 10.2 needs no triangulation.** Rockafellar reduces to the case where `x` is a
+*vertex*, by triangulating the simplex around `x` — a step he calls "intuitively obvious" and does
+not prove, and which in Lean would cost affine independence of the derived families plus a
+`Finset`-level argmin argument. It is avoidable. With `x = ∑ μᵢ vᵢ` and `z = ∑ wᵢ vᵢ`, the identity
+
+```
+w = (1 - ε) • μ + ε • ((w - (1 - ε) • μ) / ε)
+```
+
+writes *any* `z` whose weights satisfy `wᵢ ≥ (1 - ε) μᵢ` as `(1 - ε) x + ε y` with `y` again in the
+simplex, for a *fixed* `ε` chosen in advance from the target bound. Convexity then gives
+`f z ≤ (1 - ε) β + ε ν` with `β` above `f x` and `ν` above `f` on the whole simplex, and `ε` was
+chosen to make that `< b`. The vertex case is `μ = eᵢ₀`.
+
+(vi) **Affine independence is used exactly once, and topologically.** The weights failing
+`wᵢ ≥ (1 - ε) μᵢ` at some `i` in the support of `μ` form a *closed* subset of the standard simplex
+(a finite union of half-spaces met with `stdSimplex`), hence a compact one, hence one with closed
+image under the weight map; and `x` is not in that image, because affine independence makes the
+weights of a point unique (`affineIndependent_iff_eq_of_fintype_affineCombination_eq`). So the
+failure set misses a neighbourhood of `x`, which is the neighbourhood the theorem asks for. No
+metric, no finite dimension, no local convexity: §10.2 lives in a Hausdorff real TVS.
+
 | Lean name | book | note |
 |---|---|---|
-| `ConvexFn.continuousOn_relint_dom`, `ConvexFn.continuousOn_toReal_relint_dom` — **done** | **Thm 10.1** | the only §10 result used elsewhere |
-| Cor 10.1.1 | Cor 10.1.1 | not stated |
-| `LocallySimplicial` (def) + `ConvexFn.upperSemicontinuousOn` | **Thm 10.2** | needs simplices |
-| `ConvexFn.exists_unique_continuous_extension` | Thm 10.3 | |
-| `ConvexFn.lipschitzOn_of_isCompact_subset_relint` | **Thm 10.4** | |
-| `ConvexFn.uniformContinuous_iff_recessionFn_finite` | **Thm 10.5**, Cor 10.5.1–2 | dualised in Cor 13.3.3 |
-| `equiLipschitz_of_pointwise_bounded` | **Thm 10.6** | |
-| `continuous_of_convex_in_x_continuous_in_t` | Thm 10.7 | |
-| `tendsto_uniformlyOn_of_pointwise` | **Thm 10.8**, Cor 10.8.1 | |
-| `exists_subseq_tendsto_uniformlyOn` | Thm 10.9 | Arzelà–Ascoli-flavoured |
+| `ConvexFn.continuousOn_relint_dom`, `ConvexFn.continuousOn_toReal_relint_dom` — **done** | **Thm 10.1** | the only §10 result used elsewhere so far |
+| `ConvexFn.continuous_of_dom_eq_univ`, `ConvexFn.continuous_toReal_of_dom_eq_univ` — **done** | Cor 10.1.1 | |
+| `IsSimplex`, `LocallySimplicial` (defs), `ConvexFn.upperSemicontinuousOn_of_locallySimplicial`, `ConvexFn.continuousOn_of_locallySimplicial` — **done** | **Thm 10.2** | `Simplicial.lean`, layer B + T2 |
+| `exists_closedFn_continuousOn_of_locallySimplicial`, `eqOn_of_continuousOn_of_eqOn_relint` — **done** | Thm 10.3 | existence and uniqueness stated separately |
+| `ConvexOn.exists_lipschitzOnWith_of_isCompact`, `ConvexFn.exists_lipschitzOnWith_of_isCompact` — **done** | **Thm 10.4** | `interior` and `ri` forms |
+| `ConvexFn.uniformContinuous_toReal_iff`, `.exists_lipschitzWith_of_recessionFn_ne_top`, `.exists_lipschitzWith_of_frequently_le`, `.exists_lipschitzWith_of_le_lipschitz` — **done** | **Thm 10.5**, Cor 10.5.1–2 | dualised in Cor 13.3.3 |
+| `equiLipschitz_of_pointwise_bounded` | **Thm 10.6** | deferred |
+| `continuous_of_convex_in_x_continuous_in_t` | Thm 10.7 | deferred |
+| `tendsto_uniformlyOn_of_pointwise` | **Thm 10.8**, Cor 10.8.1 | deferred |
+| `exists_subseq_tendsto_uniformlyOn` | Thm 10.9 | Arzelà–Ascoli-flavoured; deferred |
 
-Mathlib's `Analysis/Convex/Continuous.lean` already has "a convex function bounded above on a
-neighbourhood is continuous"; Theorem 10.1 and Corollary 10.1.1 should be derived from it rather
-than reproved. Theorems 10.6–10.9 are only used in §24, §25 and §35 and can be deferred.
+**On the deferrals.** Theorems 10.6–10.9 are the equi-Lipschitz and convergence results; §24, §25
+and §35 are their only consumers, and none of those has started. Theorem 10.6's proof is explicitly
+"the proof of Theorem 10.4 again, noting that the Lipschitz constant depends only on the given
+bounds", so when it is written it should reuse `ConvexOn.exists_lipschitzOnWith_of_isCompact` with
+the constant `2|M|/ε` exposed rather than existentially quantified — a small change to the existing
+statement now, a second proof later.
 
-`LocallySimplicial` (§10, before Theorem 10.2) is needed again in §20 (Theorem 20.5: every
-polyhedral convex set is locally simplicial), so define it here.
+`LocallySimplicial` has, for now, no supply of instances beyond simplices themselves: **Theorem
+20.5** (every polyhedral convex set is locally simplicial) is what makes Theorems 10.2 and 10.3
+usable, and it is in §20. Rockafellar also notes that every relatively open convex set is locally
+simplicial; that is not proved here either.
 
 ## 3.6 `Tdaf/Analysis/Convex/Duality/Exact.lean` — [D5](00-overview.md#d5)
 
@@ -317,11 +353,17 @@ theorem IsExactSum.of_relint (hf : ClosedProperConvexFn f) (hg : ClosedProperCon
     {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g   -- Thm 16.4
 theorem IsExactImage.of_relint (hA) (hg : ClosedProperConvexFn g)
     {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) : …                                        -- Thm 16.3
--- in Polyhedral/Duality.lean
-theorem IsExactSum.of_polyhedral (hf : PolyhedralFn f) (hg : Proper g)
-    (h : (dom f ∩ ri (dom g)).Nonempty) : IsExactSum B f g                          -- Thm 20.1
--- in a layer-B file
-theorem IsExactSum.of_continuousAt (h : ∃ x ∈ dom g, ContinuousAt f x ∧ f x ≠ ⊤) : … -- not in book
+-- in Polyhedral/Duality.lean (done — see sub-plan 4 §4.4)
+theorem IsExactSum.of_polyhedral (hf : PolyhedralFn f) (hpf : Proper f)
+    (hg : ClosedProperConvexFn g) {x₀ : E} (hxf : x₀ ∈ dom f) (hxg : x₀ ∈ ri (dom g)) :
+    IsExactSum B f g                                                                -- Thm 20.1
+theorem IsExactSum.of_polyhedral_pair (hf : PolyhedralFn f) (hpf : Proper f)
+    (hg : PolyhedralFn g) (hpg : Proper g) {x₀ : E} (hxf : x₀ ∈ dom f) (hxg : x₀ ∈ dom g) :
+    IsExactSum B f g                                              -- Thm 20.1, both sides polyhedral
+-- in Duality/Continuity.lean (done — see §3.8)
+theorem IsExactSum.of_continuousAt (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g)
+    (hpg : Proper g) {x₀ : E} (hfx₀ : x₀ ∈ dom f) (hgx₀ : x₀ ∈ dom g)
+    (hcont : ContinuousAt f x₀) : IsExactSum B f g                            -- not in the book
 ```
 
 **Placement matters.** These do *not* live in `Exact.lean`. §20's theorems *are* `IsExactSum`
@@ -337,7 +379,7 @@ needs the *closed* proper convex hypothesis, not just `Proper`, because Theorem 
 `f*` proper and Theorem 9.2 needs a closed epigraph. It lives in its own file, `Duality/Relint.lean`,
 since no one of §6/§9/§13 owns it. `of_continuousAt` is a genuine generalisation valid in any
 TVS, cheap to prove, and is the version practitioners actually use — worth having even though
-Rockafellar does not state it.
+Rockafellar does not state it. It is done, in `Duality/Continuity.lean`; see §3.8.
 
 Downstream consumers, each reduced to `IsExactSum`/`IsExactImage` once and for all:
 
@@ -410,7 +452,40 @@ theorem IsExactSum.of_relint (hf : ClosedProperConvexFn f) (hg : ClosedProperCon
 The image rule runs on Theorem 9.2 and puts finite-dimensionality on `G` and `H`; the sum rule runs
 on Corollary 9.1.1 inside `F × ℝ` and puts it on `F` instead. Neither touches `E` beyond a norm.
 
-## 3.8 Left to the surface
+## 3.8 `Tdaf/Analysis/Convex/Duality/Continuity.lean` — `of_continuousAt`
+
+**Formalized.** The plan guessed this would be cheap and it was: one separation, at layer B, in
+about ninety lines. Four things worth recording.
+
+(i) **It is layer B, not even C.** The instinct is that separating convex sets needs local
+convexity, and for two *closed* sets it does. Here one of the two sets is open, and
+`geometric_hahn_banach_open` asks for nothing but a real topological vector space. Continuity of
+`f` at `x₀` is precisely what makes it open: `f` is bounded above by some `r` on a neighbourhood
+`V` of `x₀`, so `V ×ˢ Ioi r` sits inside the strict epigraph.
+
+(ii) **The right pair of sets is epigraph-against-*hypograph*.** With `a = (f + g)* y` finite —
+the case `= ⊤` is free — what has to be refuted is `f x + g x < ⟨x, y⟩ - a` for some `x`. Written
+as a statement about `E × ℝ`, that says the strict epigraph `{(x, μ) | f x < μ}` meets the
+hypograph `{(x, μ) | g x ≤ ⟨x, y⟩ - a - μ}` of the concave function `x ↦ ⟨x, y⟩ - a - g x`. So the
+two convex sets to separate are not two epigraphs; the second is the reflection of one.
+
+(iii) **`geometric_hahn_banach_open` separates strictly only on the open set**, and the estimate is
+needed on the whole strict epigraph, not just its interior. The bridge is
+`Convex.closure_interior_eq_closure_of_nonempty_interior` — for a convex set with nonempty
+interior, `closure (interior C) = closure C` — together with the fact that `{φ ≤ u}` is closed.
+Worth remembering as the standard way to upgrade an open-set separation.
+
+(iv) **The vertical coefficient is negative, and both signs need an argument.** After splitting `φ`
+with `exists_unique_dual_prod` into `ψ x + c μ`, `c ≠ 0` because a vertical functional would be
+`< u` at `(x₀, μ)` for every `μ > r` and `≥ u` at a point of the hypograph over the same `x₀`; and
+`c > 0` is impossible because the strict epigraph is unbounded upwards, so `ψ x₀ + c μ` would
+exceed `u` for large `μ`. With `c = -t`, `t > 0`, `exists_pairing_eq` turns `t⁻¹ • ψ` into the
+`y₁ : F` the interface asks for, and `y₂ = y - y₁`.
+
+Also here: `ConvexFn.convex_strictEpi`, which is Theorem 4.2 (`convexFn_iff_forall_lt`) read as a
+statement about a set. It belongs to §4 mathematically but had no consumer until now.
+
+## 3.9 Left to the surface
 
 - §6's counterexamples (the `[0,1+α]` family, the positive orthant vs the axis).
 - §8's worked recession functions (`(1+⟨x,Qx⟩)^{1/2}`, quadratics, log-sum-exp).

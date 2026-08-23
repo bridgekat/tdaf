@@ -44,6 +44,9 @@ This file collects the vocabulary that the rest of the development is stated aga
 * `isAdjointPair_adjoint`, `isAdjointPair_topDualPairing` — the two instantiations that
   supply the adjoint datum: a real inner-product space paired with itself, and a topological vector
   space paired with its topological dual.
+* `instIsContinuousPairingProd`, `instIsCompatiblePairingProd` — a product of continuous
+  (resp. compatible) pairings is continuous (resp. compatible). This is what lets the bifunction
+  conjugacy of §30 apply Fenchel–Moreau on `U × X` with hypotheses stated only about `U` and `X`.
 * `exists_unique_dual_prod` — a continuous linear functional on `E × ℝ` is `(x, μ) ↦ y x + c μ`
   for a *unique* pair `(y, c)`. Mathlib does not provide this, and Fenchel–Moreau needs it twice:
   the separating functional of `E × ℝ` must be split into a horizontal part and a vertical
@@ -432,9 +435,10 @@ def evalCLM (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] : F �
 /-- `B.flip.flip` is `B` definitionally, but not syntactically, and instance search does not unfold
 `LinearMap.flip`. Every result stated for one side of the pairing and then used at `B.flip` —
 `biconj_le_clFn`, `conjEquiv`, `isClosed_supportSet`, `polarCone_polarCone` —
-asks for this instance, and without it the class would have to be passed by hand there. Only the
-base class needs such a bridge: no surjectivity-consuming result is stated on one side and then
-used at `B.flip`. -/
+asks for this instance, and without it the class would have to be passed by hand there.
+`instIsCompatiblePairingFlipFlip` below is the same bridge for the stronger class, which §34 needs:
+Theorem 34.1's lower half is its upper half applied to the swapped saddle-function, and the
+swapped pairings are `Bx.flip` and `Bu.flip`. -/
 instance instIsContinuousPairingFlipFlip (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] :
     IsContinuousPairing B.flip.flip :=
   ‹IsContinuousPairing B›
@@ -457,6 +461,12 @@ theorem exists_pairing_eq (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePai
     ∃ y : F, ∀ x, g x = B x y := by
   obtain ⟨y, hy⟩ := IsCompatiblePairing.surjective_eval B g
   exact ⟨y, fun x => by rw [← hy, evalCLM_apply]⟩
+
+/-- The compatible counterpart of `instIsContinuousPairingFlipFlip`: `B.flip.flip` is `B`
+definitionally, but instance search does not unfold `LinearMap.flip`. -/
+instance instIsCompatiblePairingFlipFlip (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B] :
+    IsCompatiblePairing B.flip.flip :=
+  ‹IsCompatiblePairing B›
 
 end Compatible
 
@@ -489,6 +499,41 @@ instance instIsCompatiblePairingInner {E : Type*} [NormedAddCommGroup E]
       InnerProductSpace.toDual_symm_apply]⟩
 
 end CompatibleInstances
+
+section ProdInstances
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [TopologicalSpace X]
+
+/-- A product of continuous pairings is continuous. This is what lets §30's bifunction
+conjugation — which pairs `U × X` with `V × Y` — inherit its topological hypotheses from the
+factors. -/
+instance instIsContinuousPairingProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsContinuousPairing Bu] [IsContinuousPairing Bx] :
+    IsContinuousPairing (prodPairing Bu Bx) where
+  continuous_left q := by
+    simp only [prodPairing_apply]
+    exact ((continuous_pairing Bu q.1).comp continuous_fst).add
+      ((continuous_pairing Bx q.2).comp continuous_snd)
+
+/-- A product of compatible pairings is compatible: a continuous linear functional on `U × X`
+splits as `g (u, x) = g (u, 0) + g (0, x)`, and each summand is represented by the corresponding
+factor. -/
+instance instIsCompatiblePairingProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bx] :
+    IsCompatiblePairing (prodPairing Bu Bx) where
+  toIsContinuousPairing := instIsContinuousPairingProd Bu Bx
+  surjective_eval g := by
+    obtain ⟨v, hv⟩ := exists_pairing_eq Bu (g.comp (ContinuousLinearMap.inl ℝ U X))
+    obtain ⟨y, hy⟩ := exists_pairing_eq Bx (g.comp (ContinuousLinearMap.inr ℝ U X))
+    refine ⟨(v, y), ContinuousLinearMap.ext fun p => ?_⟩
+    have hsplit : ((p.1, 0) : U × X) + ((0, p.2) : U × X) = p := by
+      rw [Prod.mk_add_mk, add_zero, zero_add]
+    rw [evalCLM_apply, prodPairing_apply, ← hv, ← hy]
+    simpa using (map_add g ((p.1, 0) : U × X) ((0, p.2) : U × X)).symm.trans (by rw [hsplit])
+
+end ProdInstances
 
 
 end Tdaf.ConvexAnalysis

@@ -5,6 +5,7 @@ Authors: TDAF contributors
 -/
 import Mathlib.Analysis.Convex.Continuous
 import Tdaf.Analysis.Convex.RelativeInterior
+import Tdaf.Analysis.Convex.Recession.Function
 
 /-!
 # Continuity of a convex function on the relative interior of its domain
@@ -26,6 +27,15 @@ This file supplies it.
   `Convex` and `ConvexOn` — which need a module, not a torsor — still apply.
 * `ConvexFn.continuousOn_toReal_relint_dom`, `ConvexFn.continuousOn_relint_dom` —
   **Theorem 10.1**, in the real-valued and the `EReal`-valued form.
+* `exists_chart_retraction` — the chart packaged with a *continuous linear* retraction, which is
+  what carries continuity and Lipschitz constants back from the chart to `E`.
+* `ConvexFn.continuous_of_dom_eq_univ` — **Corollary 10.1.1**.
+* `ConvexOn.exists_lipschitzOnWith_of_isCompact`, `ConvexFn.exists_lipschitzOnWith_of_isCompact` —
+  **Theorem 10.4**, in the `interior` and the `ri` form.
+* `ConvexFn.uniformContinuous_toReal_iff` — **Theorem 10.5**, with
+  `ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top` as its quantitative half and
+  `ConvexFn.exists_lipschitzWith_of_frequently_le`, `ConvexFn.exists_lipschitzWith_of_le_lipschitz`
+  as **Corollaries 10.5.1** and **10.5.2**.
 * `intrinsicInterior_vadd` — translation invariance of `ri`, which the chart needs and which
   Mathlib does not state.
 
@@ -61,6 +71,7 @@ dimensions `V` has a complement, so `LinearMap.linearProjOfIsCompl` gives one, a
 -/
 
 open Pointwise Set
+open scoped NNReal
 
 namespace Tdaf.ConvexAnalysis
 
@@ -145,6 +156,36 @@ theorem relint_eq_vadd_image_interior (hC : Convex ℝ C) (hx₀ : x₀ ∈ C)
     exact h1
   rw [← hstep, intrinsicInterior_vadd, vadd_vadd, add_neg_cancel, zero_vadd]
 
+/-- **The chart, packaged for reuse.** For a convex `C` and a point `x₀ ∈ C` there is a subspace
+`V` and a *continuous linear retraction* `r : E →L[ℝ] V` such that `x ↦ r (x - x₀)` carries `ri C`
+into `interior (chart C x₀ V)` and `x₀ + r (x - x₀) = x` there.
+
+This is everything Theorems 10.1 and 10.4 use: continuity transports along `r` because `r` is
+continuous, and Lipschitz constants transport because `r` is a *bounded* linear map. The subspace
+`V` is existentially quantified precisely so that callers never see the `Submodule.span` — see the
+module docstring. -/
+theorem exists_chart_retraction (hC : Convex ℝ C) (hx₀ : x₀ ∈ C) :
+    ∃ (V : Submodule ℝ E) (r : E →L[ℝ] V),
+      Set.MapsTo (fun x : E => r (x - x₀)) (ri C) (interior (chart C x₀ V)) ∧
+      ∀ x ∈ ri C, x₀ + ((r (x - x₀) : V) : E) = x := by
+  obtain ⟨V, hV⟩ : ∃ V : Submodule ℝ E, V = Submodule.span ℝ ((fun x => x - x₀) '' C) := ⟨_, rfl⟩
+  obtain ⟨W, hW⟩ := Submodule.exists_isCompl V
+  have hW' : IsCompl (LinearMap.range V.subtype) W := by rwa [Submodule.range_subtype]
+  have hrz : ∀ z : V,
+      (LinearMap.linearProjOfIsCompl W V.subtype V.injective_subtype hW') (z : E) = z := fun z =>
+    LinearMap.linearProjOfIsCompl_apply_left W V.subtype V.injective_subtype hW' z
+  have himg := relint_eq_vadd_image_interior hC hx₀ hV
+  refine ⟨V, LinearMap.toContinuousLinearMap
+    (LinearMap.linearProjOfIsCompl W V.subtype V.injective_subtype hW'), ?_, ?_⟩
+  · intro x hx
+    rw [himg] at hx
+    obtain ⟨w, ⟨z, hz, rfl⟩, rfl⟩ := hx
+    simpa [hrz z] using hz
+  · intro x hx
+    rw [himg] at hx
+    obtain ⟨w, ⟨z, hz, rfl⟩, rfl⟩ := hx
+    simp [hrz z]
+
 end Chart
 
 section Thm101
@@ -171,9 +212,7 @@ relative to the affine hull of its domain, at every relative interior point. -/
 theorem ConvexFn.continuousOn_toReal_relint_dom (hf : ConvexFn f) (hp : Proper f) :
     ContinuousOn (fun x => (f x).toReal) (ri (dom f)) := by
   obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
-  obtain ⟨V, hV⟩ :
-      ∃ V : Submodule ℝ E, V = Submodule.span ℝ ((fun x => x - x₀) '' dom f) := ⟨_, rfl⟩
-  -- convexity, read through the chart
+  obtain ⟨V, r, hmaps, hid⟩ := exists_chart_retraction hf.convex_dom hx₀
   have hconv : ConvexOn ℝ (dom f) (fun x => (f x).toReal) := hf.convexOn_toReal_dom hp
   have hshift : (AffineMap.const ℝ V x₀ + V.subtype.toAffineMap) ⁻¹' dom f
       = chart (dom f) x₀ V := rfl
@@ -181,28 +220,10 @@ theorem ConvexFn.continuousOn_toReal_relint_dom (hf : ConvexFn f) (hp : Proper f
     hshift ▸ hconv.comp_affineMap (AffineMap.const ℝ V x₀ + V.subtype.toAffineMap)
   have hcont : ContinuousOn (fun z : V => (f (x₀ + (z : E))).toReal)
       (interior (chart (dom f) x₀ V)) := ConvexOn.continuousOn_interior hψ
-  -- a continuous retraction `E → V`, to carry continuity back
-  obtain ⟨W, hW⟩ := Submodule.exists_isCompl V
-  have hW' : IsCompl (LinearMap.range V.subtype) W := by rwa [Submodule.range_subtype]
-  set r : E →ₗ[ℝ] V := LinearMap.linearProjOfIsCompl W V.subtype V.injective_subtype hW' with hr
-  have hrz : ∀ z : V, r (z : E) = z := fun z =>
-    LinearMap.linearProjOfIsCompl_apply_left W V.subtype V.injective_subtype hW' z
   have hρcont : Continuous fun x : E => r (x - x₀) :=
-    r.continuous_of_finiteDimensional.comp (continuous_id.sub continuous_const)
-  have himg := relint_eq_vadd_image_interior hf.convex_dom hx₀ hV
-  have hmaps : Set.MapsTo (fun x : E => r (x - x₀)) (ri (dom f))
-      (interior (chart (dom f) x₀ V)) := by
-    intro x hx
-    rw [himg] at hx
-    obtain ⟨w, ⟨z, hz, rfl⟩, rfl⟩ := hx
-    simpa [hrz z] using hz
-  have heq : Set.EqOn (fun x => (f x).toReal)
-      ((fun z : V => (f (x₀ + (z : E))).toReal) ∘ fun x : E => r (x - x₀)) (ri (dom f)) := by
-    intro x hx
-    rw [himg] at hx
-    obtain ⟨w, ⟨z, hz, rfl⟩, rfl⟩ := hx
-    simp [Function.comp_apply, hrz z]
-  exact ContinuousOn.congr (hcont.comp hρcont.continuousOn hmaps) heq
+    r.continuous.comp (continuous_id.sub continuous_const)
+  refine ContinuousOn.congr (hcont.comp hρcont.continuousOn hmaps) fun x hx => ?_
+  rw [Function.comp_apply, hid x hx]
 
 /-- **Rockafellar, Theorem 10.1**: a proper convex function on a finite-dimensional space is
 continuous, relative to the affine hull of its effective domain, on `ri (dom f)`. -/
@@ -216,5 +237,342 @@ theorem ConvexFn.continuousOn_relint_dom (hf : ConvexFn f) (hp : Proper f) :
     (continuous_coe_real_ereal.comp_continuousOn (hf.continuousOn_toReal_relint_dom hp)) hcoe
 
 end Thm101
+
+/-! ### Corollary 10.1.1 -/
+
+section Cor1011
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal}
+
+/-- **Rockafellar, Corollary 10.1.1**: a convex function that is finite everywhere is continuous.
+`dom f = univ` is Rockafellar's "finite on all of `Rⁿ`", properness supplying the other half. -/
+theorem ConvexFn.continuous_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ) : Continuous f := by
+  have hri : ri (dom f) = Set.univ := by rw [hdom, intrinsicInterior_univ]
+  rw [← continuousOn_univ, ← hri]
+  exact hf.continuousOn_relint_dom hp
+
+/-- **Rockafellar, Corollary 10.1.1**, real-valued form. -/
+theorem ConvexFn.continuous_toReal_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ) : Continuous fun x => (f x).toReal := by
+  have hri : ri (dom f) = Set.univ := by rw [hdom, intrinsicInterior_univ]
+  rw [← continuousOn_univ, ← hri]
+  exact hf.continuousOn_toReal_relint_dom hp
+
+end Cor1011
+
+/-! ### Theorem 10.4: Lipschitz continuity on compact subsets of the relative interior -/
+
+section Thm104
+
+variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W] [FiniteDimensional ℝ W]
+  {D : Set W} {ψ : W → ℝ}
+
+/-- **The interior form of Rockafellar's Theorem 10.4**: a function convex on `D` is Lipschitz on
+every compact subset of `interior D`.
+
+This is the whole analytic content, and it is Rockafellar's own argument. Compactness gives an
+`ε`-collar of `S` still inside `interior D`; continuity (Theorem 10.1 in Mathlib's `interior`
+form) bounds `ψ` on that collar; and for `x ≠ y` in `S` the point
+`z = y + (ε / ‖y - x‖) • (y - x)` sits in the collar and expresses `y` as a convex combination of
+`x` and `z` with weight `‖y - x‖ / (ε + ‖y - x‖)` on `z`. Convexity then bounds the increment by
+that weight times the oscillation.
+
+Mathlib has the two-sided ball version (`ConvexOn.lipschitzOnWith_of_abs_le`) but nothing for a
+general compact subset, and the collar argument does not follow from it. -/
+theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {S : Set W}
+    (hS : IsCompact S) (hSD : S ⊆ interior D) : ∃ K : ℝ≥0, LipschitzOnWith K ψ S := by
+  obtain ⟨ε, hε, hsub⟩ := hS.exists_cthickening_subset_open isOpen_interior hSD
+  obtain ⟨M, hM⟩ := (hS.cthickening (r := ε)).exists_bound_of_continuousOn
+    ((ConvexOn.continuousOn_interior hψ).mono hsub)
+  have hMabs : ∀ w ∈ Metric.cthickening ε S, |ψ w| ≤ |M| := by
+    intro w hw
+    have hw' := hM w hw
+    rw [Real.norm_eq_abs] at hw'
+    exact hw'.trans (le_abs_self M)
+  have key : ∀ x ∈ S, ∀ y ∈ S, ψ y - ψ x ≤ 2 * |M| / ε * ‖y - x‖ := by
+    intro x hx y hy
+    rcases eq_or_ne y x with rfl | hne
+    · simp
+    have ht : 0 < ‖y - x‖ := norm_pos_iff.2 (sub_ne_zero.2 hne)
+    have hεt : (0 : ℝ) < ε + ‖y - x‖ := by positivity
+    have hzy : y + (ε / ‖y - x‖) • (y - x) - y = (ε / ‖y - x‖) • (y - x) := by
+      rw [add_sub_cancel_left]
+    have hdist : dist (y + (ε / ‖y - x‖) • (y - x)) y = ε := by
+      rw [dist_eq_norm, hzy, norm_smul, Real.norm_eq_abs,
+        abs_of_pos (by positivity : (0 : ℝ) < ε / ‖y - x‖)]
+      field_simp
+    have hzT : y + (ε / ‖y - x‖) • (y - x) ∈ Metric.cthickening ε S :=
+      Metric.mem_cthickening_of_dist_le _ _ _ _ hy hdist.le
+    have hzD : y + (ε / ‖y - x‖) • (y - x) ∈ D := interior_subset (hsub hzT)
+    have hxD : x ∈ D := interior_subset (hSD hx)
+    have hxT : x ∈ Metric.cthickening ε S := Metric.self_subset_cthickening S hx
+    have hcombo : (1 - ‖y - x‖ / (ε + ‖y - x‖)) • x
+        + (‖y - x‖ / (ε + ‖y - x‖)) • (y + (ε / ‖y - x‖) • (y - x)) = y := by
+      match_scalars <;> field_simp <;> ring
+    have hlam0 : (0 : ℝ) ≤ ‖y - x‖ / (ε + ‖y - x‖) := by positivity
+    have hlam1 : ‖y - x‖ / (ε + ‖y - x‖) ≤ 1 := by
+      rw [div_le_one hεt]; linarith
+    have hconv := hψ.2 hxD hzD (by linarith : (0 : ℝ) ≤ 1 - ‖y - x‖ / (ε + ‖y - x‖)) hlam0
+      (by ring)
+    rw [hcombo] at hconv
+    simp only [smul_eq_mul] at hconv
+    have hosc : ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x ≤ 2 * |M| := by
+      have h1 := abs_le.1 (hMabs _ hzT)
+      have h2 := abs_le.1 (hMabs x hxT)
+      linarith [h1.2, h2.1]
+    have hstep : ψ y - ψ x
+        ≤ (‖y - x‖ / (ε + ‖y - x‖)) * (ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x) := by
+      linarith [hconv]
+    have hlamt : ‖y - x‖ / (ε + ‖y - x‖) ≤ ‖y - x‖ / ε :=
+      (div_le_div_iff_of_pos_left ht hεt hε).2 (by linarith)
+    rcases le_or_gt (ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x) 0 with hneg | hpos
+    · have hle0 : ψ y - ψ x ≤ 0 :=
+        hstep.trans (mul_nonpos_of_nonneg_of_nonpos hlam0 hneg)
+      exact hle0.trans (by positivity)
+    · calc ψ y - ψ x
+          ≤ (‖y - x‖ / (ε + ‖y - x‖)) * (ψ (y + (ε / ‖y - x‖) • (y - x)) - ψ x) := hstep
+        _ ≤ (‖y - x‖ / ε) * (2 * |M|) := mul_le_mul hlamt hosc hpos.le (by positivity)
+        _ = 2 * |M| / ε * ‖y - x‖ := by ring
+  obtain ⟨K, hKcoe⟩ : ∃ K : ℝ≥0, (K : ℝ) = 2 * |M| / ε :=
+    ⟨⟨2 * |M| / ε, by positivity⟩, rfl⟩
+  refine ⟨K, LipschitzOnWith.of_dist_le_mul fun x hx y hy => ?_⟩
+  rw [Real.dist_eq, dist_eq_norm, hKcoe]
+  rcases abs_cases (ψ x - ψ y) with ⟨h, -⟩ | ⟨h, -⟩
+  · rw [h]
+    exact key y hy x hx
+  · rw [h, norm_sub_rev]
+    linarith [key x hx y hy]
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal}
+
+/-- **Rockafellar, Theorem 10.4**: a proper convex function is Lipschitz on every compact subset of
+`ri (dom f)`.
+
+Rockafellar states it for closed bounded subsets of `ri (dom f)`, which in finite dimensions is
+compactness. The proof is `ConvexOn.exists_lipschitzOnWith_of_isCompact` read through the chart of
+Theorem 10.1: the retraction that carries continuity back is a continuous linear map, hence
+Lipschitz, so it carries Lipschitz constants back as well. -/
+theorem ConvexFn.exists_lipschitzOnWith_of_isCompact (hf : ConvexFn f) (hp : Proper f) {S : Set E}
+    (hS : IsCompact S) (hSD : S ⊆ ri (dom f)) :
+    ∃ K : ℝ≥0, LipschitzOnWith K (fun x => (f x).toReal) S := by
+  obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
+  obtain ⟨V, r, hmaps, hid⟩ := exists_chart_retraction hf.convex_dom hx₀
+  have hconv : ConvexOn ℝ (dom f) (fun x => (f x).toReal) := hf.convexOn_toReal_dom hp
+  have hshift : (AffineMap.const ℝ V x₀ + V.subtype.toAffineMap) ⁻¹' dom f
+      = chart (dom f) x₀ V := rfl
+  have hψ : ConvexOn ℝ (chart (dom f) x₀ V) fun z : V => (f (x₀ + (z : E))).toReal :=
+    hshift ▸ hconv.comp_affineMap (AffineMap.const ℝ V x₀ + V.subtype.toAffineMap)
+  have hρ : Continuous fun x : E => r (x - x₀) :=
+    r.continuous.comp (continuous_id.sub continuous_const)
+  have hS'c : IsCompact ((fun x : E => r (x - x₀)) '' S) := hS.image hρ
+  have hS'sub : (fun x : E => r (x - x₀)) '' S ⊆ interior (chart (dom f) x₀ V) := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact hmaps (hSD hx)
+  obtain ⟨K, hK⟩ := ConvexOn.exists_lipschitzOnWith_of_isCompact hψ hS'c hS'sub
+  have hrlip : LipschitzWith ‖r‖₊ (fun x : E => r (x - x₀)) := by
+    refine LipschitzWith.of_dist_le_mul fun x y => ?_
+    have hsub : (r (x - x₀) : V) - r (y - x₀) = r (x - y) := by
+      rw [← map_sub]; congr 1; abel
+    rw [dist_eq_norm, hsub, dist_eq_norm, coe_nnnorm]
+    exact r.le_opNorm _
+  have hcomp : LipschitzOnWith (K * ‖r‖₊)
+      ((fun z : V => (f (x₀ + (z : E))).toReal) ∘ fun x : E => r (x - x₀)) S :=
+    hK.comp hrlip.lipschitzOnWith fun x hx => Set.mem_image_of_mem _ hx
+  refine ⟨K * ‖r‖₊, LipschitzOnWith.of_dist_le_mul fun x hx y hy => ?_⟩
+  have hval : ∀ z ∈ S, (f (x₀ + ((r (z - x₀) : V) : E))).toReal = (f z).toReal := fun z hz => by
+    rw [hid z (hSD hz)]
+  have := hcomp.dist_le_mul x hx y hy
+  rwa [Function.comp_apply, Function.comp_apply, hval x hx, hval y hy] at this
+
+end Thm104
+
+/-! ### Theorem 10.5: uniform continuity and Lipschitz continuity on the whole space -/
+
+section Thm105
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal}
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
+/-- A proper function whose effective domain is everything is the coercion of its real form. -/
+theorem coe_toReal_of_dom_eq_univ (hp : Proper f) (hdom : dom f = Set.univ) (x : E) :
+    (((f x).toReal : ℝ) : EReal) = f x := by
+  refine _root_.EReal.coe_toReal ?_ (hp.ne_bot x)
+  have hx : x ∈ dom f := by rw [hdom]; exact Set.mem_univ x
+  exact (mem_dom.1 hx).ne
+
+/-- A finite convex function on the whole space is closed: it is continuous by Corollary 10.1.1,
+hence lower semicontinuous, hence has a closed epigraph. -/
+theorem ConvexFn.isClosed_epi_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ) : IsClosed (epi f) :=
+  lowerSemicontinuous_iff_isClosed_epi.1
+    (hf.continuous_of_dom_eq_univ hp hdom).lowerSemicontinuous
+
+/-- The quantitative half of **Theorem 10.5**: when `f0⁺` is finite everywhere it is bounded by a
+linear function of the norm. This is Rockafellar's
+
+`α = sup {(f0⁺) z | ‖z‖ = 1} < ∞`,
+
+finite because `f0⁺` is a finite convex function, hence continuous (Corollary 10.1.1), and the
+unit ball is compact. Positive homogeneity spreads the bound over the whole space. -/
+theorem exists_recessionFn_le_of_forall_ne_top (hp : Proper f)
+    (hrec : ∀ y, recessionFn f y ≠ ⊤) :
+    ∃ M : ℝ, 0 ≤ M ∧ ∀ y, recessionFn f y ≤ ((M * ‖y‖ : ℝ) : EReal) := by
+  have hrdom : dom (recessionFn f) = Set.univ :=
+    Set.eq_univ_of_forall fun y => mem_dom.2 (lt_top_iff_ne_top.2 (hrec y))
+  have hrcont : Continuous fun y => (recessionFn f y).toReal :=
+    (convexFn_recessionFn f).continuous_toReal_of_dom_eq_univ (proper_recessionFn hp) hrdom
+  obtain ⟨M, hM⟩ := (isCompact_closedBall (0 : E) 1).exists_bound_of_continuousOn
+    hrcont.continuousOn
+  have hM0 : 0 ≤ M := le_trans (norm_nonneg _) (hM 0 (Metric.mem_closedBall_self zero_le_one))
+  refine ⟨M, hM0, fun y => ?_⟩
+  rcases eq_or_ne y 0 with rfl | hy
+  · rw [recessionFn_apply_zero hp]
+    simp
+  · have hyn : 0 < ‖y‖ := norm_pos_iff.2 hy
+    have hu : ‖‖y‖⁻¹ • y‖ = 1 := by
+      rw [norm_smul, Real.norm_eq_abs, abs_of_pos (inv_pos.2 hyn), inv_mul_cancel₀ hyn.ne']
+    have hsmul : ‖y‖ • (‖y‖⁻¹ • y) = y := smul_inv_smul₀ hyn.ne' y
+    have hfin := coe_toReal_of_dom_eq_univ (proper_recessionFn hp) hrdom (‖y‖⁻¹ • y)
+    have hle : (recessionFn f (‖y‖⁻¹ • y)).toReal ≤ M :=
+      le_trans (le_abs_self _)
+        (hM _ (by simpa [Metric.mem_closedBall, dist_zero_right] using hu.le))
+    calc recessionFn f y = recessionFn f (‖y‖ • (‖y‖⁻¹ • y)) := by rw [hsmul]
+      _ = ((‖y‖ : ℝ) : EReal) * recessionFn f (‖y‖⁻¹ • y) :=
+          posHomogeneous_recessionFn f ‖y‖ hyn _
+      _ = ((‖y‖ * (recessionFn f (‖y‖⁻¹ • y)).toReal : ℝ) : EReal) := by
+          rw [← Tdaf.EReal.coe_mul_coe, hfin]
+      _ ≤ ((M * ‖y‖ : ℝ) : EReal) := by
+          refine _root_.EReal.coe_le_coe_iff.2 ?_
+          nlinarith [hyn.le]
+
+/-- **Rockafellar, Theorem 10.5**, sufficiency: if the recession function of a finite convex
+function on the whole space is finite everywhere, the function is Lipschitz.
+
+The Lipschitz constant is Rockafellar's `α`, and the estimate is Corollary 8.5.1
+(`le_add_recessionFn`) fed with the linear bound on `f0⁺`. -/
+theorem ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ) (hrec : ∀ y, recessionFn f y ≠ ⊤) :
+    ∃ K : ℝ≥0, LipschitzWith K fun x => (f x).toReal := by
+  obtain ⟨M, hM0, hMle⟩ := exists_recessionFn_le_of_forall_ne_top hp hrec
+  obtain ⟨K, hKcoe⟩ : ∃ K : ℝ≥0, (K : ℝ) = M := ⟨⟨M, hM0⟩, rfl⟩
+  have key : ∀ u v : E, (f v).toReal - (f u).toReal ≤ M * ‖v - u‖ := by
+    intro u v
+    have huv : u + (v - u) = v := by abel
+    have h1 := le_add_recessionFn hf hp u (v - u)
+    rw [huv] at h1
+    have h2 : f v ≤ f u + ((M * ‖v - u‖ : ℝ) : EReal) :=
+      h1.trans (add_le_add le_rfl (hMle (v - u)))
+    rw [← coe_toReal_of_dom_eq_univ hp hdom v, ← coe_toReal_of_dom_eq_univ hp hdom u,
+      ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at h2
+    linarith
+  refine ⟨K, LipschitzWith.of_dist_le_mul fun x z => ?_⟩
+  rw [Real.dist_eq, dist_eq_norm, hKcoe]
+  rcases abs_cases ((f x).toReal - (f z).toReal) with ⟨h, -⟩ | ⟨h, -⟩
+  · rw [h]
+    exact key z x
+  · rw [h, norm_sub_rev]
+    linarith [key x z]
+
+omit [FiniteDimensional ℝ E] in
+/-- **Rockafellar, Theorem 10.5**, necessity: a uniformly continuous finite convex function has a
+finite recession function.
+
+Uniform continuity at `ε = 1` bounds `f (x + z) - f x` by `1` uniformly in `x` for every short
+`z`, which is exactly the difference formula of Theorem 8.5 saying `(f0⁺) z ≤ 1`; positive
+homogeneity then makes `f0⁺` finite in every direction. -/
+theorem ConvexFn.recessionFn_ne_top_of_uniformContinuous (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ) (hu : UniformContinuous fun x => (f x).toReal) (y : E) :
+    recessionFn f y ≠ ⊤ := by
+  obtain ⟨δ, hδ, hδ'⟩ := Metric.uniformContinuous_iff.1 hu 1 one_pos
+  have key : ∀ z : E, ‖z‖ < δ → recessionFn f z ≤ ((1 : ℝ) : EReal) := by
+    intro z hz
+    rw [recessionFn_apply_eq_iSup_sub hf hp.ne_bot]
+    refine iSup₂_le fun x _ => ?_
+    have hd : dist (x + z) x < δ := by rw [dist_eq_norm, add_sub_cancel_left]; exact hz
+    have hlt := hδ' hd
+    rw [Real.dist_eq] at hlt
+    have h1 : (f (x + z)).toReal - (f x).toReal ≤ 1 := (le_abs_self _).trans hlt.le
+    rw [← coe_toReal_of_dom_eq_univ hp hdom (x + z), ← coe_toReal_of_dom_eq_univ hp hdom x,
+      ← _root_.EReal.coe_sub]
+    exact _root_.EReal.coe_le_coe_iff.2 h1
+  rcases eq_or_ne y 0 with rfl | hy
+  · rw [recessionFn_apply_zero hp]
+    simp
+  · have hyn : 0 < ‖y‖ := norm_pos_iff.2 hy
+    have hcpos : 0 < δ / (2 * ‖y‖) := by positivity
+    have hnorm : ‖(δ / (2 * ‖y‖)) • y‖ < δ := by
+      rw [norm_smul, Real.norm_eq_abs, abs_of_pos hcpos,
+        show δ / (2 * ‖y‖) * ‖y‖ = δ / 2 by field_simp]
+      linarith
+    have hcy := key _ hnorm
+    rw [posHomogeneous_recessionFn f _ hcpos y] at hcy
+    intro htop
+    rw [htop, _root_.EReal.coe_mul_top_of_pos hcpos, top_le_iff] at hcy
+    exact _root_.EReal.coe_ne_top 1 hcy
+
+/-- **Rockafellar, Theorem 10.5**: a finite convex function on the whole space is uniformly
+continuous exactly when its recession function is finite everywhere, and then it is in fact
+Lipschitz (`ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top`). -/
+theorem ConvexFn.uniformContinuous_toReal_iff (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ) :
+    (UniformContinuous fun x => (f x).toReal) ↔ ∀ y, recessionFn f y ≠ ⊤ := by
+  refine ⟨fun hu y => hf.recessionFn_ne_top_of_uniformContinuous hp hdom hu y, fun hrec => ?_⟩
+  obtain ⟨K, hK⟩ := hf.exists_lipschitzWith_of_recessionFn_ne_top hp hdom hrec
+  exact hK.uniformContinuous
+
+/-- **Rockafellar, Corollary 10.5.1**: it is enough that `f (a • y) / a` stay bounded above along
+*some* sequence `a → ∞`, in every direction `y` — Rockafellar's `liminf`. By Theorem 8.5 the
+quotient is nondecreasing in `a`, so a bound reached infinitely often is a bound everywhere. -/
+theorem ConvexFn.exists_lipschitzWith_of_frequently_le (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ)
+    (h : ∀ y : E, ∃ c : ℝ, ∃ᶠ a : ℝ in Filter.atTop, f (a • y) ≤ ((c * a : ℝ) : EReal)) :
+    ∃ K : ℝ≥0, LipschitzWith K fun x => (f x).toReal := by
+  refine hf.exists_lipschitzWith_of_recessionFn_ne_top hp hdom fun y => ?_
+  obtain ⟨c, hfreq⟩ := h y
+  have h0 : (0 : E) ∈ dom f := by rw [hdom]; exact Set.mem_univ 0
+  have hclosed := hf.isClosed_epi_of_dom_eq_univ hp hdom
+  obtain ⟨F0, hF0⟩ : ∃ r : ℝ, f 0 = (r : EReal) :=
+    ⟨(f 0).toReal, (coe_toReal_of_dom_eq_univ hp hdom 0).symm⟩
+  have hbound : recessionFn f y ≤ ((c + |F0| : ℝ) : EReal) := by
+    rw [recessionFn_le_coe_iff_of_isClosed hf hclosed hp.ne_bot h0]
+    intro a ha
+    obtain ⟨a', ha'le, ha'ge⟩ :=
+      (hfreq.and_eventually (Filter.eventually_ge_atTop (max a 1))).exists
+    have ha'1 : (1 : ℝ) ≤ a' := le_trans (le_max_right a 1) ha'ge
+    have ha'0 : (0 : ℝ) < a' := lt_of_lt_of_le zero_lt_one ha'1
+    have hq' : ((a'⁻¹ : ℝ) : EReal) * (f (0 + a' • y) - f 0)
+        ≤ ((c + |F0| : ℝ) : EReal) := by
+      rw [coe_inv_mul_sub_le_coe_iff hp.ne_bot h0 ha'0, zero_add, hF0, ← _root_.EReal.coe_add]
+      refine ha'le.trans (_root_.EReal.coe_le_coe_iff.2 ?_)
+      nlinarith [abs_nonneg F0, neg_abs_le F0]
+    refine (coe_inv_mul_sub_le_coe_iff hp.ne_bot h0 ha).1 ?_
+    exact (monotone_coe_inv_mul_sub hf hp.ne_bot h0 y ha
+      (le_trans (le_max_left a 1) ha'ge)).trans hq'
+  exact ne_top_of_le_ne_top (_root_.EReal.coe_ne_top _) hbound
+
+/-- **Rockafellar, Corollary 10.5.2**: a finite convex function dominated by a Lipschitz function
+is itself Lipschitz.
+
+Rockafellar assumes the dominating `g` convex; the proof does not use it, so the statement here
+takes an arbitrary Lipschitz `g : E → ℝ`. -/
+theorem ConvexFn.exists_lipschitzWith_of_le_lipschitz (hf : ConvexFn f) (hp : Proper f)
+    (hdom : dom f = Set.univ) {g : E → ℝ} {K : ℝ≥0} (hg : LipschitzWith K g)
+    (hle : ∀ x, f x ≤ ((g x : ℝ) : EReal)) :
+    ∃ K' : ℝ≥0, LipschitzWith K' fun x => (f x).toReal := by
+  refine hf.exists_lipschitzWith_of_frequently_le hp hdom fun y =>
+    ⟨|g 0| + (K : ℝ) * ‖y‖, Filter.Eventually.frequently ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop (1 : ℝ)] with a ha
+  refine (hle _).trans (_root_.EReal.coe_le_coe_iff.2 ?_)
+  have hd : dist (g (a • y)) (g 0) ≤ (K : ℝ) * dist (a • y) (0 : E) := hg.dist_le_mul _ _
+  rw [Real.dist_eq, dist_zero_right, norm_smul, Real.norm_eq_abs,
+    abs_of_nonneg (by linarith : (0 : ℝ) ≤ a)] at hd
+  have h1 : g (a • y) - g 0 ≤ (K : ℝ) * (a * ‖y‖) := (le_abs_self _).trans hd
+  nlinarith [le_abs_self (g 0), abs_nonneg (g 0), norm_nonneg y, K.coe_nonneg]
+
+end Thm105
 
 end Tdaf.ConvexAnalysis
