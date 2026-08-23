@@ -1424,6 +1424,118 @@ while the slice lemma needs `AddCommGroup` and `IsTopologicalAddGroup` on both f
 `closedFn_iff`, whose properness clause is stated over a topological group), so the two live in
 separate sections; putting them together makes instance search fail on `AddCommGroup (U × X)`.
 
+### `Tdaf/Analysis/Convex/Optimization/Program.lean`
+
+§28: ordinary convex programs, and **Theorem 28.2** (existence of a Kuhn–Tucker vector under
+Slater's condition) with Corollaries 28.2.1 and 28.2.2.
+
+```lean
+def feasibleSet (f : ι → E → EReal) (b : κ → E →ᵃ[ℝ] ℝ) : Set E :=
+  {x | (∀ i, f i x ≤ 0) ∧ ∀ j, b j x ≤ 0}
+noncomputable def programLagrangian (f₀ : E → EReal) (f : ι → E → EReal) (b : κ → E →ᵃ[ℝ] ℝ)
+    (l : ι → ℝ) (μ : κ → ℝ) : E → EReal :=
+  fun x => f₀ x + (∑ i, (l i : EReal) * f i x) + ((∑ j, μ j * b j x : ℝ) : EReal)
+noncomputable def optimalValue (f₀ : E → EReal) (f : ι → E → EReal) (b : κ → E →ᵃ[ℝ] ℝ) : EReal :=
+  ⨅ x ∈ feasibleSet f b, f₀ x
+structure IsKuhnTuckerVector (f₀) (f) (b) (l : ι → ℝ) (μ : κ → ℝ) : Prop where
+  nonneg : ∀ i, 0 ≤ l i
+  nonneg_affine : ∀ j, 0 ≤ μ j
+  ne_bot : (⨅ x, programLagrangian f₀ f b l μ x) ≠ ⊥
+  ne_top : (⨅ x, programLagrangian f₀ f b l μ x) ≠ ⊤
+  iInf_eq : (⨅ x, programLagrangian f₀ f b l μ x) = optimalValue f₀ f b
+theorem exists_isKuhnTuckerVector_of_slater (hf₀ : ConvexFn f₀) (hp₀ : Proper f₀)
+    (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i)) (hsub : ∀ i, dom f₀ ⊆ dom (f i))
+    (hbot : optimalValue f₀ f b ≠ ⊥)
+    (hslater : ∃ x ∈ ri (dom f₀), (∀ i, f i x < 0) ∧ ∀ j, b j x ≤ 0) :
+    ∃ (l : ι → ℝ) (μ : κ → ℝ), IsKuhnTuckerVector f₀ f b l μ
+theorem exists_isKuhnTuckerVector_of_mem_dom …          -- Cor 28.2.1
+theorem exists_isKuhnTuckerVector_of_affine …           -- Cor 28.2.2, `[IsEmpty ι]`
+theorem exists_multipliers_of_slater_eq …               -- equality constraints, signed multipliers
+```
+
+**§28 was never blocked.** `00-overview.md` and `06-optimization.md` both recorded that Slater's
+theorem waited on "§21's theorems of the alternative for *mixed* inequality/equality systems, which
+`Helly.lean` does not have". That is wrong: `alternative_of_convex_system_affine` (Theorem 21.2)
+already keeps the affine constraints in a **second index type** `κ`, which is exactly the mixed
+form, and Rockafellar's own reduction splits an equality into two affine inequalities — which is
+what `exists_multipliers_of_slater_eq` does with `Sum.elim a fun k => -(a k)`.
+
+**The Slater proof is Theorem 21.2 applied to `Option ι`.** Add the objective as an extra
+inequality `f₀ x - α < 0` (`α` the optimal value, finite by hypothesis) and run the alternative:
+branch (a) would produce a feasible point strictly below the optimal value, so branch (b) holds and
+gives multipliers `c : Option ι → ℝ`, `μ : κ → ℝ`. The whole content of the rest of the proof is
+`0 < c none`: at the Slater point every `c (some i) * f i x` is `≤ 0` and every `μ j * a j x` is
+`≤ 0`, so `c none = 0` would force all the `c (some i)` to vanish too, contradicting `c ≠ 0`.
+Normalising by `c none` gives the Kuhn–Tucker vector.
+
+**`ri (dom f₀)` needs no separate `hdom` hypothesis.** The plan's draft carried
+`∀ i, ri (dom f₀) ⊆ dom (f i)` next to Rockafellar's assumption (b) `dom f₀ ⊆ dom (f i)`; the
+first is implied by the second and was dropped.
+
+**Corollary 28.2.1 is a prolongation along a segment.** From a Slater point `z ∈ ri (dom f₀)` and
+any `y ∈ dom f₀`, `Convex.segment_mem_relint` puts the open segment in `ri (dom f₀)` and
+`ConvexFn.tendsto_lscHull_along_segment_relint` (the `ri` form of Theorem 7.5) makes `f₀` converge
+along it, so `Tendsto.eventually_lt_const` over `𝓝[<] (1 : ℝ)` finds a Slater point where `f₀` is
+below any prescribed bound.
+
+### `Tdaf/Analysis/Convex/Optimization/Normal.lean`
+
+§30 from Corollary 30.2.2 on: **Corollary 30.2.2** (both formulas), **Theorem 30.3** in full,
+**Theorem 30.4** clauses (a), (b), (c), and **Theorem 30.5**.
+
+```lean
+theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
+    clFn f 0 = ⨆ y : F, ⨅ x : E, (((B x y : ℝ) : EReal) + f x)
+def Normal (F : Bifun U X) : Prop := clFn (infBifun F) 0 = infBifun F 0
+noncomputable def supBifun (G : Bifun Y V) : Y → EReal := fun y => ⨆ v, G y v
+def domConcaveBifun (G : Bifun Y V) : Set Y := {y | ∃ v, G y v ≠ ⊥}
+def ConcaveConsistent (G : Bifun Y V) : Prop := (0 : Y) ∈ domConcaveBifun G
+def ConcaveStronglyConsistent (G : Bifun Y V) : Prop := (0 : Y) ∈ ri (domConcaveBifun G)
+def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun G 0
+theorem clFn_infBifun_zero_eq_iSup_adjointBifun (Bx) (hF : ConvexBifun F) :
+    clFn (infBifun F) 0 = ⨆ v : V, adjointBifun Bu Bx F 0 v
+theorem clConcave_supBifun_zero_eq_infBifun_concaveAdjointBifun (hG : ConcaveBifun G) :
+    clConcave (supBifun G) 0 = infBifun (concaveAdjointBifun Bu Bx G) 0
+theorem normal_iff_iSup_adjointBifun_eq (Bx) (hF : ConvexBifun F) :
+    Normal F ↔ (⨆ v : V, adjointBifun Bu Bx F 0 v) = infBifun F 0
+theorem normal_iff_concaveNormal_adjointBifun (hF : ConvexBifun F) (hcl : ClosedBifun F) :
+    Normal F ↔ ConcaveNormal (adjointBifun Bu Bx F)
+theorem StronglyConsistent.normal (hs) (hF : ConvexBifun F) : Normal F
+theorem normal_of_kuhnTucker_nonempty (Bx) (hF) (h : (KuhnTucker Bu F).Nonempty) : Normal F
+theorem mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup (Bx) (hF) (hn : Normal F) (ht) (hb) :
+    v ∈ KuhnTucker Bu F ↔ adjointBifun Bu Bx F 0 v = ⨆ w : V, adjointBifun Bu Bx F 0 w
+theorem ConcaveFn.clConcave_eq_of_mem_relint_domConcave (hg : ConcaveFn g)
+    (hx : x ∈ ri (domConcave g)) : clConcave g x = g x
+```
+
+**All of §30 after Theorem 30.2 is one lemma.** `clFn_zero_eq_iSup_iInf` is Fenchel–Moreau read at
+the origin: `biconj B f 0 = ⨆ y (⟨0, y⟩ - f*(y)) = ⨆ y (-f*(y))`, and `-f*(y)` is
+`⨅ x (f x - ⟨x, y⟩)`, which is the dual objective `(F* 0)(-y)`. The reindexing `y ↦ -y` is
+`Function.Surjective.iSup_comp` on negation. Everything else in the file is bookkeeping on top of
+it.
+
+**Corollary 30.2.2's first formula needs no closedness.** Rockafellar states the whole corollary for
+closed convex `F`; `clFn (inf F) 0 = sup F* 0` only uses Fenchel–Moreau for `inf F`. So
+Theorem 30.3's (a) ⟺ (c) holds for *every* convex bifunction, and `ClosedBifun F` is needed only
+where `F** = cl F` has to be turned back into `F` — the second formula and clause (b).
+
+**The dual formula is the first one, negated.** `-(sup G) = inf (fun y v => -(G y v))`, so
+`clConcave (sup G) 0 = -(clFn (inf (-G)) 0)` and the first formula applies with the pairings
+`Bx.flip` and `Bu.flip`. The sign bookkeeping is that
+`-(adjointBifun Bx.flip Bu.flip (-G) 0 x) = concaveAdjointBifun Bu Bx G 0 (-x)`, so a second
+negation reindexing closes it. Composing with `F** = cl F` gives the book's
+`(cl (sup F*))(0) = inf F 0`.
+
+**Theorem 30.4(c) does not go through subgradients.** Rockafellar proves it from Theorem 23.5. Here
+`mem_kuhnTucker_iff_adjointBifun_zero_eq` already says a Kuhn–Tucker vector is a point where the
+dual objective attains `inf F 0`, and weak duality pins the dual optimal value down, so normality
+is Theorem 30.3 — and no finite-dimensionality is needed.
+
+**`ConcaveFn.clConcave_eq_of_mem_relint_domConcave` is misplaced but has nowhere to go.** It is the
+concave mirror of Theorem 7.4 and belongs with `clConcave` in `Duality/ConcaveConj.lean`; that file
+is layer C and does not import `RelativeInterior`. It lives in `Normal.lean` until something else
+needs it.
+
 ### `Tdaf/Analysis/Convex/Saddle/Closure.lean`
 
 §34: **Theorem 34.1**, both halves, with the closedness vocabulary of §33–§34.

@@ -164,7 +164,7 @@ directly. Its compactness clause is a different statement — boundedness of `�
 ## 6.3 `Optimization/Lagrangian.lean` — §28–§29 via partial conjugation
 
 **Status: the Lagrangian and its identification with the concave conjugate are done.** §28's
-ordinary convex programs are not started; see below.
+ordinary convex programs are done too, but in a **file of their own** — see §6.3a.
 
 ```lean
 noncomputable def lagrangian (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : V → X → EReal :=
@@ -183,7 +183,8 @@ theorem mem_kuhnTucker_iff_iInf_lagrangian :
 | `iInf_lagrangian` : `⨅ x L(v, x) = ⨅ u (⟨u, v⟩ + inf F u)` | the identity §29 states after the definition | done |
 | `mem_kuhnTucker_iff_iInf_lagrangian`, `iInf_lagrangian_le` | **§29**, the Lagrangian description of Kuhn–Tucker vectors, and weak duality | done |
 | `concaveFn_lagrangian`, `lagrangian_le` | `L(·, x)` concave; `L(v, x) ≤ F 0 x` | done |
-| — | `ineqBifun` and **Thm 28.2** (Slater) | not done — see below |
+| — | `ineqBifun` | **not needed** — see §6.3a |
+| `exists_isKuhnTuckerVector_of_slater` (in `Optimization/Program.lean`) | **Thm 28.2** (Slater) | done |
 | — | **Thms 28.1, 28.3, 28.4**, Cor 28.3.1 | surface, and 28.3 needs §36 |
 
 `lagrangian` is a partial concave conjugate; every Lagrangian fact is a partial-conjugate fact. This
@@ -227,16 +228,63 @@ of `EReal` but `iInf` does not commute with it definitionally. With that in hand
 `mem_kuhnTucker_iff_iInf_lagrangian` is a rewrite of §6.2's definition, and weak duality
 `iInf_lagrangian_le` is `iInf_add_infBifun_le` read through it.
 
-**Slater is still blocked, and for a reason the plan did not record.** §21's theorems of the
-alternative in `Helly.lean` cover finite systems of *inequalities*; §28 allows mixed
-inequality/equality systems, and `ineqBifun` as drafted needs the mixed form. Until that gap in
-`Helly.lean` is closed, `kuhnTucker_nonempty_of_stronglyConsistent` (§6.2) is the
-qualification-free half that is available.
+**Slater was never blocked, and `ineqBifun` was never needed.** An earlier revision of this
+sub-plan recorded that §21's theorems of the alternative cover only systems of *inequalities* while
+§28 allows mixed inequality/equality systems. That is wrong on both counts.
+`alternative_of_convex_system_affine` in `Helly.lean` keeps the affine constraints in a **second
+index type** `κ` — precisely the mixed form — and an equality constraint splits into two affine
+inequalities, `Sum.elim a fun k => -(a k)`, exactly as Rockafellar does it. And `ineqBifun` is a
+packaging of the constraints as a bifunction over `Fin m → ℝ`; Theorem 28.2 is a statement about
+the constraint functions themselves, so the packaging buys nothing on the way in. See §6.3a.
+
+## 6.3a `Optimization/Program.lean` — §28
+
+**Status: done.** Theorem 28.2 (existence of a Kuhn–Tucker vector under Slater's condition),
+Corollary 28.2.1, Corollary 28.2.2, and the equality-constrained variant.
+
+```lean
+def feasibleSet (f : ι → E → EReal) (b : κ → E →ᵃ[ℝ] ℝ) : Set E :=
+  {x | (∀ i, f i x ≤ 0) ∧ ∀ j, b j x ≤ 0}
+noncomputable def programLagrangian (f₀ : E → EReal) (f : ι → E → EReal) (b : κ → E →ᵃ[ℝ] ℝ)
+    (l : ι → ℝ) (μ : κ → ℝ) : E → EReal :=
+  fun x => f₀ x + (∑ i, (l i : EReal) * f i x) + ((∑ j, μ j * b j x : ℝ) : EReal)
+noncomputable def optimalValue (f₀) (f) (b) : EReal := ⨅ x ∈ feasibleSet f b, f₀ x
+structure IsKuhnTuckerVector (f₀) (f) (b) (l : ι → ℝ) (μ : κ → ℝ) : Prop
+```
+
+| Lean name | book | status |
+|---|---|---|
+| `feasibleSet`, `programLagrangian`, `optimalValue`, `IsKuhnTuckerVector` | §28's vocabulary | done |
+| `programLagrangian_le_of_mem_feasibleSet`, `programLagrangian_eq_top`, `programLagrangian_eq_coe` | the elementary facts the proof runs on | done |
+| `exists_isKuhnTuckerVector_of_slater` | **Thm 28.2** | done |
+| `exists_isKuhnTuckerVector_of_mem_dom` | **Cor 28.2.1** | done |
+| `exists_isKuhnTuckerVector_of_affine` | **Cor 28.2.2** | done, as `[IsEmpty ι]` |
+| `exists_multipliers_of_slater_eq` | equality constraints, signed multipliers | done |
+| — | Thms 28.1, 28.3, 28.4, Cor 28.3.1 | surface, and 28.3 needs §36 |
+
+### What actually happened
+
+**The whole proof is Theorem 21.2 applied to `Option ι`.** Add the objective as one more strict
+inequality, `f₀ x - α < 0` with `α` the (finite) optimal value. Branch (a) of the alternative would
+produce a feasible point strictly below the optimal value, so branch (b) holds and yields
+multipliers `c : Option ι → ℝ` and `μ : κ → ℝ`. Everything after that is the single step
+`0 < c none`: at the Slater point every `c (some i) * f i x` and every `μ j * a j x` is `≤ 0`, so
+`c none = 0` would force all the other `c` to vanish, contradicting `c ≠ 0`. Normalising by
+`c none` produces the Kuhn–Tucker vector.
+
+**The Lagrangian here is not `lagrangian`.** `programLagrangian` is the concrete
+`f₀ + ∑ lᵢ fᵢ + ∑ μⱼ bⱼ`; `Optimization/Lagrangian.lean`'s `lagrangian` is the partial concave
+conjugate of a bifunction. They agree once `ineqBifun` is defined, and that identification — which
+would make §28 an instance of §29/§30 rather than a parallel development — is the one piece of §28
+still worth building.
+
+**Rockafellar's hypothesis (b) subsumes the plan's `hdom`.** `dom f₀ ⊆ dom (f i)` implies
+`ri (dom f₀) ⊆ dom (f i)`, so only the former is a hypothesis.
 
 ## 6.4 `Optimization/Adjoint.lean` — §30
 
 **Status: Theorem 30.1 is done in full, and Theorem 30.2 with weak duality (Corollary 30.2.2) is
-done.** Theorems 30.3–30.5 are not.
+done.** Theorems 30.3–30.5 are done in `Optimization/Normal.lean`; see §6.4a.
 
 ```lean
 /-- The adjoint bifunction: the conjugate of the graph function, with a sign flip on the first
@@ -259,7 +307,8 @@ noncomputable def adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X �
 | `adjointBifun_zero_eq_concaveConj` — the dual objective is the **concave** conjugate of `−inf F` | **Thm 30.2** | done |
 | `adjointBifun_zero_le`, `iSup_adjointBifun_zero_le` : `sup F* 0 ≤ inf F 0` | **Cor 30.2.2**, weak duality | done |
 | `mem_kuhnTucker_iff_adjointBifun_zero_eq` | **Thm 30.5**, the half holding without normality | done |
-| — | Cor 30.2.1, `Normal` and **Thms 30.3, 30.4** | not done |
+| — | Cor 30.2.1 | not done |
+| `Normal`, **Thms 30.3, 30.4, 30.5** | §6.4a | done |
 
 **Sign warning.** Theorem 30.2 is about the **concave** conjugate: the book (line 12487) says `F*0`
 is the conjugate of the *concave* function `−inf F`, and `g* ≠ −(−g)*`. `inf F` is convex; its
@@ -306,6 +355,54 @@ Corollary 30.2.2 is `iInf_add_infBifun_le` from §6.2. `mem_kuhnTucker_iff_adjoi
 then says the Kuhn–Tucker vectors are exactly the dual-optimal `v` at which the duality gap closes,
 which is the half of Theorem 30.5 that needs no normality hypothesis.
 
+## 6.4a `Optimization/Normal.lean` — §30 from Corollary 30.2.2 on
+
+**Status: done** except Corollary 30.2.1, Corollary 30.2.3 and clauses (d)–(j) of Theorem 30.4.
+
+```lean
+theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
+    clFn f 0 = ⨆ y : F, ⨅ x : E, (((B x y : ℝ) : EReal) + f x)
+def Normal (F : Bifun U X) : Prop := clFn (infBifun F) 0 = infBifun F 0
+noncomputable def supBifun (G : Bifun Y V) : Y → EReal := fun y => ⨆ v, G y v
+def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun G 0
+```
+
+| Lean name | book | status |
+|---|---|---|
+| `clFn_zero_eq_iSup_iInf` | the computation the section rests on | done |
+| `clFn_infBifun_zero_eq_iSup_adjointBifun` | **Cor 30.2.2**, first formula | done, without closedness |
+| `clConcave_supBifun_zero_eq_infBifun_concaveAdjointBifun`, `clConcave_supBifun_adjointBifun_zero_eq` | **Cor 30.2.2**, second formula | done |
+| `normal_iff_iSup_adjointBifun_eq` | **Thm 30.3**, (a) ⟺ (c) | done |
+| `concaveNormal_adjointBifun_iff`, `normal_iff_concaveNormal_adjointBifun` | **Thm 30.3**, (b) | done |
+| `StronglyConsistent.normal`, `StrictlyConsistent.normal` | **Thm 30.4(a)** | done |
+| `ConcaveStronglyConsistent.concaveNormal`, `normal_of_concaveStronglyConsistent_adjointBifun` | **Thm 30.4(b)** | done |
+| `normal_of_kuhnTucker_nonempty` | **Thm 30.4(c)** | done |
+| `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup`, `kuhnTucker_eq_setOf_isMax`, `isGreatest_adjointBifun_zero_of_mem_kuhnTucker` | **Thm 30.5** | done |
+| `supBifun`, `domConcaveBifun`, `ConcaveConsistent`, `ConcaveStronglyConsistent`, `ConcaveNormal` | the concave mirrors of §29's vocabulary | done |
+| — | Cor 30.2.1 | not done |
+| — | Cor 30.2.3 (the `liminf` form) | not done — needs `cl f x = liminf f`, absent from `Closure.lean` |
+| — | Thm 30.4 (d)–(j) | not done — concave Kuhn–Tucker vectors, polyhedral bifunctions, bounded level sets |
+| — | Cor 30.5.1 (saddle points of `L`) | not done — needs §36 |
+
+### What actually happened
+
+**Everything after Theorem 30.2 is one lemma.** `clFn_zero_eq_iSup_iInf` is Fenchel–Moreau at the
+origin: `f**(0) = ⨆ y (⟨0, y⟩ - f*(y)) = ⨆ y (-f*(y))`, and `-f*(y) = ⨅ x (f x - ⟨x, y⟩)` is the
+dual objective at `-y`. The reindexing is `Function.Surjective.iSup_comp` on negation, and the rest
+of the file is bookkeeping.
+
+**The dual half is the primal half negated.** `-(sup G) = inf (-G)` pointwise, so
+`clConcave (sup G) 0 = -(clFn (inf (-G)) 0)` and the primal formula applies with the pairings
+`Bx.flip`, `Bu.flip`; the sign bookkeeping is
+`-(adjointBifun Bx.flip Bu.flip (-G) 0 x) = concaveAdjointBifun Bu Bx G 0 (-x)`, and a second
+negation reindexing closes it. Composing with `F** = cl F` gives the book's second formula.
+
+**The concave mirrors of §29's vocabulary had to be built, and they are cheap.**
+`domConcave (supBifun G) = domConcaveBifun G` mirrors `dom_infBifun`, and
+`ConcaveFn.clConcave_eq_of_mem_relint_domConcave` mirrors Theorem 7.4. The latter belongs with
+`clConcave` in `Duality/ConcaveConj.lean`, which is layer C and does not import
+`RelativeInterior`; it lives in `Normal.lean` until a second consumer appears.
+
 ## 6.5 `Optimization/Fenchel.lean` and `Optimization/Moreau.lean` — §31
 
 **Status: Theorems 31.1, 31.3, 31.4 and 31.5 are done** (31.3 with the linear transformation taken
@@ -331,7 +428,7 @@ gives all four variants, including both polyhedral ones, from one proof.
 | `concaveConj_sub_conj_le_sub` | weak duality (the first display of the proof of Thm 31.1) | done |
 | `fenchel_duality`, `exists_concaveConj_sub_conj_eq`, `isGreatest_concaveConj_sub_conj` | **Thm 31.1**, condition (a) | done |
 | `iInf_sub_eq_neg_iInf_conj_sub`, `fenchel_duality_of_closed`, `exists_sub_eq_iInf` | **Thm 31.1**, condition (b) | done |
-| `fenchel_duality_comp` (with a linear map interposed) | **Thm 31.2**, Cor 31.2.1 | not done |
+| `fenchel_duality_comp` (with a linear map interposed) | **Thm 31.2**, Cor 31.2.1 | unblocked, not done — `F** = cl F` and `Normal` are in place (§6.4, §6.4a); what is missing is an `EReal` lemma splitting `⨅ (a, b) (u a + v b)` into `⨅ u + ⨅ v`, valid when neither infimum is `⊤`. It is *not* the dual of `Tdaf.EReal.biSup_add_biSup`: that lemma-s pointwise `≠ ⊥` hypothesis dualises to `≠ ⊤`, which the two families here do not satisfy |
 | `neg_mem_subgradient_neg_iff_add_concaveConj_eq`, `sub_eq_concaveConj_sub_conj_iff`, `iInf_sub_eq_of_sub_eq`, `iSup_sub_eq_of_sub_eq`, `iInf_sub_eq_iff_exists_kuhnTucker` | **Thm 31.3**, Cor 31.3.1, with `A = id` | done |
 | — | **Thm 31.3**, Cor 31.3.1, with a general `A` | not done — waits on Thm 31.2 |
 | `iInf_add_indicatorFn_eq_neg_iInf_conj_add_indicatorFn`, `iInf_mem_eq_neg_iInf_mem_neg_polarCone`, `neg_conj_le_of_mem_neg_polarCone` | **Thm 31.4**, the duality equation | done |
