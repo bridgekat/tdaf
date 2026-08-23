@@ -11,7 +11,96 @@ import Tdaf.Analysis.Convex.Saddle.Defs
 /-!
 # The algebra of bifunctions
 
-Rockafellar's §38. (placeholder)
+Rockafellar's §38. The adjoint of a convex bifunction generalizes the adjoint of a linear
+transformation; this section generalizes the rest of the linear algebra — addition, scalar
+multiplication, application to a vector, composition, and the inner product — and describes how
+each behaves under taking adjoints.
+
+| operation | here | linear-algebra analogue |
+|---|---|---|
+| `F₁ □ F₂` | `infConvBifun` | `A₁ + A₂` |
+| `Fλ` | `smulRightBifun` | `λ A` |
+| `Ff` | `imageBifun` | `A x` |
+| `GF` | `compBifun` | `B ∘ A` |
+| `F⁎`, `F⁎*` | `invBifun`, `lowerAdjointBifun` | `A⁻¹`, `(A⁻¹)*` |
+| `⟨f, g⟩` | `fenchelSup` / `fenchelInf` / `HasFenchelPairing` | `⟨x, y⟩` |
+
+## Main definitions
+
+* `infConvBifun F₁ F₂` — Rockafellar's `F₁ □ F₂`, infimal convolution in the second variable.
+* `smulRightBifun F l` — Rockafellar's `Fλ`.
+* `imageBifun F f` — Rockafellar's `Ff`, and `concaveImageBifun` for the concave orientation.
+* `compBifun G F` — Rockafellar's product `GF`, and `concaveCompBifun` for the concave one.
+* `invBifun F` — Rockafellar's inverse `F⁎`, the *concave* bifunction `(F⁎ x)(u) = -(Fu)(x)`.
+* `lowerAdjointBifun Bu Bx F` — Rockafellar's `F⁎*`.
+* `fenchelSup B f g`, `fenchelInf B f g` — the two extrema whose common value is Rockafellar's
+  inner product `⟨f, g⟩`; `HasFenchelPairing` says they agree, `fenchelPairing` is the value.
+
+## Main results
+
+* `domBifun_infConvBifun`, `convexBifun_infConvBifun`, `bracket_infConvBifun` — **Theorem 38.1**.
+* `convexBifun_smulRightBifun`, `bracket_smulRightBifun` — **Theorem 38.3**.
+* `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq` — **Theorem 38.4**:
+  `(Ff)* = F⁎* f*` with the infimum attained. `conj_imageBifun_of_bracket_eq_top` is
+  Rockafellar's degenerate branch.
+* `convexBifun_compBifun`, `invBifun_compBifun` — **Theorem 38.5** and `(GF)⁎ = F⁎ G⁎`.
+* `fenchelSup_le_fenchelInf` — weak duality for the inner product, with no hypothesis.
+* `hasFenchelPairing_conj`, `fenchelPairing_conj` — **Lemma 38.6**: `⟨f*, g*⟩ = -⟨f, g⟩`.
+* `hasFenchelPairing_adjointBifun`, `conj_imageBifun_eq_fenchelPairing` — **Corollary 38.7.1**:
+  `⟨Ff, y⟩ = ⟨f, F* y⟩`.
+* `fenchelSup_imageBifun_lowerAdjointBifun`,
+  `fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun` — **Theorem 38.7**: adjoints move across
+  the inner product.
+
+## Design notes
+
+**Every relative-interior hypothesis of §38 is an `IsExactSum`.** Rockafellar's conditions are
+always "`ri (dom …)` and `ri (dom …)` have a point in common", which is Theorem 16.4; the D5
+interface `IsExactSum` (`Duality/Exact.lean`) is exactly that conclusion, and `IsExactSum.of_relint`
+(`Duality/Relint.lean`) produces it from the relative-interior condition in finite dimensions.
+Stating §38 against `IsExactSum` keeps the whole section in layer A: no topology, no local
+convexity, no finite dimension. Theorem 38.4 is Fenchel's duality theorem applied to `f` and the
+concave function `u ↦ ⟨Fu, y⟩`, and nothing else.
+
+**`IsExactSum` already carries Rockafellar's case distinction.** His proof of Theorem 38.4 splits
+on whether `y ∈ dom F*`, i.e. on whether `u ↦ ⟨Fu, y⟩` is proper. `IsExactSum Bu f (-⟨F·, y⟩)`
+demands `Proper (-⟨F·, y⟩)`, so the main branch is the only one it covers;
+`conj_imageBifun_of_bracket_eq_top` states the other branch separately, and unconditionally.
+
+**`F⁎*` is `-F*` read backwards, and that is a theorem, not the definition.**
+`lowerAdjointBifun Bu Bx F v y = -(adjointBifun Bu Bx F y v)`, and
+`lowerAdjointBifun_eq_concaveAdjointBifun` identifies it with the concave adjoint of the inverse
+bifunction `F⁎` for the flipped pairings. Defining it by the reflection avoids carrying a second
+adjoint through every statement, and the identification costs one `Prod.swap` reindexing.
+
+**The inner product is two extrema, not one number.** Rockafellar leaves `⟨f, g⟩` *undefined* when
+the sup side and the inf side differ, so the formalization keeps them apart: `fenchelSup`,
+`fenchelInf`, and the predicate `HasFenchelPairing` that they agree. Weak duality
+`fenchelSup ≤ fenchelInf` is unconditional, which makes every existence statement a single
+inequality — that is how the existence half of Corollary 38.7.1 comes out free from Theorem 38.4.
+
+**Rockafellar's domain-restricted extrema are the unrestricted ones for proper functions.** He
+defines `⟨f, g⟩` by extrema over `dom f ∩ dom g*` so that improper `f` or `g` cause no `∞ - ∞`.
+For proper `f` and proper concave `g` the excluded terms are `⊥` on the sup side and `⊤` on the inf
+side, so they do not move the extremum, and the plain `⨆`/`⨅` definitions used here agree with his.
+Every theorem below that needs the agreement carries the properness hypothesis explicitly.
+
+**`HasFenchelPairing` is a `def` unfolding to an equation, so dot notation is unavailable.**
+`h.conj` for `h : HasFenchelPairing B f g` resolves against `Eq`; the lemma is therefore named
+`hasFenchelPairing_conj` rather than `HasFenchelPairing.conj`.
+
+## What is not here
+
+* The adjoint formulas of **Theorem 38.2** (`(F₁ □ F₂)* = F₁* □ F₂*`), of **Theorem 38.3**
+  (`(Fλ)* = F*λ`) and of **Theorem 38.5** (`(GF)* = F* G*`), with Corollaries 38.2.1, 38.4.1 and
+  38.5.1. Each needs the *concave* mirror of a §16 row — supremal convolution and concave right
+  scalar multiplication — which the library does not have; by gotcha 9 the mirror is not obtainable
+  by `simp`-normalising through negation, so each is a genuine piece of work.
+* Corollary 38.7.2 and the co-finiteness discussion at the end of the section.
+
+## References
+
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §38.
 -/
 
 open Pointwise
@@ -175,6 +264,22 @@ private theorem sub_iInf_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal)
   change c + -(⨅ i, u i) = _
   rw [Tdaf.EReal.neg_iInf, add_iSup_of_ne_top _ hc]
   rfl
+
+/-- Adding a real constant cannot create `⊤`. -/
+private theorem add_coe_ne_top {a : EReal} (ha : a ≠ ⊤) (c : ℝ) : a + (c : EReal) ≠ ⊤ := by
+  induction a with
+  | bot => simp
+  | coe p => rw [← _root_.EReal.coe_add]; exact _root_.EReal.coe_ne_top _
+  | top => exact absurd rfl ha
+
+/-- Moving a subtrahend out of a difference of differences. -/
+private theorem sub_sub_eq_add_sub {a b c : EReal} (ha : a ≠ ⊥) (hc : c ≠ ⊤) :
+    b - (a - c) = (b + c) - a := by
+  have h : -(a - c) = c - a := neg_sub_swap ha hc
+  change b + -(a - c) = b + c + -a
+  rw [h]
+  change b + (c + -a) = b + c + -a
+  rw [← add_assoc]
 
 /-- A real constant minus an infimum is the supremum of the differences. -/
 private theorem coe_sub_iInf {ι : Sort*} (r : ℝ) (u : ι → EReal) :
@@ -543,5 +648,306 @@ theorem fenchelPairing_conj (hf : Proper f) (hg : ProperConcave g)
     exact neg_fenchelInf_le_fenchelSup_conj hf hg
 
 end Lemma386
+
+/-! ### Corollary 38.7.1 and Theorem 38.7 -/
+
+section Thm387
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+
+/-- `⟨f*, g⟩` read on the sup side is minus `⟨f, g*⟩` read on the inf side.
+
+This is pure sign bookkeeping, and it is the step that lets an adjoint move across the inner
+product in Theorem 38.7. -/
+theorem fenchelSup_conj_eq_neg_fenchelInf (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) {f h : E → EReal}
+    (hd : (dom f).Nonempty) (hh : (domConcave h).Nonempty) :
+    fenchelSup B.flip (conj B f) h = -(fenchelInf B f (concaveConj B h)) := by
+  rw [fenchelSup_apply, fenchelInf_apply, Tdaf.EReal.neg_iInf]
+  refine iSup_congr fun y => ?_
+  rw [LinearMap.flip_flip]
+  exact (neg_sub_swap (conj_ne_bot hd y) (concaveConj_ne_top hh y)).symm
+
+end Thm387
+
+section Thm387Bifun
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+variable [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+variable {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X}
+variable {f : U → EReal} {g : X → EReal}
+
+/-- The bracket `⟨Fu, y⟩` is below the concave biconjugate that `⟨f, F* y⟩` sees. This is
+`le_biconcaveConj` after `adjointBifun_eq_concaveConj_bracket`, and it is what makes the existence
+half of Corollary 38.7.1 free. -/
+theorem bracket_le_concaveConj_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (y : Y) (u : U) :
+    bracket Bx F u y ≤ concaveConj Bu.flip (adjointBifun Bu Bx F y) u := by
+  have hrw : adjointBifun Bu Bx F y = concaveConj Bu (fun u => bracket Bx F u y) :=
+    funext fun v => adjointBifun_eq_concaveConj_bracket Bu Bx F y v
+  rw [hrw]
+  exact le_biconcaveConj Bu (fun u => bracket Bx F u y) u
+
+/-- **Rockafellar, Corollary 38.7.1**, existence: `⟨f, F* y⟩` exists.
+
+Weak duality gives one inequality for free; the other is Theorem 38.4 together with
+`bracket_le_concaveConj_adjointBifun`. -/
+theorem hasFenchelPairing_adjointBifun (hbF : ∀ u x, F u x ≠ ⊥) (hf : Proper f) {y : Y}
+    (hex : IsExactSum Bu f (fun u => -(bracket Bx F u y))) :
+    HasFenchelPairing Bu f (adjointBifun Bu Bx F y) := by
+  refine hasFenchelPairing_of_le ?_
+  have h1 : fenchelInf Bu f (adjointBifun Bu Bx F y) = ⨆ u, (bracket Bx F u y - f u) := by
+    rw [fenchelInf_apply, ← conj_imageBifun hbF hf hex, conj_imageBifun_eq_iSup hbF hf.ne_bot y]
+  rw [h1, fenchelSup_apply]
+  exact iSup_mono fun u =>
+    add_le_add (bracket_le_concaveConj_adjointBifun Bu Bx F y u) le_rfl
+
+/-- **Rockafellar, Corollary 38.7.1**: `⟨Ff, y⟩ = ⟨f, F* y⟩` — an adjoint moves across the inner
+product.
+
+The left-hand side is Rockafellar's `⟨Ff, x*⟩`, i.e. `(Ff)*(x*)`; the right-hand side is the
+inner product of the convex `f` with the concave function `F* x*`. -/
+theorem conj_imageBifun_eq_fenchelPairing (hbF : ∀ u x, F u x ≠ ⊥) (hf : Proper f) {y : Y}
+    (hex : IsExactSum Bu f (fun u => -(bracket Bx F u y))) :
+    conj Bx (imageBifun F f) y = fenchelPairing Bu f (adjointBifun Bu Bx F y) :=
+  conj_imageBifun hbF hf hex
+
+end Thm387Bifun
+
+section Thm387Main
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+variable [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+variable {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X}
+variable {f : U → EReal} {g : X → EReal}
+
+/-- The adjoint of a bifunction that is finite somewhere is nowhere `⊤`. -/
+theorem adjointBifun_ne_top {u₀ : U} {x₀ : X} (hF : F u₀ x₀ ≠ ⊤) (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (y : Y) (v : V) : adjointBifun Bu Bx F y v ≠ ⊤ :=
+  ne_top_of_le_ne_top (add_coe_ne_top hF _) (iInf_le _ (u₀, x₀))
+
+/-- The image `F* g*` of a concave conjugate under the adjoint is nowhere `⊤`, provided `F` is
+finite at some `(u₀, x₀)` at which `g` is finite.
+
+The bound is uniform in `y` because the two occurrences of `⟨x₀, y⟩` cancel: the pair
+`(concaveConj_le_sub, iInf_le)` bounds every term of the supremum by
+`F u₀ x₀ + ⟨u₀, v⟩ - g x₀`. -/
+theorem concaveImageBifun_adjointBifun_ne_top (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) {u₀ : U} {x₀ : X} (hF : F u₀ x₀ ≠ ⊤) (hgb : g x₀ ≠ ⊥)
+    (hgt : g x₀ ≠ ⊤) (v : V) :
+    concaveImageBifun (adjointBifun Bu Bx F) (concaveConj Bx g) v ≠ ⊤ := by
+  obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hgb (lt_top_iff_ne_top.2 hgt)
+  have hbound : ∀ y : Y, concaveConj Bx g y + adjointBifun Bu Bx F y v
+      ≤ F u₀ x₀ + ((Bu u₀ v - r : ℝ) : EReal) := by
+    intro y
+    have h1 : concaveConj Bx g y ≤ ((Bx x₀ y : ℝ) : EReal) - g x₀ := concaveConj_le_sub Bx g x₀ y
+    have h2 : adjointBifun Bu Bx F y v ≤ F u₀ x₀ + ((Bu u₀ v - Bx x₀ y : ℝ) : EReal) :=
+      iInf_le _ (u₀, x₀)
+    refine le_trans (add_le_add h1 h2) (le_of_eq ?_)
+    rw [hr, ← _root_.EReal.coe_sub, add_left_comm, ← _root_.EReal.coe_add]
+    congr 2
+    ring
+  exact ne_top_of_le_ne_top (add_coe_ne_top hF _) (iSup_le hbound)
+
+/-- **Rockafellar, Theorem 38.7**, the "by definition" identity: `⟨F⁎* f*, g⟩` on the sup side is
+minus `⟨f, F* g*⟩` on the inf side.
+
+Both unwind to the same double extremum over `V × Y`, term by term
+`⟨F* y, g*⟩ - f*(v) = (g*(y) + (F* y)(v)) - f*(v)`; the only content is the `EReal` bookkeeping,
+and `iSup_comm`. -/
+theorem fenchelSup_imageBifun_lowerAdjointBifun (hf : Proper f) (hgd : (domConcave g).Nonempty)
+    {u₀ : U} {x₀ : X} (hF : F u₀ x₀ ≠ ⊤) (hgb : g x₀ ≠ ⊥) (hgt : g x₀ ≠ ⊤) :
+    fenchelSup Bx.flip (imageBifun (lowerAdjointBifun Bu Bx F) (conj Bu f)) g
+      = -(fenchelInf Bu f (concaveImageBifun (adjointBifun Bu Bx F) (concaveConj Bx g))) := by
+  have hane : ∀ v : V, conj Bu f v ≠ ⊥ := fun v => conj_ne_bot hf.dom_nonempty v
+  have hbne : ∀ y : Y, concaveConj Bx g y ≠ ⊤ := fun y => concaveConj_ne_top hgd y
+  have hcne : ∀ (y : Y) (v : V), adjointBifun Bu Bx F y v ≠ ⊤ :=
+    fun y v => adjointBifun_ne_top hF Bu Bx y v
+  have hL : fenchelSup Bx.flip (imageBifun (lowerAdjointBifun Bu Bx F) (conj Bu f)) g
+      = ⨆ y : Y, ⨆ v : V,
+        (concaveConj Bx g y - (conj Bu f v - adjointBifun Bu Bx F y v)) := by
+    rw [fenchelSup_apply]
+    refine iSup_congr fun y => ?_
+    rw [LinearMap.flip_flip]
+    have hH : imageBifun (lowerAdjointBifun Bu Bx F) (conj Bu f) y
+        = ⨅ v : V, (conj Bu f v - adjointBifun Bu Bx F y v) := rfl
+    rw [hH, sub_iInf_of_ne_top _ (hbne y)]
+  have hR : -(fenchelInf Bu f (concaveImageBifun (adjointBifun Bu Bx F) (concaveConj Bx g)))
+      = ⨆ v : V, ⨆ y : Y,
+        ((concaveConj Bx g y + adjointBifun Bu Bx F y v) - conj Bu f v) := by
+    rw [fenchelInf_apply, Tdaf.EReal.neg_iInf]
+    refine iSup_congr fun v => ?_
+    rw [neg_sub_swap (hane v)
+        (concaveImageBifun_adjointBifun_ne_top Bu Bx hF hgb hgt v),
+      concaveImageBifun_apply, iSup_sub_of_ne_bot _ (hane v)]
+  rw [hL, hR, iSup_comm]
+  exact iSup_congr fun v => iSup_congr fun y => sub_sub_eq_add_sub (hane v) (hcne y v)
+
+omit [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X] in
+/-- If `f` and `F` are both finite at some common `u₀`, the image `Ff` is not identically `⊤`. -/
+theorem dom_imageBifun_nonempty (hbF : ∀ u x, F u x ≠ ⊥) (hf : Proper f) {u₀ : U} {x₀ : X}
+    (hF : F u₀ x₀ ≠ ⊤) (hfu : f u₀ ≠ ⊤) : (dom (imageBifun F f)).Nonempty := by
+  refine ⟨x₀, ?_⟩
+  have hle : imageBifun F f x₀ ≤ f u₀ + F u₀ x₀ := iInf_le _ u₀
+  have hne : imageBifun F f x₀ ≠ ⊤ := ne_top_of_le_ne_top
+    ((_root_.EReal.add_ne_top_iff_ne_top₂ (hf.ne_bot u₀) (hbF u₀ x₀)).2 ⟨hfu, hF⟩) hle
+  exact lt_top_iff_ne_top.2 hne
+
+/-- **Rockafellar, Theorem 38.7**, third equality: `⟨F⁎* f*, g⟩ = -⟨Ff, g*⟩`.
+
+This is `fenchelSup_conj_eq_neg_fenchelInf` composed with Theorem 38.4. -/
+theorem fenchelSup_imageBifun_lowerAdjointBifun_eq_neg (hbF : ∀ u x, F u x ≠ ⊥) (hf : Proper f)
+    (hgd : (domConcave g).Nonempty) {u₀ : U} {x₀ : X} (hF : F u₀ x₀ ≠ ⊤) (hfu : f u₀ ≠ ⊤)
+    (hex : ∀ y : Y, IsExactSum Bu f (fun u => -(bracket Bx F u y))) :
+    fenchelSup Bx.flip (imageBifun (lowerAdjointBifun Bu Bx F) (conj Bu f)) g
+      = -(fenchelInf Bx (imageBifun F f) (concaveConj Bx g)) := by
+  have h38 : conj Bx (imageBifun F f) = imageBifun (lowerAdjointBifun Bu Bx F) (conj Bu f) :=
+    funext fun y => conj_imageBifun hbF hf (hex y)
+  rw [← h38]
+  exact fenchelSup_conj_eq_neg_fenchelInf Bx (dom_imageBifun_nonempty hbF hf hF hfu) hgd
+
+/-- **Rockafellar, Theorem 38.7**: adjoints move across the inner product,
+`⟨Ff, g*⟩ = ⟨f, F* g*⟩`.
+
+Rockafellar's route is `⟨Ff, g*⟩ = ⟨f, F* g*⟩ = -⟨f*, F⁎ g⟩ = -⟨F⁎* f*, g⟩`, and the step he calls
+remarkable is the last one, which he obtains "by definition" — here
+`fenchelSup_imageBifun_lowerAdjointBifun`. The other bridge is Theorem 38.4 plus the sign
+bookkeeping of `fenchelSup_conj_eq_neg_fenchelInf`. The relative-interior hypothesis of the book is
+carried by `hex` (the `IsExactSum` interface of Theorem 16.4) together with the common point
+`(u₀, x₀)` at which `f`, `F` and `g` are all finite.
+
+The equation is stated between the two *inf* sides; each of them is Rockafellar's inner product as
+soon as the corresponding pairing exists, which for the right-hand side is
+`hasFenchelPairing_adjointBifun` in the specialisation of Corollary 38.7.1. -/
+theorem fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun (hbF : ∀ u x, F u x ≠ ⊥)
+    (hf : Proper f) (hgd : (domConcave g).Nonempty) {u₀ : U} {x₀ : X} (hF : F u₀ x₀ ≠ ⊤)
+    (hfu : f u₀ ≠ ⊤) (hgb : g x₀ ≠ ⊥) (hgt : g x₀ ≠ ⊤)
+    (hex : ∀ y : Y, IsExactSum Bu f (fun u => -(bracket Bx F u y))) :
+    fenchelInf Bx (imageBifun F f) (concaveConj Bx g)
+      = fenchelInf Bu f (concaveImageBifun (adjointBifun Bu Bx F) (concaveConj Bx g)) := by
+  have h1 := fenchelSup_imageBifun_lowerAdjointBifun_eq_neg hbF hf hgd hF hfu hex
+  rw [fenchelSup_imageBifun_lowerAdjointBifun hf hgd hF hgb hgt] at h1
+  have h2 := congrArg (fun z : EReal => -z) h1
+  simpa using h2.symm
+
+end Thm387Main
+
+/-! ### Theorem 38.3: right scalar multiplication -/
+
+section SmulRightBifun
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+variable [AddCommGroup Y] [Module ℝ Y] {F : Bifun U X} {l : ℝ}
+
+/-- Rockafellar's `Fλ`: right scalar multiplication of a bifunction,
+`((Fλ) u)(x) = λ (Fu)(λ⁻¹ x)`, applied slice by slice. -/
+noncomputable def smulRightBifun (F : Bifun U X) (l : ℝ) : Bifun U X := fun u => smulRight (F u) l
+
+omit [AddCommGroup U] [Module ℝ U] in
+/-- The defining equation of `smulRightBifun`, slice by slice. -/
+theorem smulRightBifun_apply (F : Bifun U X) (l : ℝ) (u : U) :
+    smulRightBifun F l u = smulRight (F u) l := rfl
+
+/-- The linear map `(u, x) ↦ (l • u, x)`. -/
+def scaleFst (X : Type*) [AddCommGroup X] [Module ℝ X] (l : ℝ) : U × X →ₗ[ℝ] U × X :=
+  LinearMap.prod (l • LinearMap.fst ℝ U X) (LinearMap.snd ℝ U X)
+
+@[simp] theorem scaleFst_apply (l : ℝ) (p : U × X) : scaleFst X l p = (l • p.1, p.2) := rfl
+
+/-- The graph function of `Fλ` is a right scalar multiple of the graph function of `F`, read after
+the shear `(u, x) ↦ (λu, x)`. This is the linear change of variables `(u, x, μ) ↦ (u, λx, λμ)` of
+Rockafellar's proof. -/
+theorem graphFn_smulRightBifun (hl : 0 < l) (F : Bifun U X) :
+    graphFn (smulRightBifun F l) = smulRight (compLin (graphFn F) (scaleFst X l)) l := by
+  funext p
+  rw [smulRight_apply_pos hl]
+  change smulRight (F p.1) l p.2 = _
+  rw [smulRight_apply_pos hl, compLin_apply, scaleFst_apply]
+  congr 2
+  exact (smul_inv_smul₀ hl.ne' p.1).symm
+
+/-- **Rockafellar, Theorem 38.3**, first assertion: `Fλ` is convex when `F` is. -/
+theorem convexBifun_smulRightBifun (hl : 0 < l) (hF : ConvexBifun F) :
+    ConvexBifun (smulRightBifun F l) := by
+  rw [ConvexBifun, graphFn_smulRightBifun hl F]
+  exact convexFn_smulRight l (convexFn_compLin _ hF)
+
+omit [AddCommGroup U] [Module ℝ U] in
+/-- **Rockafellar, Theorem 38.3**, the inner-product identity
+`⟨(Fλ) u, x*⟩ = λ ⟨Fu, x*⟩`. It is Theorem 16.1's row `conj_smulRight`, slice by slice. -/
+theorem bracket_smulRightBifun (hl : 0 < l) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (u : U) :
+    bracket Bx (smulRightBifun F l) u = fun y => (l : EReal) * bracket Bx F u y :=
+  conj_smulRight hl Bx (F u)
+
+end SmulRightBifun
+
+/-! ### Theorem 38.5: composition -/
+
+section CompBifun
+
+section Defs
+
+variable {U X Y : Type*}
+
+/-- Rockafellar's product `GF` of bifunctions: `((GF) u)(y) = ⨅ x, (Fu)(x) + (Gx)(y)`.
+
+When `F` and `G` are the convex indicator bifunctions of linear maps `A` and `B`, `GF` is the
+indicator bifunction of `B ∘ A`. -/
+noncomputable def compBifun (G : Bifun X Y) (F : Bifun U X) : Bifun U Y :=
+  fun u y => ⨅ x, F u x + G x y
+
+theorem compBifun_apply (G : Bifun X Y) (F : Bifun U X) (u : U) (y : Y) :
+    compBifun G F u y = ⨅ x, F u x + G x y := rfl
+
+/-- The composition of *concave* bifunctions: the same formula with a supremum. -/
+noncomputable def concaveCompBifun (G : Bifun Y X) (F : Bifun X U) : Bifun Y U :=
+  fun y u => ⨆ x, G y x + F x u
+
+theorem concaveCompBifun_apply (G : Bifun Y X) (F : Bifun X U) (y : Y) (u : U) :
+    concaveCompBifun G F y u = ⨆ x, G y x + F x u := rfl
+
+/-- **Rockafellar, §38**: `(GF)⁎ = F⁎ G⁎`. The inverse of a product is the product of the inverses
+in the opposite order, with the concave orientation. -/
+theorem invBifun_compBifun (G : Bifun X Y) (F : Bifun U X) (hbF : ∀ u x, F u x ≠ ⊥)
+    (hbG : ∀ x y, G x y ≠ ⊥) :
+    invBifun (compBifun G F) = concaveCompBifun (invBifun G) (invBifun F) := by
+  funext y u
+  rw [invBifun_apply, compBifun_apply, Tdaf.EReal.neg_iInf, concaveCompBifun_apply]
+  refine iSup_congr fun x => ?_
+  have h : -(F u x + G x y) = -(F u x) + -(G x y) :=
+    _root_.EReal.neg_add (.inl (hbF u x)) (.inr (hbG x y))
+  rw [h, invBifun_apply, invBifun_apply, add_comm]
+
+end Defs
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+variable [AddCommGroup Y] [Module ℝ Y] {F : Bifun U X} {G : Bifun X Y}
+
+/-- The linear map `((u, y), x) ↦ (u, x)`. -/
+def compLeft (U X Y : Type*) [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+    [AddCommGroup Y] [Module ℝ Y] : (U × Y) × X →ₗ[ℝ] U × X :=
+  LinearMap.prod (LinearMap.fst ℝ U Y ∘ₗ LinearMap.fst ℝ (U × Y) X) (LinearMap.snd ℝ (U × Y) X)
+
+@[simp] theorem compLeft_apply (q : (U × Y) × X) : compLeft U X Y q = (q.1.1, q.2) := rfl
+
+/-- The linear map `((u, y), x) ↦ (x, y)`. -/
+def compRight (U X Y : Type*) [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+    [AddCommGroup Y] [Module ℝ Y] : (U × Y) × X →ₗ[ℝ] X × Y :=
+  LinearMap.prod (LinearMap.snd ℝ (U × Y) X) (LinearMap.snd ℝ U Y ∘ₗ LinearMap.fst ℝ (U × Y) X)
+
+@[simp] theorem compRight_apply (q : (U × Y) × X) : compRight U X Y q = (q.2, q.1.2) := rfl
+
+/-- **Rockafellar, Theorem 38.5**, first assertion: `GF` is a convex bifunction.
+
+`(u, x, y) ↦ (Fu)(x) + (Gx)(y)` is convex on `U × X × Y` (Theorem 5.2), and the graph function of
+`GF` is its image under `(u, x, y) ↦ (u, y)` (Theorem 5.7). -/
+theorem convexBifun_compBifun (hbF : ∀ u x, F u x ≠ ⊥) (hbG : ∀ x y, G x y ≠ ⊥)
+    (hF : ConvexBifun F) (hG : ConvexBifun G) : ConvexBifun (compBifun G F) := by
+  have hh : ConvexFn (compLin (graphFn F) (compLeft U X Y)
+      + compLin (graphFn G) (compRight U X Y)) :=
+    ConvexFn.add (convexFn_compLin _ hF) (convexFn_compLin _ hG)
+      (fun q => hbF _ _) (fun q => hbG _ _)
+  exact convexFn_iInf_right hh
+
+end CompBifun
 
 end Tdaf.ConvexAnalysis
