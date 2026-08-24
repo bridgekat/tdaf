@@ -237,7 +237,8 @@ theorem supportFn_eq_conj_indicator : supportFn B s = conj B (indicatorFn s)
 | `conj_indicator`, `conj_supportFn` — indicator and support function are conjugate | **Thm 13.2** |
 | `posHomogeneous_closed_iff_isSupportFn` — the closed proper positively homogeneous convex functions *are* the support functions | **Thm 13.2** |
 | `clFn_eq_supportFn_of_posHomogeneous` | Cor 13.2.1 |
-| `isSupportFn_bounded_iff_finite` | Cor 13.2.2 |
+| `isSupportFn_bounded_iff_finite` | Cor 13.2.2, with "bounded" in the pairing sense |
+| `isBounded_iff_forall_bddAbove` — **done**, in `Duality/SupportRelint.lean` | **Cor 13.2.2** with "bounded" read as `Bornology.IsBounded`. Genuinely layer D: a coordinate estimate against `Module.finBasis`, each coordinate being `⟨·, yᵢ⟩` by `exists_pairing_eq`. Cor 23.7.1, the last clause of Thm 23.4 and Cor 29.1.5 all consume this form and not the one above |
 | `recessionFn_conj` : `(conj B f) 0⁺ = δ*(·|dom f)` — **formalized**, in `Recession/Conjugate.lean`; with `constancySpace_conj` | **Thm 13.3** |
 | `conj_finite_iff_cofinite` | Cor 13.3.1 |
 | `mem_closure_dom_conj_iff`, `mem_relint_dom_conj_iff`, `mem_interior_dom_conj_iff`, `mem_affineSpan_dom_conj_iff` — **done**, in `Duality/Level.lean` | **Cor 13.3.4**, all four clauses. They need **neither Thm 12.3 nor the translation by `-y₀`**: stating them through `recessionFn f` and `⟨y, y₀⟩` rather than through `g 0⁺` makes the translation vanish. The book's exception set in (b) is `y₀`-independent, and its "`= 0`" is forced by the inequality at `-y` |

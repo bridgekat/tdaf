@@ -897,11 +897,16 @@ what is actually assumed is `ConvexFn f`, `f x` finite, `⨅ f < f x` and `∂f 
 *is* in the book ("`f` is subdifferentiable at `x`") and cannot be dropped — the `-√y` example in
 the module docstring shows why.
 
-**Corollary 23.7.1 deviates from the book's statement.** The book asks for `x ∈ int (dom f)`; the
-version here asks for `Bornology.IsBounded (∂f x)`, which is what `isClosed_coe_hull_of_isBounded`
-consumes. `bddAbove_subgradient_iff_mem_interior_dom` gives only the *pairing* form of boundedness
-("every `⟨v, ·⟩` is bounded above"); upgrading that to `Bornology.IsBounded` in `F` is a separate
-finite-dimensional lemma that does not exist yet.
+**Corollary 23.7.1 is here in both forms.** The one proved first asks for
+`Bornology.IsBounded (∂f x)`, which is what `isClosed_coe_hull_of_isBounded` consumes; the book's
+own hypothesis `x ∈ int (dom f)` is
+`normalCone_setOf_le_eq_coe_hull_subgradient_of_mem_interior_dom`, and what gets from one to the
+other is `isBounded_subgradient_iff_mem_interior_dom`.
+`bddAbove_subgradient_iff_mem_interior_dom` gives only the *pairing* form of boundedness ("every
+`⟨v, ·⟩` is bounded above"), and `isBounded_iff_forall_bddAbove` in `Duality/SupportRelint.lean`
+supplies the upgrade — at the cost of finite-dimensionality of `F`, which the pairing form does not
+need. The interior-point version assumes properness, as the book does, rather than deducing it from
+`∂f x ≠ ∅`, because Theorem 23.4 needs it first.
 
 **Theorem 23.3's second half is here too**, for the same reason Theorem 23.4 is: it is about
 relative interiors, and `Subgradient/Defs.lean` cannot see them.
@@ -1036,10 +1041,12 @@ repetition of the same argument; `increment_eq_of_subgradientRel_subset`, its en
 **neither convexity nor closedness of `g`**, only `Proper g`. That inversion is what made Theorem
 24.2's uniqueness clause reachable without any integration theory.
 
-**Still not done**: Theorem 24.2's *existence* clause (recovering `f` from a nondecreasing `φ`
-needs `∫ₐˣ φ` for an `EReal`-valued nondecreasing integrand, improper at both ends) and Theorem
-24.6's second assertion — see `Subgradient/Convergence.lean`. Corollary 31.5.2 — `∂f` is maximal
-*monotone* — is a different, easier statement and does not wait on any of this.
+**§24 is now done except for the integral itself.** Theorem 24.2's existence clause turned out
+to need no integration — see `Subgradient/Primitive.lean` — and Theorem 24.6's second assertion
+turned out to need no `EReal`-valued Corollary 10.8.1. What is left of §24 is Rockafellar's
+*construction* `f(x) = ∫ₐˣ φ` and Corollary 24.2.1, both irreducibly statements about an integral.
+Corollary 31.5.2 — `∂f` is maximal *monotone* — is a different, easier statement and does not wait
+on any of this.
 
 **Relocation candidates.** `coe_sub_add_coe` belongs in `Tdaf/Order/EReal.lean`; `conj_add_coe` in
 `Duality/Conjugate.lean`; `subgradient_add_coe`, `subgradientRel_add_coe` and
@@ -1081,15 +1088,63 @@ right endpoint and `f'₋ > -∞` right of the left endpoint" unwinds, on the li
 (`bot_lt_leftDeriv_and_rightDeriv_lt_top_iff`), which is worth knowing because it is how §25 quotes
 the condition.
 
+### `Tdaf/Analysis/Convex/Subgradient/Primitive.lean`
+
+**Theorem 24.2 in full** — the existence clause included, and with no integration theory.
+
+```lean
+def monotoneCurve (φ : ℝ → EReal) : SetRel ℝ ℝ          -- Rockafellar's `Γ(φ)`
+theorem isMonotoneRel_monotoneCurve … ; theorem exists_mem_monotoneCurve_sub …
+theorem isMaximalMonotoneRel_monotoneCurve …
+theorem subgradientRel_eq_monotoneCurve_rightDeriv …     -- the converse: every `∂f` is such a curve
+theorem exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq …    -- Thm 24.2, existence
+theorem exists_closedProperConvexFn_forall_le_le …                  -- Thm 24.2, in full
+```
+
+**Theorem 24.2's existence clause needs no integral.** `OneDim.lean` used to record the missing
+`∫ₐˣ φ` as the obstruction, and the plan carried the dependency "Theorem 24.2 existence ⇒ improper
+integral of a monotone `EReal`-valued function". Both were wrong. What Rockafellar's `f` has to be
+is characterised by its *graph*, and the graph is directly constructible: `monotoneCurve φ` is the
+complete non-decreasing curve filling in `φ`'s jumps, and **Theorem 24.3** — already proved, and
+proved through cyclic monotonicity rather than through 24.2, so not circular — hands back a closed
+proper convex `f` with `∂f = Γ(φ)`. What remains genuinely integral-shaped is only Rockafellar's
+*formula* `f(x) = ∫ₐˣ φ(t) dt` and Corollary 24.2.1.
+
+**`Γ(φ)` is a chain for every `φ`, monotone or not.** `y₀ ≤ φ⁺(x₀) ≤ φ(t) ≤ φ⁻(x₁) ≤ y₁` for any `t`
+strictly between `x₀` and `x₁`, and no hypothesis on `φ` enters. Monotonicity of `φ`, and finiteness
+of `φ` at one point, are used only for **maximality**.
+
+**Maximality goes through the antidiagonal.** Rockafellar calls "`(x, x*) ↦ x + x*` is a bijection
+of `Γ(φ)` onto `ℝ`" an elementary exercise and then never uses it. Only *surjectivity* is needed,
+and with it maximality is three lines: two comparable points of a chain with equal coordinate sums
+are equal. The direct route splits into four or five `±∞` cases and is much worse.
+
+**Rockafellar's convention for `f'₊`/`f'₋` outside `dom f` is the project's `rightDeriv`/`leftDeriv`
+exactly** — both `−∞` to the left of `dom f`, both `+∞` to the right. This is worth recording
+because the definitions (an `iInf`/`iSup` guarded by an existence condition) make it look as though
+the signs were swapped, and Theorem 24.2 is *false* under the swapped reading.
+
+**Relocation candidates.** `eq_and_eq_of_forall_coe_mem_iff` and
+`eq_bot_or_eq_top_of_forall_not_coe_mem` are pure `EReal` order facts and belong in
+`Tdaf/Order/EReal.lean`. `monotoneCurve` and its five companions are the "complete non-decreasing
+curve" material and arguably belong at the end of `OneDim.lean`, right after
+`isMaximalMonotoneRel_iff_exists_closedProperConvexFn`; this module would then hold Theorem 24.2
+alone.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Convergence.lean`
 
-**Theorem 24.5**, **Corollary 24.5.1**, and **Theorem 24.6's first assertion**.
+**Theorems 24.5 and 24.6 in full**, with **Corollary 24.5.1**.
 
 ```lean
 theorem eventually_dirDeriv_lt …                          -- Thm 24.5, first half
+theorem subgradient_subset_add_closedBall_of_forall_dirDeriv_le …   -- the shared endgame
 theorem eventually_subgradient_subset_add_closedBall …    -- Thm 24.5, second half
 theorem upperSemicontinuousAt_dirDeriv … ; theorem eventually_nhds_subgradient_subset_add_closedBall …
 theorem eventually_dirDeriv_lt_of_tendsto_dir …           -- Thm 24.6, first assertion
+theorem eventually_mem_interior_dom_of_tendsto_dir …      -- the step the book leaves implicit
+theorem subgradient_dirDeriv …                            -- Cor 23.5.3 + Thm 23.2 + Cor 23.5.2
+theorem subgradient_dirDeriv_eq_sep_normalCone … ; theorem isExposed_subgradient_dirDeriv …
+theorem eventually_subgradient_subset_exposed_add_closedBall …     -- Thm 24.6, second assertion
 ```
 
 **Theorem 24.6's first assertion needs neither the simplex construction nor closedness of `f`.**
@@ -1105,14 +1160,40 @@ repairs the finitely many stray indices.
 `tendsto_eval_of_tendsto` in `Analysis/Convex/Convergence.lean` (the §10 module of that name);
 `dirDeriv_eq_bot_of_eq_top`, `dirDeriv_eq_coe_toReal_of_mem_interior_dom`,
 `convexOn_toReal_dirDeriv`, `toReal_dirDeriv_smul`, `mem_interior_dom_dirDeriv` and
-`proper_dirDeriv_of_ne_bot` in `Subgradient/Existence.lean`; `mem_interior_dom_smul` in
-`Epigraph.lean` or `RelativeInterior.lean`.
+`proper_dirDeriv_of_ne_bot` in `Subgradient/Existence.lean`; `mem_interior_dom_smul` and
+`eventually_mem_interior_dom_of_tendsto_dir` in `Epigraph.lean` or `RelativeInterior.lean`.
+`subgradient_dirDeriv`, `subgradient_dirDeriv_eq_sep_normalCone` and
+`isExposed_subgradient_dirDeriv` are pure §23 material — a general pairing, no sequences — and
+belong in `Subgradient/Existence.lean` beside `dirDeriv_eq_supportFn_of_mem_relint_dom`;
+`subgradient_subset_add_closedBall_of_forall_dirDeriv_le` has no sequences in it either and would
+sit as comfortably in `Subgradient/Bounded.lean`.
 
-**Theorem 24.6's second assertion is blocked, on two counts.** The uniformity step wants
-Corollary 10.8.1 for `EReal`-valued convex functions dominated by a finite one — the existing form
-consumes *finite* convex functions on an open set, and `f'(xᵢ; ·)` at a boundary point takes the
-value `+∞`. And identifying the limit set `∂(f'(x; ·))(y)` with the face of `∂f x` exposed by `y`
-needs **Corollary 23.5.3**, `δ*(· | face exposed by y) = (δ*(· | C))'(y; ·)`, which does not exist yet.
+**Neither of the two obstructions this entry used to record was real.** They were: an
+`EReal`-valued Corollary 10.8.1 for the uniformity step, and Corollary 23.5.3 for identifying the
+limit set. Both dissolved.
+
+**The `xᵢ` are eventually interior, so the existing Corollary 10.8.1 applies verbatim.** The worry
+was that `f'(xᵢ; ·)` takes `+∞` when `xᵢ` is a boundary point of `dom f`. But
+`xᵢ = x + ‖xᵢ − x‖ • yᵢ` with `yᵢ → y`, and the theorem's own hypothesis `x + αy ∈ int (dom f)`
+together with openness gives `x + α yᵢ ∈ int (dom f)` for large `i`; `mem_interior_dom_smul` — the
+segment principle, already in this file — carries interiority back to the smaller step
+`‖xᵢ − x‖`. `eventually_mem_interior_dom_of_tendsto_dir` is that step, and no subsequence
+extraction or compactness argument is involved. A consequence the book does not remark on: `∂f(xᵢ)`
+is **compact** for large `i`.
+
+**Identifying the limit set is six lines, not a missing theorem.** `subgradient_dirDeriv` says
+`∂(f'(x; ·))(y) = ∂f(x)_y`, and it composes `clFn_dirDeriv` (Thm 23.2), `subgradient_clFn`
+(Cor 23.5.2) and `subgradient_supportFn` (Cor 23.5.3) — all three of which the library already had.
+The face is delivered three ways: as `∂f(x) ∩ {y is normal there}`
+(`subgradient_dirDeriv_eq_sep_normalCone`), and as Mathlib's `IsExposed`
+(`isExposed_subgradient_dirDeriv`), which hands over `IsExposed.isFace` for free.
+
+**Non-emptiness of `∂f(x)` is a consequence, not a hypothesis**, and **`f` need not be closed.**
+The book writes `∂f(x)_y`, presupposing `∂f x ≠ ∅`; that follows from properness of `f'(x; ·)`
+through Theorem 23.3's `subgradient_eq_empty_iff_exists_dirDeriv_eq_bot`. Both assertions of
+Theorem 24.6 need only `ConvexFn f` and `Proper f`, where the book says "closed proper convex".
+`hxsdom : ∀ i, xs i ∈ dom f` is likewise redundant, and is kept only because
+`eventually_dirDeriv_lt_of_tendsto_dir` still asks for it.
 
 ### `Tdaf/Analysis/Convex/Subgradient/Bounded.lean`
 
@@ -1454,10 +1535,17 @@ finitely many generating *points*. No closedness, no properness.
 vertical prism. The book derives 27.3.2 from 27.3.1 and hence from Theorem 21.5; that detour is
 avoidable.
 
-**Not done**: Thm 27.1(c), (d), (e), (g), (h) and the rest of (i) — (c), (d) and (i) need Thm 23.3
-in full and the remaining clauses of Cor 13.3.4, (e) needs a reflexive pairing (`∂f*(0)` lives in
-`E**`), (g) and (h) need Thm 13.5 — and the polyhedral refinement of Thm 27.3, Cor 27.3.1 and the
-polyhedral half of Cor 27.3.3, which genuinely do need Helly in the form of Thm 21.5.
+**Thm 27.1(d) is stated twice, and the level-set form is the one §30 wants.**
+`argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj` is the book's sentence about
+`argmin f`; `exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj` says the same
+of *some* sublevel set `{x | f x ≤ α}`, and `argmin_nonempty_and_isBounded_iff_exists_setOf_le`
+composes the two. The book states only the second reading, in Theorem 30.4(g); both run on
+`recessionConeFn f = 0`, and the bridge in the sublevel direction is `recessionCone_setOf_le`
+(Thm 8.7) rather than `recessionCone_argmin`.
+
+**Not done**: Thm 27.1(e), which needs a reflexive pairing (`∂f*(0)` lives in `E**`), and the
+polyhedral refinement of Thm 27.3, Cor 27.3.1 and the polyhedral half of Cor 27.3.3, which
+genuinely do need Helly in the form of Thm 21.5.
 
 ### `Tdaf/Analysis/Convex/Optimization/Maximum.lean`
 
@@ -1679,8 +1767,10 @@ which sidesteps deciding `l i ≠ 0`.
 theorem supportFn_kuhnTucker …    -- Cor 29.1.1: `δ*(u ∣ KT) = cl (inf F)'(0; -u)`
 theorem kuhnTucker_eq_empty_iff …                                     -- Cor 29.1.2
 theorem kuhnTucker_eq_singleton_of_dirDeriv_eq …                      -- Cor 29.1.3
-theorem dirDeriv_infBifun_eq …                                        -- Cor 29.1.4
-theorem proper_infBifun_of_stronglyConsistent …                       -- Cor 29.1.5
+theorem kuhnTucker_nonempty_of_stronglyConsistent … ; theorem dirDeriv_infBifun_eq …   -- Cor 29.1.4
+theorem proper_infBifun_of_stronglyConsistent … ; theorem continuousOn_infBifun_interior …
+theorem isBounded_kuhnTucker_of_strictlyConsistent …                  -- Cor 29.1.5
+theorem isCompact_kuhnTucker_of_strictlyConsistent …                  -- Cor 29.1.5, last clause
 theorem infBifun_eq_bot_of_mem_relint …                               -- Cor 29.1.6
 def PolyhedralBifun … ; theorem kuhnTucker_nonempty_of_polyhedralBifun …    -- Thm 29.2
 ```
@@ -1695,8 +1785,17 @@ has at least one optimal solution", but `inf F 0 ≠ -∞` suffices — an optim
 every point optimal. Finiteness is needed only for *polyhedrality* of the minimum set, which is a
 sublevel set at a real level.
 
-**Not here**: Corollary 29.1.4's compactness clause. Theorem 29.3 is in `Saddle/Minimax.lean`,
-with §36.
+**Corollary 29.1.5's compactness clause is where the pairing form of Theorem 23.4 stops being
+enough.** The three properties come from three places — non-emptiness from Theorem 23.4 through
+`kuhnTucker_nonempty_of_stronglyConsistent`, closedness and convexity from Corollary 29.1.1,
+boundedness from Theorem 23.4's last clause — and only the last is a problem.
+`bddAbove_kuhnTucker_of_strictlyConsistent` gives Corollary 13.2.2's notion of boundedness, which is
+all a general dual pair supports; Rockafellar's "closed bounded" is `Bornology.IsBounded`, and the
+upgrade is `isBounded_iff_forall_bddAbove` in `Duality/SupportRelint.lean`. It is what makes this
+one corollary need `FiniteDimensional ℝ V` and `IsCompatiblePairing B.flip` when nothing else in
+§29 does, so it lives in its own section.
+
+**Not here**: Theorem 29.4. Theorem 29.3 is in `Saddle/Minimax.lean`, with §36.
 
 ```lean
 abbrev Bifun (U X : Type*) := U → X → EReal
@@ -1957,10 +2056,43 @@ below any prescribed bound.
 `forall_conj_eq_top_iff` is the single lemma both halves of Corollary 30.2.1 run on. Corollary
 30.5.1 is in `Saddle/Minimax.lean`, with §36.
 
-**Not here**: Theorem 30.4 (g)–(j), which route through Theorem 27.1(d)/(f). **Theorem 14.2 is now
-formalized** (`Recession/Conjugate.lean`) and with it Theorem 27.1(f), so what remains is
-`int (dom (F 0)*) = int (domConcave F*)`, a Corollary 7.4.1-type result. **Corollary 13.3.4 is now
-done in all four clauses** (`Duality/Level.lean`), so that is the only remaining obstruction.
+**Not here**: Theorem 30.4 (g)–(j). Theorems 14.2 and 27.1(d)/(f) and all four clauses of
+Corollary 13.3.4 are now done, so the one step left is the "i.e." in the book's own proof — and it
+is not the one-liner that word suggests.
+
+**Rockafellar's proof of Theorem 30.4(g) hides a real argument in one "i.e.".** The proof reads:
+"Condition (g) is equivalent by Theorem 27.1(d) to having `0 ∈ int (dom (F0)*)`, i.e. `(P*)`
+strictly consistent." Writing `Fᵧ u x := F u x - ⟨x, y⟩`, the two sides are
+
+```
+dom ((F 0)*)         = {y | (inf Fᵧ) 0 > -∞}
+domConcaveBifun F*   = {y | cl (inf Fᵧ) 0 > -∞}
+```
+
+because `adjointBifun Bu Bx F y v = adjointBifun Bu Bx Fᵧ 0 v`, so Corollary 30.2.2 applied to `Fᵧ`
+gives `supBifun F* y = cl (inf Fᵧ) 0`, while `(F 0)* y = -(inf Fᵧ) 0` by definition. So the
+inclusion `⊆` is free and the *reverse* one carries the content. When `(P)` is consistent — which
+(g) forces — improperness of a convex function on `ri (dom)` (Theorem 7.2) turns the second set into
+`{y | ∀ u, (F u)* y ≠ ⊤}`, an intersection over *all* `u` whose `u = 0` member is the first set.
+Interiors of such an intersection are not automatic.
+
+**What closes it is that all the slices have the same recession function.** For closed convex `F`
+and any `u` with `F u ≢ ⊤`, `epi (F u)` is a slice of `epi F`, and the recession cone of a
+non-empty slice of a closed convex set is the corresponding slice of its recession cone — the
+non-obvious half being that a single ray suffices, which is `mem_recessionCone_of_exists_ray`
+(Theorem 8.3). Hence `(F u)0⁺ = (F 0)0⁺` for every `u ∈ dom F`, and:
+
+* by Theorem 27.1(d), (g) says `recessionConeFn (F 0) = 0`, i.e. `(F 0)0⁺ y > 0` for `y ≠ 0`;
+* `(F 0)0⁺` is positively homogeneous and lower semicontinuous, so on the unit sphere — compact, in
+  finite dimensions — it has a positive lower bound `c`;
+* for `‖y*‖ < c` and every `u`, `(F u)0⁺ - ⟨·, y*⟩ = (F 0)0⁺ - ⟨·, y*⟩` is still positive off the
+  origin, so `F u - ⟨·, y*⟩` has a bounded non-empty sublevel set and hence is bounded below;
+* so the ball of radius `c` lies in every `dom ((F u)*)`, and `0 ∈ int (domConcaveBifun F*)`.
+
+So (g) ⇒ (b) is a genuine theorem with a genuine proof, and the missing prerequisite is the
+recession cone of a slice, which `Recession/Cone.lean` does not have. (h) is the same argument on
+the concave side, and (i), (j) are the special cases of (g), (h) in which the sublevel set is
+`argmin`.
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -2387,6 +2519,7 @@ theorem exists_forall_eq_of_notMem_affineSpan …                       -- Cor 1
 theorem mem_relint_iff_lt_supportFn …                                 -- Thm 13.1, ri
 theorem mem_interior_iff_lt_supportFn …                               -- Thm 13.1, int
 theorem mem_affineSpan_iff_eq_supportFn …                             -- Thm 13.1, aff
+theorem isBounded_iff_forall_bddAbove …                               -- Cor 13.2.2, metric form
 ```
 
 **A thin module between `Duality/Support.lean` and `Duality/Level.lean`, and it has to be.** The
@@ -2407,6 +2540,16 @@ space (the condition is vacuous while `int ∅ = ∅`), so `C.Nonempty` is assum
 needs `B.SeparatingRight`, because `y ≠ 0` and `⟨·, y⟩ ≠ 0` are different conditions once
 `Rⁿ = (Rⁿ)*` is given up. The `aff` clause, on the other hand, needs **no convexity** — Corollary
 1.4.1 is about arbitrary sets, and the proof separates a point from the affine subspace `aff C`.
+
+**Corollary 13.2.2's metric form is here too**, and three later statements needed it.
+`isSupportFn_bounded_iff_finite` in `Duality/Support.lean` reads "bounded" in the *pairing* sense —
+every `⟨·, y⟩` is bounded above on `C` — which is all a general dual pair supports.
+`isBounded_iff_forall_bddAbove` upgrades that to `Bornology.IsBounded`, and the upgrade is a
+coordinate estimate against `Module.finBasis`: each `b.coord i` is continuous, hence `⟨·, yᵢ⟩` for
+some `yᵢ` by `exists_pairing_eq`, and bounding those coordinates in both directions bounds `‖x‖`.
+The converse direction needs no compatibility at all. Its consumers are Corollary 23.7.1 under the
+book's own hypothesis, the last clause of Theorem 23.4 in the norm, and Corollary 29.1.5's
+compactness clause — which is why it sits here rather than in whichever of the three came first.
 
 ### `Tdaf/Analysis/Convex/Duality/Level.lean`
 
@@ -4062,6 +4205,67 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 
 183. **Probing Mathlib names with a scratch file that does `import Mathlib` takes over ten minutes
      in a worktree.** Import a project module instead — it is already built.
+
+195. **`set x := e` with an unused `with h` does not trip the linter.** Contrary to what gotcha
+     139 implies, only genuinely unused *binders* are reported; an unused `set … with h`
+     hypothesis is silent. Drop it for tidiness, not to satisfy the linter.
+
+194. **`Prod.ext` takes the two component equalities positionally and wants the projections
+     beta-reduced.** `Prod.ext (by simp only []; linarith [hle.1, hle.2]) (by …)` works where a
+     bare `linarith` does not, because `Prod.le_def` leaves goals phrased with `p.1`/`p.2` against a
+     literal pair whose projections have not reduced.
+
+193. **A local `have` whose type is a class is picked up by instance search.** This is how
+     `IsCompatiblePairing B.flip` gets supplied at `innerₗ E`:
+     `have hflip : IsCompatiblePairing ((innerₗ E).flip) := by rw [flip_innerₗ]; infer_instance`
+     immediately before the application is enough — no `letI` (gotchas 56 and 177), no explicit
+     passing. Gotcha 172 in its consumer form.
+
+192. **`induction A with | bot | coe c | top` is the cheapest proof that an empty `EReal` interval
+     is degenerate.** `A ≤ B` with no real in `[A, B]` forces `A = B = ⊥` or `A = B = ⊤`; the `coe`
+     branch is `absurd ⟨le_rfl, hAB⟩ (h c)` and the `top` branch is `top_le_iff.1 hAB`. Only the
+     `bot` branch needs gotcha 191's density step.
+
+191. **`EReal.lt_iff_exists_real_btwn` is the whole toolkit for endpoint arguments.** Every "two
+     extended-real intervals with the same real points have the same endpoints" step is: `by_contra`,
+     push the negation, extract a real strictly between the two candidate endpoints, and bound it at
+     the other end using one anchoring real point of the interval. Four copies of that prove
+     `A₁ = A₂ ∧ B₁ = B₂`, with no separate `⊥`/`⊤` case analysis.
+
+190. **`(hR x).symm.trans_le'` on an `Eq` resolves into `Eq.trans_le'` and fails.** Given
+     `h : rightDeriv f x = ⨅ …`, chaining off `h.symm` to reach `φ x ≤ rightDeriv f x` reports "The
+     environment does not contain `Eq.trans_le'`". Use `fun x => by rw [h x]; exact le_iInf₂ …` —
+     `rw` first, then the order lemma.
+
+189. **`linter.unusedSimpArgs` reports each redundant argument separately, computed against the
+     original list.** Two warnings each saying "omit this one" can both be wrong: removing either
+     alone leaves the goal unsolved. Re-derive the list rather than applying the hints one at a time.
+
+188. **`map_sub` fires on the wrong head inside a `normalCone` membership.** In `B.flip (w - v) y`,
+     `simp only [map_sub]` rewrites `B.flip`, giving `(B.flip w - B.flip v) y`, rather than pushing
+     through to `B y (w - v)`. The working list is
+     `[mem_normalCone, map_sub, LinearMap.sub_apply, LinearMap.flip_apply, sub_nonpos]`, and
+     `LinearMap.sub_apply` is what repairs it — see gotcha 189 for why the linter's advice on it
+     misleads.
+
+187. **A `ContinuousLinearMap`'s `cont` field is stated with `.toFun`, so `simpa` cannot close it.**
+     `⟨B y, by simpa only [LinearMap.flip_apply] using continuous_pairing B.flip y⟩` fails with
+     "term has type `Continuous fun x ↦ (B y) x` but is expected to have type
+     `Continuous (B y).toFun`" — defeq, but `simpa`'s final match is syntactic. Bind the continuity
+     to a `have` and let the anonymous constructor unify by defeq.
+
+186. **`IsExposed` is not in `Subgradient/Convergence.lean`'s import closure.**
+     `Mathlib.Analysis.Convex.Exposed` reaches the project only through `Analysis/Convex/Face.lean`.
+     A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
+     "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
+     a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+185. **`include B in` is the light fix for gotcha 157.** When a theorem's *conclusion* does not
+     mention the pairing `B`, the section variable is not inserted and the statement fails with
+     "Unknown identifier `B`" even though a hypothesis' instance argument needs it. Gotcha 157
+     recommends making `B` explicit and dropping it from `variable`, which changes every call site;
+     `include B in` before the doc comment does the same job locally and changes nothing else. It is
+     the mirror image of `omit … in`, and the two often sit on adjacent declarations.
 
 184. **Checking the 100-character line limit with `awk 'length > 100'` gives false positives.**
      `awk` counts UTF-8 *bytes*, and this project's source is full of `≤`, `∈`, `•`. Count

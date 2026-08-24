@@ -178,26 +178,29 @@ where its one use of properness goes.
 (iv) Theorem 23.10 is a *nonemptiness* statement, not a calculus rule; it belongs with Theorem 23.4,
 and now lives with it in `Subgradient/Existence.lean` (§5.1a).
 
-## 5.3 `Subgradient/Monotone.lean`, `OneDim.lean`, `Convergence.lean`, `Bounded.lean` — §24
+## 5.3 `Subgradient/Monotone.lean`, `OneDim.lean`, `Primitive.lean`, `Convergence.lean`, `Bounded.lean` — §24
 
-**Status: Theorems 24.1, 24.3, 24.4, 24.5, 24.7, 24.8 and 24.9 are done in full, together with
-Corollary 24.5.1, Theorem 24.2's uniqueness clause and Theorem 24.6's first assertion. What is left
-is Theorem 24.2's existence clause and Theorem 24.6's second assertion.**
+**Status: Theorems 24.1–24.9 are all done, together with Corollary 24.5.1. What is left of §24 is
+Rockafellar's integral *formula* `f(x) = ∫ₐˣ φ` for the primitive, and Corollary 24.2.1 — both
+irreducibly statements about an integral, and neither needed by anything downstream.**
 
 §24 outgrew one module. `Monotone.lean` keeps the cyclic-monotonicity material (Theorems 24.4,
 24.8, 24.9); `OneDim.lean` holds the one-dimensional theory (24.1, 24.3, 24.2's uniqueness);
-`Convergence.lean` holds the limit theorems (24.5, 24.5.1, 24.6); `Bounded.lean` holds 24.7.
+`Primitive.lean` holds Theorem 24.2's existence clause and the complete non-decreasing curves it is
+built from; `Convergence.lean` holds the limit theorems (24.5, 24.5.1, 24.6); `Bounded.lean` holds
+24.7.
 
 | Lean name | book | status |
 |---|---|---|
 | `rightDeriv`, `leftDeriv`, `leftDeriv_le_rightDeriv`, `rightDeriv_le_leftDeriv`, `monotone_rightDeriv`, `monotone_leftDeriv`, `mem_subgradientRel_iff`, the four one-sided limit formulas (`iInf_rightDeriv_Ioi` …) | **Thm 24.1** | done, `OneDim.lean` |
 | `exists_eq_add_coe_of_le_le`, `subgradientRel_eq_of_deriv_eq` | **Thm 24.2**, uniqueness clause | done, `OneDim.lean` |
-| — | **Thm 24.2**, existence clause, and Cor 24.2.1 | **not done** — needs `∫ₐˣ φ` for a nondecreasing `EReal`-valued `φ`, improper at both ends |
+| `monotoneCurve`, `isMonotoneRel_monotoneCurve`, `exists_mem_monotoneCurve_sub`, `isMaximalMonotoneRel_monotoneCurve`, `subgradientRel_eq_monotoneCurve_rightDeriv`, `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq`, `exists_closedProperConvexFn_forall_le_le` | **Thm 24.2**, existence clause | done, `Primitive.lean` — and it needs **no integral**: the primitive is pinned down by its *graph*, `Γ(φ)` is that graph, and Thm 24.3 (proved via cyclic monotonicity, so not circular) produces `f` from it |
+| — | **Thm 24.2**'s integral formula, and Cor 24.2.1 | **not done** — the only §24 statements that genuinely need `∫ₐˣ φ` for a nondecreasing `EReal`-valued `φ`, improper at both ends |
 | `isMaximalMonotoneRel_iff_exists_closedProperConvexFn`, `isMonotoneRel_iff_forall_le_or_le`, `isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone` | **Thm 24.3** | done, `OneDim.lean` |
 | `isClosed_subgradientRel` | **Thm 24.4** | done |
 | `eventually_dirDeriv_lt`, `eventually_subgradient_subset_add_closedBall`, `upperSemicontinuousAt_dirDeriv`, `eventually_nhds_subgradient_subset_add_closedBall` | **Thm 24.5**, Cor 24.5.1 | done, `Convergence.lean` |
 | `eventually_dirDeriv_lt_of_tendsto_dir` | Thm 24.6, first assertion | done, `Convergence.lean` |
-| — | Thm 24.6, second assertion | **not done** — needs Cor 10.8.1 for `EReal`-valued convex functions, and **Cor 23.5.3** to identify the limit set with an exposed face |
+| `eventually_mem_interior_dom_of_tendsto_dir`, `subgradient_dirDeriv`, `subgradient_dirDeriv_eq_sep_normalCone`, `isExposed_subgradient_dirDeriv`, `eventually_subgradient_subset_exposed_add_closedBall` | **Thm 24.6**, second assertion | done, `Convergence.lean` — and **neither** recorded obstruction was real: the `xᵢ` are eventually *interior*, so the existing Cor 10.8.1 applies verbatim, and the exposed face is Thm 23.2 + Cor 23.5.2 + Cor 23.5.3 composed in six lines |
 | `exists_lipschitz_forall_pairing_le_of_isCompact`, `isCompact_subgradient`, `isCompact_image_subgradientRel` | Thm 24.7 | done, `Bounded.lean` |
 | `IsCyclicallyMonotone`, `cyclicPotential`, `isCyclicallyMonotone_subgradientRel`, `exists_convexFn_subgradientRel_of_isCyclicallyMonotone`, `isCyclicallyMonotone_iff_exists_convexFn` | **Thm 24.8** | done |
 | `exists_eq_subgradientRel_of_isMaximalCyclicallyMonotone` | **Thm 24.9**, "maximal ⇒ subdifferential" | done |

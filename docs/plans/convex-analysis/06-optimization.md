@@ -27,7 +27,7 @@ reflexive pairing: `∂f*(0)` a singleton is a statement about `E**`.
 | `conj_zero_eq_neg_iInf`, `iInf_eq_neg_conj_zero`, `zero_mem_dom_conj_iff` | **Thm 27.1(a)** | done |
 | `argmin_eq_subgradient_conj_zero` | **Thm 27.1(b)** | done |
 | `iInf_ne_bot_and_argmin_eq_empty_iff`, `iInf_ne_top` | **Thm 27.1(c)** | done — (a) and (b) composed with Thm 23.3's second half, now in `Subgradient/Existence.lean`. Only one of the book's two finiteness bounds appears on each side: `f*(0) ≠ ⊥` and `⨅ f ≠ ⊤` hold for *every* proper `f` |
-| `argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj`, `zero_mem_interior_dom_conj_iff_recessionConeFn_eq_zero` | **Thm 27.1(d)**, both sentences | done — and it needs **no** Cor 13.3.4, contrary to the book's proof: Cor 14.2.2 already says every level set is bounded exactly when the origin is interior to `dom f*`, and Thm 27.2 turns that into existence of a minimiser |
+| `argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj`, `zero_mem_interior_dom_conj_iff_recessionConeFn_eq_zero`, `exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj`, `argmin_nonempty_and_isBounded_iff_exists_setOf_le` | **Thm 27.1(d)**, both sentences, and the sublevel-set reading that Thm 30.4(g) states | done — and it needs **no** Cor 13.3.4, contrary to the book's proof: Cor 14.2.2 already says every level set is bounded exactly when the origin is interior to `dom f*`, and Thm 27.2 turns that into existence of a minimiser |
 | — | Thm 27.1(e) | **not done** — `∂f*(0)` a singleton lives in `E**`, so a reflexive pairing is needed to state it |
 | `recessionCone_setOf_le_eq_polarCone_dom_conj`, `recessionCone_argmin_eq_polarCone_dom_conj` | **Thm 27.1(f)** | done — Thm 8.7 composed with Thm 14.2, which is now in `Recession/Conjugate.lean` |
 | `supportFn_setOf_le`, `supportFn_argmin`, `conj_flip_conj_add_coe` | **Thm 27.1(g)**, both sentences | done. The first needs **no shifted-function API**: Cor 13.2.1 computes the closure of a generated function as a support function directly, and `conj_flip_conj_add_coe` identifies the level set it produces as `{x ∣ f**(x) - α ≤ 0}`. The second is Thm 27.1(b) plus Thm 23.2 |
@@ -147,8 +147,8 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
 | `kuhnTucker_eq_singleton_of_dirDeriv_eq`, `kuhnTucker_eq_singleton_of_hasGradientAt` | **Cor 29.1.3** | done |
 | `dirDeriv_infBifun_eq` | **Cor 29.1.4**, the derivative formula | done |
 | `proper_infBifun_of_stronglyConsistent`, `continuousOn_infBifun_interior`, `bddAbove_kuhnTucker_of_strictlyConsistent`, `infBifun_ne_top_of_mem_domBifun` | **Cor 29.1.5** | done |
+| `isBounded_kuhnTucker_of_strictlyConsistent`, `isCompact_kuhnTucker_of_strictlyConsistent` | **Cor 29.1.5**, the compactness clause | done — on `isBounded_iff_forall_bddAbove`, Cor 13.2.2 in the norm. The only §29 statement needing `FiniteDimensional ℝ V` |
 | `infBifun_eq_top_of_notMem_domBifun`, `infBifun_eq_bot_of_mem_relint` | **Cor 29.1.6** | done |
-| — | **Cor 29.1.4**, compactness under strict consistency | not done — needs the boundedness half of Thm 23.4 |
 | `polyhedralFn_mapLin`, `PolyhedralFn.clFn_eq_of_mem_dom` | **Cor 19.3.1**, the prerequisite | done |
 | `PolyhedralBifun`, `polyhedralBifun_iff`, `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`, `polyhedral_kuhnTucker_of_polyhedralBifun` | **Thm 29.2** (polyhedral case) | done |
 | `argmin_nonempty_of_polyhedralBifun`, `polyhedral_argmin_of_polyhedralBifun` | **Thm 29.2**, the optimal-solution clause | done — on Cor 27.3.2, which turned out not to need Helly. It needs **less** than the book asks: `inf F 0 ≠ -∞` suffices for existence (an optimal value of `+∞` makes every point optimal); finiteness is needed only for polyhedrality of the minimum set |
@@ -381,7 +381,7 @@ which is the half of Theorem 30.5 that needs no normality hypothesis.
 
 ## 6.4a `Optimization/Normal.lean` — §30 from Corollary 30.2.2 on
 
-**Status: done** except Corollary 30.2.1, Corollary 30.2.3 and clauses (d)–(j) of Theorem 30.4.
+**Status: done** except clauses (g)–(j) of Theorem 30.4.
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -407,7 +407,7 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 | `le_limsup_nhds`, `clConcave_eq_limsup_or`, `liminf_infBifun_eq_iSup_adjointBifun`, `limsup_supBifun_adjointBifun_eq` | **Cor 30.2.3** (the `liminf` form) | done — on `clFn_eq_liminf_or`, now in `Closure.lean` |
 | `ConcaveKuhnTucker`, `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker`, `concaveNormal_of_concaveKuhnTucker_nonempty`, `normal_of_concaveKuhnTucker_adjointBifun_nonempty` | **Thm 30.4(d)** | done |
 | `PolyhedralBifun.normal`, `ConcavePolyhedralBifun`, `ConcavePolyhedralBifun.concaveNormal`, `normal_of_concavePolyhedral_adjointBifun` | **Thm 30.4(e), (f)** | done |
-| — | Thm 30.4 (g)–(j) | not done — they route through Thm 27.1(d)/(f), **both now done**, and through Cor 13.3.4, **now done in all four clauses**. The only remaining obstruction is `int (dom (F 0)*) = int (domConcave F*)`, a Cor 7.4.1-type result |
+| — | Thm 30.4 (g)–(j) | not done — every prerequisite the book names is available (Thm 27.1(d), Thm 14.2, Cor 13.3.4 in all four clauses). What is missing is a step the book's proof hides in an "i.e.": `0 ∈ int (dom (F 0)*) ⇒ 0 ∈ int (domConcaveBifun F*)`. See the `Optimization/Normal.lean` entry in `NOTES.md` — the route is *all slices of a closed convex bifunction have the same recession function*, which needs the recession cone of a slice, the one lemma `Recession/Cone.lean` lacks |
 | `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | Cor 30.5.1 (saddle points of `L`) | done — in `Saddle/Minimax.lean` |
 
 ### What actually happened
