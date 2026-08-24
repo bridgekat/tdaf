@@ -58,6 +58,8 @@ set is the constant `−∞`, while `f'(x; 0) = 0`.
 * `isClosed_normalCone`, `subgradient_subset_normalCone_setOf_le`, `polarCone_subgradient` — the
   three preparatory facts Theorem 23.7 needs.
 * `normalCone_setOf_le_eq_closure_coe_hull_subgradient` — **Theorem 23.7**.
+* `mem_interior_of_normalCone_eq_zero` — a convex set is a neighbourhood of every point at which
+  its normal cone is trivial. Corollary 11.6.1, read through the pairing.
 * `normalCone_setOf_le_eq_coe_hull_subgradient` — **Corollary 23.7.1**.
 * `sub_mem_dom_dirDeriv`, `sub_mem_relint_dom_dirDeriv` — the inclusions
   `(dom f) - x ⊆ dom (f'(x; ·))` and `ri (dom f) - x ⊆ ri (dom (f'(x; ·)))`.
@@ -769,5 +771,41 @@ theorem normalCone_setOf_le_eq_coe_hull_subgradient_of_mem_interior_dom [IsCompa
     ((isBounded_subgradient_iff_mem_interior_dom (B := B) hf hp hri).2 hx)
 
 end Corollary2371
+
+/-! ### A trivial normal cone means an interior point -/
+
+section NormalConeInterior
+
+variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C : Set E} {x : E}
+
+/-- **A convex set is a neighbourhood of every point whose normal cone is trivial.** This is the
+converse of the obvious `x ∈ interior C ⇒ normalCone B C x = {0}`, and it is Corollary 11.6.1 in
+disguise: a point of `C` that is not interior is a *boundary* point, and a boundary point of a
+convex set carries a non-zero supporting functional, which the compatibility of the pairing turns
+back into a non-zero normal.
+
+Finite-dimensionality is not decoration. In an infinite-dimensional space a convex set can have
+empty interior and still be dense — the linear span of an orthonormal basis in a Hilbert space —
+and then no non-zero functional supports it anywhere, so the normal cone is trivial at every point
+while the interior is empty. What replaces the missing interior in finite dimensions is that a
+convex set with no interior lies in a proper affine subspace, and a functional vanishing on that
+subspace is normal everywhere; `exists_ne_zero_isMaxOn_of_mem_frontier` is where that case split
+happens. -/
+theorem mem_interior_of_normalCone_eq_zero [IsCompatiblePairing B] (hC : Convex ℝ C)
+    (hx : x ∈ C) (h : normalCone B C x = {0}) : x ∈ interior C := by
+  by_contra hnot
+  obtain ⟨g, hg0, hgmax⟩ :=
+    exists_ne_zero_isMaxOn_of_mem_frontier hC hx ⟨subset_closure hx, hnot⟩
+  obtain ⟨y, hy⟩ := exists_pairing_eq B g
+  have hmem : y ∈ normalCone B C x := by
+    intro z hz
+    have hle : g z ≤ g x := hgmax z hz
+    rw [hy z, hy x] at hle
+    simpa using sub_nonpos.2 hle
+  rw [h, Set.mem_singleton_iff] at hmem
+  exact hg0 (ContinuousLinearMap.ext fun z => by simp [hy z, hmem])
+
+end NormalConeInterior
 
 end Tdaf.ConvexAnalysis
