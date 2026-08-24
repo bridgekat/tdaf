@@ -153,7 +153,7 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
 | `PolyhedralBifun`, `polyhedralBifun_iff`, `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`, `polyhedral_kuhnTucker_of_polyhedralBifun` | **Thm 29.2** (polyhedral case) | done |
 | `argmin_nonempty_of_polyhedralBifun`, `polyhedral_argmin_of_polyhedralBifun` | **Thm 29.2**, the optimal-solution clause | done — on Cor 27.3.2, which turned out not to need Helly. It needs **less** than the book asks: `inf F 0 ≠ -∞` suffices for existence (an optimal value of `+∞` makes every point optimal); finiteness is needed only for polyhedrality of the minimum set |
 | `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — in `Saddle/Minimax.lean`, where §36 is |
-| — | **Thm 29.4** | not done — needs saddle-point existence, Thm 37.6 |
+| `domBifun_eq_image_dom_graphFn`, `mem_relint_slice`, `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq`, `domBifun_subset_domBifun_clBifun`, `domBifun_clBifun_subset_closure` | **Thm 29.4** | done, in `Optimization/Adjoint.lean` where `clBifun` is defined. **The note that it needed saddle-point existence (Thm 37.6) was wrong** — Theorem 29.4 is a §6/§7 statement about closures: Theorem 6.6 puts a relative interior point of `dom (graph F)` over `u`, the prolongation principle (Thm 6.4) makes its second coordinate relatively interior to the slice, and Theorem 7.5 writes `(cl F) u` and `cl (F u)` as the same limit along a segment. Cor 29.4.1 is still not done |
 
 `Consistent`, `StronglyConsistent`, `StrictlyConsistent` are `0 ∈ dom F`, `0 ∈ ri (dom F)`,
 `0 ∈ int (dom F)` respectively. They are the constraint qualifications of Part VI and connect

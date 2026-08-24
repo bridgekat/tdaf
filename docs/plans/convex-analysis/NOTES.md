@@ -2034,7 +2034,7 @@ upgrade is `isBounded_iff_forall_bddAbove` in `Duality/SupportRelint.lean`. It i
 one corollary need `FiniteDimensional ℝ V` and `IsCompatiblePairing B.flip` when nothing else in
 §29 does, so it lives in its own section.
 
-**Not here**: Theorem 29.4. Theorem 29.3 is in `Saddle/Minimax.lean`, with §36.
+**Not here**: Theorem 29.4, which is in `Optimization/Adjoint.lean` because `clBifun` is defined there; Theorem 29.3 is in `Saddle/Minimax.lean`, with §36.
 
 ```lean
 abbrev Bifun (U X : Type*) := U → X → EReal
@@ -2133,7 +2133,41 @@ occurrences at once, so a trailing `iInf_congr fun x => add_comm _ _` is "No goa
 ### `Tdaf/Analysis/Convex/Optimization/Adjoint.lean`
 
 §30: **Theorem 30.1** in full, **Theorem 30.2**, **Corollary 30.2.2**, and the normality-free
-half of Theorem 30.5.
+half of Theorem 30.5. Also **Theorem 29.4**, which lands here rather than in
+`Optimization/Perturbation.lean` because `clBifun` is defined here.
+
+```lean
+theorem domBifun_eq_image_dom_graphFn (F) :
+    domBifun F = LinearMap.fst ℝ U X '' dom (graphFn F)
+theorem mem_relint_slice (hS : Convex ℝ S) (hux : (u, x) ∈ ri S) :
+    x ∈ ri {y | (u, y) ∈ S}                                        -- **Thm 6.4** on a slice
+theorem clBifun_apply_eq_clFn (hF : ConvexBifun F) (hu : u ∈ ri (domBifun F)) :
+    clBifun F u = clFn (F u)                                       -- **Thm 29.4**, first
+theorem infBifun_clBifun_eq …                                      -- **Thm 29.4**, second
+theorem domBifun_subset_domBifun_clBifun …                         -- **Thm 29.4**, third
+theorem domBifun_clBifun_subset_closure …
+```
+
+**Theorem 29.4 never needed §36 or §37.** The plan recorded it as blocked on saddle-point
+existence (Theorem 37.6); it is not, and nothing in its statement mentions a saddle-function. It is
+a §6/§7 statement about closures, and the proof is Rockafellar's own: `dom F` is the projection of
+`dom (graph F)` (`domBifun_eq_image_dom_graphFn`), Theorem 6.6 (`Convex.relint_image`) makes `ri`
+commute with that projection and so puts some `(u, x) ∈ ri (dom (graph F))` over each
+`u ∈ ri (dom F)`, the prolongation criterion (Theorem 6.4) drops `x` into `ri (dom (F u))`, and
+Theorem 7.5 (`ConvexFn.tendsto_clFn_along_segment_relint`) writes `(cl F) u y` and `cl (F u) y` as
+the *same* limit along the segment from `x` to `y` — the segment stays in the slice because
+`(1 - a) • (u, x) + a • (u, y) = (u, (1 - a) • x + a • y)`. When `graph F` is improper,
+Theorem 7.2 (`ConvexFn.eq_bot_of_mem_relint_dom`) makes it `⊥` at `(u, x)`, `lscHull_le` pushes
+that onto both hulls, and `clFn_of_exists_eq_bot` makes both sides the constant `⊥`. The second
+assertion is then `iInf_clFn_eq_iInf`, and the third is Theorem 7.4's two domain inclusions
+(`dom_subset_dom_lscHull`, `dom_lscHull_subset_closure_dom`) pushed through `fst` with
+`image_closure_subset_closure_image`.
+
+**Corollary 29.4.1 is still not done.** It needs the perturbation functions of `(P)` and `(cl P)`
+to agree on a *neighbourhood* of `0`, which is `infBifun_clBifun_eq` plus the fact that strong
+consistency puts `0` in the relative interior — but "neighbourhood" there is relative, and the
+Kuhn–Tucker clause then needs `KuhnTucker B F = KuhnTucker B (clBifun F)`, which is
+`kuhnTucker_eq_neg_subgradient` at two functions that agree near `0`.
 
 ```lean
 noncomputable def adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
@@ -3364,6 +3398,59 @@ an interior point); `prodInnerL` (Riesz representation on a product, no convexit
 `neg_add_closedBall_zero`, `prod_add_prod_subset`, `norm_sub_le_of_mem_singleton_add_closedBall`
 (Mathlib-shaped gaps in pointwise-set arithmetic); `ConcaveConvexOn.negSwap` and
 `tendsto_eval_prod_of_tendsto` (`Saddle/Continuity.lean`).
+
+---
+
+### `Tdaf/Analysis/Convex/Saddle/Rademacher.lean`
+
+§35's last two theorems: **Theorem 35.9** (a finite concave-convex function on an open rectangle is
+differentiable a.e. there, densely, with `∇K` continuous where it exists) and **Theorem 35.10**
+(convergence of gradients under pointwise convergence, uniformly on compacts).
+
+```lean
+theorem ConcaveConvexOn.exists_lipschitzOnWith_ball … :
+    ∃ r > 0, ball p r ⊆ C ×ˢ D ∧ ∃ k : ℝ≥0, LipschitzOnWith k K (ball p r)
+theorem ae_differentiableAt_of_concaveConvexOn … : ∀ᵐ p ∂μ, p ∈ C ×ˢ D → DifferentiableAt ℝ K p
+theorem measure_diff_differentiableAt_of_concaveConvexOn … :
+    μ ((C ×ˢ D) \ {p | DifferentiableAt ℝ K p}) = 0
+theorem subset_closure_differentiableAt_of_concaveConvexOn … :
+    C ×ˢ D ⊆ closure {p | DifferentiableAt ℝ K p}
+theorem continuousOn_saddleGradient … (hS : S ⊆ C ×ˢ D)
+    (hG : ∀ p ∈ S, HasSaddleGradientAt K (G p) p) : ContinuousOn G S
+theorem dist_le_of_subgradientSaddle_subset … : dist a b ≤ ε
+theorem tendsto_of_hasSaddleGradientAt … : Tendsto G atTop (𝓝 G')      -- **Thm 35.10**
+theorem tendstoUniformlyOn_saddleGradient … : TendstoUniformlyOn Gs G atTop S
+```
+
+**Theorem 35.9 does not go through Theorem 25.5, and it does not need the book's Fubini argument.**
+Rockafellar decomposes the complement of the differentiability set into the closed sets `Sₖ` where
+a one-sided partial derivative jumps by at least `1/k`, and shows each meets every coordinate line
+in a finite set. All that convexity has to supply here is a *local Lipschitz constant*, and
+Theorem 35.1 (`ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact`) gives one on every compact
+rectangle; shrinking a closed ball to an open one makes the set simultaneously Lipschitz and open,
+which is what lets `LipschitzOnWith.ae_differentiableWithinAt_of_mem` upgrade to `DifferentiableAt`.
+The rest — a countable subcover from `TopologicalSpace.isOpen_iUnion_countable`, then
+`Basis.addHaar` borrowed locally for the density clause — is `Subgradient/Rademacher.lean`'s proof
+of Theorem 25.5 transcribed. Note that `Metric.ball p r` in `U × X` **is** the product of the two
+balls (`Metric.ball_prod_same`, the supremum metric), which is why one radius does for both factors.
+
+**The continuity clause and both clauses of Theorem 35.10 are the same two lines.**
+`subgradientSaddle_eq_singleton_of_hasSaddleGradientAt` (Theorem 35.8) turns `∂K(p) ⊆ ∂K(q) + εB`
+into `‖∇K(p) - ∇K(q)‖ ≤ ε`; feed it Corollary 35.7.1 and you get continuity of `∇K`, feed it
+Theorem 35.7 at a constant sequence and you get Theorem 35.10's pointwise clause, feed it
+Theorem 35.7 along a subsequence and Corollary 35.7.1 at the limit point and you get the uniform
+clause by the contradiction argument of Theorem 25.7. Neither Theorem 35.4 nor Theorem 35.9 is used
+in Theorem 35.10, and the pointwise clause needs differentiability only at the point in question,
+not everywhere as the book assumes.
+
+**`∇K` is a pair, so the statements quantify over a representing function.** There is no canonical
+`∇K : U × X → U × X` without choice, so `continuousOn_saddleGradient` and
+`tendstoUniformlyOn_saddleGradient` take any `G` with `HasSaddleGradientAt K (G p) p` on the set in
+question. `prodInnerL` is injective, so `G` is unique there and nothing is lost.
+
+**Relocation candidates**: `ConcaveConvexOn.exists_lipschitzOnWith_ball` belongs beside Theorem 35.1
+in `Saddle/Continuity.lean` — it is Theorem 35.1 with a ball in place of a compact rectangle, and
+nothing about Rademacher enters it.
 
 ---
 
@@ -4986,6 +5073,46 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State
 `have`s in the contracted form and let `funext` introduce the point.
+
+440. **`omit … in` goes *before* the doc comment, not between it and the `theorem`.** A doc
+     comment must be immediately followed by a declaration, so
+     `/-- … -/` `omit [FiniteDimensional ℝ U] in` `theorem …` fails with the useless
+     `unexpected token 'omit'; expected 'lemma'`. Same placement rule as `include … in`
+     (gotcha 185).
+
+441. **Dot notation never works on `Convex ℝ C`, `ConvexBifun F`, or any other `def`-shaped
+     predicate.** `Convex` unfolds to a Pi type, so `hC.mem_relint_iff_prolong` is resolved
+     against `Function`, and the error is the baffling "The environment does not contain
+     `Function.mem_relint_iff_prolong` … of type `?m ∈ C → StarConvex ℝ ?m C`". Write
+     `Convex.mem_relint_iff_prolong hC …`, `Convex.interior_subset_relint hC …`,
+     `ConvexFn.convex_dom hF`, `ConvexFn.clFn_eq_lscHull hF hp`. Structures (`ConcaveConvexOn`,
+     `Proper`, `ConvexFn`) are fine — it is only the `def`s that break.
+
+442. **A `have` whose stated type is merely *defeq* to the lemma's can flip the elaboration
+     around and fail.** `have hxT : x ∈ {y | (u, y) ∈ S} := intrinsicInterior_subset hux` with
+     `hux : (u, x) ∈ ri S` reports an application type mismatch, because the expected type drives
+     the implicit set of `intrinsicInterior_subset` to `{y | (u, y) ∈ S}` and then `hux` no longer
+     fits. State the `have` in the lemma's own shape — `have hxT : ((u, x) : U × X) ∈ S := …` —
+     and let the *argument* position do the defeq check when you use it. The general rule: put the
+     defeq step where the term is checked *against* an expected type, never where it *creates* one.
+
+443. **Membership in `s ×ˢ t` by anonymous constructor cannot infer the element.** `hsub ⟨hw, hv⟩`
+     leaves `?p.1 ∈ s` and `?p.2 ∈ t` unsolved and reports the mismatch against `?m.260.2`. Use
+     `Set.mk_mem_prod hw hv`, which names the pair `(w, v)`.
+
+444. **`closedBall_subset_ball (by linarith)` inside a term whose target radius is still a
+     metavariable makes `linarith` fail on `r ≤ ?m`.** The `by linarith` is elaborated before the
+     enclosing application fixes the radius. Name the inequality first
+     (`have hhalf : r / 2 < r := by linarith`) and pass it. Destructuring `obtain ⟨u, v⟩ := p`
+     before using `Metric.ball_prod_same` is worth doing for the same reason: the rewrite wants the
+     centre syntactically a pair.
+
+445. **`lake env lean` on a scratch file can fail with
+     `failed to read file '….olean.private'` even when `lake build` of the same module
+     succeeds**, because the shared `.lake/packages/mathlib` build tree carries no `.olean.private`
+     files. It is not a signal about your proof. For `#print axioms`, use the MCP `lean_verify`
+     (one declaration at a time, and it works), or append the `#print axioms` block to a project
+     module and read the `info` diagnostics from the LSP.
 
 ## 3. Build and verification
 
