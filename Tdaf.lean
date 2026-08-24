@@ -82,6 +82,7 @@ import Tdaf.Analysis.Convex.Subgradient.Legendre
 import Tdaf.Analysis.Convex.Subgradient.Monotone
 import Tdaf.Analysis.Convex.Subgradient.OneDim
 import Tdaf.Analysis.Convex.Subgradient.Primitive
+import Tdaf.Analysis.Convex.Subgradient.Rademacher
 import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 import Tdaf.Analysis.Convex.Tangent
 import Tdaf.Order.EReal
