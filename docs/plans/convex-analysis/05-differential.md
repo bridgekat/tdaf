@@ -406,13 +406,15 @@ point of differentiability near `x + εᵢ y`".
 
 ## 5.5 `Subgradient/Legendre.lean` — §26
 
-**Status: Theorem 26.4 is done, and §26 is now unblocked — Theorem 25.6, its last missing
-prerequisite, is done.**
+**Status: Theorems 26.1 and 26.4 are done.** §26 was unblocked by Theorem 25.6; what remains is
+Lemma 26.2, Theorem 26.3 with Corollaries 26.3.1–26.3.3, Corollary 26.4.1, and Theorems 26.5 and
+26.6 with Lemma 26.7.
 
 | Lean name | book | status |
 |---|---|---|
 | `legendreDom`, `HasGradientAt.add_conj_eq`, `conj_eq_of_hasGradientAt`, `sub_eq_sub_of_hasGradientAt`, `legendreDom_subset_dom_conj` | **Thm 26.4** | done |
-| `subgradient_singleValued_iff_essentiallySmooth` | **Thm 26.1**, Lemma 26.2 | **not done** |
+| `EssentiallySmooth`, `subgradient_eq_singleton_of_essentiallySmooth`, `subgradient_eq_empty_of_essentiallySmooth`, `subsingleton_subgradient_of_essentiallySmooth`, `differentiableAtFn_of_subsingleton_subgradient`, `essentiallySmooth_of_subsingleton_subgradient`, `subsingleton_subgradient_iff_essentiallySmooth` | **Thm 26.1** | done, `EssentiallySmooth.lean` — the two halves use different parts of §25: only the converse needs Thm 25.6, and it needs it in the weak form "`∂f x ≠ ∅` implies `S(x) ≠ ∅`" |
+| — | Lemma 26.2 | **not done** — the directional-derivative form of condition (c) |
 | `essentiallyStrictlyConvex_conj_iff_essentiallySmooth` | **Thm 26.3**, Cor 26.3.1–3 | **not done** |
 | — | Cor 26.4.1 | **not done** |
 | `legendreType_conj_iff` and `∇f* = (∇f)⁻¹` | **Thm 26.5** | **not done** |

@@ -6,6 +6,7 @@ Authors: TDAF contributors
 import Mathlib.Analysis.Calculus.Rademacher
 import Tdaf.Analysis.Convex.Subgradient.Convergence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
+import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 
 /-!
 # Almost everywhere differentiability of a convex function
@@ -29,6 +30,8 @@ differentiability are dense there, and the gradient map is continuous where it i
 * `continuousOn_fderiv_of_convexOn` — **Corollary 25.5.1**, for Mathlib's `ConvexOn`.
 * `measure_diff_twoSided_dirDeriv` — **Theorem 25.4**, the measure-zero clause, which is now a
   corollary of Theorem 25.5 rather than its source.
+* `subgradient_topDualPairing_eq_singleton`, `hasGradientAt_toDual_of_subgradient_eq_singleton` —
+  Theorem 25.1 and its converse carried across that bridge, in vector form.
 * `mem_subgradient_innerL_iff`, `subgradient_innerL_eq_singleton` — the Riesz bridge between the
   two pairings the library uses on an inner-product space, which is what lets Corollary 24.5.1
   (stated for `innerₗ E`) speak about gradients (which live in `StrongDual ℝ E`).
@@ -259,6 +262,31 @@ theorem subgradient_innerL_eq_singleton (hf : ConvexFn f) (h : HasGradientAt f f
     Set.mem_singleton_iff]
   exact ⟨fun hv => by rw [← hv, LinearIsometryEquiv.symm_apply_apply],
     fun hv => by rw [hv, LinearIsometryEquiv.apply_symm_apply]⟩
+
+/-- **The Riesz bridge for singletons**: a subdifferential that is the single *vector* `v` for the
+inner-product pairing is the single *functional* `⟪v, ·⟫` for the canonical pairing with the dual.
+-/
+theorem subgradient_topDualPairing_eq_singleton {v : E}
+    (h : subgradient (innerₗ E) f x = {v}) :
+    subgradient (topDualPairing ℝ E).flip f x = {InnerProductSpace.toDual ℝ E v} := by
+  ext g
+  rw [Set.mem_singleton_iff]
+  constructor
+  · intro hg
+    have hmem : (InnerProductSpace.toDual ℝ E).symm g ∈ subgradient (innerₗ E) f x := by
+      rw [mem_subgradient_innerL_iff, LinearIsometryEquiv.apply_symm_apply]
+      exact hg
+    rw [h, Set.mem_singleton_iff] at hmem
+    rw [← hmem, LinearIsometryEquiv.apply_symm_apply]
+  · rintro rfl
+    exact mem_subgradient_innerL_iff.1 (by rw [h]; rfl)
+
+/-- **Rockafellar, Theorem 25.1**, converse half, in vector form: a lone subgradient for the
+inner-product pairing is the gradient. -/
+theorem hasGradientAt_toDual_of_subgradient_eq_singleton (hf : ConvexFn f) (hp : Proper f) {v : E}
+    (h : subgradient (innerₗ E) f x = {v}) :
+    HasGradientAt f (InnerProductSpace.toDual ℝ E v) x :=
+  hasGradientAt_of_subgradient_eq_singleton hf hp (subgradient_topDualPairing_eq_singleton h)
 
 /-- **Rockafellar, Theorem 25.5**, the continuity clause: the gradient mapping is continuous on the
 set where the function is differentiable.

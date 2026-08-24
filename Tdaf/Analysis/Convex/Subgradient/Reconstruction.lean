@@ -440,20 +440,8 @@ theorem exposedPoints_subset_gradientLimits (hf : ConvexFn f) (hp : Proper f)
     have hl0 : ∀ z : E, l z = 0 := fun z => by rw [hlw, hzero, inner_zero_left]
     have hsingle : subgradient (innerₗ E) f x = {v} :=
       Set.eq_singleton_iff_unique_mem.2 ⟨hv, fun z hz => (hl z hz).2 (by rw [hl0, hl0])⟩
-    have hdual : subgradient (topDualPairing ℝ E).flip f x = {InnerProductSpace.toDual ℝ E v} := by
-      ext g
-      rw [Set.mem_singleton_iff]
-      constructor
-      · intro hg
-        have hmem : (InnerProductSpace.toDual ℝ E).symm g ∈ subgradient (innerₗ E) f x := by
-          rw [mem_subgradient_innerL_iff, LinearIsometryEquiv.apply_symm_apply]
-          exact hg
-        rw [hsingle, Set.mem_singleton_iff] at hmem
-        rw [← hmem, LinearIsometryEquiv.apply_symm_apply]
-      · rintro rfl
-        exact mem_subgradient_innerL_iff.1 (by rw [hsingle]; rfl)
     exact mem_gradientLimits_of_hasGradientAt
-      (hasGradientAt_of_subgradient_eq_singleton hf hp hdual)
+      (hasGradientAt_toDual_of_subgradient_eq_singleton hf hp hsingle)
   · -- Otherwise, normalise the exposing direction.
     have hy₀pos : 0 < ‖y₀‖ := norm_pos_iff.2 hzero
     set y : E := ‖y₀‖⁻¹ • y₀ with hydef
