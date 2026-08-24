@@ -207,6 +207,17 @@ theorem convex_subgradient (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → ERea
     have h2 : a * B (z - x) y₁ + b * B (z - x) y₁ = B (z - x) y₁ := by rw [← add_mul, hab, one_mul]
     linarith
 
+/-- **A point with a subgradient lies in the effective domain.** Were `f x = ⊤`, the subgradient
+inequality would read `⊤ ≤ f z` for every `z` and force `f ≡ ⊤`, which properness forbids.
+
+No topology and no convexity: this is a statement about the defining inequality alone. -/
+theorem mem_dom_of_mem_subgradient (hp : Proper f) (hy : y ∈ subgradient B f x) : x ∈ dom f := by
+  obtain ⟨z₀, hz₀⟩ := hp.dom_nonempty
+  refine mem_dom.2 (lt_top_iff_ne_top.2 fun htop => ?_)
+  have hle := hy z₀
+  rw [htop, _root_.EReal.top_add_coe] at hle
+  exact absurd (top_le_iff.1 hle) (mem_dom.1 hz₀).ne
+
 end Defs
 
 /-! ### Theorem 23.5, conditions (a)–(d)

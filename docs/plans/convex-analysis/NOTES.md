@@ -1479,6 +1479,77 @@ gradient is `evalCLM B y₀`. The `topDualPairing` corollaries are the ones with
 because the forward half (`HasGradientAt.subgradient_eq`) exists only there: for a general pairing
 a non-injective `evalCLM` would make `∂f x` a whole fibre rather than a point.
 
+### `Tdaf/Analysis/Convex/Subgradient/Reconstruction.lean`
+
+**Theorem 25.6**: for a closed proper convex `f` with `int (dom f) ≠ ∅`,
+
+```
+∂f x = cl (conv S(x)) + N_{dom f}(x)     for every x,
+```
+
+where `S(x) = gradientLimits f x` is the set of limits of gradients at points of differentiability
+tending to `x`.
+
+```lean
+def gradientLimits (f : E → EReal) (x : E) : Set E                -- Rockafellar's `S (x)`
+theorem gradientLimits_subset_subgradient …                       -- `S x ⊆ ∂f x`, Thm 24.4
+theorem inner_add_smul_le_of_mem_subgradient …                    -- the inequality, in ℝ
+theorem containsNoLine_subgradient …                              -- `∂f x` contains no line
+theorem recessionCone_subgradient_subset_normalCone …             -- `0⁺(∂f x) ⊆ N_{dom f}(x)`
+theorem exists_mem_interior_dom_of_forall_normalCone …            -- the separation step
+theorem exists_seq_differentiableAtFn_tendsto_dir …               -- the approach sequence
+theorem exposedPoints_subset_gradientLimits …                     -- the substantive step
+theorem subgradient_eq_closure_convexHull_gradientLimits_add_normalCone …   -- **Thm 25.6**
+```
+
+**The recession cone of `∂f x` is never computed.** Rockafellar identifies `N_{dom f}(x)` with
+`0⁺(∂f x)` and uses the identification three times. Each use follows more cheaply from the
+*inclusion* `∂f x + N_{dom f}(x) ⊆ ∂f x` — `subgradient_add_normalCone_dom_subset`, which needs
+neither convexity nor a topology — plus "let `λ → ∞` in the subgradient inequality", which is the
+same three lines every time. `containsNoLine_subgradient` and
+`recessionCone_subgradient_subset_normalCone` are those arguments; the equality of the two cones
+is not stated anywhere.
+
+**The separation step is `geometric_hahn_banach_open`.** The book deduces from "the half-line
+`{x + α y}` cannot be *properly* separated from `dom f`" that it meets `int (dom f)`, citing
+Theorem 11.3 and then Theorem 6.1. The contrapositive is all that is needed and Mathlib proves it
+directly: if the half-line misses the open convex `int (dom f)`, the separating functional's Riesz
+representative is a non-zero normal at `x` with `⟨y, y*⟩ ≥ 0`. Proper separation never enters, and
+neither does §11.
+
+**The approach sequence needs a quadratic tolerance.** Theorem 24.6 consumes the *direction*
+`‖xᵢ - x‖⁻¹(xᵢ - x) → y`, not `xᵢ → x`; a point of differentiability within `εᵢ` of `x + εᵢ y`
+controls the direction not at all, while one within `εᵢ²` puts the direction within `4εᵢ` of `y`.
+That is the content of `exists_seq_differentiableAtFn_tendsto_dir`, and it is what the book's
+half-sentence "let `xᵢ` be a point of differentiability near `x + εᵢ y`" is hiding.
+
+**A zero exposing functional is the degenerate case, and it is the easy one.** `l = 0` exposes
+`x*` exactly when `∂f x = {x*}`, and then Theorem 25.1's converse
+(`hasGradientAt_of_subgradient_eq_singleton`) makes `f` differentiable at `x` itself, so `x*` is a
+limit of gradients along the constant sequence. There is no ray to build — which is fortunate,
+since there is no direction to build it in.
+
+### `Tdaf/Analysis/Convex/Subgradient/GradientLimit.lean`
+
+**Theorem 25.7**: convex functions finite and differentiable on an open convex set and converging
+pointwise there to a function that is also finite and differentiable have converging gradients —
+uniformly on every compact subset.
+
+```lean
+theorem dist_le_of_subgradient_subset …        -- singleton inclusion = gradient bound
+theorem tendsto_of_hasGradientAt …             -- **Thm 25.7**, pointwise
+theorem tendstoUniformlyOn_fderiv_toReal …     -- **Thm 25.7**, uniform on compacts
+```
+
+**Both clauses are Theorem 24.5 with the subdifferentials collapsed by Theorem 25.1.** The
+pointwise clause is 24.5 at the constant sequence `xᵢ = x`; no contradiction argument, no
+compactness, and — unlike the book — no appeal to Theorem 10.8, which 24.5 has already absorbed.
+The uniform clause runs the contradiction **once, on the norm**, rather than one partial derivative
+at a time: a failure of uniform convergence gives indices `φ n` and points `zₙ` of the compact set
+with `‖∇f(zₙ) - ∇f_{φ n}(zₙ)‖ ≥ ε`, a convergent subsequence `zₙ → w` turns Theorem 24.5 (along the
+subsequence) and Corollary 24.5.1 (at `w`) into two `ε/3` bounds, and the triangle inequality
+closes it. Theorem 24.5 is stated for a *moving* sequence of points exactly so that this works.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Rademacher.lean`
 
 **Theorem 25.5**: a proper convex function on a finite-dimensional space is differentiable at
@@ -4686,6 +4757,37 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
      "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
      a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+252. **`real_inner_comm a b : ⟪b, a⟫ = ⟪a, b⟫` — the explicit arguments are in the *opposite*
+     order to the ones that appear first.** `rw [real_inner_comm (z - x) w]` looks for
+     `⟪w, z - x⟫`, not for `⟪z - x, w⟫`, and the error names a pattern that seems to have nothing
+     to do with what was written. Read the statement before supplying arguments.
+
+251. **`rw [norm_sub_rev]` with no arguments rewrites the *first* `‖a - b‖` in the goal**, which
+     in a normed-space estimate is almost never the one meant — typically `‖xᵢ - x‖` rather than
+     the error term beside it, and the resulting hypothesis is then unusable by `linarith` even
+     though it looks right. Always write `norm_sub_rev a b`.
+
+250. **`∃ a > 0, x + a • y ∈ S` elaborates `a : ℕ`.** With `E` an `AddCommGroup` the `ℕ`-`SMul`
+     instance is found first and the whole statement silently becomes a statement about integer
+     multiples; the failure surfaces much later as `Application type mismatch: a has type ℝ but is
+     expected to have type ℕ` at the *use* site. Write `∃ a : ℝ, 0 < a ∧ …`.
+
+249. **`Ioc_mem_nhdsWithin_Ioi` is not a name in this Mathlib**, and neither is any obvious
+     renaming of it. When a filter argument on `𝓝[>] a` needs a two-sided bound on the parameter,
+     it is usually cheaper to drop the filter entirely and run the estimate by `by_contra` with an
+     explicit `t = min (1/2) (d / (2 * c))`: no interval lemma, no `NeBot` instance, and the
+     arithmetic is what `linarith` wants anyway.
+
+248. **`hf.convex_dom` displays unfolded, so `Convex` dot notation on it fails.** Its type prints
+     as `∀ ⦃x⦄, x ∈ dom f → StarConvex ℝ x (dom f)`, and `hf.convex_dom.interior` reports
+     `Invalid field 'interior': the environment does not contain 'Function.interior'`. Bind it
+     first — `have hdom : Convex ℝ (dom f) := hf.convex_dom` — and use `hdom.interior`.
+
+247. **With `open scoped RealInnerProductSpace` the notation is `⟪x, y⟫`, not `⟪x, y⟫_ℝ`.** The
+     subscript form belongs to Mathlib's own source, which uses a file-local notation. Writing it
+     gives `unexpected identifier; expected ':=' or '|'` pointing at the `_ℝ`, and a second error
+     claiming a `Prop` was expected where `(⟪z - x, w⟫ : ℝ)` was found.
 
 246. **`Basis` is `Module.Basis` in this Mathlib.** `Basis.ofVectorSpace ℝ E` reports
      `Unknown identifier`; write `Module.Basis.ofVectorSpace ℝ E`. Dot notation on the result
