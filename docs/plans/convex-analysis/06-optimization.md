@@ -434,8 +434,9 @@ negation reindexing closes it. Composing with `F** = cl F` gives the book's seco
 
 ## 6.5 `Optimization/Fenchel.lean` and `Optimization/Moreau.lean` — §31
 
-**Status: Theorems 31.1, 31.3, 31.4 and 31.5 are done** (31.3 with the linear transformation taken
-to be the identity, which is the setting of 31.1; 31.5 without its existence-and-uniqueness half).
+**Status: Theorems 31.1–31.5 are done, with Corollaries 31.2.1, 31.3.1, 31.4.2, 31.5.1 and
+31.5.2.** What is left of §31 is Corollary 31.4.3 (which needs Theorem 12.3 and co-finiteness) and
+Corollary 31.4.1, which is deliberately left to the surface layer.
 
 ```lean
 theorem fenchel_duality (hex : IsExactSum B f (-g)) :
@@ -465,15 +466,17 @@ supplies.
 | `fenchel_duality`, `exists_concaveConj_sub_conj_eq`, `isGreatest_concaveConj_sub_conj` | **Thm 31.1**, condition (a) | done |
 | `iInf_sub_eq_neg_iInf_conj_sub`, `fenchel_duality_of_closed`, `exists_sub_eq_iInf` | **Thm 31.1**, condition (b) | done |
 | `concaveConj_compLin`, `fenchel_duality_comp`, `exists_concaveConj_sub_conj_comp_eq` | **Thm 31.2** | done |
-| — | **Cor 31.2.1** | not done — its exact statement was not verified against the source, and an unverified statement is not written |
+| `iSup_concaveConj_compLin_sub_conj`, `fenchel_duality_comp_of_closed`, `exists_sub_comp_eq_iInf` | **Cor 31.2.1** | done. The statement, verified against the source, is Theorem 31.2's equation under *either* of Rockafellar's two conditions, with the supremum attained under (a) and the infimum attained under (b). Condition (a) was already covered by `fenchel_duality_comp` and `exists_concaveConj_sub_conj_comp_eq`; condition (b) is `fenchel_duality_of_closed` composed with the same collapse of the dual value from `F` to `H`, which is why that collapse was factored out as `iSup_concaveConj_compLin_sub_conj` |
 | `neg_mem_subgradient_neg_iff_add_concaveConj_eq`, `sub_eq_concaveConj_sub_conj_iff`, `iInf_sub_eq_of_sub_eq`, `iSup_sub_eq_of_sub_eq`, `iInf_sub_eq_iff_exists_kuhnTucker` | **Thm 31.3**, Cor 31.3.1, with `A = id` | done |
 | `sub_comp_eq_concaveConj_sub_conj_iff`, `iInf_sub_comp_eq_of_sub_eq`, `iSup_sub_comp_eq_of_sub_eq`, `iInf_sub_comp_eq_iff_exists_kuhnTucker`, `concaveConj_sub_conj_comp_le_sub` | **Thm 31.3**, Cor 31.3.1, with a general `A` | done. **Theorem 31.3 itself needs nothing from Theorem 31.2** — only the `IsAdjointPair` datum, to identify `⟨A x, z⟩'` with `⟨x, A' z⟩`; only Cor 31.3.1's attainment clause consumes `concaveConj_compLin`. It needs neither `f` nor `g` closed, for the reason recorded below for `A = id`. Cor 31.3.1 does need `Proper (-g)` on all of `G`, which `IsExactSum.proper_right` does **not** give — that comes from `IsExactImage.proper`, so the image hypothesis is load-bearing for more than attainment |
 | `iInf_add_indicatorFn_eq_neg_iInf_conj_add_indicatorFn`, `iInf_mem_eq_neg_iInf_mem_neg_polarCone`, `neg_conj_le_of_mem_neg_polarCone` | **Thm 31.4**, the duality equation | done |
 | `add_conj_eq_zero_iff_mem_subgradient_and_pairing_eq_zero`, `forall_le_of_mem_subgradient_of_pairing_eq_zero`, `conj_le_conj_of_mem_subgradient_of_pairing_eq_zero` | **Thm 31.4**, the optimality conditions | done |
-| — | **Cor 31.4.1** (the orthant), Cors 31.4.2–3 | not done — instances of Thm 31.4 in a coordinate space |
+| `neg_polarCone_coe_submodule`, `smul_coe_submodule`, `iInf_mem_submodule_eq_neg_iInf_mem_polarCone`, `add_conj_eq_zero_iff_mem_subgradient_of_mem_submodule` | **Cor 31.4.2** (a subspace) | done. `K = L` makes `K* = -K°` collapse to `K°`, which for a subspace is the annihilator `L^⊥` (`polarCone_coe_submodule'`), and Theorem 31.4's orthogonality condition `⟨x, y⟩ = 0` becomes automatic |
+| — | **Cor 31.4.1** (the orthant) | deliberately not stated — the componentwise complementarity `ξⱼ ξⱼ* = 0` is a statement about `EuclideanSpace ℝ (Fin n)`, not about the pairing, so it belongs to the surface layer |
+| — | **Cor 31.4.3** | not done — it needs **Theorem 12.3** (the conjugate of `h(z + ·) - ⟨z*, ·⟩`), which is not in the library, and co-finiteness of `h`, which §26 now expresses as `dom h* = E` |
 | `quadFn`, `conj_quadFn`, `conj_quadFn_sub`, `moreau_add`, `infConv_quadFn_ne_top` and companions, `mem_subgradient_iff_infConv_eq` | **Thm 31.5 (Moreau)**, the identity and the Kuhn–Tucker characterisation | done |
 | `moreauObj`, `prox`, `argmin_moreauObj_nonempty`, `mem_argmin_moreauObj_iff`, `eq_of_sub_mem_subgradient`, `existsUnique_sub_mem_subgradient`, `prox_eq_iff`, `argmin_moreauObj_eq_singleton`, `infConv_quadFn_eq_moreauObj_prox`, `prox_add_prox_conj` | **Thm 31.5**, attainment and uniqueness | done (`Optimization/Prox.lean`), in finite dimensions |
-| `x = ∇(f* □ w) z`, `x* = ∇(f □ w) z` | **Thm 31.5**, the gradient formulas | not done — need Thm 26.3 on the Moreau envelopes |
+| `quadFn_zero_sub`, `subgradient_quadFn`, `isExactSum_quadFn`, `closedProperConvexFn_infConv_quadFn`, `conj_infConv_quadFn`, `subgradient_infConv_quadFn`, `prox_conj_eq`, `hasGradientAt_infConv_quadFn`, `hasGradientAt_infConv_conj_quadFn`, `gradient_infConv_quadFn`, `gradient_infConv_conj_quadFn` | **Thm 31.5**, the gradient formulas | done (`Optimization/MoreauGradient.lean`). Theorem 26.3 was **not** needed: `∂(f □ w) z` is shown to be a singleton directly — Corollary 23.5.1, then Theorem 16.4 in its unconditional direction, then Theorem 23.8 — and Theorem 25.1's converse turns the singleton into a gradient |
 | `dist_prox_prox_le`, `lipschitzWith_prox`, `subgradientRelHomeomorph` | **Cor 31.5.1** | done (`Optimization/Prox.lean`) |
 | `isMaximalMonotoneRel_subgradientRel` | **Cor 31.5.2** | done (`Optimization/Prox.lean`) |
 

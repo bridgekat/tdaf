@@ -43,6 +43,7 @@ import Tdaf.Analysis.Convex.Optimization.Fenchel
 import Tdaf.Analysis.Convex.Optimization.Lagrangian
 import Tdaf.Analysis.Convex.Optimization.Minimum
 import Tdaf.Analysis.Convex.Optimization.Moreau
+import Tdaf.Analysis.Convex.Optimization.MoreauGradient
 import Tdaf.Analysis.Convex.Optimization.Normal
 import Tdaf.Analysis.Convex.Optimization.Perturbation
 import Tdaf.Analysis.Convex.Optimization.Program
