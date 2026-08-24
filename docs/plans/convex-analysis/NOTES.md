@@ -903,6 +903,35 @@ consumes. `bddAbove_subgradient_iff_mem_interior_dom` gives only the *pairing* f
 ("every `⟨v, ·⟩` is bounded above"); upgrading that to `Bornology.IsBounded` in `F` is a separate
 finite-dimensional lemma that does not exist yet.
 
+**Theorem 23.3's second half is here too**, for the same reason Theorem 23.4 is: it is about
+relative interiors, and `Subgradient/Defs.lean` cannot see them.
+
+```lean
+theorem dom_dirDeriv_subset_direction …        -- `dom (f'(x; ·)) ⊆ aff (dom f) - x`
+theorem sub_mem_dom_dirDeriv …                 -- `(dom f) - x ⊆ dom (f'(x; ·))`
+theorem sub_mem_relint_dom_dirDeriv …          -- `ri (dom f) - x ⊆ ri (dom (f'(x; ·)))`
+theorem dirDeriv_eq_bot_of_subgradient_eq_empty …                  -- **Thm 23.3**, second half
+theorem exists_dirDeriv_eq_bot_and_dirDeriv_neg_eq_top …           -- its two-sided form
+theorem subgradient_eq_empty_iff_exists_dirDeriv_eq_bot …          -- the criterion §27 consumes
+```
+
+**It needs no properness of `f`.** The whole argument runs inside `f'(x; ·)`, which is improper as
+soon as `∂f x = ∅` (its closure is `δ*(· | ∅) ≡ −∞`, so Theorem 7.4 forbids properness), and
+Theorem 7.2 is applied to *it*, never to `f`. No case split on `Proper f` is needed.
+
+**Rockafellar's proof overshoots in its last sentence.** It concludes `f'(x; ·) = −∞` "throughout
+`(dom f) - x`", where the *statement* of the theorem says `ri (dom f) - x` — and only the statement
+is true. For `f y = -√y` on `[0, ∞)` at `x = 0`: `∂f 0 = ∅`, `f'(0; y) = −∞` for every `y > 0`,
+but `f'(0; 0) = 0` and `0 ∈ (dom f) - x`.
+
+**Theorem 6.4 replaces the book's `C ⊆ D ⊆ aff C` step.** Rockafellar gets `ri C ⊆ ri D` from those
+inclusions by observing that both relative interiors are taken inside the same affine set. The
+prolongation criterion gives it in one move: prolong a segment of `D` ending at `z - x` *inside
+`dom f`*, which `z ∈ ri (dom f)` allows, and land back in `D` by `sub_mem_dom_dirDeriv`. Only
+`D ⊆ aff (dom f) - x` is still needed, and that is the easy inclusion of
+`dom_dirDeriv_of_mem_relint_dom`, factored out as `dom_dirDeriv_subset_direction` — it never used
+`x ∈ ri (dom f)` in the first place.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Approx.lean`
 
 §23's ε-subgradients and **Theorem 23.6**.
@@ -992,11 +1021,113 @@ takes `Continuous fun p : E × F => B p.1 p.2` explicitly (automatic in `ℝⁿ`
 graph as `⋂ z, {p | f p.1 + ⟨z - p.1, p.2⟩ ≤ f z}` and each slice, where `f z` is finite, as a
 preimage of `epi f`.
 
-**Not done**: Thms 24.1–24.3 (one-dimensional: `f'₊`, `f'₋`, complete nondecreasing curves — §23
-gives `dirDeriv` but no one-sided derivatives on `ℝ`), Thms 24.5–24.7 (they rest on Thms 10.6–10.9,
-deferred), and the maximality half of Thm 24.9 (needs `∂f ⊆ ∂g → g = f + const`, which runs through
-Thm 23.4, Thm 23.2 and the one-dimensional material of 24.1–24.3). Corollary 31.5.2 — `∂f` is
-maximal *monotone* — is a different, easier statement and does not wait on any of this.
+**Theorem 24.9 is now here in full**, and its uniqueness clause is what unlocked the rest of §24:
+
+```lean
+theorem eq_add_coe_of_subgradientRel_subset …     -- Thm 24.9, uniqueness: `∂f ⊆ ∂g → g = f + α`
+theorem isMaximalCyclicallyMonotone_subgradientRel …            -- Thm 24.9, maximality
+theorem isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn …        -- Thm 24.9
+def IsMaximalMonotoneRel …                       -- §24's maximal monotone mappings
+```
+
+**The uniqueness clause does not depend on Theorems 24.1–24.3**, contrary to the plan's dependency
+order and to Rockafellar's own route. It follows from Theorem 23.5 plus the conjugate-side
+repetition of the same argument; `increment_eq_of_subgradientRel_subset`, its engine, needs
+**neither convexity nor closedness of `g`**, only `Proper g`. That inversion is what made Theorem
+24.2's uniqueness clause reachable without any integration theory.
+
+**Still not done**: Theorem 24.2's *existence* clause (recovering `f` from a nondecreasing `φ`
+needs `∫ₐˣ φ` for an `EReal`-valued nondecreasing integrand, improper at both ends) and Theorem
+24.6's second assertion — see `Subgradient/Convergence.lean`. Corollary 31.5.2 — `∂f` is maximal
+*monotone* — is a different, easier statement and does not wait on any of this.
+
+**Relocation candidates.** `coe_sub_add_coe` belongs in `Tdaf/Order/EReal.lean`; `conj_add_coe` in
+`Duality/Conjugate.lean`; `subgradient_add_coe`, `subgradientRel_add_coe` and
+`exists_coe_of_subgradient_nonempty` in `Subgradient/Defs.lean`. In the other direction, `cycleVal`
+and its API belong *here*, beside `chainVal`, rather than in `OneDim.lean` where they were written.
+
+### `Tdaf/Analysis/Convex/Subgradient/OneDim.lean`
+
+§24's one-dimensional theory: **Theorems 24.1 and 24.3**, and **Theorem 24.2's uniqueness clause**.
+
+```lean
+noncomputable def rightDeriv (f : ℝ → EReal) (x : ℝ) : EReal        -- `f'₊(x)`
+noncomputable def leftDeriv  (f : ℝ → EReal) (x : ℝ) : EReal        -- `f'₋(x)`
+def cycleVal …                                     -- `chainVal` specialised to `ℝ`
+theorem leftDeriv_le_rightDeriv … ; theorem rightDeriv_le_leftDeriv …            -- Thm 24.1
+theorem monotone_rightDeriv … ; theorem monotone_leftDeriv …
+theorem mem_subgradientRel_iff …                   -- `f'₋(x) ≤ y ≤ f'₊(x)`
+theorem iInf_rightDeriv_Ioi … (and three siblings) -- the one-sided limit formulas
+theorem exists_eq_add_coe_of_le_le …               -- Thm 24.2, uniqueness
+theorem isMaximalMonotoneRel_iff_exists_closedProperConvexFn …                   -- Thm 24.3
+```
+
+**Theorem 24.3 is stated as "maximal monotone = maximal chain".** Rockafellar's *complete
+non-decreasing curves* in `ℝ²` are exactly the maximal chains of `ℝ × ℝ` for the coordinatewise
+order, and `isMonotoneRel_iff_forall_le_or_le` is the bridge. `mem_subgradientRel_iff` then
+describes each such curve as the region `f'₋(x) ≤ y ≤ f'₊(x)`, which is the geometric content.
+
+**`rightDeriv_le_leftDeriv` (`f'₊(y) ≤ f'₋(z)` for `y < z`) needs only properness, not convexity.**
+`dirDeriv` is an *infimum* of difference quotients rather than a limit, so the comparison across a
+gap is free. Convexity enters only at a single point, in `leftDeriv_le_rightDeriv`.
+
+**Relocation candidates.** `innerₗ_real_apply` belongs in `Duality/Pairing.lean`;
+`tendsto_nhdsWithin_Ioi_of_monotone`, `tendsto_nhdsWithin_Iio_of_monotone` and
+`exists_max_mem_of_ne_nil` are pure Mathlib material and belong in an order/list file; `cycleVal`
+and its API belong in `Subgradient/Monotone.lean`.
+
+**Rockafellar's two-sided finiteness condition is `x ∈ interior (dom f)`.** "`f'₊ < +∞` left of the
+right endpoint and `f'₋ > -∞` right of the left endpoint" unwinds, on the line, to exactly that
+(`bot_lt_leftDeriv_and_rightDeriv_lt_top_iff`), which is worth knowing because it is how §25 quotes
+the condition.
+
+### `Tdaf/Analysis/Convex/Subgradient/Convergence.lean`
+
+**Theorem 24.5**, **Corollary 24.5.1**, and **Theorem 24.6's first assertion**.
+
+```lean
+theorem eventually_dirDeriv_lt …                          -- Thm 24.5, first half
+theorem eventually_subgradient_subset_add_closedBall …    -- Thm 24.5, second half
+theorem upperSemicontinuousAt_dirDeriv … ; theorem eventually_nhds_subgradient_subset_add_closedBall …
+theorem eventually_dirDeriv_lt_of_tendsto_dir …           -- Thm 24.6, first assertion
+```
+
+**Theorem 24.6's first assertion needs neither the simplex construction nor closedness of `f`.**
+Rockafellar builds a polytope (Theorems 20.5 and 10.2) only to make `f` continuous relative to it
+at the point being approached. Using monotonicity of the difference quotient in its step — replace
+the vanishing step `|xᵢ − x|` by a fixed larger one — moves all the continuity to *interior*
+points, where Theorem 10.1 applies. `ConvexFn f` and `Proper f` suffice.
+
+**Theorem 24.5 needs no "the sequence lies in `C`" hypothesis.** `xᵢ → x ∈ U` is enough; the proof
+repairs the finitely many stray indices.
+
+**Relocation candidates.** `supportFn_closedBall` belongs in `Duality/Support.lean`;
+`tendsto_eval_of_tendsto` in `Analysis/Convex/Convergence.lean` (the §10 module of that name);
+`dirDeriv_eq_bot_of_eq_top`, `dirDeriv_eq_coe_toReal_of_mem_interior_dom`,
+`convexOn_toReal_dirDeriv`, `toReal_dirDeriv_smul`, `mem_interior_dom_dirDeriv` and
+`proper_dirDeriv_of_ne_bot` in `Subgradient/Existence.lean`; `mem_interior_dom_smul` in
+`Epigraph.lean` or `RelativeInterior.lean`.
+
+**Theorem 24.6's second assertion is blocked, on two counts.** The uniformity step wants
+Corollary 10.8.1 for `EReal`-valued convex functions dominated by a finite one — the existing form
+consumes *finite* convex functions on an open set, and `f'(xᵢ; ·)` at a boundary point takes the
+value `+∞`. And identifying the limit set `∂(f'(x; ·))(y)` with the face of `∂f x` exposed by `y`
+needs **Corollary 23.5.3**, `δ*(· | face exposed by y) = (δ*(· | C))'(y; ·)`, which does not exist yet.
+
+### `Tdaf/Analysis/Convex/Subgradient/Bounded.lean`
+
+**Theorem 24.7**: `∂f` maps compact subsets of `int (dom f)` to non-empty compact sets.
+
+```lean
+theorem exists_lipschitz_forall_pairing_le_of_isCompact …     -- the shared constant, Thm 10.4
+theorem isCompact_subgradient …
+theorem isCompact_image_subgradientRel …                      -- Thm 24.7
+```
+
+**Theorem 24.7 needs neither Corollary 24.5.1 nor §13**, contrary to the plan: Theorem 10.4 alone
+does it, and a *single* Lipschitz constant serves all three conclusions at once.
+
+**Relocation candidate.** `Convex.interior_subset_relint` belongs in `RelativeInterior.lean`.
 
 ### `Tdaf/Analysis/Convex/Subgradient/Gradient.lean`
 
@@ -1307,6 +1438,13 @@ project still does not have.
 **Theorem 27.1(h) cost one import and one duplicate.** `Subgradient/Approx.lean` had to be imported
 for Theorem 23.6, and that made gotcha 136's triple `add_coe_le_coe_iff` an actual build error —
 see `Tdaf/Order/EReal.lean`.
+
+**Thm 27.1(c) is `iInf_ne_bot_and_argmin_eq_empty_iff`**, and it is (a) and (b) composed with
+Theorem 23.3's second half in its `subgradient_eq_empty_iff_exists_dirDeriv_eq_bot` packaging —
+a second import, of `Subgradient/Existence.lean`. Only *one* of the book's two finiteness bounds
+appears on each side of the equivalence: `f*(0) ≠ ⊥` holds for every proper `f` (`conj_ne_bot`) and
+symmetrically `⨅ f ≠ ⊤` does too (`iInf_ne_top`, recorded here for exactly that reason). Stating
+"finite" in full would put two redundant conjuncts into an `↔`.
 
 **Cor 27.3.2 is done, and it does not need Helly.** `argmin_nonempty_of_polyhedralFn` runs the
 finitely generated description of the epigraph (Theorem 19.1): a lower bound forces every
@@ -2309,6 +2447,14 @@ Also here: `posHomogeneous_ofEpi` (a cone's `ofEpi` is positively homogeneous �
 `zero_mem_closure_dom_conj_iff` kept as a two-line specialisation so that its call sites did not
 move — together with **Corollary 13.4.2** (`interior_dom_conj_nonempty_iff`) and
 `separatingRight_flip_of_separatingDual`.
+
+**Theorem 27.1(i)'s second sentence is here too**, `zero_notMem_closure_dom_conj_iff`, with
+`recessionFn_le_neg_coe_iff` spelling out what `f 0⁺ y ≤ -ε` means pointwise. It is the first
+sentence with the quantifier negated; the pointwise form is `recessionFn_le_coe_iff_forall`, i.e.
+Theorem 8.5 through Theorem 8.1's `a = 1` test, so **no separate Theorem 8.5 work was needed**
+after all. Two conditions Rockafellar states are automatic: `y ≠ 0`, because at `y = 0` the
+inequality at `a = 1` would read `0 ≤ -ε` at any point of the (non-empty) effective domain; and
+the restriction of `x` to `dom f`, because off `dom f` the right-hand side is `⊤ - ε = ⊤`.
 
 **Corollary 13.3.4 needs neither Theorem 12.3 nor the translation by `-y₀`.** Rockafellar sets
 `g = f - ⟨·, y₀⟩`, computes `dom g* = (dom f*) - y₀`, and applies Theorem 13.1 to that translate.
@@ -3868,6 +4014,58 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      through `Submodule.toAffineSubspace`, which type ascription does not trigger (gotcha 53).
      Feeding `geometric_hahn_banach_compact_closed` the submodule as a *set* and then running
      `t • w ∈ V` for all `t : ℝ` through the bound is three lines and dodges the coercion entirely.
+
+169. **`SetRel` inclusion applied to a subgradient membership needs an ascription.** Write
+     `show ((x, y) : E × F) ∈ subgradientRel B f from hy`; without it elaboration picks the wrong
+     membership instance.
+
+170. **`conj_ne_bot` leaves `B` a metavariable.** Pass `(B := B)` and the point explicitly.
+
+171. **`Tdaf.EReal.iSup_add_coe` is oriented `(⨆ u) + r = ⨆ (u + r)`**, not the reverse. A `rw`
+     in the natural reading direction fails with "did not find an occurrence".
+
+172. **`flip_innerₗ` is propositional, not definitional.** An instance on `(innerₗ E).flip` needs
+     `have : IsCompatiblePairing ((innerₗ E).flip) := by rw [flip_innerₗ]; infer_instance`, not
+     `inferInstance` alone.
+
+173. **`Ioo_mem_nhdsWithin_Ioi` is now `Ioo_mem_nhdsGT`** (and `Ioo_mem_nhdsWithin_Iio` is
+     `Ioo_mem_nhdsLT`).
+
+174. **Dot notation on a `Monotone` hypothesis resolves into `Function`.** `hg.tendsto_…` where
+     `hg : Monotone g` looks for `Function.tendsto_…`. Name such lemmas `…_of_monotone` and call
+     them prefix-style.
+
+175. **`EReal.continuous_coe_real` does not exist** — use `EReal.continuous_coe_iff.2`.
+
+176. **A `rw` with `dirDeriv f x z = ↑(…).toReal` rewrites *both* sides of the goal.** Rewrite
+     inside a hypothesis instead, or the equation eats its own right-hand side.
+
+177. **`haveI` for a `Prop`-valued instance trips `linter.style.haveILetI`.** Use `have`.
+
+178. **Pointwise addition of `Set`s needs `open scoped Pointwise`** — without it `A + B` on sets
+     is an elaboration error, not a missing instance.
+
+179. **`MonotoneOn` applied to a point yields a beta-unreduced term.** The result is
+     `(fun a => …) (e i)`, and a following `rw` will not see its subterms. State the `have` with
+     its explicit type to force reduction.
+
+180. **`Convex.interior_subset_relint` returns a *subset*, not a membership.** Inside
+     `mem_nhds_iff.2 ⟨s, …⟩` it is the second component and must not be applied to the point.
+
+181. **`match_scalars <;> field_simp` may close some branches and not others.** `<;> ring` then
+     trips `linter.unnecessarySeqFocus` while `(field_simp; ring)` fails with "no goals". Use
+     `<;> (field_simp; try ring)`.
+
+182. **`Tdaf.EReal.sub_div_le_coe_iff` and `coe_le_sub_div_iff` are the two lemmas that turn a
+     difference-quotient bound into a bound on the value.** The strict versions come from them by
+     `not_le`; there is no separate pair.
+
+183. **Probing Mathlib names with a scratch file that does `import Mathlib` takes over ten minutes
+     in a worktree.** Import a project module instead — it is already built.
+
+184. **Checking the 100-character line limit with `awk 'length > 100'` gives false positives.**
+     `awk` counts UTF-8 *bytes*, and this project's source is full of `≤`, `∈`, `•`. Count
+     codepoints (e.g. `python -c "..."` over the decoded lines) instead.
 
 
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`

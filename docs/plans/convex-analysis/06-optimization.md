@@ -10,29 +10,29 @@ Lagrangian, dual program, Kuhn–Tucker vectors) is obtained from it by **partia
 
 ## 6.1 `Optimization/Minimum.lean` — §27
 
-**Status: Theorem 27.1 (a), (b), (d), (f), (g), (h) and the first sentence of (i), Theorems 27.2
-and 27.4, the non-polyhedral case of 27.3 and Corollary 27.3.2 are done — everything except (c),
-(e), (i)'s second sentence, and the polyhedral refinement of 27.3.**
+**Status: Theorem 27.1 (a), (b), (c), (d), (f), (g), (h) and (i), Theorems 27.2 and 27.4, the
+non-polyhedral case of 27.3 and Corollary 27.3.2 are done — everything except (e) and the
+polyhedral refinement of 27.3.**
 
 Theorem 27.1 is a summary: nine facts about `inf f` and `argmin f`, each a restatement of an earlier
 result in terms of `f*` at the origin. It is the ideal first theorem of this sub-plan because it
 forces all the earlier APIs to line up — and it did: (a) and (b) went straight through, and the
-other seven turned out to be exactly the parts of the book that were still deferred elsewhere. Six
-of the nine are now in; what is left is (c), which needs Theorem 23.3 in full, (e), which cannot be
-*stated* without a reflexive pairing, and the second sentence of (i), which needs Theorem 8.5.
+other seven turned out to be exactly the parts of the book that were still deferred elsewhere.
+Eight of the nine are now in. The only one left is (e), which cannot be *stated* without a
+reflexive pairing: `∂f*(0)` a singleton is a statement about `E**`.
 
 | Lean name | book | status |
 |---|---|---|
 | `argmin`, `mem_argmin_iff_zero_mem_subgradient`, `convex_argmin` | §27's opening remarks | done |
 | `conj_zero_eq_neg_iInf`, `iInf_eq_neg_conj_zero`, `zero_mem_dom_conj_iff` | **Thm 27.1(a)** | done |
 | `argmin_eq_subgradient_conj_zero` | **Thm 27.1(b)** | done |
-| — | Thm 27.1(c) | **not done** — needs Thm 23.3 in full |
+| `iInf_ne_bot_and_argmin_eq_empty_iff`, `iInf_ne_top` | **Thm 27.1(c)** | done — (a) and (b) composed with Thm 23.3's second half, now in `Subgradient/Existence.lean`. Only one of the book's two finiteness bounds appears on each side: `f*(0) ≠ ⊥` and `⨅ f ≠ ⊤` hold for *every* proper `f` |
 | `argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj`, `zero_mem_interior_dom_conj_iff_recessionConeFn_eq_zero` | **Thm 27.1(d)**, both sentences | done — and it needs **no** Cor 13.3.4, contrary to the book's proof: Cor 14.2.2 already says every level set is bounded exactly when the origin is interior to `dom f*`, and Thm 27.2 turns that into existence of a minimiser |
 | — | Thm 27.1(e) | **not done** — `∂f*(0)` a singleton lives in `E**`, so a reflexive pairing is needed to state it |
 | `recessionCone_setOf_le_eq_polarCone_dom_conj`, `recessionCone_argmin_eq_polarCone_dom_conj` | **Thm 27.1(f)** | done — Thm 8.7 composed with Thm 14.2, which is now in `Recession/Conjugate.lean` |
 | `supportFn_setOf_le`, `supportFn_argmin`, `conj_flip_conj_add_coe` | **Thm 27.1(g)**, both sentences | done. The first needs **no shifted-function API**: Cor 13.2.1 computes the closure of a generated function as a support function directly, and `conj_flip_conj_add_coe` identifies the level set it produces as `{x ∣ f**(x) - α ≤ 0}`. The second is Thm 27.1(b) plus Thm 23.2 |
 | `iInf_supportFn_setOf_le`, `epsSubgradient_conj_zero` | **Thm 27.1(h)** | done — Thm 23.6 for `f*` at the origin, once the level sets of `f` above `inf f` are identified with the ε-subdifferentials of `f*` |
-| `zero_mem_closure_dom_conj_iff` (in `Duality/Level.lean`) | **Thm 27.1(i)**, first sentence | done — it is Cor 13.3.4(a) at the origin, which is now available for a general `y₀` as `mem_closure_dom_conj_iff`. The second sentence needs only Thm 8.5's difference formula, `recessionFn_apply_eq_iSup_sub`, which is in `Recession/Function.lean` |
+| `zero_mem_closure_dom_conj_iff`, `zero_notMem_closure_dom_conj_iff`, `recessionFn_le_neg_coe_iff` (in `Duality/Level.lean`) | **Thm 27.1(i)**, both sentences | done — the first is Cor 13.3.4(a) at the origin, available for a general `y₀` as `mem_closure_dom_conj_iff`; the second is that with the quantifier negated. It needed **no Thm 8.5 work**: `recessionFn_le_coe_iff_forall` is already Thm 8.5 through Thm 8.1's `a = 1` test. Rockafellar's `y ≠ 0` and his restriction of `x` to `dom f` are both automatic |
 | `argmin_nonempty_of_recessionConeFn_eq_zero`, `isCompact_argmin_of_recessionConeFn_eq_zero`, `exists_pos_forall_exists_mem_argmin_dist_lt` | **Thm 27.2**, all three assertions | done |
 | `tendsto_infDist_argmin`, `isBounded_range_of_tendsto_iInf`, `mem_argmin_of_mapClusterPt` | Cor 27.2.1 | done |
 | `tendsto_of_argmin_eq_singleton` | Cor 27.2.2 | done |
