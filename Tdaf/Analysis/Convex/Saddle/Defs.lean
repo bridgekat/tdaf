@@ -118,20 +118,6 @@ private theorem coe_sub_eq_neg_add {c : ℝ} {w : EReal} :
   change (c : EReal) + -w = -w + (c : EReal)
   exact add_comm _ _
 
-/-- Moving a real summand across an `EReal` inequality. -/
-private theorem add_coe_le_coe_iff {w : EReal} {c r : ℝ} :
-    w + (c : EReal) ≤ (r : EReal) ↔ w ≤ ((r - c : ℝ) : EReal) := by
-  induction w with
-  | bot => simp
-  | coe s =>
-    rw [← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff, _root_.EReal.coe_le_coe_iff]
-    constructor <;> intro h <;> linarith
-  | top =>
-    rw [_root_.EReal.top_add_of_ne_bot (_root_.EReal.coe_ne_bot c)]
-    constructor
-    · exact fun h => absurd (top_le_iff.1 h) (_root_.EReal.coe_ne_top r)
-    · exact fun h => absurd (top_le_iff.1 h) (_root_.EReal.coe_ne_top _)
-
 /-- A real-valued "affine coordinate" added to a convex function keeps it convex. The hypothesis is
 the combination law rather than linearity, so that the same lemma serves a coordinate of a pairing
 and a projection of a product alike. -/
@@ -140,8 +126,9 @@ private theorem convexFn_add_coe {E : Type*} [AddCommGroup E] [Module ℝ E] {f 
     (hl : ∀ (x y : E) (a b : ℝ), a + b = 1 → l (a • x + b • y) = a * l x + b * l y) :
     ConvexFn (fun x => f x + ((l x : ℝ) : EReal)) := by
   refine convexFn_of_epi_combo fun x y μ ν hx hy a b ha hb hab => ?_
-  have hcomb := hf.epi_combo (add_coe_le_coe_iff.1 hx) (add_coe_le_coe_iff.1 hy) ha hb hab
-  refine add_coe_le_coe_iff.2 (hcomb.trans (le_of_eq ?_))
+  have hcomb := hf.epi_combo (Tdaf.EReal.add_coe_le_coe_iff.1 hx)
+    (Tdaf.EReal.add_coe_le_coe_iff.1 hy) ha hb hab
+  refine Tdaf.EReal.add_coe_le_coe_iff.2 (hcomb.trans (le_of_eq ?_))
   rw [_root_.EReal.coe_eq_coe_iff, hl x y a b hab]
   ring
 

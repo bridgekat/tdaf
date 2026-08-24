@@ -187,12 +187,6 @@ omit [Module ℝ E] in
 @[simp] theorem shiftFn_apply (f : E → EReal) (x : E) (c : ℝ) (w : E) :
     shiftFn f x c w = f (x + w) + (c : EReal) := rfl
 
-/-- Moving a real constant across `≤` against a real coercion. -/
-theorem add_coe_le_coe_iff {z : EReal} {c m : ℝ} :
-    z + (c : EReal) ≤ (m : EReal) ↔ z ≤ ((m - c : ℝ) : EReal) := by
-  rw [_root_.EReal.coe_sub, _root_.EReal.le_sub_iff_add_le (.inl (_root_.EReal.coe_ne_bot c))
-    (.inl (_root_.EReal.coe_ne_top c))]
-
 omit [Module ℝ E] in
 /-- The value of `shiftFn` at the origin. -/
 theorem shiftFn_zero {r c : ℝ} (hr : f x = (r : EReal)) :
@@ -202,7 +196,7 @@ theorem shiftFn_zero {r c : ℝ} (hr : f x = (r : EReal)) :
 /-- A translate of a convex function, raised by a constant, is convex. -/
 theorem convexFn_shiftFn (hf : ConvexFn f) (x : E) (c : ℝ) : ConvexFn (shiftFn f x c) := by
   refine convexFn_of_epi_combo fun u v μ ν hu hv a b ha hb hab => ?_
-  rw [shiftFn_apply, add_coe_le_coe_iff] at hu hv ⊢
+  rw [shiftFn_apply, Tdaf.EReal.add_coe_le_coe_iff] at hu hv ⊢
   have hxs : a • x + b • x = x := by rw [← add_smul, hab, one_smul]
   have hx : a • (x + u) + b • (x + v) = x + (a • u + b • v) := by
     have hrearr : a • (x + u) + b • (x + v) = (a • x + b • x) + (a • u + b • v) := by
@@ -382,7 +376,7 @@ theorem isClosed_epi_shiftFn (hc : IsClosed (epi f)) (x : E) (c : ℝ) :
   have hpre : epi (shiftFn f x c) = (fun p : E × ℝ => (x + p.1, p.2 - c)) ⁻¹' epi f := by
     ext p
     simp only [Set.mem_preimage, mem_epi, shiftFn_apply]
-    exact add_coe_le_coe_iff
+    exact Tdaf.EReal.add_coe_le_coe_iff
   rw [hpre]
   exact hc.preimage ((continuous_const.add continuous_fst).prodMk
     (continuous_snd.sub continuous_const))

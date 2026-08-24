@@ -371,16 +371,6 @@ section PolyhedralLinear
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → EReal}
 
-/-- Adding a finite constant to an `EReal`, read as a condition on epigraph height.
-
-The same statement is `Subgradient/Approx.lean`'s `add_coe_le_coe_iff` and `Saddle/Defs.lean`'s
-private twin; none of the three files imports the others, and the lemma really belongs in
-`Tdaf/Order/EReal.lean`. -/
-private theorem add_coe_le_coe_iff {a : EReal} {c m : ℝ} :
-    a + (c : EReal) ≤ (m : EReal) ↔ a ≤ ((m - c : ℝ) : EReal) := by
-  rw [_root_.EReal.coe_sub, _root_.EReal.le_sub_iff_add_le (.inl (_root_.EReal.coe_ne_bot c))
-    (.inl (_root_.EReal.coe_ne_top c))]
-
 /-- **Adding a linear functional preserves polyhedrality.** The epigraph of `f + φ` is the preimage
 of `epi f` under the shear `(x, μ) ↦ (x, μ - φ x)`, and `Polyhedral.comap` asks for nothing beyond
 a real vector space — no finite dimension, no topology.
@@ -393,7 +383,7 @@ theorem PolyhedralFn.add_linear (hf : PolyhedralFn f) (φ : E →ₗ[ℝ] ℝ) :
       = (LinearMap.prod (LinearMap.fst ℝ E ℝ)
           (LinearMap.snd ℝ E ℝ - φ.comp (LinearMap.fst ℝ E ℝ))) ⁻¹' epi f := by
     ext q
-    exact add_coe_le_coe_iff
+    exact Tdaf.EReal.add_coe_le_coe_iff
   change Polyhedral (epi _)
   rw [hepi]
   exact Polyhedral.comap hf _
