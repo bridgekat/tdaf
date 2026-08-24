@@ -104,10 +104,11 @@ and every statement here quantifies over all `ε > 0`.
 
 ## What is not here
 
-**Theorems 35.9 and 35.10 are not formalised.** Theorem 35.9 (differentiability almost everywhere,
-and continuity of `∇K` on the set where it exists) rests on Theorem 25.5, i.e. on Rademacher's
-theorem, which `Subgradient/Gradient.lean` does not have; Theorem 35.10 rests on 35.9 and on
-Theorem 24.5.
+**Theorems 35.9 and 35.10 are in `Saddle/Rademacher.lean`**, which imports this file. Their
+measure-zero and density clauses need Rademacher's theorem, and keeping the measure-theoretic
+imports out of here costs nothing: 35.9's continuity clause is
+`eventually_nhds_subgradientSaddle_subset` below with the subdifferentials collapsed by
+Theorem 35.8, and 35.10 is `eventually_subgradientSaddle_subset` the same way.
 
 **Corollary 35.8.1's last clause is not formalised**: that finiteness of the `m + n` two-sided
 partial derivatives already forces differentiability. It is a statement about a coordinate basis,

@@ -325,7 +325,7 @@ structure ConcaveConvexOn (C : Set U) (D : Set X) (K : U × X → ℝ) : Prop wh
 | `uniformCauchySeqOn_prod_of_dense`, `exists_tendstoUniformlyOn_prod_of_dense`, `…'`, `tendstoUniformlyOn_prod_of_tendsto` | **Thm 35.4** | done |
 | `exists_subseq_tendstoUniformlyOn_prod` | **Thm 35.5** | done |
 | — | **Thms 35.6–35.8**, Cors 35.7.1 and 35.8.1 | done, in `Saddle/Differential.lean` — see §7.3a |
-| — | **Thm 35.9**, Thm 35.10 | not done — needs Rademacher (Thm 25.5) |
+| — | **Thm 35.9**, Thm 35.10 | done, in `Saddle/Rademacher.lean` — see §7.3b |
 
 **The plan's advice was right and paid off.** §10's convergence theorems were written for families
 indexed by an arbitrary type, and Theorem 35.2 is exactly Theorem 10.6 applied four times — twice
@@ -369,7 +369,8 @@ deferred clean-up.
 | `lowerSemicontinuousAt_dirDerivReal_fst`, `upperSemicontinuousAt_dirDerivReal_snd`, `eventually_nhds_subgradient{Saddle,Fst,Snd}_subset` | **Cor 35.7.1** | done |
 | `prodInnerL`, `HasSaddleGradientAt`, `subgradient{Fst,Snd,Saddle}_eq_singleton_of_hasSaddleGradientAt`, `hasSaddleGradientAt_of_subgradient_eq_singleton`, `hasSaddleGradientAt_iff_subgradientSaddle_eq_singleton`, `differentiableAt_iff_exists_subgradientSaddle_eq_singleton` | **Thm 35.8** | done |
 | `forall_inner_le_dirDerivReal_iff`, `forall_dirDerivReal_le_inner_iff`, `subgradient{Fst,Snd}_eq_singleton_of_dirDerivReal`, `hasSaddleGradientAt_iff_forall_dirDerivReal_eq`, `differentiableAt_iff_isLinearMap_dirDerivReal` | **Cor 35.8.1** | done except its last clause (the `m + n` two-sided partials), which quantifies over a coordinate basis and belongs to a surface layer |
-| — | **Thms 35.9, 35.10** | not done — both rest on Theorem 25.5, i.e. on Rademacher. Nothing else blocks them: `eventually_nhds_subgradientSaddle_subset` is already 35.9's continuity clause and 35.10 is `eventually_subgradientSaddle_subset` plus 35.9 |
+| `ConcaveConvexOn.exists_lipschitzOnWith_ball`, `ae_differentiableAt_of_concaveConvexOn`, `measure_diff_differentiableAt_of_concaveConvexOn`, `subset_closure_differentiableAt_of_concaveConvexOn`, `continuousOn_saddleGradient` | **Thm 35.9** | done, in `Saddle/Rademacher.lean`. It does **not** go through Theorem 25.5: the only thing convexity supplies is a local Lipschitz constant (Theorem 35.1 on a compact rectangle, shrunk to a ball), and Mathlib's Rademacher does the analysis, exactly as in `Subgradient/Rademacher.lean`. No `Sₖ` decomposition and no Fubini |
+| `dist_le_of_subgradientSaddle_subset`, `tendsto_of_hasSaddleGradientAt`, `tendstoUniformlyOn_saddleGradient` | **Thm 35.10** | done, in `Saddle/Rademacher.lean` — Theorem 35.7 and Corollary 35.7.1 with the subdifferentials collapsed to singletons by Theorem 35.8, which is the proof of Theorem 25.7 verbatim. Neither Theorem 35.4 nor Theorem 35.9 is needed, and the pointwise clause needs differentiability only at the point in question |
 
 **Theorem 35.8's converse does not need Theorem 35.4's rescalings.** Rockafellar routes it through
 the uniform convergence of `h_λ(x, y) = [K(u + λx, v + λy) − K(u,v) − λ⟨x, u*⟩ − λ⟨y, v*⟩]/λ` on

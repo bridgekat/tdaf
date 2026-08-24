@@ -74,6 +74,7 @@ import Tdaf.Analysis.Convex.Saddle.Equiv
 import Tdaf.Analysis.Convex.Saddle.Existence
 import Tdaf.Analysis.Convex.Saddle.Kernel
 import Tdaf.Analysis.Convex.Saddle.Minimax
+import Tdaf.Analysis.Convex.Saddle.Rademacher
 import Tdaf.Analysis.Convex.Saddle.Subgradient
 import Tdaf.Analysis.Convex.Separation
 import Tdaf.Analysis.Convex.Subgradient.Approx

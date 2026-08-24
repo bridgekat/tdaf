@@ -44,6 +44,11 @@ first factor.
 * `mem_kuhnTucker_iff_adjointBifun_zero_eq` — the Kuhn–Tucker vectors are exactly the `v` at which
   the dual objective attains the optimal value of `(P)`; this is the half of **Theorem 30.5** that
   holds without normality.
+* `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq`, `domBifun_subset_domBifun_clBifun`,
+  `domBifun_clBifun_subset_closure` — **Theorem 29.4**, all three of its assertions. It is stated
+  here rather than in `Optimization/Perturbation.lean` because `clBifun` is defined here; the
+  supporting `domBifun_eq_image_dom_graphFn` and `mem_relint_slice` are the two projections of
+  §6 that the proof runs on.
 
 ## Design notes
 
@@ -89,8 +94,8 @@ too; the direction that holds without it is `mem_kuhnTucker_iff_adjointBifun_zer
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §30 (Theorem 30.1,
-  Theorem 30.2, Corollary 30.2.2).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §29 (Theorem 29.4) and
+  §30 (Theorem 30.1, Theorem 30.2, Corollary 30.2.2).
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -252,6 +257,121 @@ theorem closedBifun_clBifun (F : Bifun U X) : ClosedBifun (clBifun F) :=
   closedFn_clFn (graphFn F)
 
 end BifunClosureClosed
+
+/-! ### Theorem 29.4: the closure of a bifunction, slice by slice -/
+
+section RelintClosure
+
+open Filter Topology
+
+variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {F : Bifun U X}
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
+/-- The effective domain of a bifunction is the projection of the effective domain of its graph
+function. This is the identification Theorem 29.4 runs on: `ri` and `closure` both commute with a
+linear image, so every clause of the theorem is a clause about `graph F` read through `fst`. -/
+theorem domBifun_eq_image_dom_graphFn (F : Bifun U X) :
+    domBifun F = LinearMap.fst ℝ U X '' dom (graphFn F) := by
+  ext u
+  constructor
+  · rintro ⟨x, hx⟩
+    exact ⟨(u, x), mem_dom.2 (lt_of_le_of_ne le_top hx), rfl⟩
+  · rintro ⟨p, hp, rfl⟩
+    exact ⟨p.2, (mem_dom.1 hp).ne⟩
+
+/-- **Rockafellar, Theorem 6.4** read on a slice: if `(u, x)` is a relative interior point of a
+convex set of pairs, then `x` is a relative interior point of the slice through `u`.
+
+The prolongation criterion transports verbatim: a segment of the slice ending at `x` is a segment
+of the set ending at `(u, x)`, and prolonging it keeps the first coordinate at `u`. -/
+theorem mem_relint_slice {S : Set (U × X)} (hS : Convex ℝ S) {u : U} {x : X}
+    (hux : (u, x) ∈ ri S) : x ∈ ri {y | (u, y) ∈ S} := by
+  have hT : Convex ℝ {y | (u, y) ∈ S} := by
+    intro a ha b hb s t hs ht hst
+    have h := hS ha hb hs ht hst
+    have hu : s • ((u, a) : U × X) + t • (u, b) = (u, s • a + t • b) := by
+      rw [Prod.smul_mk, Prod.smul_mk, Prod.mk_add_mk, ← add_smul, hst, one_smul]
+    rwa [hu] at h
+  have hxT : ((u, x) : U × X) ∈ S := intrinsicInterior_subset hux
+  refine (Convex.mem_relint_iff_prolong hT ⟨x, hxT⟩).2 fun y hy => ?_
+  obtain ⟨μ, hμ, hmem⟩ := (Convex.mem_relint_iff_prolong hS ⟨(u, y), hy⟩).1 hux (u, y) hy
+  refine ⟨μ, hμ, ?_⟩
+  have hu : (1 - μ) • ((u, y) : U × X) + μ • (u, x) = (u, (1 - μ) • y + μ • x) := by
+    rw [Prod.smul_mk, Prod.smul_mk, Prod.mk_add_mk, ← add_smul, sub_add_cancel, one_smul]
+  rwa [hu] at hmem
+
+/-- **Rockafellar, Theorem 29.4**, first assertion: at a relative interior point of `dom F` the
+closure of a convex bifunction is computed slice by slice, `(cl F) u = cl (F u)`.
+
+Theorem 6.6 puts a relative interior point `(u, x)` of `dom (graph F)` over `u`, and Theorem 6.4
+makes `x` a relative interior point of `dom (F u)`; Theorem 7.5 then writes both closures as the
+same limit along the segment from `x` to `y` inside the slice. When `graph F` is improper,
+Theorem 7.2 makes it `-∞` at `(u, x)` and both closures are the constant `-∞`. -/
+theorem clBifun_apply_eq_clFn (hF : ConvexBifun F) {u : U} (hu : u ∈ ri (domBifun F)) :
+    clBifun F u = clFn (F u) := by
+  have hconv : Convex ℝ (dom (graphFn F)) := ConvexFn.convex_dom hF
+  have himg : u ∈ LinearMap.fst ℝ U X '' ri (dom (graphFn F)) := by
+    rw [← Convex.relint_image hconv, ← domBifun_eq_image_dom_graphFn]
+    exact hu
+  obtain ⟨⟨u', x⟩, hp, hpu⟩ := himg
+  simp only [LinearMap.fst_apply] at hpu
+  subst hpu
+  have hslice : x ∈ ri (dom (F u')) := mem_relint_slice hconv hp
+  have hxdom : x ∈ dom (F u') := intrinsicInterior_subset hslice
+  by_cases hpr : Proper (graphFn F)
+  · have hFu : Proper (F u') := ⟨⟨x, hxdom⟩, fun y => hpr.ne_bot (u', y)⟩
+    funext y
+    have h1 : Tendsto (fun a : ℝ => graphFn F ((1 - a) • ((u', x) : U × X) + a • (u', y)))
+        (𝓝[<] (1 : ℝ)) (𝓝 (clFn (graphFn F) (u', y))) :=
+      ConvexFn.tendsto_clFn_along_segment_relint hF hpr hp (u', y)
+    have heq : (fun a : ℝ => graphFn F ((1 - a) • ((u', x) : U × X) + a • (u', y)))
+        = fun a : ℝ => F u' ((1 - a) • x + a • y) := by
+      funext a
+      have hu : (1 - a) • ((u', x) : U × X) + a • (u', y) = (u', (1 - a) • x + a • y) := by
+        rw [Prod.smul_mk, Prod.smul_mk, Prod.mk_add_mk, ← add_smul, sub_add_cancel, one_smul]
+      rw [hu]
+      rfl
+    rw [heq] at h1
+    exact tendsto_nhds_unique h1
+      (ConvexFn.tendsto_clFn_along_segment_relint (hF.convexFn_apply u') hFu hslice y)
+  · have hbot : graphFn F (u', x) = ⊥ := ConvexFn.eq_bot_of_mem_relint_dom hF hpr hp
+    have hb1 : lscHull (graphFn F) (u', x) = ⊥ :=
+      le_bot_iff.1 (hbot ▸ lscHull_le (graphFn F) (u', x))
+    have hb2 : lscHull (F u') x = ⊥ := le_bot_iff.1 (hbot ▸ lscHull_le (F u') x)
+    rw [clFn_of_exists_eq_bot ⟨x, hb2⟩]
+    funext y
+    rw [clBifun_apply, clFn_of_exists_eq_bot ⟨(u', x), hb1⟩]
+
+/-- **Rockafellar, Theorem 29.4**, second assertion: at a relative interior point of `dom F` the
+program `(cl F) u` has the same optimal value as `F u`.
+
+A convex function and its closure have the same infimum (`iInf_clFn_eq_iInf`); the content is the
+first assertion, which makes `(cl F) u` a closure at all. -/
+theorem infBifun_clBifun_eq (hF : ConvexBifun F) {u : U} (hu : u ∈ ri (domBifun F)) :
+    infBifun (clBifun F) u = infBifun F u := by
+  rw [infBifun_apply, infBifun_apply, clBifun_apply_eq_clFn hF hu]
+  exact iInf_clFn_eq_iInf (F u)
+
+/-- **Rockafellar, Theorem 29.4**, third assertion, first inclusion: closing a proper convex
+bifunction can only enlarge its effective domain. -/
+theorem domBifun_subset_domBifun_clBifun (hF : ConvexBifun F) (hp : Proper (graphFn F)) :
+    domBifun F ⊆ domBifun (clBifun F) := by
+  rw [domBifun_eq_image_dom_graphFn F, domBifun_eq_image_dom_graphFn (clBifun F), graphFn_clBifun]
+  refine Set.image_mono ?_
+  rw [ConvexFn.clFn_eq_lscHull hF hp]
+  exact dom_subset_dom_lscHull _
+
+/-- **Rockafellar, Theorem 29.4**, third assertion, second inclusion: closing a proper convex
+bifunction cannot enlarge its effective domain beyond the closure. -/
+theorem domBifun_clBifun_subset_closure (hF : ConvexBifun F) (hp : Proper (graphFn F)) :
+    domBifun (clBifun F) ⊆ closure (domBifun F) := by
+  rw [domBifun_eq_image_dom_graphFn F, domBifun_eq_image_dom_graphFn (clBifun F), graphFn_clBifun]
+  refine subset_trans (Set.image_mono ?_) (image_closure_subset_closure_image continuous_fst)
+  rw [ConvexFn.clFn_eq_lscHull hF hp]
+  exact dom_lscHull_subset_closure_dom _
+
+end RelintClosure
 
 section ImageClosed
 

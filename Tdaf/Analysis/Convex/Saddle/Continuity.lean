@@ -42,8 +42,10 @@ obtained here by applying the §10 result twice — once in each variable — an
 ## What is not here
 
 Theorems 35.6–35.10 (directional derivatives, subgradients, differentiability almost everywhere)
-are the §23/§24/§25 half of the section and belong with the material they extend; §25's Rademacher
-half is not formalized yet, so 35.9 and 35.10 are blocked in any case.
+are the §23/§24/§25 half of the section and belong with the material they extend: 35.6–35.8 are in
+`Saddle/Differential.lean` and 35.9–35.10 in `Saddle/Rademacher.lean`, which reads
+`ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact` below on a ball and hands it to Mathlib's
+Rademacher theorem.
 
 ## Implementation notes
 
