@@ -78,8 +78,10 @@ import Tdaf.Analysis.Convex.Saddle.Rademacher
 import Tdaf.Analysis.Convex.Saddle.Subgradient
 import Tdaf.Analysis.Convex.Separation
 import Tdaf.Analysis.Convex.Subgradient.Approx
+import Tdaf.Analysis.Convex.Subgradient.BoundaryDirDeriv
 import Tdaf.Analysis.Convex.Subgradient.Bounded
 import Tdaf.Analysis.Convex.Subgradient.Calculus
+import Tdaf.Analysis.Convex.Subgradient.Cofinite
 import Tdaf.Analysis.Convex.Subgradient.Convergence
 import Tdaf.Analysis.Convex.Subgradient.Defs
 import Tdaf.Analysis.Convex.Subgradient.Differentiability
@@ -92,6 +94,7 @@ import Tdaf.Analysis.Convex.Subgradient.Legendre
 import Tdaf.Analysis.Convex.Subgradient.LegendreType
 import Tdaf.Analysis.Convex.Subgradient.Monotone
 import Tdaf.Analysis.Convex.Subgradient.OneDim
+import Tdaf.Analysis.Convex.Subgradient.Preservation
 import Tdaf.Analysis.Convex.Subgradient.Primitive
 import Tdaf.Analysis.Convex.Subgradient.Rademacher
 import Tdaf.Analysis.Convex.Subgradient.Reconstruction
