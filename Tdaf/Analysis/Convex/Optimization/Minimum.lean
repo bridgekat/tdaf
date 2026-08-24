@@ -40,6 +40,13 @@ convex set, and the optimality condition `0 ∈ ∂h x + N_C(x)`.
 * `exists_forall_le_of_recessionConeFn_inter_eq_zero` — **Theorem 27.3**, the non-polyhedral case,
   with `recessionConeFn_add_indicatorFn` for the recession calculus behind it and
   `exists_forall_le_of_forall_le_zero` for **Corollary 27.3.3**.
+* `exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace` — **Theorem 27.3** in the
+  general form: the common recession cone need only consist of directions of constancy of `h` that
+  are directions of linearity of `C`.
+* `exists_forall_le_of_polyhedral_of_inter_subset_constancySpace` — **Theorem 27.3**, the
+  polyhedral refinement: for polyhedral `C` the linearity requirement drops.
+  `argmin_nonempty_of_recessionConeFn_subset_constancySpace` is its unconstrained case, and
+  `exists_linearProj` is the projection that both run on.
 * `argmin_nonempty_of_polyhedralFn` — a polyhedral convex function bounded below attains its
   infimum; `exists_forall_le_of_polyhedralFn_of_polyhedral` is the same statement relative to a
   polyhedral convex set, **Corollary 27.3.2**.
@@ -104,19 +111,31 @@ function directly, and the level set it produces is `{x | f**(x) - α ≤ 0}`.
 natural home is beside `supportFn_setOf_le_zero` in `Duality/Level.lean`; it is here because that
 module sits below this one and because §27 is where level sets of `f` are the subject.
 
-**The polyhedral refinement of Theorem 27.3**, and with it Corollary 27.3.1 and the polyhedral half
-of Corollary 27.3.3. Rockafellar proves the refinement from Helly's theorem in the form of
-Theorem 21.5, which is not formalised — see `Helly.lean` for that obstruction.
+**Corollary 27.3.1.** Its statement could not be checked against the book, so nothing is claimed
+under that number; the two statements the polyhedral refinement is known to yield —
+`argmin_nonempty_of_recessionConeFn_subset_constancySpace` and, through it, the polyhedral half of
+Corollary 27.3.3 for affine constraints — are what is here.
 
-Corollary 27.3.2 *is* here, because it does not need the refinement: the finitely generated
-description of a polyhedral epigraph gives it directly. Rockafellar's route through
-Corollary 27.3.1 is what ties it to Helly, and `argmin_nonempty_of_polyhedralFn` cuts that tie.
+**The polyhedral refinement of Theorem 27.3 does not need Helly.** Rockafellar derives it from
+Theorem 21.5, applied to `C` together with the level sets `lev_α h`; Theorem 21.5 is still not
+formalised (see `Helly.lean`), and the refinement no longer waits for it. The directions of
+constancy of `h` form a subspace, and `exists_linearProj` projects along it: `h` is unchanged, the
+image of `C` is polyhedral, and the common recession cone collapses to `{0}`, which is the
+hypothesis of the non-polyhedral case. Polyhedrality of `C` enters exactly once, through
+`Polyhedral.recessionCone_image` — a linear map commutes with `0⁺` on a polyhedral set and, in
+general, on no other kind.
+
+Corollary 27.3.2 does not need the refinement either: the finitely generated description of a
+polyhedral epigraph gives it directly, and `argmin_nonempty_of_polyhedralFn` cuts Rockafellar's
+route through Corollary 27.3.1.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §27 (Theorem 27.1(a),
   (b), (d), (f), (g), (h), Theorem 27.2 with Corollaries 27.2.1–27.2.2, Theorem 27.3 with
-  Corollaries 27.3.2 and 27.3.3, Theorem 27.4).
+  Corollaries 27.3.2 and 27.3.3, Theorem 27.4). Theorem 27.3's general and polyhedral recession
+  hypotheses are stated as the book's constancy/linearity conditions; the derivation is not the
+  book's.
 -/
 
 open Set Pointwise
@@ -658,32 +677,92 @@ theorem eq_of_sub_mem_constancySpace {x y : E} (hxy : x - y ∈ constancySpace h
   rwa [hxy'] at hval
 
 omit [FiniteDimensional ℝ E] in
-/-- **Quotienting out the directions of constancy without leaving the space.** For any `h` there is
-a linear projection `A` of `E` that annihilates the constancy space of `h` and moves every point
-only by a direction of constancy; `eq_of_sub_mem_constancySpace` then gives `h (A x) = h x`.
+/-- **Every subspace is the kernel of a linear projection.** For a subspace `M` of `E` there is a
+linear `A : E →ₗ[ℝ] E` and a complement `N` such that `A` moves every point only by a direction of
+`M`, annihilates `M`, lands in `N` and fixes `N` pointwise.
 
-`A` is the projection onto any complement of `constancySubmodule h`, which exists because `E` is
-finite-dimensional. Working with an idempotent on `E` rather than with the quotient `E ⧸ M` keeps
-`h` itself in play and avoids having to transport closedness and properness across a quotient. -/
-theorem exists_linearMap_sub_mem_constancySpace (h : E → EReal) :
-    ∃ A : E →ₗ[ℝ] E, (∀ x, x - A x ∈ constancySpace h) ∧ ∀ y ∈ constancySpace h, A y = 0 := by
-  obtain ⟨N, hN⟩ := Submodule.exists_isCompl (constancySubmodule h)
-  refine ⟨(LinearMap.id : E →ₗ[ℝ] E) - (constancySubmodule h).projection N hN, fun x => ?_,
-    fun y hy => ?_⟩
-  · have hmem : (constancySubmodule h).projection N hN x ∈ constancySubmodule h := by
-      rw [← Submodule.coe_projectionOnto_apply]
-      exact ((constancySubmodule h).projectionOnto N hN x).2
-    have hsub : x - ((LinearMap.id : E →ₗ[ℝ] E)
-        - (constancySubmodule h).projection N hN) x
-        = (constancySubmodule h).projection N hN x := by
-      simp
-    rw [hsub, ← mem_constancySubmodule]
-    exact hmem
-  · have hy' : y ∈ constancySubmodule h := mem_constancySubmodule.2 hy
-    have hfix : (constancySubmodule h).projection N hN y = y := by
-      rw [← Submodule.coe_projectionOnto_apply,
-        Submodule.projectionOnto_apply_of_mem_left hN hy']
+This is the vehicle for "quotient out a subspace" arguments without leaving `E`: composing with `A`
+keeps a function that is constant along `M` unchanged, and keeps its epigraph in play, which a
+passage to `E ⧸ M` would not. -/
+theorem exists_linearProj (M : Submodule ℝ E) :
+    ∃ (A : E →ₗ[ℝ] E) (N : Submodule ℝ E), (∀ x, x - A x ∈ M) ∧ (∀ y ∈ M, A y = 0) ∧
+      (∀ x, A x ∈ N) ∧ ∀ y ∈ N, A y = y := by
+  obtain ⟨N, hN⟩ := Submodule.exists_isCompl M
+  refine ⟨(LinearMap.id : E →ₗ[ℝ] E) - M.projection N hN, N, fun x => ?_, fun y hy => ?_,
+    fun x => ?_, fun y hy => ?_⟩
+  · have hval : x - ((LinearMap.id : E →ₗ[ℝ] E) - M.projection N hN) x
+        = M.projection N hN x := by simp
+    rw [hval, ← Submodule.coe_projectionOnto_apply]
+    exact (M.projectionOnto N hN x).2
+  · have hfix : M.projection N hN y = y := by
+      rw [← Submodule.coe_projectionOnto_apply, Submodule.projectionOnto_apply_of_mem_left hN hy]
     simp [hfix]
+  · have hval : ((LinearMap.id : E →ₗ[ℝ] E) - M.projection N hN) x = x - M.projection N hN x := by
+      simp
+    rw [hval, ← Submodule.projectionOnto_apply_eq_zero_iff hN, map_sub,
+      Submodule.projectionOnto_projection hN, sub_self]
+  · have hzero : M.projection N hN y = 0 := by
+      rw [← Submodule.coe_projectionOnto_apply, Submodule.projectionOnto_apply_of_mem_right hN hy,
+        Submodule.coe_zero]
+    simp [hzero]
+
+/-- **Rockafellar, Theorem 27.3**, in the general form the polyhedral refinement refines: a closed
+proper convex `h` attains its infimum over a nonempty closed convex `C` as soon as every direction
+of recession common to `h` and `C` is *both* a direction in which `h` is constant *and* a direction
+of linearity of `C`.
+
+`exists_forall_le_of_recessionConeFn_inter_eq_zero` is the case where the common recession cone is
+`{0}`; here it may be any subspace along which `h` is constant and `C` is linear. The proof is the
+projection argument again, this time along `constancySubmodule h ⊓ linealitySubmodule C`: the
+image of `C` is literally `C ∩ N`, because `C` is invariant under the directions being projected
+out, and its recession cone is `0⁺C ∩ N` by `recessionCone_inter`. -/
+theorem exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace
+    (hh : ClosedProperConvexFn h) (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
+    (hrec : recessionConeFn h ∩ recessionCone C ⊆ constancySpace h ∩ linealitySpace C) :
+    ∃ x ∈ C, ∀ z ∈ C, h x ≤ h z := by
+  obtain ⟨A, N, hsub, hA0, hAN, hAfix⟩ :=
+    exists_linearProj (constancySubmodule h ⊓ linealitySubmodule C)
+  have hsubc : ∀ x, x - A x ∈ constancySpace h := fun x =>
+    mem_constancySubmodule.1 (Submodule.mem_inf.1 (hsub x)).1
+  have hsubl : ∀ x, x - A x ∈ linealitySpace C := fun x =>
+    mem_linealitySubmodule.1 (Submodule.mem_inf.1 (hsub x)).2
+  have hmemC : ∀ x ∈ C, A x ∈ C := by
+    intro x hx
+    have hneg : -(x - A x) ∈ recessionCone C := (mem_linealitySpace.1 (hsubl x)).2
+    have := add_mem_of_mem_recessionCone hneg hx
+    rwa [show x + -(x - A x) = A x by abel] at this
+  have himg : A '' C = C ∩ (N : Set E) := by
+    refine Set.Subset.antisymm ?_ fun y hy => ⟨y, hy.1, hAfix y hy.2⟩
+    rintro _ ⟨x, hx, rfl⟩
+    exact ⟨hmemC x hx, hAN x⟩
+  obtain ⟨x₀, hx₀⟩ := hCne
+  have hne : (C ∩ (N : Set E)).Nonempty := ⟨A x₀, hmemC x₀ hx₀, hAN x₀⟩
+  have hrecimg : recessionCone (A '' C) = recessionCone C ∩ (N : Set E) := by
+    rw [himg, recessionCone_inter hC hCc N.convex N.closed_of_finiteDimensional hne,
+      recessionCone_coe_submodule]
+  have hrec' : recessionConeFn h ∩ recessionCone (A '' C) = {0} := by
+    refine Set.Subset.antisymm (fun y hy => ?_) fun y hy => ?_
+    · obtain ⟨hy1, hy2⟩ := hy
+      rw [hrecimg] at hy2
+      obtain ⟨hy2C, hy2N⟩ := hy2
+      have hyM : y ∈ constancySubmodule h ⊓ linealitySubmodule C := by
+        obtain ⟨hc, hl⟩ := hrec ⟨hy1, hy2C⟩
+        exact Submodule.mem_inf.2 ⟨mem_constancySubmodule.2 hc, mem_linealitySubmodule.2 hl⟩
+      have h1 : A y = 0 := hA0 y hyM
+      have h2 : A y = y := hAfix y hy2N
+      exact Set.mem_singleton_iff.2 (by rw [← h2, h1])
+    · rw [Set.mem_singleton_iff] at hy
+      subst hy
+      exact ⟨recessionFn_apply_zero_le h, zero_mem_recessionCone _⟩
+  have hCimgconv : Convex ℝ (A '' C) := by rw [himg]; exact hC.inter N.convex
+  have hCimgcl : IsClosed (A '' C) := by
+    rw [himg]; exact hCc.inter N.closed_of_finiteDimensional
+  obtain ⟨x', hx'C, hx'min⟩ := exists_forall_le_of_recessionConeFn_inter_eq_zero hh
+    hCimgconv hCimgcl ⟨A x₀, ⟨x₀, hx₀, rfl⟩⟩ hrec'
+  obtain ⟨x, hxC, rfl⟩ := hx'C
+  refine ⟨x, hxC, fun z hz => ?_⟩
+  rw [eq_of_sub_mem_constancySpace (hsubc x), eq_of_sub_mem_constancySpace (hsubc z)]
+  exact hx'min (A z) ⟨z, hz, rfl⟩
 
 /-- **Rockafellar, Theorem 27.3**, the polyhedral refinement: a closed proper convex `h` attains
 its infimum over a nonempty **polyhedral** convex set `C` as soon as every direction of recession
@@ -696,7 +775,7 @@ The hypothesis is strictly weaker than the one of
 `{(a, 0) | a ≥ 0}`, along which `h` is constant, yet `inf_C h = -∞`.
 
 The proof replaces `C` by its image under a projection killing the constancy space of `h`
-(`exists_linearMap_sub_mem_constancySpace`). The image is polyhedral, `h` is unchanged along the
+(`exists_linearProj`). The image is polyhedral, `h` is unchanged along the
 fibres, and the common recession cone collapses to `{0}` — for a common direction of recession of
 the image lifts to one of `C` by `Polyhedral.recessionCone_image`, and the lift differs from it by
 a direction of constancy, hence is itself a common direction of recession and so lies in the
@@ -705,7 +784,8 @@ theorem exists_forall_le_of_polyhedral_of_inter_subset_constancySpace
     (hh : ClosedProperConvexFn h) (hC : Polyhedral C) (hCne : C.Nonempty)
     (hrec : recessionConeFn h ∩ recessionCone C ⊆ constancySpace h) :
     ∃ x ∈ C, ∀ z ∈ C, h x ≤ h z := by
-  obtain ⟨A, hsub, hA0⟩ := exists_linearMap_sub_mem_constancySpace h
+  obtain ⟨A, -, hsub', hA0, -, -⟩ := exists_linearProj (constancySubmodule h)
+  have hsub : ∀ x, x - A x ∈ constancySpace h := fun x => mem_constancySubmodule.1 (hsub' x)
   have hCimg : Polyhedral (A '' C) := hC.image A
   have hCimgne : (A '' C).Nonempty := hCne.image A
   have hrec' : recessionConeFn h ∩ recessionCone (A '' C) = {0} := by
@@ -719,7 +799,8 @@ theorem exists_forall_le_of_polyhedral_of_inter_subset_constancySpace
           (recessionPointedConeFn h).add_mem hy1 hdrec
         have heq : A y' + (y' - A y') = y' := by abel
         rwa [heq] at hadd
-      exact Set.mem_singleton_iff.2 (hA0 y' (hrec ⟨hy'rec, hy'⟩))
+      exact Set.mem_singleton_iff.2
+        (hA0 y' (mem_constancySubmodule.2 (hrec ⟨hy'rec, hy'⟩)))
     · rw [Set.mem_singleton_iff] at hy
       subst hy
       exact ⟨recessionFn_apply_zero_le h, zero_mem_recessionCone _⟩
