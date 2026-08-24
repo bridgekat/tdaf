@@ -44,12 +44,15 @@ origin of `f + w(z - ·)` dominates `-(f x₀ + w(z - x₀))` for `x₀ ∈ dom 
 
 ## What is not here
 
-**Uniqueness of the two minimisers and the `prox` operator.** Rockafellar's Theorem 31.5 also says
-that both infima are *uniquely attained*, that the minimisers `x` and `x*` are characterised by
-`z = x + x*` with `x* ∈ ∂f x`, and that they are the gradients of the two Moreau envelopes.
-Attainment needs Theorem 27.2 in a Hilbert space (`Optimization/Minimum.lean` proves it in finite
-dimensions), uniqueness needs strict convexity of `w`, and the gradient formulas need Theorem 26.3.
-`Corollary 31.5.2` (maximal monotonicity of `∂f`) rests on all of that.
+**Attainment, uniqueness and the `prox` operator are in `Optimization/Prox.lean`.** Rockafellar's
+Theorem 31.5 also says that both infima are *uniquely attained*, that the minimisers `x` and `x*`
+are characterised by `z = x + x*` with `x* ∈ ∂f x`, and that they are the gradients of the two
+Moreau envelopes. The first two clauses, and Corollaries 31.5.1 and 31.5.2 with them, are proved
+in `Optimization/Prox.lean`; attainment is Theorem 27.2, so that file is finite-dimensional where
+this one is not.
+
+**The gradient formulas** `x = ∇(f* □ w) z` and `x* = ∇(f □ w) z` are still missing. They need
+Theorem 26.3 applied to the two Moreau envelopes.
 
 ## References
 
