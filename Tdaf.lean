@@ -62,13 +62,16 @@ import Tdaf.Analysis.Convex.Recession.Function
 import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Representation
 import Tdaf.Analysis.Convex.Saddle.Closure
+import Tdaf.Analysis.Convex.Saddle.Conjugate
 import Tdaf.Analysis.Convex.Saddle.Continuity
 import Tdaf.Analysis.Convex.Saddle.Correspondence
 import Tdaf.Analysis.Convex.Saddle.Defs
 import Tdaf.Analysis.Convex.Saddle.Differential
 import Tdaf.Analysis.Convex.Saddle.Equiv
+import Tdaf.Analysis.Convex.Saddle.Existence
 import Tdaf.Analysis.Convex.Saddle.Kernel
 import Tdaf.Analysis.Convex.Saddle.Minimax
+import Tdaf.Analysis.Convex.Saddle.Subgradient
 import Tdaf.Analysis.Convex.Separation
 import Tdaf.Analysis.Convex.Subgradient.Approx
 import Tdaf.Analysis.Convex.Subgradient.Bounded
