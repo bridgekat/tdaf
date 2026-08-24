@@ -54,6 +54,7 @@ import Tdaf.Analysis.Convex.Polyhedral.Conjugate
 import Tdaf.Analysis.Convex.Polyhedral.Defs
 import Tdaf.Analysis.Convex.Polyhedral.Duality
 import Tdaf.Analysis.Convex.Polyhedral.Function
+import Tdaf.Analysis.Convex.Polyhedral.Homogeneous
 import Tdaf.Analysis.Convex.Polyhedral.Ops
 import Tdaf.Analysis.Convex.Polyhedral.Recession
 import Tdaf.Analysis.Convex.Polyhedral.Separation
