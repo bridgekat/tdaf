@@ -1209,6 +1209,50 @@ curve" material and arguably belong at the end of `OneDim.lean`, right after
 `isMaximalMonotoneRel_iff_exists_closedProperConvexFn`; this module would then hold Theorem 24.2
 alone.
 
+### `Tdaf/Analysis/Convex/Subgradient/Integral.lean`
+
+**Corollary 24.2.1**: a convex function of one variable is the integral of either of its one-sided
+derivatives.
+
+```lean
+theorem sub_eq_intervalIntegral_derivWithin_Ioi …   -- in Mathlib's vocabulary
+theorem rightDeriv_eq_coe_derivWithin …             -- the bridge
+theorem sub_eq_intervalIntegral_rightDeriv …        -- **Cor 24.2.1**, `f'₊`
+theorem sub_eq_intervalIntegral_leftDeriv …         -- **Cor 24.2.1**, `f'₋`
+```
+
+**The fundamental theorem of calculus applies with nothing to spare.**
+`intervalIntegral.integral_eq_sub_of_hasDeriv_right` asks for three things — continuity on the
+closed interval, a derivative *from the right* at each interior point, and interval integrability
+of that derivative — and convexity supplies exactly those three: Theorem 10.1
+(`ConvexOn.continuousOn_interior`), `ConvexOn.hasDerivWithinAt_rightDeriv_of_mem_interior`, and
+`ConvexOn.monotoneOn_rightDeriv` with `MonotoneOn.intervalIntegrable`. **No a.e. differentiability
+and no Lebesgue theory of monotone functions is involved**, which is worth knowing because the
+plan had this corollary filed with Theorem 25.4's measure-zero clause as "needs measure theory".
+
+**The bridge is the only real work, and it is where `interior` enters.** `rightDeriv f t` is an
+`EReal` infimum of difference quotients — the right definition when `f` can be infinite — while
+Mathlib's right derivative is a limit, computed as `sInf (slope f t '' {z ∈ dom f | t < z})`. The
+`EReal` infimum ranges over *all* steps `a > 0`, including those landing outside `dom f`, where the
+quotient is `⊤`; that is harmless but it is why `rightDeriv_eq_coe_derivWithin` asks for
+`t ∈ interior (dom f)` rather than for `f t` finite. The proof is `le_antisymm`: `csInf_le` at each
+admissible slope one way, and `EReal.lt_iff_exists_real_btwn` followed by `exists_lt_of_csInf_lt`
+the other.
+
+**`sub_div_eq_coe_slope` needs no order relation between the two points.** At `z = t` both sides
+are `0` — Mathlib's `slope f a a` is `0 / 0 = 0`, and the `EReal` quotient divides by `0` — so the
+`t < z` hypothesis that the callers have anyway is not part of the lemma.
+
+**The left-derivative half needs no second bridge.** `f'₋` and `f'₊` differ only on the jump set of
+`f'₊`, which `countable_leftDeriv_ne_rightDeriv` shows countable, hence null; the two integrals then
+agree by `intervalIntegral.integral_congr_ae`.
+
+**Not here**: Theorem 24.2's integral *formula*. The book defines `f (x) = ∫ₐˣ φ` for an arbitrary
+nondecreasing `φ : ℝ → [-∞, +∞]` and proves `f` closed proper convex with `f'₋ = φ₋ ≤ φ ≤ φ₊ = f'₊`.
+That needs the integral at the finite endpoints of the interval where `φ` is finite, as a limit of
+Riemann integrals, and `+∞` outside — an improper integral. `Primitive.lean` already proves the
+theorem's *existence* half with no integral at all, so only the formula is missing.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Convergence.lean`
 
 **Theorems 24.5 and 24.6 in full**, with **Corollary 24.5.1**.

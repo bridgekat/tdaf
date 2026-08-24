@@ -180,22 +180,23 @@ and now lives with it in `Subgradient/Existence.lean` (§5.1a).
 
 ## 5.3 `Subgradient/Monotone.lean`, `OneDim.lean`, `Primitive.lean`, `Convergence.lean`, `Bounded.lean` — §24
 
-**Status: Theorems 24.1–24.9 are all done, together with Corollary 24.5.1. What is left of §24 is
-Rockafellar's integral *formula* `f(x) = ∫ₐˣ φ` for the primitive, and Corollary 24.2.1 — both
-irreducibly statements about an integral, and neither needed by anything downstream.**
+**Status: Theorems 24.1–24.9 are all done, together with Corollaries 24.2.1 and 24.5.1. What is
+left of §24 is Rockafellar's integral *formula* `f(x) = ∫ₐˣ φ` for the primitive of an arbitrary
+nondecreasing `φ`, which is an improper integral and which nothing downstream needs.**
 
 §24 outgrew one module. `Monotone.lean` keeps the cyclic-monotonicity material (Theorems 24.4,
 24.8, 24.9); `OneDim.lean` holds the one-dimensional theory (24.1, 24.3, 24.2's uniqueness);
 `Primitive.lean` holds Theorem 24.2's existence clause and the complete non-decreasing curves it is
-built from; `Convergence.lean` holds the limit theorems (24.5, 24.5.1, 24.6); `Bounded.lean` holds
-24.7.
+built from; `Integral.lean` holds Corollary 24.2.1; `Convergence.lean` holds the limit theorems
+(24.5, 24.5.1, 24.6); `Bounded.lean` holds 24.7.
 
 | Lean name | book | status |
 |---|---|---|
 | `rightDeriv`, `leftDeriv`, `leftDeriv_le_rightDeriv`, `rightDeriv_le_leftDeriv`, `monotone_rightDeriv`, `monotone_leftDeriv`, `mem_subgradientRel_iff`, the four one-sided limit formulas (`iInf_rightDeriv_Ioi` …) | **Thm 24.1** | done, `OneDim.lean` |
 | `exists_eq_add_coe_of_le_le`, `subgradientRel_eq_of_deriv_eq` | **Thm 24.2**, uniqueness clause | done, `OneDim.lean` |
 | `monotoneCurve`, `isMonotoneRel_monotoneCurve`, `exists_mem_monotoneCurve_sub`, `isMaximalMonotoneRel_monotoneCurve`, `subgradientRel_eq_monotoneCurve_rightDeriv`, `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq`, `exists_closedProperConvexFn_forall_le_le` | **Thm 24.2**, existence clause | done, `Primitive.lean` — and it needs **no integral**: the primitive is pinned down by its *graph*, `Γ(φ)` is that graph, and Thm 24.3 (proved via cyclic monotonicity, so not circular) produces `f` from it |
-| — | **Thm 24.2**'s integral formula, and Cor 24.2.1 | **not done** — the only §24 statements that genuinely need `∫ₐˣ φ` for a nondecreasing `EReal`-valued `φ`, improper at both ends |
+| `sub_eq_intervalIntegral_derivWithin_Ioi`, `sub_div_eq_coe_slope`, `rightDeriv_eq_coe_derivWithin`, `sub_eq_intervalIntegral_rightDeriv`, `sub_eq_intervalIntegral_leftDeriv` | **Cor 24.2.1**, both halves | done, `Integral.lean` — the FTC applies with nothing to spare, and the work is the bridge from the project's `EReal` infimum of quotients to Mathlib's `derivWithin _ (Ioi t) t` |
+| — | **Thm 24.2**'s integral formula | **not done** — the one §24 statement that genuinely needs `∫ₐˣ φ` for a nondecreasing `EReal`-valued `φ`, improper at both ends. Theorem 24.2 *itself* is done, without any integral |
 | `isMaximalMonotoneRel_iff_exists_closedProperConvexFn`, `isMonotoneRel_iff_forall_le_or_le`, `isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone` | **Thm 24.3** | done, `OneDim.lean` |
 | `isClosed_subgradientRel` | **Thm 24.4** | done |
 | `eventually_dirDeriv_lt`, `eventually_subgradient_subset_add_closedBall`, `upperSemicontinuousAt_dirDeriv`, `eventually_nhds_subgradient_subset_add_closedBall` | **Thm 24.5**, Cor 24.5.1 | done, `Convergence.lean` |
