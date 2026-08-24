@@ -74,6 +74,7 @@ import Tdaf.Analysis.Convex.Subgradient.Bounded
 import Tdaf.Analysis.Convex.Subgradient.Calculus
 import Tdaf.Analysis.Convex.Subgradient.Convergence
 import Tdaf.Analysis.Convex.Subgradient.Defs
+import Tdaf.Analysis.Convex.Subgradient.Differentiability
 import Tdaf.Analysis.Convex.Subgradient.Existence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
 import Tdaf.Analysis.Convex.Subgradient.Legendre
