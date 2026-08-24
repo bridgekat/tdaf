@@ -47,6 +47,8 @@ This file collects the vocabulary that the rest of the development is stated aga
 * `instIsContinuousPairingProd`, `instIsCompatiblePairingProd` — a product of continuous
   (resp. compatible) pairings is continuous (resp. compatible). This is what lets the bifunction
   conjugacy of §30 apply Fenchel–Moreau on `U × X` with hypotheses stated only about `U` and `X`.
+* `isContinuousPairing_prodPairing_flip` — the same on the dual side, for the flipped product
+  pairing that every closedness statement about an adjoint (§30, §37, §38) asks for.
 * `exists_unique_dual_prod` — a continuous linear functional on `E × ℝ` is `(x, μ) ↦ y x + c μ`
   for a *unique* pair `(y, c)`. Mathlib does not provide this, and Fenchel–Moreau needs it twice:
   the separating functional of `E × ℝ` must be split into a horizontal part and a vertical
@@ -571,6 +573,27 @@ instance instIsCompatiblePairingProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx 
     simpa using (map_add g ((p.1, 0) : U × X) ((0, p.2) : U × X)).symm.trans (by rw [hsplit])
 
 end ProdInstances
+
+section ProdDualInstances
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace V] [TopologicalSpace Y]
+
+/-- The pairing of the two *dual* factors is continuous whenever each of its two halves is. The
+statement is not an instance because `(prodPairing Bu Bx).flip` is not syntactically a
+`prodPairing`; `prodPairing_flip` is what turns it into one.
+
+Every closedness statement about an adjoint — §30's `closedConcaveFn_graphFn_adjointBifun`, §37's
+`closedBifun_inverseBifun_adjointBifun`, §38's `closedBifun_lowerAdjointBifun` — asks for this
+instance on the dual side, and this is the only way to obtain it from hypotheses on the factors. -/
+theorem isContinuousPairing_prodPairing_flip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsContinuousPairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] :
+    IsContinuousPairing (prodPairing Bu Bx).flip := by
+  rw [prodPairing_flip]
+  infer_instance
+
+end ProdDualInstances
 
 
 end Tdaf.ConvexAnalysis

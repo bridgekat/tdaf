@@ -540,7 +540,7 @@ noncomputable def fenchelPairing (f : E → EReal) (g : E → EReal) : EReal :=
   ⨅ x, f x - g x     -- when it equals ⨆ y, g* y - f* y; existence is part of the theory
 ```
 
-**Status: done except Theorem 38.2 with Corollary 38.2.1, and Corollaries 38.4.1 and 38.5.1.**
+**Status: done except Corollary 38.2.1, Corollary 38.7.2 and the co-finiteness remark.**
 The operations are `infConvBifun`, `smulRightBifun`, `imageBifun` / `concaveImageBifun`,
 `compBifun` / `concaveCompBifun`, `invBifun` (`F⫶`) and `lowerAdjointBifun` (`F⫶*`); the inner
 product is `fenchelSup` / `fenchelInf` with `HasFenchelPairing` and `fenchelPairing`.
@@ -548,11 +548,14 @@ product is `fenchelSup` / `fenchelInf` with `HasFenchelPairing` and `fenchelPair
 | Lean name | book | status |
 |---|---|---|
 | `domBifun_infConvBifun`, `convexBifun_infConvBifun`, `graphFn_infConvBifun`, `bracket_infConvBifun` | **Thm 38.1** | done |
-| — | **Thm 38.2**, Cor 38.2.1 | not done — needs the *concave* orientation of Thm 16.4, and a concave `supConv` that does not exist |
-| `convexBifun_smulRightBifun`, `graphFn_smulRightBifun`, `bracket_smulRightBifun` | **Thm 38.3** | done |
+| `adjointBifun_infConvBifun`, `adjointBifun_infConvBifun_eq_supConvBifun`, `supConvBifun` | **Thm 38.2** | done, against one `IsExactSum` per `y` |
+| — | Cor 38.2.1 | not done — needs infimal convolution in the *first* bifunction variable and its adjoint formula; see `Bifunction/Algebra.lean`, `What is not here` |
+| `convexBifun_smulRightBifun`, `graphFn_smulRightBifun`, `bracket_smulRightBifun`, `adjointBifun_smulRightBifun` | **Thm 38.3** | done, including the adjoint formula |
 | `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq`, `conj_imageBifun_eq_iSup`, `conj_imageBifun_of_bracket_eq_top`, `lowerAdjointBifun_eq_concaveAdjointBifun`, `convexBifun_lowerAdjointBifun` | **Thm 38.4** | done, against `IsExactSum` |
-| `convexBifun_compBifun`, `invBifun_compBifun` | **Thm 38.5** | done |
-| — | Cors 38.4.1, 38.5.1 | not done — both need "closure commutes with `imageBifun`/`compBifun`", which is Thm 38.2's argument again |
+| `convexBifun_compBifun`, `invBifun_compBifun`, `adjointBifun_compBifun`, `exists_adjointBifun_compBifun_eq`, `lowerAdjointBifun_compBifun` | **Thm 38.5** | done |
+| `conj_imageBifun_lowerAdjointBifun`, `closedFn_imageBifun`, `exists_imageBifun_eq`, `conj_imageBifun_eq_clFn` | **Cor 38.4.1** | done |
+| `lowerAdjointBifun_compBifun_lowerAdjointBifun`, `closedBifun_compBifun`, `exists_compBifun_eq`, `lowerAdjointBifun_compBifun_eq_clBifun` | **Cor 38.5.1** | done |
+| — | Cor 38.7.2, co-finiteness | not done — Rockafellar derives 38.7.2 from Cor 38.2.1 |
 | `hasFenchelPairing_conj`, `fenchelPairing_conj`, `fenchelSup_le_fenchelInf`, `hasFenchelPairing_of_le` | **Lemma 38.6** | done |
 | `hasFenchelPairing_adjointBifun`, `conj_imageBifun_eq_fenchelPairing` | **Cor 38.7.1** | done |
 | `fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun` and its supports | **Thm 38.7** | done |

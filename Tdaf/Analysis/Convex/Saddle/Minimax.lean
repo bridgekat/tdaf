@@ -1097,16 +1097,6 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
   [TopologicalSpace V] [IsTopologicalAddGroup V] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
 
-omit [IsTopologicalAddGroup V] [IsTopologicalAddGroup Y] in
-/-- The pairing of the two dual factors is continuous whenever each of its two halves is. The
-statement is not an instance because `(prodPairing Bu Bx).flip` is not syntactically a
-`prodPairing`; `prodPairing_flip` is what turns it into one. -/
-theorem isContinuousPairing_prodPairing_flip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
-    [IsContinuousPairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] :
-    IsContinuousPairing (prodPairing Bu Bx).flip := by
-  rw [prodPairing_flip]
-  infer_instance
-
 /-- Each slice of the negated adjoint is a closed convex function: the closedness half of
 Theorem 30.1, sliced. -/
 theorem closedFn_neg_adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsContinuousPairing Bu.flip]
