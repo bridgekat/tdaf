@@ -1203,6 +1203,57 @@ theorem tendsto_smulRight_recessionFn_of_zero_mem_dom (hf : ClosedProperConvexFn
 
 end Topological
 
+/-! ### Layer B: Theorem 8.3 for slices
+
+A closed convex function of two variables has the **same** recession function on every slice
+`x ↦ G (u, x)` whose effective domain is non-empty. This is Theorem 8.3 — "one half-line is
+enough" — read on the epigraph, and it is what makes the recession behaviour of a perturbed
+minimisation problem independent of the perturbation. -/
+
+section Slice
+
+variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [TopologicalSpace U] [IsTopologicalAddGroup U]
+  [ContinuousSMul ℝ U] [AddCommGroup X] [Module ℝ X] [TopologicalSpace X] [IsTopologicalAddGroup X]
+  [ContinuousSMul ℝ X] {G : U × X → EReal} {u₀ : U} {x₀ y : X} {ν : ℝ}
+
+/-- A recession direction of *one* slice of a closed convex `G` is a recession direction of *every*
+slice, with the same bound.
+
+The slice inequality tested at the single point `x₀` — which is Theorem 8.5's "one point suffices",
+here not even needed in that form — exhibits a half-line of `epi G` in the direction
+`((0, y), ν)`, and for a closed convex set one half-line is enough (Theorem 8.3). Reading the
+resulting recession direction back on the slice at `u` gives the claim. Note that no hypothesis is
+placed on `u`: when `G (u, ·) ≡ ⊤` the conclusion holds vacuously. -/
+theorem recessionFn_le_coe_of_slice (hG : ConvexFn G) (hc : IsClosed (epi G))
+    (hx₀ : G (u₀, x₀) ≠ ⊤) (h : recessionFn (fun x => G (u₀, x)) y ≤ (ν : EReal)) (u : U) :
+    recessionFn (fun x => G (u, x)) y ≤ (ν : EReal) := by
+  obtain ⟨μ, hμ, -⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 (lt_top_iff_ne_top.2 hx₀)
+  have hdir : (((0 : U), y), ν) ∈ recessionCone (epi G) := by
+    refine mem_recessionCone_of_exists_ray hG.convex_epi hc ⟨((u₀, x₀), μ), fun a ha => ?_⟩
+    have hstep := recessionFn_le_coe_iff_forall.1 h x₀ a ha
+    have hbound : G (u₀, x₀ + a • y) ≤ ((μ + a * ν : ℝ) : EReal) := by
+      refine hstep.trans ?_
+      rw [_root_.EReal.coe_add]
+      exact add_le_add hμ.le le_rfl
+    simpa [Prod.smul_mk, smul_zero] using hbound
+  refine recessionFn_le_coe_iff.2 fun p hp a ha => ?_
+  have hmem : ((u, p.1), p.2) ∈ epi G := hp
+  simpa [Prod.smul_mk, smul_zero] using hdir _ hmem a ha
+
+/-- **Theorem 8.3 for slices**: a closed convex function of two variables has the same recession
+function on any two slices with non-empty effective domain. -/
+theorem recessionFn_slice_eq (hG : ConvexFn G) (hc : IsClosed (epi G)) {u₁ : U}
+    (h₀ : ∃ x, G (u₀, x) ≠ ⊤) (h₁ : ∃ x, G (u₁, x) ≠ ⊤) :
+    recessionFn (fun x => G (u₀, x)) = recessionFn (fun x => G (u₁, x)) := by
+  obtain ⟨x₀, hx₀⟩ := h₀
+  obtain ⟨x₁, hx₁⟩ := h₁
+  funext z
+  refine Tdaf.EReal.eq_of_forall_le_coe_iff fun r => ⟨fun h => ?_, fun h => ?_⟩
+  · exact recessionFn_le_coe_of_slice hG hc hx₀ h u₁
+  · exact recessionFn_le_coe_of_slice hG hc hx₁ h u₀
+
+end Slice
+
 /-! ### Layer D: bounded level sets -/
 
 section FiniteDimensional

@@ -118,20 +118,6 @@ private theorem coe_sub_eq_neg_add {c : ℝ} {w : EReal} :
   change (c : EReal) + -w = -w + (c : EReal)
   exact add_comm _ _
 
-/-- A real-valued "affine coordinate" added to a convex function keeps it convex. The hypothesis is
-the combination law rather than linearity, so that the same lemma serves a coordinate of a pairing
-and a projection of a product alike. -/
-private theorem convexFn_add_coe {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal}
-    (hf : ConvexFn f) {l : E → ℝ}
-    (hl : ∀ (x y : E) (a b : ℝ), a + b = 1 → l (a • x + b • y) = a * l x + b * l y) :
-    ConvexFn (fun x => f x + ((l x : ℝ) : EReal)) := by
-  refine convexFn_of_epi_combo fun x y μ ν hx hy a b ha hb hab => ?_
-  have hcomb := hf.epi_combo (Tdaf.EReal.add_coe_le_coe_iff.1 hx)
-    (Tdaf.EReal.add_coe_le_coe_iff.1 hy) ha hb hab
-  refine Tdaf.EReal.add_coe_le_coe_iff.2 (hcomb.trans (le_of_eq ?_))
-  rw [_root_.EReal.coe_eq_coe_iff, hl x y a b hab]
-  ring
-
 end ERealAux
 
 /-! ### The two effective domains -/
