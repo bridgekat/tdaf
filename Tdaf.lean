@@ -67,6 +67,7 @@ import Tdaf.Analysis.Convex.Saddle.Continuity
 import Tdaf.Analysis.Convex.Saddle.Correspondence
 import Tdaf.Analysis.Convex.Saddle.Defs
 import Tdaf.Analysis.Convex.Saddle.Equiv
+import Tdaf.Analysis.Convex.Saddle.Existence
 import Tdaf.Analysis.Convex.Saddle.Kernel
 import Tdaf.Analysis.Convex.Saddle.Minimax
 import Tdaf.Analysis.Convex.Saddle.Subgradient
