@@ -406,9 +406,9 @@ point of differentiability near `x + εᵢ y`".
 
 ## 5.5 `Subgradient/Legendre.lean` — §26
 
-**Status: Theorems 26.1, 26.3 and 26.4 are done, with Corollary 26.3.1.** §26 was unblocked by
-Theorem 25.6; what remains is Lemma 26.2, Corollaries 26.3.2–26.3.3, Corollary 26.4.1, and
-Theorems 26.5 and 26.6 with Lemma 26.7.
+**Status: Theorems 26.1, 26.3, 26.4, 26.5 and 26.6 are done, with Corollaries 26.3.1 and
+26.4.1.** §26 was unblocked by Theorem 25.6; what remains is Lemma 26.2, Corollaries 26.3.2–26.3.3,
+and Lemma 26.7.
 
 | Lean name | book | status |
 |---|---|---|
@@ -418,9 +418,10 @@ Theorems 26.5 and 26.6 with Lemma 26.7.
 | `StrictConvexOnFn`, `domSubgradient`, `EssentiallyStrictlyConvex`, `mem_subgradient_of_combo`, `le_combo_of_mem_subgradient`, `mem_subgradient_endpoints_of_le_combo`, `essentiallyStrictlyConvex_iff_pairwise_disjoint`, `essentiallySmooth_conj_iff_essentiallyStrictlyConvex` | **Thm 26.3** | done, `StrictlyConvex.lean` — one reformulation (distinct points never share a subgradient) plus Theorem 26.1 applied to `f*` |
 | `subgradient_injective_iff` | **Cor 26.3.1** | done, `StrictlyConvex.lean` |
 | — | Cors 26.3.2, 26.3.3 | **not done** — they need the behaviour of essential strict convexity under addition and under composition with a linear map, i.e. §16's exact rows on the *concave* side |
-| — | Cor 26.4.1 | **not done** |
-| `legendreType_conj_iff` and `∇f* = (∇f)⁻¹` | **Thm 26.5** | **not done** |
-| `gradient_bijective_iff_strictConvex_cofinite` | **Thm 26.6**, Lemma 26.7 | **not done** |
+| `gradientRange`, `hasGradientAt_toDual_iff_mem_subgradient`, `gradientRange_eq_domSubgradient_conj`, `relint_dom_conj_subset_gradientRange`, `gradientRange_subset_dom_conj`, `strictConvexOnFn_conj_of_subset_gradientRange` | **Cor 26.4.1** | done, `LegendreType.lean` — `D = dom ∂f*`, hence `ri (dom f*) ⊆ D ⊆ dom f*`; the last clause is Theorem 26.3 read backwards (`essentiallyStrictlyConvex_conj_iff_essentiallySmooth`) |
+| `LegendreType`, `legendreType_iff_subgradient_injective`, `legendreType_conj_iff`, `LegendreType.conj`, `hasGradientAt_conj_iff`, `gradientRange_eq_interior_dom_conj`, `eq_of_hasGradientAt_of_legendreType`, `bijOn_gradient_of_legendreType`, `gradient_conj_gradient`, `gradient_gradient_conj`, `continuousOn_gradient_toReal`, `continuousOn_gradient_interior_dom` | **Thm 26.5** | done, `LegendreType.lean` — Cor 26.3.1 on both sides turns the duality into "inverting `∂` swaps single-valuedness and injectivity"; `∇f* = (∇f)⁻¹` is then `mem_subgradient_conj_innerL_iff` |
+| `essentiallySmooth_of_dom_eq_univ`, `closedFn_of_dom_eq_univ`, `bijOn_gradient_univ_iff`, `conj_finite_of_bijOn_gradient_univ` | **Thm 26.6** | done, `LegendreType.lean` — co-finiteness is stated as `dom f* = E` (Cor 13.3.1), since the recession function is not in the library |
+| — | Lemma 26.7 | **not done** — the sequential characterisation of co-finiteness; it needs Theorem 23.4's boundedness clause, Corollary 24.5.1 and Theorem 24.4, all of which are available, so this is a proof to write rather than a blocker |
 
 ### What actually happened
 

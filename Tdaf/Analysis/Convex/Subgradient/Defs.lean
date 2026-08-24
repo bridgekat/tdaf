@@ -24,6 +24,8 @@ inequalities, one for each `z`, and neither it nor Theorem 23.5 uses any topolog
 * `subgradient B f x` — the subdifferential `∂f x`, a subset of `F`.
 * `subgradientRel B f` — the *graph* of `∂f`, as a `SetRel E F`. Corollary 23.5.1 is literally
   `SetRel.inv` applied to it; see the design note.
+* `domSubgradient B f` — the set of points at which `f` has a subgradient, Rockafellar's
+  `dom ∂f`.
 * `normalCone B C x` — the normal cone `N_C(x)`, with `normalPointedCone` bundling it as
   a `PointedCone ℝ F`.
 * `dirDeriv f x y` — the one-sided directional derivative `f'(x; y)`, as the infimum of the
@@ -217,6 +219,19 @@ theorem mem_dom_of_mem_subgradient (hp : Proper f) (hy : y ∈ subgradient B f x
   have hle := hy z₀
   rw [htop, _root_.EReal.top_add_coe] at hle
   exact absurd (top_le_iff.1 hle) (mem_dom.1 hz₀).ne
+
+/-- **`dom ∂f`**: the set of points at which `f` has at least one subgradient. Rockafellar's
+`dom ∂f`, and the set §26's essential strict convexity quantifies over. -/
+def domSubgradient (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) : Set E :=
+  {x | (subgradient B f x).Nonempty}
+
+@[simp] theorem mem_domSubgradient : x ∈ domSubgradient B f ↔ (subgradient B f x).Nonempty :=
+  Iff.rfl
+
+/-- `dom ∂f ⊆ dom f`: a subgradient at `x` forces `f x < ⊤`. -/
+theorem domSubgradient_subset_dom (hp : Proper f) : domSubgradient B f ⊆ dom f := by
+  rintro z ⟨y, hy⟩
+  exact mem_dom_of_mem_subgradient hp hy
 
 end Defs
 

@@ -43,6 +43,7 @@ import Tdaf.Analysis.Convex.Optimization.Fenchel
 import Tdaf.Analysis.Convex.Optimization.Lagrangian
 import Tdaf.Analysis.Convex.Optimization.Minimum
 import Tdaf.Analysis.Convex.Optimization.Moreau
+import Tdaf.Analysis.Convex.Optimization.MoreauGradient
 import Tdaf.Analysis.Convex.Optimization.Normal
 import Tdaf.Analysis.Convex.Optimization.Perturbation
 import Tdaf.Analysis.Convex.Optimization.Program
@@ -91,6 +92,7 @@ import Tdaf.Analysis.Convex.Subgradient.Gradient
 import Tdaf.Analysis.Convex.Subgradient.GradientLimit
 import Tdaf.Analysis.Convex.Subgradient.Integral
 import Tdaf.Analysis.Convex.Subgradient.Legendre
+import Tdaf.Analysis.Convex.Subgradient.LegendreType
 import Tdaf.Analysis.Convex.Subgradient.Monotone
 import Tdaf.Analysis.Convex.Subgradient.OneDim
 import Tdaf.Analysis.Convex.Subgradient.Primitive

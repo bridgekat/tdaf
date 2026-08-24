@@ -124,6 +124,22 @@ theorem subgradient_eq_empty_of_essentiallySmooth (hf : ConvexFn f) (hp : Proper
   rw [tendsto_congr hnorm] at htop
   exact not_tendsto_atTop_of_tendsto_nhds (hvs.norm) htop
 
+/-- **Theorem 26.1's "in this case" clause, as one equation**: for an essentially smooth closed
+proper convex function, `dom ∂f` is exactly the interior of the effective domain. -/
+theorem domSubgradient_eq_interior_dom_of_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
+    (hcl : ClosedFn f) (hes : EssentiallySmooth f) :
+    domSubgradient (innerₗ E) f = interior (dom f) := by
+  ext z
+  rw [mem_domSubgradient]
+  constructor
+  · intro hne
+    by_contra hz
+    rw [subgradient_eq_empty_of_essentiallySmooth hf hp hcl hes hz] at hne
+    exact absurd hne (Set.not_nonempty_empty)
+  · intro hz
+    rw [subgradient_eq_singleton_of_essentiallySmooth hf hes hz]
+    exact Set.singleton_nonempty _
+
 /-- **Rockafellar, Theorem 26.1**, the easy half: an essentially smooth closed proper convex
 function has a single-valued subdifferential. -/
 theorem subsingleton_subgradient_of_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
