@@ -48,6 +48,8 @@ each behaves under taking adjoints.
 * `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq` — **Theorem 38.4**:
   `(Ff)* = F⁎* f*` with the infimum attained. `conj_imageBifun_of_bracket_eq_top` is
   Rockafellar's degenerate branch.
+* `convexBifun_lowerAdjointBifun`, `closedBifun_lowerAdjointBifun` — `F⁎*` is a *closed* convex
+  bifunction, with no hypothesis on `F` at all; this is Theorem 30.1 read on the convex side.
 * `lowerAdjointBifun_lowerAdjointBifun_eq_clBifun`, `conj_imageBifun_lowerAdjointBifun`,
   `closedFn_imageBifun`, `exists_imageBifun_eq`, `conj_imageBifun_eq_clFn` —
   **Corollary 38.4.1**: for closed proper convex `F` and `f`, `Ff` is closed, the infimum defining
@@ -139,13 +141,14 @@ one for each `y`, rather than his single relative-interior condition; see the bl
   convolves in the second, so the mirror operation and its adjoint formula have to be built first.
   Following Corollary 38.4.1, the right packaging is the convex one — a first-variable convolution
   of the `Fᵢ⁎*`, closed with `clBifun` — so no concave closure is needed for it either.
-* **Corollary 38.5.1**, `(GF)* = cl (F* G*)` with `GF` closed. `lowerAdjointBifun_compBifun`
-  applied to `F⁎*` and `G⁎*`, together with `lowerAdjointBifun_lowerAdjointBifun_eq_clBifun`,
-  exhibits `GF` as `(compBifun (G⁎*) (F⁎*))⁎*`; what is missing is that a *lower adjoint is
-  closed*. Corollary 38.4.1 got the corresponding step from `closedFn_conj`, but `graphFn (F⁎*)`
-  is `conj (graphFn F)` precomposed with `(v, y) ↦ (-v, y)`, and the library has no
-  `ClosedFn.compLin` for a linear homeomorphism — only `convexFn_compLin`. That one lemma is the
-  whole gap.
+* **Corollary 38.5.1**, `(GF)* = cl (F* G*)` with `GF` closed and the infimum defining
+  `((GF)u)(y)` attained. Every ingredient is now here: `lowerAdjointBifun_compBifun` applied to
+  `F⁎*` and `G⁎*`, together with `lowerAdjointBifun_lowerAdjointBifun_eq_clBifun`, exhibits
+  `GF` as `(compBifun (G⁎*) (F⁎*))⁎*`, and `closedBifun_lowerAdjointBifun` then gives closedness
+  for free. What is left is instance plumbing — the statement carries topologies on `U`, `X`, `Y`
+  *and* the compatibility of the flipped product pairing `(prodPairing Bu.flip By.flip).flip` —
+  plus the `LinearMap.flip_flip` bookkeeping that the doubly-flipped pairings introduce. No
+  mathematics is missing.
 * Corollary 38.7.2 and the co-finiteness discussion at the end of the section.
 
 ## References
@@ -563,6 +566,37 @@ theorem convexBifun_lowerAdjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx
   exact convexFn_compLin (swapLin V Y) hc
 
 end LowerAdjoint
+
+/-! ### The lower adjoint is closed -/
+
+section LowerAdjointClosed
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsContinuousPairing (prodPairing Bu Bx).flip] {F : Bifun U X}
+
+/-- **`F⁎*` is a closed convex bifunction, with no hypothesis on `F` at all.**
+
+Theorem 30.1 gives that `F*` is concave-closed (`closedConcaveFn_graphFn_adjointBifun`); `F⁎*` is
+its reflected negative, and `closedFn_compLin` carries closedness across the reflection. This is
+the convex-side companion of `convexBifun_lowerAdjointBifun`, and it is what makes a bifunction
+exhibited as some `H⁎*` closed. -/
+theorem closedBifun_lowerAdjointBifun : ClosedBifun (lowerAdjointBifun Bu Bx F) := by
+  have hc : ClosedFn (fun p : Y × V => -(graphFn (adjointBifun Bu Bx F) p)) :=
+    closedConcaveFn_iff.1 closedConcaveFn_graphFn_adjointBifun
+  have hcont : Continuous (swapLin V Y) := by
+    change Continuous fun p : V × Y => ((p.2, p.1) : Y × V)
+    exact continuous_snd.prodMk continuous_fst
+  have heq : graphFn (lowerAdjointBifun Bu Bx F)
+      = compLin (fun p : Y × V => -(graphFn (adjointBifun Bu Bx F) p)) (swapLin V Y) :=
+    funext fun _ => rfl
+  change ClosedFn (graphFn (lowerAdjointBifun Bu Bx F))
+  rw [heq]
+  exact closedFn_compLin hc hcont
+
+end LowerAdjointClosed
 
 /-! ### Theorem 38.4: the conjugate of an image -/
 
