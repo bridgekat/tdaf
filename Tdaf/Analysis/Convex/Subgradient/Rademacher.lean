@@ -26,6 +26,9 @@ differentiability are dense there, and the gradient map is continuous where it i
 * `interior_dom_subset_closure_differentiableAtFn` — **Theorem 25.5**, the density clause.
 * `continuousOn_fderiv_toReal` — **Theorem 25.5**, the continuity clause: `∇f` is continuous on
   the set where it exists.
+* `continuousOn_fderiv_of_convexOn` — **Corollary 25.5.1**, for Mathlib's `ConvexOn`.
+* `measure_diff_twoSided_dirDeriv` — **Theorem 25.4**, the measure-zero clause, which is now a
+  corollary of Theorem 25.5 rather than its source.
 * `mem_subgradient_innerL_iff`, `subgradient_innerL_eq_singleton` — the Riesz bridge between the
   two pairings the library uses on an inner-product space, which is what lets Corollary 24.5.1
   (stated for `innerₗ E`) speak about gradients (which live in `StrongDual ℝ E`).
@@ -53,10 +56,17 @@ is stated for the pairing `innerₗ E`, whose subgradients are *vectors*, while 
 produces an element of `StrongDual ℝ E`; `mem_subgradient_innerL_iff` is the translation, and it is
 an isometry, so the `ε` survives unchanged.
 
+**Rockafellar's implication runs the other way.** He proves Theorem 25.4's measure-zero clause
+first, by a Fubini argument over lines through the `Sₖ` decomposition, and gets Theorem 25.5 by
+intersecting the `n` coordinate directions. With Rademacher available the order reverses:
+Theorem 25.5 is proved directly and `measure_diff_twoSided_dirDeriv` reads it off, since
+differentiability supplies the two-sided derivative in *every* direction at once. Neither the
+`Sₖ` decomposition nor Fubini is needed.
+
 ## What is not here
 
-Theorems 25.6 and 25.7 (a convex function of a differentiable convex function, and the gradient
-mapping of a Legendre transform) and the measure-zero clause of Theorem 25.4.
+Theorem 25.6 (a subgradient at a boundary point as a limit of gradients) and Theorem 25.7
+(convergence of gradients under pointwise convergence).
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -170,6 +180,28 @@ theorem measure_diff_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
   change ¬(z ∈ interior (dom f) → DifferentiableAtFn f z)
   exact fun hcon => hz.2 (hcon hz.1)
 
+omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
+/-- **Where `f` is differentiable, every two-sided directional derivative exists.** Both sides are
+values of the gradient (Theorem 25.2, necessity). -/
+theorem twoSided_dirDeriv_of_differentiableAtFn (hf : ConvexFn f)
+    (h : DifferentiableAtFn f x) (y : E) : dirDeriv f x y = -dirDeriv f x (-y) := by
+  obtain ⟨f', hf'⟩ := h
+  rw [hf'.dirDeriv_eq hf, hf'.dirDeriv_eq hf, map_neg, _root_.EReal.coe_neg, neg_neg]
+
+/-- **Rockafellar, Theorem 25.4**, the measure-zero clause: in any fixed direction `y`, the
+two-sided directional derivative exists almost everywhere on `int (dom f)`.
+
+Rockafellar proves this first, by a Fubini argument over lines, and deduces Theorem 25.5 from it
+by intersecting the `n` coordinate directions. Here Rademacher's theorem gives Theorem 25.5
+directly, and this clause is the trivial consequence: differentiability at `z` supplies the
+two-sided derivative in *every* direction. -/
+theorem measure_diff_twoSided_dirDeriv (hf : ConvexFn f) (hp : Proper f) (y : E) :
+    μ (interior (dom f) \ {z | dirDeriv f z y = -dirDeriv f z (-y)}) = 0 := by
+  refine measure_mono_null (fun z hz => ?_) (measure_diff_differentiableAtFn (μ := μ) hf hp)
+  obtain ⟨hzU, hzy⟩ := hz
+  exact Set.mem_sdiff_of_mem hzU fun hzd =>
+    hzy (twoSided_dirDeriv_of_differentiableAtFn hf hzd y)
+
 end Rademacher
 
 section Dense
@@ -262,6 +294,31 @@ theorem continuousOn_fderiv_toReal (hf : ConvexFn f) (hp : Proper f) :
         rw [dist_eq_norm, ← (InnerProductSpace.toDual ℝ E).symm.norm_map (g z - g x), map_sub]
     _ ≤ ε / 2 := hnorm
     _ < ε := half_lt_self hε
+
+/-- **Rockafellar, Corollary 25.5.1**: a finite convex function differentiable on an open convex
+set is *continuously* differentiable there.
+
+Mathlib's `ConvexOn` enters through `convexOn_iff_convexFn`, which extends `g` by `⊤` off `C`; on
+the open set `C` the extension has the same gradients, so Theorem 25.5's continuity clause applies
+verbatim. -/
+theorem continuousOn_fderiv_of_convexOn {C : Set E} {g : E → ℝ} (hC : IsOpen C)
+    (hne : C.Nonempty) (hg : ConvexOn ℝ C g) (hd : DifferentiableOn ℝ g C) :
+    ContinuousOn (fderiv ℝ g) C := by
+  set f : E → EReal := restrict C fun z => ((g z : ℝ) : EReal) with hfdef
+  have hcf : ConvexFn f := (convexOn_iff_convexFn C g).1 hg
+  have hdom : dom f = C := by
+    ext z
+    by_cases hz : z ∈ C <;> simp [hfdef, hz]
+  have hp : Proper f := ⟨by rw [hdom]; exact hne, fun z => by
+    by_cases hz : z ∈ C <;> simp [hfdef, hz]⟩
+  have hint : interior (dom f) = C := by rw [hdom, hC.interior_eq]
+  have hgrad : ∀ z ∈ C, HasGradientAt f (fderiv ℝ g z) z := fun z hz => by
+    refine ⟨g, ?_, ((hd z hz).differentiableAt (hC.mem_nhds hz)).hasFDerivAt⟩
+    filter_upwards [hC.mem_nhds hz] with w hw
+    simp [hfdef, hw]
+  have hsub : C ⊆ {z | DifferentiableAtFn f z} := fun z hz => ⟨_, hgrad z hz⟩
+  exact ((continuousOn_fderiv_toReal hcf hp).mono hsub).congr fun z hz =>
+    (HasGradientAt.fderiv_toReal_eq (hgrad z hz)).symm
 
 end GradientContinuity
 
