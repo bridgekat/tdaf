@@ -77,12 +77,12 @@ in dimension at least two (`ConvexFn.iSup_sdiff_relint_of_containsNoLine`, via
 
 ## What is not here
 
-**Corollaries 32.3.1, 32.3.3 and 32.3.4.** Their statements could not be checked against the book
-in the session that wrote this file, and nothing here is named after them. Theorem 32.3 itself is
-present in both of its clauses, and the two specialisations that Rockafellar's corollaries are most
-likely to be — to a finitely generated set and to the whole space — are here as
-`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` and `ConvexFn.eq_of_forall_le`, stated
-without a book number.
+**Corollary 32.3.3**: a convex function on a nonempty polyhedral convex set `C ⊆ dom f` with no
+half-line in `C` along which `f` is unbounded above attains its supremum. Corollaries 32.3.1 and
+32.3.4 are here — as `exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine` and
+`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` — but 32.3.3 drops the "contains no lines"
+hypothesis in favour of a condition on the half-lines of `C`, and the lineality space of `C` would
+have to be quotiented out first, exactly as in Theorem 27.3's polyhedral refinement.
 
 **The unqualified "supremum is attained" clause of Corollary 32.3.2.** It is false for a merely
 compact convex `C ⊆ dom f`: take `C` the closed unit disc in `ℝ²`, `f = 0` on the open disc and
@@ -345,8 +345,9 @@ theorem ConvexFn.iSup_extremePoints_of_containsNoLine (hf : ConvexFn f) (hC : Co
   rw [← hf.iSup_convexHull (C.extremePoints ℝ)]
   exact le_iSup₂ (f := fun z (_ : z ∈ convexHull ℝ (C.extremePoints ℝ)) => f z) u hu
 
-/-- **Rockafellar, Theorem 32.3**, attainment clause: a maximiser of a convex function over a
-closed convex set containing no lines can be replaced by an extreme point.
+/-- **Rockafellar, Corollary 32.3.1**: if the supremum of a convex function over a closed convex
+set containing no lines is attained at all, it is attained at an extreme point. This is also
+Theorem 32.3's attainment clause.
 
 No boundedness hypothesis is needed — a finite maximum is itself a bound — but `f x ≠ ⊤` is: for
 `C = [0, ∞)` and `f` equal to `0` on `[0, 1)` and `⊤` on `[1, ∞)`, the value `⊤` is a maximum,
@@ -397,15 +398,15 @@ section Polyhedral
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {C : Set E}
 
-/-- **A convex function bounded above on a nonempty finitely generated (polyhedral) convex set
-containing no lines attains its supremum at an extreme point.**
+/-- **Rockafellar, Corollary 32.3.4**: a convex function bounded above on a nonempty polyhedral
+convex set containing no lines attains its supremum at one of its finitely many extreme points.
 
 The ingredient beyond Theorem 32.3 is Corollary 18.3.1 (`extremePoints_convexHullPD_subset`): a
 finitely generated set has only finitely many extreme points, so the supremum over them is a
 maximum, and the sublevel set at that maximum swallows their convex hull.
 
-Rockafellar's §32 has corollaries of Theorem 32.3 of this kind, but their statements could not be
-checked against the book in the session that wrote this file, so no book number is claimed. -/
+This is **Rockafellar's Corollary 32.3.4**, with "polyhedral" in its finitely generated form
+(Theorem 19.1); `hbdd` carries both his boundedness hypothesis and his standing `C ⊆ dom f`. -/
 theorem exists_mem_extremePoints_isMaxOn_of_finitelyGenerated (hf : ConvexFn f)
     (hC : FinitelyGenerated C) (hnl : ContainsNoLine C) (hne : C.Nonempty) {β : ℝ}
     (hbdd : ∀ x ∈ C, f x ≤ (β : EReal)) : ∃ z ∈ C.extremePoints ℝ, ∀ w ∈ C, f w ≤ f z := by

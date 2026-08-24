@@ -41,7 +41,7 @@ reflexive pairing: `∂f*(0)` a singleton is a statement about `E**`.
 | `exists_linearProj`, `eq_of_sub_mem_constancySpace`, `exists_forall_le_of_polyhedral_of_inter_subset_constancySpace` | **Thm 27.3**, polyhedral refinement | done — and it does **not** need Helly, see below |
 | `argmin_nonempty_of_recessionConeFn_subset_constancySpace` | the refinement with `C = Rⁿ` | done |
 | `argmin_nonempty_of_polyhedralFn`, `exists_forall_le_of_polyhedralFn_of_polyhedral` | **Cor 27.3.2** | done — and it does **not** rest on the polyhedral refinement, see below |
-| — | Cor 27.3.1 | **not stated** — its wording could not be checked against the book; the refinement it rests on is done |
+| — | Cor 27.3.1 | **not done** — its wording is now verified (`h` closed proper convex, every direction of recession a direction in which `h` is *affine* ⟹ `h` attains its infimum over any polyhedral `C` on which it is bounded below). It is strictly stronger than `argmin_nonempty_of_recessionConeFn_subset_constancySpace`, which asks for directions of *constancy* and needs no boundedness |
 | `exists_forall_le_of_forall_le_zero` | Cor 27.3.3, non-polyhedral case | done |
 | `le_of_mem_subgradient_of_neg_mem_normalCone`, `exists_mem_subgradient_neg_mem_normalCone` | **Thm 27.4** | done |
 
@@ -116,10 +116,14 @@ it needs to be: it is enough that every common direction of recession be a direc
 is along `constancySubmodule h ⊓ linealitySubmodule C`, the image of `C` is literally `C ∩ N`, and
 no polyhedrality is used.
 
-**Corollary 27.3.1 is not stated.** Its exact wording could not be checked against the book, and the
-project's rule is not to attach a book number to a guessed statement. What the refinement yields —
-the unconstrained `argmin_nonempty_of_recessionConeFn_subset_constancySpace` — is stated without
-one.
+**Corollary 27.3.1 is not done, and its wording is now verified**: `h` closed proper convex with
+every direction of recession a direction in which `h` is **affine** attains its infimum over any
+polyhedral convex set `C` on which it is bounded below. The session that wrote the refinement had
+no copy of the book and would not guess. Against the text, the gap is real: what is proved
+(`argmin_nonempty_of_recessionConeFn_subset_constancySpace`) asks for directions of *constancy* and
+needs no boundedness; 27.3.1 allows a nonzero slope and pays for it with boundedness below on `C`.
+Closing it means showing the slope is `≥ 0` there, then running the refinement on the affine
+directions.
 
 **Corollary 27.3.2 does not need any of that.** The book derives it from 27.3.1;
 `argmin_nonempty_of_polyhedralFn` gets it directly from the finitely generated description of the
@@ -575,9 +579,10 @@ Theorem 27.2 in a Hilbert space, and `Optimization/Minimum.lean` has it only in 
 
 ## 6.6 `Optimization/Maximum.lean` — §32
 
-**Status: Theorems 32.1, 32.2, 32.3 and 32.4 are done**, with Corollaries 32.1.1, 32.2.1, 32.3.2
-(both clauses) and 32.4.1. Maximising a convex function is short and self-contained; it depends on
-§18, on §10 for the one attainment statement, and on nothing later.
+**Status: Theorems 32.1, 32.2, 32.3 and 32.4 are done**, with Corollaries 32.1.1, 32.2.1, 32.3.1,
+32.3.2 (both clauses), 32.3.4 and 32.4.1; only Corollary 32.3.3 is left. Maximising a convex
+function is short and self-contained; it depends on §18, on §10 for the one attainment statement,
+and on nothing later.
 
 ```lean
 theorem ConvexFn.eq_of_isMaxOn_mem_relint (hf : ConvexFn f) (hCdom : C ⊆ dom f) {z : E}
@@ -598,8 +603,10 @@ who arrives with `IsMaxOn`.
 | `ConvexFn.iSup_extremePoints`, `exists_mem_extremePoints_eq_of_isMaxOn` | **Cor 32.3.2**, compact case, without the "attained" clause | done |
 | `ConvexFn.add_le_of_forall_add_smul_le`, `ConvexFn.add_le_of_mem_recessionCone`, `ConvexFn.exists_mem_convexHull_extremePoints_le`, `ConvexFn.iSup_extremePoints_of_containsNoLine`, `exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine` | **Thm 32.3**, both clauses | done |
 | `ConvexFn.iSup_extremePoints_add_coneHull` | Thm 32.3 in representation form (no boundedness hypothesis) | done |
-| `ConvexFn.eq_of_forall_le`, `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` | the two likely readings of Cors 32.3.1/32.3.3/32.3.4 | done, but **not** claimed to be those corollaries |
-| — | **Cors 32.3.1, 32.3.3, 32.3.4** | not done — the book's statements could not be verified (no access to the text) |
+| `exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine` | **Cor 32.3.1** | done — it is also Thm 32.3's attainment clause; the two statements coincide |
+| `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` | **Cor 32.3.4** | done — "polyhedral" in its finitely generated form (Thm 19.1); the boundedness hypothesis carries Rockafellar's standing `C ⊆ dom f` with it |
+| `ConvexFn.eq_of_forall_le` | unnumbered: bounded above on the whole space ⟹ constant | done |
+| — | **Cor 32.3.3** | not done — it drops "contains no lines" in favour of "no half-line in `C` on which `f` is unbounded above", so the lineality space of `C` has to be quotiented out first, exactly as in Thm 27.3's polyhedral refinement |
 | `exists_mem_extremePoints_isMaxOn_of_isCompact` | **Cor 32.3.2**, the "supremum is attained" clause, for `C ⊆ ri (dom f)` | done |
 | `mem_normalCone_of_mem_subgradient_of_isMaxOn`, `ne_zero_of_mem_subgradient_of_isMaxOn` | **Thm 32.4** | done |
 | `le_of_mem_normalCone` | **Cor 32.4.1** | done |
@@ -664,13 +671,15 @@ boundary points meet the circle only at their endpoints) with an unattained supr
 Theorem 10.1 (`ConvexFn.continuousOn_relint_dom`) applies — the prerequisite the plan named, but
 the hypothesis has to be in the statement, not only in the proof.
 
-**Corollaries 32.3.1, 32.3.3 and 32.3.4 are still open, for a different reason than recorded.**
-§18 is no longer the obstacle; what is missing is the *statements*. They could not be checked
-against the book, and rather than invent them the file carries two unnumbered specialisations of
-Theorem 32.3 that any of them plausibly is: `ConvexFn.eq_of_forall_le` (a convex function bounded
-above on the whole space is constant — the ray lemma applied in both directions) and
-`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` (over a finitely generated set the extreme
-points are finite in number by Corollary 18.3.1, so the supremum is a maximum).
+**Corollaries 32.3.1 and 32.3.4 were already proved, only unlabelled.** The session that wrote
+`Maximum.lean` had no copy of the book and declined to attach book numbers to guessed statements.
+Checked against the text afterwards, Corollary 32.3.1 *is* Theorem 32.3's attainment clause
+(`exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine`) and Corollary 32.3.4 *is*
+`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated`, with "polyhedral" read through
+Theorem 19.1. Only **Corollary 32.3.3** is genuinely open: it drops "contains no lines" in favour
+of "no half-line in `C` on which `f` is unbounded above", which needs the lineality space of `C`
+quotiented out first — the same manoeuvre as Theorem 27.3's polyhedral refinement.
+`ConvexFn.eq_of_forall_le` stays unnumbered; it is not one of the corollaries.
 
 **Correction to the earlier status.** This section used to record Theorem 32.3 and Corollaries
 32.2.1, 32.3.1, 32.3.3 and 32.3.4 as blocked on Theorems 18.4–18.5 for *unbounded* closed convex

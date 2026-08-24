@@ -1964,8 +1964,11 @@ once, through `Polyhedral.recessionCone_image`. The same projection, run along
 `constancySubmodule h ⊓ linealitySubmodule C`, strengthens the *general* case from
 `0⁺h ∩ 0⁺C = {0}` to Rockafellar's constancy/linearity hypothesis
 (`exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace`); there the image of `C` is
-literally `C ∩ N` and no polyhedrality is used. **Corollary 27.3.1 is not stated**: its wording
-could not be checked against the book, and a book number is not attached to a guessed statement.
+literally `C ∩ N` and no polyhedrality is used. **Corollary 27.3.1 is not done**; its wording is
+now verified (every direction of recession a direction in which `h` is *affine* ⟹ the infimum is
+attained over any polyhedral `C` on which `h` is bounded below), and it is strictly stronger than
+`argmin_nonempty_of_recessionConeFn_subset_constancySpace`, which asks for *constancy* directions
+and needs no boundedness.
 
 **Relocation candidates.** `eq_of_sub_mem_constancySpace` and `exists_linearProj` are general facts
 about `constancySpace` and about subspaces; they belong in `Recession/Function.lean` and in a linear
@@ -2142,11 +2145,17 @@ compact convex `C ⊆ dom f` it is false: on the closed unit disc, `f = 0` on th
 `ConvexFn.continuousOn_relint_dom` applies; `IsCompact.exists_isMaxOn` then works directly on the
 `EReal`-valued `f`, with no `toReal` detour.
 
-**Not done**: Cors 32.3.1, 32.3.3 and 32.3.4. §18 is no longer the obstacle — what is missing is
-their *statements*, which could not be checked against the book. The file carries two unnumbered
-specialisations of Thm 32.3 that any of them plausibly is: `ConvexFn.eq_of_forall_le` (bounded
-above on the whole space ⇒ constant) and `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated`
-(finitely many extreme points by Cor 18.3.1, so the supremum is a maximum).
+**Cors 32.3.1 and 32.3.4 were proved here before they were labelled.** The session that wrote the
+file had no copy of the book and would not attach a number to a guessed statement; checked against
+the text afterwards, Cor 32.3.1 is Thm 32.3's attainment clause
+(`exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine`) and Cor 32.3.4 is
+`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated`, "polyhedral" read through Thm 19.1.
+`ConvexFn.eq_of_forall_le` (bounded above on the whole space ⇒ constant) is *not* one of them and
+stays unnumbered.
+
+**Not done**: Cor 32.3.3, which replaces "contains no lines" by "no half-line in `C` on which `f`
+is unbounded above". That needs the lineality space of `C` quotiented out first, the manoeuvre
+`Optimization/Minimum.lean` uses for Thm 27.3's polyhedral refinement.
 
 ### `Tdaf/Analysis/Convex/Face.lean`
 

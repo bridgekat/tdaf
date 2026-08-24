@@ -111,10 +111,15 @@ function directly, and the level set it produces is `{x | f**(x) - α ≤ 0}`.
 natural home is beside `supportFn_setOf_le_zero` in `Duality/Level.lean`; it is here because that
 module sits below this one and because §27 is where level sets of `f` are the subject.
 
-**Corollary 27.3.1.** Its statement could not be checked against the book, so nothing is claimed
-under that number; the two statements the polyhedral refinement is known to yield —
-`argmin_nonempty_of_recessionConeFn_subset_constancySpace` and, through it, the polyhedral half of
-Corollary 27.3.3 for affine constraints — are what is here.
+**Corollary 27.3.1**, whose wording is: *let `h` be a closed proper convex function such that every
+direction of recession of `h` is a direction in which `h` is **affine**; then `h` attains its
+infimum relative to any polyhedral convex set `C` on which it is bounded below.* It is a genuine
+strengthening of what is here, not a restatement:
+`argmin_nonempty_of_recessionConeFn_subset_constancySpace` asks for directions of **constancy** and
+needs no boundedness, whereas 27.3.1 allows a nonzero slope along a direction of recession and pays
+for it with boundedness below on `C`. Closing the gap means showing that the slope along such a
+direction is `≥ 0` when `h` is bounded below on `C`, and then running the polyhedral refinement on
+the affine — rather than constant — directions.
 
 **The polyhedral refinement of Theorem 27.3 does not need Helly.** Rockafellar derives it from
 Theorem 21.5, applied to `C` together with the level sets `lev_α h`; Theorem 21.5 is still not
