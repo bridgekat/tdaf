@@ -33,6 +33,8 @@ affine hull asks for equality in the reversible directions and nothing at all el
 * `mem_interior_iff_lt_supportFn` — the same theorem's `int` clause.
 * `mem_affineSpan_iff_eq_supportFn` — its `aff` clause, which is **Corollary 1.4.1**: the affine
   hull of a set is the intersection of the hyperplanes containing it.
+* `isBounded_iff_forall_bddAbove` — **Corollary 13.2.2** in its metric form: a set is bounded in
+  the norm exactly when its support function is finite everywhere.
 
 ## What is not here
 
@@ -307,6 +309,57 @@ theorem mem_affineSpan_iff_eq_supportFn (hne : C.Nonempty) (x : E) :
     have heq := h y hrev
     rw [hsupp] at heq
     exact hxc (by exact_mod_cast heq)
+
+/-! ### Corollary 13.2.2: boundedness in the norm -/
+
+/-- **Rockafellar, Corollary 13.2.2**, metric form: in finite dimensions a set is bounded in the
+norm exactly when every `⟨·, y⟩` is bounded above on it, i.e. exactly when its support function is
+finite everywhere.
+
+`exists_supportFn_finite_iff` in `Duality/Support.lean` states the same equivalence with
+"bounded" read in the *pairing* sense, and that version holds in any locally convex space. What is
+finite-dimensional here is the upgrade to `Bornology.IsBounded`, and it is a coordinate estimate:
+`x = ∑ i, (b.coord i x) • b i` for a finite basis `b`, each `b.coord i` is continuous and hence
+`⟨·, yᵢ⟩` for some `yᵢ`, and bounding those coordinates in both directions bounds `‖x‖`. The
+converse direction needs no compatibility — in finite dimensions every linear functional is
+bounded on a bounded set. -/
+theorem isBounded_iff_forall_bddAbove :
+    Bornology.IsBounded C ↔ ∀ y : F, ∃ c : ℝ, ∀ x ∈ C, B x y ≤ c := by
+  constructor
+  · intro hb y
+    obtain ⟨r, hr⟩ := isBounded_iff_forall_norm_le.1 hb
+    set φ : E →L[ℝ] ℝ := LinearMap.toContinuousLinearMap (B.flip y)
+    refine ⟨‖φ‖ * r, fun x hx => ?_⟩
+    calc (B x y : ℝ) = φ x := rfl
+      _ ≤ ‖φ x‖ := Real.le_norm_self _
+      _ ≤ ‖φ‖ * ‖x‖ := φ.le_opNorm x
+      _ ≤ ‖φ‖ * r := by
+          exact mul_le_mul_of_nonneg_left (hr x hx) (norm_nonneg φ)
+  · intro h
+    rw [isBounded_iff_forall_norm_le]
+    set b := Module.finBasis ℝ E
+    have hco : ∀ i, ∃ y : F, ∀ x : E, b.coord i x = B x y := fun i =>
+      exists_pairing_eq B ⟨b.coord i, LinearMap.continuous_of_finiteDimensional _⟩
+    choose y hy using hco
+    have hbd : ∀ i, ∃ c : ℝ, ∀ x ∈ C, |b.coord i x| ≤ c := by
+      intro i
+      obtain ⟨c₁, hc₁⟩ := h (y i)
+      obtain ⟨c₂, hc₂⟩ := h (-(y i))
+      refine ⟨max c₁ c₂, fun x hx => ?_⟩
+      have h₁ : b.coord i x ≤ c₁ := by rw [hy i x]; exact hc₁ x hx
+      have h₂ : -(b.coord i x) ≤ c₂ := by
+        rw [hy i x, ← map_neg (B x) (y i)]
+        exact hc₂ x hx
+      rw [abs_le]
+      exact ⟨by linarith [le_max_right c₁ c₂], by linarith [le_max_left c₁ c₂]⟩
+    choose c hc using hbd
+    refine ⟨∑ i, c i * ‖b i‖, fun x hx => ?_⟩
+    calc ‖x‖ = ‖∑ i, b.repr x i • b i‖ := by rw [b.sum_repr]
+      _ ≤ ∑ i, ‖b.repr x i • b i‖ := norm_sum_le _ _
+      _ ≤ ∑ i, c i * ‖b i‖ := by
+          refine Finset.sum_le_sum fun i _ => ?_
+          rw [norm_smul, Real.norm_eq_abs, ← b.coord_apply]
+          exact mul_le_mul_of_nonneg_right (hc i x hx) (norm_nonneg _)
 
 end FiniteDim
 
