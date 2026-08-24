@@ -70,9 +70,10 @@ conjugate of an affine function is a point indicator.
 
 The pieces still missing are:
 
-* The bridge from that lemma to `k₀`: the computation of
-  `epi (convFn (fun i ∈ I₀ => (fᵢ)*)) = conv {(aᵢ, αᵢ)} + cone {(0,1)}` for affine `fᵢ`, which needs
-  the conjugate of an affine function and `IsEpiLike` for a convex hull of a union.
+* The last step of the bridge to `k₀`: `polyhedralFn_posHomGen_convFn` already covers a family
+  whose members have single translated vertical rays for epigraphs, so what is left is the
+  identification of `fᵢ*` with a point indicator `δ(· | {aᵢ}) - βᵢ` for affine `fᵢ`, which needs a
+  separating pairing.
 * The identification of `kⱼ*` with `δ(· | Cⱼ)`, and the separation step
   `(-dom k₀) ∩ ri (dom k₁) ≠ ∅` (Theorem 20.2, available in `Polyhedral/Separation.lean`).
 

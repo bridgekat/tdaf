@@ -358,7 +358,7 @@ are layer D only because Theorem 19.1 is.
 | `toNNLinear`, `image_coe_hull`, `coe_hull_union` | plumbing for the generator side | done |
 | `recessionCone_polyhedral_system`, `Polyhedral.polyhedralCone_recessionCone` | **Thm 19.5**, inequality side | done |
 | `recessionCone_of_finitelyGenerated`, `Polyhedral.recessionCone_image` | **Thm 19.5**, generator side | done — `Polyhedral/Recession.lean` |
-| `verticalRay`, `epi_posHomGen_of_epi_eq`, `polyhedralFn_posHomGen_of_epi_eq` | **Cor 19.1.2 for functions** | done — `Polyhedral/Homogeneous.lean` |
+| `verticalRay`, `epi_posHomGen_of_epi_eq`, `polyhedralFn_posHomGen_of_epi_eq`, `epi_convFn_of_epi_eq`, `polyhedralFn_posHomGen_convFn` | **Cor 19.1.2 for functions** | done — `Polyhedral/Homogeneous.lean` |
 | `coe_hull_of_convex_zero_mem`, `FinitelyGeneratedCone.add`, `polyhedral_singleton` | plumbing for §20 | done |
 | `coe_hull_coe_submodule`, `polyhedral_coe_submodule`, `polyhedral_coe_affineSubspace` | subspaces and affine sets are polyhedral | done |
 | `finitelyGeneratedCone_hull_of_zero_mem`, `finitelyGeneratedCone_coe_submodule` | **Cor 19.7.1** | done |
@@ -582,10 +582,14 @@ the polyhedral side work.
   identity is false (`f x = |x| + 1` on `ℝ`, where `(1,1) ∈ epi (posHomGen f)` is in no
   non-negative combination of `epi f ∪ {(0,1)}`), and the vertical-ray case is the one §21 needs,
   since the conjugate of an affine function is a point indicator.
-* Still missing: the bridge from that lemma to `k₀` itself — the computation of
-  `epi (convFn (fun i ∈ I₀ => (fᵢ)*))` as `conv {(aᵢ, αᵢ)} + cone {(0,1)}`, which needs the
-  conjugate of an affine function and `IsEpiLike` for the convex hull of the union — and the
-  identification `kⱼ* = δ(· ∣ Cⱼ)` with the separation step `(-dom k₀) ∩ ri (dom k₁) ≠ ∅`
+* `epi_convFn_of_epi_eq` and `polyhedralFn_posHomGen_convFn` carry that through the convex hull:
+  for a *finite* family whose members have single translated vertical rays for epigraphs,
+  `epi (convFn g) = conv {pᵢ} + cone {(0,1)}` and `posHomGen (convFn g)` is polyhedral. `IsEpiLike`
+  for a convex hull of a union is not automatic — `Operations/Hull.lean` carries it as a hypothesis
+  — and here it is paid for by finite generation.
+* Still missing for `k₀`: the identification of `fᵢ*` with a point indicator `δ(· ∣ {aᵢ}) - βᵢ` for
+  affine `fᵢ`, which needs a separating pairing. And, for 21.4 itself, the identification
+  `kⱼ* = δ(· ∣ Cⱼ)` with the separation step `(-dom k₀) ∩ ri (dom k₁) ≠ ∅`
   (Theorem 20.2, `Polyhedral/Separation.lean`).
 
 **Theorem 27.3's polyhedral refinement no longer waits for Theorem 21.5.** It was the one downstream

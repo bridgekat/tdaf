@@ -698,6 +698,10 @@ theorem epi_posHomGen_of_epi_eq {f : E → EReal} {P : Finset (E × ℝ)}
     epi (posHomGen f)
       = (PointedCone.hull ℝ (insert ((0 : E), (1 : ℝ)) (P : Set (E × ℝ))) : Set (E × ℝ))
 theorem polyhedralFn_posHomGen_of_epi_eq … : PolyhedralFn (posHomGen f)
+theorem epi_convFn_of_epi_eq {ι : Type*} [Finite ι] {g : ι → E → EReal} {p : ι → E × ℝ}
+    (hg : ∀ i, epi (g i) = {p i} + (verticalRay E : Set (E × ℝ))) :
+    epi (convFn g) = convexHull ℝ (Set.range p) + (verticalRay E : Set (E × ℝ))
+theorem polyhedralFn_posHomGen_convFn … : PolyhedralFn (posHomGen (convFn g))
 ```
 
 **The extra generator `(0, 1)` is forced.** `posHomGen f = ofEpi ↑(cone (epi f))` by definition, and
@@ -719,9 +723,16 @@ single translated vertical ray.
 absorbs the vertical ray. `IsEpiLike K` comes from `IsEpiLike.of_isClosed`: `K` is a finitely
 generated cone, hence closed, and contains `(0, 1)`, hence is upward closed.
 
-**What it does *not* do.** It does not identify `k₀` itself. The bridge still missing is
-`epi (convFn (fun i ∈ I₀ => (fᵢ)*)) = conv {(aᵢ, αᵢ)} + cone {(0,1)}` for affine `fᵢ`, which needs
-the conjugate of an affine function and `IsEpiLike` for a convex hull of a union.
+**`epi_convFn_of_epi_eq` carries it through the convex hull.** For a finite family whose members
+have single translated vertical rays for epigraphs — what the conjugate of an affine function looks
+like — `epi (convFn g) = conv {pᵢ} + cone {(0,1)}`, and `polyhedralFn_posHomGen_convFn` concludes.
+`IsEpiLike` for a convex hull of a union is *not* automatic (`Operations/Hull.lean` carries it as a
+hypothesis for that reason); here it is paid for by finite generation, since `conv P + cone {(0,1)}`
+is closed and absorbs the vertical ray.
+
+**What it does *not* do.** It does not identify `k₀` itself: the remaining step is
+`fᵢ* = δ(· ∣ {aᵢ}) - βᵢ` for affine `fᵢ`, which needs a separating pairing to turn
+`∀ x, B x (y - aᵢ) = 0` into `y = aᵢ`.
 
 ### `Tdaf/Analysis/Convex/Polyhedral/Function.lean`
 
