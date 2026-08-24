@@ -660,6 +660,69 @@ the closure is enough, and that ray issues from a point of `Cᵢ`, which is why 
 the sets are nonempty. Rockafellar's `⋃ {λ₁C₁ + λ₂C₂}`-with-`0⁺`-substituted description is not
 formalised — `conv (C₁ ∪ C₂) + (0⁺C₁ + 0⁺C₂)` says the same thing without a convention.
 
+### `Tdaf/Analysis/Convex/Polyhedral/Recession.lean`
+
+**Theorem 19.5 on the generator side**, and the consequence §27 consumes.
+
+```lean
+theorem recessionCone_of_finitelyGenerated
+    (hPD : C = convexHull ℝ (P : Set E) + (PointedCone.hull ℝ (D : Set E) : Set E))
+    (hne : C.Nonempty) : recessionCone C = (PointedCone.hull ℝ (D : Set E) : Set E)
+theorem Polyhedral.recessionCone_image (hC : Polyhedral C) (hne : C.Nonempty) (A : E →ₗ[ℝ] F) :
+    recessionCone (A '' C) = A '' recessionCone C
+```
+
+`Polyhedral/Ops.lean` already had Theorem 19.5 on the *inequality* side; this is the other side, and
+`⊇` is `coe_hull_subset_recessionCone_of_finitelyGenerated`, already there. `⊆` is Corollary 9.1.2
+(`Convex.recessionCone_add_of_neg_notMem_recessionCone`), whose hypothesis is vacuous because
+`conv P` is compact and recedes in no direction at all.
+
+**`Polyhedral.recessionCone_image` has no hypothesis on `A`, and that is the point.** Theorem 9.1
+(`recessionCone_image_of_recessionCone_inter_ker`) computes `0⁺(A '' C)` only when `0⁺C ∩ ker A` is
+`{0}`; for a general closed convex `C` and a general `A` the image need not even be closed. A
+polyhedral `C` needs no repair, because both sides are read off generators that `A` pushes forward.
+This is the *only* place polyhedrality is used in Theorem 27.3's polyhedral refinement.
+
+The file is separate from `Polyhedral/Ops.lean` only because `Ops.lean` does not import
+`Recession/Closedness.lean` and adding the import there would rebuild all of §19–§22.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Homogeneous.lean`
+
+**Corollary 19.1.2 for functions**, the piece §21's Theorems 21.4/21.5 were named as blocked on.
+
+```lean
+noncomputable def verticalRay (E : Type*) [AddCommGroup E] [Module ℝ E] : PointedCone ℝ (E × ℝ) :=
+  PointedCone.hull ℝ ({((0 : E), (1 : ℝ))} : Set (E × ℝ))
+theorem epi_posHomGen_of_epi_eq {f : E → EReal} {P : Finset (E × ℝ)}
+    (hepi : epi f = convexHull ℝ (P : Set (E × ℝ)) + (verticalRay E : Set (E × ℝ))) :
+    epi (posHomGen f)
+      = (PointedCone.hull ℝ (insert ((0 : E), (1 : ℝ)) (P : Set (E × ℝ))) : Set (E × ℝ))
+theorem polyhedralFn_posHomGen_of_epi_eq … : PolyhedralFn (posHomGen f)
+```
+
+**The extra generator `(0, 1)` is forced.** `posHomGen f = ofEpi ↑(cone (epi f))` by definition, and
+`cone (epi f)` meets the vertical axis only at the origin — for `f = δ(· | {a}) + α` it is the ray
+through `(a, -α)` plus `0`. An epigraph has to contain the whole ray above each of its points, so
+`epi (posHomGen f)` is strictly larger than the generating cone, and Rockafellar's generator list
+for `epi k₀` carries `(0, 1)` for exactly this reason.
+
+**The hypothesis is `epi f = conv P + cone {(0,1)}`, not `PolyhedralFn f`.** With a general
+direction set the identity fails: for `f x = |x| + 1` on `ℝ`, `epi (posHomGen f) = epi |·|` contains
+`(1, 1)`, while every non-negative combination of points of `epi f ∪ {(0,1)}` has second coordinate
+at least `|first| + λ` with `λ > 0`. A closure is needed in general. The vertical-ray case is the
+one §21 uses, because the conjugate of an affine function is a point indicator whose epigraph is a
+single translated vertical ray.
+
+**Neither inclusion needs positive homogeneity of `ofEpi K`.** `⊆` is
+`epi_ofEpi_subset_of_isEpiLike` applied to `F = cone (epi f)` — nothing about the function
+`ofEpi K` is checked — and `⊇` is `coe_hull_epi_subset_epi_posHomGen` plus the fact that an epigraph
+absorbs the vertical ray. `IsEpiLike K` comes from `IsEpiLike.of_isClosed`: `K` is a finitely
+generated cone, hence closed, and contains `(0, 1)`, hence is upward closed.
+
+**What it does *not* do.** It does not identify `k₀` itself. The bridge still missing is
+`epi (convFn (fun i ∈ I₀ => (fᵢ)*)) = conv {(aᵢ, αᵢ)} + cone {(0,1)}` for affine `fᵢ`, which needs
+the conjugate of an affine function and `IsEpiLike` for a convex hull of a union.
+
 ### `Tdaf/Analysis/Convex/Polyhedral/Function.lean`
 
 `PolyhedralFn f := Polyhedral (epi f)`, with `convexFn`, `isClosed_epi`, `lowerSemicontinuous`,
@@ -1816,8 +1879,24 @@ and belongs in `Optimization/Moreau.lean`, with `moreau_add` rewritten to use it
 
 ### `Tdaf/Analysis/Convex/Optimization/Minimum.lean`
 
-§27: **Theorems 27.1(a), 27.1(b), 27.2 with Corollaries 27.2.1–27.2.2, the non-polyhedral case of
-Theorem 27.3 with Corollary 27.3.3, and Theorem 27.4**.
+§27: **Theorems 27.1(a), 27.1(b), 27.2 with Corollaries 27.2.1–27.2.2, Theorem 27.3 in full — the
+general case, the polyhedral refinement, and Corollaries 27.3.2 and 27.3.3 — and Theorem 27.4**.
+
+**Theorem 27.3's polyhedral refinement does not need Helly.** Rockafellar derives it from
+Theorem 21.5 applied to `C` together with the level sets `lev_α h`; the proof here projects `E`
+along `constancySubmodule h` (`exists_linearProj`), which leaves `h` unchanged — it is constant
+along the fibres — and collapses `0⁺h ∩ 0⁺(A '' C)` to `{0}`. Polyhedrality of `C` enters exactly
+once, through `Polyhedral.recessionCone_image`. The same projection, run along
+`constancySubmodule h ⊓ linealitySubmodule C`, strengthens the *general* case from
+`0⁺h ∩ 0⁺C = {0}` to Rockafellar's constancy/linearity hypothesis
+(`exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace`); there the image of `C` is
+literally `C ∩ N` and no polyhedrality is used. **Corollary 27.3.1 is not stated**: its wording
+could not be checked against the book, and a book number is not attached to a guessed statement.
+
+**Relocation candidates.** `eq_of_sub_mem_constancySpace` and `exists_linearProj` are general facts
+about `constancySpace` and about subspaces; they belong in `Recession/Function.lean` and in a linear
+algebra file respectively, and are here only to avoid rebuilding the whole project from
+`Recession/Function.lean`.
 
 ```lean
 def argmin (f : E → EReal) : Set E := {x | ∀ z, f x ≤ f z}
@@ -5405,6 +5484,43 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 268. **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State
 `have`s in the contracted form and let `funext` introduce the point.
+
+350. **Pointwise `+` on `Set` needs `open scoped Pointwise`**, and the error does not say so: it is
+     `failed to synthesize HAdd (Set E) (Set E) ?m`, with a metavariable in the third slot, which
+     reads like an elaboration-order problem rather than a missing scoped instance.
+
+351. **A `rw` with a lemma about `↑(PointedCone.hull ℝ S)` fails if the convexity argument is
+     supplied inline as `((PointedCone.hull ℝ S : ConvexCone ℝ E)).convex`.** The elaborated
+     statement then carries a *double* coercion `↑↑(hull …)`, defeq to the goal's `↑(hull …)` but
+     not syntactically equal, so `rw` reports "did not find an occurrence" while displaying two
+     terms that print almost identically. Bind the convexity to a `have` whose statement is written
+     with the coercion the goal uses, then pass the `have`.
+
+352. **`Set.Finite.isCompact_convexHull` cannot infer its scalar field.**
+     `P.finite_toSet.isCompact_convexHull` fails with `failed to synthesize Field 𝕜✝`; write
+     `P.finite_toSet.isCompact_convexHull (𝕜 := ℝ)`.
+
+353. **`Submodule.linearProjOfIsCompl` is deprecated** (2026-05-04) in favour of
+     `Submodule.projectionOnto` (`E →ₗ[R] p`) and `Submodule.projection` (`E →ₗ[R] E`). The whole
+     supporting API was renamed with it: `projectionOnto_apply_of_mem_left`,
+     `projectionOnto_apply_of_mem_right`, `projectionOnto_apply_eq_zero_iff`,
+     `projectionOnto_projection`, `coe_projectionOnto_apply`, `ker_projectionOnto`. Deprecation
+     warnings count as build failures here, so the old names are unusable.
+
+354. **`LinearMap.id - f` inside a `refine ⟨…, …⟩` elaborates to a metavariable** and then reports
+     `Function expected at LinearMap.id - f`. The expected type of the anonymous-constructor slot is
+     not propagated far enough; ascribe `(LinearMap.id : E →ₗ[ℝ] E) - f`.
+
+355. **The `{c : ℝ // 0 ≤ c}`-action of a `PointedCone` is defeq to the `ℝ`-action but invisible to
+     `rw` and `simp`.** A goal `c • (1 : ℝ) = ↑c` with `c : {c // 0 ≤ c}` is *not* closed by `simp`,
+     and `rw` with a `have` stating the `ℝ`-form does not fire; even `show` "changes the goal" while
+     leaving the smul in the subtype form. What works is to prove the statement for `(c : ℝ) • …`
+     with `Prod.smul_mk, smul_zero, smul_eq_mul, mul_one` and close the goal with `exact`, which
+     unifies up to defeq. `Polyhedral/Ops.lean` uses the same trick.
+
+356. **`recessionCone_coe_submodule` already exists** in `Recession/Cone.lean`. It was re-proved
+     from scratch in `Optimization/Minimum.lean` before the name clash surfaced at build time —
+     grep for the *identifier alone* before writing anything, including three-line utilities.
 
 ## 3. Build and verification
 
