@@ -83,6 +83,7 @@ import Tdaf.Analysis.Convex.Subgradient.Defs
 import Tdaf.Analysis.Convex.Subgradient.Differentiability
 import Tdaf.Analysis.Convex.Subgradient.Existence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
+import Tdaf.Analysis.Convex.Subgradient.GradientLimit
 import Tdaf.Analysis.Convex.Subgradient.Integral
 import Tdaf.Analysis.Convex.Subgradient.Legendre
 import Tdaf.Analysis.Convex.Subgradient.Monotone

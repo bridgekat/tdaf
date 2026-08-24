@@ -538,6 +538,7 @@ Tdaf/
       OneDim.lean                     -- §24 Thms 24.1, 24.3, 24.2 (uniqueness)   [on ℝ]
       Primitive.lean                  -- §24 Thm 24.2 (existence), complete non-decreasing curves
       Integral.lean                   -- §24 Cor 24.2.1, f as the integral of f'
+      Rademacher.lean                 -- §25 Thm 25.5, a.e. differentiability; Cor 25.5.1
       Convergence.lean                -- §24 Thms 24.5, 24.6
       Bounded.lean                    -- §24 Thm 24.7
       Gradient.lean                   -- ∇f vs ∂f; §25 Thms 25.1, 25.2
@@ -1015,6 +1016,7 @@ Theorems 10.6–10.9 still unblock is, through Theorems 25.5–25.6, the rest of
 | `Subgradient/OneDim.lean` | §24 — `rightDeriv`/`leftDeriv` on `ℝ` and **Theorem 24.3**: the maximal monotone relations on `ℝ` are exactly the subdifferentials |
 | `Subgradient/Primitive.lean` | §24 — **Theorem 24.2**: complete non-decreasing curves, and the primitive of a monotone `φ` recovered from its graph rather than from an integral |
 | `Subgradient/Integral.lean` | §24 — **Corollary 24.2.1**: a convex function of one variable is the integral of either of its one-sided derivatives |
+| `Subgradient/Rademacher.lean` | §25 — **Theorem 25.5**: a convex function is differentiable almost everywhere, and densely, on the interior of its effective domain, and `∇f` is continuous there; **Corollary 25.5.1**; **Theorem 25.4**'s measure-zero clause |
 | `Subgradient/Convergence.lean` | §24 — **Theorems 24.5 and 24.6**: what `∂f` and `f'(x; ·)` do along a converging sequence |
 | `Subgradient/Bounded.lean` | §24 — **Theorem 24.7**: `∂f` carries compact subsets of `int (dom f)` to compact sets |
 | `Subgradient/Calculus.lean` | **Thms 23.8, 23.9**, Cor 23.8.1 — the sum and image rules, against the D5 interfaces |

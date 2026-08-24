@@ -280,13 +280,15 @@ limit set `∂(f'(x; ·))(y)` with the face of `∂f x` exposed by `y`.
 Note that Corollary 31.5.2 (`∂f` is maximal *monotone*) is a different and easier statement, proved
 from Moreau's theorem in §31, and does not wait on any of this.
 
-## 5.4 `Subgradient/Gradient.lean` and `Differentiability.lean` — §25
+## 5.4 `Subgradient/Gradient.lean`, `Differentiability.lean` and `Rademacher.lean` — §25
 
-**Status: Theorems 25.1, 25.2 and 25.3 are done in full, with Corollaries 25.1.1, 25.1.2 and
-25.1.3 and Theorem 25.4's continuity and density clauses.** `Gradient.lean` holds the Frechet
+**Status: Theorems 25.1–25.5 are done in full, with Corollaries 25.1.1, 25.1.2, 25.1.3 and
+25.5.1. What is left of §25 is Theorems 25.6 and 25.7.** `Gradient.lean` holds the Frechet
 theory (25.1's forward half, 25.2) and the subgradient form of Cors 25.1.2–25.1.3;
 `Uniqueness.lean` holds Theorem 25.1's converse half and the differentiability form of those two
-corollaries; `Differentiability.lean` holds the one-variable theory (25.3, 25.4).
+corollaries; `Differentiability.lean` holds the one-variable theory (25.3, 25.4's continuity and
+density clauses); `Rademacher.lean` holds Theorem 25.5, Corollary 25.5.1 and 25.4's measure-zero
+clause.
 
 | Lean name | book | status |
 |---|---|---|
@@ -302,8 +304,9 @@ corollaries; `Differentiability.lean` holds the one-variable theory (25.3, 25.4)
 | `differentiableAtFn_of_forall_basis_dirDeriv_eq` | **Thm 25.2**, last sentence (the `n` two-sided partials) | done — and it is the *primitive* statement, the general form being it read at an arbitrary basis |
 | `continuousAt_rightDeriv_iff`, `countable_leftDeriv_ne_rightDeriv`, `differentiableAtFn_iff_leftDeriv_eq_rightDeriv`, `countable_not_differentiableAtFn`, `continuousAt_rightDeriv_of_differentiableAtFn`, `subset_closure_differentiableAtFn` | **Thm 25.3**, all three assertions | done, `Differentiability.lean` — two of the three need neither closedness nor the book's extension step, and the monotonicity clause is `monotone_rightDeriv`, unrestricted |
 | `convexFn_lineRestrict`, `proper_lineRestrict`, `dirDeriv_lineRestrict`, `upperSemicontinuousAt_dirDeriv_left`, `dirDeriv_sub_smul_le`, `continuousAt_dirDeriv_iff`, `subset_closure_twoSided_dirDeriv` | **Thm 25.4**, continuity and density | done, `Differentiability.lean` — no `y ≠ 0`, no one-dimensional limit theory, and the density clause needs no finite-dimensionality |
-| — | Thm 25.4, the measure-zero clause and the `Sₖ` decomposition | **not done** — needs Haar measure on `E` and Fubini; and "a bounded monotone function has finitely many jumps of size `≥ 1/k`", an induction over an ordered `Finset` |
-| `ae_differentiableAt_and_continuousOn_gradient` | **Thm 25.5**, Cor 25.5.1 | **not done** |
+| `measure_diff_twoSided_dirDeriv` | **Thm 25.4**, the measure-zero clause | done, `Rademacher.lean` — two lines from Theorem 25.5, with no `Sₖ` decomposition and no Fubini; the book's implication runs the other way |
+| `HasGradientAt.hasFDerivAt_toReal`, `hasGradientAt_of_hasFDerivAt_toReal`, `exists_lipschitzOnWith_ball`, `ae_differentiableAtFn`, `measure_diff_differentiableAtFn`, `interior_dom_subset_closure_differentiableAtFn`, `mem_subgradient_innerL_iff`, `subgradient_innerL_eq_singleton`, `continuousOn_fderiv_toReal` | **Thm 25.5**, all three clauses | done, `Rademacher.lean` — Mathlib's Rademacher theorem plus Theorem 10.4 on balls; the continuity clause is Cor 24.5.1 through the Riesz isometry |
+| `continuousOn_fderiv_of_convexOn` | **Cor 25.5.1** | done, `Rademacher.lean` — stated for Mathlib's `ConvexOn`, through `convexOn_iff_convexFn` |
 | `subgradient_eq_convexHull_limits_gradient` | Thm 25.6 | **not done** |
 | `tendsto_gradient_of_tendsto` | Thm 25.7 | **not done** |
 
@@ -359,16 +362,31 @@ half available in the subgradient form, since "a singleton subdifferential force
 relative-interiority" is missing. Corollary 25.1.3's "non-empty closed convex set `C`" is
 unnecessary — `C` is a support set, automatically closed and convex.
 
-Theorem 25.5 (a.e. differentiability) — check `Mathlib/Analysis/Calculus/Rademacher.lean` first:
-a finite convex function on an open set is locally Lipschitz (Theorem 10.4), so Rademacher applies
-directly and gives a.e. differentiability for free. If so, only the *continuity of `∇f` on its
-domain of existence* remains, which is Theorem 24.4 plus Theorem 25.1. **This would be a substantial
-saving over Rockafellar's route through Theorem 25.4.**
+**Theorem 25.5 went exactly as this plan predicted.** Mathlib does have Rademacher's theorem
+(`LipschitzOnWith.ae_differentiableWithinAt_of_mem`), Theorem 10.4 does supply the Lipschitz
+constants, and the continuity of `∇f` is Corollary 24.5.1 plus Theorem 25.1. Three details the
+prediction did not contain:
+
+* Rademacher gives differentiability *within* a set, so the cover has to be by **open** sets —
+  `exists_lipschitzOnWith_ball` shrinks Theorem 10.4's compact set to a ball — and
+  `TopologicalSpace.isOpen_iUnion_countable` is what turns countably many a.e. statements into one.
+* The density clause needs no measure *in its statement*: a non-empty open set has positive Haar
+  measure, so the proof borrows `Module.Basis.ofVectorSpace`'s `addHaar` locally, as Mathlib's own
+  `dense_differentiableAt_norm` does.
+* Corollary 24.5.1 is stated for the pairing `innerₗ E`, whose subgradients are *vectors*, while
+  `HasGradientAt` produces an element of `StrongDual ℝ E`. `mem_subgradient_innerL_iff` is the
+  bridge, and because `InnerProductSpace.toDual` is a `LinearIsometryEquiv` the `ε` survives it.
+
+**And the saving was larger than predicted**: Theorem 25.4's measure-zero clause, which the book
+proves *first* and which this plan filed as needing Fubini and a jump-counting induction, is a
+two-line corollary of Theorem 25.5 — differentiability supplies the two-sided derivative in every
+direction at once.
 
 ## 5.5 `Subgradient/Legendre.lean` — §26
 
 **Status: Theorem 26.4 is done. Everything else in §26 is blocked on Theorem 26.1, which is blocked
-on Theorem 25.6.**
+on Theorem 25.6 — now the *only* missing prerequisite, since Theorem 25.5 and the sufficiency half
+of Theorem 25.2 are both done.**
 
 | Lean name | book | status |
 |---|---|---|
@@ -383,8 +401,8 @@ on Theorem 25.6.**
 
 **The sub-plan's premise was wrong: §26 is not self-contained.** Rockafellar's Theorem 26.1 needs
 Theorem 25.6 (a subgradient at a boundary point is a limit of gradients), which needs Theorem 25.5
-(Rademacher) and §24's convergence theory; and its other direction needs the sufficiency half of
-Theorem 25.2 (Gâteaux ⇒ Fréchet, finite-dimensional). Theorems 26.3, 26.5, 26.6 and Corollaries
+(Rademacher, now done) and §24's convergence theory; and its other direction needs the sufficiency
+half of Theorem 25.2 (Gâteaux ⇒ Fréchet, finite-dimensional), which is also now done. Theorems 26.3, 26.5, 26.6 and Corollaries
 26.3.1–26.3.3 and 26.4.1 all route through 26.1.
 
 **Theorem 26.4 does not.** It needs only Theorem 25.1 and Theorem 23.5 (d), so it is done in full:

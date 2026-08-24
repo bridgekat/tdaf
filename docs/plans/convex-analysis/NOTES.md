@@ -1479,6 +1479,51 @@ gradient is `evalCLM B y₀`. The `topDualPairing` corollaries are the ones with
 because the forward half (`HasGradientAt.subgradient_eq`) exists only there: for a general pairing
 a non-injective `evalCLM` would make `∂f x` a whole fibre rather than a point.
 
+### `Tdaf/Analysis/Convex/Subgradient/Rademacher.lean`
+
+**Theorem 25.5**: a proper convex function on a finite-dimensional space is differentiable at
+almost every point of `int (dom f)`, those points are dense there, and `∇f` is continuous on them.
+Also **Corollary 25.5.1** and **Theorem 25.4**'s measure-zero clause.
+
+```lean
+theorem HasGradientAt.hasFDerivAt_toReal …            -- ∇f is `fderiv` of the real trace
+theorem hasGradientAt_of_hasFDerivAt_toReal …         -- and conversely, at interior points
+theorem exists_lipschitzOnWith_ball …                 -- Theorem 10.4 on a ball
+theorem ae_differentiableAtFn …                       -- **Thm 25.5**, almost everywhere
+theorem measure_diff_differentiableAtFn …             -- the same, as a null set
+theorem interior_dom_subset_closure_differentiableAtFn …  -- **Thm 25.5**, density
+theorem continuousOn_fderiv_toReal …                  -- **Thm 25.5**, `∇f` continuous
+theorem continuousOn_fderiv_of_convexOn …             -- **Cor 25.5.1**
+theorem measure_diff_twoSided_dirDeriv …              -- **Thm 25.4**, measure-zero clause
+theorem mem_subgradient_innerL_iff …                  -- the Riesz bridge between the pairings
+```
+
+**Mathlib has Rademacher's theorem** — `Mathlib/Analysis/Calculus/Rademacher.lean`,
+`LipschitzOnWith.ae_differentiableWithinAt_of_mem`, under `[FiniteDimensional]`, `[BorelSpace]` and
+`[IsAddHaarMeasure μ]` — and that is what makes all of this cheap. Sub-plan 5 guessed as much and
+the guess was right. Convexity only has to supply local Lipschitz constants:
+`exists_lipschitzOnWith_ball` shrinks Theorem 10.4's *compact* set to an *open* ball, so that
+`DifferentiableWithinAt` upgrades to `DifferentiableAt`, and
+`TopologicalSpace.isOpen_iUnion_countable` turns countably many a.e. statements into one.
+
+**Rockafellar's implication runs the other way.** He proves Theorem 25.4's measure-zero clause
+first, by a Fubini argument over lines through the `Sₖ` decomposition, and gets Theorem 25.5 by
+intersecting the `n` coordinate directions. Here 25.5 comes first and 25.4's clause is two lines,
+because differentiability supplies the two-sided derivative in *every* direction at once. Neither
+the `Sₖ` decomposition nor Fubini is needed anywhere.
+
+**The density clause carries no measure in its statement.** A non-empty open set has positive Haar
+measure, so it cannot sit inside a null set; the proof borrows `Module.Basis.ofVectorSpace`'s
+`addHaar` and the Borel structure locally, exactly as Mathlib's `dense_differentiableAt_norm` does.
+
+**Two pairings meet here, and the bridge between them is an isometry.** Corollary 24.5.1 is stated
+for `innerₗ E`, whose subgradients are *vectors*, while `HasGradientAt` produces an element of
+`StrongDual ℝ E`. `mem_subgradient_innerL_iff` translates, and because `InnerProductSpace.toDual`
+is a `LinearIsometryEquiv` the `ε` of the upper-semicontinuity statement survives unchanged — which
+is the entire proof of the continuity clause.
+
+**Not here**: Theorems 25.6 and 25.7.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Legendre.lean`
 
 §26's Legendre transformation, reduced to what is reachable: **Theorem 26.4**.
@@ -3385,6 +3430,95 @@ Kuhn–Tucker vector" form instead.
 `iSup_clConcave_eq_iSup` and `concaveConj_clConcave` (Theorem 12.2's first half, concave side)
 belong in `Duality/ConcaveConj.lean`.
 
+### `Tdaf/Analysis/Convex/Saddle/Subgradient.lean`
+
+§37's subdifferential theory: the two one-sided subdifferentials of a saddle-function, their
+product `∂K`, and **Theorems 37.4, 37.5** and **Corollary 37.5.3**.
+
+```lean
+def concaveSubgradient B g x …        -- the superdifferential of a concave function
+def saddleSubgradient Bu Bx K p …     -- `∂K (u, x) = ∂₁K (u, x) × ∂₂K (u, x)`
+def IsBifunSubgradientPair …          -- Theorem 37.5's condition (d), representative-free
+def saddleTilt Bu Bx K q …            -- `K` tilted by a linear function
+theorem mem_saddleSubgradient_iff_isSaddlePoint …        -- **Thm 37.4**, no hypotheses at all
+theorem kernelSet_subset_domSaddleSubgradient_subset_domSaddle …  -- **Thm 37.4**, 2nd sentence
+theorem mem_saddleSubgradient_iff_isBifunSubgradientPair …        -- **Thm 37.5**, (a) ⇔ (d)
+theorem mem_saddleSubgradient_upperConjSaddle_iff …               -- **Thm 37.5**, (b) ⇔ (d)
+theorem exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle …  -- **Thm 37.6**
+```
+
+**`∂K` is the same relation for every member of a class.** That is the content of (a) ⇔ (d), and it
+is why `IsBifunSubgradientPair` is stated for the bifunction rather than for a representative;
+(b) ⇔ (d) then says the subdifferentials of conjugate classes are inverse to each other, which is
+what turns saddle-point existence into a statement about `0 ∈ dom ∂K*`.
+
+The module also carries the `EReal` cancellation lemmas §37 runs on (`sub_coe_le_sub_coe_iff_le_add`
+and relatives) — relocation candidates for `Tdaf/Order/EReal.lean`.
+
+### `Tdaf/Analysis/Convex/Saddle/Conjugate.lean`
+
+The two conjugates `K̲*`, `K̄*` of a saddle-function are the two brackets of *one* convex
+bifunction, hence a closure pair: **Corollaries 37.1.2 and 37.1.3**.
+
+```lean
+theorem adjointBifun_flip_inverseBifun …                    -- `(G_*)^* = (G^*)_*`, no hypotheses
+theorem adjointBifun_flip_inverseBifun_adjointBifun …        -- biadjoint identity `(F_*^*)^* = F_*`
+theorem saddleLagrangian_eq_concaveBracket …                 -- `L (v, x) = ⟨v, F_* x⟩`
+theorem partialCl₁_lowerConjSaddle, partialCl₂_upperConjSaddle …  -- **Cor 37.1.2**
+theorem saddleClass_conjSaddle, saddleEquiv_lowerConjSaddle_upperConjSaddle …
+theorem dom₁_conjSaddle_eq, dom₂_conjSaddle_eq, domSaddle_conjSaddle_eq …
+theorem hasSaddleValue_of_mem_relint_dom₁_lowerConjSaddle …  -- **Cor 37.1.3**
+```
+
+**The one new algebraic fact is the biadjoint identity, and it is not a new theorem.** The inverse
+operation `F ↦ F_*` intertwines the adjoint of a convex bifunction with the adjoint of a concave
+one, so `(F_*^*)^* = F_*` is Theorem 30.2 (`F^{**} = cl F`) read through that intertwining.
+
+### `Tdaf/Analysis/Convex/Saddle/Existence.lean`
+
+The `C*` halves of §37 and the existence theorems: **Theorem 37.3 (b)**, **Theorem 37.6**,
+**Corollaries 37.2.1, 37.3.1, 37.3.2, 37.6.1, 37.6.2**.
+
+```lean
+def swapAdjointBifun …                                   -- `F♯`, the bifunction of the swapped class
+theorem saddleSwap_mem_bifunSaddleClass …                 -- `saddleSwap` carries `Ω (F)` onto `Ω (F♯)`
+theorem upperConjSaddle_saddleSwap, lowerConjSaddle_saddleSwap …  -- it exchanges the conjugates
+theorem proper_graphFn_of_properSaddleFn …                -- `ProperSaddleFn K → Proper (graphFn F)`
+theorem hasSaddleValue_of_no_common_direction_of_recession_neg …  -- **Thm 37.3**, condition (b)
+theorem exists_isSaddlePoint_of_no_common_direction_of_recession …  -- **Thm 37.6** on `K`
+theorem exists_saddlePoint_of_isBounded …                 -- **Cor 37.6.2**, the minimax theorem
+theorem isBifunSubgradientPair_iff_mem_subgradient_graphFn …      -- **Thm 37.5**, (c) ⇔ (d)
+```
+
+**The device is `saddleSwap K (y, u) = -K (u, x)`, and the swapped class is not the conjugate
+class.** Under the swap `Ω (F)` becomes `Ω (F♯)` at the *negated flipped* pairings, where
+`F♯ = flipBifun (inverseBifun (adjointBifun Bu Bx F))` — not `F_*^*`, which goes from `V` to `Y`
+and lives on the wrong product. The `flipBifun` is load-bearing.
+
+**Corollary 37.3.2 cannot be stated with real-valued extrema.** With only one of `C`, `D` bounded
+both iterated extrema can be infinite (`C = {0}`, `D = ℝ`, `K (u, v) = v` gives
+`sup_C inf_D K = -∞`), so the equality is stated in `EReal`. Corollary 37.6.2, where both are
+bounded, keeps the book's real inequalities.
+
+**Not here**: Corollary 37.5.1's homeomorphism clause and Corollary 37.5.2 (maximal monotonicity of
+`∂K`). Both need Corollaries 31.5.1 and 31.5.2, which rest on the `prox` operator of Theorem 31.5;
+`Optimization/Moreau.lean` records that as not done. `Subgradient/Monotone.lean` has maximal
+*cyclic* monotonicity, which is a different statement.
+
+### `Tdaf/Analysis/Convex/Duality/ConcaveOps.lean`
+
+Supremal convolution and the concave Theorem 16.4, which §38 needs for the adjoint of `F₁ □ F₂`.
+
+```lean
+def supConv g h …                       -- `-((-g) □ (-h))`
+theorem infConv_neg …
+theorem supConv_apply …                 -- the sup formula, when neither function reaches `+∞`
+theorem concaveConj_add_of_isExactSum …  -- **the concave Thm 16.4**: `(g₁ + g₂)* = g₁* □ g₂*`
+```
+
+Rockafellar writes `□` for both convolutions and calls this "the concave version of Theorem 16.4";
+the hypothesis is exactly `IsExactSum B (-g₁) (-g₂)`.
+
 ### `Tdaf/Analysis/Convex/Bifunction/Algebra.lean`
 
 The **convex algebra** of bifunctions: the operations that mirror the linear algebra of linear
@@ -3469,6 +3603,23 @@ orientation field would double every statement.
 **Not here**: Theorems 39.3–39.6 and 39.8. 39.3 and 39.4 specialize Theorems 33.1–33.3 and
 Corollary 33.2.1 to processes, all of which are now in `Saddle/Correspondence.lean` and
 `Saddle/Kernel.lean`, so they should be short.
+
+### `Tdaf/Analysis/Convex/Bifunction/ProcessDuality.lean`
+
+The two inner products of a convex process, `⟨Au, x*⟩` and `⟨u, A* x*⟩`: **Theorems 39.3 and 39.4**.
+
+```lean
+theorem ConvexProcess.closedBifun_indicatorBifun_iff …     -- `A` closed ⇔ `δ(·|A·)` closed
+theorem ConvexProcess.partialCl₂_concaveBracket_adjointBifun_indicatorBifun …  -- **Thm 39.3**, 4th
+theorem bracket_eq_concaveBracket_adjointBifun_of_mem_relint_domConcaveBifun …  -- dual **Cor 33.2.1**
+theorem ConvexProcess.bracket_eq_concaveBracket_of_mem_relint_dom …             -- **Thm 39.3**, last
+theorem exists_unique_convexProcess_bracket_indicatorBifun_eq …                 -- **Thm 39.4**
+```
+
+**The two inner products are the bracket and the concave bracket of §33**, taken at the indicator
+bifunction of `A` and at its adjoint, so everything separating them is a partial closure.
+`Bifunction/Process.lean` proves what needs only Theorem 33.2's first equation; this module adds
+what needs the second — closedness of `A` — and what needs relative interiors.
 
 ## 2. Lean/Mathlib gotchas
 
@@ -4535,6 +4686,128 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
      "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
      a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+246. **`Basis` is `Module.Basis` in this Mathlib.** `Basis.ofVectorSpace ℝ E` reports
+     `Unknown identifier`; write `Module.Basis.ofVectorSpace ℝ E`. Dot notation on the result
+     still works (`w.addHaar`, `w.equivFun`) because those declarations live in the same
+     namespace, so only the *first* mention needs correcting.
+
+245. **`Set.mem_setOf_eq` and `Set.mem_diff_of_mem` are deprecated** (→ `Set.mem_ofPred_eq`,
+     `Set.mem_sdiff_of_mem`), and a deprecation warning fails a zero-warning build. Prefer the
+     project's own `@[simp]` membership lemmas — `mem_subgradient`, `mem_dom`, `mem_normalCone` —
+     over unfolding a set-builder, since they are stated as `Iff.rfl` and do not move.
+
+244. **`⟨h₁, h₂⟩` does not elaborate against a goal `z ∈ s \ t`.** The error is "Invalid `⟨…⟩`
+     notation: The expected type of this term could not be determined", because `Set.diff` is no
+     longer reducibly an `And`. `Set.mem_sdiff_of_mem h₁ h₂` works, and so does `obtain ⟨h₁, h₂⟩`
+     in the other direction — destructuring is fine, only construction fails.
+
+243. **A `show` that changes the goal trips `linter.style.show`.** `show` is for readability;
+     when the new goal is only definitionally equal to the old one — typically after
+     `measure_mono_null`, where the goal is membership in a set-builder — write `change`.
+
+242. **`𝓝` is scoped in `Topology`, not `Filter`.** `open Filter` alone leaves `𝓝 x` to be
+     swallowed by `autoImplicit`, and the error is the misleading "Function expected at `𝓝`, but
+     this term has type `?m.8`". `open Topology` (or `open scoped Topology`) fixes it.
+
+241. **`omit … in` must precede the doc comment, not sit between it and the `theorem`.** Putting
+     it after `-/` gives `unexpected token 'omit'; expected 'lemma'`, which does not point at the
+     real problem.
+
+240. **`exact` against a `ClosedFn` goal can time out where the same move against `ConvexFn` is
+     instant.** `ConvexFn f` is a genuine predicate, so unification is structural; `ClosedFn f`
+     unfolds to the *equation* `clFn f = f`, so `exact closedFn_compLin h hcont` pushes a linear
+     reflection through `clFn` and hits the 200000-heartbeat `whnf` limit. Fix: state the
+     reflection as `have heq : … = … := funext fun _ => rfl`, `change` to the `ClosedFn` form,
+     `rw [heq]`, then `exact`.
+
+239. **`rw [iInf_comm]` cannot reach a nested swap; feed it an explicit `iInf_congr`.** Turning
+     `⨅ u ⨅ y ⨅ x` into `⨅ x ⨅ u ⨅ y` by `rw [iInf_comm]; exact iInf_congr fun u => iInf_comm`
+     fails with a stuck `CompleteLattice ?m` — the inner `iInf_comm` has nothing to fix its
+     implicit family. Write the inner swap as a fully typed
+     `have hswap : ∀ u, (⨅ y, ⨅ x, body) = ⨅ x, ⨅ y, body := fun u => iInf_comm`, then
+     `rw [iInf_congr hswap, iInf_comm]`.
+
+238. **`a + ⨅ B = ⨅ i, (a + B i)` needs nothing about `a`, only `⨅ B ≠ ⊥`.** `a = ⊥` works
+     because `⊥` absorbs on both sides, and `a = ⊤` works because `⨅ B ≠ ⊥` forces every
+     `B i ≠ ⊥`. Adding `a ≠ ⊥` by symmetry with the right-hand version only trips the
+     unused-variable linter.
+
+237. **The infimal mirror of `Tdaf.EReal.biSup_add_biSup` needs a different hypothesis, not the
+     dual one.** For suprema the hypothesis is that the *values* avoid `⊥`; dualizing gives
+     "values avoid `⊤`", which is useless for bifunctions, where `F u x = ⊤` off the domain. The
+     usable condition is that the two *infima* avoid `⊥`, and that is what
+     `IsExactSum.proper_left`/`proper_right` deliver. See `iInf_add_iInf_of_ne_bot` in
+     `Bifunction/Algebra.lean`.
+
+236. **Mathlib's `EReal.neg_add` concludes `-x - y`, not `-x + -y`, and `rw` sees the
+     difference.** The two are defeq, so landing it in a typed `have` works; but
+     `rw [EReal.neg_add …]` leaves a term headed by `Sub.sub`, and a following `rw [neg_neg]`
+     fails with "did not find an occurrence of `- -?a`".
+
+235. **`neg_le_neg` and `_root_.neg_le_neg_iff` do not fire on `EReal`; `EReal.neg_le_neg_iff`
+     does.** `EReal` is an `AddCommMonoid` with a `Neg`, not a group, so the root-namespace
+     lemmas ask for `AddGroup`. Under a Pi type the failure message is about the *eta-expanded*
+     codomain (`failed to synthesize AddCommGroup ((fun a => EReal) …)`) and looks unrelated
+     to `EReal`.
+
+234. **When a saddle-function is swapped, the binder types of `iSup`/`iInf` swap too.** In
+     `upperConjSaddle Bu' Bx' K'` the outer `⨅` ranges over the domain of `Bu'` and the inner `⨆`
+     over the *codomain* of `Bx'`; in `lowerConjSaddle` they are the other way round. Naming the
+     binders by analogy with the unswapped statement type-checks the `refine` and then fails three
+     lines later inside a `have`. Read binder types off the pairing arguments.
+
+233. **`hcu.comp (by fun_prop)` can never work.** `Continuous.comp` leaves the inner function a
+     metavariable, so `fun_prop` reports "was unable to prove `Continuous ?m.377`" with an empty
+     issue list. Introduce the inner map as its own `have` with an explicit type and pass it.
+
+232. **`Continuous.add` builds `Continuous (f + g)`, which does not unify with
+     `Continuous fun x => f x + g x` under `simpa`.** The mismatch is `Pi.add` versus a lambda.
+     Stating the sum as its own `have` with the pointwise body forces `Continuous.add` to
+     elaborate against the expected type.
+
+231. **`isClosed_subgradientRel` (Theorem 24.4) wants *joint* continuity of the pairing, and
+     `IsContinuousPairing` does not supply it.** The class gives `Continuous fun x => B x y` for
+     each fixed `y`; the theorem needs `Continuous fun p : E × F => B p.1 p.2`, because the
+     subgradient inequality moves both arguments at once. Every caller passes it by hand
+     (`Subgradient/Bounded.lean` uses `continuous_inner`), and a statement over a general pairing
+     has to carry the hypothesis explicitly — one per factor for a `prodPairing`.
+
+230. **`io.open(p, "w")` in a Python heredoc defaults to cp936 on this machine and truncates the
+     file before failing.** This is gotchas 81/140 with a sharper edge: the `UnicodeEncodeError`
+     is raised at `f.write`, *after* the file has been emptied, so a Lean file full of `ℝ` and
+     `₁` is destroyed by the first write attempt. Always
+     `io.open(tmp, "w", encoding="utf-8", newline="\n")` followed by `os.replace(tmp, p)`.
+
+229. **`induction a <;> induction b <;> simp_all <;> …` trips three linters at once** —
+     `linter.flexible` ("simp_all is a flexible tactic modifying ⊢"), `linter.unusedSimpArgs` (a
+     `←` lemma that never fires still silences the forward direction) and
+     `linter.unnecessarySeqFocus` — so it cannot be used in a zero-warning build. For nine-case
+     `EReal` arithmetic the deterministic route is cheaper anyway.
+
+228. **`rw [← h]` with `h : f C = C` rewrites *every* occurrence of `C` in the goal**, including
+     ones inside subterms you meant to keep. Against
+     `C ⊆ closure (convexHull ℝ (C.exposedPoints ℝ))`, rewriting with
+     `← convexHull_extremePoints …` turns the second `C` into a hull too and the goal becomes
+     unprovable. Start a `calc` from the equation instead — it is then used at exactly one
+     position.
+
+227. **`PointedCone ℝ E` is a `Submodule {r : ℝ // 0 ≤ r} E`, so its scalars are the subtype.**
+     `Submodule.smul_mem _ a h` with `a : ℝ` does not typecheck; write
+     `Submodule.smul_mem _ (⟨a, ha.le⟩ : {r : ℝ // 0 ≤ r}) h`. In the `| smul a u _ hu` case of
+     `Submodule.span_induction` over a cone hull the bound `a` is that subtype and the goal is
+     `↑a • u ∈ K`; a hypothesis of type `(a : ℝ) • u ∈ K` closes it via a `have`, but not inline.
+
+226. **Set inclusion between coerced `PointedCone`s is closed by the `≤` proof itself.** With
+     `hle : PointedCone.hull ℝ S ≤ PointedCone.hull ℝ T`, `exact hle` discharges
+     `(PointedCone.hull ℝ S : Set E) ⊆ (PointedCone.hull ℝ T : Set E)` — no
+     `SetLike.coe_subset_coe` round trip.
+
+225. **`/tmp` in the Bash tool is Git Bash's `/tmp`; the Windows `python` on PATH cannot see
+     it.** A heredoc written to `/tmp/x.lean` and read back by a Python script with the same path
+     raises `FileNotFoundError`. Put any scratch file a Python script will read in the scratchpad
+     directory (a real Windows path), and give it a distinctive name — the scratchpad is shared
+     across sessions.
 
 224. **`add_right_eq_self` is not a name in this Mathlib.** `y₀ + n = y₀ ⇒ n = 0` is closed by
      `simpa using h`; reaching for the named lemma gives "Unknown identifier", and the current
