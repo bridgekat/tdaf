@@ -34,6 +34,11 @@ of `f'(x; y)` in `(x, y)` and of `∂f` in `x`.
 * `upperSemicontinuousAt_dirDeriv`, `eventually_nhds_subgradient_subset_add_closedBall` — the
   constant-family case: `f'(x; y)` is upper semicontinuous in `(x, y)` on `int (dom f) × E`, and
   `∂f z ⊆ ∂f x + ε B` for `z` near `x`.
+* `eventually_dirDeriv_lt_of_tendsto_dir` — the same `limsup` inequality for an approach to a
+  point of `dom f` that need not be interior, along a fixed limiting direction `y`, bounded by the
+  second-order derivative `f'(x; y; ·)`.
+* `mem_interior_dom_smul`, `mem_interior_dom_dirDeriv`, `proper_dirDeriv_of_ne_bot` — the three
+  facts about `dom f` and `dom f'(x; ·)` that approach makes use of.
 * `supportFn_closedBall` — `δ*(y | ε B) = ε ‖y‖`, the set-side identity the inclusion needs.
 * `dirDeriv_eq_coe_toReal_of_mem_interior_dom`, `convexOn_toReal_dirDeriv`,
   `toReal_dirDeriv_smul` — `f'(x; ·)` at an interior point of `dom f` as a finite sublinear
@@ -60,18 +65,28 @@ sequences. The local corollaries are nevertheless stated for the neighbourhood f
 space paired with itself. The directional-derivative statement needs no such thing and is stated
 for a finite-dimensional normed space.
 
+**Approach to a boundary point needs neither closedness nor a polytope.** Rockafellar proves the
+directional form of the boundary statement by building a simplex around the limiting direction,
+so that `f` is continuous relative to the resulting polytope at `x` itself. That is avoidable: the
+monotonicity of the difference quotient in its step replaces the vanishing step `|x i - x|` by a
+fixed larger one, and then only the continuity of `f` at *interior* points is used. Consequently
+`f` need not be closed, only convex and proper.
+
 ## What is not here
 
-**The refinement in which `x i` approaches `x` from one fixed direction** — where the limit set is
-not all of `∂f(x)` but the face of `∂f(x)` exposed by that direction, and the bounding function is
-the second-order derivative `f'(x; y; ·)`. It needs the identity
-`δ*(· | face of C exposed by y) = (δ*(· | C))'(y; ·)`, continuity of a convex function relative to
-a polytope, and a simplex around a prescribed interior direction.
+**The subgradient form of the directional statement**, `∂f(x i) ⊆ ∂(f'(x; ·))(y) + ε B`. The
+uniformity step used for `eventually_subgradient_subset_add_closedBall` is not available here: it
+consumes a family of *finite* convex functions on an open set, while the sublinear functions
+`f'(x i; ·)` attached to boundary points `x i` take the value `+∞`. What would replace it is either
+a version of `eventually_forall_le_add_of_eventually_le` for `EReal`-valued convex functions
+bounded above by a finite one, or a compactness argument extracting a convergent subsequence from
+`∂f(x i)`. Identifying the limit set `∂(f'(x; ·))(y)` with the face of `∂f(x)` exposed by `y`
+needs, in addition, the identity `δ*(· | face of C exposed by y) = (δ*(· | C))'(y; ·)`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorem 24.5,
-  Corollary 24.5.1). Theorem 24.6 is the refinement described above.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorems 24.5 and
+  24.6, Corollary 24.5.1).
 -/
 
 open Set Filter Topology
@@ -445,5 +460,226 @@ theorem eventually_nhds_subgradient_subset_add_closedBall (hf : ConvexFn f) (hfp
     (fun z _ => tendsto_const_nhds) hx hzs hε
 
 end LocalSubgradient
+
+/-! ### Approach to a point of the domain along a direction -/
+
+section Boundary
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal} {x y : E}
+
+omit [FiniteDimensional ℝ E] in
+/-- **The segment principle for effective domains**: if `x ∈ dom f` and `x + α • u` is interior to
+`dom f`, then so is `x + t • u` for every `t` in `(0, α]`. -/
+theorem mem_interior_dom_smul (hf : ConvexFn f) (hx : x ∈ dom f) {u : E} {α t : ℝ} (hα : 0 < α)
+    (hu : x + α • u ∈ interior (dom f)) (ht : 0 < t) (htα : t ≤ α) :
+    x + t • u ∈ interior (dom f) := by
+  have hle : (0 : ℝ) ≤ 1 - t / α := by
+    rw [sub_nonneg]
+    exact (div_le_one hα).2 htα
+  have h := hf.convex_dom.combo_interior_self_mem_interior hu hx (a := t / α) (b := 1 - t / α)
+    (by positivity) hle (by ring)
+  have heq : (t / α) • (x + α • u) + (1 - t / α) • x = x + t • u := by
+    match_scalars <;> (field_simp; try ring)
+  rwa [heq] at h
+
+omit [FiniteDimensional ℝ E] in
+/-- **A ray into the interior makes the direction interior to the domain of `f'(x; ·)`**: if
+`x + α • y` is interior to `dom f` for some `α > 0`, then `y` is interior to `dom f'(x; ·)`,
+because a single difference quotient bounds `f'(x; ·)` above near `y`. -/
+theorem mem_interior_dom_dirDeriv (hfp : Proper f) (hx : x ∈ dom f) {α : ℝ}
+    (hα : 0 < α) (hαy : x + α • y ∈ interior (dom f)) :
+    y ∈ interior (dom (dirDeriv f x)) := by
+  have hcont : Continuous fun v : E => x + α • v := by fun_prop
+  obtain ⟨r, hr⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hfp.ne_bot x) (mem_dom.1 hx)
+  refine interior_maximal (fun v hv => ?_) (hcont.isOpen_preimage _ isOpen_interior)
+    (show y ∈ (fun v : E => x + α • v) ⁻¹' interior (dom f) from hαy)
+  obtain ⟨s, hs⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hfp.ne_bot (x + α • v))
+    (mem_dom.1 (interior_subset hv))
+  refine mem_dom.2 (lt_of_le_of_lt (dirDeriv_le f x v hα) ?_)
+  rw [hs, hr, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_div]
+  exact _root_.EReal.coe_lt_top _
+
+/-- **`f'(x; ·)` is proper once it is finite at one interior point of its effective domain.** A
+convex function that takes the value `-∞` takes it throughout the relative interior of its domain,
+so a single finite interior value rules `-∞` out everywhere. -/
+theorem proper_dirDeriv_of_ne_bot (hf : ConvexFn f) (hfp : Proper f) (hx : x ∈ dom f)
+    (hy : y ∈ interior (dom (dirDeriv f x))) (hne : dirDeriv f x y ≠ ⊥) :
+    Proper (dirDeriv f x) := by
+  have hconv : ConvexFn (dirDeriv f x) := convexFn_dirDeriv hf (mem_dom.1 hx).ne (hfp.ne_bot x)
+  by_contra h
+  exact hne (ConvexFn.eq_bot_of_mem_relint_dom hconv h
+    (Convex.interior_subset_relint hconv.convex_dom ⟨y, hy⟩ hy))
+
+/-- **Rockafellar, Theorem 24.6**, the directional-derivative half: directional derivatives are
+upper semicontinuous along an approach to a point of `dom f` that need not be interior, provided
+the approach has a limiting direction `y` and the second-order derivative in that direction is used
+as the bound.
+
+If `x i → x` inside `dom f` with `x i ≠ x` and the unit vectors `|x i - x|⁻¹ (x i - x)` converge to
+`y`, and if `f'(x; y) > -∞` while the ray `x + ℝ₊ y` meets `int (dom f)`, then
+
+```
+limsup_i f'(x i; z) ≤ f'(x; y; z) := (f'(x; ·))'(y; z),        ∀ z.
+```
+
+As in `eventually_dirDeriv_lt` the `limsup` is spelled without junk values: every real `μ` above
+`f'(x; y; z)` eventually bounds `f'(x i; z)`.
+
+The proof adds two difference quotients of `f`, at `x` in the direction `y i` and at `x i` in the
+direction `λ z`, so that they telescope into the quotient at `x` in the direction
+`u i = y i + λ z`, and then uses the monotonicity of that quotient in its step to replace the step
+`|x i - x|`, which tends to `0`, by the fixed larger step `|x i - x| + β`. Since `x + β u i` tends
+to an *interior* point of `dom f`, the right-hand side converges, and the left-hand side converges
+because `f'(x; ·)` is continuous at `y`. -/
+theorem eventually_dirDeriv_lt_of_tendsto_dir (hf : ConvexFn f) (hfp : Proper f) (hx : x ∈ dom f)
+    {xs : ℕ → E} (hxsdom : ∀ i, xs i ∈ dom f) (hxsne : ∀ i, xs i ≠ x)
+    (hxs : Tendsto xs atTop (𝓝 x))
+    (hdir : Tendsto (fun i => ‖xs i - x‖⁻¹ • (xs i - x)) atTop (𝓝 y))
+    (hy : dirDeriv f x y ≠ ⊥) {α : ℝ} (hα : 0 < α) (hαy : x + α • y ∈ interior (dom f))
+    {z : E} {μ : ℝ} (hμ : dirDeriv (dirDeriv f x) y z < (μ : EReal)) :
+    ∀ᶠ i in atTop, dirDeriv f (xs i) z < (μ : EReal) := by
+  obtain ⟨r, hr⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hfp.ne_bot x) (mem_dom.1 hx)
+  have hgconv : ConvexFn (dirDeriv f x) :=
+    convexFn_dirDeriv hf (mem_dom.1 hx).ne (hfp.ne_bot x)
+  have hyint : y ∈ interior (dom (dirDeriv f x)) := mem_interior_dom_dirDeriv hfp hx hα hαy
+  have hgp : Proper (dirDeriv f x) := proper_dirDeriv_of_ne_bot hf hfp hx hyint hy
+  obtain ⟨c, hc⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hgp.ne_bot y)
+    (mem_dom.1 (interior_subset hyint))
+  -- A step `lam > 0` realising a quotient of `f'(x; ·)` below `μ` and keeping the ray interior.
+  obtain ⟨lam0, hlam0, hq0⟩ := dirDeriv_lt_iff.1 hμ
+  have hmemW : ∀ᶠ t in 𝓝 (0 : ℝ), x + α • (y + t • z) ∈ interior (dom f) := by
+    have hcont : Continuous fun t : ℝ => x + α • (y + t • z) := by fun_prop
+    have h0 := hcont.tendsto 0
+    simp only [zero_smul, add_zero] at h0
+    exact h0.eventually_mem (isOpen_interior.mem_nhds hαy)
+  obtain ⟨δ, hδ, hδW⟩ := Metric.eventually_nhds_iff.1 hmemW
+  set lam : ℝ := min lam0 (δ / 2) with hlamdef
+  have hlampos : 0 < lam := lt_min hlam0 (by linarith)
+  have hlamle : lam ≤ lam0 := min_le_left _ _
+  have hlamW : x + α • (y + lam • z) ∈ interior (dom f) := by
+    refine hδW ?_
+    rw [Real.dist_eq, sub_zero, abs_of_pos hlampos]
+    exact lt_of_le_of_lt (min_le_right _ _) (by linarith)
+  have hqlam : (dirDeriv f x (y + lam • z) - dirDeriv f x y) / (lam : EReal) < (μ : EReal) :=
+    lt_of_le_of_lt (monotoneOn_sub_div hgconv hc z (mem_Ioi.2 hlampos) (mem_Ioi.2 hlam0) hlamle)
+      hq0
+  have hgu : dirDeriv f x (y + lam • z) < ((c + μ * lam : ℝ) : EReal) := by
+    rw [hc] at hqlam
+    by_contra hcon
+    push Not at hcon
+    exact absurd ((EReal.coe_le_sub_div_iff hlampos _).2 hcon) (not_le.2 hqlam)
+  -- A step `b > 0`, at most `α / 2`, realising a quotient of `f` below `c + μ lam`.
+  obtain ⟨b0, hb0, hqb0⟩ := dirDeriv_lt_iff.1 hgu
+  set b : ℝ := min b0 (α / 2) with hbdef
+  have hbpos : 0 < b := lt_min hb0 (by linarith)
+  have hble : b ≤ b0 := min_le_left _ _
+  have hbα : b ≤ α / 2 := min_le_right _ _
+  have hqb : (f (x + b • (y + lam • z)) - f x) / (b : EReal) < ((c + μ * lam : ℝ) : EReal) :=
+    lt_of_le_of_lt (monotoneOn_sub_div hf hr (y + lam • z) (mem_Ioi.2 hbpos) (mem_Ioi.2 hb0) hble)
+      hqb0
+  have hbu : x + b • (y + lam • z) ∈ interior (dom f) :=
+    mem_interior_dom_smul hf hx hα hlamW hbpos (by linarith)
+  -- The three sequences.
+  obtain ⟨e, Y, U, hedef, hYdef, hUdef⟩ :
+      ∃ (e : ℕ → ℝ) (Y U : ℕ → E), (∀ i, e i = ‖xs i - x‖) ∧
+        (∀ i, Y i = (e i)⁻¹ • (xs i - x)) ∧ (∀ i, U i = Y i + lam • z) :=
+    ⟨_, _, fun i => ‖xs i - x‖⁻¹ • (xs i - x) + lam • z, fun _ => rfl, fun _ => rfl, fun _ => rfl⟩
+  have hepos : ∀ i, 0 < e i := fun i => by
+    rw [hedef]
+    exact norm_pos_iff.2 (sub_ne_zero.2 (hxsne i))
+  have heten : Tendsto e atTop (𝓝 0) := by
+    have h : Tendsto (fun i => ‖xs i - x‖) atTop (𝓝 ‖x - x‖) := (hxs.sub_const x).norm
+    rw [sub_self, norm_zero] at h
+    exact h.congr fun i => (hedef i).symm
+  have hYten : Tendsto Y atTop (𝓝 y) := hdir.congr fun i => by rw [hYdef, hedef]
+  have hUten : Tendsto U atTop (𝓝 (y + lam • z)) :=
+    (hYten.add_const (lam • z)).congr fun i => (hUdef i).symm
+  -- The two limits, on the two sides of the inequality.
+  have hScont : ContinuousAt (fun v => (dirDeriv f x v).toReal) y :=
+    (hgconv.continuousOn_toReal_relint_dom hgp).continuousAt (mem_nhds_iff.2
+      ⟨interior (dom (dirDeriv f x)),
+        Convex.interior_subset_relint hgconv.convex_dom ⟨y, hyint⟩, isOpen_interior, hyint⟩)
+  have hSten : Tendsto (fun i => (dirDeriv f x (Y i)).toReal) atTop (𝓝 c) := by
+    have h := hScont.tendsto.comp hYten
+    rwa [hc, _root_.EReal.toReal_coe] at h
+  have hFcont : ContinuousAt (fun v => (f v).toReal) (x + b • (y + lam • z)) :=
+    (hf.continuousOn_toReal_relint_dom hfp).continuousAt (mem_nhds_iff.2
+      ⟨interior (dom f), Convex.interior_subset_relint hf.convex_dom ⟨_, hbu⟩,
+        isOpen_interior, hbu⟩)
+  have hpt : Tendsto (fun i => x + (e i + b) • U i) atTop (𝓝 (x + b • (y + lam • z))) := by
+    have h : Tendsto (fun i => x + (e i + b) • U i) atTop
+        (𝓝 (x + ((0 : ℝ) + b) • (y + lam • z))) :=
+      tendsto_const_nhds.add ((heten.add tendsto_const_nhds).smul hUten)
+    simpa using h
+  have hQten : Tendsto (fun i => ((f (x + (e i + b) • U i)).toReal - r) / (e i + b)) atTop
+      (𝓝 (((f (x + b • (y + lam • z))).toReal - r) / b)) :=
+    ((hFcont.tendsto.comp hpt).sub tendsto_const_nhds).div
+      (by simpa using heten.add (tendsto_const_nhds (x := b))) hbpos.ne'
+  obtain ⟨q, hq⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hfp.ne_bot _)
+    (mem_dom.1 (interior_subset hbu))
+  have hQlt : ((f (x + b • (y + lam • z))).toReal - r) / b - c < μ * lam := by
+    rw [hq, hr, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_div, _root_.EReal.coe_lt_coe_iff] at hqb
+    rw [hq, _root_.EReal.toReal_coe]
+    linarith
+  -- Everything that has to hold only for large indices.
+  filter_upwards [heten.eventually_le_const (show (0 : ℝ) < α / 2 by linarith),
+    (((by fun_prop : Continuous fun v : E => x + α • v).tendsto _).comp hUten).eventually_mem
+      (isOpen_interior.mem_nhds hlamW),
+    hYten.eventually_mem (isOpen_interior.mem_nhds hyint),
+    (hQten.sub hSten).eventually_lt_const hQlt] with i hei heU heY hQS
+  have hei0 : 0 < e i := hepos i
+  have hxeq : x + e i • Y i = xs i := by
+    rw [hYdef i, smul_smul, mul_inv_cancel₀ hei0.ne', one_smul]
+    abel
+  have hxeq2 : x + e i • U i = xs i + e i • (lam • z) := by
+    rw [hUdef i, smul_add, ← hxeq]
+    abel
+  have hmem1 : x + e i • U i ∈ interior (dom f) :=
+    mem_interior_dom_smul hf hx hα heU hei0 (by linarith)
+  have hmem2 : x + (e i + b) • U i ∈ interior (dom f) :=
+    mem_interior_dom_smul hf hx hα heU (by linarith) (by linarith)
+  obtain ⟨a1, ha1⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hfp.ne_bot (xs i))
+    (mem_dom.1 (hxsdom i))
+  obtain ⟨m1, hm1⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hfp.ne_bot (x + e i • U i))
+    (mem_dom.1 (interior_subset hmem1))
+  obtain ⟨m2, hm2⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hfp.ne_bot (x + (e i + b) • U i))
+    (mem_dom.1 (interior_subset hmem2))
+  obtain ⟨s1, hs1⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hgp.ne_bot (Y i))
+    (mem_dom.1 (interior_subset heY))
+  have step1 : dirDeriv f x (Y i) ≤ (((a1 - r) / e i : ℝ) : EReal) := by
+    have h := dirDeriv_le f x (Y i) hei0
+    rwa [hxeq, ha1, hr, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_div] at h
+  have step2 : (lam : EReal) * dirDeriv f (xs i) z ≤ (((m1 - a1) / e i : ℝ) : EReal) := by
+    have h := dirDeriv_le f (xs i) (lam • z) hei0
+    rw [posHomogeneous_dirDeriv f (xs i) lam hlampos z, ← hxeq2, hm1, ha1,
+      ← _root_.EReal.coe_sub, ← _root_.EReal.coe_div] at h
+    exact h
+  have step3 : dirDeriv f x (Y i) + (lam : EReal) * dirDeriv f (xs i) z
+      ≤ (((m1 - r) / e i : ℝ) : EReal) := by
+    have h := add_le_add step1 step2
+    rwa [← _root_.EReal.coe_add,
+      show (a1 - r) / e i + (m1 - a1) / e i = (m1 - r) / e i from by field_simp; ring] at h
+  have step4 : (((m1 - r) / e i : ℝ) : EReal) ≤ (((m2 - r) / (e i + b) : ℝ) : EReal) := by
+    have h : (f (x + e i • U i) - f x) / ((e i : ℝ) : EReal)
+        ≤ (f (x + (e i + b) • U i) - f x) / ((e i + b : ℝ) : EReal) :=
+      monotoneOn_sub_div hf hr (U i) (mem_Ioi.2 hei0)
+        (mem_Ioi.2 (by linarith : (0 : ℝ) < e i + b)) (by linarith)
+    rwa [hm1, hm2, hr, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_div, ← _root_.EReal.coe_sub,
+      ← _root_.EReal.coe_div] at h
+  rw [hm2, hs1, _root_.EReal.toReal_coe, _root_.EReal.toReal_coe] at hQS
+  by_contra hcon
+  push Not at hcon
+  have h5 : ((lam * μ : ℝ) : EReal) ≤ (lam : EReal) * dirDeriv f (xs i) z := by
+    rw [← EReal.coe_mul_coe]
+    exact (EReal.coe_mul_le_coe_mul_iff hlampos).2 hcon
+  have h6 : ((s1 + lam * μ : ℝ) : EReal) ≤ (((m2 - r) / (e i + b) : ℝ) : EReal) := by
+    rw [_root_.EReal.coe_add]
+    refine le_trans (add_le_add ?_ h5) (step3.trans step4)
+    rw [hs1]
+  rw [_root_.EReal.coe_le_coe_iff] at h6
+  linarith [mul_comm lam μ]
+
+end Boundary
 
 end Tdaf.ConvexAnalysis
