@@ -7,6 +7,7 @@ import Mathlib.Analysis.Calculus.Deriv.Comp
 import Mathlib.Analysis.Convex.Exposed
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.Normed.Module.FiniteDimension
 import Tdaf.Analysis.Convex.Subgradient.Defs
 
 /-!
@@ -15,7 +16,9 @@ import Tdaf.Analysis.Convex.Subgradient.Defs
 Rockafellar's §25, the part that does not need measure theory. **Theorem 25.1**: where a convex
 function is differentiable, its gradient is its *only* subgradient, and the directional derivative
 is the corresponding linear function; conversely, a linear directional derivative forces the
-subdifferential to be a single point.
+subdifferential to be a single point. **Theorem 25.2**: for a convex function finite at `x`,
+differentiability at `x` is *equivalent* to linearity of `f'(x; ·)`, and in finite dimensions the
+two-sided derivatives along a basis already suffice.
 
 ## Main results
 
@@ -28,6 +31,11 @@ subdifferential to be a single point.
   differentiability of a convex function.
 * `eq_of_mem_subgradient_of_hasFDerivAt` — the uniqueness half on its own; it needs no convexity.
 * `dirDeriv_eq_of_hasFDerivAt` — **Theorem 25.2**, necessity: `f'(x; v) = ⟨v, ∇f x⟩`.
+* `hasGradientAt_of_dirDeriv_eq`, `differentiableAtFn_iff_exists_dirDeriv_eq` — **Theorem 25.2**,
+  sufficiency and the resulting equivalence, in finite dimensions.
+* `differentiableAtFn_of_forall_basis_dirDeriv_eq` — **Theorem 25.2**, last sentence: the `n`
+  two-sided partial derivatives suffice.
+* `ConvexFn.sum_le` — Jensen's inequality for a finite convex combination.
 * `proper_of_eventuallyEq_coe`, `mem_interior_dom_of_eventuallyEq_coe` — **Corollary 25.1.1**.
 * `mem_exposedPoints_epi_conj_iff` — the exposed points of `epi f*` are the points `(y, f* y)`
   such that `y` is the *only* subgradient of `f` at some point. **Corollary 25.1.2** in its
@@ -74,6 +82,17 @@ differentiability at `x` forces `f` to be finite near `x`, i.e. `x ∈ int (dom 
 (`mem_interior_dom_of_eventuallyEq_coe`). Restricting instead to `f : E → ℝ` would lose §26, where
 the interesting functions are `+∞` outside an open set.
 
+**Gâteaux ⇒ Fréchet is a cross-polytope estimate, not a compactness argument.** The sufficiency
+half of Theorem 25.2 is the only genuinely finite-dimensional statement in the file. Rockafellar
+gets it from Theorems 23.2, 7.2 and 4.8; the route taken here is quantitative and shorter. Writing
+`z - x = ∑ ξ j • b j` in a basis and putting `S = ∑ |ξ j|`, the point `z` is a convex combination
+of the `n` points `x + (S * sign (ξ j)) • b j`, each of which lies along a *basis* direction at the
+common distance `S` from `x`; the one-sided estimate `f (x + t • b j) ≤ f x + t c j + |t| η`
+therefore applies to all of them at once, and Jensen's inequality (`ConvexFn.sum_le`) reassembles
+them into `f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖`. No compactness, no continuity of `f`, and the
+hypothesis consumed is only the `2n` one-sided derivatives along `± b j` — which is exactly
+Rockafellar's strengthening.
+
 **The proof of Theorem 25.1 never mentions `dirDeriv`.** Rockafellar routes it through
 Theorem 23.2, but with a Fréchet derivative in hand the one-sided limit of the difference quotient
 along a ray does everything: convexity bounds the quotient above by `f z - f x`, which gives
@@ -83,17 +102,10 @@ The uniqueness half therefore uses neither convexity nor properness.
 
 ## What is not here
 
-**The sufficiency half of Theorem 25.2 is not formalised**, and it is not a mere transcription:
-linearity of `f'(x; ·)` gives Gâteaux differentiability, and the upgrade to Fréchet
-differentiability is a genuinely finite-dimensional argument (uniform convergence of the difference
-quotients over the compact unit sphere). `dirDeriv_eq_of_hasFDerivAt` gives the necessity half, and
-`subgradient_eq_singleton_of_dirDeriv_eq` gives what sufficiency is used for.
-
-**Theorems 25.3–25.7 are not formalised.** Theorem 25.3 is one-dimensional and rests on
-Theorem 24.1; Theorem 25.4 rests on Theorem 24.5; Theorem 25.5 (a.e. differentiability) is
-Rademacher's theorem plus the continuity of `∇f`, which is Theorem 24.4 together with Theorem 25.1
-but needs the measure-theoretic statement first; Theorems 25.6 and 25.7 rest on 25.5 and on §24's
-convergence theory.
+**Theorems 25.5–25.7 are not formalised.** Theorem 25.5 (a.e. differentiability) is Rademacher's
+theorem plus the continuity of `∇f`, which is Theorem 24.4 together with Theorem 25.1 but needs the
+measure-theoretic statement first; Theorems 25.6 and 25.7 rest on 25.5 and on §24's convergence
+theory. Theorems 25.3 and 25.4 are in `Subgradient/Differentiability.lean`, which needs §24.
 
 **The differentiability reading of Corollaries 25.1.2 and 25.1.3 is not available**, for the same
 reason: turning `∂f x = {y}` into "`f` is differentiable at `x` with `∇f x = y`" is precisely the
@@ -102,8 +114,8 @@ converse half of Theorem 25.1. The subgradient readings, which is what the geome
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorem 25.1,
-  Corollaries 25.1.1, 25.1.2 and 25.1.3, and the necessity half of Theorem 25.2).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorems 25.1 and
+  25.2, and Corollaries 25.1.1, 25.1.2 and 25.1.3).
 -/
 
 open Set Filter Topology
@@ -158,6 +170,33 @@ theorem clFn_dirDeriv_eq_of_subgradient_eq_singleton [TopologicalSpace E] [Conti
   rfl
 
 end Linear
+
+/-! ### Jensen's inequality for finite convex combinations -/
+
+section Jensen
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal}
+
+/-- **Jensen's inequality** for a convex `EReal`-valued function, in the form the epigraph supplies
+it: a convex combination of points at which `f` is bounded above by reals `m j` is bounded above by
+the same combination of the `m j`.
+
+The proof is `Convex.sum_mem` applied to `epi f`; stating it separately keeps the product-space
+bookkeeping out of the arguments that consume it. -/
+theorem ConvexFn.sum_le {ι : Type*} (hf : ConvexFn f) (t : Finset ι) (u : ι → E) (m wt : ι → ℝ)
+    (hm : ∀ j ∈ t, f (u j) ≤ ((m j : ℝ) : EReal)) (hw : ∀ j ∈ t, 0 ≤ wt j)
+    (hw1 : ∑ j ∈ t, wt j = 1) :
+    f (∑ j ∈ t, wt j • u j) ≤ ((∑ j ∈ t, wt j * m j : ℝ) : EReal) := by
+  have hmem := hf.convex_epi.sum_mem hw hw1 (fun j hj => mk_mem_epi.2 (hm j hj))
+  have hsum : (∑ j ∈ t, wt j • ((u j, m j) : E × ℝ))
+      = ((∑ j ∈ t, wt j • u j, ∑ j ∈ t, wt j * m j) : E × ℝ) := by
+    refine Prod.ext ?_ ?_
+    · simp [Prod.fst_sum]
+    · simp [Prod.snd_sum, smul_eq_mul]
+  rw [hsum] at hmem
+  exact mk_mem_epi.1 hmem
+
+end Jensen
 
 /-! ### Rays and difference quotients -/
 
@@ -386,6 +425,324 @@ theorem HasGradientAt.unique {f₁' f₂' : StrongDual ℝ E} (h₁ : HasGradien
     have h2' : f z = ((g₂ z : ℝ) : EReal) := h2
     exact_mod_cast h1'.symm.trans h2'
   exact hd₁.unique (hd₂.congr_of_eventuallyEq hgg)
+
+/-! ### Theorem 25.2, sufficiency -/
+
+section Sufficiency
+
+variable {ι : Type*} [Finite ι]
+
+/-- The **two-sided one-dimensional estimate** behind Theorem 25.2. If the directional derivatives
+of `f` at `x` along `v` and `-v` are `c` and `-c`, then for every `η > 0` there is a step `a₀ > 0`
+with
+
+```
+f (x + t • v) ≤ f x + t * c + |t| * η        whenever |t| ≤ a₀,
+```
+
+for `t` of *either* sign. Both halves are `exists_le_of_dirDeriv_lt`; on the negative side it is
+applied in the direction `-v`, and the linear term survives unchanged because `(-t) * (-c) = t * c`
+while the error term picks up `|t| = -t`. -/
+theorem exists_forall_abs_le_of_dirDeriv_eq (hf : ConvexFn f) {r : ℝ} (hr : f x = (r : EReal))
+    {v : E} {c η : ℝ} (hη : 0 < η) (hpos : dirDeriv f x v = (c : EReal))
+    (hneg : dirDeriv f x (-v) = ((-c : ℝ) : EReal)) :
+    ∃ a₀ : ℝ, 0 < a₀ ∧ ∀ t : ℝ, |t| ≤ a₀ →
+      f (x + t • v) ≤ ((r + t * c + |t| * η : ℝ) : EReal) := by
+  obtain ⟨a₁, ha₁, h₁⟩ := exists_le_of_dirDeriv_lt hf hr (y := v) (m := c + η)
+    (by rw [hpos]; exact_mod_cast lt_add_of_pos_right c hη)
+  obtain ⟨a₂, ha₂, h₂⟩ := exists_le_of_dirDeriv_lt hf hr (y := -v) (m := -c + η)
+    (by rw [hneg]; exact_mod_cast lt_add_of_pos_right (-c) hη)
+  refine ⟨min a₁ a₂, lt_min ha₁ ha₂, fun t ht => ?_⟩
+  rcases lt_trichotomy t 0 with hlt | rfl | hgt
+  · have habs : |t| = -t := abs_of_neg hlt
+    rw [habs] at ht
+    have hle := h₂ (-t) (by linarith) (ht.trans (min_le_right _ _))
+    rw [neg_smul_neg] at hle
+    refine hle.trans (le_of_eq ?_)
+    rw [_root_.EReal.coe_eq_coe_iff, habs]
+    ring
+  · rw [zero_smul, add_zero, hr, _root_.EReal.coe_le_coe_iff]
+    simp
+  · have habs : |t| = t := abs_of_pos hgt
+    rw [habs] at ht
+    have hle := h₁ t hgt (ht.trans (min_le_left _ _))
+    refine hle.trans (le_of_eq ?_)
+    rw [_root_.EReal.coe_eq_coe_iff, habs]
+    ring
+
+/-- **Rockafellar, Theorem 25.2**, sufficiency, quantitatively: two-sided directional derivatives
+along a *basis* already force the tangent affine estimate
+
+```
+f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖
+```
+
+on a ball whose radius depends only on `ε`.
+
+Finite-dimensionality enters through a *cross-polytope* decomposition rather than through
+compactness of the unit sphere, which makes the argument quantitative and basis-free at the end.
+Writing `z - x = ∑ ξ j • b j` and `S = ∑ |ξ j|`, the point `z` is the convex combination, with
+weights `|ξ j| / S`, of the points `x + (S * sign (ξ j)) • b j`; each of those sits at distance `S`
+from `x` along a basis direction, where `exists_forall_abs_le_of_dirDeriv_eq` applies. The linear
+terms recombine into `⟨z - x, y₀⟩` exactly, and the error term is `S * η`, which is at most
+`ε ‖z - x‖` once `η` is scaled by the constant relating `∑ |ξ j|` to `‖z - x‖`. -/
+theorem exists_le_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E] (b : Module.Basis ι ℝ E)
+    (hf : ConvexFn f) {r : ℝ} (hr : f x = (r : EReal)) {y₀ : StrongDual ℝ E}
+    (hpos : ∀ j, dirDeriv f x (b j) = ((y₀ (b j) : ℝ) : EReal))
+    (hneg : ∀ j, dirDeriv f x (-(b j)) = ((-(y₀ (b j)) : ℝ) : EReal))
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ δ : ℝ, 0 < δ ∧ ∀ z : E, ‖z - x‖ ≤ δ →
+      f z ≤ ((r + y₀ (z - x) + ε * ‖z - x‖ : ℝ) : EReal) := by
+  classical
+  obtain ⟨hι⟩ := nonempty_fintype ι
+  obtain ⟨K, hK, hcoord⟩ : ∃ K : ℝ, 0 < K ∧ ∀ w : E, ∑ j, |b.repr w j| ≤ K * ‖w‖ := by
+    set T : E →L[ℝ] (ι → ℝ) := LinearMap.toContinuousLinearMap (b.equivFun : E →ₗ[ℝ] (ι → ℝ))
+      with hT
+    refine ⟨(Fintype.card ι : ℝ) * ‖T‖ + 1, by positivity, fun w => ?_⟩
+    have hbound : ∀ j : ι, |b.repr w j| ≤ ‖T‖ * ‖w‖ := by
+      intro j
+      have hTj : T w j = b.repr w j := by rw [hT]; simp [Module.Basis.equivFun_apply]
+      have h1 : |b.repr w j| ≤ ‖T w‖ := by
+        rw [← hTj]
+        simpa using norm_le_pi_norm (T w) j
+      exact h1.trans (T.le_opNorm w)
+    calc ∑ j, |b.repr w j| ≤ ∑ _j : ι, ‖T‖ * ‖w‖ := Finset.sum_le_sum fun j _ => hbound j
+      _ = (Fintype.card ι : ℝ) * (‖T‖ * ‖w‖) := by
+          rw [Finset.sum_const, nsmul_eq_mul, Finset.card_univ]
+      _ ≤ ((Fintype.card ι : ℝ) * ‖T‖ + 1) * ‖w‖ := by nlinarith [norm_nonneg w]
+  set η : ℝ := ε / K with hηdef
+  have hη : 0 < η := div_pos hε hK
+  have hstep : ∀ j : ι, ∃ a₀ : ℝ, 0 < a₀ ∧ ∀ t : ℝ, |t| ≤ a₀ →
+      f (x + t • b j) ≤ ((r + t * y₀ (b j) + |t| * η : ℝ) : EReal) := fun j =>
+    exists_forall_abs_le_of_dirDeriv_eq hf hr hη (hpos j) (hneg j)
+  choose A hA hA' using hstep
+  obtain ⟨c, hc, hcA⟩ : ∃ c : ℝ, 0 < c ∧ ∀ j, c ≤ A j := by
+    rcases isEmpty_or_nonempty ι with hι | hι
+    · exact ⟨1, one_pos, fun j => (IsEmpty.false j).elim⟩
+    · obtain ⟨j₀, -, hj₀⟩ := Finset.exists_min_image (Finset.univ : Finset ι) A
+        ⟨Classical.arbitrary ι, Finset.mem_univ _⟩
+      exact ⟨A j₀, hA j₀, fun j => hj₀ j (Finset.mem_univ j)⟩
+  refine ⟨c / K, div_pos hc hK, fun z hz => ?_⟩
+  set w : E := z - x with hwdef
+  set ξ : ι → ℝ := fun j => b.repr w j with hξdef
+  have hrepr : ∑ j, ξ j • b j = w := by
+    simp [hξdef]
+  have hy₀w : ∑ j, ξ j * y₀ (b j) = y₀ w := by
+    rw [← hrepr, map_sum]
+    exact Finset.sum_congr rfl fun j _ => by rw [map_smul, smul_eq_mul]
+  set S : ℝ := ∑ j, |ξ j| with hSdef
+  have hS0 : 0 ≤ S := Finset.sum_nonneg fun j _ => abs_nonneg _
+  have hSK : S ≤ K * ‖w‖ := hcoord w
+  have hSc : S ≤ c := by
+    refine hSK.trans ?_
+    have hle : K * ‖w‖ ≤ K * (c / K) := mul_le_mul_of_nonneg_left hz hK.le
+    rwa [mul_div_cancel₀ c hK.ne'] at hle
+  rcases hS0.eq_or_lt with hS | hSpos
+  · have hzero : ∀ j, ξ j = 0 := by
+      intro j
+      have h := (Finset.sum_eq_zero_iff_of_nonneg fun j _ => abs_nonneg (ξ j)).1 hS.symm j
+        (Finset.mem_univ j)
+      exact abs_eq_zero.1 h
+    have hw0 : w = 0 := by rw [← hrepr]; simp [hzero]
+    have hzx : z = x := by
+      rw [hwdef] at hw0
+      exact sub_eq_zero.1 hw0
+    rw [hzx, hw0, hr]
+    simp
+  · set σ : ι → ℝ := fun j => if 0 ≤ ξ j then 1 else -1 with hσdef
+    have habs : ∀ j, |S * σ j| = S := by
+      intro j
+      rw [abs_mul, abs_of_pos hSpos, hσdef]
+      by_cases hj : 0 ≤ ξ j <;> simp [hj]
+    have hmul : ∀ j, |ξ j| * σ j = ξ j := by
+      intro j
+      rw [hσdef]
+      by_cases hj : 0 ≤ ξ j
+      · simp [hj, abs_of_nonneg hj]
+      · simp [hj, abs_of_neg (not_le.1 hj)]
+    have hcoef : ∀ j : ι, (|ξ j| / S) * (S * σ j) = ξ j := by
+      intro j
+      have h : (|ξ j| / S) * (S * σ j) = (|ξ j| * σ j) * (S / S) := by ring
+      rw [h, div_self hSpos.ne', mul_one, hmul j]
+    have hw1 : ∑ j, |ξ j| / S = 1 := by
+      rw [← Finset.sum_div, ← hSdef]
+      exact div_self hSpos.ne'
+    have hmem : ∀ j ∈ (Finset.univ : Finset ι),
+        f (x + (S * σ j) • b j) ≤ ((r + (S * σ j) * y₀ (b j) + S * η : ℝ) : EReal) := by
+      intro j _
+      have h := hA' j (S * σ j) (by rw [habs j]; exact hSc.trans (hcA j))
+      rwa [habs j] at h
+    have hjensen : f (∑ j, (|ξ j| / S) • (x + (S * σ j) • b j)) ≤
+        ((∑ j, (|ξ j| / S) * (r + (S * σ j) * y₀ (b j) + S * η) : ℝ) : EReal) :=
+      hf.sum_le _ _ _ _ hmem (fun j _ => div_nonneg (abs_nonneg _) hSpos.le) hw1
+    have hpt : ∑ j, (|ξ j| / S) • (x + (S * σ j) • b j) = z := by
+      have hterm : ∀ j : ι,
+          (|ξ j| / S) • (x + (S * σ j) • b j) = (|ξ j| / S) • x + ξ j • b j := by
+        intro j
+        rw [smul_add, smul_smul, hcoef j]
+      calc ∑ j, (|ξ j| / S) • (x + (S * σ j) • b j)
+          = ∑ j, ((|ξ j| / S) • x + ξ j • b j) := Finset.sum_congr rfl fun j _ => hterm j
+        _ = (∑ j, |ξ j| / S) • x + ∑ j, ξ j • b j := by
+            rw [Finset.sum_add_distrib, ← Finset.sum_smul]
+        _ = x + w := by rw [hw1, one_smul, hrepr]
+        _ = z := by rw [hwdef]; abel
+    have hval : ∑ j, (|ξ j| / S) * (r + (S * σ j) * y₀ (b j) + S * η) = r + y₀ w + S * η := by
+      have hterm : ∀ j : ι, (|ξ j| / S) * (r + (S * σ j) * y₀ (b j) + S * η)
+          = (|ξ j| / S) * r + ξ j * y₀ (b j) + (|ξ j| / S) * (S * η) := by
+        intro j
+        have h : (|ξ j| / S) * (r + (S * σ j) * y₀ (b j) + S * η)
+            = (|ξ j| / S) * r + ((|ξ j| / S) * (S * σ j)) * y₀ (b j) + (|ξ j| / S) * (S * η) := by
+          ring
+        rw [h, hcoef j]
+      calc ∑ j, (|ξ j| / S) * (r + (S * σ j) * y₀ (b j) + S * η)
+          = ∑ j, ((|ξ j| / S) * r + ξ j * y₀ (b j) + (|ξ j| / S) * (S * η)) :=
+            Finset.sum_congr rfl fun j _ => hterm j
+        _ = (∑ j, |ξ j| / S) * r + (∑ j, ξ j * y₀ (b j)) + (∑ j, |ξ j| / S) * (S * η) := by
+            rw [Finset.sum_add_distrib, Finset.sum_add_distrib, ← Finset.sum_mul, ← Finset.sum_mul]
+        _ = r + y₀ w + S * η := by rw [hw1, one_mul, one_mul, hy₀w]
+    rw [hpt, hval] at hjensen
+    refine hjensen.trans ?_
+    rw [_root_.EReal.coe_le_coe_iff]
+    have hSη : S * η ≤ ε * ‖w‖ := by
+      calc S * η ≤ (K * ‖w‖) * η := mul_le_mul_of_nonneg_right hSK hη.le
+        _ = ε * ‖w‖ := by rw [hηdef]; field_simp
+    linarith
+
+/-- The estimate of `exists_le_of_forall_basis_dirDeriv_eq` recovers `f'(x; ·)` in *every*
+direction, not only along the basis: it bounds `f'(x; v)` above by `⟨v, y₀⟩`, and Theorem 23.1's
+`-f'(x; -v) ≤ f'(x; v)` supplies the matching lower bound. This is the step that turns
+Rockafellar's `n` two-sided partial derivatives into the linearity of `f'(x; ·)`; his own route is
+through Theorems 7.2 and 4.8, which need `f'(x; ·)` to be proper first. -/
+theorem dirDeriv_eq_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
+    (b : Module.Basis ι ℝ E) (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥)
+    {y₀ : StrongDual ℝ E} (hpos : ∀ j, dirDeriv f x (b j) = ((y₀ (b j) : ℝ) : EReal))
+    (hneg : ∀ j, dirDeriv f x (-(b j)) = ((-(y₀ (b j)) : ℝ) : EReal)) (v : E) :
+    dirDeriv f x v = ((y₀ v : ℝ) : EReal) := by
+  obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hb (lt_top_iff_ne_top.2 ht)
+  have hle : ∀ u : E, dirDeriv f x u ≤ ((y₀ u : ℝ) : EReal) := by
+    intro u
+    rcases eq_or_ne u 0 with rfl | hu
+    · rw [dirDeriv_zero ht hb]
+      simp
+    have hnu : 0 < ‖u‖ := norm_pos_iff.2 hu
+    have hnu' : ‖u‖ ≠ 0 := hnu.ne'
+    by_contra hcon
+    obtain ⟨m, hm₁, hm₂⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 (not_le.1 hcon)
+    have hm' : y₀ u < m := by exact_mod_cast hm₁
+    obtain ⟨δ, hδ, hup⟩ := exists_le_of_forall_basis_dirDeriv_eq b hf hr hpos hneg
+      (div_pos (sub_pos.2 hm') hnu)
+    set a : ℝ := min (δ / ‖u‖) 1 with hadef
+    have ha : 0 < a := lt_min (div_pos hδ hnu) one_pos
+    have hnorm : ‖x + a • u - x‖ ≤ δ := by
+      rw [add_sub_cancel_left, norm_smul, Real.norm_eq_abs, abs_of_pos ha]
+      calc a * ‖u‖ ≤ (δ / ‖u‖) * ‖u‖ := mul_le_mul_of_nonneg_right (min_le_left _ _) hnu.le
+        _ = δ := div_mul_cancel₀ δ hnu'
+    have hbound := hup (x + a • u) hnorm
+    rw [add_sub_cancel_left] at hbound
+    have hfinal : dirDeriv f x u ≤ (m : EReal) := by
+      refine (dirDeriv_le f x u ha).trans ?_
+      rw [hr, Tdaf.EReal.sub_div_le_coe_iff ha]
+      refine hbound.trans (le_of_eq ?_)
+      rw [_root_.EReal.coe_eq_coe_iff, map_smul, smul_eq_mul, norm_smul, Real.norm_eq_abs,
+        abs_of_pos ha]
+      field_simp
+      ring
+    exact absurd hfinal (not_le.2 hm₂)
+  refine le_antisymm (hle v) ?_
+  have hneg' := hle (-v)
+  rw [map_neg] at hneg'
+  have h2 := _root_.EReal.neg_le_neg_iff.2 hneg'
+  rw [← _root_.EReal.coe_neg, neg_neg] at h2
+  exact h2.trans (neg_dirDeriv_neg_le hf ht hb v)
+
+/-- **Rockafellar, Theorem 25.2**, sufficiency, from two-sided derivatives along a basis: `f` is
+Fréchet differentiable at `x`, with gradient the functional `y₀` whose values along the basis are
+the given one-sided derivatives.
+
+The two-sided estimate `f x + ⟨z - x, y₀⟩ ≤ f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖` does all three
+jobs at once: the lower half comes from `y₀ ∈ ∂f x` (Theorem 23.2), the upper half is
+`exists_le_of_forall_basis_dirDeriv_eq`, and together they make `f` finite near `x` — so that the
+local real representative `z ↦ (f z).toReal` exists — and exhibit the little-o estimate defining
+`HasFDerivAt`. -/
+theorem hasGradientAt_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
+    (b : Module.Basis ι ℝ E) (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥)
+    {y₀ : StrongDual ℝ E} (hpos : ∀ j, dirDeriv f x (b j) = ((y₀ (b j) : ℝ) : EReal))
+    (hneg : ∀ j, dirDeriv f x (-(b j)) = ((-(y₀ (b j)) : ℝ) : EReal)) :
+    HasGradientAt f y₀ x := by
+  obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hb (lt_top_iff_ne_top.2 ht)
+  have hall := dirDeriv_eq_of_forall_basis_dirDeriv_eq b hf ht hb hpos hneg
+  have hsubg : y₀ ∈ subgradient (topDualPairing ℝ E).flip f x :=
+    (mem_subgradient_iff_le_dirDeriv ht hb).2 fun v => le_of_eq (hall v).symm
+  have hlow : ∀ z : E, ((r + y₀ (z - x) : ℝ) : EReal) ≤ f z := by
+    intro z
+    have h := hsubg z
+    rwa [hr, show ((topDualPairing ℝ E).flip (z - x)) y₀ = y₀ (z - x) from rfl,
+      ← _root_.EReal.coe_add] at h
+  obtain ⟨δ₁, hδ₁, hup₁⟩ := exists_le_of_forall_basis_dirDeriv_eq b hf hr hpos hneg one_pos
+  have hfin : ∀ z : E, ‖z - x‖ ≤ δ₁ → f z = (((f z).toReal : ℝ) : EReal) := by
+    intro z hz
+    refine (_root_.EReal.coe_toReal (ne_top_of_le_ne_top (_root_.EReal.coe_ne_top _)
+      (hup₁ z hz)) ?_).symm
+    intro hbot
+    have h := hlow z
+    rw [hbot, le_bot_iff] at h
+    exact absurd h (_root_.EReal.coe_ne_bot _)
+  have hfg : f =ᶠ[𝓝 x] fun z => (((f z).toReal : ℝ) : EReal) := by
+    filter_upwards [Metric.closedBall_mem_nhds x hδ₁] with z hz
+    exact hfin z (by rwa [Metric.mem_closedBall, dist_eq_norm] at hz)
+  have hgx : (f x).toReal = r := by rw [hr, _root_.EReal.toReal_coe]
+  refine ⟨fun z => (f z).toReal, hfg, ?_⟩
+  rw [hasFDerivAt_iff_isLittleO, Asymptotics.isLittleO_iff]
+  intro ε hε
+  obtain ⟨δ, hδ, hup⟩ := exists_le_of_forall_basis_dirDeriv_eq b hf hr hpos hneg hε
+  filter_upwards [Metric.closedBall_mem_nhds x (lt_min hδ hδ₁)] with z hz
+  have hzn : ‖z - x‖ ≤ min δ δ₁ := by rwa [Metric.mem_closedBall, dist_eq_norm] at hz
+  have h1 := hup z (hzn.trans (min_le_left _ _))
+  have h2 := hlow z
+  rw [hfin z (hzn.trans (min_le_right _ _)), _root_.EReal.coe_le_coe_iff] at h1 h2
+  rw [hgx, Real.norm_eq_abs, abs_le]
+  exact ⟨by linarith, by linarith⟩
+
+/-- **Rockafellar, Theorem 25.2**, sufficiency: if the directional derivative `f'(x; ·)` is the
+linear function `⟨·, y₀⟩`, then `f` is differentiable at `x` with `∇f x = y₀`.
+
+This is the previous theorem read at any basis; the hypothesis in every direction is more than the
+proof consumes. -/
+theorem hasGradientAt_of_dirDeriv_eq [FiniteDimensional ℝ E] (hf : ConvexFn f) (ht : f x ≠ ⊤)
+    (hb : f x ≠ ⊥) {y₀ : StrongDual ℝ E}
+    (h : ∀ v : E, dirDeriv f x v = ((y₀ v : ℝ) : EReal)) : HasGradientAt f y₀ x :=
+  hasGradientAt_of_forall_basis_dirDeriv_eq (Module.finBasis ℝ E) hf ht hb (fun j => h _)
+    (fun j => by rw [h, map_neg])
+
+/-- **Rockafellar, Theorem 25.2**, in full: for a convex function finite at `x`, differentiability
+at `x` is equivalent to linearity of `f'(x; ·)`. Necessity is `HasGradientAt.dirDeriv_eq` and
+sufficiency is `hasGradientAt_of_dirDeriv_eq`. -/
+theorem differentiableAtFn_iff_exists_dirDeriv_eq [FiniteDimensional ℝ E] (hf : ConvexFn f)
+    (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
+    DifferentiableAtFn f x ↔
+      ∃ y₀ : StrongDual ℝ E, ∀ v : E, dirDeriv f x v = ((y₀ v : ℝ) : EReal) := by
+  constructor
+  · rintro ⟨y₀, hy₀⟩
+    exact ⟨y₀, hy₀.dirDeriv_eq hf⟩
+  · rintro ⟨y₀, h⟩
+    exact ⟨y₀, hasGradientAt_of_dirDeriv_eq hf ht hb h⟩
+
+/-- **Rockafellar, Theorem 25.2**, last sentence: it is enough that the `n` two-sided partial
+derivatives exist and are finite. Here "the `n` partial derivatives" is the pair of one-sided
+derivatives along the vectors of a basis, and "two-sided and finite" is the requirement that they
+be the negatives of each other and real. The gradient is then `b.constr` of those numbers. -/
+theorem differentiableAtFn_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
+    (b : Module.Basis ι ℝ E) (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) (c : ι → ℝ)
+    (hpos : ∀ j, dirDeriv f x (b j) = ((c j : ℝ) : EReal))
+    (hneg : ∀ j, dirDeriv f x (-(b j)) = ((-(c j) : ℝ) : EReal)) :
+    DifferentiableAtFn f x := by
+  refine ⟨LinearMap.toContinuousLinearMap (b.constr ℝ c), ?_⟩
+  have hval : ∀ j, (LinearMap.toContinuousLinearMap (b.constr ℝ c)) (b j) = c j := fun j => by
+    simp
+  exact hasGradientAt_of_forall_basis_dirDeriv_eq b hf ht hb (fun j => by rw [hpos j, hval j])
+    (fun j => by rw [hneg j, hval j])
+
+end Sufficiency
 
 end Frechet
 
