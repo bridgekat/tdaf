@@ -36,6 +36,8 @@ first factor.
   `concaveBifun_adjointBifun` — **Theorem 30.1**: `F*` is a *closed* concave bifunction, with no
   hypothesis on `F` at all.
 * `concaveAdjointBifun_adjointBifun_eq_clBifun` — **Theorem 30.1**'s biconjugation, `F** = cl F`;
+* `exists_adjointBifun_ne_bot` — **Theorem 30.1**'s properness half: the adjoint of a closed
+  proper convex bifunction is finite somewhere.
   `concaveAdjointBifun_adjointBifun_eq_self` is the fixed-point form for closed convex `F`.
 * `adjointBifun_zero_eq_concaveConj` — **Theorem 30.2**: the dual objective `F* 0` is the *concave*
   conjugate of the concave function `-inf F`.
@@ -499,6 +501,21 @@ bifunction. -/
 theorem concaveAdjointBifun_adjointBifun_eq_self (hF : ConvexBifun F) (hcl : ClosedBifun F) :
     concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) = F := by
   rw [concaveAdjointBifun_adjointBifun_eq_clBifun hF, hcl.clBifun_eq]
+
+/-- **Rockafellar, Theorem 30.1**, properness half: the adjoint of a *closed proper* convex
+bifunction is finite somewhere.
+
+`concaveFn_graphFn_adjointBifun` and `closedConcaveFn_graphFn_adjointBifun` say that `F*` is
+closed concave with no hypothesis at all; this supplies the remaining clause of "`F*` is a closed
+proper concave bifunction". The proof is Theorem 12.2's properness half (`proper_conj`) read
+through `adjointBifun_eq_neg_conj_graphFn`: `F*` is the negated conjugate of the graph function at
+a reflected point, so `F*` is somewhere `> -∞` exactly when `(graph F)*` is somewhere `< +∞`. -/
+theorem exists_adjointBifun_ne_bot (hF : ClosedProperConvexFn (graphFn F)) :
+    ∃ (y : Y) (v : V), adjointBifun Bu Bx F y v ≠ ⊥ := by
+  obtain ⟨q, hq⟩ := (proper_conj (B := prodPairing Bu Bx) hF).dom_nonempty
+  refine ⟨q.2, -q.1, ?_⟩
+  rw [adjointBifun_eq_neg_conj_graphFn, neg_neg]
+  simpa using hq.ne
 
 end Thm301
 

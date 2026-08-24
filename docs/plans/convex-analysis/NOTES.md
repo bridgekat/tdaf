@@ -3761,8 +3761,8 @@ the hypothesis is exactly `IsExactSum B (-g₁) (-g₂)`.
 ### `Tdaf/Analysis/Convex/Bifunction/Algebra.lean`
 
 The **convex algebra** of bifunctions: the operations that mirror the linear algebra of linear
-maps, and the inner product that adjoints move across. §38, except Theorem 38.2 with Corollary
-38.2.1 and Corollaries 38.4.1 and 38.5.1.
+maps, and the inner product that adjoints move across. §38, except Corollary 38.2.1,
+Corollary 38.7.2 and the co-finiteness remark.
 
 ```lean
 noncomputable def infConvBifun …    -- `F₁ □ F₂`, the analogue of `A₁ + A₂`
@@ -3795,12 +3795,15 @@ already excludes the degenerate branch, which is stated separately and unconditi
 **`(F* g*)(v) ≠ ⊤` is not automatic** — a supremum of finite terms can be `⊤` — but it is bounded
 uniformly in `y`, because the two `⟨x₀, y⟩` terms cancel (`concaveImageBifun_adjointBifun_ne_top`).
 
-**Not here**: Theorem 38.2 and Corollary 38.2.1 (`(F₁ □ F₂)* = F₁* □ F₂*`), which need the *concave*
-orientation of Theorem 16.4 — `Duality/Exact.lean` has only the convex `IsExactSum.conj_add`, and
-per design decision D2 the concave transfer is hand-written, which here also needs a concave
-`supConv` that does not exist. Corollaries 38.4.1 and 38.5.1 assert closedness of `Ff` / `GF`
-*together with* `(Ff)* = cl (F⫶* f*)`; the missing piece is "closure commutes with
-`imageBifun` / `compBifun`", which is Theorem 38.2's argument again.
+**Not here**: Corollary 38.2.1 (`(F₁ □ F₂)* = cl (F₁* □ F₂*)`). Theorem 38.2 *is* here — it is
+Theorem 38.1 followed by `concaveConj_add_of_isExactSum` (`Duality/ConcaveOps.lean`), so the
+closure step of Rockafellar's proof never arises. The corollary is Theorem 38.2 applied to the
+adjoints, which convolve in the *first* variable of the bifunction, and that convolution
+together with its adjoint formula does not exist yet; the `What is not here` list in
+`Bifunction/Algebra.lean` spells out the two-step proof. Corollaries 38.4.1 and 38.5.1 are
+both here now: each exhibits its composite as a `lowerAdjointBifun`, which is closed with no
+hypothesis (`closedBifun_lowerAdjointBifun`), so "closure commutes with `imageBifun` /
+`compBifun`" is never needed.
 
 **Relocation candidate**: `infConv_indicatorFn` (`δ(·∣S) □ δ(·∣T) = δ(·∣S+T)`) belongs in
 `Operations/InfConv.lean`, which currently has only the singleton case.
@@ -4925,6 +4928,44 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
      "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
      a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+274. **`lake` 5.0.0 has no `-j` / `--jobs` option**, so the job count cannot be capped from the
+     command line; `LEAN_NUM_THREADS=3` caps threads *inside* each `lean` process instead. Related:
+     a `python - <<'EOF'` heredoc prints to a cp936 stdout on this machine, so a `print` of a
+     string containing an unusual character raises `UnicodeEncodeError` *after* the file has
+     already been written — the traceback is misleading (gotcha 230's sibling). Prefer extracting
+     an unusual character from the file being edited over hand-writing a backslash-u escape, which
+     the shell may also mangle inside a heredoc.
+
+273. **`map_smul` does not reach a scalar sitting in front of an *applied* linear map.** After
+     `simp only [map_smul, smul_eq_mul]` a goal can still contain `(l • Bx p) y`;
+     `LinearMap.smul_apply` is the lemma that turns it into `l * Bx p y`, and without it
+     `field_simp` reports the un-normalised form and fails.
+
+272. **`lowerAdjointBifun A B H v y` is *defined* as `-(adjointBifun A B H y v)`, so a goal
+     `adjointBifun … y v = -(lowerAdjointBifun … v y)` is `a = - -a` and `rfl` fails.** Close it
+     with `exact (neg_neg _).symm`. The same trap appears whenever a sign is moved across the
+     `F*` / `F⁎*` reflection.
+
+271. **`rw [EReal.neg_add h₁ h₂]` takes its implicit `a` and `b` from the *types of the side
+     conditions you pass*.** Supplying `hG.proper.ne_bot (x, y) : graphFn G (x, y) ≠ ⊥` makes the
+     rewrite look for `-(graphFn G (x, y) + …)`, which does not occur in a goal written with
+     `G x y` — even though the two are definitionally equal. Bind the side conditions in the
+     goal's own spelling (`have hGb : G x y ≠ ⊥ := hG.proper.ne_bot (x, y)`) before rewriting.
+
+270. **`EReal.bot_add_of_ne_bot` does not exist, although `EReal.top_add_of_ne_bot` does.** For the
+     `⊥` case of an induction over `EReal`, `simp [EReal.coe_mul_bot_of_pos hl]` closes what the
+     missing lemma would have; the `⊤` case still needs `EReal.top_add_of_ne_bot` explicitly,
+     because `simp` normalises `↑(l * c)` to `↑l * ↑c` and then cannot see the coercion.
+
+269. **A worktree's `.lake/build` can be stale while `lake` reports it up to date.** The symptom is
+     "Unknown identifier `foo`" in a file you did not touch, where `foo` was added by a commit the
+     worktree *does* contain, reproducible across runs, and `lake build -H` (`--rehash`) does not
+     detect it — the `.hash`/`.trace` files were regenerated without the `.olean` being rebuilt.
+     Diagnose with `grep -c foo <Module>.olean`: Lean 4 oleans store declaration names verbatim, so
+     a zero count on a module whose source defines `foo` proves the artifact is stale. The fix is
+     to delete the library's build tree (`rm -rf .lake/build/lib/lean/Tdaf .lake/build/ir/Tdaf`
+     plus the top-level `Tdaf.olean*`) and rebuild; touching files does nothing (gotcha 223).
 
 267. **Rewrite the *argument* of a pairing before applying a real-valued `Tendsto` lemma.**
      `simp only [affineFn_eq_coe, hlin]` with
