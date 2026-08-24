@@ -1754,8 +1754,10 @@ stronger, which is exactly Rockafellar's point: `D` is only "almost convex".
 
 **Theorem 26.6 states co-finiteness as `dom f* = E`.** Rockafellar defines it through the recession
 function (`f0+` is `+∞` off the origin) and only then identifies it with `dom f* = Rⁿ`, by
-Corollary 13.3.1; the recession function is not in the library, so the equation is the definition
-here. Everything else in Theorem 26.6 is Theorem 26.5 with `interior (dom f) = E`, which also makes
+Corollary 13.3.1. The recession function *is* in the library — `Cofinite` in `Duality/Level.lean`,
+with `cofinite_iff_dom_conj_eq_univ` — but it does not enter Theorem 26.6's proof, so the equation
+is what this file uses; `Subgradient/Cofinite.lean` (Lemma 26.7) states the `Cofinite` form.
+Everything else in Theorem 26.6 is Theorem 26.5 with `interior (dom f) = E`, which also makes
 essential smoothness automatic — condition (c) quantifies over points outside the interior, and
 there are none.
 
@@ -1781,6 +1783,106 @@ subdifferential is a gradient by Theorem 25.1's converse. Essential smoothness n
 **`w` had to be untranslated.** `Prox.lean` proves everything for `w (z - ·)`, because that is what
 the Moreau objective needs; the subdifferential and exactness facts for `w` itself are the `z = 0`
 instances, and `quadFn_zero_sub` is the one-line bridge.
+
+### `Tdaf/Analysis/Convex/Subgradient/BoundaryDirDeriv.lean`
+
+§26's **Lemma 26.2**: condition (c) of essential smoothness, in directional-derivative form.
+
+```lean
+theorem closedFn_lineRestrict …                                 -- a closed `f` restricted to a line is closed
+theorem proper_lineRestrict_of_mem_dom …                        -- base point need not lie in `dom f`
+theorem rightDeriv_lineRestrict_eq_dirDeriv …                   -- `g'₊(t) = f'(x + t y; y)`, also where `g t = ⊤`
+theorem tendsto_dirDeriv_lineRestrict …                         -- **Thm 24.1** along the segment `[x, a]`
+theorem rightDeriv_lineRestrict_zero_eq_bot_iff …               -- `g'₊(0) = −∞ ↔ ∂f x = ∅`
+theorem subgradient_eq_empty_iff_tendsto_norm_fderiv …          -- condition (c) at `x` is `∂f x = ∅`
+theorem essentiallySmooth_iff_tendsto_dirDeriv …                -- **Lemma 26.2**
+```
+
+**Both conditions are `∂f x = ∅`, and that is the whole proof.** Condition (c) is Theorem 24.4 in
+one direction (a bounded subsequence of gradients has a convergent sub-subsequence, whose limit is
+a subgradient) and Theorem 25.6 in the other (a subgradient makes `S(x)` non-empty). Condition (c')
+is Theorem 24.1 on the restriction `g(t) = f(x + t(a − x))` — `lim_{t ↓ 0} g'₊(t) = g'₊(0)` — plus
+Theorem 23.3 with Theorem 7.2 for `g'₊(0) = f'(x; a − x)`, which is
+`dirDeriv_eq_bot_of_subgradient_eq_empty`. The two halves of Theorem 26.1's own proof are exactly
+`subgradient_eq_empty_iff_tendsto_norm_fderiv`, now extracted and named.
+
+**`proper_lineRestrict` was not enough.** It asks for the *base point* of the line to lie in
+`dom f`, and Lemma 26.2's base point `x` is precisely the one that may not; the line still meets
+`dom f` at `t = 1`, which is what `proper_lineRestrict_of_mem_dom` asks for instead.
+
+**The `x ∉ dom f` branch is not a degenerate case, it is half the lemma.** There `g 0 = ⊤`, so
+`rightDeriv g 0 = ⊥` by fiat (`rightDeriv_eq_bot_of_eq_top`) and `∂f x = ∅` because a subgradient
+would put `x` in `dom f` — both sides of the equivalence hold, with no analysis at all.
+
+**`f` is assumed closed, where the book says "no loss of generality".** Rockafellar replaces `f` by
+`cl f` because (c) and (c') see only `C = int (dom f)`; transporting both conditions across `cl f`
+costs more than it saves, and every §26 consumer already carries `ClosedFn f`.
+
+### `Tdaf/Analysis/Convex/Subgradient/Preservation.lean`
+
+§26's **Corollaries 26.3.2 and 26.3.3**: essential smoothness under `□` and under linear images.
+
+```lean
+theorem StrictConvexOnFn.add_convexFn …                         -- layer A: strict + convex is strict
+theorem StrictConvexOnFn.compLin …                              -- layer A: pull back along an injection
+theorem IsExactSum.essentiallySmooth_infConv …                  -- **Cor 26.3.2**, D5 form
+theorem essentiallySmooth_infConv_of_relint …                   -- **Cor 26.3.2**, the book's `ri` form
+theorem IsExactImage.essentiallySmooth_mapLin …                 -- **Cor 26.3.3**, D5 form
+theorem essentiallySmooth_mapLin_of_relint …                    -- **Cor 26.3.3**, the book's `ri` form
+```
+
+**The `ri` hypotheses are D5 interfaces, and the `of_relint` bridges already existed.**
+`IsExactSum.of_relint` and `IsExactImage.of_relint` (`Duality/Relint.lean`) supply the instances
+from Rockafellar's `ri (dom f₁*) ∩ ri (dom f₂*) ≠ ∅` and `A' y* ∈ ri (dom f*)` respectively, so no
+new constraint qualification had to be built.
+
+**Corollary 26.3.3 instantiates `IsExactImage` at the transpose, not at `A`.** The identity being
+used is `A f = (f* A')*`, so the interface is `IsExactImage (innerₗ G) (innerₗ E) A' A hA f*`: the
+interface's "`A`" is the transpose `A' : G →ₗ E` and its "`A'`" is `A`. The adjointness datum
+`hA : IsAdjointPair (innerₗ G) (innerₗ E) A' A` unfolds to `⟪y, A x⟫ = ⟪A' y, x⟫`, which is the
+ordinary relation with the arguments in the order the interface wants.
+
+**"`A` onto" is only `Function.Injective A'`.** That is what the strict-convexity transfer consumes,
+so the interface-level theorem asks for the injectivity and
+`injective_of_isAdjointPair_of_surjective` derives it for the `ri` corollary.
+
+**Finiteness on `C` is a hypothesis of `StrictConvexOnFn.add_convexFn`.** Where `f x = ⊤` the strict
+inequality for `f` is vacuous while the one for `f + g` is not, so both summands must be known real
+on `C`. At the use site `C ⊆ dom ∂(f₁* + f₂*) ⊆ dom (f₁* + f₂*)` and `dom_add` splits it.
+
+### `Tdaf/Analysis/Convex/Subgradient/Cofinite.lean`
+
+§26's **Lemma 26.7**: co-finiteness as blow-up of `‖∇f‖` at infinity.
+
+```lean
+theorem forall_tendsto_norm_atTop_iff_isBounded …               -- sequences ↔ bounded sublevel sets of `‖g‖`
+theorem isBounded_setOf_norm_gradient_le_of_dom_conj_eq_univ …  -- easy half, **Thm 24.7**
+theorem gradientRange_subset_interior_dom_conj_of_isBounded …   -- `∇f(E)` is open
+theorem isClosed_gradientRange_of_isBounded …                   -- `∇f(E)` is closed
+theorem cofinite_iff_forall_tendsto_norm_gradient_atTop …       -- **Lemma 26.7**
+```
+
+**Recast the sequential condition first.** "`‖∇f xᵢ‖ → ∞` whenever `‖xᵢ‖ → ∞`" is equivalent to
+"`{x | ‖∇f x‖ ≤ b}` is bounded for every `b`", by a lemma with no convexity in it at all
+(`forall_tendsto_norm_atTop_iff_isBounded`). Doing this before touching convexity removes *every*
+sequence extraction from the mathematics.
+
+**The hard half is connectedness, not a boundary point.** Rockafellar picks a boundary point `x*`
+of `dom f*` and splits on `∂f*(x*)` being empty or unbounded. Producing that boundary point in Lean
+means running "the segment from an interior to an exterior point crosses the boundary", and the
+empty branch then needs a sequence in `ri (dom f*)` converging to `x*` plus Theorem 24.4. Instead:
+`D = ∇f(E)` is open (its normal cone in `dom f*` is trivial, Corollary 11.6.1) and closed
+(continuity of `∇f`, Theorem 25.5), `D` is non-empty, and `E` is connected. The book's two cases
+are the two ways `D` could fail to be clopen.
+
+**The half-line replaces "`∂f*(x*)` is unbounded".** `subgradient_add_normalCone_dom_subset`
+(`Subgradient/Calculus.lean`) says `∂f*(x*) + N_{dom f*}(x*) ⊆ ∂f*(x*)`, so a non-zero normal `n`
+puts `x + t n`, `t ≥ 0`, inside `∂f*(x*)` — every one of those points has gradient `x*`, so the
+sublevel set at height `‖x*‖` is unbounded. Theorem 23.4's boundedness clause is never used, which
+matters because it carries an `x ∈ ri (dom f)` hypothesis that would have to be supplied for `f*`.
+
+**Corollary 24.5.1 is not used either**, contrary to the prediction in `05-differential.md`. The
+easy half is Theorem 24.7 applied to a closed ball: `{x | ‖∇f x‖ ≤ b}` *is* `∂f*` of that ball.
 
 ### `Tdaf/Analysis/Convex/Optimization/Fenchel.lean`
 
@@ -5692,6 +5794,38 @@ will not rewrite a goal containing `partialCl₁ g`, even though the two are eta
      scratch file that `#check`s the declaration; fix by deleting that module's `.olean`, `.trace`
      and `.ilean` and rebuilding, which cascades correctly to its dependents. Touching the source
      does **not** help — `lake` traces content, not mtime.
+
+291. **`omit [inst] in` goes before the doc comment, not between it and `theorem`.** Putting it
+after the `/-- … -/` gives `unexpected token 'omit'; expected 'lemma'`, which does not say what is
+wrong. The order is `omit … in`, then the docstring, then the declaration.
+
+292. **`IsCompatiblePairing ((innerₗ E).flip)` is as invisible to instance search as the continuous
+version of gotcha 275.** Corollary 13.3.1 (`cofinite_iff_dom_conj_eq_univ`) needs it for
+`B := innerₗ E` and fails with "failed to synthesize instance". The named instance
+`isCompatiblePairing_flip_innerL` now sits beside `isContinuousPairing_flip_innerL` in
+`Subgradient/StrictlyConvex.lean`; both are one line of `rw [flip_innerₗ]; infer_instance`.
+
+293. **`simp` turns `⟪y, y⟫_ℝ = 0` into `0 = ‖y‖ ^ 2`, with the sides swapped.** So
+`simpa using h` fails against a goal `‖y‖ ^ 2 = 0` — `simpa using h.symm` is what works, and
+`inner_self_eq_zero.1 h` does not fire once `simp` has normalised the inner product away. Conclude
+with `norm_eq_zero.1 (by nlinarith [norm_nonneg y])`.
+
+294. **A hypothesis `h : x ∈ {z | P z}` must be re-ascribed before `linarith` sees `P x`.**
+`absurd (h : P x) (by linarith)` does *not* put `P x` into the `linarith` context — the tactic runs
+on the `¬ (x ∈ …)` goal instead and reports "failed to find a contradiction" with the hypothesis
+missing from the printed state. Write `have h' : P x := h` first. (`Set.mem_setOf_eq` is deprecated
+in this Mathlib in favour of `Set.mem_ofPred_eq`, so `simp only [Set.mem_setOf_eq]` also warns.)
+
+295. **Do not `rw [Function.comp_def]` to line up a composed sequence; use `Tendsto.congr`.**
+`IsCompact.tendsto_subseq` hands back `Tendsto (xs ∘ φ) atTop (𝓝 a)`, and composing with a
+continuous map gives a goal mentioning `(xs ∘ φ) x` that a `fun x => xs (φ x)` rewrite will not
+match. `(hlim.comp hφ.tendsto_atTop).congr fun n => (hgrad (φ n)).symm` is one line and needs no
+unfolding, because `Function.comp_apply` is `rfl`.
+
+296. **`Metric.isBounded_range_of_tendsto` bounds the *whole* range of a convergent sequence.**
+Reaching for `Tendsto.isBoundedUnder_le` gives only an eventual bound and then forces a reindexing
+`ws i = vs (i + N)` to feed `IsCompact.tendsto_subseq`, which wants `∀ n, xs n ∈ K`. The range
+version removes the reindexing entirely.
 
 ## 3. Build and verification
 
