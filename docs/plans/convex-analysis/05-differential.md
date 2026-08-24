@@ -280,10 +280,10 @@ limit set `∂(f'(x; ·))(y)` with the face of `∂f x` exposed by `y`.
 Note that Corollary 31.5.2 (`∂f` is maximal *monotone*) is a different and easier statement, proved
 from Moreau's theorem in §31, and does not wait on any of this.
 
-## 5.4 `Subgradient/Gradient.lean`, `Differentiability.lean` and `Rademacher.lean` — §25
+## 5.4 `Subgradient/Gradient.lean`, `Differentiability.lean`, `Rademacher.lean`, `GradientLimit.lean` and `Reconstruction.lean` — §25
 
-**Status: Theorems 25.1–25.5 are done in full, with Corollaries 25.1.1, 25.1.2, 25.1.3 and
-25.5.1. What is left of §25 is Theorems 25.6 and 25.7.** `Gradient.lean` holds the Frechet
+**Status: §25 is complete — Theorems 25.1–25.7 in full, with Corollaries 25.1.1, 25.1.2, 25.1.3
+and 25.5.1.** `Gradient.lean` holds the Frechet
 theory (25.1's forward half, 25.2) and the subgradient form of Cors 25.1.2–25.1.3;
 `Uniqueness.lean` holds Theorem 25.1's converse half and the differentiability form of those two
 corollaries; `Differentiability.lean` holds the one-variable theory (25.3, 25.4's continuity and
@@ -307,8 +307,8 @@ clause.
 | `measure_diff_twoSided_dirDeriv` | **Thm 25.4**, the measure-zero clause | done, `Rademacher.lean` — two lines from Theorem 25.5, with no `Sₖ` decomposition and no Fubini; the book's implication runs the other way |
 | `HasGradientAt.hasFDerivAt_toReal`, `hasGradientAt_of_hasFDerivAt_toReal`, `exists_lipschitzOnWith_ball`, `ae_differentiableAtFn`, `measure_diff_differentiableAtFn`, `interior_dom_subset_closure_differentiableAtFn`, `mem_subgradient_innerL_iff`, `subgradient_innerL_eq_singleton`, `continuousOn_fderiv_toReal` | **Thm 25.5**, all three clauses | done, `Rademacher.lean` — Mathlib's Rademacher theorem plus Theorem 10.4 on balls; the continuity clause is Cor 24.5.1 through the Riesz isometry |
 | `continuousOn_fderiv_of_convexOn` | **Cor 25.5.1** | done, `Rademacher.lean` — stated for Mathlib's `ConvexOn`, through `convexOn_iff_convexFn` |
-| `subgradient_eq_convexHull_limits_gradient` | Thm 25.6 | **not done** |
-| `tendsto_gradient_of_tendsto` | Thm 25.7 | **not done** |
+| `gradientLimits`, `gradientLimits_subset_subgradient`, `containsNoLine_subgradient`, `recessionCone_subgradient_subset_normalCone`, `exists_mem_interior_dom_of_forall_normalCone`, `exists_seq_differentiableAtFn_tendsto_dir`, `exposedPoints_subset_gradientLimits`, `subgradient_eq_closure_convexHull_gradientLimits_add_normalCone` | **Thm 25.6** | done, `Reconstruction.lean` — the recession cone of `∂f x` is never computed, and the separation step is `geometric_hahn_banach_open` rather than Thm 11.3 |
+| `dist_le_of_subgradient_subset`, `tendsto_of_hasGradientAt`, `tendstoUniformlyOn_fderiv_toReal` | **Thm 25.7**, both clauses | done, `GradientLimit.lean` — the pointwise clause is Thm 24.5 at a constant sequence; the uniform clause is the same theorem along a compactness subsequence, run once on the norm rather than one partial derivative at a time |
 
 ### What actually happened
 
@@ -382,11 +382,32 @@ proves *first* and which this plan filed as needing Fubini and a jump-counting i
 two-line corollary of Theorem 25.5 — differentiability supplies the two-sided derivative in every
 direction at once.
 
+**Theorem 25.6 needs the recession cone of `∂f x` only as an inclusion.** Rockafellar identifies
+`N_{dom f}(x)` with `0⁺(∂f x)` and uses the identification three times — to see that `∂f x`
+contains no lines, to place the extreme directions in the normal cone, and to bound `⟨y, y*⟩`.
+Each of the three follows more cheaply from the *inclusion* `∂f x + N_{dom f}(x) ⊆ ∂f x`
+(`subgradient_add_normalCone_dom_subset`, already in `Subgradient/Calculus.lean`) together with a
+"let `λ → ∞` in the subgradient inequality" argument that is the same three lines every time.
+`containsNoLine_subgradient` and `recessionCone_subgradient_subset_normalCone` are those arguments,
+and the equality of the two cones is never needed.
+
+**And its separation step is Mathlib's `geometric_hahn_banach_open`, not Theorem 11.3.** The book
+deduces from "the half-line `{x + αy}` cannot be *properly* separated from `dom f`" that it meets
+`int (dom f)`, citing Theorem 11.3 and then Theorem 6.1. What the argument actually needs is the
+contrapositive: if the half-line misses the open convex set `int (dom f)` then Hahn–Banach
+separates them, and the separating functional is a non-zero normal at `x` making a non-obtuse
+angle with `y`. Proper separation never enters.
+
+**The tolerance in the approach sequence has to be quadratic.** Theorem 24.6 needs the *direction*
+`‖xᵢ - x‖⁻¹(xᵢ - x)` to converge to `y`, not merely `xᵢ → x`; picking `xᵢ` within `εᵢ` of
+`x + εᵢ y` gives no control at all on the direction, and `εᵢ²` is what makes the error `4εᵢ`. That
+is `exists_seq_differentiableAtFn_tendsto_dir`, which is the whole of the book's "let `xᵢ` be a
+point of differentiability near `x + εᵢ y`".
+
 ## 5.5 `Subgradient/Legendre.lean` — §26
 
-**Status: Theorem 26.4 is done. Everything else in §26 is blocked on Theorem 26.1, which is blocked
-on Theorem 25.6 — now the *only* missing prerequisite, since Theorem 25.5 and the sufficiency half
-of Theorem 25.2 are both done.**
+**Status: Theorem 26.4 is done, and §26 is now unblocked — Theorem 25.6, its last missing
+prerequisite, is done.**
 
 | Lean name | book | status |
 |---|---|---|
@@ -401,8 +422,9 @@ of Theorem 25.2 are both done.**
 
 **The sub-plan's premise was wrong: §26 is not self-contained.** Rockafellar's Theorem 26.1 needs
 Theorem 25.6 (a subgradient at a boundary point is a limit of gradients), which needs Theorem 25.5
-(Rademacher, now done) and §24's convergence theory; and its other direction needs the sufficiency
-half of Theorem 25.2 (Gâteaux ⇒ Fréchet, finite-dimensional), which is also now done. Theorems 26.3, 26.5, 26.6 and Corollaries
+(Rademacher) and §24's convergence theory; and its other direction needs the sufficiency half of
+Theorem 25.2 (Gâteaux ⇒ Fréchet, finite-dimensional). **All three are now done**, so nothing
+outside §26 blocks it. Theorems 26.3, 26.5, 26.6 and Corollaries
 26.3.1–26.3.3 and 26.4.1 all route through 26.1.
 
 **Theorem 26.4 does not.** It needs only Theorem 25.1 and Theorem 23.5 (d), so it is done in full:
