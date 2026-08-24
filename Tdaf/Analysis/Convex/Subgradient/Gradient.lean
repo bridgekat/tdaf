@@ -107,10 +107,12 @@ theorem plus the continuity of `∇f`, which is Theorem 24.4 together with Theor
 measure-theoretic statement first; Theorems 25.6 and 25.7 rest on 25.5 and on §24's convergence
 theory. Theorems 25.3 and 25.4 are in `Subgradient/Differentiability.lean`, which needs §24.
 
-**The differentiability reading of Corollaries 25.1.2 and 25.1.3 is not available**, for the same
-reason: turning `∂f x = {y}` into "`f` is differentiable at `x` with `∇f x = y`" is precisely the
-converse half of Theorem 25.1. The subgradient readings, which is what the geometry gives, are
-`mem_exposedPoints_epi_conj_iff` and `mem_exposedPoints_supportSet_iff`.
+**Theorem 25.1's converse half is in `Subgradient/Uniqueness.lean`**, not here: turning
+`∂f x = {y}` into "`f` is differentiable at `x` with `∇f x = y`" needs `x` to be an *interior* point
+of `dom f`, which costs a normal-cone argument and hence `Subgradient/Calculus.lean` and the
+finite-dimensional separation of `Subgradient/Existence.lean`. What this module gives is the
+subgradient reading of Corollaries 25.1.2 and 25.1.3, `mem_exposedPoints_epi_conj_iff` and
+`mem_exposedPoints_supportSet_iff`; the differentiability reading is there too.
 
 ## References
 
