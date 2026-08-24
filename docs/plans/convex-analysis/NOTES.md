@@ -32,6 +32,11 @@ theorem neg_iInf {ι : Sort*} (u : ι → EReal) : -(⨅ i, u i) = ⨆ i, -(u i)
 unconditional because `a` is finite. `neg_iSup`/`neg_iInf` are what make the sign dictionary of
 `Duality/ConcaveConj.lean` a one-line rewrite.
 
+`add_coe_le_coe_iff : z + ↑c ≤ ↑m ↔ z ≤ ↑(m - c)` lives here because it had been written three
+times over — see gotcha 136. `iSup_add_coe` / `iInf_add_coe` move a *real* constant in and out of a
+supremum or infimum with no hypothesis at all, which is what makes the level-set arguments of §13
+and §27 short.
+
 The multiplication-and-supremum group, which §13 and §16 run on:
 
 ```lean
@@ -1270,6 +1275,38 @@ singleton minimum set as a level set, and Theorem 8.7 then forces `0⁺f = {0}`.
 **Thm 27.1(f) is done**: `recessionCone_setOf_le_eq_polarCone_dom_conj` and
 `recessionCone_argmin_eq_polarCone_dom_conj` are Theorem 8.7 composed with Theorem 14.2. The first
 sentence of Thm 27.1(i) is `zero_mem_closure_dom_conj_iff` in `Duality/Level.lean`.
+
+**Thm 27.1 (d), (g) and (h) are done too**, in `section ConjugateAtZero`.
+
+```lean
+theorem zero_mem_interior_dom_conj_iff_recessionConeFn_eq_zero …
+theorem argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj …    -- Thm 27.1(d)
+theorem conj_flip_conj_add_coe …                    -- (f* + α)* = f** - α
+theorem supportFn_setOf_le …                        -- Thm 27.1(g), first sentence
+theorem supportFn_argmin …                          -- Thm 27.1(g), second sentence
+theorem epsSubgradient_conj_zero …                  -- lev_α f = ∂_ε f*(0)
+theorem iInf_supportFn_setOf_le …                   -- Thm 27.1(h)
+```
+
+**Theorem 27.1(d) does not need Corollary 13.3.4**, contrary to the book's proof. Corollary 14.2.2
+already says every level set is bounded exactly when the origin is interior to `dom f*`, and
+Theorem 27.2 turns "no direction of recession" into existence of a minimiser; the two directions
+then close through Theorem 8.7.
+
+**Theorem 27.1(g)'s first sentence does not need a shifted-function API either.** It is Theorem
+13.5 for `f - α`, but `clFn_posHomGen` (Corollary 13.2.1) computes the closure of a generated
+function as a support function with *no* hypotheses, so all that is needed is
+`conj_flip_conj_add_coe`, which says the level set it produces is `{x | f**(x) - α ≤ 0}`. That
+avoids proving `ConvexFn`/`ClosedFn`/`Proper` stability under adding a real constant — an API the
+project still does not have.
+
+**`supportFn_setOf_le` is a §13 statement living in §27.** Its natural home is beside
+`supportFn_setOf_le_zero` in `Duality/Level.lean`; it is here because that module sits *below*
+`Optimization/Minimum.lean` in the import graph.
+
+**Theorem 27.1(h) cost one import and one duplicate.** `Subgradient/Approx.lean` had to be imported
+for Theorem 23.6, and that made gotcha 136's triple `add_coe_le_coe_iff` an actual build error —
+see `Tdaf/Order/EReal.lean`.
 
 **Cor 27.3.2 is done, and it does not need Helly.** `argmin_nonempty_of_polyhedralFn` runs the
 finitely generated description of the epigraph (Theorem 19.1): a lower bound forces every
@@ -3589,12 +3626,15 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      so a lemma about polyhedral functions on a non-finite-dimensional dual space typechecks and
      then fails three lines later. `#check @PolyhedralFn` before guessing.
 
-136. **`add_coe_le_coe_iff` exists three times.** Public in `Subgradient/Approx.lean`, private in
+136. **`add_coe_le_coe_iff` existed three times** — public in `Subgradient/Approx.lean`, private in
      `Saddle/Defs.lean`, private in `Saddle/Correspondence.lean`, all with the statement
-     `a + ↑c ≤ ↑m ↔ a ≤ ↑(m - c)` and no import path between them — gotcha 34's near-duplicate
-     hazard, realised. It belongs in `Tdaf/Order/EReal.lean`; the proof is two lines,
-     `rw [EReal.coe_sub, EReal.le_sub_iff_add_le (.inl (EReal.coe_ne_bot c))
-     (.inl (EReal.coe_ne_top c))]`, with no `induction a` case split.
+     `a + ↑c ≤ ↑m ↔ a ≤ ↑(m - c)` and no import path between them; gotcha 34's near-duplicate
+     hazard, realised. **Now fixed**: it is `Tdaf.EReal.add_coe_le_coe_iff` and the three copies are
+     gone. What forced the issue is worth knowing: adding *one* import to a fourth file
+     (`Optimization/Minimum.lean` gained `Subgradient/Approx.lean`) turned the latent duplication
+     into a hard error, `a non-private declaration … has already been declared`, reported at the
+     *private* copy in a file that had not changed. A private declaration does not protect you from
+     a public one of the same name coming into scope.
 
 137. **`rw [mapLin_fst_apply]` leaves a beta-redex that blocks the next `rw`.** The result is
      `⨅ z, (fun p => …) (y, z)`, so a later `rw [h (y, z)]` cannot find its pattern under the
