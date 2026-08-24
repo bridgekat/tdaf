@@ -80,6 +80,12 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
 * `ConvexProcess.comp_adjointProcess_le`, `ConvexProcess.adjointProcess_comp` —
   **Theorem 39.8**: `(BA)* = A* B*`, under the exactness hypothesis of Theorem 16.4 for
   `⟨B·, z*⟩` and `⟨·, u*⟩` on `A⁻¹`.
+* `ConvexProcess.indicatorBifun_inv`, `ConvexProcess.coadjointProcess_inv`,
+  `ConvexProcess.lowerAdjointBifun_indicatorBifun` — the last entries of the §38/§39 dictionary:
+  `(A⁻¹)* = A*⁻¹`, and `F⁎*` for an indicator bifunction is the indicator bifunction of `A*⁻¹`.
+* `ConvexProcess.conj_imageBifun_indicatorBifun`,
+  `ConvexProcess.exists_imageBifun_indicatorBifun_adjointProcess_eq` — **Theorem 39.7**, first
+  two assertions: `(Af)* = A*⁻¹ f*`, with the infimum defining `(A*⁻¹ f*)(x*)` attained.
 
 ## Design notes
 
@@ -139,11 +145,13 @@ transporting the pairing instance across `LinearMap.flip`), and `polarCone_polar
   saddle-like kernels `K (u, x*) = ⟨Au, x*⟩`. It needs the closure operations of §33 and hence a
   topology, so it lives in `Bifunction/ProcessDuality.lean` with the rest of the layer-B material;
   the two ingredients contributed from this side are listed above.
-* **Theorem 39.7**, `(Af)* = A*⁻¹ f*`. Rockafellar's proof is one line — "this specializes
-  Theorem 38.4 and Corollary 38.4.1" — and both are now available (`conj_imageBifun`,
-  `conj_imageBifun_eq_imageBifun`, `closedFn_imageBifun`, `conj_imageBifun_eq_clFn`), so all that
-  remains is the dictionary `A⁪* = (A*)⁻¹` between `lowerAdjointBifun` and
-  `ConvexProcess.adjointProcess`, on top of `adjointBifun_indicatorBifun`.
+* The closed halves of **Theorems 39.5 and 39.8** — `A₁ + A₂` and `BA` closed, with the adjoint
+  the closure of the sum resp. product of the adjoints. They specialize Corollaries 38.2.1 and
+  38.5.1, neither of which is available; see the `What is not here` list in
+  `Bifunction/Algebra.lean` for what each is blocked on.
+* The closed half of **Theorem 39.7** — `Af` closed, its infimum attained, and
+  `(Af)* = cl (A*⁻¹ f*)`. It needs a topology, so it lives in `Bifunction/ProcessDuality.lean`
+  with the rest of the layer-B material; the open half is here.
 * The infimum-oriented mirrors of Theorems 39.3, 39.5 and 39.8. Rockafellar states each for both
   orientations with "convexity and concavity reversed"; only the supremum-oriented one is here,
   and by gotcha 9 the mirror is not obtainable by `simp`-normalising through negation.
@@ -1259,6 +1267,85 @@ end ConvexProcess
 
 end Thm398
 
+
+
+/-! ### Theorem 39.7: the conjugate of an image under a convex process -/
+
+section Thm397
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+/-- The indicator bifunction of `A⁻¹` is the indicator bifunction of `A` read backwards: both
+values are `δ(· | ·)` of the same membership `(u, x) ∈ graph A`. -/
+@[simp] theorem indicatorBifun_inv (A : ConvexProcess U X) (x : X) (u : U) :
+    A.inv.indicatorBifun x u = A.indicatorBifun u x := by
+  rw [indicatorBifun_apply, indicatorBifun_apply]
+  by_cases h : (u, x) ∈ A.graph
+  · rw [indicatorFn_of_mem (show u ∈ A.inv.eval x from h),
+      indicatorFn_of_mem (show x ∈ A.eval u from h)]
+  · rw [indicatorFn_of_notMem (show u ∉ A.inv.eval x from h),
+      indicatorFn_of_notMem (show x ∉ A.eval u from h)]
+
+/-- **Rockafellar, §39**, `(A⁻¹)* = A*⁻¹`. The inverse of a supremum-oriented process is infimum
+oriented, so its adjoint is the `coadjointProcess`; with that reading the identity is an
+unfolding, both sides being `{(v, y) | ⟨x, y⟩ ≤ ⟨u, v⟩ for every (u, x) ∈ graph A}`. -/
+theorem coadjointProcess_inv (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A : ConvexProcess U X) :
+    coadjointProcess Bx Bu A.inv = (adjointProcess Bu Bx A).inv := by
+  refine ConvexProcess.ext (SetLike.ext fun q => ?_)
+  exact ⟨fun h p hp => h (p.2, p.1) hp, fun h p hp => h (p.2, p.1) hp⟩
+
+/-- **The `F⁎*` entry of the §38/§39 dictionary**: the lower adjoint of the indicator bifunction
+of `A` is the indicator bifunction of `A*⁻¹`.
+
+This is `adjointBifun_indicatorBifun` with the two negations of `lowerAdjointBifun` cancelling
+against the negation the opposite orientation of `A*` puts on its indicator, and the reversal
+`indicatorBifun_inv` absorbing the transposition. It is the last thing Theorem 39.7 needs. -/
+theorem lowerAdjointBifun_indicatorBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A : ConvexProcess U X) :
+    lowerAdjointBifun Bu Bx A.indicatorBifun = (adjointProcess Bu Bx A).inv.indicatorBifun := by
+  funext v y
+  rw [lowerAdjointBifun_apply, adjointBifun_indicatorBifun, neg_neg, indicatorBifun_inv]
+
+/-- The indicator bifunction of a convex process is finite at the origin, `0` being in `A 0`.
+This is the "finite somewhere" side condition Corollary 38.4.1 asks of `F`. -/
+theorem indicatorBifun_zero_zero_ne_top (A : ConvexProcess U X) :
+    A.indicatorBifun 0 0 ≠ ⊤ := by
+  rw [indicatorBifun_apply, indicatorFn_of_mem A.zero_mem_eval_zero]
+  simp
+
+/-- **Rockafellar, Theorem 39.7**, first assertion: `(Af)* = A*⁻¹ f*`, where `Af` is the image
+`Ff` of `f` under the indicator bifunction `F` of `A`, i.e. `(Af)(x) = inf {f u | x ∈ A u}`.
+
+Rockafellar's proof is "this specializes Theorem 38.4", and so is this one: the only work is the
+dictionary `lowerAdjointBifun_indicatorBifun`. His relative-interior hypothesis
+`ri (dom f) ∩ ri (dom A) ≠ ∅` becomes the `IsExactSum` of Theorem 38.4, `dom F` being `dom A`. -/
+theorem conj_imageBifun_indicatorBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A : ConvexProcess U X) {f : U → EReal} (hf : Proper f) {y : Y}
+    (hex : IsExactSum Bu f (fun u => -(bracket Bx A.indicatorBifun u y))) :
+    conj Bx (imageBifun A.indicatorBifun f) y
+      = imageBifun (adjointProcess Bu Bx A).inv.indicatorBifun (conj Bu f) y := by
+  rw [← lowerAdjointBifun_indicatorBifun]
+  exact conj_imageBifun_eq_imageBifun A.indicatorBifun_ne_bot hf hex
+
+/-- **Rockafellar, Theorem 39.7**, second assertion: the infimum defining `(A*⁻¹ f*)(x*)` is
+attained. This is Theorem 38.4's attainment clause read through the same dictionary. -/
+theorem exists_imageBifun_indicatorBifun_adjointProcess_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) {f : U → EReal} (hf : Proper f) {y : Y}
+    (hex : IsExactSum Bu f (fun u => -(bracket Bx A.indicatorBifun u y))) :
+    ∃ v : V, conj Bu f v + (adjointProcess Bu Bx A).inv.indicatorBifun v y
+      = imageBifun (adjointProcess Bu Bx A).inv.indicatorBifun (conj Bu f) y := by
+  obtain ⟨v, hv⟩ := exists_conj_imageBifun_eq (Bu := Bu) (Bx := Bx) A.indicatorBifun_ne_bot hf hex
+  refine ⟨v, ?_⟩
+  rw [← conj_imageBifun_indicatorBifun Bu Bx A hf hex, ← hv, ← lowerAdjointBifun_indicatorBifun]
+  rfl
+
+end ConvexProcess
+
+end Thm397
 
 
 /-! ### Theorem 39.1: bounded values force a linear transformation -/

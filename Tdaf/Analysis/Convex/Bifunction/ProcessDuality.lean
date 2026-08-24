@@ -39,6 +39,13 @@ the clauses that need only Theorem 33.2's first equation; this module adds the o
 * `exists_unique_convexProcess_bracket_indicatorBifun_eq` — **Theorem 39.4**: a lower closed
   concave-convex `K` with `K (0, 0) = 0` that is positively homogeneous in each variable
   separately is `⟨Au, x*⟩` for exactly one closed convex process `A`.
+* `ConvexProcess.closedFn_imageBifun_indicatorBifun`,
+  `ConvexProcess.exists_imageBifun_indicatorBifun_eq`,
+  `ConvexProcess.exists_mem_eval_and_eq_imageBifun`,
+  `ConvexProcess.conj_imageBifun_indicatorBifun_eq_clFn` — **Theorem 39.7**, closed half: for a
+  closed convex process `A` and a closed proper convex `f`, the image `Af` is closed, the infimum
+  defining `(Af)(x)` is attained, and `(Af)* = cl (A*⁻¹ f*)`. The open half is in
+  `Bifunction/Process.lean`.
 
 ## Design notes
 
@@ -492,5 +499,86 @@ theorem exists_unique_convexProcess_bracket_indicatorBifun_eq
         hA'br⟩
 
 end Thm394
+
+/-! ### Theorem 39.7 for a closed convex process -/
+
+section Thm397Closed
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] {A : ConvexProcess U X} {f : U → EReal}
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.7**, third assertion: for a closed convex process `A` and a closed
+proper convex `f`, the image `Af` is closed.
+
+This is Corollary 38.4.1 at the indicator bifunction of `A`, the closedness hypothesis passing
+through `closedBifun_indicatorBifun_iff` and the "finite somewhere" side condition being
+`0 ∈ A 0`. Rockafellar's hypothesis `ri (dom f*) ∩ ri (dom A*⁻¹) ≠ ∅` is the `IsExactSum` of
+Corollary 38.4.1, one instance per `x`; `dom A*⁻¹` is `range A*`. -/
+theorem closedFn_imageBifun_indicatorBifun (hA : IsClosed (A.graph : Set (U × X)))
+    (hf : ClosedProperConvexFn f)
+    (hex : ∀ x : X, IsExactSum Bu.flip (conj Bu f)
+      (fun v => -(bracket Bx.flip (adjointProcess Bu Bx A).inv.indicatorBifun v x))) :
+    ClosedFn (imageBifun A.indicatorBifun f) := by
+  refine closedFn_imageBifun (Bu := Bu) (Bx := Bx) A.convexBifun_indicatorBifun
+    ((closedBifun_indicatorBifun_iff A).2 hA) A.indicatorBifun_zero_zero_ne_top hf ?_
+  simpa only [lowerAdjointBifun_indicatorBifun] using hex
+
+/-- **Rockafellar, Theorem 39.7**, fourth assertion: the infimum defining `(Af)(x)` is attained,
+in the raw form `∃ u, f u + δ(x | A u) = (Af)(x)`. -/
+theorem exists_imageBifun_indicatorBifun_eq (hA : IsClosed (A.graph : Set (U × X)))
+    (hf : ClosedProperConvexFn f) {x : X}
+    (hex : IsExactSum Bu.flip (conj Bu f)
+      (fun v => -(bracket Bx.flip (adjointProcess Bu Bx A).inv.indicatorBifun v x))) :
+    ∃ u : U, f u + A.indicatorBifun u x = imageBifun A.indicatorBifun f x := by
+  refine exists_imageBifun_eq (Bu := Bu) (Bx := Bx) A.convexBifun_indicatorBifun
+    ((closedBifun_indicatorBifun_iff A).2 hA) A.indicatorBifun_zero_zero_ne_top hf ?_
+  simpa only [lowerAdjointBifun_indicatorBifun] using hex
+
+/-- **Rockafellar, Theorem 39.7**, fourth assertion in the form he states it: wherever `Af` is
+finite, the infimum `inf {f u | x ∈ A u}` is attained at an actual `u` with `x ∈ A u`.
+
+The raw form `exists_imageBifun_indicatorBifun_eq` produces a `u` with
+`f u + δ(x | A u) = (Af)(x)`; the indicator is `0` or `⊤`, and `⊤` is excluded because `f u ≠ ⊥`
+would then force `(Af)(x) = ⊤`. -/
+theorem exists_mem_eval_and_eq_imageBifun (hA : IsClosed (A.graph : Set (U × X)))
+    (hf : ClosedProperConvexFn f) {x : X}
+    (hex : IsExactSum Bu.flip (conj Bu f)
+      (fun v => -(bracket Bx.flip (adjointProcess Bu Bx A).inv.indicatorBifun v x)))
+    (hne : imageBifun A.indicatorBifun f x ≠ ⊤) :
+    ∃ u : U, x ∈ A.eval u ∧ f u = imageBifun A.indicatorBifun f x := by
+  obtain ⟨u, hu⟩ := exists_imageBifun_indicatorBifun_eq (Bu := Bu) (Bx := Bx) hA hf hex
+  have hmem : x ∈ A.eval u := by
+    by_contra hc
+    rw [indicatorBifun_apply, indicatorFn_of_notMem hc,
+      _root_.EReal.add_top_of_ne_bot (hf.proper.ne_bot u)] at hu
+    exact hne hu.symm
+  refine ⟨u, hmem, ?_⟩
+  rwa [indicatorBifun_apply, indicatorFn_of_mem hmem, add_zero] at hu
+
+variable [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y]
+  [LocallyConvexSpace ℝ Y] [IsCompatiblePairing Bx.flip]
+
+/-- **Rockafellar, Theorem 39.7**, last assertion: `(Af)* = cl (A*⁻¹ f*)`. -/
+theorem conj_imageBifun_indicatorBifun_eq_clFn (hA : IsClosed (A.graph : Set (U × X)))
+    (hf : ClosedProperConvexFn f)
+    (hex : ∀ x : X, IsExactSum Bu.flip (conj Bu f)
+      (fun v => -(bracket Bx.flip (adjointProcess Bu Bx A).inv.indicatorBifun v x))) :
+    conj Bx (imageBifun A.indicatorBifun f)
+      = clFn (imageBifun (adjointProcess Bu Bx A).inv.indicatorBifun (conj Bu f)) := by
+  rw [← lowerAdjointBifun_indicatorBifun (Bu := Bu) (Bx := Bx)]
+  refine conj_imageBifun_eq_clFn A.convexBifun_indicatorBifun
+    ((closedBifun_indicatorBifun_iff A).2 hA) A.indicatorBifun_zero_zero_ne_top hf ?_
+  simpa only [lowerAdjointBifun_indicatorBifun] using hex
+
+end ConvexProcess
+
+end Thm397Closed
+
 
 end Tdaf.ConvexAnalysis
