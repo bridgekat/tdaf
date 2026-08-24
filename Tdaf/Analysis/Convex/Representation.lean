@@ -42,9 +42,11 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
 * `convexHullPD_extremePoints_extremeDirections` — **Theorem 18.5**, the Minkowski–Klee
   representation: a closed convex set containing no lines is the convex hull of its extreme points
   and extreme directions. `extremePoints_nonempty_of_containsNoLine` is **Corollary 18.5.3** and
-  `coneHull_extremeDirections_eq` is **Corollary 18.5.2**. **Corollary 18.5.1**, Minkowski's
-  theorem for compact sets, is `convexHull_extremePoints` in `Face.lean`, proved earlier and used
-  here as the base case of the induction.
+  `coneHull_extremeDirections_eq` is **Corollary 18.5.2**, with
+  `coneHull_of_forall_extremeDirection` for Rockafellar's own phrasing in terms of an arbitrary
+  set of generators of the extreme rays. **Corollary 18.5.1**, Minkowski's theorem for compact
+  sets, is `convexHull_extremePoints` in `Face.lean`, proved earlier and used here as the base
+  case of the induction.
 * `IsFace.eq_convexHullPD` — **Theorem 18.3**: a nonempty face of `conv S` is the hull of the
   points of `S` it contains and the directions of `S` in which it recedes.
   `extremePoints_convexHullPD_subset` and `exists_mem_eq_smul_of_mem_extremeDirections` are the
@@ -54,20 +56,21 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
 * `extremePoints_subset_closure_exposedPoints` — **Theorem 18.6, Straszewicz's theorem**: the
   exposed points of a closed convex set are dense in its extreme points. `Mathlib` does not have
   this. `mem_exposedPoints_of_forall_norm_sub_le` is the geometric heart (a farthest point is
-  exposed) and `closure_exposedPoints_eq_closure_extremePoints` is the symmetric restatement.
+  exposed), `closure_exposedPoints_eq_closure_extremePoints` is the symmetric restatement, and
+  `closure_convexHull_exposedPoints` is the representation `C = cl (conv (exp C))` that
+  Rockafellar draws from it for a compact `C`.
 
 ## What is not here
 
 * **Theorem 18.7** (a closed convex set containing no lines is the closed hull of its *exposed*
-  points and exposed directions), **Corollary 18.7.1** and **Theorem 18.8** (an `n`-dimensional
-  closed convex set is the intersection of its tangent closed half-spaces). There is no definition
-  of an *exposed direction* here, only of an extreme one. Rockafellar's proof of 18.7 also turns
-  on dimension bookkeeping that nothing in this project supports yet: an `(n-2)`-dimensional
-  affine set inside a supporting hyperplane meeting `C ∩ H` only at one point, and the deduction
-  that the resulting exposed face is one-dimensional. Extending that affine set to a hyperplane
-  missing `int C` is Rockafellar's Theorem 11.2, and that *is* available, as
-  `exists_separates_of_isOpen_of_disjoint_affine` in `Separation.lean`. Theorem 18.8 needs 18.7
-  applied to the epigraph of the support function, so it is blocked behind 18.7.
+  points and exposed directions) and **Corollary 18.7.1** are in `Exposed.lean`, which defines
+  `IsExposedDirection` — there is no notion of an exposed direction here, only of an extreme one
+  — and imports this file. **Theorem 18.8** (an `n`-dimensional closed convex set is the
+  intersection of its tangent closed half-spaces) is in `Tangent.lean`, which reaches it through
+  the polar rather than through 18.7. Neither file needs the dimension bookkeeping of
+  Rockafellar's own proof of 18.7 — an `(n-2)`-dimensional affine set inside a supporting
+  hyperplane meeting `C ∩ H` at one point — nor his reduction of 18.8 to the epigraph of the
+  support function.
 
 ## Design notes
 
@@ -237,6 +240,32 @@ theorem zero_mem_of_forall_smul_mem (hne : K.Nonempty)
     (hcone : ∀ x ∈ K, ∀ a : ℝ, 0 ≤ a → a • x ∈ K) : (0 : E) ∈ K := by
   obtain ⟨x, hx⟩ := hne
   simpa using hcone x hx 0 le_rfl
+
+/-- **A convex set closed under multiplication by non-negative scalars is closed under
+addition**: `u + v` is twice the midpoint of `u` and `v`. -/
+theorem add_mem_of_convex_of_forall_smul_mem (hK : Convex ℝ K)
+    (hcone : ∀ x ∈ K, ∀ a : ℝ, 0 ≤ a → a • x ∈ K) {u v : E} (hu : u ∈ K) (hv : v ∈ K) :
+    u + v ∈ K := by
+  have hmid : (1 / 2 : ℝ) • u + (1 / 2 : ℝ) • v ∈ K :=
+    hK hu hv (by norm_num) (by norm_num) (by norm_num)
+  have h2 := hcone _ hmid 2 (by norm_num)
+  have heq : (2 : ℝ) • ((1 / 2 : ℝ) • u + (1 / 2 : ℝ) • v) = u + v := by module
+  rwa [heq] at h2
+
+/-- **The cone hull of a subset of a convex cone stays inside it.** The cone `K` is described by
+the two properties Rockafellar uses — convexity and closure under non-negative scalar
+multiplication — rather than as a bundled `PointedCone`. -/
+theorem coeHull_subset_of_forall_smul_mem (hK : Convex ℝ K) (hne : K.Nonempty)
+    (hcone : ∀ x ∈ K, ∀ a : ℝ, 0 ≤ a → a • x ∈ K) {T : Set E} (hTK : T ⊆ K) :
+    (PointedCone.hull ℝ T : Set E) ⊆ K := by
+  intro w hw
+  induction hw using Submodule.span_induction with
+  | mem u hu => exact hTK hu
+  | zero => exact zero_mem_of_forall_smul_mem hne hcone
+  | add u v _ _ hu hv => exact add_mem_of_convex_of_forall_smul_mem hK hcone hu hv
+  | smul a u _ hu =>
+    have h : (a : ℝ) • u ∈ K := hcone u hu a a.2
+    exact h
 
 /-- **The origin is the only extreme point of a cone containing no lines.** The half needing the
 no-lines hypothesis is that the origin *is* extreme: a segment through the origin with endpoints
@@ -1232,6 +1261,25 @@ theorem coneHull_extremeDirections_eq (hC : Convex ℝ C) (hCcl : IsClosed C) (h
   have h := convexHullPD_extremePoints_extremeDirections hC hCcl hnl
   rwa [extremePoints_eq_singleton_zero hne hcone hnl, convexHullPD_zero_singleton] at h
 
+/-- **Rockafellar, Corollary 18.5.2** in his own phrasing: if every extreme ray of a closed convex
+cone `C` containing no lines is generated by some vector of a subset `T` of `C`, then `T`
+generates `C`.
+
+Rockafellar assumes the cone contains more than the origin. That hypothesis is unnecessary here
+for the same reason as in `coneHull_extremeDirections_eq`: the zero cone has no extreme
+directions, so the hypothesis on `T` is vacuous and both sides are `{0}`. -/
+theorem coneHull_of_forall_extremeDirection {T : Set E} (hC : Convex ℝ C) (hCcl : IsClosed C)
+    (hne : C.Nonempty) (hcone : ∀ x ∈ C, ∀ a : ℝ, 0 ≤ a → a • x ∈ C) (hnl : ContainsNoLine C)
+    (hTC : T ⊆ C) (hgen : ∀ y ∈ extremeDirections C, ∃ x ∈ T, ∃ a : ℝ, 0 < a ∧ y = a • x) :
+    (PointedCone.hull ℝ T : Set E) = C := by
+  refine subset_antisymm (coeHull_subset_of_forall_smul_mem hC hne hcone hTC) ?_
+  rw [← coneHull_extremeDirections_eq hC hCcl hne hcone hnl]
+  have hle : PointedCone.hull ℝ (extremeDirections C) ≤ PointedCone.hull ℝ T := by
+    refine Submodule.span_le.2 fun y hy => ?_
+    obtain ⟨u, huT, a, ha, rfl⟩ := hgen y hy
+    exact Submodule.smul_mem _ (⟨a, ha.le⟩ : {r : ℝ // 0 ≤ r}) (PointedCone.subset_hull huT)
+  exact hle
+
 end Representation
 
 
@@ -1490,6 +1538,22 @@ theorem closure_exposedPoints_eq_closure_extremePoints (hC : Convex ℝ C) (hCcl
     closure (C.exposedPoints ℝ) = closure (C.extremePoints ℝ) :=
   Subset.antisymm (closure_mono exposedPoints_subset_extremePoints)
     (closure_minimal (extremePoints_subset_closure_exposedPoints hC hCcl) isClosed_closure)
+
+/-- **Rockafellar, Theorem 18.6** in the representation form he draws from it: a compact convex
+set is the *closed* convex hull of its exposed points. The closure cannot be dropped — the
+exposed points of a compact convex set need not be closed — which is why the exposed
+representation of Theorem 18.7 carries a closure where the extreme representation of Theorem 18.5
+does not. -/
+theorem closure_convexHull_exposedPoints (hC : Convex ℝ C) (hCcomp : IsCompact C) :
+    closure (convexHull ℝ (C.exposedPoints ℝ)) = C := by
+  refine subset_antisymm
+    (closure_minimal (convexHull_min exposedPoints_subset hC) hCcomp.isClosed) ?_
+  have h1 : C.extremePoints ℝ ⊆ closure (convexHull ℝ (C.exposedPoints ℝ)) :=
+    (extremePoints_subset_closure_exposedPoints hC hCcomp.isClosed).trans
+      (closure_mono (subset_convexHull ℝ _))
+  calc C = convexHull ℝ (C.extremePoints ℝ) := (convexHull_extremePoints hCcomp hC).symm
+    _ ⊆ closure (convexHull ℝ (C.exposedPoints ℝ)) :=
+        convexHull_min h1 (convex_convexHull ℝ _).closure
 
 end Straszewicz
 

@@ -455,35 +455,15 @@ theorem closure_coneHull_of_forall_exposedDirection {T : Set E} (hC : Convex ℝ
     (hnl : ContainsNoLine C) (hTC : T ⊆ C)
     (hgen : ∀ y ∈ exposedDirections C, ∃ x ∈ T, ∃ a : ℝ, 0 < a ∧ y = a • x) :
     closure (PointedCone.hull ℝ T : Set E) = C := by
-  have h0 : (0 : E) ∈ C := zero_mem_of_forall_smul_mem hne hcone
-  have hadd : ∀ u ∈ C, ∀ v ∈ C, u + v ∈ C := by
-    intro u hu v hv
-    have hmid : (1 / 2 : ℝ) • u + (1 / 2 : ℝ) • v ∈ C := hC hu hv (by norm_num) (by norm_num)
-      (by norm_num)
-    have := hcone _ hmid 2 (by norm_num)
-    have heq : (2 : ℝ) • ((1 / 2 : ℝ) • u + (1 / 2 : ℝ) • v) = u + v := by module
-    rwa [heq] at this
-  have hhullC : (PointedCone.hull ℝ T : Set E) ⊆ C := by
-    intro w hw
-    induction hw using Submodule.span_induction with
-    | mem u hu => exact hTC hu
-    | zero => exact h0
-    | add u v _ _ hu hv => exact hadd u hu v hv
-    | smul a u _ hu =>
-      have : (a : ℝ) • u ∈ C := hcone u hu a a.2
-      exact this
-  have hsubT : (PointedCone.hull ℝ (exposedDirections C) : Set E) ⊆
-      (PointedCone.hull ℝ T : Set E) := by
-    have hle : PointedCone.hull ℝ (exposedDirections C) ≤ PointedCone.hull ℝ T := by
-      refine Submodule.span_le.2 fun y hy => ?_
-      obtain ⟨u, huT, a, ha, rfl⟩ := hgen y hy
-      have hmem : u ∈ PointedCone.hull ℝ T := PointedCone.subset_hull huT
-      have := Submodule.smul_mem (PointedCone.hull ℝ T) (⟨a, ha.le⟩ : {r : ℝ // 0 ≤ r}) hmem
-      exact this
-    exact hle
-  refine subset_antisymm (closure_minimal hhullC hCcl) ?_
+  refine subset_antisymm
+    (closure_minimal (coeHull_subset_of_forall_smul_mem hC hne hcone hTC) hCcl) ?_
   rw [← closure_coneHull_exposedDirections hC hCcl hne hcone hnl]
-  exact closure_mono hsubT
+  refine closure_mono ?_
+  have hle : PointedCone.hull ℝ (exposedDirections C) ≤ PointedCone.hull ℝ T := by
+    refine Submodule.span_le.2 fun y hy => ?_
+    obtain ⟨u, huT, a, ha, rfl⟩ := hgen y hy
+    exact Submodule.smul_mem _ (⟨a, ha.le⟩ : {r : ℝ // 0 ≤ r}) (PointedCone.subset_hull huT)
+  exact hle
 
 end Representation
 
