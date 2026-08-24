@@ -596,7 +596,7 @@ structure ConvexProcess (U X : Type*) [AddCommGroup U] [Module ℝ U] … where
   zero_mem : (0, 0) ∈ graph
 ```
 
-**Status: Theorems 39.1, 39.2 and Corollary 39.7.1 are done.** `ConvexProcess U X` wraps a
+**Status: Theorems 39.1–39.8 and Corollary 39.7.1 are done**, except for the *closed halves* of Theorems 39.5 and 39.8 and the infimum-oriented mirrors. `ConvexProcess U X` wraps a
 `PointedCone ℝ (U × X)` — not a raw `Set` with side conditions, as this plan sketched — with
 `eval`, `dom`, `range`, `image`, `inv`, `ofLinearMap`, `comp`, an `Add` instance,
 `indicatorBifun`, `adjointProcess` and `coadjointProcess`.
@@ -608,8 +608,13 @@ structure ConvexProcess (U X : Type*) [AddCommGroup U] [Module ℝ U] … where
 | `adjointBifun_indicatorBifun`, `isClosed_graph_adjointProcess`, `graph_coadjointProcess_adjointProcess_eq_closure`, `coadjointProcess_adjointProcess_eq_self_iff` | **Thm 39.2** | done |
 | `isClosed_image`, `isClosed_image_of_isBounded`, `image_eq_image_snd` | **Cor 39.7.1** | done |
 | `graphFn_indicatorBifun`, `convexBifun_indicatorBifun`, `domBifun_indicatorBifun`, `indicatorBifun_add`, `indicatorBifun_comp`, `dom_add`, `eval_comp`, `inv_comp` | the §38 ↔ §39 dictionary | done |
-| — | Thms 39.3, 39.4 | not done — they specialize Thms 33.1–33.3 and Cor 33.2.1 to processes, which are now available, so they should be short |
-| — | Thms 39.5–39.8 | not done |
+| `ConvexProcess.closedBifun_indicatorBifun_iff`, `ConvexProcess.partialCl₂_concaveBracket_adjointBifun_indicatorBifun`, `bracket_eq_concaveBracket_adjointBifun_of_mem_relint_domConcaveBifun`, `ConvexProcess.bracket_eq_concaveBracket_of_mem_relint_dom`, `exists_unique_convexProcess_bracket_indicatorBifun_eq` | Thms 39.3, 39.4 | done (`Bifunction/ProcessDuality.lean`) — they are Thms 33.1–33.3 and Cor 33.2.1 read at the indicator bifunction of a process, so everything separating the two inner products is a partial closure |
+| `ConvexProcess.adjointProcess_add` | **Thm 39.5**, the adjoint formula | done (`Bifunction/Process.lean`) — the hypothesis is an `IsExactSum` per `x*`, not a relative-interior condition |
+| `ConvexProcess.adjointProcess_smul`, `coadjointProcess_smul` | **Thm 39.6** | done (`Bifunction/Process.lean`) — Rockafellar's `λ > 0` is needed only from here on |
+| `ConvexProcess.exists_imageBifun_indicatorBifun_adjointProcess_eq` (open half), `ConvexProcess.conj_imageBifun_indicatorBifun_eq_clFn` and companions (closed half) | **Thm 39.7** | done — the open half in `Bifunction/Process.lean`, the closed half (`Af` closed, its infimum attained, `(Af)* = cl (A*⁻¹ f*)`) in `Bifunction/ProcessDuality.lean`, which is where the topology lives |
+| `comp_adjointProcess_le`, `ConvexProcess.adjointProcess_comp` | **Thm 39.8**, the adjoint formula | done (`Bifunction/Process.lean`) — `(BA)* = A* B*` under the exactness hypothesis of Thm 16.4; it does **not** need Thm 38.5 |
+| — | the **closed halves** of Thms 39.5 and 39.8 | not done — `A₁ + A₂` and `BA` closed, with the adjoint the closure of the sum resp. the product of the adjoints. They specialize **Cor 38.2.1**, which is blocked on infimal convolution in the *first* bifunction variable; see the `What is not here` list in `Bifunction/Process.lean` |
+| — | the infimum-oriented mirrors of Thms 39.3, 39.5, 39.8 | not done — Rockafellar states each for both orientations, and by gotcha 9 the mirror is not obtainable by `simp`-normalising through negation |
 
 **Corollary 39.7.1 is Theorem 9.1, not Theorem 39.7.** Rockafellar derives it by specializing
 Theorem 39.7 and separating the barrier cone of `C` from the range of `A*`. But `A C` is the
