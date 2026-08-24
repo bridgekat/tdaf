@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Saddle.Subgradient
+import Tdaf.Analysis.Convex.Subgradient.Monotone
 
 /-!
 # Existence of saddle-values and saddle-points
@@ -38,6 +39,9 @@ therefore its `D*` companion read at the swapped data, and no new duality is nee
   concave-convex function on a closed `C × D`, through Corollaries 34.2.4 and 33.3.3.
 * `biSup_biInf_eq_biInf_biSup_of_isBounded_right`, `..._left` — **Corollary 37.3.2**.
 * `exists_saddlePoint_of_isBounded` — **Corollary 37.6.2**, the classical minimax theorem.
+* `isBifunSubgradientPair_iff_mem_subgradient_graphFn` — **Theorem 37.5**, (c) ⇔ (d): `∂K` is the
+  partial inversion of `∂f`, `f` the graph function of `F`.
+* `isClosed_setOf_mem_saddleSubgradient` — **Corollary 37.5.1**, closedness clause.
 
 ## Design notes
 
@@ -61,6 +65,11 @@ Corollary 34.2.4 and Theorem 34.3 deliver `ProperSaddleFn K`. The bridge is
 `F u x = -∞` (which would make a bracket `+∞`), and `dom₁ K ≠ ∅` rules out `F ≡ +∞` (which would
 make the upper bracket `-∞`).
 
+**Theorem 37.5's (c) needs no hypothesis on `F` at all.** The equivalence between condition (d)
+and `(-u*, v) ∈ ∂f (u, v*)` is Theorem 23.5 plus the identity `(F* v)(u*) = -f*(-u*, v)`
+(`adjointBifun_eq_neg_conj_graphFn`), and both are unconditional; convexity and closedness enter
+only when (a) is brought in, i.e. when a representative `K ∈ Ω (F)` is chosen.
+
 **Corollary 37.3.2 is stated with `EReal`-valued extrema.** The book writes
 `inf_D sup_C K = sup_C inf_D K` for a finite `K`, but with only one of `C`, `D` bounded the two
 iterated extrema can be `±∞`, so the equality has to be read in `EReal`. Corollary 37.6.2, where
@@ -68,14 +77,18 @@ both sets are bounded, is stated with real inequalities exactly as the book disp
 
 ## What is not here
 
-**Corollaries 37.5.1 and 37.5.2.** The closedness clause of 37.5.1 is Theorem 24.4 and is
-reachable, but its homeomorphism clause is Corollary 31.5.1 and 37.5.2 is Corollary 31.5.2; both
-of those rest on the attainment and uniqueness half of Moreau's Theorem 31.5, which
-`Optimization/Moreau.lean` records as not done.
+**Corollary 37.5.1's homeomorphism clause, and Corollary 37.5.2.** That the graph of `∂K` is
+homeomorphic to `Rᵐ × Rⁿ` under `(u, v, u*, v*) ↦ (u - u*, v + v*)` is Corollary 31.5.1, and that
+`(u, v) ↦ (-∂₁K, ∂₂K)` is maximal monotone is Corollary 31.5.2. Both rest on the attainment and
+uniqueness half of Moreau's Theorem 31.5 — the `prox` operator — which
+`Optimization/Moreau.lean` records as not done; `Subgradient/Monotone.lean` has maximal *cyclic*
+monotonicity (Theorem 24.9) but not maximal monotonicity, which is the weaker but genuinely
+different statement Corollary 37.5.2 needs. The closedness clause of 37.5.1 *is* here, since it
+is Theorem 24.4.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §34, §36, §37.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24, §34, §36, §37.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -679,5 +692,101 @@ theorem exists_saddlePoint_of_isBounded (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [
     exact h
 
 end Cor3732
+
+/-! ### Theorem 37.5, condition (c), and Corollary 37.5.1 -/
+
+section Thm375c
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- Cancelling a real summand on the right of an `EReal` equation. -/
+private theorem add_coe_right_inj {a b : EReal} {r : ℝ} :
+    a + (r : EReal) = b + (r : EReal) ↔ a = b :=
+  ⟨fun h => le_antisymm ((_root_.EReal.addLECancellable_coe r).add_le_add_iff_right.1 h.le)
+      ((_root_.EReal.addLECancellable_coe r).add_le_add_iff_right.1 h.ge), fun h => by rw [h]⟩
+
+/-- The arithmetic behind Theorem 37.5's (c) ⇔ (d): with `e = c - d`, the two equations
+`-b = e - a` and `a - c = b - d` say the same thing. Both reduce to `a + d = b + c`, where no
+`∞ - ∞` can arise because `c` and `d` are real. -/
+private theorem neg_eq_coe_sub_iff_sub_coe_eq_sub_coe (a b : EReal) (c d e : ℝ)
+    (he : -d + c = e) :
+    -b = ((e : ℝ) : EReal) - a ↔ a - ((c : ℝ) : EReal) = b - ((d : ℝ) : EReal) := by
+  have hb : -b = -(b - ((0 : ℝ) : EReal)) := by
+    rw [_root_.EReal.coe_zero, sub_zero]
+  have hkey : b + ((e : ℝ) : EReal) + ((d : ℝ) : EReal) = b + ((c : ℝ) : EReal) := by
+    rw [add_assoc, ← _root_.EReal.coe_add]
+    congr 2
+    linarith
+  rw [hb, ← neg_sub_coe a e, _root_.neg_inj, sub_coe_eq_sub_coe_iff, _root_.EReal.coe_zero,
+    add_zero, sub_coe_eq_sub_coe_iff]
+  refine ⟨fun h => ?_, fun h => ?_⟩
+  · rw [← h]
+    exact hkey
+  · exact add_coe_right_inj.1 (hkey.trans h.symm)
+
+/-- **Rockafellar, Theorem 37.5**, (c) ⇔ (d): membership in the subdifferential of the class
+`Ω (F)` is membership in the subdifferential of the graph function `f` of `F`, with the pair
+`(u*, v)` **partially inverted** to `(-u*, v)` and `(u, v*)` read as a point of `U × X`.
+
+This is the identity that makes `∂K` a partial inversion of `∂f`, and hence lets the geometric
+results about `∂f` be read off for saddle-functions. -/
+theorem isBifunSubgradientPair_iff_mem_subgradient_graphFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (p : U × Y) (q : V × X) :
+    IsBifunSubgradientPair Bu Bx F p q ↔
+      (-q.1, p.2) ∈ subgradient (prodPairing Bu Bx) (graphFn F) (p.1, q.2) := by
+  have hconj : conj (prodPairing Bu Bx) (graphFn F) (-q.1, p.2)
+      = -(adjointBifun Bu Bx F p.2 q.1) := by
+    rw [adjointBifun_eq_neg_conj_graphFn, neg_neg]
+  have hpair : (prodPairing Bu Bx (p.1, q.2) (-q.1, p.2) : ℝ)
+      = -(Bu p.1 q.1) + Bx q.2 p.2 := by
+    simp
+  rw [mem_subgradient_iff_conj_eq, hconj, hpair, graphFn_apply, isBifunSubgradientPair_def]
+  exact (neg_eq_coe_sub_iff_sub_coe_eq_sub_coe _ _ _ _ _ rfl).symm
+
+end Thm375c
+
+section Cor3751
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X} {K : U × Y → EReal}
+
+/-- **Rockafellar, Corollary 37.5.1**, closedness clause: the graph of `∂K` is closed.
+
+Proof idea: Theorem 37.5 identifies that graph with the preimage of the graph of `∂f` — `f` the
+graph function of `F` — under the linear homeomorphism `(u, y, v, x) ↦ ((u, x), (-v, y))`, and
+Theorem 24.4 says the graph of `∂f` is closed.
+
+The homeomorphism clause of the corollary is Corollary 31.5.1, which is not available. -/
+theorem isClosed_setOf_mem_saddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hcu : Continuous fun r : U × V => Bu r.1 r.2)
+    (hcx : Continuous fun r : X × Y => Bx r.1 r.2) (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hpr : Proper (graphFn F)) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    IsClosed {r : (U × Y) × (V × X) | r.2 ∈ saddleSubgradient Bu Bx.flip K r.1} := by
+  have hcont : Continuous fun r : (U × Y) × (V × X) => ((r.1.1, r.2.2), (-r.2.1, r.1.2)) := by
+    fun_prop
+  have hpairing : Continuous fun r : (U × X) × (V × Y) => (prodPairing Bu Bx) r.1 r.2 := by
+    have hgu : Continuous fun r : (U × X) × (V × Y) => (r.1.1, r.2.1) := by fun_prop
+    have hgx : Continuous fun r : (U × X) × (V × Y) => (r.1.2, r.2.2) := by fun_prop
+    have h1 : Continuous fun r : (U × X) × (V × Y) => Bu r.1.1 r.2.1 := hcu.comp hgu
+    have h2 : Continuous fun r : (U × X) × (V × Y) => Bx r.1.2 r.2.2 := hcx.comp hgx
+    have h3 : Continuous fun r : (U × X) × (V × Y) => Bu r.1.1 r.2.1 + Bx r.1.2 r.2.2 :=
+      h1.add h2
+    simpa only [prodPairing_apply] using h3
+  have hset : {r : (U × Y) × (V × X) | r.2 ∈ saddleSubgradient Bu Bx.flip K r.1}
+      = (fun r : (U × Y) × (V × X) => ((r.1.1, r.2.2), (-r.2.1, r.1.2)))
+        ⁻¹' subgradientRel (prodPairing Bu Bx) (graphFn F) := by
+    ext r
+    rw [Set.mem_preimage, Set.mem_ofPred_eq,
+      mem_saddleSubgradient_iff_isBifunSubgradientPair Bu Bx hF hcl hK,
+      isBifunSubgradientPair_iff_mem_subgradient_graphFn]
+    exact Iff.rfl
+  rw [hset]
+  exact IsClosed.preimage hcont
+    (isClosed_subgradientRel hpairing hpr (ClosedFn.lowerSemicontinuous hcl))
+
+end Cor3751
 
 end Tdaf.ConvexAnalysis

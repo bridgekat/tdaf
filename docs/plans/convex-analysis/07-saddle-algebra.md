@@ -361,7 +361,12 @@ def HasSaddleValue (K : U × X → EReal) : Prop :=
   (⨆ u, ⨅ x, K (u, x)) = (⨅ x, ⨆ u, K (u, x))
 ```
 
-**Status: all of §36 is done, and §37 through Corollary 37.1.1.** The names below are the ones
+**Status: all of §36 and all of §37 are done**, except Corollary 37.5.1's homeomorphism clause
+and Corollary 37.5.2, which need Corollaries 31.5.1 and 31.5.2 (`Optimization/Moreau.lean`).
+§37 is spread over `Saddle/Minimax.lean` (the vocabulary and Theorem 37.1),
+`Saddle/Conjugate.lean` (Cors 37.1.2–37.1.3, the `D*` halves of Thm 37.2, Cor 37.2.1, Thm 37.3
+and Cor 37.3.1), `Saddle/Subgradient.lean` (Thms 37.4–37.6 and Cor 37.5.3) and
+`Saddle/Existence.lean` (the `C*` halves, Cors 37.3.2, 37.5.1, 37.6.1 and 37.6.2). The names below are the ones
 actually used; each plan entry above split into several statements, as usual.
 
 | Lean name | book | status |
@@ -383,9 +388,54 @@ actually used; each plan entry above split into several statements, as usual.
 | `minimax_eq_neg_lowerConjSaddle_zero`, `maximin_eq_neg_upperConjSaddle_zero`, `hasSaddleValue_iff_conjSaddle_zero_eq` | §37, the displays before Cor 37.1.3 | done |
 | `upperConjSaddle_eq_saddleLagrangian`, `lowerConjSaddle_eq_bracket_inverseBifun` | **Thm 37.1**, both equations | done |
 | `concaveConvexFn_upperConjSaddle`, `upperClosedFn_upperConjSaddle`, `concaveConvexFn_lowerConjSaddle`, `lowerClosedFn_lowerConjSaddle` | **Cor 37.1.1** | done |
-| — | **Cors 37.1.2–37.1.3** | not done — need the biadjoint identity `(F_*^*)^* = F_*` |
-| — | **Thm 37.2**, Cor 37.2.1 | not done — needs **Thm 6.8** |
-| — | **Thms 37.3–37.6** with their corollaries | not done |
+| `adjointBifun_flip_inverseBifun`, `adjointBifun_flip_inverseBifun_adjointBifun`, `upperConjSaddle_eq_concaveBracket_adjointBifun`, `partialCl₁_lowerConjSaddle`, `partialCl₂_upperConjSaddle`, `saddleClass_conjSaddle`, `saddleEquiv_lowerConjSaddle_upperConjSaddle`, `properSaddleFn_upperConjSaddle`, `properSaddleFn_lowerConjSaddle`, `dom₁_conjSaddle_eq`, `dom₂_conjSaddle_eq`, `domSaddle_conjSaddle_eq`, `lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₁`, `…_dom₂` | **Cor 37.1.2** | done (`Saddle/Conjugate.lean`) |
+| `hasSaddleValue_of_mem_relint_dom₁_lowerConjSaddle`, `hasSaddleValue_of_mem_relint_dom₂_lowerConjSaddle`, `exists_maximin_eq_coe_of_mem_relint_domSaddle` | **Cor 37.1.3** | done (`Saddle/Conjugate.lean`) |
+| `dom₁_eq_domBifun_of_mem_bifunSaddleClass`, `dom₂_upperConjSaddle`, `supportFn_dom₂_upperConjSaddle`, `supportFn_dom₂_upperConjSaddle_eq_iSup_recessionFn` | **Thm 37.2**, the `D*` half | done (`Saddle/Conjugate.lean`) — it does need **Thm 6.8** |
+| `zero_mem_interior_dom₂_upperConjSaddle_iff` | **Cor 37.2.1**, the `D*` half | done (`Saddle/Conjugate.lean`) |
+| `zero_mem_interior_dom₁_lowerConjSaddle_iff` | **Cor 37.2.1**, the `C*` half | done (`Saddle/Existence.lean`) — through `saddleSwap`, not through a second `supportFn` computation |
+| `hasSaddleValue_of_no_common_direction_of_recession` | **Thm 37.3**, condition (a) | done (`Saddle/Conjugate.lean`) |
+| `hasSaddleValue_of_no_common_direction_of_recession_neg` | **Thm 37.3**, condition (b) | done (`Saddle/Existence.lean`) |
+| `lt_recessionFn_of_isBounded_dom`, `hasSaddleValue_of_isBounded_dom₂`, `hasSaddleValue_of_isBounded_dom₁` | **Cor 37.3.1** | done (`Saddle/Conjugate.lean`, `Saddle/Existence.lean`) |
+| `saddleStructure_lowerSimpleExt`, `maximin_lowerSimpleExt`, `minimax_lowerSimpleExt`, `exists_bifunSaddleClass_lowerSimpleExt`, `biSup_biInf_eq_biInf_biSup_of_isBounded_left`, `…_right` | **Cor 37.3.2** | done (`Saddle/Existence.lean`) |
+| `concaveSubgradient`, `saddleSubgradient`, `domSaddleSubgradient`, `saddleTilt`, `mem_saddleSubgradient_iff_isSaddlePoint`, `domSaddleSubgradient_subset_domSaddle`, `kernelSet_subset_domSaddleSubgradient` | **Thm 37.4** | done (`Saddle/Subgradient.lean`) |
+| `IsBifunSubgradientPair`, `mem_saddleSubgradient_iff_isBifunSubgradientPair`, `mem_saddleSubgradient_upperConjSaddle_iff` | **Thm 37.5**, (a) ⇔ (d) ⇔ (b) | done (`Saddle/Subgradient.lean`) |
+| `isBifunSubgradientPair_iff_mem_subgradient_graphFn` | **Thm 37.5**, (c) ⇔ (d) | done (`Saddle/Existence.lean`) — **no hypothesis on `F` at all** |
+| `isClosed_setOf_mem_saddleSubgradient` | **Cor 37.5.1**, closedness clause | done (`Saddle/Existence.lean`) |
+| — | **Cor 37.5.1**, homeomorphism clause; **Cor 37.5.2** | not done — need **Cor 31.5.1** and **Cor 31.5.2**, i.e. the attainment/uniqueness half of Thm 31.5 (`prox`) |
+| `mem_saddleSubgradient_upperConjSaddle_zero_iff`, `convex_setOf_isSaddlePoint`, `exists_isSaddlePoint_iff_zero_mem_domSaddleSubgradient` | **Cor 37.5.3** | done (`Saddle/Subgradient.lean`) |
+| `exists_isSaddlePoint_of_zero_mem_kernelSet_upperConjSaddle`, `exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle`, `exists_isSaddlePoint_of_no_common_direction_of_recession` | **Thm 37.6** | done (`Saddle/Subgradient.lean`, `Saddle/Existence.lean`) |
+| `exists_isSaddlePoint_of_isBounded_domSaddle`, `exists_maximin_eq_coe_of_isBounded_domSaddle` | **Cor 37.6.1** | done (`Saddle/Existence.lean`) |
+| `exists_saddlePoint_of_isBounded` | **Cor 37.6.2** | done (`Saddle/Existence.lean`) — proved from Rockafellar's unbounded machinery, not from Mathlib's `Sion` |
+| `swapAdjointBifun`, `adjointBifun_neg_flipBifun`, `adjointBifun_swapAdjointBifun`, `saddleSwap_mem_bifunSaddleClass`, `upperConjSaddle_saddleSwap`, `lowerConjSaddle_saddleSwap`, `proper_graphFn_of_properSaddleFn`, `separatingRight_neg_flip` | the `saddleSwap` dictionary §37 needs | done (`Saddle/Existence.lean`) |
+
+**The `C*` half of §37 is the `D*` half at `saddleSwap`, and the dictionary is four lemmas.**
+`Saddle/Conjugate.lean` left the `C*` halves open, saying that what was missing was "the dictionary
+carrying `bifunSaddleClass` across that swap". It is: `saddleSwap` carries `Ω (F)` onto `Ω (F♯)` at
+the **negated flipped** pairings `-Bx.flip`, `-Bu.flip`, where `(F♯ y) v = -(F* y)(v)`
+(`saddleSwap_mem_bifunSaddleClass`), and it exchanges the two conjugates
+(`upperConjSaddle_saddleSwap`). Nothing else is needed — no second support-function computation, no
+mirror of Theorem 6.8. The one piece of real content is `adjointBifun_neg_flipBifun`, the identity
+`(-Bx, -Bu)-adjoint of flipBifun F = flipBifun of the (Bu, Bx)-adjoint`, which is one reindexing of
+an infimum over a product; through it the biadjoint identity `(F_*^*)^* = F_*` becomes
+`adjointBifun_swapAdjointBifun`, "the adjoint of `F♯` is `-F`".
+
+**`F♯` is *not* `F_*^*`.** `F_*^* = inverseBifun (adjointBifun Bu Bx F)` goes from `V` to `Y` and
+belongs to the *conjugate* class on `V × X`; the swapped class lives on `Y × U` and its bifunction
+goes from `Y` to `V`. The two differ by `flipBifun`, and the difference is not cosmetic — the
+pairings sit in the other order.
+
+**`Proper (graphFn F)` is a hypothesis of every §37 statement and had to be derived.** Theorem 34.3
+and Corollary 34.2.4 deliver `ProperSaddleFn K`, not properness of the bifunction, and the two are
+related by `proper_graphFn_of_properSaddleFn`: `dom₂ K ≠ ∅` rules out `F u x = -∞`, because that
+makes the bracket `⟨Fu, ·⟩` identically `+∞`, and `dom₁ K ≠ ∅` rules out `F ≡ +∞`, because that
+makes the upper bracket identically `-∞`. Both halves of properness are needed and neither is
+optional.
+
+**Corollary 37.3.2 must be stated in `EReal`.** The book writes `inf_D sup_C K = sup_C inf_D K` for
+a *finite* `K`, but with only one of `C`, `D` bounded the two iterated extrema can be `±∞` — take
+`C` a point, `D` a line and `K` linear and non-constant on `D`. The equality is still true, and is
+what `biSup_biInf_eq_biInf_biSup_of_isBounded_left` states; only Corollary 37.6.2, where both sets
+are bounded, can be stated with real inequalities, and it is.
 
 **`HasSaddleValue` must not build in finiteness.** The book calls the common value the saddle-value
 when the two iterated extrema are *equal*, and states finiteness separately (Cor 36.3.1, Cor 37.1.3,
