@@ -51,6 +51,15 @@ intertwining.
   `hasSaddleValue_of_mem_relint_dom₂_lowerConjSaddle` — **Corollary 37.1.3**: the origin in the
   relative interior of either half of `C* × D*` forces the saddle-value to exist, and it is then
   finite.
+* `dom₁_eq_domBifun_of_mem_bifunSaddleClass`, `dom₂_upperConjSaddle` — the two effective
+  domains as projections: `C = dom F` for *every* member of `Ω (F)`, and `D*` is the projection
+  of `dom F` on `X`.
+* `supportFn_dom₂_upperConjSaddle`, `supportFn_dom₂_upperConjSaddle_eq_iSup_recessionFn` —
+  **Theorem 37.2**, the `D*` half, in the book's difference-quotient form and in recession-function
+  form.
+* `zero_mem_interior_dom₂_upperConjSaddle_iff` — **Corollary 37.2.1**, the `D*` half.
+* `hasSaddleValue_of_no_common_direction_of_recession` — **Theorem 37.3**, condition (a).
+* `hasSaddleValue_of_isBounded_dom₂` — **Corollary 37.3.1**, the half where `D` is bounded.
 
 ## Design notes
 
@@ -82,11 +91,12 @@ instances.
 
 ## What is not here
 
-**Theorem 37.2** (the support functions of `C*` and `D*`), **Corollary 37.2.1** and
-**Theorems 37.3–37.6**. Theorem 37.2 is reachable — Theorem 6.8 *is* formalized, as
-`Convex.mem_relint_prod_iff` — but it needs a §13-flavoured identification of `δ*(· | dom (F u))`
-with the recession function of `K (u, ·)` that is not assembled here. Theorems 37.4–37.6 rest on
-§35's subdifferential `∂K = ∂₁K × ∂₂K`, which the backbone does not yet have.
+**The `C*` halves of Theorem 37.2, Corollary 37.2.1, Theorem 37.3 and Corollary 37.3.1.** They are
+the same statements read through `saddleSwap`, at the negated flipped pairings `-Bx.flip`,
+`-Bu.flip`; what is missing is the dictionary carrying `bifunSaddleClass` across that swap.
+
+**Theorems 37.4–37.6**, which rest on §35's subdifferential `∂K = ∂₁K × ∂₂K`; they live in
+`Saddle/Subgradient.lean`.
 
 ## References
 
@@ -505,5 +515,385 @@ theorem exists_maximin_eq_coe_of_mem_relint_domSaddle (Bu : U →ₗ[ℝ] V →�
   rw [maximin_eq_neg_upperConjSaddle_zero Bu Bx K, heq, _root_.EReal.coe_neg]
 
 end Cor3713
+
+/-! ### Theorem 37.2: the effective domains of the conjugate saddle-functions
+
+Rockafellar's Theorem 37.2 computes the support functions of `C* = dom₁ K*` and `D* = dom₂ K*`,
+for `K ∈ Ω (F)`, in terms of `K` itself. The `D*` half is the one with content: `D*` is the
+projection on `X` of `dom F`, and the support function of that projection is assembled from the
+support functions of the individual slices `dom (F u)`, each of which is a recession function by
+Theorem 13.3.
+
+The lemmas of this block are the bookkeeping. `D*` and `C*` are projections; support functions do
+not see relative interiors; and the relative interior of a projection is the union of the relative
+interiors of the slices taken over `ri` of the other projection (Theorems 6.6 and 6.8). -/
+
+section DomLagrangian
+
+variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+
+/-- **Rockafellar, Theorem 37.2 (the set `D*`)**: the second effective domain of the Lagrangian
+`L (v, x) = inf_u {⟨u, v⟩ + F (u, x)}` is the projection of `dom F` on `X`, with no hypotheses on
+`F` whatsoever.
+
+Proof idea: `L (v, x) ≤ ⟨u, v⟩ + F (u, x)` gives `⊇` at once. For `⊆` it is enough to test
+`v = 0`, where `L (0, x) = inf_u F (u, x)`; an infimum below `⊤` has a term below `⊤`. -/
+theorem dom₂_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) :
+    dom₂ (saddleLagrangian Bu F) = Prod.snd '' dom (graphFn F) := by
+  ext x
+  constructor
+  · intro hx
+    have h0 : lagrangian Bu F 0 x < ⊤ := hx 0
+    rw [lagrangian_apply] at h0
+    have h1 : ⨅ u, F u x < ⊤ := by
+      refine lt_of_le_of_lt (le_of_eq (iInf_congr fun u => ?_)) h0
+      rw [map_zero, _root_.EReal.coe_zero, zero_add]
+    obtain ⟨u, hu⟩ := iInf_lt_iff.1 h1
+    exact ⟨(u, x), hu, rfl⟩
+  · rintro ⟨p, hp, rfl⟩
+    intro v
+    change lagrangian Bu F v p.2 < ⊤
+    rw [lagrangian_apply]
+    refine lt_of_le_of_lt (iInf_le (fun u => ((Bu u v : ℝ) : EReal) + F u p.2) p.1) ?_
+    exact _root_.EReal.add_lt_top (_root_.EReal.coe_ne_top _) (ne_of_lt hp)
+
+end DomLagrangian
+
+section DomProjection
+
+variable {U X : Type*}
+
+/-- `dom F ⊆ U` is the projection on `U` of the effective domain of the graph function: both say
+that some value `F (u, x)` is `< ⊤`. -/
+theorem domBifun_eq_image_fst (F : Bifun U X) : domBifun F = Prod.fst '' dom (graphFn F) := by
+  ext u
+  constructor
+  · rintro ⟨x, hx⟩
+    exact ⟨(u, x), lt_top_iff_ne_top.2 hx, rfl⟩
+  · rintro ⟨p, hp, rfl⟩
+    exact ⟨p.2, ne_of_lt hp⟩
+
+end DomProjection
+
+section DomBracket
+
+variable {U X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- The first effective domain of the lower bracket `⟨Fu, y⟩` is `dom F`: the bracket is `-∞`
+exactly where the slice `F u` is identically `+∞`, uniformly in `y` (`domConcave_bracket`). -/
+theorem dom₁_bracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) :
+    dom₁ (fun p : U × Y => bracket Bx F p.1 p.2) = domBifun F := by
+  ext u
+  constructor
+  · intro hu
+    have h : u ∈ domConcave fun u => bracket Bx F u (0 : Y) := hu 0
+    rwa [domConcave_bracket] at h
+  · intro hu y
+    have h : u ∈ domConcave fun u => bracket Bx F u y := by
+      rw [domConcave_bracket]; exact hu
+    exact h
+
+end DomBracket
+
+section SupportRelint
+
+variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [AddCommGroup F] [Module ℝ F]
+
+/-- **The support function does not see the relative interior**: `δ*(· | ri C) = δ*(· | C)` for
+convex `C`. Proof idea: support functions do not see closures (`supportFn_closure`), and
+`cl (ri C) = cl C` by Theorem 6.3. -/
+theorem supportFn_relint (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] {C : Set E}
+    (hC : Convex ℝ C) : supportFn B (ri C) = supportFn B C := by
+  rw [← supportFn_closure (B := B) (ri C), Convex.closure_relint hC, supportFn_closure]
+
+end SupportRelint
+
+section RelintProjection
+
+variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+
+/-- **Theorems 6.6 and 6.8 combined**: the relative interior of the projection on `X` of a convex
+set `S ⊆ U × X` is the union, over `u` in the relative interior of the projection on `U`, of the
+relative interiors of the slices of `S`.
+
+Proof idea: `ri (A '' S) = A '' ri S` for the linear projection `A` (Theorem 6.6), and
+`(u, x) ∈ ri S ↔ u ∈ ri (proj S) ∧ x ∈ ri (slice u)` (Theorem 6.8). -/
+theorem relint_image_snd_eq_iUnion {S : Set (U × X)} (hS : Convex ℝ S) :
+    ri (Prod.snd '' S) = ⋃ u ∈ ri (Prod.fst '' S), ri {x | (u, x) ∈ S} := by
+  have hsnd : ri (Prod.snd '' S) = Prod.snd '' ri S := by
+    have h := Convex.relint_image hS (LinearMap.snd ℝ U X)
+    rwa [show ⇑(LinearMap.snd ℝ U X) = Prod.snd from rfl] at h
+  rw [hsnd]
+  ext x
+  constructor
+  · rintro ⟨p, hp, rfl⟩
+    have h := (Convex.mem_relint_prod_iff hS (y := p.1) (z := p.2)).1 hp
+    exact Set.mem_iUnion₂.2 ⟨p.1, h.1, h.2⟩
+  · intro hx
+    obtain ⟨u, hu, hx'⟩ := Set.mem_iUnion₂.1 hx
+    exact ⟨(u, x), (Convex.mem_relint_prod_iff hS).2 ⟨hu, hx'⟩, rfl⟩
+
+end RelintProjection
+
+section SupportUnion
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+
+/-- The support function of a set-indexed union is the pointwise supremum of the support
+functions: `supportFn_iUnion` applied to the two nested unions of `⋃ i ∈ s, t i`. -/
+theorem supportFn_biUnion {ι : Type*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Set ι) (t : ι → Set E)
+    (y : F) : supportFn B (⋃ i ∈ s, t i) y = ⨆ i ∈ s, supportFn B (t i) y := by
+  simp only [supportFn_iUnion]
+
+end SupportUnion
+
+section Thm372
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {F : Bifun U X} {K : U × Y → EReal}
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
+/-- **The first effective domain of any `K ∈ Ω (F)` is `dom F`.** Rockafellar identifies `C` with
+`dom F` silently throughout §37; this is the proof.
+
+Proof idea: `cl₂` does not move `dom₁` (`dom₁_partialCl₂`), and on the interval `Ω (F)` the
+operation `cl₂` is constant at the lower bracket (Theorem 34.2), whose `dom₁` is `dom F` because
+`⟨Fu, y⟩ = -∞` exactly where `F u ≡ +∞`. -/
+theorem dom₁_eq_domBifun_of_mem_bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hK : K ∈ bifunSaddleClass Bu Bx F) (hKcc : ConcaveConvexFn K) (hne : (dom₂ K).Nonempty) :
+    dom₁ K = domBifun F := by
+  have hcl₂ : partialCl₂ K = fun p : U × Y => bracket Bx F p.1 p.2 :=
+    partialCl₂_eq_of_mem_saddleClass (partialCl₂_concaveBracket_adjoint Bu Bx hF hcl) hK
+  rw [← dom₁_partialCl₂ hKcc hne, hcl₂, dom₁_bracket]
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
+/-- **The support function of `dom (F u)` is the recession function of `K (u, ·)`**, for `u` in
+`ri (dom₁ K)` and `F = bifunOfSaddle Bx K`.
+
+Proof idea: over `ri (dom₁ K)` the slice `K (u, ·)` is closed proper convex (Theorem 34.3) and
+`F u` is its conjugate, so this is Theorem 13.3 for that slice, read through
+`Bx.flip.flip = Bx`. -/
+theorem recessionFn_slice_eq_supportFn_dom (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx.flip] (hK : ConcaveConvexFn K) (hs : ConvexSliceStructure K) {u : U}
+    (hu : u ∈ ri (dom₁ K)) :
+    recessionFn (fun y => K (u, y)) = supportFn Bx (dom (bifunOfSaddle Bx K u)) := by
+  have hcpc : ClosedProperConvexFn fun y => K (u, y) :=
+    ⟨hK.convex_snd u, hs.closedFn_slice u hu, hs.proper_slice u (intrinsicInterior_subset hu)⟩
+  have h := recessionFn_eq_supportFn_dom_conj (B := Bx.flip) hcpc
+  rwa [LinearMap.flip_flip] at h
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
+/-- **The inner half of Rockafellar, Theorem 37.2**: for `u` in `ri (dom₁ K)` the support function
+of the slice `dom (F u)` — where `F = bifunOfSaddle Bx K` — is the difference quotient supremum
+`sup_{y ∈ D} {K (u, y + w) - K (u, y)}`.
+
+Proof idea: over `ri (dom₁ K)` the slice `K (u, ·)` is closed proper convex with effective domain
+exactly `D = dom₂ K` (Theorem 34.3), and `F u` is its conjugate. Theorem 13.3 turns the support
+function of `dom (F u) = dom (K (u, ·)*)` into the recession function of `K (u, ·)`, and
+Theorem 8.5 evaluates that recession function as a supremum of difference quotients over the
+effective domain. -/
+theorem supportFn_dom_bifunOfSaddle_eq_iSup_sub (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx.flip] (hK : ConcaveConvexFn K) (hs : ConvexSliceStructure K) {u : U}
+    (hu : u ∈ ri (dom₁ K)) (w : Y) :
+    supportFn Bx (dom (bifunOfSaddle Bx K u)) w = ⨆ y ∈ dom₂ K, (K (u, y + w) - K (u, y)) := by
+  have hconv : ConvexFn fun y => K (u, y) := hK.convex_snd u
+  have hp : Proper fun y => K (u, y) := hs.proper_slice u (intrinsicInterior_subset hu)
+  rw [← recessionFn_slice_eq_supportFn_dom Bx hK hs hu,
+    recessionFn_apply_eq_iSup_sub hconv hp.ne_bot w, hs.dom_slice u hu]
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
+/-- The second effective domain of the upper conjugate is the projection of `dom F` on `X`: the
+upper conjugate is the Lagrangian of `F` (Corollary 37.1.1) and `dom₂_saddleLagrangian` applies. -/
+theorem dom₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    dom₂ (upperConjSaddle Bu Bx K) = Prod.snd '' dom (graphFn F) := by
+  rw [upperConjSaddle_eq_saddleLagrangian Bu Bx hF hcl hK, dom₂_saddleLagrangian]
+
+/-- **Rockafellar, Theorem 37.2** (the `D*` half): the support function of the second effective
+domain of the conjugate saddle-function is
+
+`δ*(w | D*) = sup_{u ∈ ri C} sup_{y ∈ D} {K (u, y + w) - K (u, y)}`,
+
+where `C = dom₁ K` and `D = dom₂ K`.
+
+Proof idea: `D*` is the projection of `dom F` on `X`, and a support function does not see the
+relative interior. By Theorems 6.6 and 6.8 the relative interior of that projection is the union
+over `u ∈ ri C` of the relative interiors of the slices `dom (F u)`, so the support function is the
+supremum of the slice support functions; each of those is
+`supportFn_dom_bifunOfSaddle_eq_iSup_sub`. -/
+theorem supportFn_dom₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F)
+    (hKcc : ConcaveConvexFn K) (hne : (dom₂ K).Nonempty) (hs : ConvexSliceStructure K) (w : Y) :
+    supportFn Bx (dom₂ (upperConjSaddle Bu Bx K)) w
+      = ⨆ u ∈ ri (dom₁ K), ⨆ y ∈ dom₂ K, (K (u, y + w) - K (u, y)) := by
+  have hFK : bifunOfSaddle Bx K = F := bifunOfSaddle_eq_of_mem_bifunSaddleClass Bu Bx hF hcl hK
+  have hG : Convex ℝ (dom (graphFn F)) := ConvexFn.convex_dom hF
+  have hC : dom₁ K = Prod.fst '' dom (graphFn F) := by
+    rw [dom₁_eq_domBifun_of_mem_bifunSaddleClass Bu Bx hF hcl hK hKcc hne, domBifun_eq_image_fst]
+  have hsndconv : Convex ℝ (Prod.snd '' dom (graphFn F)) :=
+    hG.linear_image (LinearMap.snd ℝ U X)
+  calc supportFn Bx (dom₂ (upperConjSaddle Bu Bx K)) w
+      = supportFn Bx (ri (Prod.snd '' dom (graphFn F))) w := by
+        rw [dom₂_upperConjSaddle Bu Bx hF hcl hK, supportFn_relint Bx hsndconv]
+    _ = supportFn Bx (⋃ u ∈ ri (dom₁ K), ri {x | (u, x) ∈ dom (graphFn F)}) w := by
+        rw [relint_image_snd_eq_iUnion hG, hC]
+    _ = ⨆ u ∈ ri (dom₁ K), supportFn Bx (ri {x | (u, x) ∈ dom (graphFn F)}) w :=
+        supportFn_biUnion Bx (ri (dom₁ K)) (fun u => ri {x | (u, x) ∈ dom (graphFn F)}) w
+    _ = ⨆ u ∈ ri (dom₁ K), ⨆ y ∈ dom₂ K, (K (u, y + w) - K (u, y)) := by
+        refine iSup_congr fun u => iSup_congr fun hu => ?_
+        have hslice : {x | (u, x) ∈ dom (graphFn F)} = dom (bifunOfSaddle Bx K u) := by
+          rw [hFK]; rfl
+        have hconvu : ConvexFn (bifunOfSaddle Bx K u) := by
+          rw [hFK]; exact ConvexBifun.convexFn_apply hF u
+        rw [hslice, supportFn_relint Bx (ConvexFn.convex_dom hconvu)]
+        exact supportFn_dom_bifunOfSaddle_eq_iSup_sub Bx hKcc hs hu w
+
+/-- **Rockafellar, Theorem 37.2**, in recession-function form: the support function of `D*` is the
+pointwise supremum, over `u ∈ ri C`, of the recession functions of the slices `K (u, ·)`. This is
+the shape the proof of Corollary 37.2.1 uses. -/
+theorem supportFn_dom₂_upperConjSaddle_eq_iSup_recessionFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hK : K ∈ bifunSaddleClass Bu Bx F) (hKcc : ConcaveConvexFn K) (hne : (dom₂ K).Nonempty)
+    (hs : ConvexSliceStructure K) (w : Y) :
+    supportFn Bx (dom₂ (upperConjSaddle Bu Bx K)) w
+      = ⨆ u ∈ ri (dom₁ K), recessionFn (fun y => K (u, y)) w := by
+  rw [supportFn_dom₂_upperConjSaddle Bu Bx hF hcl hK hKcc hne hs w]
+  refine iSup_congr fun u => iSup_congr fun hu => ?_
+  exact (supportFn_dom_bifunOfSaddle_eq_iSup_sub Bx hKcc hs hu w).symm.trans
+    (congrFun (recessionFn_slice_eq_supportFn_dom Bx hKcc hs hu) w).symm
+
+/-- **Rockafellar, Corollary 37.2.1** (the `D*` half): the origin is an interior point of `D*` if
+and only if the convex functions `K (u, ·)`, for `u ∈ ri C`, have no common direction of recession
+— that is, no `w ≠ 0` is a direction of recession of all of them at once.
+
+Proof idea: `0 ∈ int D*` iff `δ*(w | D*) > 0` for every `w ≠ 0` (Theorem 13.1, `int` clause), and
+Theorem 37.2 evaluates `δ*(w | D*)` as the supremum of the `(K (u, ·))∞ (w)`; a supremum is
+positive exactly when one of its terms is.
+
+`Bx.SeparatingRight` is the hypothesis that makes `w ≠ 0` and `⟨·, w⟩ ≠ 0` the same condition; in
+Rockafellar's setting, where a space is paired with itself, it is automatic. -/
+theorem zero_mem_interior_dom₂_upperConjSaddle_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hB : Bx.SeparatingRight) (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hpr : Proper (graphFn F)) (hK : K ∈ bifunSaddleClass Bu Bx F)
+    (hKcc : ConcaveConvexFn K) (hne : (dom₂ K).Nonempty) (hs : ConvexSliceStructure K) :
+    (0 : X) ∈ interior (dom₂ (upperConjSaddle Bu Bx K)) ↔
+      ∀ w : Y, w ≠ 0 → ∃ u ∈ ri (dom₁ K), 0 < recessionFn (fun y => K (u, y)) w := by
+  have hconv : Convex ℝ (dom₂ (upperConjSaddle Bu Bx K)) :=
+    (concaveConvexFn_upperConjSaddle Bu Bx hF hcl hK).convex_dom₂
+  have hnex : (dom₂ (upperConjSaddle Bu Bx K)).Nonempty :=
+    (properSaddleFn_upperConjSaddle Bu Bx hF hcl hpr hK).dom₂_nonempty
+  rw [mem_interior_iff_lt_supportFn (B := Bx) hconv hnex hB 0]
+  refine forall_congr' fun w => imp_congr_right fun _ => ?_
+  rw [map_zero, LinearMap.zero_apply, _root_.EReal.coe_zero,
+    supportFn_dom₂_upperConjSaddle_eq_iSup_recessionFn Bu Bx hF hcl hK hKcc hne hs w]
+  simp only [lt_iSup_iff, exists_prop]
+
+end Thm372
+
+/-! ### Theorem 37.3: existence of the saddle-value -/
+
+section Thm373
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {F : Bifun U X} {K : U × Y → EReal}
+
+/-- **Rockafellar, Theorem 37.3**, condition (a): if the convex functions `K (u, ·)` for
+`u ∈ ri C` have no common direction of recession, then the saddle-value of `K` exists.
+
+Proof idea: Corollary 37.2.1 turns the recession hypothesis into `0 ∈ int D*`, hence into
+`0 ∈ ri D*`, and Corollary 37.1.3 concludes. -/
+theorem hasSaddleValue_of_no_common_direction_of_recession (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bx.SeparatingRight)
+    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hpr : Proper (graphFn F))
+    (hK : K ∈ bifunSaddleClass Bu Bx F) (hKcc : ConcaveConvexFn K) (hne : (dom₂ K).Nonempty)
+    (hs : ConvexSliceStructure K)
+    (hrec : ∀ w : Y, w ≠ 0 → ∃ u ∈ ri (dom₁ K), 0 < recessionFn (fun y => K (u, y)) w) :
+    HasSaddleValue K := by
+  refine hasSaddleValue_of_mem_relint_dom₂_lowerConjSaddle Bu Bx hF hcl hpr hK ?_
+  rw [dom₂_conjSaddle_eq Bu Bx hF hcl hpr hK]
+  exact interior_subset_intrinsicInterior
+    ((zero_mem_interior_dom₂_upperConjSaddle_iff Bu Bx hB hF hcl hpr hK hKcc hne hs).2 hrec)
+
+end Thm373
+
+section BoundedRecession
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → EReal}
+
+/-- **A function with a nonempty bounded effective domain has no nonzero direction of recession**:
+`f0⁺ (w) > 0` for every `w ≠ 0`.
+
+Proof idea: `f0⁺ (w) ≤ 0` makes `f` nonincreasing along `w`, so the whole ray `y₀ + a • w`,
+`a ≥ 0`, stays in `dom f` (`add_smul_le_of_recessionFn_nonpos`). A ray in a direction `w ≠ 0`
+leaves every ball, contradicting boundedness. -/
+theorem lt_recessionFn_of_isBounded_dom (hne : (dom f).Nonempty)
+    (hb : Bornology.IsBounded (dom f)) {w : E} (hw : w ≠ 0) : 0 < recessionFn f w := by
+  rw [lt_iff_not_ge]
+  intro h
+  obtain ⟨y₀, hy₀⟩ := hne
+  obtain ⟨r, hr⟩ := isBounded_iff_forall_norm_le.1 hb
+  have hwpos : (0 : ℝ) < ‖w‖ := norm_pos_iff.2 hw
+  have hy₀r : ‖y₀‖ ≤ r := hr y₀ hy₀
+  have hy₀nn : (0 : ℝ) ≤ ‖y₀‖ := norm_nonneg y₀
+  set a : ℝ := (r + ‖y₀‖ + 1) / ‖w‖ with hadef
+  have hann : (0 : ℝ) ≤ a := by
+    rw [hadef]
+    exact div_nonneg (by linarith) hwpos.le
+  have hmem : y₀ + a • w ∈ dom f :=
+    lt_of_le_of_lt (add_smul_le_of_recessionFn_nonpos h y₀ hann) hy₀
+  have h1 : ‖y₀ + a • w‖ ≤ r := hr _ hmem
+  have h2 : a * ‖w‖ = r + ‖y₀‖ + 1 := div_mul_cancel₀ _ (ne_of_gt hwpos)
+  have h3 : ‖a • w‖ ≤ ‖y₀ + a • w‖ + ‖y₀‖ := by
+    have hsub : (y₀ + a • w) - y₀ = a • w := add_sub_cancel_left y₀ (a • w)
+    calc ‖a • w‖ = ‖(y₀ + a • w) - y₀‖ := by rw [hsub]
+      _ ≤ ‖y₀ + a • w‖ + ‖y₀‖ := norm_sub_le _ _
+  rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg hann, h2] at h3
+  linarith
+
+end BoundedRecession
+
+section Cor3731
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {F : Bifun U X} {K : U × Y → EReal}
+
+/-- **Rockafellar, Corollary 37.3.1** (the `D` half): if the second effective domain of `K` is
+bounded, the saddle-value of `K` exists. Over a compact `D` this is the classical minimax theorem.
+
+Proof idea: for `u ∈ ri C` the slice `K (u, ·)` has effective domain exactly `D` (Theorem 34.3),
+which is bounded, so it has no nonzero direction of recession; condition (a) of Theorem 37.3 is
+therefore satisfied, and `ri C` is nonempty because `C` is. -/
+theorem hasSaddleValue_of_isBounded_dom₂ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hB : Bx.SeparatingRight) (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hpr : Proper (graphFn F)) (hK : K ∈ bifunSaddleClass Bu Bx F)
+    (hKcc : ConcaveConvexFn K) (hne : (dom₂ K).Nonempty) (hne₁ : (dom₁ K).Nonempty)
+    (hs : ConvexSliceStructure K) (hbd : Bornology.IsBounded (dom₂ K)) : HasSaddleValue K := by
+  refine hasSaddleValue_of_no_common_direction_of_recession Bu Bx hB hF hcl hpr hK hKcc hne hs
+    fun w hw => ?_
+  obtain ⟨u, hu⟩ := Convex.relint_nonempty hKcc.convex_dom₁ hne₁
+  have hdom : dom (fun y => K (u, y)) = dom₂ K := hs.dom_slice u hu
+  exact ⟨u, hu, lt_recessionFn_of_isBounded_dom (by rw [hdom]; exact hne)
+    (by rw [hdom]; exact hbd) hw⟩
+
+end Cor3731
 
 end Tdaf.ConvexAnalysis
