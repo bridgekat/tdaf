@@ -141,7 +141,7 @@ theorem isClosed_add_of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing 
     rw [supportFn_eq_conj_indicatorFn]
     exact PolyhedralFn.conj (B := B) (polyhedralFn_indicatorFn h₁)
   have hexact : IsExactSum B.flip (supportFn B C₁) (supportFn B C₂) :=
-    IsExactSum.of_polyhedral hfn₁ (proper_supportFn hne₁)
+    IsExactSum.of_polyhedral_closed hfn₁ (proper_supportFn hne₁)
       ⟨convexFn_supportFn B C₂, closedFn_supportFn, proper_supportFn hne₂⟩ hx₀₁ hx₀₂
   have hL : conj B.flip (supportFn B C₁ + supportFn B C₂)
       = indicatorFn (closure (C₁ + C₂)) := by

@@ -18,8 +18,9 @@ domains; here the polyhedral side contributes only a point of its effective doma
 
 * `IsExactSum.of_polyhedral_pair` — the case where *both* functions are polyhedral: no relative
   interiors are involved at all, only `dom f ∩ dom g ≠ ∅`.
-* `IsExactSum.of_polyhedral` — **Theorem 20.1**: a polyhedral `f` and a closed proper convex `g`
-  add exactly as soon as `dom f` meets `ri (dom g)`.
+* `IsExactSum.of_polyhedral` — **Theorem 20.1**: a polyhedral `f` and a *proper convex* `g` add
+  exactly as soon as `dom f` meets `ri (dom g)`. `IsExactSum.of_polyhedral_closed` is the closed
+  case, which carries the argument.
 * `relint_inter_relint_nonempty_of_subset_affineSpan` — the relative-interior step the proof of
   Theorem 20.1 turns on.
 
@@ -32,11 +33,14 @@ recession-cone criterion, and here it is free, because a sum of polyhedral sets 
 `epi_infConv_of_polyhedralFn` (**Corollary 19.3.4**), properness of `f* □ g*`, and the splitting
 that `IsExactSum.exact_le` asks for — is then identical.
 
-**`ClosedFn` is not a hypothesis on the polyhedral side.** A polyhedral convex function that is
-proper is automatically closed (`PolyhedralFn.closedFn`), so where `of_relint` takes
+**`ClosedFn` is not a hypothesis on either side.** A polyhedral convex function that is proper is
+automatically closed (`PolyhedralFn.closedFn`), so where `of_relint_closed` takes
 `ClosedProperConvexFn` this file takes `PolyhedralFn` plus `Proper`. On the *non*-polyhedral side
-closedness is still asked for, exactly as in `of_relint` and for the same reason: Theorem 12.2 is
-what makes `g*` proper.
+the closed case `of_polyhedral_closed` still asks for it — Theorem 12.2 is what makes `g*` proper —
+but `of_polyhedral` removes it by Theorem 9.3, exactly as `of_relint` does. The asymmetry of
+Theorem 20.1 survives the removal because the closure formula is used in its conjugate form
+`conj_add_eq_conj_clFn_add_clFn`, whose two segment hypotheses are met on different grounds:
+Corollary 7.5.1 for the closed polyhedral `f`, Theorem 7.5 for `g`.
 
 **The general case is Rockafellar's own reduction, and it runs on an indicator.** With
 `M = aff (dom g)` and `δ = δ(· | M)`, the function `δ + f` is again polyhedral — `M` is polyhedral
@@ -190,7 +194,7 @@ The proof is Rockafellar's. Let `M = aff (dom g)` and `δ = δ(· | M)`, and put
 `ri (dom h)` does meet `ri (dom g)`, so `of_relint` splits `(h + g)* = (f + g)*` exactly; the pair
 case splits `h*` as `δ* □ f*`; and `δ* □ g* = (δ + g)* = g*` re-absorbs the `δ*` that the first
 split left over. -/
-theorem IsExactSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+theorem IsExactSum.of_polyhedral_closed [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : PolyhedralFn f) (hpf : Proper f) (hg : ClosedProperConvexFn g)
     {x₀ : E} (hxf : x₀ ∈ dom f) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g := by
   classical
@@ -221,11 +225,11 @@ theorem IsExactSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.
       (PolyhedralFn.convexFn hhpoly).convex_dom hg.convex.convex_dom
       (by rw [hhdom]; exact fun x hx => hx.1) hx₀h hxg
   -- the three exact splittings
-  have hAg : IsExactSum B (δ + f) g := IsExactSum.of_relint hhcpc hg hx₁h hx₁g
+  have hAg : IsExactSum B (δ + f) g := IsExactSum.of_relint_closed hhcpc hg hx₁h hx₁g
   have hδf : IsExactSum B δ f := IsExactSum.of_polyhedral_pair hδpoly hδproper hf hpf hx₀δ hxf
   have hx₀riδ : x₀ ∈ ri (dom δ) := by
     rw [hδdom, AffineSubspace.intrinsicInterior_coe]; exact hx₀M
-  have hδg : IsExactSum B δ g := IsExactSum.of_relint hδcpc hg hx₀riδ hxg
+  have hδg : IsExactSum B δ g := IsExactSum.of_relint_closed hδcpc hg hx₀riδ hxg
   -- `δ` is absorbed on both sides
   have hsumδg : δ + g = g := indicatorFn_add_eq_self hdomgM
   have hsum : δ + f + g = f + g := by
@@ -254,6 +258,29 @@ theorem IsExactSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.
       _ ≤ conj B (δ + f) z₁ + conj B g z₂ := add_le_add huvle le_rfl
       _ ≤ conj B (δ + f + g) y := hzle
       _ = conj B (f + g) y := by rw [hsum]
+
+/-- **Rockafellar, Theorem 20.1**, with the book's hypotheses: a proper polyhedral convex function
+and a *proper convex* function add exactly as soon as `dom f` meets `ri (dom g)`. Neither closedness
+of `g` nor a relative interior point of `dom f` is needed.
+
+The reduction to `IsExactSum.of_polyhedral_closed` is Theorem 9.3 in the conjugate form
+`conj_add_eq_conj_clFn_add_clFn`. Its two segment hypotheses are met on opposite grounds: `f` is
+closed proper (**Corollary 7.5.1**, only `x₀ ∈ dom f` needed), `g` is proper convex
+(**Theorem 7.5**, `x₀ ∈ ri (dom g)`). That asymmetry is exactly the asymmetry of Theorem 20.1
+itself, which is why the closure formula has to be taken in this form and not as
+`cl (f + g) = cl f + cl g`. -/
+theorem IsExactSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hf : PolyhedralFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
+    {x₀ : E} (hxf : x₀ ∈ dom f) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g := by
+  have hfc : ClosedProperConvexFn f := hf.closedProperConvexFn hpf
+  have hcl : clFn f = f := hfc.closed
+  refine IsExactSum.of_clFn hpf hpg ?_
+    (conj_add_eq_conj_clFn_add_clFn hfc.convex hpf hg hpg
+      (hfc.tendstoClFnAlongSegment hxf) (hg.tendstoClFnAlongSegment hpg hxg))
+  rw [hcl]
+  exact IsExactSum.of_polyhedral_closed hf hpf
+    ⟨convexFn_clFn hg, closedFn_clFn g, hg.proper_clFn hpg⟩ hxf
+    (by rw [hg.relint_dom_clFn hpg]; exact hxg)
 
 end Sum
 

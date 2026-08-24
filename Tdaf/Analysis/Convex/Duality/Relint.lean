@@ -28,12 +28,32 @@ what discharge them.
 
 * `IsExactImage.of_relint` — **Rockafellar, Theorem 16.3**: if `g` is closed proper convex and the
   range of `A` meets `ri (dom g)`, then `g` pulls back exactly along `A`.
-* `IsExactSum.of_relint` — **Rockafellar, Theorem 16.4**: two closed proper convex functions whose
-  effective domains share a relative interior point add exactly.
+* `IsExactSum.of_relint` — **Rockafellar, Theorem 16.4**: two *proper convex* functions whose
+  effective domains share a relative interior point add exactly. `IsExactSum.of_relint_closed` is
+  the closed case, which carries the actual argument.
+* `TendstoClFnAlongSegment` — "`cl f` is the limit of `f` along segments issuing from `x₀`", the
+  single hypothesis shared by **Theorem 7.5** (`x₀ ∈ ri (dom f)`) and **Corollary 7.5.1** (`f`
+  closed proper, `x₀ ∈ dom f`).
+* `conj_add_eq_conj_clFn_add_clFn` — **Theorem 9.3** in conjugate form,
+  `(f + g)* = (cl f + cl g)*`. The book's own form `cl (f + g) = cl f + cl g` is `clFn_add` in
+  `Recession/Closedness.lean`; it is *not* what §20 can use, see the design notes.
+* `IsExactSum.of_clFn` — exactness transfers from the closures.
 
 ## Design notes
 
-**Neither proof is an argument; both are assemblies.** Every ingredient is already proved
+**Closedness is not needed for Theorem 16.4, and the book does not ask for it.** The closed case
+`IsExactSum.of_relint_closed` is where the work is; the general case is Theorem 9.3. Replacing `f`
+and `g` by their closures moves `conj_add_eq_clFn_infConv` the wrong way *only* if one compares
+`(f + g)*` with `(cl f + cl g)*` naively: `cl f + cl g ≤ f + g` gives `(f + g)* ≤ (cl f + cl g)*`,
+which is the same direction as the unconditional `conj_add_le_infConv`, so nothing follows. What
+closes the gap is that the two conjugates are in fact *equal*
+(`conj_add_eq_conj_clFn_add_clFn`), and one passage to the limit along a segment issuing from the
+common relative interior point proves it. The conjugate form is deliberately weaker than the book's
+`cl (f + g) = cl f + cl g` (`clFn_add`, `Recession/Closedness.lean`): proving that identity needs
+Theorem 7.5 for `f + g` too, hence a relative interior point of *both* domains, whereas §20 has
+only a point of `dom f`.
+
+**Neither closed proof is an argument; both are assemblies.** Every ingredient is already proved
 elsewhere, and the two constructors differ only in which §9 theorem they invoke — Theorem 9.2 for
 images, Corollary 9.1.1 for sums.
 
@@ -207,7 +227,7 @@ Corollary 9.1.1's hypothesis — two cancelling recession directions must be lin
 is Theorem 13.3 plus Theorem 6.4: `(z, ν) ∈ 0⁺(epi f*)` and `(-z, -ν) ∈ 0⁺(epi g*)` force
 `⟨x₀, z⟩ ≤ ν` and `-⟨x₀, z⟩ ≤ -ν` at the common point `x₀`, so both bounds are attained at a
 relative interior point and both linear functions are constant. -/
-theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+theorem IsExactSum.of_relint_closed [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) :
     IsExactSum B f g := by
@@ -282,5 +302,120 @@ theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip
     _ = ((μ : ℝ) : EReal) := by rw [← _root_.EReal.coe_add, hab]
 
 end Sum
+
+/-! ### Theorem 9.3: dropping closedness from the constraint qualifications -/
+
+section Closure
+
+open Filter Topology
+
+variable {E F : Type*}
+  [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
+
+/-- `f` is **recovered along segments issuing from `x₀`**: at every `y` the value `(cl f) y` is the
+limit of `f` along the half-open segment running from `x₀` to `y`.
+
+This is the conclusion of **Theorem 7.5** when `x₀ ∈ ri (dom f)`, and of **Corollary 7.5.1** when
+`f` is closed proper convex and `x₀ ∈ dom f`. It is the only property of `x₀` that the closure
+formula of **Theorem 9.3** uses, and naming it is what lets §16's relative-interior qualification
+and §20's polyhedral one run through one and the same lemma. -/
+def TendstoClFnAlongSegment (f : E → EReal) (x₀ : E) : Prop :=
+  ∀ y, Tendsto (fun a : ℝ => f ((1 - a) • x₀ + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y))
+
+/-- **Rockafellar, Theorem 7.5**: a proper convex function is recovered along segments issuing from
+any relative interior point of its effective domain. -/
+theorem ConvexFn.tendstoClFnAlongSegment (hf : ConvexFn f) (hp : Proper f) {x₀ : E}
+    (hx₀ : x₀ ∈ ri (dom f)) : TendstoClFnAlongSegment f x₀ := by
+  intro y
+  rw [hf.clFn_eq_lscHull hp]
+  exact hf.tendsto_lscHull_along_segment_relint hx₀ y
+
+omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
+/-- **Rockafellar, Corollary 7.5.1**: a closed proper convex function is recovered along segments
+issuing from any point of its effective domain — no relative interior is needed. This is the extra
+freedom that makes Theorem 20.1 stronger than Theorem 16.4. -/
+theorem ClosedProperConvexFn.tendstoClFnAlongSegment (hf : ClosedProperConvexFn f) {x₀ : E}
+    (hx₀ : x₀ ∈ dom f) : TendstoClFnAlongSegment f x₀ := by
+  intro y
+  rw [show clFn f = f from hf.closed]
+  exact tendsto_along_segment_of_closed_proper hf hx₀ y
+
+omit [FiniteDimensional ℝ F] in
+/-- **Rockafellar, Theorem 9.3**, in the form the constraint qualifications consume it: if two
+proper convex functions are both recovered along segments issuing from one common point, then
+`f + g` and `cl f + cl g` have the same conjugate.
+
+Rockafellar's own statement is `cl (f + g) = cl f + cl g`, and proving *that* needs Theorem 7.5 for
+`f + g` as well, hence `x₀ ∈ ri (dom f) ∩ ri (dom g)`. The conjugate form needs no such thing:
+`f* = (cl f)*` holds outright (**Theorem 12.2**), so only the *sum* has to be compared, and one
+passage to the limit along the segment does that. That is what lets Theorem 20.1 drop closedness
+too, where `x₀` is a point of `dom f` and of `ri (dom g)` only.
+
+The hard half is the inequality `(cl f + cl g)* ≤ (f + g)*`, i.e. that every affine minorant of
+`f + g` already minorises `cl f + cl g`; the reverse is `cl ≤ id` and antitonicity. -/
+theorem conj_add_eq_conj_clFn_add_clFn (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g)
+    (hpg : Proper g) {x₀ : E} (hsf : TendstoClFnAlongSegment f x₀)
+    (hsg : TendstoClFnAlongSegment g x₀) :
+    conj B (f + g) = conj B (clFn f + clFn g) := by
+  have hclf : Proper (clFn f) := hf.proper_clFn hpf
+  have hclg : Proper (clFn g) := hg.proper_clFn hpg
+  have hmono : clFn f + clFn g ≤ f + g := fun x => add_le_add (clFn_le f x) (clFn_le g x)
+  refine funext fun y => le_antisymm (conj_antitone B hmono y) ?_
+  have key : ∀ c : ℝ, conj B (f + g) y ≤ (c : EReal) →
+      conj B (clFn f + clFn g) y ≤ (c : EReal) := by
+    intro c hc
+    rw [conj_le_coe_iff] at hc ⊢
+    intro x
+    have hlin : ∀ a : ℝ, B ((1 - a) • x₀ + a • x) y = (1 - a) * B x₀ y + a * B x y := by
+      intro a
+      rw [map_add, map_smul, map_smul]
+      simp
+    have hL : Tendsto (fun a : ℝ => affineFn B y c ((1 - a) • x₀ + a • x))
+        (𝓝[<] (1 : ℝ)) (𝓝 (affineFn B y c x)) := by
+      simp only [affineFn_eq_coe, hlin]
+      exact EReal.tendsto_coe.2
+        ((tendsto_affine_nhdsLT_one (B x₀ y) (B x y)).sub tendsto_const_nhds)
+    have hR : Tendsto (fun a : ℝ => (f + g) ((1 - a) • x₀ + a • x))
+        (𝓝[<] (1 : ℝ)) (𝓝 ((clFn f + clFn g) x)) := by
+      have hcont : ContinuousAt (fun p : EReal × EReal => p.1 + p.2) (clFn f x, clFn g x) :=
+        EReal.continuousAt_add (Or.inr (hclg.ne_bot x)) (Or.inl (hclf.ne_bot x))
+      exact hcont.tendsto.comp ((hsf x).prodMk_nhds (hsg x))
+    exact le_of_tendsto_of_tendsto' hL hR fun a => hc _
+  by_contra hcon
+  rw [not_le] at hcon
+  obtain ⟨c, h1, h2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hcon
+  exact absurd (key c h1.le) (not_le.2 h2)
+
+omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
+/-- Exactness passes from the closures to the functions themselves, as soon as the sum has not
+changed its conjugate. `conj_add_eq_conj_clFn_add_clFn` is what supplies the second hypothesis. -/
+theorem IsExactSum.of_clFn [IsContinuousPairing B] (hpf : Proper f) (hpg : Proper g)
+    (h : IsExactSum B (clFn f) (clFn g))
+    (hconj : conj B (f + g) = conj B (clFn f + clFn g)) : IsExactSum B f g := by
+  refine ⟨hpf, hpg, fun y => ?_⟩
+  obtain ⟨y₁, y₂, hy, hle⟩ := h.exact_le y
+  rw [conj_clFn, conj_clFn] at hle
+  exact ⟨y₁, y₂, hy, by rw [hconj]; exact hle⟩
+
+/-- **Rockafellar, Theorem 16.4**, with the book's hypotheses: two *proper convex* functions add
+exactly as soon as their effective domains have a relative interior point in common. Closedness is
+not needed, and Rockafellar does not assume it.
+
+The reduction is Theorem 9.3: `cl f` and `cl g` are closed proper convex with the same relative
+interiors of effective domains (**Corollary 7.4.1**), so `IsExactSum.of_relint_closed` applies to
+them; `conj_add_eq_conj_clFn_add_clFn` says the passage back to `f` and `g` costs nothing. -/
+theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
+    {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g :=
+  IsExactSum.of_clFn hpf hpg
+    (IsExactSum.of_relint_closed ⟨convexFn_clFn hf, closedFn_clFn f, hf.proper_clFn hpf⟩
+      ⟨convexFn_clFn hg, closedFn_clFn g, hg.proper_clFn hpg⟩
+      (by rw [hf.relint_dom_clFn hpf]; exact hxf) (by rw [hg.relint_dom_clFn hpg]; exact hxg))
+    (conj_add_eq_conj_clFn_add_clFn hf hpf hg hpg
+      (hf.tendstoClFnAlongSegment hpf hxf) (hg.tendstoClFnAlongSegment hpg hxg))
+
+end Closure
 
 end Tdaf.ConvexAnalysis
