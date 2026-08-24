@@ -111,7 +111,8 @@ is a reindexing of the infimum and holds for every `f` and every `x`.
   sentence of Theorem 23.4 — `∂f x = ∅` off `dom f` for proper `f` — is recorded, as
   `subgradient_eq_empty_of_notMem_dom`.
 * The second half of **Theorem 23.3** (if `f` is not subdifferentiable at `x` then
-  `f'(x; z - x) = -∞` for `z ∈ ri (dom f)`) is relative-interior-based and is deferred with it.
+  `f'(x; z - x) = -∞` for `z ∈ ri (dom f)`) is relative-interior-based and is deferred with it,
+  to `Tdaf/Analysis/Convex/Subgradient/Existence.lean`.
 * **Theorem 23.6** (ε-subgradients) is omitted: its proof runs through Theorems 9.7 and 13.5, and
   Theorem 13.5 is itself deferred by `Tdaf/Analysis/Convex/Duality/Support.lean`.
 * **Theorems 23.8–23.10** are subdifferential *calculus* and belong in

@@ -8,6 +8,7 @@ import Tdaf.Analysis.Convex.Recession.Closedness
 import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Subgradient.Approx
 import Tdaf.Analysis.Convex.Subgradient.Calculus
+import Tdaf.Analysis.Convex.Subgradient.Existence
 
 /-!
 # The minimum of a convex function
@@ -49,6 +50,8 @@ convex set, and the optimality condition `0 ∈ ∂h x + N_C(x)`.
 * `supportFn_setOf_le`, `supportFn_argmin` — **Theorem 27.1(g)**, the two sentences.
 * `iInf_supportFn_setOf_le` — **Theorem 27.1(h)**, with `epsSubgradient_conj_zero` identifying
   the level sets of `f` above `inf f` with the ε-subdifferentials of `f*` at the origin.
+* `iInf_ne_bot_and_argmin_eq_empty_iff` — **Theorem 27.1(c)**: the infimum is finite but
+  unattained exactly when `f*(0)` is finite and `f*'(0; ·)` is `−∞` somewhere.
 
 ## Design notes
 
@@ -75,10 +78,16 @@ restricted to `ℕ` and `atTop`.
 
 ## What is not here
 
-**Theorem 27.1(c), (e), and the second sentence of (i).** (c) needs the full Theorem 23.3; (e) is
-`∂f*(0)` a singleton, which lives in `E**` and so needs a reflexive pairing to be stated at all;
-(i)'s second sentence needs Theorem 8.5. Its first sentence is `zero_mem_closure_dom_conj_iff` in
-`Duality/Level.lean`, next to the Corollary 13.3.4 it specialises.
+**Theorem 27.1(e).** It says that `∂f*(0)` is a singleton, which lives in `E**` and so needs a
+reflexive pairing to be stated at all. Both sentences of (i) are in `Duality/Level.lean`, as
+`zero_mem_closure_dom_conj_iff` and `zero_notMem_closure_dom_conj_iff`, next to the Corollary
+13.3.4 they specialise.
+
+**Theorem 27.1(c) mentions only one of the book's two finiteness conditions.** Rockafellar asks
+that `f*(0)` be finite, i.e. `≠ ⊥` and `≠ ⊤`; for proper `f` the first half is automatic
+(`conj_ne_bot`), and symmetrically `⨅ f ≠ ⊤` is automatic because `dom f ≠ ∅`. So on both sides of
+the equivalence only one of the two bounds carries information, and `iInf_ne_top` records the one
+that does not.
 
 **Theorem 27.1(d) does not need Corollary 13.3.4**, contrary to Rockafellar's proof: Corollary
 14.2.2 already says that every level set is bounded exactly when the origin is interior to
@@ -932,6 +941,33 @@ theorem iInf_supportFn_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper
   rw [← dirDeriv_eq_iInf_supportFn_epsSubgradient (B := B.flip) (convexFn_conj B f) hcp hepi hc0 y]
   refine iInf_congr fun ε => iInf_congr fun hε => ?_
   rw [epsSubgradient_conj_zero hf hc hp hμ ε, LinearMap.flip_flip]
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+/-- A proper function takes a value below `⊤` somewhere, so its infimum is never `⊤`. Together
+with `conj_ne_bot` this is why "finite" costs only one inequality on each side of Theorem
+27.1(c). -/
+theorem iInf_ne_top (hp : Proper f) : (⨅ x, f x) ≠ ⊤ := by
+  obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
+  exact (lt_of_le_of_lt (iInf_le _ x₀) (mem_dom.1 hx₀)).ne
+
+omit [FiniteDimensional ℝ E] in
+/-- **Rockafellar, Theorem 27.1(c)**: the infimum of a closed proper convex function is finite but
+*unattained* exactly when `f*(0)` is finite and `f*'(0; ·)` takes the value `−∞` somewhere.
+
+Theorem 27.1(a) turns "the infimum is finite" into "`f*(0)` is finite", Theorem 27.1(b) turns
+"unattained" into "`∂f*(0) = ∅`", and Theorem 23.3 reads the latter off the directional
+derivative. Only one bound appears on each side: `f*(0) ≠ ⊥` and `⨅ f ≠ ⊤` hold for every proper
+`f`, by `conj_ne_bot` and `iInf_ne_top`. -/
+theorem iInf_ne_bot_and_argmin_eq_empty_iff (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f) :
+    ((⨅ x, f x) ≠ ⊥ ∧ argmin f = ∅)
+      ↔ (conj B f 0 ≠ ⊤ ∧ ∃ y : F, dirDeriv (conj B f) 0 y = ⊥) := by
+  have hb : conj B f 0 ≠ ⊥ := conj_ne_bot hp.dom_nonempty 0
+  have hiff : (⨅ x, f x) ≠ ⊥ ↔ conj B f 0 ≠ ⊤ := by
+    rw [conj_zero_eq_neg_iInf, ne_eq, ne_eq, _root_.EReal.neg_eq_top_iff]
+  rw [hiff, and_congr_right_iff]
+  intro ht
+  rw [argmin_eq_subgradient_conj_zero (B := B) hf hc,
+    subgradient_eq_empty_iff_exists_dirDeriv_eq_bot (B := B.flip) (convexFn_conj B f) ht hb]
 
 end ConjugateAtZero
 
