@@ -108,7 +108,9 @@ sums (of weights, and of weighted points) rewritable by the same lemma.
 Mathlib has `IsExtreme`, `Set.extremePoints`, `IsExposed`, and Krein–Milman
 (`Analysis/Convex/{Extreme,Exposed,KreinMilman}.lean`).
 
-**Status: Theorems 18.1 and 18.2 are done; 18.4 and 18.5 are done in the bounded case.**
+**Status: all of §18 is done.** `Face.lean` carries Theorems 18.1 and 18.2 and the compact
+case of 18.4 and 18.5; `Representation.lean` carries 18.3–18.6 in general; `Exposed.lean` and
+`Tangent.lean` carry 18.7 and 18.8.
 
 | Lean name | book | status |
 |---|---|---|
@@ -118,12 +120,16 @@ Mathlib has `IsExtreme`, `Set.extremePoints`, `IsExposed`, and Krein–Milman
 | `IsFace.eq_of_relint_inter_nonempty` | Cor 18.1.2 | done |
 | `IsFace.disjoint_relint`, `.subset_intrinsicFrontier`, `.finrank_vectorSpan_lt` | Cor 18.1.3 | done |
 | `exists_isFace_subset_relint`, `exists_isFace_mem_relint`, `eq_iUnion_relint_isFace`, `IsFace.relint_pairwise_disjoint`, `IsFace.relint_maximal` | **Thm 18.2** | done |
-| `IsFace.convexHull_inter` | Thm 18.3, Cor 18.3.1 | **not done** |
-| `exists_notMem_relint_mem_segment` | Thm 18.4 | done for compact `C` |
-| `convexHull_extremePoints`, `extremePoints_nonempty` | **Thm 18.5**, Cors 18.5.1, 18.5.3 | done for compact `C` |
-| — | Cor 18.5.2 (cones) | **not done** |
-| `dense_exposedPoints` (Straszewicz) | **Thm 18.6** | **not done** |
-| `IsExposedDirection`, `exposedDirections`, `exists_forall_sub_le_mul_sub`, `closure_convexHullPD_exposedPoints_exposedDirections`, `closure_coneHull_exposedDirections` | **Thm 18.7**, Cor 18.7.1 | done, in `Exposed.lean` |
+| `IsFace.eq_convexHullPD` | **Thm 18.3** | done, in `Representation.lean` |
+| `extremePoints_convexHullPD_subset`, `exists_mem_eq_smul_of_mem_extremeDirections`, `…_of_isBounded` | Cor 18.3.1 | done, in `Representation.lean` |
+| `exists_notMem_relint_mem_segment` | Thm 18.4, compact case | done |
+| `IsAffineHalf`, `isAffineHalf_of_convex_sdiff_relint`, `exists_notMem_relint_mem_segment_of_not_isAffineHalf` | **Thm 18.4** | done, in `Representation.lean` |
+| `convexHull_extremePoints`, `extremePoints_nonempty` | Cor 18.5.1, and Cor 18.5.3 for compact `C` | done |
+| `ContainsNoLine`, `IsExtremeDirection`, `extremeDirections`, `exists_eq_halfLine`, `convexHullPD_extremePoints_extremeDirections` | **Thm 18.5** | done, in `Representation.lean` |
+| `extremePoints_nonempty_of_containsNoLine` | Cor 18.5.3 | done, in `Representation.lean` |
+| `coneHull_extremeDirections_eq`, `coneHull_of_forall_extremeDirection` | Cor 18.5.2 (cones) | done, in `Representation.lean` |
+| `mem_exposedPoints_of_forall_norm_sub_le`, `image_exposedPoints`, `extremePoints_subset_closure_exposedPoints`, `closure_exposedPoints_eq_closure_extremePoints`, `closure_convexHull_exposedPoints` | **Thm 18.6** (Straszewicz) | done, in `Representation.lean` |
+| `IsExposedDirection`, `exposedDirections`, `exists_forall_sub_le_mul_sub`, `closure_convexHullPD_exposedPoints_exposedDirections`, `closure_coneHull_exposedDirections`, `closure_coneHull_of_forall_exposedDirection` | **Thm 18.7**, Cor 18.7.1 | done, in `Exposed.lean` |
 | `IsSupportingAt`, `IsTangentAt`, `exists_isTangentAt_lt_of_zero_mem_interior`, `eq_iInter_tangent_halfSpaces` | **Thm 18.8** | done, in `Tangent.lean` |
 
 ### What actually happened
@@ -225,6 +231,24 @@ Theorem 18.5's `dim C ≤ 1` case, which the book calls trivial, needs an explic
 `C` as a closed half-line; conversely the induction is *simpler* than the book's, since Minkowski
 (Corollary 18.5.1) discharges the bounded case in every dimension, so only unbounded `dim ≥ 2` uses
 18.4 and 18.2. Straszewicz is cleaner with a nearest-point projection than with Rockafellar's `ε`.
+
+**Both cone corollaries are stated twice, and the second statement is the book's.** Corollaries
+18.5.2 and 18.7.1 are phrased by Rockafellar for an arbitrary set `T` of vectors meeting each
+extreme (resp. exposed) ray, not for the set of all extreme (resp. exposed) directions.
+`coneHull_extremeDirections_eq` and `closure_coneHull_exposedDirections` are the "all directions"
+form, which is what the induction produces; `coneHull_of_forall_extremeDirection` and
+`closure_coneHull_of_forall_exposedDirection` are the book's, and follow by monotonicity of the
+cone hull. Neither needs Rockafellar's "containing more than just the origin": the zero cone has
+no extreme directions, so the hypothesis on `T` is vacuous and both sides are `{0}`. The cone `K`
+is described throughout by convexity plus closure under non-negative scaling rather than as a
+bundled `PointedCone`, because that is how the sets coming out of Theorem 18.5 present
+themselves; `coeHull_subset_of_forall_smul_mem` and `add_mem_of_convex_of_forall_smul_mem` are
+the two layer-A lemmas that bridge to `PointedCone.hull`.
+
+**Theorem 18.6 is stated in the hull form Rockafellar wants it for.**
+`closure_convexHull_exposedPoints` — a compact convex set is `cl (conv (exp C))` — is Minkowski's
+theorem composed with Straszewicz's, and does not go through Theorem 18.7, which supersedes it
+for line-free sets but lives downstream in `Exposed.lean`.
 
 ## 4.3 `Polyhedral/Defs.lean` — §19
 
