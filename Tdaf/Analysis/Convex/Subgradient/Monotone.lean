@@ -3,12 +3,12 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
-import Tdaf.Analysis.Convex.Subgradient.Defs
+import Tdaf.Analysis.Convex.Subgradient.Existence
 
 /-!
 # Monotonicity of the subdifferential
 
-Rockafellar's §24. The subdifferential of a proper convex function is not merely *monotone* —
+The subdifferential of a proper convex function is not merely *monotone* —
 `⟨x₁ - x₂, y₁ - y₂⟩ ≥ 0` whenever `yᵢ ∈ ∂f xᵢ` — but **cyclically monotone**: every finite cycle
 `(x₀, y₀), (x₁, y₁), …, (x_m, y_m)` in the graph satisfies
 
@@ -16,16 +16,26 @@ Rockafellar's §24. The subdifferential of a proper convex function is not merel
 ⟨x₁ - x₀, y₀⟩ + ⟨x₂ - x₁, y₁⟩ + ⋯ + ⟨x₀ - x_m, y_m⟩ ≤ 0.
 ```
 
-**Theorem 24.8** says this is the whole story: a multivalued mapping is contained in the
-subdifferential of a closed proper convex function exactly when it is cyclically monotone, and the
-function can be written down — it is the supremum of the telescoping sums above, read as affine
-functions of a free endpoint.
+Cyclic monotonicity is the whole story. A multivalued mapping is contained in the subdifferential
+of a closed proper convex function exactly when it is cyclically monotone, and the function can be
+written down: it is the supremum of the telescoping sums above, read as affine functions of a free
+endpoint. Sharpening "contained in" to "equal to" needs a *rigidity* statement in the other
+direction — a closed proper convex function is determined by its subdifferential up to an additive
+constant — and the two together identify the maximal cyclically monotone mappings as precisely the
+subdifferentials.
+
+The rigidity statement is proved here by subdivision. Along a segment in `ri (dom f)` cut into `N`
+equal steps, each step contributes the same increment to `f` and to `g` up to an error controlled
+by one subgradient difference; telescoping the `N` steps leaves an error of order `1/N`, so the
+increments agree exactly. Two functions with the same increments on `ri (dom f)` differ by a
+constant there, and closedness propagates the identity to all of `E`.
 
 ## Main definitions
 
 * `chainVal B s l x` — Rockafellar's telescoping sum along the chain that starts at `s`, runs
   through the list `l`, and ends at `x`.
-* `IsMonotoneRel B ρ`, `IsCyclicallyMonotone B ρ`, `IsMaximalCyclicallyMonotone B ρ`.
+* `IsMonotoneRel B ρ`, `IsMaximalMonotoneRel B ρ`, `IsCyclicallyMonotone B ρ`,
+  `IsMaximalCyclicallyMonotone B ρ`.
 * `cyclicPotential B ρ s` — the function Rockafellar constructs in Theorem 24.8.
 
 ## Main results
@@ -40,6 +50,17 @@ functions of a free endpoint.
 * `exists_eq_subgradientRel_of_isMaximalCyclicallyMonotone` — **Theorem 24.9**, the half that
   follows from Theorem 24.8: a maximal cyclically monotone mapping *is* a subdifferential.
 * `isClosed_subgradientRel` — **Theorem 24.4**: the graph of `∂f` is closed.
+* `abs_sub_increment_le` — the subdivision estimate: if `∂f ⊆ ∂g`, the increments of `f` and of `g`
+  along `N` equal steps of a common displacement `d` differ by at most `⟨d, y_N - y_0⟩`.
+* `increment_eq_of_subgradientRel_subset` — the increments of `f` and `g` between two points of
+  `ri (dom f)` coincide.
+* `eq_add_coe_of_subgradientRel_subset` — **rigidity**: `∂f ⊆ ∂g` forces `g = f + α` for a real
+  constant `α` (**Theorem 24.9**, uniqueness).
+* `isMaximalCyclicallyMonotone_subgradientRel` and
+  `isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn` — **Theorem 24.9** in full: `∂f` is
+  maximal cyclically monotone, and maximal cyclic monotonicity characterises subdifferentials.
+* `conj_add_coe`, `subgradient_add_coe`, `subgradientRel_add_coe` — the effect of an additive
+  constant on the conjugate and on the subdifferential.
 
 ## Design notes
 
@@ -64,24 +85,29 @@ arguments move. In `ℝⁿ` the hypothesis is automatic; here it is an explicit
 
 ## What is not here
 
-**Theorems 24.1, 24.2, 24.3, 24.5, 24.6, 24.7 and the maximality half of 24.9 are not formalised.**
-Theorems 24.1–24.3 are the one-dimensional theory (`f'₊` and `f'₋` as nondecreasing functions, and
-complete nondecreasing curves), which needs one-sided derivatives on `ℝ` that §23 does not provide.
-Theorems 24.5–24.7 are the convergence and boundedness results, which rest on Theorems 10.6–10.9
-(the equi-Lipschitz theory, deferred). The remaining half of Theorem 24.9 — that `∂f` is *maximal*
-cyclically monotone — needs the uniqueness statement "`∂f ⊆ ∂g` implies `g = f + const`", which
-Rockafellar proves from Theorem 23.4, Theorem 23.2 and a one-dimensional argument along segments in
-`ri (dom f)`; the one-dimensional argument is the same material as Theorems 24.1–24.3.
+**Local boundedness of `∂f`** lives in `Tdaf.Analysis.Convex.Subgradient.Bounded`, which imports
+this file.
+
+**The one-dimensional theory is absent**: the description of the subdifferential of a closed proper
+convex function on `ℝ` as a complete nondecreasing curve, and the recovery of the function from that
+curve by integration. It needs one-sided derivatives `f'₊`, `f'₋` for `EReal`-valued functions on
+`ℝ` — including the conventions `f'₊ = +∞` past the right end of `dom f` and `f'₋ = -∞` before its
+left end, which are *not* the values `dirDeriv` takes there — together with a theory of the integral
+of a monotone `[-∞, +∞]`-valued function. Neither is in the project.
+
+**Convergence of subgradients** (`∂fᵢ → ∂f` for a pointwise-convergent sequence of finite convex
+functions, and the corresponding statement for one-sided directional derivatives) is also absent;
+see the discussion in `Tdaf.Analysis.Convex.Subgradient.Bounded`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorems 24.4, 24.8,
-  and half of 24.9).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorems 24.4, 24.8
+  and 24.9).
 * R. T. Rockafellar, *Characterization of the subdifferentials of convex functions*, Pacific J.
   Math. **17** (1966) 497–510.
 -/
 
-open Set
+open Set Filter Topology
 
 namespace Tdaf.ConvexAnalysis
 
@@ -154,10 +180,18 @@ non-positive telescoping sum. Rockafellar's definition, with the cycle written a
 def IsCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
   ∀ s ∈ ρ, ∀ l : List (E × F), (∀ q ∈ l, q ∈ ρ) → chainVal B s l s.1 ≤ 0
 
+/-- A monotone mapping is **maximal** when no strictly larger monotone mapping contains it. -/
+def IsMaximalMonotoneRel (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
+  IsMonotoneRel B ρ ∧ ∀ σ : SetRel E F, IsMonotoneRel B σ → ρ ⊆ σ → σ ⊆ ρ
+
 /-- A cyclically monotone mapping is **maximal** when no strictly larger cyclically monotone
 mapping contains it. Theorem 24.9 identifies these with the subdifferentials. -/
 def IsMaximalCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
   IsCyclicallyMonotone B ρ ∧ ∀ σ : SetRel E F, IsCyclicallyMonotone B σ → ρ ⊆ σ → σ ⊆ ρ
+
+/-- Monotonicity passes to sub-mappings. -/
+theorem IsMonotoneRel.mono (h : IsMonotoneRel B σ) (hsub : ρ ⊆ σ) : IsMonotoneRel B ρ :=
+  fun p hp q hq => h p (hsub hp) q (hsub hq)
 
 /-- Cyclic monotonicity passes to sub-mappings. -/
 theorem IsCyclicallyMonotone.mono (h : IsCyclicallyMonotone B σ) (hsub : ρ ⊆ σ) :
@@ -435,5 +469,466 @@ theorem isClosed_subgradientRel [IsTopologicalAddGroup E]
       (hB.comp ((continuous_const.sub continuous_fst).prodMk continuous_snd))
 
 end GraphClosed
+
+/-! ### Increments along a chain of subgradients -/
+
+section Increment
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
+
+/-- One half of the subgradient inequality, read as a bound on an increment of `f`: a subgradient
+at the *left* endpoint underestimates the increment. -/
+theorem pairing_le_sub_of_mem_subgradient {p q : E} {a b : ℝ} {u : F}
+    (hp : f p = (a : EReal)) (hq : f q = (b : EReal)) (hu : u ∈ subgradient B f p) :
+    B (q - p) u ≤ b - a := by
+  have h := hu q
+  rw [hp, hq, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at h
+  linarith
+
+/-- The other half: a subgradient at the *right* endpoint overestimates the increment. -/
+theorem sub_le_pairing_of_mem_subgradient {p q : E} {a b : ℝ} {v : F}
+    (hp : f p = (a : EReal)) (hq : f q = (b : EReal)) (hv : v ∈ subgradient B f q) :
+    b - a ≤ B (q - p) v := by
+  have h := hv p
+  rw [hq, hp, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at h
+  have hexp : B (p - q) v = -(B (q - p) v) := by
+    simp only [map_sub, LinearMap.sub_apply]
+    ring
+  rw [hexp] at h
+  linarith
+
+/-- **The chain estimate that proves Theorem 24.9's uniqueness clause.** Along a chain of equally
+spaced points `x 0, x 1, …, x N` with common step `d`, where `v i` is a subgradient of `f` at
+`x i` and `∂f ⊆ ∂g`, the increments of `f` and of `g` across the chain differ by at most
+`⟨d, v N - v 0⟩`.
+
+The two increments are trapped between the *same* two telescoping sums — the subgradients of `f`
+serve `g` as well — so their difference is majorised by the total variation of the chain of
+subgradients, which telescopes to `⟨d, v N⟩ - ⟨d, v 0⟩`. Halving the step halves the bound while
+leaving the two ends of the chain alone, and that is what forces the two increments to agree. -/
+theorem abs_sub_increment_le (hsub : subgradientRel B f ⊆ subgradientRel B g)
+    {x : ℕ → E} {v : ℕ → F} {a b : ℕ → ℝ} {d : E} {N : ℕ}
+    (hx : ∀ i < N, x (i + 1) = x i + d)
+    (hv : ∀ i ≤ N, v i ∈ subgradient B f (x i))
+    (ha : ∀ i ≤ N, f (x i) = ((a i : ℝ) : EReal))
+    (hb : ∀ i ≤ N, g (x i) = ((b i : ℝ) : EReal)) :
+    |(a N - a 0) - (b N - b 0)| ≤ B d (v N - v 0) := by
+  have step : ∀ i, i < N →
+      |(a (i + 1) - a i) - (b (i + 1) - b i)| ≤ B d (v (i + 1)) - B d (v i) := by
+    intro i hi
+    have hi' : i ≤ N := hi.le
+    have hd : x (i + 1) - x i = d := by rw [hx i hi]; abel
+    have hvi : v i ∈ subgradient B f (x i) := hv i hi'
+    have hvi1 : v (i + 1) ∈ subgradient B f (x (i + 1)) := hv (i + 1) hi
+    have hgi : v i ∈ subgradient B g (x i) :=
+      hsub (show ((x i, v i) : E × F) ∈ subgradientRel B f from hvi)
+    have hgi1 : v (i + 1) ∈ subgradient B g (x (i + 1)) :=
+      hsub (show ((x (i + 1), v (i + 1)) : E × F) ∈ subgradientRel B f from hvi1)
+    have h1 := pairing_le_sub_of_mem_subgradient (ha i hi') (ha (i + 1) hi) hvi
+    have h2 := sub_le_pairing_of_mem_subgradient (ha i hi') (ha (i + 1) hi) hvi1
+    have h3 := pairing_le_sub_of_mem_subgradient (hb i hi') (hb (i + 1) hi) hgi
+    have h4 := sub_le_pairing_of_mem_subgradient (hb i hi') (hb (i + 1) hi) hgi1
+    rw [hd] at h1 h2 h3 h4
+    rw [abs_le]
+    constructor <;> linarith
+  have hsum : ∑ i ∈ Finset.range N, ((a (i + 1) - a i) - (b (i + 1) - b i))
+      = (a N - a 0) - (b N - b 0) := by
+    rw [Finset.sum_sub_distrib, Finset.sum_range_sub a N, Finset.sum_range_sub b N]
+  calc |(a N - a 0) - (b N - b 0)|
+      = |∑ i ∈ Finset.range N, ((a (i + 1) - a i) - (b (i + 1) - b i))| := by rw [hsum]
+    _ ≤ ∑ i ∈ Finset.range N, |(a (i + 1) - a i) - (b (i + 1) - b i)| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ i ∈ Finset.range N, (B d (v (i + 1)) - B d (v i)) :=
+        Finset.sum_le_sum fun i hi => step i (Finset.mem_range.1 hi)
+    _ = B d (v N) - B d (v 0) := Finset.sum_range_sub (fun i => B d (v i)) N
+    _ = B d (v N - v 0) := (map_sub (B d) _ _).symm
+
+end Increment
+
+/-! ### Raising a function by a constant -/
+
+section AddConst
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+
+omit [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F] in
+/-- `a - (u + α) = (a - u) + (-α)` for reals `a`, `α` and an arbitrary `EReal` `u`. Both infinite
+values of `u` collapse the two sides to the same thing, so there is no hypothesis. -/
+theorem coe_sub_add_coe (a α : ℝ) (u : EReal) :
+    (a : EReal) - (u + (α : EReal)) = ((a : EReal) - u) + ((-α : ℝ) : EReal) := by
+  induction u with
+  | bot => simp
+  | coe r =>
+    rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub,
+      ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff]
+    ring
+  | top => simp
+
+/-- **Raising a function by a real constant lowers its conjugate by that constant.** This is the
+one piece of conjugacy Theorem 24.9 needs beyond Fenchel–Moreau: `∂f ⊆ ∂g` pins `g` to `f + α` only
+after the same relation on the conjugate side has been turned back into an inequality on `E`. -/
+theorem conj_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α : ℝ) :
+    conj B (fun x => f x + (α : EReal)) = fun y => conj B f y + ((-α : ℝ) : EReal) := by
+  funext y
+  rw [conj_apply, conj_apply, Tdaf.EReal.iSup_add_coe]
+  exact iSup_congr fun x => coe_sub_add_coe _ _ _
+
+end AddConst
+
+/-! ### Theorem 24.9: `∂f` determines `f` up to an additive constant -/
+
+section Uniqueness
+
+variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
+
+omit [FiniteDimensional ℝ E] in
+/-- A point at which a proper function is subdifferentiable is a point where it is finite. -/
+theorem exists_coe_of_subgradient_nonempty (hpg : Proper g) {x : E}
+    (h : (subgradient B g x).Nonempty) : ∃ c : ℝ, g x = (c : EReal) := by
+  have hxdom : x ∈ dom g := by
+    by_contra hc
+    rw [subgradient_eq_empty_of_notMem_dom hpg hc] at h
+    exact absurd h Set.not_nonempty_empty
+  exact EReal.exists_coe_of_ne_bot_of_lt_top (hpg.ne_bot x) hxdom
+
+/-- **Rockafellar, Theorem 24.9**, the analytic core: if `∂f ⊆ ∂g` then `f` and `g` have the *same
+increments* between relative interior points of `dom f`.
+
+Rockafellar deduces this from the one-dimensional theory of §24.1–24.3, integrating the common
+one-sided derivative along the segment. The argument here is elementary and needs none of it.
+Subdivide `[x₁, x₂]` into `N` equal steps and pick a subgradient `v i ∈ ∂f (x i)` at each node,
+keeping the two ends fixed. Each step traps both increments in the interval
+`[⟨d, v i⟩, ⟨d, v (i+1)⟩]`, so the two increments differ by at most the telescoping total
+`⟨d, v N - v 0⟩ = N⁻¹ ⟨x₂ - x₁, v N - v 0⟩`, which tends to `0`. -/
+theorem increment_eq_of_subgradientRel_subset [IsCompatiblePairing B]
+    (hf : ConvexFn f) (hpf : Proper f) (hpg : Proper g)
+    (hsub : subgradientRel B f ⊆ subgradientRel B g)
+    {x₁ x₂ : E} {a₁ a₂ b₁ b₂ : ℝ} (h₁ : x₁ ∈ ri (dom f)) (h₂ : x₂ ∈ ri (dom f))
+    (hfa₁ : f x₁ = (a₁ : EReal)) (hfa₂ : f x₂ = (a₂ : EReal))
+    (hgb₁ : g x₁ = (b₁ : EReal)) (hgb₂ : g x₂ = (b₂ : EReal)) :
+    a₂ - a₁ = b₂ - b₁ := by
+  obtain ⟨u₀, hu₀⟩ := subgradient_nonempty_of_mem_relint_dom (B := B) hf hpf h₁
+  obtain ⟨u₁, hu₁⟩ := subgradient_nonempty_of_mem_relint_dom (B := B) hf hpf h₂
+  set C : ℝ := B (x₂ - x₁) (u₁ - u₀) with hC
+  have key : ∀ N : ℕ, 0 < N → |(a₂ - a₁) - (b₂ - b₁)| ≤ (N : ℝ)⁻¹ * C := by
+    intro N hN
+    have hNpos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    have hN0 : (N : ℝ) ≠ 0 := hNpos.ne'
+    set d : E := (N : ℝ)⁻¹ • (x₂ - x₁) with hd
+    set x : ℕ → E := fun i => x₁ + (i : ℝ) • d with hxdef
+    have hx0 : x 0 = x₁ := by simp [hxdef]
+    have hxN : x N = x₂ := by
+      simp only [hxdef, hd, smul_smul, mul_inv_cancel₀ hN0, one_smul]
+      abel
+    have hxstep : ∀ i < N, x (i + 1) = x i + d := by
+      intro i _
+      simp only [hxdef]
+      push_cast
+      rw [add_smul, one_smul]
+      abel
+    have hxmem : ∀ i ≤ N, x i ∈ ri (dom f) := by
+      intro i hi
+      have ht0 : (0 : ℝ) ≤ (i : ℝ) / (N : ℝ) := by positivity
+      have ht1 : (i : ℝ) / (N : ℝ) ≤ 1 := by
+        rw [div_le_one hNpos]
+        exact_mod_cast hi
+      have heq : x i = (1 - (i : ℝ) / (N : ℝ)) • x₁ + ((i : ℝ) / (N : ℝ)) • x₂ := by
+        have hxi : x i = x₁ + ((i : ℝ) / (N : ℝ)) • (x₂ - x₁) := by
+          simp only [hxdef, hd, smul_smul, div_eq_mul_inv]
+        rw [hxi]
+        module
+      rw [heq]
+      exact Convex.relint hf.convex_dom h₁ h₂ (by linarith) ht0 (by ring)
+    have hex : ∀ i, ∃ u : F, i ≤ N → u ∈ subgradient B f (x i) := by
+      intro i
+      by_cases hi : i ≤ N
+      · obtain ⟨u, hu⟩ := subgradient_nonempty_of_mem_relint_dom (B := B) hf hpf (hxmem i hi)
+        exact ⟨u, fun _ => hu⟩
+      · exact ⟨0, fun hc => absurd hc hi⟩
+    choose u hu using hex
+    set v : ℕ → F := fun i => if i = 0 then u₀ else if i = N then u₁ else u i with hvdef
+    have hvmem : ∀ i ≤ N, v i ∈ subgradient B f (x i) := by
+      intro i hi
+      simp only [hvdef]
+      split
+      · rename_i hi0
+        subst hi0
+        rw [hx0]
+        exact hu₀
+      · split
+        · rename_i hiN
+          subst hiN
+          rw [hxN]
+          exact hu₁
+        · exact hu i hi
+    have hfa : ∀ i ≤ N, f (x i) = (((f (x i)).toReal : ℝ) : EReal) := by
+      intro i hi
+      refine (_root_.EReal.coe_toReal ?_ (hpf.ne_bot _)).symm
+      exact (mem_dom.1 (intrinsicInterior_subset (hxmem i hi))).ne
+    have hgb : ∀ i ≤ N, g (x i) = (((g (x i)).toReal : ℝ) : EReal) := by
+      intro i hi
+      obtain ⟨c, hc⟩ := exists_coe_of_subgradient_nonempty hpg
+        ⟨v i, hsub (show ((x i, v i) : E × F) ∈ subgradientRel B f from hvmem i hi)⟩
+      rw [hc]
+      simp
+    have hchain := abs_sub_increment_le hsub (x := x) (v := v)
+      (a := fun i => (f (x i)).toReal) (b := fun i => (g (x i)).toReal) (d := d) (N := N)
+      hxstep hvmem hfa hgb
+    have hv0 : v 0 = u₀ := by simp [hvdef]
+    have hvN : v N = u₁ := by simp [hvdef, hN.ne']
+    have hBd : B d (v N - v 0) = (N : ℝ)⁻¹ * C := by
+      rw [hvN, hv0, hd, map_smul, LinearMap.smul_apply, smul_eq_mul, hC]
+    have ha0 : (f (x 0)).toReal = a₁ := by rw [hx0, hfa₁]; simp
+    have haN : (f (x N)).toReal = a₂ := by rw [hxN, hfa₂]; simp
+    have hb0 : (g (x 0)).toReal = b₁ := by rw [hx0, hgb₁]; simp
+    have hbN : (g (x N)).toReal = b₂ := by rw [hxN, hgb₂]; simp
+    simp only [ha0, haN, hb0, hbN, hBd] at hchain
+    exact hchain
+  have hlim : Tendsto (fun N : ℕ => (N : ℝ)⁻¹ * C) atTop (𝓝 0) := by
+    simpa using tendsto_inv_atTop_nhds_zero_nat.mul_const C
+  have hle : |(a₂ - a₁) - (b₂ - b₁)| ≤ 0 := by
+    refine ge_of_tendsto hlim ?_
+    filter_upwards [eventually_gt_atTop 0] with N hN using key N hN
+  have hzero := abs_nonpos_iff.1 hle
+  linarith
+
+/-- **Rockafellar, Theorem 24.9**, the geometric half: if `∂f ⊆ ∂g` then `g ≤ f + α` for a real
+constant `α`, with equality on `cl (dom f)`.
+
+The increments already agree on `ri (dom f)` (`increment_eq_of_subgradientRel_subset`), which fixes
+`α`. Theorem 7.5 carries the identity from `ri (dom f)` out to `cl (dom f)`: `f` is the limit of its
+values along a segment running into the boundary point, lower semicontinuity of `g` gives one
+inequality there and convexity of `g` the other. Off `cl (dom f)` the right-hand side is `⊤`. -/
+theorem exists_forall_le_add_coe_of_subgradientRel_subset [IsCompatiblePairing B]
+    (hf : ConvexFn f) (hpf : Proper f) (hcf : ClosedFn f)
+    (hg : ConvexFn g) (hpg : Proper g) (hlg : LowerSemicontinuous g)
+    (hsub : subgradientRel B f ⊆ subgradientRel B g) :
+    ∃ α : ℝ, (∀ y, g y ≤ f y + (α : EReal)) ∧
+      ∀ y ∈ closure (dom f), g y = f y + (α : EReal) := by
+  obtain ⟨z, hz⟩ := Convex.relint_nonempty hf.convex_dom hpf.dom_nonempty
+  have hfinf : ∀ x ∈ ri (dom f), f x = (((f x).toReal : ℝ) : EReal) := fun x hx =>
+    (_root_.EReal.coe_toReal (mem_dom.1 (intrinsicInterior_subset hx)).ne (hpf.ne_bot x)).symm
+  have hfing : ∀ x ∈ ri (dom f), g x = (((g x).toReal : ℝ) : EReal) := by
+    intro x hx
+    obtain ⟨u, hu⟩ := subgradient_nonempty_of_mem_relint_dom (B := B) hf hpf hx
+    obtain ⟨c, hc⟩ := exists_coe_of_subgradient_nonempty hpg
+      ⟨u, hsub (show ((x, u) : E × F) ∈ subgradientRel B f from hu)⟩
+    rw [hc]
+    simp
+  set α : ℝ := (g z).toReal - (f z).toReal with hα
+  have claim1 : ∀ x ∈ ri (dom f), g x = f x + (α : EReal) := by
+    intro x hx
+    have h := increment_eq_of_subgradientRel_subset hf hpf hpg hsub hz hx
+      (hfinf z hz) (hfinf x hx) (hfing z hz) (hfing x hx)
+    rw [hfinf x hx, hfing x hx, ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff, hα]
+    linarith
+  have hcf' : clFn f = f := hcf
+  have claim2 : ∀ y ∈ closure (dom f), g y = f y + (α : EReal) := by
+    intro y hy
+    have hseg : ∀ᶠ a : ℝ in 𝓝[<] (1 : ℝ),
+        g ((1 - a) • z + a • y) = f ((1 - a) • z + a • y) + (α : EReal) := by
+      filter_upwards [eventually_mem_Ico_nhdsLT_one] with a ha
+      exact claim1 _ (Convex.segment_mem_relint hf.convex_dom hz hy ha.1 ha.2)
+    have hftend : Tendsto (fun a : ℝ => f ((1 - a) • z + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (f y)) := by
+      have h := hf.tendsto_clFn_along_segment_relint hpf hz y
+      rwa [hcf'] at h
+    refine le_antisymm ?_ ?_
+    · by_contra hcon
+      rw [not_le] at hcon
+      obtain ⟨c, hc1, hc2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hcon
+      have hfyt : f y ≠ ⊤ := by
+        intro h
+        rw [h, _root_.EReal.top_add_coe] at hc1
+        exact absurd hc1 not_top_lt
+      obtain ⟨t, ht⟩ :=
+        EReal.exists_coe_of_ne_bot_of_lt_top (hpf.ne_bot y) (lt_top_iff_ne_top.2 hfyt)
+      rw [ht, ← _root_.EReal.coe_add, _root_.EReal.coe_lt_coe_iff] at hc1
+      have h1 : ∀ᶠ a : ℝ in 𝓝[<] (1 : ℝ), f ((1 - a) • z + a • y) < ((c - α : ℝ) : EReal) := by
+        refine hftend.eventually_lt_const ?_
+        rw [ht, _root_.EReal.coe_lt_coe_iff]
+        linarith
+      have h2 : ∀ᶠ a : ℝ in 𝓝[<] (1 : ℝ), ((c : ℝ) : EReal) < g ((1 - a) • z + a • y) :=
+        (tendsto_segment z y).eventually (hlg y (c : EReal) hc2)
+      obtain ⟨a, ⟨ha1, ha2⟩, ha3⟩ := ((h1.and h2).and hseg).exists
+      have hlt : g ((1 - a) • z + a • y) < ((c : ℝ) : EReal) := by
+        rw [ha3]
+        have h := _root_.EReal.add_lt_add_right_coe ha1 α
+        rwa [← _root_.EReal.coe_add, show c - α + α = c by ring] at h
+      exact absurd (ha2.trans hlt) (lt_irrefl _)
+    · by_contra hcon
+      rw [not_le] at hcon
+      obtain ⟨c, hc1, hc2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hcon
+      obtain ⟨s, hs⟩ :=
+        EReal.exists_coe_of_ne_bot_of_lt_top (hpg.ne_bot y) (lt_top_iff_ne_top.2 hc1.ne_top)
+      have hsc : s < c := by rw [hs, _root_.EReal.coe_lt_coe_iff] at hc1; exact hc1
+      have hfy : ((c - α : ℝ) : EReal) < f y := by
+        by_contra hle
+        rw [not_lt] at hle
+        have h : f y + (α : EReal) ≤ ((c - α : ℝ) : EReal) + (α : EReal) := add_le_add hle le_rfl
+        rw [← _root_.EReal.coe_add, show c - α + α = c by ring] at h
+        exact absurd (hc2.trans_le h) (lt_irrefl _)
+      have h1 : ∀ᶠ a : ℝ in 𝓝[<] (1 : ℝ), ((c - α : ℝ) : EReal) < f ((1 - a) • z + a • y) :=
+        hftend.eventually_const_lt hfy
+      have h2 : ∀ᶠ a : ℝ in 𝓝[<] (1 : ℝ),
+          g ((1 - a) • z + a • y) ≤ (((1 - a) * (g z).toReal + a * s : ℝ) : EReal) := by
+        filter_upwards [eventually_mem_Ico_nhdsLT_one] with a ha
+        exact hg.epi_combo (le_of_eq (hfing z hz)) (le_of_eq hs) (by linarith [ha.2]) ha.1
+          (by ring)
+      have h3 : ∀ᶠ a : ℝ in 𝓝[<] (1 : ℝ), ((1 - a) * (g z).toReal + a * s : ℝ) < c :=
+        (tendsto_affine_nhdsLT_one _ s).eventually_lt_const hsc
+      obtain ⟨a, ⟨ha1, ha2⟩, ha3, ha4⟩ := ((h1.and h2).and (h3.and hseg)).exists
+      have hlt1 : ((c : ℝ) : EReal) < g ((1 - a) • z + a • y) := by
+        rw [ha4]
+        have h := _root_.EReal.add_lt_add_right_coe ha1 α
+        rwa [← _root_.EReal.coe_add, show c - α + α = c by ring] at h
+      have hlt2 : g ((1 - a) • z + a • y) < ((c : ℝ) : EReal) :=
+        lt_of_le_of_lt ha2 (by exact_mod_cast ha3)
+      exact absurd (hlt1.trans hlt2) (lt_irrefl _)
+  refine ⟨α, fun y => ?_, claim2⟩
+  by_cases hy : y ∈ closure (dom f)
+  · exact le_of_eq (claim2 y hy)
+  · have hyd : y ∉ dom f := fun hc => hy (subset_closure hc)
+    have htop : f y = ⊤ := by
+      by_contra hc
+      exact hyd (mem_dom.2 (lt_top_iff_ne_top.2 hc))
+    rw [htop, _root_.EReal.top_add_coe]
+    exact le_top
+
+end Uniqueness
+
+/-! ### Theorem 24.9 in full -/
+
+section MaximalCyclic
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
+
+/-- Raising a function by a real constant does not change its subdifferential. -/
+@[simp] theorem subgradient_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α : ℝ) (x : E) :
+    subgradient B (fun x => f x + (α : EReal)) x = subgradient B f x := by
+  ext y
+  simp only [mem_subgradient]
+  refine forall_congr' fun z => ?_
+  rw [add_right_comm]
+  exact (_root_.EReal.addLECancellable_coe α).add_le_add_iff_right
+
+/-- The graph form of `subgradient_add_coe`. -/
+theorem subgradientRel_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α : ℝ) :
+    subgradientRel B (fun x => f x + (α : EReal)) = subgradientRel B f :=
+  Set.ext fun p => by
+    simp only [subgradientRel, Set.mem_ofPred_eq, subgradient_add_coe]
+
+end MaximalCyclic
+
+section Theorem249
+
+variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
+
+/-- **Rockafellar, Theorem 24.9**, uniqueness clause: a closed proper convex function is determined
+by its subdifferential up to an additive constant, and already by the *inclusion* `∂f ⊆ ∂g`.
+
+The proof follows Rockafellar. `exists_forall_le_add_coe_of_subgradientRel_subset` gives `g ≤ f + α`
+with equality on `cl (dom f)`; Corollary 23.5.1 turns `∂f ⊆ ∂g` into `∂f* ⊆ ∂g*` and repeats the
+argument on the conjugate side, giving `g* ≤ f* + β` with equality on `cl (dom f*)`. Evaluating
+Theorem 23.5 (d) at a pair `(x, y)` of the graph of `∂f` — where both equalities apply — forces
+`β = -α`, so `g* ≤ (f + α)*`; conjugating that back and using Fenchel–Moreau gives `g ≥ f + α`. -/
+theorem eq_add_coe_of_subgradientRel_subset [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (hsub : subgradientRel B f ⊆ subgradientRel B g) :
+    ∃ α : ℝ, ∀ x, g x = f x + (α : EReal) := by
+  obtain ⟨α, hle, heq⟩ := exists_forall_le_add_coe_of_subgradientRel_subset hf.convex hf.proper
+    hf.closed hg.convex hg.proper hg.lowerSemicontinuous hsub
+  have hfstar : ClosedProperConvexFn (conj B f) :=
+    ⟨convexFn_conj B f, closedFn_conj, proper_conj hf⟩
+  have hgstar : ClosedProperConvexFn (conj B g) :=
+    ⟨convexFn_conj B g, closedFn_conj, proper_conj hg⟩
+  have hsub' : subgradientRel B.flip (conj B f) ⊆ subgradientRel B.flip (conj B g) := by
+    rw [subgradientRel_conj_eq_inv hf.convex hf.closed,
+      subgradientRel_conj_eq_inv hg.convex hg.closed]
+    exact fun p hp => hsub hp
+  obtain ⟨β, hleβ, heqβ⟩ := exists_forall_le_add_coe_of_subgradientRel_subset hfstar.convex
+    hfstar.proper hfstar.closed hgstar.convex hgstar.proper hgstar.lowerSemicontinuous hsub'
+  -- The two constants are opposite: evaluate Theorem 23.5 (d) at a point of the graph of `∂f`.
+  obtain ⟨x, hx⟩ := Convex.relint_nonempty hf.convex.convex_dom hf.proper.dom_nonempty
+  obtain ⟨y, hy⟩ := subgradient_nonempty_of_mem_relint_dom (B := B) hf.convex hf.proper hx
+  have hxdom : x ∈ dom f := intrinsicInterior_subset hx
+  have hfx : f x + conj B f y = ((B x y : ℝ) : EReal) :=
+    (Proper.mem_subgradient_iff_add_conj_eq hf.proper).1 hy
+  have hgx : g x + conj B g y = ((B x y : ℝ) : EReal) :=
+    (Proper.mem_subgradient_iff_add_conj_eq hg.proper).1
+      (hsub (show ((x, y) : E × F) ∈ subgradientRel B f from hy))
+  obtain ⟨p, hp⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hf.proper.ne_bot x) hxdom
+  have hqbot : conj B f y ≠ ⊥ := conj_ne_bot (B := B) hf.proper.dom_nonempty y
+  have hqtop : conj B f y ≠ ⊤ := by
+    intro hc
+    rw [hp, hc, _root_.EReal.coe_add_top] at hfx
+    exact absurd hfx.symm (_root_.EReal.coe_ne_top _)
+  obtain ⟨q, hq⟩ := EReal.exists_coe_of_ne_bot_of_lt_top hqbot (lt_top_iff_ne_top.2 hqtop)
+  have hydom : y ∈ dom (conj B f) := mem_dom.2 (lt_top_iff_ne_top.2 hqtop)
+  have hgxval : g x = ((p + α : ℝ) : EReal) := by
+    rw [heq x (subset_closure hxdom), hp, ← _root_.EReal.coe_add]
+  have hgyval : conj B g y = ((q + β : ℝ) : EReal) := by
+    rw [heqβ y (subset_closure hydom), hq, ← _root_.EReal.coe_add]
+  rw [hp, hq, ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff] at hfx
+  rw [hgxval, hgyval, ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff] at hgx
+  have hβ : β = -α := by linarith
+  -- Conjugating `g* ≤ (f + α)*` back to `E`.
+  have hstar : conj B (fun x => f x + (α : EReal)) = fun y => conj B f y + ((-α : ℝ) : EReal) :=
+    conj_add_coe B f α
+  have hgle : conj B g ≤ conj B (fun x => f x + (α : EReal)) := by
+    rw [hstar]
+    intro y
+    rw [← hβ]
+    exact hleβ y
+  have hbcf : conj B.flip (conj B f) = f := biconj_eq_self hf.convex hf.closed
+  have hbcg : conj B.flip (conj B g) = g := biconj_eq_self hg.convex hg.closed
+  have hbih : conj B.flip (conj B (fun x => f x + (α : EReal))) = fun x => f x + (α : EReal) := by
+    rw [hstar, conj_add_coe B.flip (conj B f) (-α), neg_neg]
+    funext x
+    rw [congrFun hbcf x]
+  have hge := conj_antitone B.flip hgle
+  rw [hbih, hbcg] at hge
+  exact ⟨α, fun x => le_antisymm (hle x) (Pi.le_def.1 hge x)⟩
+
+/-- **Rockafellar, Theorem 24.9**, the half that Theorem 24.8 does *not* give: the subdifferential
+of a closed proper convex function is a *maximal* cyclically monotone mapping.
+
+If `∂f ⊆ σ` with `σ` cyclically monotone then Theorem 24.8 puts `σ ⊆ ∂g` for some closed proper
+convex `g`; the uniqueness clause makes `g = f + α`, and a constant does not change a
+subdifferential (`subgradientRel_add_coe`), so `σ ⊆ ∂f`. -/
+theorem isMaximalCyclicallyMonotone_subgradientRel [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] (hf : ClosedProperConvexFn f) :
+    IsMaximalCyclicallyMonotone B (subgradientRel B f) := by
+  refine ⟨isCyclicallyMonotone_subgradientRel hf.proper, fun σ hσ hsub => ?_⟩
+  obtain ⟨x, hx⟩ := Convex.relint_nonempty hf.convex.convex_dom hf.proper.dom_nonempty
+  obtain ⟨y, hy⟩ := subgradient_nonempty_of_mem_relint_dom (B := B) hf.convex hf.proper hx
+  obtain ⟨g, hgconv, hgclosed, hgproper, hgsub⟩ :=
+    exists_convexFn_subgradientRel_of_isCyclicallyMonotone hσ
+      ⟨(x, y), hsub (show ((x, y) : E × F) ∈ subgradientRel B f from hy)⟩
+  obtain ⟨α, hα⟩ := eq_add_coe_of_subgradientRel_subset hf ⟨hgconv, hgclosed, hgproper⟩
+    (hsub.trans hgsub)
+  have hgeq : g = fun x => f x + (α : EReal) := funext hα
+  rw [hgeq, subgradientRel_add_coe] at hgsub
+  exact hgsub
+
+/-- **Rockafellar, Theorem 24.9** in full: on a finite-dimensional space the maximal cyclically
+monotone mappings are exactly the subdifferentials of the closed proper convex functions. -/
+theorem isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] {ρ : SetRel E F} :
+    IsMaximalCyclicallyMonotone B ρ ↔
+      ∃ f : E → EReal, ClosedProperConvexFn f ∧ ρ = subgradientRel B f := by
+  constructor
+  · intro h
+    obtain ⟨f, hconv, hclosed, hproper, heq⟩ :=
+      exists_eq_subgradientRel_of_isMaximalCyclicallyMonotone h
+    exact ⟨f, ⟨hconv, hclosed, hproper⟩, heq⟩
+  · rintro ⟨f, hf, rfl⟩
+    exact isMaximalCyclicallyMonotone_subgradientRel hf
+
+end Theorem249
 
 end Tdaf.ConvexAnalysis
