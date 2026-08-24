@@ -96,6 +96,11 @@ structure Proper (f : E → EReal) : Prop where
 /-- `dom` is Rockafellar's projection of the epigraph — with no hypothesis on `f`. -/
 theorem dom_eq_fst_image_epi (f : E → EReal) : dom f = Prod.fst '' epi f
 
+/-- A real-valued affine coordinate added to a convex function keeps it convex. -/
+theorem convexFn_add_coe (hf : ConvexFn f) {l : E → ℝ}
+    (hl : ∀ (x y : E) (a b : ℝ), a + b = 1 → l (a • x + b • y) = a * l x + b * l y) :
+    ConvexFn (fun x => f x + ((l x : ℝ) : EReal))
+
 noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x => ⨅ _ : x ∈ s, f x
 @[simp] theorem restrict_of_mem    {…} (hx : x ∈ s) : restrict s f x = f x
 @[simp] theorem restrict_of_notMem {…} (hx : x ∉ s) : restrict s f x = ⊤
@@ -733,6 +738,17 @@ goes straight through Theorem 13.1 instead, so `Polar.lean`'s deferral of Theore
 `⊇` is "a linear function bounded above on a half-line has nonpositive slope"; `⊆` is
 `mem_closure_convexHull_iff_le_supportFn`, since a recession direction leaves every inequality
 `⟨·, y⟩ ≤ δ*(y | C)` intact.
+
+**Theorem 8.3 has a slice corollary, and it lives in `Recession/Function.lean`.**
+`recessionFn_le_coe_of_slice` and `recessionFn_slice_eq` say that a closed convex function of two
+variables has the *same* recession function on every slice `x ↦ G (u, x)` with non-empty effective
+domain. The proof is `mem_recessionCone_of_exists_ray` — Theorem 8.3, "one half-line is enough" —
+applied to `epi G` in the direction `((0, y), ν)`: the slice inequality at a single point exhibits
+the half-line, and reading the resulting recession direction back at any other `u` gives the
+inequality there. Neither `u` needs to be in `dom F` for the `≤` form; the equality form needs both.
+It is the missing prerequisite that Theorem 30.4(g) turned out to need, and nothing weaker will do:
+without closedness the slices genuinely differ (take `F 0 x = |x|`, `F u ≡ 0` for `u ∈ (0, 1]`, `⊤`
+elsewhere — jointly convex, not closed, and the recession functions differ).
 
 ### `Tdaf/Analysis/Convex/Recession/Closedness.lean`
 
@@ -2138,14 +2154,23 @@ below any prescribed bound.
 ### `Tdaf/Analysis/Convex/Optimization/Normal.lean`
 
 §30 from Corollary 30.2.1 on: **Corollaries 30.2.1, 30.2.2** (both formulas) **and 30.2.3**,
-**Theorem 30.3** in full, **Theorem 30.4** clauses (a)–(f), and **Theorem 30.5**.
+**Theorem 30.3** in full, **Theorem 30.4** clauses (a)–(g) and (i), and **Theorem 30.5**.
 `ConcaveKuhnTucker` and `ConcavePolyhedralBifun` are the two definitions clauses (d)–(f) need;
 `forall_conj_eq_top_iff` is the single lemma both halves of Corollary 30.2.1 run on. Corollary
 30.5.1 is in `Saddle/Minimax.lean`, with §36.
 
-**Not here**: Theorem 30.4 (g)–(j). Theorems 14.2 and 27.1(d)/(f) and all four clauses of
-Corollary 13.3.4 are now done, so the one step left is the "i.e." in the book's own proof — and it
-is not the one-liner that word suggests.
+**Theorem 30.4(g) and (i) are here**, in `section Thm304Main`, and getting them cost a new
+prerequisite.
+
+```lean
+noncomputable def shiftBifun (Bx) (F : Bifun U X) (y : Y) : Bifun U X
+theorem infBifun_shiftBifun …            -- `inf (F - ⟨·, y⟩) u = -(Fu)*(y)`
+theorem convexBifun_shiftBifun … ; theorem adjointBifun_shiftBifun_zero …
+theorem supBifun_adjointBifun …          -- **Cor 30.2.2** at an arbitrary `y`
+theorem mem_domConcaveBifun_adjointBifun …                     -- the book's "i.e."
+theorem normal_of_exists_setOf_le …                            -- **Thm 30.4(g)**
+theorem normal_of_argmin_nonempty_and_isBounded …              -- **Thm 30.4(i)**
+```
 
 **Rockafellar's proof of Theorem 30.4(g) hides a real argument in one "i.e.".** The proof reads:
 "Condition (g) is equivalent by Theorem 27.1(d) to having `0 ∈ int (dom (F0)*)`, i.e. `(P*)`
@@ -2176,10 +2201,38 @@ non-obvious half being that a single ray suffices, which is `mem_recessionCone_o
   origin, so `F u - ⟨·, y*⟩` has a bounded non-empty sublevel set and hence is bounded below;
 * so the ball of radius `c` lies in every `dom ((F u)*)`, and `0 ∈ int (domConcaveBifun F*)`.
 
-So (g) ⇒ (b) is a genuine theorem with a genuine proof, and the missing prerequisite is the
-recession cone of a slice, which `Recession/Cone.lean` does not have. (h) is the same argument on
-the concave side, and (i), (j) are the special cases of (g), (h) in which the sublevel set is
-`argmin`.
+That is what `normal_of_exists_setOf_le` does, with `recessionFn_slice_eq` supplying the first
+step. Three details the sketch hides:
+
+* **`shiftBifun` is needed because Corollary 30.2.2 is stated at the origin only.**
+  `adjointBifun Bu Bx (shiftBifun Bx F y) 0 v = adjointBifun Bu Bx F y v`, so applying the
+  origin-only formula to the shifted bifunction computes the whole `y`-slice of the adjoint. The
+  identity is EReal bookkeeping — `(z - c) + b = z + (b - c)` for real `b`, `c` — and the convexity
+  of the shift is `convexFn_add_coe`, newly public in `Epigraph.lean`, promoted from the `private`
+  copy `Saddle/Defs.lean` had carried since §33. That dedup was **forced, not optional**: gotcha 136
+  again, `a non-private declaration … has already been declared`, reported at the private copy in a
+  file nobody had touched.
+* **No properness is assumed.** An improper closed convex bifunction has `inf F 0 = -∞` — by
+  `ConvexFn.eq_bot_or_eq_top`, Corollary 7.2.1 — and normality then holds because `cl` cannot go
+  below `-∞`. The proof case-splits on `∃ p, graphFn F p = ⊥` and disposes of that branch in four
+  lines.
+* **Theorem 30.4(g) is the one §30 statement that needs `FiniteDimensional ℝ U`.** It enters
+  through `ConvexFn.proper_clFn`, Theorem 7.4, applied to `u ↦ -(Fu)*(y)` — not through anything
+  about the perturbation space as such. `X` and `Y` are finite-dimensional already, for Theorem
+  27.1(d) and Corollary 13.3.4(c).
+
+**(i) needs properness where (g) does not.** `argmin (F0)` is a level set of `F0` at its own
+minimum value, which is `argmin_nonempty_and_isBounded_iff_exists_setOf_le` — but only for proper
+`F0`. Without properness "optimal solution" and "optimal value" come apart: for `F0 ≡ ⊤` over a
+zero-dimensional `X` the set of optimal solutions is non-empty and bounded while no level set is,
+so (i) is *not* literally contained in (g) as the book says.
+
+**Not here**: Theorem 30.4 (h) and (j), the concave mirrors of (g) and (i). They are the same
+argument applied to `F*`, and the obstruction is structural rather than mathematical: `F*` is a
+bifunction from `Y` to `V`, its slices are functions on `V`, and `V` — the space paired with the
+perturbation space `U` — is a plain module throughout §29 and §30. Theorem 27.1(d) and Corollary
+13.3.4(c) both need it finite-dimensional. Adding `[FiniteDimensional ℝ V]` to a mirror section
+would make them reachable at the cost of a fourth finite-dimensionality hypothesis.
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -4346,6 +4399,29 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
      "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
      a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+210. **A section variable forced in by `include` is implicit *and* un-inferrable at call sites.**
+     `include Bu Bx in theorem normal_of_exists_setOf_le … : Normal F` compiles, but every caller
+     must write `normal_of_exists_setOf_le (Bu := Bu) (Bx := Bx) …`, because the conclusion mentions
+     neither pairing. The failure is a stuck-instance message naming
+     `IsCompatiblePairing (LinearMap.flip ?m)`, not an "unknown implicit". Gotcha 185's `include` is
+     the right fix for the *statement*; this is its price at the call site.
+
+209. **`heq ▸ h` fails when the target is a `def` hiding the rewritten term.** `ConvexBifun G`
+     unfolds to `ConvexFn (graphFn G)`, and `▸` reports "the equality does not contain the expected
+     result type on either the left or the right hand side" because it matches syntactically. Go
+     through the `_iff` lemma first: `refine convexBifun_iff.2 ?_; rw [← heq]; exact h`.
+
+208. **`EReal.neg_sub` produces `-a + b`, not `b - a`.** After
+     `rw [_root_.EReal.neg_sub h h']` the goal is `… = -↑c + F u x` where the book-shaped answer is
+     `F u x - ↑c`. Finish with `sub_eq_add_neg` followed by `exact add_comm _ _`; do not try to
+     rewrite `add_comm` inside the `rw` list, since it fires on the first `_ + _` it meets.
+
+207. **`convexFn_add_coe`'s `l` cannot be found by higher-order unification.** Passing only the
+     combination-law hypothesis gives "Application type mismatch … but is expected to have type
+     `∀ (x y : E) (a b : ℝ), a + b = 1 → ?m (a • x + b • y) = …`". Supply it:
+     `convexFn_add_coe (f := graphFn F) (l := fun r => -(Bx r.2 y)) hF hl`, and state `hl` with the
+     same lambda applied, so that the two match up to beta.
 
 206. **Extract `Convex.sum_mem`-on-`epi f` as a lemma before using it.** Applied inline it drags
      `Prod.fst_sum` / `Prod.snd_sum` bookkeeping into every consumer, and its higher-order

@@ -381,7 +381,7 @@ which is the half of Theorem 30.5 that needs no normality hypothesis.
 
 ## 6.4a `Optimization/Normal.lean` — §30 from Corollary 30.2.2 on
 
-**Status: done** except clauses (g)–(j) of Theorem 30.4.
+**Status: done** except clauses (h) and (j) of Theorem 30.4.
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -407,7 +407,9 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 | `le_limsup_nhds`, `clConcave_eq_limsup_or`, `liminf_infBifun_eq_iSup_adjointBifun`, `limsup_supBifun_adjointBifun_eq` | **Cor 30.2.3** (the `liminf` form) | done — on `clFn_eq_liminf_or`, now in `Closure.lean` |
 | `ConcaveKuhnTucker`, `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker`, `concaveNormal_of_concaveKuhnTucker_nonempty`, `normal_of_concaveKuhnTucker_adjointBifun_nonempty` | **Thm 30.4(d)** | done |
 | `PolyhedralBifun.normal`, `ConcavePolyhedralBifun`, `ConcavePolyhedralBifun.concaveNormal`, `normal_of_concavePolyhedral_adjointBifun` | **Thm 30.4(e), (f)** | done |
-| — | Thm 30.4 (g)–(j) | not done — every prerequisite the book names is available (Thm 27.1(d), Thm 14.2, Cor 13.3.4 in all four clauses). What is missing is a step the book's proof hides in an "i.e.": `0 ∈ int (dom (F 0)*) ⇒ 0 ∈ int (domConcaveBifun F*)`. See the `Optimization/Normal.lean` entry in `NOTES.md` — the route is *all slices of a closed convex bifunction have the same recession function*, which needs the recession cone of a slice, the one lemma `Recession/Cone.lean` lacks |
+| `shiftBifun`, `infBifun_shiftBifun`, `convexBifun_shiftBifun`, `adjointBifun_shiftBifun_zero`, `supBifun_adjointBifun`, `mem_domConcaveBifun_adjointBifun`, `normal_of_exists_setOf_le` | **Thm 30.4(g)** | done — and the book's "i.e." is a theorem, not a step: `0 ∈ int (dom (F 0)*) ⇒ 0 ∈ int (domConcaveBifun F*)` needs *all slices of a closed convex bifunction have the same recession function* (`recessionFn_slice_eq`, Thm 8.3 on the epigraph). No properness assumed; the one §30 statement needing `FiniteDimensional ℝ U` |
+| `normal_of_argmin_nonempty_and_isBounded` | **Thm 30.4(i)** | done — with `Proper (F 0)`, which the book's "(i) is contained in (g)" quietly needs |
+| — | Thm 30.4 (h), (j) | not done — the concave mirrors, blocked structurally: they are (g), (i) applied to `F*`, whose slices live on `V`, and `V` is a plain module throughout §29–§30 while Thm 27.1(d) and Cor 13.3.4(c) need it finite-dimensional |
 | `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | Cor 30.5.1 (saddle points of `L`) | done — in `Saddle/Minimax.lean` |
 
 ### What actually happened
