@@ -19,6 +19,7 @@ import Tdaf.Analysis.Convex.Duality.Pairing
 import Tdaf.Analysis.Convex.Duality.Polar
 import Tdaf.Analysis.Convex.Duality.Relint
 import Tdaf.Analysis.Convex.Duality.Support
+import Tdaf.Analysis.Convex.Duality.SupportRelint
 import Tdaf.Analysis.Convex.Epigraph
 import Tdaf.Analysis.Convex.Exposed
 import Tdaf.Analysis.Convex.Face
