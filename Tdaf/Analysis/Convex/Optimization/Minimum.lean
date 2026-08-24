@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Polyhedral.Function
+import Tdaf.Analysis.Convex.Polyhedral.Recession
 import Tdaf.Analysis.Convex.Recession.Closedness
 import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Subgradient.Approx
@@ -629,6 +630,119 @@ theorem exists_forall_le_of_forall_le_zero {ι : Type*} {g : ι → E → EReal}
   exact ⟨x, hxC, hmin⟩
 
 end Constrained
+
+/-! ### Theorem 27.3: the polyhedral refinement
+
+When the constraint set is polyhedral the recession hypothesis may be weakened from "`h` and `C`
+have no direction of recession in common" to "every direction of recession common to `h` and `C` is
+a direction in which `h` is *constant*". Rockafellar derives this from Helly's theorem in the form
+of Theorem 21.5, applied to `C` together with the level sets `lev_α h` for `α` above the infimum.
+The proof here does not: the directions of constancy of `h` form a subspace, and projecting `E`
+along that subspace leaves `h` untouched while shrinking the common recession cone to `{0}`, which
+is the hypothesis of the non-polyhedral case. Polyhedrality of `C` enters exactly once, through
+`Polyhedral.recessionCone_image`: a linear map commutes with `0⁺` on a polyhedral set and on no
+other kind. -/
+
+section ConstancyReduction
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {h : E → EReal} {C : Set E}
+
+omit [FiniteDimensional ℝ E] in
+/-- Two points differing by a direction of constancy carry the same value. This is
+`mem_constancySpace_iff_forall_eq` (Corollary 8.6.1) read as a statement about a *pair* of points
+rather than about a direction. -/
+theorem eq_of_sub_mem_constancySpace {x y : E} (hxy : x - y ∈ constancySpace h) : h x = h y := by
+  have hxy' : y + (1 : ℝ) • (x - y) = x := by rw [one_smul]; abel
+  have hval := (mem_constancySpace_iff_forall_eq.1 hxy) y 1
+  rwa [hxy'] at hval
+
+omit [FiniteDimensional ℝ E] in
+/-- **Quotienting out the directions of constancy without leaving the space.** For any `h` there is
+a linear projection `A` of `E` that annihilates the constancy space of `h` and moves every point
+only by a direction of constancy; `eq_of_sub_mem_constancySpace` then gives `h (A x) = h x`.
+
+`A` is the projection onto any complement of `constancySubmodule h`, which exists because `E` is
+finite-dimensional. Working with an idempotent on `E` rather than with the quotient `E ⧸ M` keeps
+`h` itself in play and avoids having to transport closedness and properness across a quotient. -/
+theorem exists_linearMap_sub_mem_constancySpace (h : E → EReal) :
+    ∃ A : E →ₗ[ℝ] E, (∀ x, x - A x ∈ constancySpace h) ∧ ∀ y ∈ constancySpace h, A y = 0 := by
+  obtain ⟨N, hN⟩ := Submodule.exists_isCompl (constancySubmodule h)
+  refine ⟨(LinearMap.id : E →ₗ[ℝ] E) - (constancySubmodule h).projection N hN, fun x => ?_,
+    fun y hy => ?_⟩
+  · have hmem : (constancySubmodule h).projection N hN x ∈ constancySubmodule h := by
+      rw [← Submodule.coe_projectionOnto_apply]
+      exact ((constancySubmodule h).projectionOnto N hN x).2
+    have hsub : x - ((LinearMap.id : E →ₗ[ℝ] E)
+        - (constancySubmodule h).projection N hN) x
+        = (constancySubmodule h).projection N hN x := by
+      simp
+    rw [hsub, ← mem_constancySubmodule]
+    exact hmem
+  · have hy' : y ∈ constancySubmodule h := mem_constancySubmodule.2 hy
+    have hfix : (constancySubmodule h).projection N hN y = y := by
+      rw [← Submodule.coe_projectionOnto_apply,
+        Submodule.projectionOnto_apply_of_mem_left hN hy']
+    simp [hfix]
+
+/-- **Rockafellar, Theorem 27.3**, the polyhedral refinement: a closed proper convex `h` attains
+its infimum over a nonempty **polyhedral** convex set `C` as soon as every direction of recession
+common to `h` and `C` is a direction in which `h` is constant.
+
+The hypothesis is strictly weaker than the one of
+`exists_forall_le_of_recessionConeFn_inter_eq_zero`, which asks the common recession cone to be
+`{0}`; polyhedrality of `C` is what pays for the weakening. It cannot be dropped: on `ℝ²` with
+`h(x₁, x₂) = x₂` and the closed convex `C = {x | x₁ ≥ x₂²}`, the common recession cone is
+`{(a, 0) | a ≥ 0}`, along which `h` is constant, yet `inf_C h = -∞`.
+
+The proof replaces `C` by its image under a projection killing the constancy space of `h`
+(`exists_linearMap_sub_mem_constancySpace`). The image is polyhedral, `h` is unchanged along the
+fibres, and the common recession cone collapses to `{0}` — for a common direction of recession of
+the image lifts to one of `C` by `Polyhedral.recessionCone_image`, and the lift differs from it by
+a direction of constancy, hence is itself a common direction of recession and so lies in the
+kernel. -/
+theorem exists_forall_le_of_polyhedral_of_inter_subset_constancySpace
+    (hh : ClosedProperConvexFn h) (hC : Polyhedral C) (hCne : C.Nonempty)
+    (hrec : recessionConeFn h ∩ recessionCone C ⊆ constancySpace h) :
+    ∃ x ∈ C, ∀ z ∈ C, h x ≤ h z := by
+  obtain ⟨A, hsub, hA0⟩ := exists_linearMap_sub_mem_constancySpace h
+  have hCimg : Polyhedral (A '' C) := hC.image A
+  have hCimgne : (A '' C).Nonempty := hCne.image A
+  have hrec' : recessionConeFn h ∩ recessionCone (A '' C) = {0} := by
+    refine Set.Subset.antisymm (fun y hy => ?_) (fun y hy => ?_)
+    · obtain ⟨hy1, hy2⟩ := hy
+      rw [hC.recessionCone_image hCne A] at hy2
+      obtain ⟨y', hy', rfl⟩ := hy2
+      have hdrec : y' - A y' ∈ recessionConeFn h := (mem_constancySpace.1 (hsub y')).1
+      have hy'rec : y' ∈ recessionConeFn h := by
+        have hadd : A y' + (y' - A y') ∈ recessionConeFn h :=
+          (recessionPointedConeFn h).add_mem hy1 hdrec
+        have heq : A y' + (y' - A y') = y' := by abel
+        rwa [heq] at hadd
+      exact Set.mem_singleton_iff.2 (hA0 y' (hrec ⟨hy'rec, hy'⟩))
+    · rw [Set.mem_singleton_iff] at hy
+      subst hy
+      exact ⟨recessionFn_apply_zero_le h, zero_mem_recessionCone _⟩
+  obtain ⟨x', hx'C, hx'min⟩ := exists_forall_le_of_recessionConeFn_inter_eq_zero hh
+    hCimg.convex hCimg.isClosed hCimgne hrec'
+  obtain ⟨x, hxC, rfl⟩ := hx'C
+  refine ⟨x, hxC, fun z hz => ?_⟩
+  rw [eq_of_sub_mem_constancySpace (hsub x), eq_of_sub_mem_constancySpace (hsub z)]
+  exact hx'min (A z) ⟨z, hz, rfl⟩
+
+/-- The unconstrained case of the polyhedral refinement: a closed proper convex function whose
+recession cone consists entirely of directions of constancy — equivalently, whose recession cone is
+a subspace — attains its infimum.
+
+`argmin_nonempty_of_recessionConeFn_eq_zero` (Theorem 27.2) is the case where that subspace is
+`{0}`. -/
+theorem argmin_nonempty_of_recessionConeFn_subset_constancySpace (hh : ClosedProperConvexFn h)
+    (hrec : recessionConeFn h ⊆ constancySpace h) : (argmin h).Nonempty := by
+  obtain ⟨x, -, hx⟩ := exists_forall_le_of_polyhedral_of_inter_subset_constancySpace hh
+    polyhedral_univ ⟨0, Set.mem_univ 0⟩ fun y hy => hrec hy.1
+  exact ⟨x, mem_argmin_iff.2 fun z => hx z (Set.mem_univ z)⟩
+
+end ConstancyReduction
 
 
 /-! ### Polyhedral minimisation -/
