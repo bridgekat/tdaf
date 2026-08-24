@@ -74,10 +74,15 @@ import Tdaf.Analysis.Convex.Subgradient.Bounded
 import Tdaf.Analysis.Convex.Subgradient.Calculus
 import Tdaf.Analysis.Convex.Subgradient.Convergence
 import Tdaf.Analysis.Convex.Subgradient.Defs
+import Tdaf.Analysis.Convex.Subgradient.Differentiability
 import Tdaf.Analysis.Convex.Subgradient.Existence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
+import Tdaf.Analysis.Convex.Subgradient.Integral
 import Tdaf.Analysis.Convex.Subgradient.Legendre
 import Tdaf.Analysis.Convex.Subgradient.Monotone
 import Tdaf.Analysis.Convex.Subgradient.OneDim
+import Tdaf.Analysis.Convex.Subgradient.Primitive
+import Tdaf.Analysis.Convex.Subgradient.Rademacher
+import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 import Tdaf.Analysis.Convex.Tangent
 import Tdaf.Order.EReal

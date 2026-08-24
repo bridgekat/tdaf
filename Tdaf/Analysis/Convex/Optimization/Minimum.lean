@@ -52,6 +52,10 @@ convex set, and the optimality condition `0 ∈ ∂h x + N_C(x)`.
   the level sets of `f` above `inf f` with the ε-subdifferentials of `f*` at the origin.
 * `iInf_ne_bot_and_argmin_eq_empty_iff` — **Theorem 27.1(c)**: the infimum is finite but
   unattained exactly when `f*(0)` is finite and `f*'(0; ·)` is `−∞` somewhere.
+* `exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj`,
+  `argmin_nonempty_and_isBounded_iff_exists_setOf_le` — Theorem 27.1(d) and (f) combined, in the
+  form **Theorem 30.4** conditions (g) and (i) take: *some* level set is non-empty and bounded
+  exactly when the minimum set is, and both say `0 ∈ int (dom f*)`.
 
 ## Design notes
 
@@ -842,6 +846,45 @@ theorem argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (hf : Conve
   · intro hrec
     exact ⟨argmin_nonempty_of_recessionConeFn_eq_zero hf hc hp hrec,
       (isCompact_argmin_of_recessionConeFn_eq_zero hf hc hp hrec).isBounded⟩
+
+/-- **Rockafellar, Theorem 27.1(d)** in the form Theorem 30.4(g) states it: *some* level set of
+`f` is non-empty and bounded exactly when the origin is interior to `dom f*`.
+
+Theorem 27.1(f) is what makes "some" as good as "every": all non-empty level sets share the
+recession cone of `f`, so one bounded level set forces `f 0⁺` to be trivial, and Theorem 27.2 then
+returns a bounded minimum set. -/
+theorem exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (hf : ConvexFn f)
+    (hc : ClosedFn f) (hp : Proper f) :
+    (∃ α : ℝ, {x : E | f x ≤ (α : EReal)}.Nonempty ∧
+        Bornology.IsBounded {x : E | f x ≤ (α : EReal)})
+      ↔ (0 : F) ∈ interior (dom (conj B f)) := by
+  rw [zero_mem_interior_dom_conj_iff_recessionConeFn_eq_zero (B := B) hf hc hp]
+  have hlsc : LowerSemicontinuous f := (closedFn_iff_lowerSemicontinuous hp.ne_bot).1 hc
+  constructor
+  · rintro ⟨α, hne, hbd⟩
+    have hrec := (isBounded_iff_recessionCone_eq_zero (hf.convex_le _)
+      (lowerSemicontinuous_iff_isClosed_le.1 hlsc α) hne).1 hbd
+    rwa [recessionCone_setOf_le hf (lowerSemicontinuous_iff_isClosed_epi.1 hlsc) hne] at hrec
+  · intro hrec
+    obtain ⟨a, ha⟩ := argmin_nonempty_of_recessionConeFn_eq_zero hf hc hp hrec
+    obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
+    obtain ⟨μ, hμ⟩ := EReal.exists_coe_of_ne_bot_of_lt_top (hp.ne_bot a)
+      (lt_of_le_of_lt (ha x₀) (mem_dom.1 hx₀))
+    refine ⟨μ, ⟨a, le_of_eq hμ⟩, ?_⟩
+    rw [← argmin_eq_setOf_le ha hμ]
+    exact (isCompact_argmin_of_recessionConeFn_eq_zero hf hc hp hrec).isBounded
+
+include B in
+/-- **Rockafellar, Theorem 30.4**, the equivalence of its conditions (g) and (i) for the objective
+function of a convex program: the minimum set is non-empty and bounded exactly when some level set
+is. Both say `0 ∈ int (dom f*)`. -/
+theorem argmin_nonempty_and_isBounded_iff_exists_setOf_le (hf : ConvexFn f) (hc : ClosedFn f)
+    (hp : Proper f) :
+    ((argmin f).Nonempty ∧ Bornology.IsBounded (argmin f))
+      ↔ ∃ α : ℝ, {x : E | f x ≤ (α : EReal)}.Nonempty ∧
+          Bornology.IsBounded {x : E | f x ≤ (α : EReal)} :=
+  (argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (B := B) hf hc hp).trans
+    (exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (B := B) hf hc hp).symm
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] [IsCompatiblePairing B]
   [IsCompatiblePairing B.flip] in

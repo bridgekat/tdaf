@@ -25,6 +25,8 @@ Rockafellar's `ri` versions of Theorems 23.8 and 23.9 are these two theorems com
 * `image_subgradient_subset`, `IsExactImage.subgradient_compLin` — **Theorem 23.9**.
 * `normalCone_add_subset`, `IsExactSum.normalCone_inter` — **Corollary 23.8.1**, the indicator
   instance.
+* `subgradient_add_normalCone_dom_subset`, `normalCone_dom_eq_zero_of_subgradient_eq_singleton` —
+  the normal cone to `dom f`, and what a *unique* subgradient does to it.
 
 ## Design notes
 
@@ -182,5 +184,43 @@ theorem IsExactSum.normalCone_inter (h : IsExactSum B (indicatorFn C) (indicator
     subgradient_indicatorFn hD] at hsum
 
 end NormalCone
+
+/-! ### The normal cone to the effective domain -/
+
+section NormalConeDom
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {x : E}
+
+/-- **A normal to the effective domain may be added to a subgradient.** This is the elementary
+inclusion behind Rockafellar's `∂f x + N_{dom f}(x) = ∂f x`, and it needs neither convexity nor a
+topology: outside `dom f` the subgradient inequality reads `≤ ⊤`, and inside it the added term is
+`≤ 0`. -/
+theorem subgradient_add_normalCone_dom_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (x : E) :
+    subgradient B f x + normalCone B (dom f) x ⊆ subgradient B f x := by
+  rintro _ ⟨y, hy, n, hn, rfl⟩ z
+  by_cases hz : z ∈ dom f
+  · have hle : ((B (z - x) (y + n) : ℝ) : EReal) ≤ ((B (z - x) y : ℝ) : EReal) := by
+      rw [map_add, _root_.EReal.coe_le_coe_iff]
+      linarith [hn z hz]
+    exact (add_le_add (le_refl (f x)) hle).trans (hy z)
+  · rw [top_le_iff.1 (not_lt.1 fun h => hz (mem_dom.2 h))]
+    exact le_top
+
+/-- **A lone subgradient leaves no room for a normal direction.** If `∂f x` is the single point
+`y₀` then `y₀ + n` is again a subgradient for every `n` normal to `dom f` at `x`, so `n = 0`.
+
+This is the step that turns uniqueness of the subgradient into an *interior* statement: with
+`mem_interior_of_normalCone_eq_zero` it says that a convex function with a unique subgradient at
+`x` has `x` interior to its effective domain. -/
+theorem normalCone_dom_eq_zero_of_subgradient_eq_singleton {y₀ : F}
+    (h : subgradient B f x = {y₀}) : normalCone B (dom f) x = {0} := by
+  refine Set.eq_singleton_iff_unique_mem.2 ⟨fun z _ => by simp, fun n hn => ?_⟩
+  have hy₀ : y₀ ∈ subgradient B f x := by rw [h]; rfl
+  have hmem := subgradient_add_normalCone_dom_subset B f x (Set.add_mem_add hy₀ hn)
+  rw [h, Set.mem_singleton_iff] at hmem
+  simpa using hmem
+
+end NormalConeDom
 
 end Tdaf.ConvexAnalysis

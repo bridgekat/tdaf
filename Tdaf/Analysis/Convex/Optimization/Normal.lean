@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Optimization.Adjoint
+import Tdaf.Analysis.Convex.Optimization.Minimum
 
 /-!
 # Normality of a dual pair of convex programs
@@ -416,6 +417,217 @@ theorem normal_of_concaveStronglyConsistent_adjointBifun (hF : ConvexBifun F)
     (hs.concaveNormal (concaveBifun_adjointBifun Bu Bx F))
 
 end Thm304Dual
+
+/-! ### Theorem 30.4(g) and (i): bounded level sets -/
+
+section Thm304Shift
+
+variable {U V X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X} {y : Y}
+
+/-- `F` with a linear function of `x` subtracted off. Its optimal value at `u` is `-(Fu)*(y)`, so
+Corollary 30.2.2 read at the origin for `shiftBifun Bx F y` computes `sup (F* y)` — the whole
+`y`-slice of the adjoint, not only the one at `y = 0`. -/
+noncomputable def shiftBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (y : Y) : Bifun U X :=
+  fun u x => F u x - ((Bx x y : ℝ) : EReal)
+
+@[simp] theorem shiftBifun_apply (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (y : Y) (u : U)
+    (x : X) : shiftBifun Bx F y u x = F u x - ((Bx x y : ℝ) : EReal) := rfl
+
+/-- The optimal value of the shifted program is the conjugate of the slice, negated. -/
+theorem infBifun_shiftBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (y : Y) (u : U) :
+    infBifun (shiftBifun Bx F y) u = -(conj Bx (F u) y) := by
+  rw [infBifun_apply, conj_apply, Tdaf.EReal.neg_iSup]
+  refine iInf_congr fun x => ?_
+  rw [shiftBifun_apply, _root_.EReal.neg_sub (Or.inl (_root_.EReal.coe_ne_bot ((Bx x) y)))
+    (Or.inl (_root_.EReal.coe_ne_top ((Bx x) y))), sub_eq_add_neg]
+  exact add_comm _ _
+
+end Thm304Shift
+
+section Thm304Convex
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X} {y : Y}
+
+/-- Subtracting a linear function of `x` keeps a convex bifunction convex. -/
+theorem convexBifun_shiftBifun (hF : ConvexBifun F) (y : Y) :
+    ConvexBifun (shiftBifun Bx F y) := by
+  have hl : ∀ (p q : U × X) (a b : ℝ), a + b = 1 →
+      (fun r : U × X => -(Bx r.2 y)) (a • p + b • q)
+        = a * (fun r : U × X => -(Bx r.2 y)) p + b * (fun r : U × X => -(Bx r.2 y)) q := by
+    intro p q a b _
+    simp only [Prod.snd_add, Prod.smul_snd, map_add, map_smul, smul_eq_mul,
+      LinearMap.add_apply, LinearMap.smul_apply]
+    ring
+  have h := convexFn_add_coe (f := graphFn F) (l := fun r : U × X => -(Bx r.2 y)) hF hl
+  have heq : (fun p : U × X => graphFn F p + ((-(Bx p.2 y) : ℝ) : EReal))
+      = graphFn (shiftBifun Bx F y) := by
+    funext p
+    simp only [graphFn, shiftBifun, _root_.EReal.coe_neg, sub_eq_add_neg]
+  refine convexBifun_iff.2 ?_
+  rw [← heq]
+  exact h
+
+/-- Shifting by `y` and reading the adjoint at the origin is the adjoint at `y`. -/
+theorem adjointBifun_shiftBifun_zero (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) (y : Y) (v : V) :
+    adjointBifun Bu Bx (shiftBifun Bx F y) 0 v = adjointBifun Bu Bx F y v := by
+  have key : ∀ (z : EReal) (b c : ℝ),
+      (z - (c : EReal)) + (b : EReal) = z + ((b - c : ℝ) : EReal) := by
+    intro z b c
+    rw [_root_.EReal.coe_sub, sub_eq_add_neg z, sub_eq_add_neg ((b : ℝ) : EReal), add_assoc,
+      add_comm (-(((c : ℝ) : EReal))) (((b : ℝ) : EReal))]
+  simp only [adjointBifun_apply, shiftBifun_apply, map_zero, sub_zero, key]
+
+end Thm304Convex
+
+section Thm304Main
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [AddCommGroup V] [Module ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X} {y : Y}
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y]
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] in
+/-- **Corollary 30.2.2 at an arbitrary `y`**: the supremum defining the dual objective at `y` is
+the closure, at the origin, of the shifted optimal value. -/
+theorem supBifun_adjointBifun (hF : ConvexBifun F) (y : Y) :
+    supBifun (adjointBifun Bu Bx F) y = clFn (infBifun (shiftBifun Bx F y)) 0 := by
+  rw [supBifun_apply,
+    clFn_infBifun_zero_eq_iSup_adjointBifun (Bu := Bu) Bx (convexBifun_shiftBifun hF y)]
+  exact (iSup_congr fun v => adjointBifun_shiftBifun_zero Bu Bx F y v).symm
+
+omit [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bx]
+  [IsCompatiblePairing Bx.flip] in
+/-- **The step Rockafellar's proof of Theorem 30.4(g) writes as "i.e."**: if the perturbed
+objective `Fu - ⟨·, y⟩` is bounded below for *every* perturbation `u`, then `y` belongs to the
+effective domain of the dual program.
+
+This is where the closure operation is paid for. `domConcaveBifun F*` asks for `sup (F* y) ≠ -∞`,
+which by `supBifun_adjointBifun` is `cl (inf (F - ⟨·, y⟩)) 0 ≠ -∞`, strictly stronger than
+`inf (F - ⟨·, y⟩) 0 ≠ -∞` — and the latter is what `y ∈ dom ((F0)*)` says. What bridges them is
+Theorem 7.4: a *proper* convex function has a proper closure, and properness of `u ↦ -(Fu)*(y)` is
+exactly the hypothesis here. It is also what makes this the one §30 statement needing
+`FiniteDimensional ℝ U`. -/
+theorem mem_domConcaveBifun_adjointBifun (hF : ConvexBifun F) (hc : Consistent F)
+    (h : ∀ u : U, conj Bx (F u) y ≠ ⊤) :
+    y ∈ domConcaveBifun (adjointBifun Bu Bx F) := by
+  obtain ⟨x₀, hx₀⟩ := hc
+  have hprop : Proper (infBifun (shiftBifun Bx F y)) := by
+    refine ⟨⟨0, mem_dom.2 ?_⟩, fun u => ?_⟩
+    · have hle : infBifun (shiftBifun Bx F y) 0 ≤ shiftBifun Bx F y 0 x₀ := iInf_le _ x₀
+      refine lt_of_le_of_lt hle ?_
+      rw [shiftBifun_apply, sub_eq_add_neg]
+      exact _root_.EReal.add_lt_top hx₀
+        (by rw [Ne, _root_.EReal.neg_eq_top_iff]; exact _root_.EReal.coe_ne_bot _)
+    · rw [infBifun_shiftBifun, Ne, _root_.EReal.neg_eq_bot_iff]
+      exact h u
+  have hcl := (convexFn_infBifun (convexBifun_shiftBifun (Bx := Bx) hF y)).proper_clFn hprop
+  have hne : supBifun (adjointBifun Bu Bx F) y ≠ ⊥ := by
+    rw [supBifun_adjointBifun hF y]
+    exact hcl.ne_bot 0
+  rw [mem_domConcaveBifun]
+  by_contra hcon
+  push Not at hcon
+  exact hne (by rw [supBifun_apply, iSup_eq_bot.2 hcon])
+
+include Bu Bx in
+/-- **Rockafellar, Theorem 30.4(g)**: if some level set `{x | (F0)(x) ≤ α}` is non-empty and
+bounded, then normality holds for `(P)` and `(P*)`.
+
+The book calls this "a special case of (b)" via Theorem 27.1(d), and the passage from one to the
+other is a single word: "i.e.". It is not a single step. Theorem 27.1(d) does give
+`0 ∈ int (dom ((F0)*))`, but strict consistency of `(P*)` is `0 ∈ int (domConcaveBifun F*)`, which
+is an intersection over *all* perturbations `u` of the sets `dom ((Fu)*)`; the `u = 0` term is what
+Theorem 27.1(d) supplies, and openness of an intersection is not automatic. What makes it open here
+is that all slices of a closed convex bifunction have the **same recession function** —
+`recessionFn_slice_eq`, Theorem 8.3 read on the epigraph — so Corollary 13.3.4(c) describes every
+`int (dom ((Fu)*))` by the same inequality and they are all *equal*.
+
+No properness is assumed: an improper closed convex bifunction has `inf F 0 = -∞`, and normality
+then holds for the trivial reason that `cl` cannot go below `-∞`. -/
+theorem normal_of_exists_setOf_le (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (h : ∃ α : ℝ, {x : X | F 0 x ≤ (α : EReal)}.Nonempty ∧
+      Bornology.IsBounded {x : X | F 0 x ≤ (α : EReal)}) :
+    Normal F := by
+  obtain ⟨α, ⟨x₀, hx₀⟩, hbd⟩ := h
+  have hx₀top : F 0 x₀ ≠ ⊤ := (lt_of_le_of_lt hx₀ (_root_.EReal.coe_lt_top α)).ne
+  have hcons : Consistent F := ⟨x₀, hx₀top⟩
+  have hlsc : LowerSemicontinuous (graphFn F) := ClosedFn.lowerSemicontinuous hcl
+  have hcont : ∀ u : U, Continuous fun x : X => (u, x) := fun u =>
+    continuous_const.prodMk continuous_id
+  by_cases hbot : ∃ p : U × X, graphFn F p = ⊥
+  · have hb : F 0 x₀ = ⊥ :=
+      (ConvexFn.eq_bot_or_eq_top hF hlsc hbot (0, x₀)).resolve_right hx₀top
+    have hval : infBifun F 0 = ⊥ := by
+      refine le_bot_iff.1 ?_
+      rw [infBifun_apply, ← hb]
+      exact iInf_le _ x₀
+    have hle : clFn (infBifun F) 0 ≤ ⊥ := by rw [← hval]; exact clFn_le _ 0
+    rw [normal_iff, le_bot_iff.1 hle, hval]
+  push Not at hbot
+  have hslice : ∀ u : U, u ∈ domBifun F → ClosedProperConvexFn (F u) := by
+    intro u hu
+    obtain ⟨x₁, hx₁⟩ := hu
+    refine ⟨hF.convexFn_apply u, ?_, ⟨⟨x₁, mem_dom.2 (lt_top_iff_ne_top.2 hx₁)⟩,
+      fun x => hbot (u, x)⟩⟩
+    refine (closedFn_iff_lowerSemicontinuous fun x => hbot (u, x)).2 fun x r hr => ?_
+    exact ((hcont u).tendsto x).eventually (hlsc (u, x) r hr)
+  have hepi : IsClosed (epi (graphFn F)) := lowerSemicontinuous_iff_isClosed_epi.1 hlsc
+  have h0int : (0 : Y) ∈ interior (dom (conj Bx (F 0))) := by
+    have h0 := hslice 0 hcons
+    exact (exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (B := Bx)
+      h0.convex h0.closed h0.proper).1 ⟨α, ⟨x₀, hx₀⟩, hbd⟩
+  have hsub : interior (dom (conj Bx (F 0))) ⊆ domConcaveBifun (adjointBifun Bu Bx F) := by
+    intro z hz
+    refine mem_domConcaveBifun_adjointBifun hF hcons fun u => ?_
+    by_cases hu : u ∈ domBifun F
+    · have hrec : recessionFn (F 0) = recessionFn (F u) :=
+        recessionFn_slice_eq hF hepi hcons hu
+      have hzu : z ∈ interior (dom (conj Bx (F u))) := by
+        rw [mem_interior_dom_conj_iff (hslice u hu) z, ← hrec]
+        exact (mem_interior_dom_conj_iff (hslice 0 hcons) z).1 hz
+      exact (mem_dom.1 (interior_subset hzu)).ne
+    · have htop : ∀ x : X, F u x = ⊤ := fun x => by
+        by_contra hcon
+        exact hu ⟨x, hcon⟩
+      have hinf : infBifun (shiftBifun Bx F z) u = ⊤ := by
+        rw [infBifun_apply]
+        refine le_antisymm le_top (le_iInf fun x => ?_)
+        rw [shiftBifun_apply, htop x, _root_.EReal.top_sub_coe]
+      rw [infBifun_shiftBifun] at hinf
+      rw [_root_.EReal.neg_eq_top_iff.1 hinf]
+      exact bot_ne_top
+  exact normal_of_concaveStronglyConsistent_adjointBifun hF hcl
+    (interior_subset_intrinsicInterior (interior_maximal hsub isOpen_interior h0int))
+
+include Bu Bx in
+/-- **Rockafellar, Theorem 30.4(i)**: if the optimal solutions to `(P)` form a non-empty bounded
+set — in particular if there is exactly one — then normality holds.
+
+The book calls (i) "contained in (g)", and with `F0` proper it is: `argmin (F0)` is a level set of
+`F0` at its own minimum value, and `argmin_nonempty_and_isBounded_iff_exists_setOf_le` is that
+observation. Properness is not removable here as it is in `normal_of_exists_setOf_le`: without it
+"optimal solution" and "optimal value" come apart, and for `F0 ≡ ⊤` over a zero-dimensional `X` the
+set of optimal solutions is non-empty and bounded while no level set is. -/
+theorem normal_of_argmin_nonempty_and_isBounded (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hp : Proper (F 0)) (hne : (argmin (F 0)).Nonempty)
+    (hbd : Bornology.IsBounded (argmin (F 0))) :
+    Normal F := by
+  have hc : ClosedFn (F 0) := by
+    refine (closedFn_iff_lowerSemicontinuous hp.ne_bot).2 fun x r hr => ?_
+    exact ((continuous_const.prodMk continuous_id).tendsto x).eventually
+      (ClosedFn.lowerSemicontinuous hcl (0, x) r hr)
+  exact normal_of_exists_setOf_le (Bu := Bu) (Bx := Bx) hF hcl
+    ((argmin_nonempty_and_isBounded_iff_exists_setOf_le (B := Bx) (hF.convexFn_apply 0) hc hp).1
+      ⟨hne, hbd⟩)
+
+end Thm304Main
 
 /-! ### Corollary 30.2.1: consistency of the two programs -/
 

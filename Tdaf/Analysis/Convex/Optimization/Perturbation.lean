@@ -40,8 +40,20 @@ is worth buying.
   value is finite, `v` is a Kuhn–Tucker vector exactly when `-v ∈ ∂(inf F)(0)`.
 * `kuhnTucker_eq_neg_subgradient`, `convex_kuhnTucker`, `isClosed_kuhnTucker` — the Kuhn–Tucker set
   is a reflected subdifferential, hence closed and convex (part of Corollary 29.1.1).
-* `kuhnTucker_nonempty_of_stronglyConsistent` — Theorem 23.4 applied to `inf F`: a strongly
-  consistent program has a Kuhn–Tucker vector.
+* `kuhnTucker_nonempty_of_stronglyConsistent`, `dirDeriv_infBifun_eq` — **Corollary 29.1.4**:
+  a strongly consistent program has a Kuhn–Tucker vector, and `(inf F)'(0; ·)` is the support
+  function of the Kuhn–Tucker set read at the reflected direction. Both are Theorem 23.4 applied
+  to `inf F`, whose properness is supplied by `proper_infBifun_of_stronglyConsistent`.
+* `posHomogeneous_dirDeriv_infBifun`, `convexFn_dirDeriv_infBifun`, `supportFn_kuhnTucker` —
+  **Corollary 29.1.1**'s remaining clauses.
+* `kuhnTucker_eq_empty_iff` — **Corollary 29.1.2**, Theorem 23.3 applied to `inf F`.
+* `kuhnTucker_eq_singleton_of_dirDeriv_eq`, `kuhnTucker_eq_singleton_of_hasGradientAt` —
+  **Corollary 29.1.3**, in its algebraic and its Fréchet form.
+* `continuousOn_infBifun_interior`, `kuhnTucker_nonempty_of_strictlyConsistent`,
+  `isBounded_kuhnTucker_of_strictlyConsistent`, `isCompact_kuhnTucker_of_strictlyConsistent` —
+  **Corollary 29.1.5**: under strict consistency the optimal value is finite and continuous near
+  the origin and the Kuhn–Tucker vectors form a non-empty compact convex set.
+* `infBifun_eq_top_of_notMem_domBifun`, `infBifun_eq_bot_of_mem_relint` — **Corollary 29.1.6**.
 * `PolyhedralBifun` and, for a polyhedral convex program, `PolyhedralBifun.polyhedralFn_apply`,
   `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`,
   `polyhedral_kuhnTucker_of_polyhedralBifun`, `argmin_nonempty_of_polyhedralBifun` and
@@ -65,19 +77,23 @@ inequality form `inf F 0 ≤ ⟨u, v⟩ + inf F u` is a two-line consequence
 `KuhnTucker B F = -(∂(inf F)(0))` as sets and every property of subdifferentials transfers through
 `Set` negation, which is a preimage.
 
+**Corollary 29.1.5's boundedness clause is where the pairing form of Theorem 23.4 stops being
+enough.** `bddAbove_subgradient_iff_mem_interior_dom` says every `⟨u, ·⟩` is bounded above on
+`∂(inf F)(0)`, which is Corollary 13.2.2's notion of boundedness and all a general dual pair
+supports. Rockafellar's "closed bounded" is `Bornology.IsBounded`, and the upgrade is
+`isBounded_iff_forall_bddAbove` in `Duality/SupportRelint.lean` — a coordinate estimate against a
+finite basis, hence genuinely finite-dimensional in `V`.
+
 ## What is not here
 
-**Corollaries 29.1.2, 29.1.3, 29.1.5 and 29.1.6, and Theorems 29.3, 29.4.** The
-directional-derivative corollaries need §23's two-sided derivative and §25's differentiability
-criteria; Theorems 29.3 and 29.4 need §36's saddle-point correspondence on top of the Lagrangian
-(`Optimization/Lagrangian.lean`). Compactness of the Kuhn–Tucker set under *strict* consistency
-(Corollary 29.1.4) needs the boundedness half of Theorem 23.4, which
-`Subgradient/Existence.lean` does not have.
+**Theorem 29.4.** It needs §36's saddle-point correspondence on top of the Lagrangian
+(`Optimization/Lagrangian.lean`); Theorem 29.3 came out of §36 and is in `Saddle/Minimax.lean`.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §29 (Theorems 29.1
-  and 29.2).
+  and 29.2, Corollaries 29.1.1–29.1.6), reading §13 (Corollary 13.2.2) and §23 (Theorems 23.3,
+  23.4 and 25.2).
 -/
 
 open Pointwise
@@ -532,6 +548,46 @@ theorem bddAbove_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F) (hp : Pro
   simpa using hb
 
 end Cor2914
+
+section Cor2915
+
+variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] [AddCommGroup X] [Module ℝ X]
+  {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {F : Bifun U X}
+
+/-- **Rockafellar, Corollary 29.1.5**, last clause, boundedness half: under *strict* consistency
+the Kuhn–Tucker set is bounded in the norm.
+
+`bddAbove_kuhnTucker_of_strictlyConsistent` is the same statement in the pairing sense of
+Corollary 13.2.2; `isBounded_iff_forall_bddAbove` is the finite-dimensional upgrade. -/
+theorem isBounded_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F)
+    (hp : Proper (infBifun F)) (hs : StrictlyConsistent F) :
+    Bornology.IsBounded (KuhnTucker B F) := by
+  rw [isBounded_iff_forall_bddAbove (B := B.flip)]
+  intro u
+  simpa using bddAbove_kuhnTucker_of_strictlyConsistent (B := B) hF hp hs u
+
+/-- **Rockafellar, Corollary 29.1.5**, last clause: under *strict* consistency the Kuhn–Tucker set
+is compact.
+
+Closedness is Corollary 29.1.1, boundedness is the last clause of Theorem 23.4, and compactness is
+then Heine–Borel. With `kuhnTucker_nonempty_of_strictlyConsistent` and `convex_kuhnTucker` this is
+the book's "non-empty closed bounded convex set". -/
+theorem isCompact_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F)
+    (hp : Proper (infBifun F)) (hs : StrictlyConsistent F) (ht : infBifun F 0 ≠ ⊤) :
+    IsCompact (KuhnTucker B F) :=
+  Metric.isCompact_of_isClosed_isBounded (isClosed_kuhnTucker ht (hp.ne_bot 0))
+    (isBounded_kuhnTucker_of_strictlyConsistent hF hp hs)
+
+omit [FiniteDimensional ℝ V] [IsCompatiblePairing B.flip] in
+/-- **Rockafellar, Corollary 29.1.5**, last clause, existence half: a strictly consistent program
+is strongly consistent, so Theorem 23.4 gives it a Kuhn–Tucker vector. -/
+theorem kuhnTucker_nonempty_of_strictlyConsistent (hF : ConvexBifun F)
+    (hp : Proper (infBifun F)) (hs : StrictlyConsistent F) (ht : infBifun F 0 ≠ ⊤) :
+    (KuhnTucker B F).Nonempty :=
+  kuhnTucker_nonempty_of_stronglyConsistent (B := B) hF hp hs.stronglyConsistent ht
+
+end Cor2915
 
 section Cor2913
 
