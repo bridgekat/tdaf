@@ -70,8 +70,8 @@ therefore developed here, since §13.5 is its first consumer.
 * `mem_closure_dom_conj_iff`, `mem_relint_dom_conj_iff`, `mem_interior_dom_conj_iff`,
   `mem_affineSpan_dom_conj_iff` — **Corollary 13.3.4**, its four clauses: where a point sits
   relative to `dom f*` is decided by the sign of `f 0⁺ - ⟨·, y₀⟩`.
-* `zero_mem_closure_dom_conj_iff` — clause (a) at the origin, which is the first sentence of
-  **Theorem 27.1(i)**.
+* `zero_mem_closure_dom_conj_iff`, `zero_notMem_closure_dom_conj_iff` — clause (a) at the origin,
+  which is **Theorem 27.1(i)** in both its sentences.
 * `separatingRight_flip_of_separatingDual` — a compatible pairing with a separating dual separates
   the points of `E`, which is what clause (c) needs in place of the book's `y ≠ 0`.
 * `dom_conj_eq_univ_iff`, `cofinite_iff_dom_conj_eq_univ`, `cofinite_iff_forall_conj_lt_top` — the
@@ -766,6 +766,53 @@ theorem zero_mem_closure_dom_conj_iff (hf : ClosedProperConvexFn f) :
     (0 : F) ∈ closure (dom (conj B f)) ↔ ∀ y : E, 0 ≤ recessionFn f y := by
   rw [mem_closure_dom_conj_iff (B := B) hf]
   simp
+
+omit [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E]
+  [LocallyConvexSpace ℝ E] in
+/-- The recession bound `f 0⁺ y ≤ -ε` written out: `f` decreases at rate at least `ε` along `y`.
+
+This is `recessionFn_le_coe_iff_forall` — Theorem 8.5 through Theorem 8.1's `a = 1` test — with the
+sign moved onto the right-hand side and `x` restricted to `dom f`. The restriction is free: off
+`dom f` the right-hand side is `⊤ - ε = ⊤`. -/
+theorem recessionFn_le_neg_coe_iff (f : E → EReal) (y : E) (ε : ℝ) :
+    recessionFn f y ≤ ((-ε : ℝ) : EReal) ↔
+      ∀ x ∈ dom f, ∀ a : ℝ, 0 ≤ a → f (x + a • y) ≤ f x - ((a * ε : ℝ) : EReal) := by
+  have hrw : ∀ (x : E) (a : ℝ), (f x + ((a * -ε : ℝ) : EReal))
+      = f x - ((a * ε : ℝ) : EReal) := fun x a => by
+    rw [show (a * -ε : ℝ) = -(a * ε) from by ring, _root_.EReal.coe_neg, ← sub_eq_add_neg]
+  rw [recessionFn_le_coe_iff_forall]
+  refine ⟨fun h x _ a ha => (hrw x a) ▸ h x a ha, fun h x a ha => (hrw x a).symm ▸ ?_⟩
+  rcases eq_or_ne (f x) ⊤ with hx | hx
+  · rw [hx, _root_.EReal.top_sub_coe]
+    exact le_top
+  · exact h x (mem_dom.2 (lt_top_iff_ne_top.2 hx)) a ha
+
+/-- **Rockafellar, Theorem 27.1(i)**, second sentence: the origin lies *outside* the closure of
+`dom f*` exactly when `f` decreases at a uniform positive rate along some direction.
+
+It is the first sentence with the quantifier negated, once `recessionFn_le_neg_coe_iff` spells out
+what a negative recession value means. Two remarks the book does not make: `y ≠ 0` is automatic
+here, because at `y = 0` the inequality at `a = 1` would read `0 ≤ -ε` at any point of the
+(non-empty) effective domain; and restricting `x` to `dom f` costs nothing. -/
+theorem zero_notMem_closure_dom_conj_iff (hf : ClosedProperConvexFn f) :
+    (0 : F) ∉ closure (dom (conj B f)) ↔
+      ∃ y : E, y ≠ 0 ∧ ∃ ε : ℝ, 0 < ε ∧
+        ∀ x ∈ dom f, ∀ a : ℝ, 0 ≤ a → f (x + a • y) ≤ f x - ((a * ε : ℝ) : EReal) := by
+  rw [zero_mem_closure_dom_conj_iff (B := B) hf, not_forall]
+  constructor
+  · rintro ⟨y, hy⟩
+    rw [not_le] at hy
+    obtain ⟨m, hm₁, hm₂⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hy
+    have hmneg : m < 0 := by exact_mod_cast hm₂
+    refine ⟨y, ?_, -m, neg_pos.2 hmneg, (recessionFn_le_neg_coe_iff f y (-m)).1 ?_⟩
+    · rintro rfl
+      rw [recessionFn_apply_zero hf.proper] at hy
+      exact absurd hy (lt_irrefl 0)
+    · rw [neg_neg]
+      exact hm₁.le
+  · rintro ⟨y, -, ε, hε, hineq⟩
+    refine ⟨y, not_le.2 (lt_of_le_of_lt ((recessionFn_le_neg_coe_iff f y ε).2 hineq) ?_)⟩
+    exact_mod_cast neg_lt_zero.2 hε
 
 end CofiniteMain
 
