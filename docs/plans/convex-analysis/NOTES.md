@@ -1635,15 +1635,55 @@ theorem HasGradientAt.add_conj_eq (hf : ConvexFn f) (h : HasGradientAt f y x) :
 "`g` is the restriction of `f*` to `D`"; `sub_eq_sub_of_hasGradientAt` is his remark that `∇f` need
 not be one-to-one for `g` to be single-valued; `legendreDom_subset_dom_conj` is `D ⊆ dom f*`.
 
-**Two things are deliberately *not* defined.** `EssentiallySmooth`, `EssentiallyStrictlyConvex` and
-`LegendreType` have no provable theorem until 26.1 is reachable, and an untestable definition is
-exactly what cost §18 a rewrite (`IsExtreme` is not Rockafellar's face). And `legendreConj` itself
-would need a choice function for `(∇f)⁻¹` and would then have to be proved equal to `conj B f` on
-`D` — `conj_eq_of_hasGradientAt` states that equality without the detour.
+**`legendreConj` itself is deliberately not defined**: it would need a choice function for
+`(∇f)⁻¹` and would then have to be proved equal to `conj B f` on `D` — `conj_eq_of_hasGradientAt`
+states that equality without the detour. (`EssentiallySmooth`, `EssentiallyStrictlyConvex` and
+`LegendreType` were withheld for the same reason until 26.1 became reachable; they now live in
+`EssentiallySmooth.lean`, `StrictlyConvex.lean` and `LegendreType.lean`.)
 
 The file's one private helper, `eq_coe_of_coe_add_eq_coe`, solves `(r : EReal) + c = (s : EReal)`
 for `c`; the two infinities are excluded by the equation itself. Promote it to `Tdaf/Order/EReal.lean`
 if a second consumer appears.
+
+### `Tdaf/Analysis/Convex/Subgradient/LegendreType.lean`
+
+§26's second half: **Corollary 26.4.1** and **Theorem 26.5**.
+
+```lean
+def gradientRange (f : E → EReal) : Set E                       -- Rockafellar's `D`, in vector form
+def LegendreType (f : E → EReal) : Prop                         -- essentially smooth + strictly convex on `int (dom f)`
+theorem hasGradientAt_toDual_iff_mem_subgradient …              -- the whole file, in one line
+theorem gradientRange_eq_domSubgradient_conj …                  -- **Cor 26.4.1**: `D = dom ∂f*`
+theorem legendreType_conj_iff …                                 -- **Thm 26.5**, first assertion
+theorem hasGradientAt_conj_iff …                                -- **Thm 26.5**: `∇f* = (∇f)⁻¹`
+theorem bijOn_gradient_of_legendreType …                        -- **Thm 26.5**: `∇f : C ≅ C*`
+theorem bijOn_gradient_univ_iff …                               -- **Thm 26.6**
+```
+
+**Everything here is `hasGradientAt_toDual_iff_mem_subgradient` plus Corollary 23.5.1.** For an
+essentially smooth `f`, "`v` is *the* gradient at `x`" and "`v` is *a* subgradient at `x`" are the
+same statement — Theorem 25.1 inside `int (dom f)`, and outside it both sides are impossible by the
+substantive half of Theorem 26.1. Composing that with `∂f* = (∂f)⁻¹` turns every assertion of
+Theorem 26.5 into a rewrite. In particular `∇f* = (∇f)⁻¹` costs three rewrites and no analysis.
+
+**Theorem 26.5's duality is Corollary 26.3.1 applied twice.** `LegendreType f` unfolds, through
+`subgradient_injective_iff`, into "`∂f` is single-valued **and** injective"; inverting `∂` swaps
+those two conditions, so `legendreType_conj_iff` is `and_comm` on top of
+`subsingleton_subgradient_conj_iff` and `pairwise_disjoint_subgradient_conj_iff`.
+
+**Mathlib's `gradient` needs no wrapper.** `gradient (fun w => (f w).toReal)` is literally
+`(InnerProductSpace.toDual ℝ E).symm (fderiv ℝ …)`, which is what §25 already writes out by hand,
+so Theorem 26.5's bijection is stated with an existing Mathlib function.
+
+**`D` is not claimed convex.** Corollary 26.4.1 gives `ri (dom f*) ⊆ D ⊆ dom f*` and nothing
+stronger, which is exactly Rockafellar's point: `D` is only "almost convex".
+
+**Theorem 26.6 states co-finiteness as `dom f* = E`.** Rockafellar defines it through the recession
+function (`f0+` is `+∞` off the origin) and only then identifies it with `dom f* = Rⁿ`, by
+Corollary 13.3.1; the recession function is not in the library, so the equation is the definition
+here. Everything else in Theorem 26.6 is Theorem 26.5 with `interior (dom f) = E`, which also makes
+essential smoothness automatic — condition (c) quantifies over points outside the interior, and
+there are none.
 
 ### `Tdaf/Analysis/Convex/Optimization/Fenchel.lean`
 
@@ -5401,6 +5441,20 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 184. **Checking the 100-character line limit with `awk 'length > 100'` gives false positives.**
      `awk` counts UTF-8 *bytes*, and this project's source is full of `≤`, `∈`, `•`. Count
      codepoints (e.g. `python -c "..."` over the decoded lines) instead.
+
+275. **`closedFn_conj` for the self-pairing needs `IsContinuousPairing ((innerₗ E).flip)`, and
+instance search cannot find it.** `flip_innerₗ` says `(innerₗ E).flip = innerₗ E`, but that is a
+propositional equation, not something unification sees through, so every appeal to `closedFn_conj`
+with `B := innerₗ E` failed with "failed to synthesize instance". The fix is the one-line named
+instance `isContinuousPairing_flip_innerL` in `Subgradient/StrictlyConvex.lean`; a local
+`have hflip : IsContinuousPairing ((innerₗ E).flip) := by rw [flip_innerₗ]; infer_instance` works
+too (typeclass resolution does consult local hypotheses of class type), but repeats itself.
+
+276. **Mathlib's `gradient` is Rockafellar's `∇f`, but `rw [gradient]` does not unfold it.**
+`Mathlib.Analysis.Calculus.Gradient.Basic` defines `gradient f x = (toDual 𝕜 F).symm (fderiv 𝕜 f x)`,
+which is exactly the expression §25 writes out by hand, so no new definition is needed for
+`fun w => (f w).toReal`. It is a plain `def`, so unfolding needs `unfold gradient` (or `show`);
+`rw [gradient]` fails.
 
 268. **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State

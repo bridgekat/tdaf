@@ -89,6 +89,7 @@ import Tdaf.Analysis.Convex.Subgradient.Gradient
 import Tdaf.Analysis.Convex.Subgradient.GradientLimit
 import Tdaf.Analysis.Convex.Subgradient.Integral
 import Tdaf.Analysis.Convex.Subgradient.Legendre
+import Tdaf.Analysis.Convex.Subgradient.LegendreType
 import Tdaf.Analysis.Convex.Subgradient.Monotone
 import Tdaf.Analysis.Convex.Subgradient.OneDim
 import Tdaf.Analysis.Convex.Subgradient.Primitive
