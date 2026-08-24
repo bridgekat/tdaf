@@ -411,7 +411,10 @@ def HasSaddleValue (K : U × X → EReal) : Prop :=
 ```
 
 **Status: all of §36 and all of §37 are done**, except Corollary 37.5.1's homeomorphism clause
-and Corollary 37.5.2, which need Corollaries 31.5.1 and 31.5.2 (`Optimization/Moreau.lean`).
+and Corollary 37.5.2. Those need Corollaries 31.5.1 and 31.5.2, which are now proved
+(`Optimization/Prox.lean`) but only over `innerₗ E`; instantiating them at `prodPairing` needs that
+file restated over a symmetric positive-definite self-pairing, because `U × X` carries Mathlib's
+*supremum* norm and is not an `InnerProductSpace`.
 §37 is spread over `Saddle/Minimax.lean` (the vocabulary and Theorem 37.1),
 `Saddle/Conjugate.lean` (Cors 37.1.2–37.1.3, the `D*` halves of Thm 37.2, Cor 37.2.1, Thm 37.3
 and Cor 37.3.1), `Saddle/Subgradient.lean` (Thms 37.4–37.6 and Cor 37.5.3) and
@@ -450,7 +453,7 @@ actually used; each plan entry above split into several statements, as usual.
 | `IsBifunSubgradientPair`, `mem_saddleSubgradient_iff_isBifunSubgradientPair`, `mem_saddleSubgradient_upperConjSaddle_iff` | **Thm 37.5**, (a) ⇔ (d) ⇔ (b) | done (`Saddle/Subgradient.lean`) |
 | `isBifunSubgradientPair_iff_mem_subgradient_graphFn` | **Thm 37.5**, (c) ⇔ (d) | done (`Saddle/Existence.lean`) — **no hypothesis on `F` at all** |
 | `isClosed_setOf_mem_saddleSubgradient` | **Cor 37.5.1**, closedness clause | done (`Saddle/Existence.lean`) |
-| — | **Cor 37.5.1**, homeomorphism clause; **Cor 37.5.2** | not done — need **Cor 31.5.1** and **Cor 31.5.2**, i.e. the attainment/uniqueness half of Thm 31.5 (`prox`) |
+| — | **Cor 37.5.1**, homeomorphism clause; **Cor 37.5.2** | not done — **Cor 31.5.1** and **Cor 31.5.2** exist (`Optimization/Prox.lean`) but only for `innerₗ E`; `U × X` is not an `InnerProductSpace`, so `Prox.lean` has to be restated over a symmetric positive-definite self-pairing `B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ` first |
 | `mem_saddleSubgradient_upperConjSaddle_zero_iff`, `convex_setOf_isSaddlePoint`, `exists_isSaddlePoint_iff_zero_mem_domSaddleSubgradient` | **Cor 37.5.3** | done (`Saddle/Subgradient.lean`) |
 | `exists_isSaddlePoint_of_zero_mem_kernelSet_upperConjSaddle`, `exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle`, `exists_isSaddlePoint_of_no_common_direction_of_recession` | **Thm 37.6** | done (`Saddle/Subgradient.lean`, `Saddle/Existence.lean`) |
 | `exists_isSaddlePoint_of_isBounded_domSaddle`, `exists_maximin_eq_coe_of_isBounded_domSaddle` | **Cor 37.6.1** | done (`Saddle/Existence.lean`) |

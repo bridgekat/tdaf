@@ -79,12 +79,17 @@ both sets are bounded, is stated with real inequalities exactly as the book disp
 
 **Corollary 37.5.1's homeomorphism clause, and Corollary 37.5.2.** That the graph of `∂K` is
 homeomorphic to `Rᵐ × Rⁿ` under `(u, v, u*, v*) ↦ (u - u*, v + v*)` is Corollary 31.5.1, and that
-`(u, v) ↦ (-∂₁K, ∂₂K)` is maximal monotone is Corollary 31.5.2. Both rest on the attainment and
-uniqueness half of Moreau's Theorem 31.5 — the `prox` operator — which
-`Optimization/Moreau.lean` records as not done; `Subgradient/Monotone.lean` has maximal *cyclic*
-monotonicity (Theorem 24.9) but not maximal monotonicity, which is the weaker but genuinely
-different statement Corollary 37.5.2 needs. The closedness clause of 37.5.1 *is* here, since it
-is Theorem 24.4.
+`(u, v) ↦ (-∂₁K, ∂₂K)` is maximal monotone is Corollary 31.5.2. Both corollaries are now proved,
+in `Optimization/Prox.lean` — but only for `innerₗ E`, i.e. for a space carrying an
+`InnerProductSpace ℝ` instance. Theorem 37.5 pairs `U × X` with `V × Y` through `prodPairing`, and
+in Mathlib a product of inner-product spaces carries the *supremum* norm, not the Euclidean one, so
+`U × X` is not an `InnerProductSpace` and the two corollaries cannot be instantiated here as they
+stand. What is needed is `Optimization/Prox.lean` restated over a symmetric, positive-definite,
+jointly continuous self-pairing `B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ` in place of `innerₗ E`;
+`prodPairing (innerₗ U) (innerₗ X)` is such a pairing on `U × X`, and everything in that file — the
+quadratic `w z = ½ B z z`, its subdifferential `{x - z}`, its recession function, and the
+monotonicity inequality — is written in terms of `B` alone. The closedness clause of 37.5.1 *is*
+here, since it is Theorem 24.4.
 
 ## References
 
@@ -758,7 +763,8 @@ Proof idea: Theorem 37.5 identifies that graph with the preimage of the graph of
 graph function of `F` — under the linear homeomorphism `(u, y, v, x) ↦ ((u, x), (-v, y))`, and
 Theorem 24.4 says the graph of `∂f` is closed.
 
-The homeomorphism clause of the corollary is Corollary 31.5.1, which is not available. -/
+The homeomorphism clause of the corollary is Corollary 31.5.1 (`Optimization/Prox.lean`), which
+cannot be instantiated at `prodPairing`: see this module's *What is not here*. -/
 theorem isClosed_setOf_mem_saddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hcu : Continuous fun r : U × V => Bu r.1 r.2)

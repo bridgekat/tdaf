@@ -46,6 +46,7 @@ import Tdaf.Analysis.Convex.Optimization.Moreau
 import Tdaf.Analysis.Convex.Optimization.Normal
 import Tdaf.Analysis.Convex.Optimization.Perturbation
 import Tdaf.Analysis.Convex.Optimization.Program
+import Tdaf.Analysis.Convex.Optimization.Prox
 import Tdaf.Analysis.Convex.Optimization.Maximum
 import Tdaf.Analysis.Convex.Polyhedral.Closedness
 import Tdaf.Analysis.Convex.Polyhedral.Cone

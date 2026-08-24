@@ -1742,10 +1742,55 @@ companions then follow from `moreau_add` itself.
 `iSup_add_coe`): a real constant moves in and out of an infimum with no hypothesis, including over
 an empty index type.
 
-**Not done**: the existence and uniqueness of the splitting `z = x + x*`, `prox`, the gradient
-formulas `x = ∇(f* □ w) z`, and Cor 31.5.2. Existence is Theorem 27.2 in a Hilbert space —
-`Optimization/Minimum.lean` proves it only in finite dimensions — uniqueness is strict convexity of
-`w`, and the gradient formulas need Theorem 26.3.
+**Not done here**: only the gradient formulas `x = ∇(f* □ w) z` and `x* = ∇(f □ w) z`, which need
+Theorem 26.3. The existence and uniqueness of the splitting `z = x + x*`, `prox`, Cor 31.5.1 and
+Cor 31.5.2 are in `Optimization/Prox.lean`; existence is Theorem 27.2, so that file is
+finite-dimensional and this one is not.
+
+### `Tdaf/Analysis/Convex/Optimization/Prox.lean`
+
+§31's Theorem 31.5, attainment and uniqueness, and **Corollaries 31.5.1 and 31.5.2**. Over a
+**finite-dimensional** real inner-product space, because attainment is Theorem 27.2.
+
+```lean
+noncomputable def moreauObj (f : E → EReal) (z : E) : E → EReal    -- `x ↦ f x + w (z - x)`
+noncomputable def prox (f : E → EReal) (z : E) : E                 -- Rockafellar's `prox (z | f)`
+theorem subgradient_quadFn_sub …                        -- `∂(w (z - ·)) x = {x - z}`
+theorem recessionFn_quadFn_sub …                        -- `(w (z - ·))0⁺ y = ⊤` for `y ≠ 0`
+theorem argmin_moreauObj_nonempty …                     -- Thm 31.5, attainment
+theorem mem_argmin_moreauObj_iff …                      -- Thm 31.5, minimiser ⟺ `z - x ∈ ∂f x`
+theorem eq_of_sub_mem_subgradient …                     -- Thm 31.5, uniqueness
+theorem prox_add_prox_conj …                            -- Thm 31.5, `z = prox(z|f) + prox(z|f*)`
+theorem lipschitzWith_prox …                            -- `prox` is nonexpansive
+noncomputable def subgradientRelHomeomorph …            -- Cor 31.5.1
+theorem isMaximalMonotoneRel_subgradientRel …           -- Cor 31.5.2
+```
+
+**Attainment is Theorem 9.3 plus one line, not a growth estimate.** `recessionFn_add` splits the
+recession function of `f + w (z - ·)`, and `(w (z - ·))0⁺ y = ⊤` for `y ≠ 0` falls out of testing the
+recession inequality `q (x + a • y) ≤ q x + a ν` at the *single* point `x = z`, where `q z = 0`: it
+reads `½ a² |y|² ≤ a ν`, false for large `a`. Since `f0⁺` never takes `-∞` (`recessionFn_ne_bot`),
+the sum is `⊤` off the origin, `recessionConeFn = {0}`, and Theorem 27.2 fires. No affine minorant
+and no level-set boundedness are needed.
+
+**Uniqueness and nonexpansiveness are the same two lines.** Both are the monotonicity inequality of
+Theorem 24.8 (`isMonotoneRel_subgradientRel`) at the two pairs `(xᵢ, zᵢ - xᵢ)`: with `z₁ = z₂` it
+gives `|x₁ - x₂|² ≤ 0`, and in general `|x₁ - x₂|² ≤ ⟨x₁ - x₂, z₁ - z₂⟩`. Rockafellar's strict
+convexity of `w` is never used, and neither is Theorem 26.3.
+
+**Corollary 31.5.1 needs no closedness of the graph.** Theorem 24.4 is not imported: the inverse
+`z ↦ (prox f z, z - prox f z)` is continuous because `prox` is nonexpansive, and that is the whole
+analytic content. The `Homeomorph` is built directly on `↑(subgradientRel (innerₗ E) f)`.
+
+**`prox` is `Classical.epsilon`, not `dite`.** The `if h : s.Nonempty then h.choose else 0` idiom
+needs `dif_pos` to unfold, and `dif_pos` is deprecated in this Mathlib (→ `dite_eq_left`), which
+fails a zero-warning build. `Classical.epsilon (· ∈ argmin (moreauObj f z))` unfolds through
+`Classical.epsilon_spec` with no rewriting at all.
+
+**Relocation candidates.** `isExactSum_quadFn_sub` duplicates the `have hex` inside `moreau_add`
+and belongs in `Optimization/Moreau.lean`, with `moreau_add` rewritten to use it;
+`closedProperConvexFn_conj` belongs in `Duality/Conjugate.lean` beside `closedFn_conj`, once the
+`IsContinuousPairing B.flip` bookkeeping is settled.
 
 ### `Tdaf/Analysis/Convex/Optimization/Minimum.lean`
 
@@ -3572,9 +3617,14 @@ both iterated extrema can be infinite (`C = {0}`, `D = ℝ`, `K (u, v) = v` give
 bounded, keeps the book's real inequalities.
 
 **Not here**: Corollary 37.5.1's homeomorphism clause and Corollary 37.5.2 (maximal monotonicity of
-`∂K`). Both need Corollaries 31.5.1 and 31.5.2, which rest on the `prox` operator of Theorem 31.5;
-`Optimization/Moreau.lean` records that as not done. `Subgradient/Monotone.lean` has maximal
-*cyclic* monotonicity, which is a different statement.
+`∂K`). Corollaries 31.5.1 and 31.5.2 now exist (`Optimization/Prox.lean`), but only over
+`innerₗ E`. Theorem 37.5 pairs `U × X` with `V × Y` through `prodPairing`, and Mathlib gives a
+product of inner-product spaces the *supremum* norm, so `U × X` is not an `InnerProductSpace` and
+neither corollary can be instantiated here. The fix is to restate `Optimization/Prox.lean` over a
+symmetric, positive-definite, jointly continuous self-pairing `B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ` with
+`w z = ½ B z z`; `prodPairing (innerₗ U) (innerₗ X)` is one, and nothing in that file uses the norm
+for anything but `B`. `Subgradient/Monotone.lean` has maximal *cyclic* monotonicity, which is a
+different statement.
 
 ### `Tdaf/Analysis/Convex/Duality/ConcaveOps.lean`
 
@@ -4757,6 +4807,45 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
      "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
      a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+257. **A product of inner-product spaces blocks every §31 result at `prodPairing`.** This is
+     gotcha 214 with teeth: `Optimization/Prox.lean` (Theorem 31.5's attainment, Cor 31.5.1,
+     Cor 31.5.2) is stated over `innerₗ E`, and §37 wants it at
+     `prodPairing (innerₗ U) (innerₗ X)` on `U × X`, which carries the *supremum* norm and so has
+     no `InnerProductSpace ℝ` instance. `WithLp 2 (U × X)` has the instance but a different
+     topology *instance*, so `ClosedFn`, `Continuous` and `IsClosed` do not transfer
+     definitionally. The real fix is to state `Prox.lean` over a symmetric, positive-definite,
+     jointly continuous self-pairing `B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ` with `w z = ½ B z z`: nothing in it
+     uses the norm except through `B`.
+
+256. **`dif_pos` is deprecated (→ `dite_eq_left`), which kills the `dite`-plus-`Exists.choose`
+     idiom for a total selector.** `if h : s.Nonempty then h.choose else 0` can only be unfolded
+     through `dif_pos`, and a deprecation warning fails the zero-warning bar. Use
+     `Classical.epsilon (· ∈ s)` instead: `Classical.epsilon_spec` takes the nonemptiness proof
+     directly and no rewriting is needed. `Nonempty E` is found automatically for any
+     `AddCommGroup`.
+
+255. **`closedFn_conj` wants `IsContinuousPairing B.flip`, which is not an instance for
+     `innerₗ E`.** `IsCompatiblePairing (innerₗ E)` is an instance and it extends
+     `IsContinuousPairing`, but nothing fires for the *flip*. Supply it with
+     `have : IsContinuousPairing ((innerₗ E).flip) := by rw [flip_innerₗ]; infer_instance` — a
+     plain `have`, since `linter.style.haveILetI` rejects `haveI` on a `Prop` and a local `have`
+     of a class type still participates in instance search. Same shape as the
+     `IsCompatiblePairing ((innerₗ ℝ).flip)` `have`s in `Subgradient/OneDim.lean`.
+
+254. **`abel` emits an `info` "Try this: abel_nf" when normalisation alone closes the goal.** It
+     is only an info, not a warning, so it does not fail the bar, but it clutters the build log.
+     Write `abel_nf` where the suggestion appears; `abel` is still the right call when the goal
+     needs the final `rfl`.
+
+253. **The Bash tool truncates a command at roughly 8 KB, which silently breaks heredocs.** Two
+     attempts to write a large file with `cat > f <<'EOF'` failed with bash's
+     "unexpected EOF while looking for matching quote" at *line 93* and *line 95* of otherwise
+     valid 130- and 380-line scripts: the command was cut mid-string, leaving a quote open.
+     Companion to gotcha 230. For a new Lean file use the `Write` tool; for a bulk edit, `Write`
+     the Python script to the scratchpad and run it with `python <path>`, reading with
+     `io.open(..., encoding='utf-8', newline='')` and writing with
+     `io.open(tmp, 'w', encoding='utf-8', newline='\n')` plus `os.replace`.
 
 252. **`real_inner_comm a b : ⟪b, a⟫ = ⟪a, b⟫` — the explicit arguments are in the *opposite*
      order to the ones that appear first.** `rw [real_inner_comm (z - x) w]` looks for

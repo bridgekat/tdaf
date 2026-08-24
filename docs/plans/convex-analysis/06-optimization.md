@@ -471,14 +471,17 @@ supplies.
 | `add_conj_eq_zero_iff_mem_subgradient_and_pairing_eq_zero`, `forall_le_of_mem_subgradient_of_pairing_eq_zero`, `conj_le_conj_of_mem_subgradient_of_pairing_eq_zero` | **Thm 31.4**, the optimality conditions | done |
 | — | **Cor 31.4.1** (the orthant), Cors 31.4.2–3 | not done — instances of Thm 31.4 in a coordinate space |
 | `quadFn`, `conj_quadFn`, `conj_quadFn_sub`, `moreau_add`, `infConv_quadFn_ne_top` and companions, `mem_subgradient_iff_infConv_eq` | **Thm 31.5 (Moreau)**, the identity and the Kuhn–Tucker characterisation | done |
-| `prox`; the existence and uniqueness of the splitting; `x = ∇(f* □ w) z` | **Thm 31.5**, the remaining clauses | not done — need Thm 27.2 in a Hilbert space and Thm 26.3 |
-| `subgradient_maximalMonotone` | **Cor 31.5.2** | not done — rests on the clauses above |
+| `moreauObj`, `prox`, `argmin_moreauObj_nonempty`, `mem_argmin_moreauObj_iff`, `eq_of_sub_mem_subgradient`, `existsUnique_sub_mem_subgradient`, `prox_eq_iff`, `argmin_moreauObj_eq_singleton`, `infConv_quadFn_eq_moreauObj_prox`, `prox_add_prox_conj` | **Thm 31.5**, attainment and uniqueness | done (`Optimization/Prox.lean`), in finite dimensions |
+| `x = ∇(f* □ w) z`, `x* = ∇(f □ w) z` | **Thm 31.5**, the gradient formulas | not done — need Thm 26.3 on the Moreau envelopes |
+| `dist_prox_prox_le`, `lipschitzWith_prox`, `subgradientRelHomeomorph` | **Cor 31.5.1** | done (`Optimization/Prox.lean`) |
+| `isMaximalMonotoneRel_subgradientRel` | **Cor 31.5.2** | done (`Optimization/Prox.lean`) |
 
 Moreau's theorem (31.5) needs an inner-product structure and is the source of the proximal operator.
-Its *identity* is now proved (`Optimization/Moreau.lean`); what is still missing is that the two
-infima are attained, which is Theorem 27.2 in a Hilbert space rather than in `ℝⁿ`. Corollary 31.5.2
-gives maximal monotonicity of `∂f` without going through the much harder §24, but it needs the
-attainment clause first.
+Its *identity* is proved in an arbitrary real Hilbert space (`Optimization/Moreau.lean`); the
+attainment and uniqueness clauses, and the two corollaries, are in `Optimization/Prox.lean` and are
+finite-dimensional, because attainment is Theorem 27.2 and `Optimization/Minimum.lean` proves that
+only in `ℝⁿ`. Corollary 31.5.2 gives maximal monotonicity of `∂f` without going through the much
+harder §24, exactly as Rockafellar says.
 
 ### What actually happened
 
