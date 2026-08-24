@@ -1,0 +1,368 @@
+/-
+Copyright (c) 2026 TDAF contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: TDAF contributors
+-/
+import Tdaf.Analysis.Convex.Subgradient.EssentiallySmooth
+
+/-!
+# Essential strict convexity
+
+Rockafellar's **Theorem 26.3**: a closed proper convex function is *essentially strictly convex*
+exactly when its conjugate is essentially smooth. Together with Theorem 26.1 this is the duality
+that makes the Legendre transformation of §26 an involution — strict convexity on one side is
+smoothness on the other.
+
+## Main definitions
+
+* `StrictConvexOnFn f C` — `f` satisfies the convexity inequality *strictly* between distinct
+  points of `C`.
+* `domSubgradient B f` — the set of points at which `f` has a subgradient, Rockafellar's `dom ∂f`.
+* `EssentiallyStrictlyConvex f` — `f` is strictly convex on every convex subset of `dom ∂f`.
+
+## Main results
+
+* `mem_subgradient_of_combo`, `le_combo_of_mem_subgradient` — a subgradient shared by two points
+  is a subgradient at every point between them, and `f` is affine along that segment.
+* `essentiallyStrictlyConvex_iff_pairwise_disjoint` — the reformulation Theorem 26.3 runs on:
+  `f` is essentially strictly convex exactly when distinct points never share a subgradient.
+* `essentiallySmooth_conj_iff_essentiallyStrictlyConvex` — **Theorem 26.3**.
+* `subgradient_injective_iff` — **Corollary 26.3.1**.
+
+## Design notes
+
+**The theorem is one reformulation plus Theorem 26.1.** Corollary 23.5.1 makes `∂f*` the inverse
+of `∂f`, so single-valuedness of `∂f*` *is* "distinct points never share a subgradient of `f`",
+and Theorem 26.1 turns that into essential smoothness of `f*`. What is left is the equivalence of
+the sharing condition with essential strict convexity, and both directions of it are one
+computation read forwards and backwards: a shared subgradient forces `f` to be affine along the
+segment, and affineness along a segment inside `dom ∂f` produces a shared subgradient.
+
+**Every value in sight is finite, so the arithmetic is real.** Points of `dom ∂f` lie in `dom f`
+and `f` is proper, so `f` is real there; the only `EReal` case split is on `f z` at the *test*
+point of the subgradient inequality, where `f z = ⊤` makes the inequality trivial. That is why
+`sub_le_of_mem_subgradient` is stated in `ℝ`.
+
+**The definitions are layer A and the theorems are not.** `StrictConvexOnFn`, `domSubgradient` and
+`EssentiallyStrictlyConvex` need only a real module; Theorem 26.3 needs an inner-product space,
+because `EssentiallySmooth` does.
+
+## References
+
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26 (Theorem 26.3,
+  Corollary 26.3.1).
+-/
+
+namespace Tdaf.ConvexAnalysis
+
+open Filter Metric Topology
+
+section Defs
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
+
+/-- **Strict convexity on a set.** Between two *distinct* points of `C` the convexity inequality
+is strict. Nothing is asked off `C`, and nothing is asked about the finiteness of `f`. -/
+def StrictConvexOnFn (f : E → EReal) (C : Set E) : Prop :=
+  ∀ ⦃x⦄, x ∈ C → ∀ ⦃y⦄, y ∈ C → x ≠ y → ∀ ⦃a b : ℝ⦄, 0 < a → 0 < b → a + b = 1 →
+    f (a • x + b • y) < (a : EReal) * f x + (b : EReal) * f y
+
+/-- Strict convexity is inherited by subsets. -/
+theorem StrictConvexOnFn.mono {C D : Set E} (h : StrictConvexOnFn f C) (hDC : D ⊆ C) :
+    StrictConvexOnFn f D := fun _ hx _ hy hne _ _ ha hb hab =>
+  h (hDC hx) (hDC hy) hne ha hb hab
+
+/-- **`dom ∂f`**: the set of points at which `f` has at least one subgradient. -/
+def domSubgradient (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) : Set E :=
+  {x | (subgradient B f x).Nonempty}
+
+@[simp] theorem mem_domSubgradient {x : E} :
+    x ∈ domSubgradient B f ↔ (subgradient B f x).Nonempty := Iff.rfl
+
+/-- `dom ∂f ⊆ dom f`: a subgradient at `x` forces `f x < ⊤`. -/
+theorem domSubgradient_subset_dom (hp : Proper f) : domSubgradient B f ⊆ dom f := by
+  rintro z ⟨y, hy⟩
+  exact mem_dom_of_mem_subgradient hp hy
+
+/-- **Rockafellar's essential strict convexity**: `f` is strictly convex on every convex subset of
+`dom ∂f`.
+
+Rockafellar's warning is worth repeating: this is *weaker* than strict convexity on `dom f` and
+*stronger* than strict convexity on `ri (dom f)`, and the two examples separating it from both are
+in the text after the definition. -/
+def EssentiallyStrictlyConvex (f : E → EReal) : Prop :=
+  ∀ ⦃C : Set E⦄, Convex ℝ C → C ⊆ domSubgradient B f → StrictConvexOnFn f C
+
+/-- **The subgradient inequality between real numbers.** Both values are finite — `f x` because a
+subgradient exists there, `f z` by hypothesis — so the `EReal` inequality is a real one. -/
+theorem sub_le_of_mem_subgradient (hp : Proper f) {v : F} {x z : E} (h : v ∈ subgradient B f x)
+    (hz : z ∈ dom f) : (f x).toReal + B (z - x) v ≤ (f z).toReal := by
+  have hle := h z
+  have hxt : f x ≠ ⊤ := (mem_dom.1 (mem_dom_of_mem_subgradient hp h)).ne
+  have hzt : f z ≠ ⊤ := (mem_dom.1 hz).ne
+  rw [← _root_.EReal.coe_toReal hxt (hp.ne_bot x), ← _root_.EReal.coe_toReal hzt (hp.ne_bot z),
+    ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at hle
+  exact hle
+
+/-- The subgradient inequality, in the direction that has to be *proved*: a real bound at every
+point of `dom f` is the `EReal` subgradient inequality everywhere, since off `dom f` it reads
+`≤ ⊤`. -/
+theorem mem_subgradient_of_forall_sub_le (hp : Proper f) {v : F} {x : E} (hx : x ∈ dom f)
+    (h : ∀ z ∈ dom f, (f x).toReal + B (z - x) v ≤ (f z).toReal) : v ∈ subgradient B f x := by
+  intro z
+  by_cases hz : z ∈ dom f
+  · rw [← _root_.EReal.coe_toReal (mem_dom.1 hx).ne (hp.ne_bot x),
+      ← _root_.EReal.coe_toReal (mem_dom.1 hz).ne (hp.ne_bot z), ← _root_.EReal.coe_add,
+      _root_.EReal.coe_le_coe_iff]
+    exact h z hz
+  · rw [top_le_iff.1 (not_lt.1 fun hlt => hz (mem_dom.2 hlt))]
+    exact le_top
+
+end Defs
+
+section Segment
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {v : F} {x₁ x₂ : E} {a b : ℝ}
+
+/-- The pairing at a convex combination splits, because `z - (a x₁ + b x₂)` is the same
+combination of `z - x₁` and `z - x₂`. -/
+theorem pairing_sub_combo (hab : a + b = 1) (z : E) :
+    B (z - (a • x₁ + b • x₂)) v = a * B (z - x₁) v + b * B (z - x₂) v := by
+  have hsplit : z - (a • x₁ + b • x₂) = a • (z - x₁) + b • (z - x₂) := by
+    rw [smul_sub, smul_sub]
+    match_scalars <;> linarith [hab]
+  rw [hsplit, map_add, LinearMap.add_apply, map_smul, map_smul,
+    LinearMap.smul_apply, LinearMap.smul_apply, smul_eq_mul, smul_eq_mul]
+
+/-- The pairing from a convex combination back to the first endpoint. -/
+theorem pairing_combo_sub_left (hab : a + b = 1) :
+    B (a • x₁ + b • x₂ - x₁) v = b * B (x₂ - x₁) v := by
+  have hsplit : a • x₁ + b • x₂ - x₁ = b • (x₂ - x₁) := by
+    rw [smul_sub]
+    match_scalars <;> linarith [hab]
+  rw [hsplit, map_smul, LinearMap.smul_apply, smul_eq_mul]
+
+/-- The pairing from a convex combination back to the second endpoint. -/
+theorem pairing_combo_sub_right (hab : a + b = 1) :
+    B (a • x₁ + b • x₂ - x₂) v = -(a * B (x₂ - x₁) v) := by
+  have hsplit : a • x₁ + b • x₂ - x₂ = (-a) • (x₂ - x₁) := by
+    rw [smul_sub]
+    match_scalars <;> linarith [hab]
+  rw [hsplit, map_smul, LinearMap.smul_apply, smul_eq_mul]
+  ring
+
+/-- **A subgradient shared by two points is a subgradient all along the segment between them.**
+The graph of `⟨·, v⟩ - f*(v)` is a supporting hyperplane touching `epi f` at both endpoints, so it
+touches it along the whole segment. -/
+theorem mem_subgradient_of_combo (hf : ConvexFn f) (hp : Proper f)
+    (h₁ : v ∈ subgradient B f x₁) (h₂ : v ∈ subgradient B f x₂)
+    (ha : 0 < a) (hb : 0 < b) (hab : a + b = 1) :
+    v ∈ subgradient B f (a • x₁ + b • x₂) := by
+  have hx₁ : x₁ ∈ dom f := mem_dom_of_mem_subgradient hp h₁
+  have hx₂ : x₂ ∈ dom f := mem_dom_of_mem_subgradient hp h₂
+  have hcomb : a • x₁ + b • x₂ ∈ dom f := hf.convex_dom hx₁ hx₂ ha.le hb.le hab
+  refine mem_subgradient_of_forall_sub_le hp hcomb fun z hz => ?_
+  -- The combination's value is bounded by the combination of the endpoint values.
+  have hcv := (convexFn_iff_le hp.ne_bot).1 hf x₁ x₂ a b ha hb hab
+  have hreal : (f (a • x₁ + b • x₂)).toReal ≤ a * (f x₁).toReal + b * (f x₂).toReal := by
+    rw [← _root_.EReal.coe_toReal (mem_dom.1 hx₁).ne (hp.ne_bot x₁),
+      ← _root_.EReal.coe_toReal (mem_dom.1 hx₂).ne (hp.ne_bot x₂),
+      ← _root_.EReal.coe_toReal (mem_dom.1 hcomb).ne (hp.ne_bot _), Tdaf.EReal.coe_mul_coe,
+      Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at hcv
+    exact hcv
+  rw [pairing_sub_combo hab z]
+  have hA := mul_le_mul_of_nonneg_left (sub_le_of_mem_subgradient hp h₁ hz) ha.le
+  have hB' := mul_le_mul_of_nonneg_left (sub_le_of_mem_subgradient hp h₂ hz) hb.le
+  have hsum : a * (f z).toReal + b * (f z).toReal = (f z).toReal := by
+    rw [← add_mul, hab, one_mul]
+  linarith
+
+/-- **A shared subgradient makes `f` affine along the segment**, so the convexity inequality there
+is an *equality* and strict convexity fails. -/
+theorem le_combo_of_mem_subgradient (hp : Proper f) (h₁ : v ∈ subgradient B f x₁)
+    (h₂ : v ∈ subgradient B f x₂) (ha : 0 < a) (hb : 0 < b) (hab : a + b = 1)
+    (hcomb : a • x₁ + b • x₂ ∈ dom f) :
+    (a : EReal) * f x₁ + (b : EReal) * f x₂ ≤ f (a • x₁ + b • x₂) := by
+  have hx₁ : x₁ ∈ dom f := mem_dom_of_mem_subgradient hp h₁
+  have hx₂ : x₂ ∈ dom f := mem_dom_of_mem_subgradient hp h₂
+  have hs₁ := sub_le_of_mem_subgradient hp h₁ hcomb
+  have hs₂ := sub_le_of_mem_subgradient hp h₂ hcomb
+  rw [pairing_combo_sub_left hab] at hs₁
+  rw [pairing_combo_sub_right hab] at hs₂
+  have hA := mul_le_mul_of_nonneg_left hs₁ ha.le
+  have hB' := mul_le_mul_of_nonneg_left hs₂ hb.le
+  have hsum : a * (f (a • x₁ + b • x₂)).toReal + b * (f (a • x₁ + b • x₂)).toReal
+      = (f (a • x₁ + b • x₂)).toReal := by rw [← add_mul, hab, one_mul]
+  rw [← _root_.EReal.coe_toReal (mem_dom.1 hx₁).ne (hp.ne_bot x₁),
+    ← _root_.EReal.coe_toReal (mem_dom.1 hx₂).ne (hp.ne_bot x₂),
+    ← _root_.EReal.coe_toReal (mem_dom.1 hcomb).ne (hp.ne_bot _), Tdaf.EReal.coe_mul_coe,
+    Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff]
+  linarith
+
+/-- **The converse computation**: if `f` fails to be strictly convex between `x₁` and `x₂` and has
+a subgradient at the point between them, that subgradient serves at both endpoints.
+
+The two endpoint inequalities add up to the failed strict inequality, so neither can be strict. -/
+theorem mem_subgradient_endpoints_of_le_combo (hp : Proper f) (hx₁ : x₁ ∈ dom f)
+    (hx₂ : x₂ ∈ dom f) (hv : v ∈ subgradient B f (a • x₁ + b • x₂))
+    (ha : 0 < a) (hb : 0 < b) (hab : a + b = 1)
+    (hle : a * (f x₁).toReal + b * (f x₂).toReal ≤ (f (a • x₁ + b • x₂)).toReal) :
+    v ∈ subgradient B f x₁ ∧ v ∈ subgradient B f x₂ := by
+  have hcomb : a • x₁ + b • x₂ ∈ dom f := mem_dom_of_mem_subgradient hp hv
+  have hs₁ := sub_le_of_mem_subgradient hp hv hx₁
+  have hs₂ := sub_le_of_mem_subgradient hp hv hx₂
+  rw [show x₁ - (a • x₁ + b • x₂) = -(a • x₁ + b • x₂ - x₁) by abel, map_neg,
+    LinearMap.neg_apply, pairing_combo_sub_left hab] at hs₁
+  rw [show x₂ - (a • x₁ + b • x₂) = -(a • x₁ + b • x₂ - x₂) by abel, map_neg,
+    LinearMap.neg_apply, pairing_combo_sub_right hab] at hs₂
+  have hsum : a * (f (a • x₁ + b • x₂)).toReal + b * (f (a • x₁ + b • x₂)).toReal
+      = (f (a • x₁ + b • x₂)).toReal := by rw [← add_mul, hab, one_mul]
+  -- Both endpoint inequalities are equalities.
+  have he₁ : (f (a • x₁ + b • x₂)).toReal - b * B (x₂ - x₁) v = (f x₁).toReal := by
+    refine le_antisymm (by linarith) (le_of_mul_le_mul_left ?_ ha)
+    have hB' := mul_le_mul_of_nonneg_left hs₂ hb.le
+    linarith
+  have he₂ : (f (a • x₁ + b • x₂)).toReal + a * B (x₂ - x₁) v = (f x₂).toReal := by
+    refine le_antisymm (by linarith) (le_of_mul_le_mul_left ?_ hb)
+    have hA := mul_le_mul_of_nonneg_left hs₁ ha.le
+    linarith
+  constructor
+  · refine mem_subgradient_of_forall_sub_le hp hx₁ fun z hz => ?_
+    have hz' := sub_le_of_mem_subgradient hp hv hz
+    have hlin : B (z - x₁) v = B (z - (a • x₁ + b • x₂)) v + b * B (x₂ - x₁) v := by
+      rw [show z - x₁ = (z - (a • x₁ + b • x₂)) + (a • x₁ + b • x₂ - x₁) by abel, map_add,
+        LinearMap.add_apply, pairing_combo_sub_left hab]
+    rw [hlin, ← he₁]
+    linarith
+  · refine mem_subgradient_of_forall_sub_le hp hx₂ fun z hz => ?_
+    have hz' := sub_le_of_mem_subgradient hp hv hz
+    have hlin : B (z - x₂) v = B (z - (a • x₁ + b • x₂)) v - a * B (x₂ - x₁) v := by
+      rw [show z - x₂ = (z - (a • x₁ + b • x₂)) + (a • x₁ + b • x₂ - x₂) by abel, map_add,
+        LinearMap.add_apply, pairing_combo_sub_right hab]
+      ring
+    rw [hlin, ← he₂]
+    linarith
+
+end Segment
+
+section Reformulation
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
+
+/-- **The reformulation Theorem 26.3 runs on**: a proper convex function is essentially strictly
+convex exactly when two distinct points never share a subgradient.
+
+Forwards: a shared subgradient makes the whole segment lie in `dom ∂f` and `f` affine on it, so
+strict convexity fails on that segment, a convex subset of `dom ∂f`. Backwards: a failure of
+strict convexity on a convex `C ⊆ dom ∂f` puts a subgradient at a point between two points of `C`,
+and the failed inequality forces that subgradient to serve at both of them. -/
+theorem essentiallyStrictlyConvex_iff_pairwise_disjoint (hf : ConvexFn f) (hp : Proper f) :
+    EssentiallyStrictlyConvex (B := B) f ↔
+      ∀ x₁ x₂ : E, x₁ ≠ x₂ → Disjoint (subgradient B f x₁) (subgradient B f x₂) := by
+  constructor
+  · intro hes x₁ x₂ hne
+    rw [Set.disjoint_left]
+    intro v h₁ h₂
+    -- The segment lies in `dom ∂f`.
+    have hseg : segment ℝ x₁ x₂ ⊆ domSubgradient B f := by
+      rintro _ ⟨a, b, ha, hb, hab, rfl⟩
+      rcases eq_or_lt_of_le ha with rfl | ha'
+      · have hb1 : b = 1 := by linarith
+        subst hb1
+        simpa using ⟨v, h₂⟩
+      rcases eq_or_lt_of_le hb with rfl | hb'
+      · have ha1 : a = 1 := by linarith
+        subst ha1
+        simpa using ⟨v, h₁⟩
+      exact ⟨v, mem_subgradient_of_combo hf hp h₁ h₂ ha' hb' hab⟩
+    have hstrict := hes (convex_segment x₁ x₂) hseg (left_mem_segment ℝ x₁ x₂)
+      (right_mem_segment ℝ x₁ x₂) hne (a := 1/2) (b := 1/2) (by norm_num) (by norm_num)
+      (by norm_num)
+    have hcomb : (1/2 : ℝ) • x₁ + (1/2 : ℝ) • x₂ ∈ dom f :=
+      hf.convex_dom (mem_dom_of_mem_subgradient hp h₁) (mem_dom_of_mem_subgradient hp h₂)
+        (by norm_num) (by norm_num) (by norm_num)
+    exact absurd (le_combo_of_mem_subgradient hp h₁ h₂ (by norm_num) (by norm_num) (by norm_num)
+      hcomb) (not_le.2 hstrict)
+  · intro hdisj C hC hCsub x₁ hx₁ x₂ hx₂ hne a b ha hb hab
+    by_contra hcon
+    push Not at hcon
+    have hmem : a • x₁ + b • x₂ ∈ C := hC hx₁ hx₂ ha.le hb.le hab
+    obtain ⟨v, hv⟩ := hCsub hmem
+    have hx₁d : x₁ ∈ dom f := domSubgradient_subset_dom hp (hCsub hx₁)
+    have hx₂d : x₂ ∈ dom f := domSubgradient_subset_dom hp (hCsub hx₂)
+    have hcombd : a • x₁ + b • x₂ ∈ dom f := hf.convex_dom hx₁d hx₂d ha.le hb.le hab
+    have hle : a * (f x₁).toReal + b * (f x₂).toReal ≤ (f (a • x₁ + b • x₂)).toReal := by
+      rw [← _root_.EReal.coe_toReal (mem_dom.1 hx₁d).ne (hp.ne_bot x₁),
+        ← _root_.EReal.coe_toReal (mem_dom.1 hx₂d).ne (hp.ne_bot x₂),
+        ← _root_.EReal.coe_toReal (mem_dom.1 hcombd).ne (hp.ne_bot _), Tdaf.EReal.coe_mul_coe,
+        Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at hcon
+      exact hcon
+    obtain ⟨hsub₁, hsub₂⟩ :=
+      mem_subgradient_endpoints_of_le_combo hp hx₁d hx₂d hv ha hb hab hle
+    exact (Set.disjoint_left.1 (hdisj x₁ x₂ hne)) hsub₁ hsub₂
+
+end Reformulation
+
+section Conjugate
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal}
+
+/-- **Rockafellar, Theorem 26.3**: a closed proper convex function is essentially strictly convex
+exactly when its conjugate is essentially smooth. -/
+theorem essentiallySmooth_conj_iff_essentiallyStrictlyConvex (hf : ConvexFn f) (hp : Proper f)
+    (hcl : ClosedFn f) :
+    EssentiallySmooth (conj (innerₗ E) f) ↔ EssentiallyStrictlyConvex (B := innerₗ E) f := by
+  have hflip : IsContinuousPairing ((innerₗ E).flip) := by rw [flip_innerₗ]; infer_instance
+  have hcp : ClosedProperConvexFn f := ⟨hf, hcl, hp⟩
+  have hgc : ConvexFn (conj (innerₗ E) f) := convexFn_conj _ f
+  have hgp : Proper (conj (innerₗ E) f) := proper_conj hcp
+  have hgcl : ClosedFn (conj (innerₗ E) f) := closedFn_conj
+  -- Corollary 23.5.1, with the flip discharged once so that no rewrite has to reach inside `conj`.
+  have hbridge : ∀ u w : E,
+      u ∈ subgradient (innerₗ E) (conj (innerₗ E) f) w ↔ w ∈ subgradient (innerₗ E) f u := by
+    intro u w
+    have h := mem_subgradient_conj_iff_of_closedFn (B := innerₗ E) (f := f) (x := u) (y := w)
+      hf hcl
+    rwa [flip_innerₗ] at h
+  rw [← subsingleton_subgradient_iff_essentiallySmooth hgc hgp hgcl,
+    essentiallyStrictlyConvex_iff_pairwise_disjoint hf hp]
+  constructor
+  · intro h x₁ x₂ hne
+    rw [Set.disjoint_left]
+    intro v hv₁ hv₂
+    exact hne (h v ((hbridge x₁ v).2 hv₁) ((hbridge x₂ v).2 hv₂))
+  · intro h v x₁ hx₁ x₂ hx₂
+    by_contra hne
+    exact (Set.disjoint_left.1 (h x₁ x₂ hne)) ((hbridge x₁ v).1 hx₁) ((hbridge x₂ v).1 hx₂)
+
+/-- **Rockafellar, Corollary 26.3.1**: `∂f` is a one-to-one mapping — single-valued and injective —
+exactly when `f` is essentially smooth and strictly convex on `int (dom f)`.
+
+Under essential smoothness `dom ∂f` *is* `int (dom f)` (Theorem 26.1), so essential strict
+convexity, which quantifies over all convex subsets of `dom ∂f`, collapses to strict convexity on
+that one set. -/
+theorem subgradient_injective_iff (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f) :
+    ((∀ z : E, (subgradient (innerₗ E) f z).Subsingleton) ∧
+        ∀ x₁ x₂ : E, x₁ ≠ x₂ →
+          Disjoint (subgradient (innerₗ E) f x₁) (subgradient (innerₗ E) f x₂)) ↔
+      (EssentiallySmooth f ∧ StrictConvexOnFn f (interior (dom f))) := by
+  have hdom : Convex ℝ (dom f) := hf.convex_dom
+  rw [subsingleton_subgradient_iff_essentiallySmooth hf hp hcl,
+    ← essentiallyStrictlyConvex_iff_pairwise_disjoint hf hp]
+  refine and_congr_right fun hes => ⟨fun h => ?_, fun h => ?_⟩
+  · refine h hdom.interior fun z hz => ?_
+    rw [mem_domSubgradient, subgradient_eq_singleton_of_essentiallySmooth hf hes hz]
+    exact Set.singleton_nonempty _
+  · refine fun C hC hCsub => h.mono fun z hz => ?_
+    by_contra hzint
+    obtain ⟨v, hv⟩ := hCsub hz
+    rw [subgradient_eq_empty_of_essentiallySmooth hf hp hcl hes hzint] at hv
+    exact absurd hv (Set.notMem_empty v)
+
+end Conjugate
+
+end Tdaf.ConvexAnalysis

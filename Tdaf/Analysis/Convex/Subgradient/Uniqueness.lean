@@ -68,16 +68,6 @@ section Interior
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {x : E} {y₀ : F}
 
-omit [FiniteDimensional ℝ E] in
-/-- A point at which a proper function has a subgradient lies in its effective domain. Were
-`f x = ⊤`, the subgradient inequality would force `f ≡ ⊤`. -/
-theorem mem_dom_of_mem_subgradient (hp : Proper f) (hy₀ : y₀ ∈ subgradient B f x) : x ∈ dom f := by
-  obtain ⟨z₀, hz₀⟩ := hp.dom_nonempty
-  refine mem_dom.2 (lt_top_iff_ne_top.2 fun htop => ?_)
-  have hle := hy₀ z₀
-  rw [htop, _root_.EReal.top_add_coe] at hle
-  exact absurd (top_le_iff.1 hle) (mem_dom.1 hz₀).ne
-
 include B in
 /-- **A lone subgradient puts `x` in the interior of `dom f`.** This is the step Rockafellar's
 Theorem 25.1 passes over: `∂f x = {y₀}` leaves no room for a normal direction to `dom f`
