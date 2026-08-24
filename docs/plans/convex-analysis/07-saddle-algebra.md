@@ -139,7 +139,7 @@ named predicate would buy one line and cost a duplicated API, since D2's negatio
 hand-written. If §38–§39 ever needs concave polyhedral bifunctions in bulk, that is when to add
 it.
 | `SaddleEquiv`, `ClosedSaddleFn`, `saddleClass`, `partialCl₂_eq_of_mem_saddleClass`, `partialCl₁_eq_of_mem_saddleClass`, `saddleEquiv_of_mem_saddleClass`, `closedSaddleFn_of_mem_saddleClass`, `exists_unique_bifun_of_closedSaddleFn` | **Thm 34.2** | done (`Saddle/Equiv.lean`) |
-| — | **Thm 34.2**'s `dom K = dom F × dom F*` and `ri` clauses, Cors 34.2.1–4 | not done — need `ri` |
+| — | **Thm 34.2**'s `dom K = dom F × dom F*` and `ri` clauses, Cors 34.2.1–4 | done in `Saddle/Kernel.lean` (§7.2b), where the `ri` machinery is available; they are listed there, not here |
 | `closedSaddleFn_iff_saddleStructure` | **Thm 34.3** | done (`Saddle/Kernel.lean`) |
 | `saddleEquiv_iff_kernel_eq` | **Thm 34.4** | done (`Saddle/Kernel.lean`) |
 | `exists_unique_saddleEquiv_class_of_kernel`, `exists_unique_saddleEquiv_class_of_finite` | **Thm 34.5**, Cor 34.5.1 | done (`Saddle/Kernel.lean`) |
