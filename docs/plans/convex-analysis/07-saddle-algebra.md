@@ -324,9 +324,8 @@ structure ConcaveConvexOn (C : Set U) (D : Set X) (K : U × X → ℝ) : Prop wh
 | `continuousOn_prod_of_concaveConvexOn`, `…'` | **Thm 35.3** | done |
 | `uniformCauchySeqOn_prod_of_dense`, `exists_tendstoUniformlyOn_prod_of_dense`, `…'`, `tendstoUniformlyOn_prod_of_tendsto` | **Thm 35.4** | done |
 | `exists_subseq_tendstoUniformlyOn_prod` | **Thm 35.5** | done |
-| — | **Thm 35.6**, Thm 35.7, Cor 35.7.1 | not done — directional derivatives |
-| — | **Thm 35.8**, Cor 35.8.1 | not done |
-| — | **Thm 35.9**, Thm 35.10 | not done — needs Rademacher |
+| — | **Thms 35.6–35.8**, Cors 35.7.1 and 35.8.1 | done, in `Saddle/Differential.lean` — see §7.3a |
+| — | **Thm 35.9**, Thm 35.10 | not done — needs Rademacher (Thm 25.5) |
 
 **The plan's advice was right and paid off.** §10's convergence theorems were written for families
 indexed by an arbitrary type, and Theorem 35.2 is exactly Theorem 10.6 applied four times — twice
@@ -349,6 +348,56 @@ a product — it bounds one variable at a time — but Theorem 35.5's diagonal e
 
 **The Lipschitz constant is `k₁ + k₂`, not the book's `2(α₁ + α₂)`** — Mathlib's product metric is
 the supremum metric.
+
+## 7.3a `Saddle/Differential.lean` — §35, the differential half
+
+**Status: Theorems 35.6, 35.7 and 35.8 are done, with Corollaries 35.7.1 and 35.8.1.** These are
+§23/§24/§25 read for a concave-convex function of a pair, on an open rectangle where it is finite
+and real-valued. Layer D.
+
+The module is `Differential`, not `Subgradient`, because §37 owns that name for the
+`EReal`-valued `concaveSubgradient` / `saddleSubgradient`. Unifying the two subdifferentials is a
+deferred clean-up.
+
+| Lean name | book | status |
+|---|---|---|
+| `dirDerivReal`, and its §23 API (`exists_tendsto_slope_of_convexOn`, `tendsto_slope_dirDerivReal_of_*`, `tendsto_slope_smul`, `dirDerivReal_smul_of_tendsto`, `dirDerivReal_zero`, `{convexOn,concaveOn}_dirDerivReal`, `dirDerivReal_le_slope`, `slope_le_dirDerivReal`) | **Thm 23.1** for real-valued functions | done — relocation candidate: this is not §35 material |
+| `convexOn_comp_line`, `concaveOn_comp_line`, `isOpen_line_steps`, `add_smul_convexComb`, `eventually_nhdsGT_add_smul_mem`, `continuousAt_comp_line_of_*` | restriction to a line | done — relocation candidate: general convexity |
+| `dirDerivReal_prod`, `tendsto_slope_dirDerivReal_prod`, `concaveConvexOn_dirDerivReal`, `dirDerivReal_prod_smul`, `dirDerivReal_prod_fst`, `dirDerivReal_prod_snd`, `eventually_slope_snd_lt` | **Thm 35.6**, all clauses | done |
+| `subgradientFst`, `subgradientSnd`, `subgradientSaddle`, `subgradientSnd_eq_subgradient`, `subgradientFst_eq_neg_subgradient` | §35's `∂₁K`, `∂₂K`, `∂K`, and the bridge to a §23 subdifferential of a slice | done |
+| `tendsto_eval_prod_of_tendsto`, `eventually_dirDerivReal_snd_lt`, `eventually_lt_dirDerivReal_fst`, `eventually_subgradient{Snd,Fst,Saddle}_subset` | **Thm 35.7** | done |
+| `lowerSemicontinuousAt_dirDerivReal_fst`, `upperSemicontinuousAt_dirDerivReal_snd`, `eventually_nhds_subgradient{Saddle,Fst,Snd}_subset` | **Cor 35.7.1** | done |
+| `prodInnerL`, `HasSaddleGradientAt`, `subgradient{Fst,Snd,Saddle}_eq_singleton_of_hasSaddleGradientAt`, `hasSaddleGradientAt_of_subgradient_eq_singleton`, `hasSaddleGradientAt_iff_subgradientSaddle_eq_singleton`, `differentiableAt_iff_exists_subgradientSaddle_eq_singleton` | **Thm 35.8** | done |
+| `forall_inner_le_dirDerivReal_iff`, `forall_dirDerivReal_le_inner_iff`, `subgradient{Fst,Snd}_eq_singleton_of_dirDerivReal`, `hasSaddleGradientAt_iff_forall_dirDerivReal_eq`, `differentiableAt_iff_isLinearMap_dirDerivReal` | **Cor 35.8.1** | done except its last clause (the `m + n` two-sided partials), which quantifies over a coordinate basis and belongs to a surface layer |
+| — | **Thms 35.9, 35.10** | not done — both rest on Theorem 25.5, i.e. on Rademacher. Nothing else blocks them: `eventually_nhds_subgradientSaddle_subset` is already 35.9's continuity clause and 35.10 is `eventually_subgradientSaddle_subset` plus 35.9 |
+
+**Theorem 35.8's converse does not need Theorem 35.4's rescalings.** Rockafellar routes it through
+the uniform convergence of `h_λ(x, y) = [K(u + λx, v + λy) − K(u,v) − λ⟨x, u*⟩ − λ⟨y, v*⟩]/λ` on
+bounded sets. Corollary 35.7.1 is downstream of Theorem 35.4 anyway and gives the Fréchet estimate
+outright, by sandwiching the increment at the three points `(u,v)`, `(u, v+b)`, `(u+a, v+b)`.
+
+**Theorem 35.7 is not "immediate from Theorem 24.5".** The missing step is *continuous*
+convergence — `K_i (u_i, v_i) → K (u, v)` along a moving sequence — which needs Theorem 35.4's
+uniform convergence on a compact rectangle *plus* Theorem 35.1's continuity of the limit.
+`tendsto_eval_prod_of_tendsto` is that step, and after Theorem 35.8's converse it is the largest
+proof in the module.
+
+**Everything is on an open rectangle, not at relative-interior points.** The book restricts to
+interior points of `dom K` "for the sake of simplicity"; going relative would need `ri` forms of
+Theorems 23.1 and 23.2 for real-valued functions, which is a §23 project.
+
+**Theorem 35.8's finiteness hypothesis is redundant in the book.** Rockafellar asks only that `K`
+be finite *at* `(u, v)`; a singleton `∂K (u,v)` is nonempty and bounded, so Theorem 23.4 puts
+`(u,v)` in `int dom K` anyway. The module assumes the open rectangle instead, matching the rest of
+§35. Same remark for Corollary 35.8.1.
+
+**The book has a typo in Theorem 35.8**: "if `K` has a unique subgradient at `(u, v)`, then `K` is
+differentiable at *`x`*" — `x` is not a variable of the theorem, and the sentence is copied from
+Theorem 25.1.
+
+**The `εB` of Theorem 35.7 is the supremum ball**, not the Euclidean one — the same cause as the
+already-recorded `k₁ + k₂` correction to Theorem 35.2. Immaterial, since every statement
+quantifies over all `ε > 0`.
 
 ## 7.4 `Saddle/Minimax.lean` — §36, §37
 

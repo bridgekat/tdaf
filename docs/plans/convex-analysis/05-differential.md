@@ -281,16 +281,20 @@ from Moreau's theorem in §31, and does not wait on any of this.
 
 ## 5.4 `Subgradient/Gradient.lean` and `Differentiability.lean` — §25
 
-**Status: Theorems 25.1, 25.2 and 25.3 are done in full, with Corollary 25.1.1 and Theorem 25.4's
-continuity and density clauses.** `Gradient.lean` holds the Frechet theory (25.1, 25.2);
-`Differentiability.lean` holds the one-variable theory (25.3, 25.4).
+**Status: Theorems 25.1, 25.2 and 25.3 are done in full, with Corollaries 25.1.1, 25.1.2 and
+25.1.3 and Theorem 25.4's continuity and density clauses.** `Gradient.lean` holds the Frechet
+theory (25.1's forward half, 25.2) and the subgradient form of Cors 25.1.2–25.1.3;
+`Uniqueness.lean` holds Theorem 25.1's converse half and the differentiability form of those two
+corollaries; `Differentiability.lean` holds the one-variable theory (25.3, 25.4).
 
 | Lean name | book | status |
 |---|---|---|
 | `le_of_hasFDerivAt`, `eq_of_mem_subgradient_of_hasFDerivAt`, `subgradient_eq_singleton_of_hasFDerivAt` | **Thm 25.1** | done |
 | `mem_interior_dom_of_eventuallyEq_coe`, `proper_of_eventuallyEq_coe` | **Cor 25.1.1** | done |
 | `mem_exposedPoints_prod_Ici_iff`, `Proper.eq_sub_of_mem_subgradient`, `mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff` | **Cor 25.1.2, Cor 25.1.3**, subgradient form | done — with `ClosedFn`, which the book does not assume |
-| — | Cor 25.1.2, Cor 25.1.3, differentiability form | **not done** — needs the converse half of Thm 25.1 |
+| `mem_exposedPoints_epi_conj_iff_hasGradientAt`, `mem_exposedPoints_supportSet_iff_hasGradientAt` | **Cor 25.1.2, Cor 25.1.3**, differentiability form | done, `Uniqueness.lean` |
+| `mem_dom_of_mem_subgradient`, `mem_interior_dom_of_subgradient_eq_singleton`, `closedFn_dirDeriv_of_mem_interior_dom`, `hasGradientAt_evalCLM_of_subgradient_eq_singleton`, `hasGradientAt_of_subgradient_eq_singleton`, `hasGradientAt_iff_subgradient_eq_singleton`, `differentiableAtFn_iff_exists_subgradient_eq_singleton` | **Thm 25.1**, converse half, and the theorem in full | done, `Uniqueness.lean` |
+| `subgradient_add_normalCone_dom_subset`, `normalCone_dom_eq_zero_of_subgradient_eq_singleton` (`Subgradient/Calculus.lean`), `mem_interior_of_normalCone_eq_zero` (`Subgradient/Existence.lean`) | the interior step Thm 25.1's proof passes over | done — the second is Cor 11.6.1 read through the pairing |
 | `dirDeriv_eq_of_hasFDerivAt` | **Thm 25.2**, necessity | done |
 | `subgradient_eq_singleton_of_dirDeriv_eq`, `clFn_dirDeriv_eq_of_subgradient_eq_singleton` | **Thm 25.2**, the algebraic content of sufficiency | done |
 | `ConvexFn.sum_le`, `exists_forall_abs_le_of_dirDeriv_eq`, `exists_le_of_forall_basis_dirDeriv_eq`, `dirDeriv_eq_of_forall_basis_dirDeriv_eq`, `hasGradientAt_of_forall_basis_dirDeriv_eq`, `hasGradientAt_of_dirDeriv_eq`, `differentiableAtFn_iff_exists_dirDeriv_eq` | **Thm 25.2**, sufficiency, and the theorem in full | done — by a **cross-polytope** decomposition, so no compactness of the unit sphere, no continuity of `f`, and neither Thm 7.2 nor Thm 4.8 nor Thm 23.2 |

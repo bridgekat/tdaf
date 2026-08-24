@@ -1388,6 +1388,53 @@ of a half-cylinder and belongs beside `epi_indicatorFn` in `Indicator.lean` or i
 exposed-points module; `Proper.eq_sub_of_mem_subgradient` belongs in `Subgradient/Defs.lean` with
 the rest of Theorem 23.5.
 
+### `Tdaf/Analysis/Convex/Subgradient/Uniqueness.lean`
+
+**Theorem 25.1's converse half**, and with it the differentiability reading of Corollaries 25.1.2
+and 25.1.3.
+
+```lean
+theorem mem_dom_of_mem_subgradient …
+theorem mem_interior_dom_of_subgradient_eq_singleton …     -- the step the book passes over
+theorem closedFn_dirDeriv_of_mem_interior_dom …            -- removes the `cl` from Thm 23.2
+theorem hasGradientAt_evalCLM_of_subgradient_eq_singleton …
+theorem hasGradientAt_iff_subgradient_eq_singleton …        -- **Thm 25.1** in full
+theorem mem_exposedPoints_epi_conj_iff_hasGradientAt …      -- **Cor 25.1.2**
+theorem mem_exposedPoints_supportSet_iff_hasGradientAt …    -- **Cor 25.1.3**
+```
+
+**The whole difficulty is one word in Rockafellar's proof.** He assumes only "`f` finite at `x`"
+and then applies Theorem 23.2, which computes `cl f'(x; ·)`, not `f'(x; ·)`. The closure is
+harmless exactly when `x ∈ int (dom f)`, and *that* is what a unique subgradient has to be made to
+give. Two new lemmas do it:
+
+* `subgradient_add_normalCone_dom_subset` (`Subgradient/Calculus.lean`) —
+  `∂f x + N_{dom f}(x) ⊆ ∂f x`, layer A, no convexity and no topology. A singleton `∂f x` therefore
+  forces `N_{dom f}(x) = {0}` (`normalCone_dom_eq_zero_of_subgradient_eq_singleton`).
+* `mem_interior_of_normalCone_eq_zero` (`Subgradient/Existence.lean`) — in finite dimensions a
+  convex set is a neighbourhood of every point at which its normal cone is trivial. This is
+  Corollary 11.6.1 read through the pairing, and finite-dimensionality is not decoration: the span
+  of an orthonormal basis in a Hilbert space is convex, dense, has empty interior, and has trivial
+  normal cone everywhere. What replaces the missing interior in finite dimensions is that a convex
+  set with no interior lies in a proper affine subspace.
+
+**Theorem 23.4's interiority clause is not a shortcut.** `bddAbove_subgradient_iff_mem_interior_dom`
+says `∂f x` bounded ↔ `x ∈ int (dom f)` — but only under the hypothesis `x ∈ ri (dom f)`, which is
+most of what has to be proved. A singleton is bounded, so the equivalence looks like it settles the
+matter, and it does not.
+
+**The route through Corollary 24.5.1 saves nothing here.** Upper semicontinuity of `∂f` gives the
+Fréchet estimate directly — the sandwich
+`0 ≤ f z - f x - ⟨z - x, y₀⟩ ≤ ⟨z - x, y - y₀⟩ ≤ ε‖z - x‖` — and that is what
+`Saddle/Differential.lean` does for saddle-functions, where no `dirDeriv` API exists. It needs the
+same interior step (Corollary 24.5.1 and Theorem 23.4 both want `x ∈ int (dom f)`), and it would
+duplicate Theorem 25.2 rather than use it.
+
+**The general-pairing statement is `hasGradientAt_evalCLM_of_subgradient_eq_singleton`**, whose
+gradient is `evalCLM B y₀`. The `topDualPairing` corollaries are the ones with an *equivalence*,
+because the forward half (`HasGradientAt.subgradient_eq`) exists only there: for a general pairing
+a non-injective `evalCLM` would make `∂f x` a whole fibre rather than a point.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Legendre.lean`
 
 §26's Legendre transformation, reduced to what is reachable: **Theorem 26.4**.
@@ -3186,6 +3233,51 @@ From the repository `README.md` ("Reviewing a formalization"):
 
 ---
 
+### `Tdaf/Analysis/Convex/Saddle/Differential.lean`
+
+Rockafellar §35's differential half: **Theorems 35.6, 35.7 and 35.8**, with Corollaries 35.7.1 and
+35.8.1. §23/§24/§25 read for a concave-convex function of a pair on an open rectangle.
+
+**The module is `Differential`, not `Subgradient`, because §37 owns that name.** `dirDerivReal`,
+`subgradientFst`, `subgradientSnd`, `subgradientSaddle` and `HasSaddleGradientAt` are the
+real-valued theory on a rectangle; `Saddle/Subgradient.lean` holds `concaveSubgradient` and
+`saddleSubgradient` for `EReal`-valued saddle-functions, which is what §37's conjugacy needs. The
+two notions agree where both apply. **Unifying them is a deferred clean-up**, and it is the one
+place where two agents working in parallel produced the same file name for different content.
+
+**`dirDerivReal` is a genuine limit, not an infimum.** `Subgradient/Defs.lean`'s `dirDeriv` is the
+`EReal` infimum of the difference quotients, which is the right definition when the function can be
+infinite. For a finite convex function on an open set the quotient is monotone and bounded, so the
+limit exists, and stating it as a limit is what lets `Filter.Tendsto` machinery apply. The whole
+§23 API around it — `tendsto_slope_dirDerivReal_of_convexOn`, `convexOn_dirDerivReal`,
+`dirDerivReal_le_slope` — is Theorem 23.1 in real form and **is a relocation candidate**: it has
+nothing to do with saddle-functions and belongs beside `dirDeriv`.
+
+**Theorem 35.6's content is the *joint* limit.** The displayed equation
+`K'(u, v; u', v') = K'(u, v; u', 0) + K'(u, v; 0, v')` presupposes that the two-variable difference
+quotient converges at all, which is `tendsto_slope_dirDerivReal_prod`; the equation itself is then
+the concave and convex halves meeting.
+
+**Theorem 35.8's converse is the module's largest proof after Theorem 35.7's.** It goes through
+Corollary 35.7.1, not through Theorem 35.4's rescalings as the book does: sandwich the increment at
+`(u,v)`, `(u, v+b)` and `(u+a, v+b)` and read the Fréchet estimate off directly. The scaffolding for
+Rockafellar's own route was written and then deleted.
+
+**A product of inner-product spaces is not an inner-product space in Mathlib** — `Prod` carries the
+supremum norm — so the gradient of a function of a pair has to be represented by hand as
+`prodInnerL`. Same fact as the `k₁ + k₂` Lipschitz constant of Theorem 35.2.
+
+**Relocation candidates**, beyond `dirDerivReal`: `convexOn_comp_line` and the restriction-to-a-line
+group (general convexity); `dirDerivReal_eq_of_hasFDerivAt`, `le_add_of_hasFDerivAt_of_convexOn`
+and the two `eq_of_forall_…_of_hasFDerivAt` (real forms of Theorems 25.1 and 25.2, belong in
+`Subgradient/Gradient.lean`); `forall_inner_le_dirDerivReal_iff` and its partner (Theorem 23.2 at
+an interior point); `prodInnerL` (Riesz representation on a product, no convexity);
+`neg_add_closedBall_zero`, `prod_add_prod_subset`, `norm_sub_le_of_mem_singleton_add_closedBall`
+(Mathlib-shaped gaps in pointwise-set arithmetic); `ConcaveConvexOn.negSwap` and
+`tendsto_eval_prod_of_tendsto` (`Saddle/Continuity.lean`).
+
+---
+
 ### `Tdaf/Analysis/Convex/Saddle/Minimax.lean`
 
 Rockafellar §36 in full, and §37 through Corollary 37.1.1: saddle-points, the two iterated
@@ -4399,6 +4491,84 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
      "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
      a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+224. **`add_right_eq_self` is not a name in this Mathlib.** `y₀ + n = y₀ ⇒ n = 0` is closed by
+     `simpa using h`; reaching for the named lemma gives "Unknown identifier", and the current
+     spelling is unstable enough (`add_eq_left`, `add_right_eq_self`, `self_eq_add_right` have all
+     existed) that `simpa` is the portable move.
+
+223. **`touch` does not force `lake` to re-elaborate — lake keys on content hashes, not mtimes.**
+     `touch f && lake build` prints only `Build completed successfully` and re-runs no linter, so
+     "touch every file you changed before the final build" is a no-op in this toolchain. To make
+     the linters actually re-run, delete the module's artifact:
+     `rm .lake/build/lib/lean/<Module path>.olean` (plus `Tdaf.olean`) and rebuild — that produces
+     the expected `✔ Built …` line.
+
+222. **The scratchpad directory is shared across sessions**, so `Write` to a generic name
+     (`part3.lean`) fails with "File has not been read yet" because a previous session's file of
+     that name is still on disk — an error that reads like a harness bug and is not one. Prefix
+     scratch filenames with the task, or `rm` first.
+
+221. **Split a mixed-space section rather than `omit`-ing per declaration.** In a section over `U`
+     and `X` carrying `[FiniteDimensional]` on both, roughly half the declarations trip the
+     unused-section-variable linter, each with a *different* list. Splitting into one section with
+     the finite-dimensional instances and one without removed six `omit` lines. Gotcha 147, applied
+     preventively.
+
+220. **`norm_fst_le` / `norm_snd_le` (`‖p.1‖ ≤ ‖p‖`) live at the root namespace**, in
+     `Mathlib/Analysis/Normed/Group/Constructions.lean`, not in `Prod`. Grepping for
+     `Prod.norm_fst_le` finds only the `WithLp` `enorm` versions and suggests, wrongly, that the
+     fact is missing.
+
+219. **`rw` does not iota-reduce a projection of a pair literal.** `dirDerivReal_prod … (u', 0)`
+     yields `… (u', 0).1 + … (u', 0).2`, and `rw [dirDerivReal_zero]` reports "did not find an
+     occurrence" against `(u', 0).2`. Follow the `rw` with `simp […]`, which beta/iota-reduces
+     first. Same shape as gotchas 137 and 150.
+
+218. **`obtain ⟨y, hy⟩ := lemma …` leaves a pairing metavariable where `exact lemma …` would
+     not.** `subgradient_nonempty_of_mem_relint_dom hf hp hri` destructured by `obtain` fails with
+     "typeclass instance problem is stuck: `IsCompatiblePairing ?m`", because `B` occurs only in
+     the conclusion and there is no expected type to fix it. Pass `(B := …)`. Gotcha 145's family,
+     triggered by `obtain` rather than by `have`.
+
+217. **`Filter.eventually_iff_seq_eventually` then `rw [nhds_prod_eq]` converts a sequential
+     theorem into a neighbourhood-filter one on a product.** After the rewrite
+     `hps : Tendsto ps atTop (𝓝 u ×ˢ 𝓝 v)` supplies `hps.fst` and `hps.snd` directly — contrast
+     gotchas 71 and 156, which are the *other* direction. `𝓝 (u, v)` being countably generated is
+     what makes the equivalence available.
+
+216. **Structure eta makes `((ps i).1, (ps i).2)` definitionally `ps i`.** A sequential theorem
+     concluding about `subgradient… ((ps i).1, (ps i).2)` closes a goal about `subgradient… (ps i)`
+     by plain `exact`, with no `Prod.mk.eta`. The same eta is why `rw [Set.singleton_prod_singleton]`,
+     which leaves `{(q.1, q.2)} = {q}`, is discharged by the rewrite's own trailing `rfl`.
+
+215. **`hasFDerivAt_iff_isLittleO_nhds_zero` plus `Asymptotics.isLittleO_iff` is the ε-δ entry point
+     to `HasFDerivAt`**: it turns the goal into
+     `∀ c > 0, ∀ᶠ h in 𝓝 0, ‖f (x + h) - f x - f' h‖ ≤ c * ‖h‖`, which is exactly what a
+     "sandwich the increment" proof produces. Working at `𝓝 0` rather than at `𝓝 x` is also what
+     makes `(u, v) + h = (u + h.1, v + h.2)` a bare `rfl`.
+
+214. **A product of inner-product spaces is not an `InnerProductSpace`.** Mathlib's `Prod` carries
+     the *supremum* norm; `WithLp 2 (E × F)` is the inner-product one. So `innerSL`,
+     `InnerProductSpace.toDual` and Mathlib's `gradient` are all unavailable for a function of a
+     pair, and a gradient must be built by hand as
+     `(innerSL ℝ q.1).comp (.fst ℝ U X) + (innerSL ℝ q.2).comp (.snd ℝ U X)`.
+
+213. **`NormedSpace.Dual` is not a live name** — the type is `StrongDual` — and the error is
+     `unknown constant`. You usually do not need to name it: `DFunLike.congr_fun h w` applies an
+     equation between bundled maps with no ascription, where
+     `congrArg (fun T : NormedSpace.Dual ℝ U => T w) h` demands one.
+
+212. **`ContinuousLinearMap.add_apply`, `.zero_apply` and `.coe_comp'` are deprecated** (→
+     `add_apply`, `zero_apply`, `ContinuousLinearMap.coe_comp`), and deprecation warnings fail the
+     no-warnings bar. For a hand-built CLM, skip the `simp only` list entirely: `+`, `.comp`,
+     `.fst`/`.snd` and `innerSL` all apply *definitionally*, so
+     `have h : prodInnerL q p = ⟪q.1, p.1⟫ + ⟪q.2, p.2⟫ := rfl` typechecks.
+
+211. **`innerSL_apply` does not exist — it is `innerSL_apply_apply`**, and `innerSL_inj` (`@[simp]`,
+     in `Analysis/InnerProductSpace/Dual.lean`) already gives `innerSL ᵌ x = innerSL ᵌ y ↔ x = y`. A
+     hand-rolled "an inner product separates points on the left" lemma is a duplicate. The
+     un-applied form is `coe_innerSL_apply`.
 
 210. **A section variable forced in by `include` is implicit *and* un-inferrable at call sites.**
      `include Bu Bx in theorem normal_of_exists_setOf_le … : Normal F` compiles, but every caller
