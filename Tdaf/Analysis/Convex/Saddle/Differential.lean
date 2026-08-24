@@ -53,6 +53,13 @@ concave mirror.
 
 ## Design notes
 
+**The module is `Differential`, not `Subgradient`, because §37 owns that name.** What lives here
+is the differential theory of a *real-valued* concave-convex function on an open rectangle —
+`dirDerivReal`, `subgradientFst`, `subgradientSnd`, `subgradientSaddle`, `HasSaddleGradientAt` —
+while `Saddle/Subgradient.lean` holds `concaveSubgradient` and `saddleSubgradient` for
+`EReal`-valued saddle-functions, which is what §37's conjugacy needs. The two notions agree where
+both apply, and unifying them is a deferred clean-up rather than a name clash.
+
 **`dirDerivReal` is a limit, not an infimum.** `dirDeriv` (`Subgradient/Defs.lean`) is defined as
 `⨅ t > 0, (f (x + t • y) - f x) / t`, which coincides with the limit exactly when the difference
 quotient is monotone in the step. That is true along a line for a convex function and false for a
