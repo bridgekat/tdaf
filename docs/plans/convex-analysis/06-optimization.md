@@ -11,8 +11,8 @@ Lagrangian, dual program, Kuhn–Tucker vectors) is obtained from it by **partia
 ## 6.1 `Optimization/Minimum.lean` — §27
 
 **Status: Theorem 27.1 (a), (b), (c), (d), (f), (g), (h) and (i), Theorems 27.2 and 27.4, the
-non-polyhedral case of 27.3 and Corollary 27.3.2 are done — everything except (e) and the
-polyhedral refinement of 27.3.**
+27.3 in full — general case *and* polyhedral refinement — and Corollaries 27.3.2 and 27.3.3 are
+done. Everything except (e) and Corollary 27.3.1.**
 
 Theorem 27.1 is a summary: nine facts about `inf f` and `argmin f`, each a restatement of an earlier
 result in terms of `f*` at the origin. It is the ideal first theorem of this sub-plan because it
@@ -37,9 +37,11 @@ reflexive pairing: `∂f*(0)` a singleton is a statement about `E**`.
 | `tendsto_infDist_argmin`, `isBounded_range_of_tendsto_iInf`, `mem_argmin_of_mapClusterPt` | Cor 27.2.1 | done |
 | `tendsto_of_argmin_eq_singleton` | Cor 27.2.2 | done |
 | `recessionConeFn_add_indicatorFn`, `exists_forall_le_of_recessionConeFn_inter_eq_zero` | **Thm 27.3**, non-polyhedral case | done |
-| — | **Thm 27.3**, polyhedral refinement | **not done** — needs Helly in the form of Thm 21.5 |
+| `exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace` | **Thm 27.3**, general case with the constancy/linearity recession hypothesis | done — strictly weaker hypothesis than the `= {0}` row above |
+| `exists_linearProj`, `eq_of_sub_mem_constancySpace`, `exists_forall_le_of_polyhedral_of_inter_subset_constancySpace` | **Thm 27.3**, polyhedral refinement | done — and it does **not** need Helly, see below |
+| `argmin_nonempty_of_recessionConeFn_subset_constancySpace` | the refinement with `C = Rⁿ` | done |
 | `argmin_nonempty_of_polyhedralFn`, `exists_forall_le_of_polyhedralFn_of_polyhedral` | **Cor 27.3.2** | done — and it does **not** rest on the polyhedral refinement, see below |
-| — | Cor 27.3.1 | **not done** — rests on the polyhedral refinement |
+| — | Cor 27.3.1 | **not stated** — its wording could not be checked against the book; the refinement it rests on is done |
 | `exists_forall_le_of_forall_le_zero` | Cor 27.3.3, non-polyhedral case | done |
 | `le_of_mem_subgradient_of_neg_mem_normalCone`, `exists_mem_subgradient_neg_mem_normalCone` | **Thm 27.4** | done |
 
@@ -97,12 +99,27 @@ because the second summand only takes the values `0` and `⊤` the sublevel cond
 minimises, which is what Rockafellar means by "if `f` is identically `+∞` the infimum is trivially
 attained throughout `C`".
 
-**The polyhedral refinement of Theorem 27.3 is blocked upstream of §27, but Corollary 27.3.2 is
-not.** Rockafellar proves the refinement from Helly's theorem in the form of Theorem 21.5, applied
-to the collection consisting of `C` and the level sets `lev_α h`, `α > inf`. Theorem 21.5 is not
-formalised. Its obstruction is **no longer** the closedness hypothesis in Theorems 16.4 and 20.1 —
-that is fixed, see `04-representation.md` — but Corollary 19.1.2 for *functions* and the
-identification `kⱼ* = δ(· ∣ Cⱼ)` inside Theorem 21.4. Theorem 27.1(f), which the refinement also wants, **is** now available.
+**The polyhedral refinement of Theorem 27.3 does not need Helly.** Rockafellar proves it from
+Theorem 21.5, applied to `C` together with the level sets `lev_α h`, `α > inf`; Theorem 21.5 is
+still not formalised, and the refinement no longer waits for it. The directions of constancy of `h`
+form a subspace, and `exists_linearProj` projects `E` along it: `h` is unchanged (it is constant
+along the fibres), the image of `C` is polyhedral, and the common recession cone collapses to `{0}`,
+which is the hypothesis of the general case. Polyhedrality of `C` enters exactly once, through
+`Polyhedral.recessionCone_image` — a linear map commutes with `0⁺` on a polyhedral set and, in
+general, on no other kind, since for a general closed convex set the image need not even be closed.
+
+**The same projection strengthens the general case.** The recession hypothesis
+`0⁺h ∩ 0⁺C = {0}` that `exists_forall_le_of_recessionConeFn_inter_eq_zero` carries is stronger than
+it needs to be: it is enough that every common direction of recession be a direction of constancy of
+`h` *and* a direction of linearity of `C`, which is what
+`exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace` assumes. There the projection
+is along `constancySubmodule h ⊓ linealitySubmodule C`, the image of `C` is literally `C ∩ N`, and
+no polyhedrality is used.
+
+**Corollary 27.3.1 is not stated.** Its exact wording could not be checked against the book, and the
+project's rule is not to attach a book number to a guessed statement. What the refinement yields —
+the unconstrained `argmin_nonempty_of_recessionConeFn_subset_constancySpace` — is stated without
+one.
 
 **Corollary 27.3.2 does not need any of that.** The book derives it from 27.3.1;
 `argmin_nonempty_of_polyhedralFn` gets it directly from the finitely generated description of the
