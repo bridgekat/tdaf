@@ -1088,6 +1088,68 @@ right endpoint and `f'₋ > -∞` right of the left endpoint" unwinds, on the li
 (`bot_lt_leftDeriv_and_rightDeriv_lt_top_iff`), which is worth knowing because it is how §25 quotes
 the condition.
 
+### `Tdaf/Analysis/Convex/Subgradient/Differentiability.lean`
+
+**Theorem 25.3** in full and **Theorem 25.4**'s continuity and density clauses — §25 read on the
+line, where differentiability of a convex function is a statement about the jump set of a monotone
+function.
+
+```lean
+theorem continuousAt_rightDeriv_iff …            -- Thm 24.1 as a criterion
+theorem countable_leftDeriv_ne_rightDeriv …      -- the jump set of `f'₊` is countable
+theorem differentiableAtFn_iff_leftDeriv_eq_rightDeriv …        -- Thms 25.2 + 25.3
+theorem countable_not_differentiableAtFn … ; theorem continuousAt_rightDeriv_of_differentiableAtFn …
+theorem subset_closure_differentiableAtFn …                     -- Thm 25.3, density
+theorem convexFn_lineRestrict … ; theorem proper_lineRestrict … ; theorem dirDeriv_lineRestrict …
+theorem continuousAt_dirDeriv_iff …                             -- Thm 25.4, continuity
+theorem subset_closure_twoSided_dirDeriv …                      -- Thm 25.4, density
+```
+
+**Countability is Mathlib's, not a jump-summing argument.** `Monotone.countable_not_continuousAt`
+applies verbatim to `EReal`-valued monotone functions — see gotcha 202 — so the whole of Theorem
+25.3's first assertion is `monotone_rightDeriv` plus that.
+
+**Two of Theorem 25.3's three clauses need neither closedness nor the book's extension step.**
+Rockafellar opens by extending `f` and then quotes Theorem 24.1 in full. Only the *easy* half of
+the continuity criterion is used, and that half is the sandwich
+`⨆ {f'₊(z) | z < x} ≤ f'₋(x) ≤ f'₊(x)`, whose ingredients (`rightDeriv_le_leftDeriv`,
+`leftDeriv_le_rightDeriv`, `monotone_rightDeriv`) need only `ConvexFn` and `Proper`. `ClosedFn`
+enters exactly once, in `continuousAt_rightDeriv_of_differentiableAtFn`. This is what lets Theorem
+25.4's density clause carry no closedness hypothesis either.
+
+**Theorem 25.3's "relative to `D`" is an artefact of the book's notation.** Rockafellar's `f'`
+exists only on the set `D` where `f` is differentiable, so he can only say "continuous and
+non-decreasing relative to `D`". `rightDeriv f` is defined on the whole line and agrees with `f'`
+on `D`; what Theorem 24.1 proves is `ContinuousAt (rightDeriv f) x` in the ordinary sense, and
+monotonicity is global — it is `monotone_rightDeriv` in `OneDim.lean`, with no restricted version
+needed.
+
+**Theorem 25.4 needs no `y ≠ 0`, no one-dimensional limit theory, and no measure zero.** At `y = 0`
+both sides hold (`f'(z; 0) = 0` near an interior point, and `0 = -0`). The `⇐` direction is
+Corollary 24.5.1 twice, at `y` and at `-y`; the `⇒` direction, which the book gets from
+`lim_{λ↑₀} g'₊(λ) = g'₋(0)`, is a single term of *each* defining infimum —
+`f'(x - λy; y) ≤ (f x - f (x - λy))/λ ≤ -f'(x; -y)` for every `λ > 0`, no limit taken and no
+convexity used — so Rockafellar's identity `liminf_{z→x} f'(z; y) = -f'(x; -y)` is avoidable. And
+the density clause restricts to the line through `x` in direction `y` and quotes Theorem 25.3's
+countability, so `subset_closure_twoSided_dirDeriv` carries **no** `[FiniteDimensional ℝ E]`; only
+the continuity clause does, through Corollary 24.5.1.
+
+**Not here**: Theorem 25.4's measure-zero clause and its `Sₖ` decomposition. The first needs Haar
+measure on `E` and Rockafellar's Fubini step. The second needs (a) upper semicontinuity of
+`z ↦ f'(z; y) + f'(z; -y)` on `int (dom f)` — an `EReal`-sum-of-usc lemma, harmless because both
+summands are finite there — and (b) "a monotone function bounded on `[a, b]` has finitely many
+jumps of size `≥ 1/k` there", an induction over an ordered `Finset` the project does not have.
+Neither is needed for the density clause, which goes a different way.
+
+**Relocation candidates.** `convexFn_lineRestrict` and `proper_lineRestrict` belong in
+`Epigraph.lean` or `Operations/Basic.lean`, and `dirDeriv_lineRestrict` in `Subgradient/Defs.lean`:
+they are general facts about composing with an affine parametrisation of a line, with nothing
+§25-specific about them, and `dirDeriv_lineRestrict` is the natural bridge for every future
+"restrict to a line" argument. `upperSemicontinuousAt_dirDeriv_left` belongs in
+`Subgradient/Convergence.lean` immediately after `upperSemicontinuousAt_dirDeriv`, of which it is a
+one-line slice. `dirDeriv_sub_smul_le` belongs in `Subgradient/Defs.lean` with the rest of Theorem
+23.1.
+
 ### `Tdaf/Analysis/Convex/Subgradient/Primitive.lean`
 
 **Theorem 24.2 in full** — the existence clause included, and with no integration theory.
@@ -1212,8 +1274,7 @@ does it, and a *single* Lipschitz constant serves all three conclusions at once.
 
 ### `Tdaf/Analysis/Convex/Subgradient/Gradient.lean`
 
-§25's differentiability theory: **Theorem 25.1** in full, **Corollary 25.1.1**, and the necessity
-half of **Theorem 25.2**.
+§25's differentiability theory: **Theorems 25.1 and 25.2** in full, with **Corollary 25.1.1**.
 
 **Differentiability of an `EReal`-valued function is a local real representative.** `HasFDerivAt`
 needs a normed target, so every Fréchet statement in the file carries
@@ -1244,8 +1305,27 @@ infimum: `EReal.coe_le_sub_div_iff` for the lower bound, and `EReal.lt_iff_exist
 `EReal.sub_div_le_coe_iff` for the upper one, so no `EReal` division is ever computed. Sufficiency
 proper (linear `f'(x; ·)` ⇒ Fréchet differentiable) is **not** done and is not a transcription: it
 is Gâteaux ⇒ Fréchet, which needs `[FiniteDimensional ℝ E]` and compactness of the unit sphere.
-What sufficiency gets used for is available algebraically as
+What sufficiency gets used for is also available algebraically as
 `subgradient_eq_singleton_of_dirDeriv_eq`, over an arbitrary pairing with `Function.Injective B.flip`.
+
+**Theorem 25.2's sufficiency needs no compactness — a cross-polytope does it.** This entry and
+§5.4 both used to record "Gateaux ⇒ Frechet needs uniform convergence of the difference quotients
+over the compact unit sphere". It does not. Write `z - x = ∑ j, ξ j • b j` in a basis, put
+`S = ∑ j, |ξ j|`, and observe that `z` is the convex combination, with weights `|ξ j| / S`, of the
+`n` points `x + (S · sign (ξ j)) • b j` — all at the *same* distance `S` from `x`, along a basis
+direction. One one-sided estimate therefore covers all of them and Jensen (`ConvexFn.sum_le`)
+reassembles. The proof is quantitative, basis-explicit, and needs no continuity of `f`.
+
+**So Rockafellar's strengthening is the primitive statement, not a corollary.** The estimate
+consumes only the `2n` one-sided derivatives along `±b j`, so
+`differentiableAtFn_of_forall_basis_dirDeriv_eq` is proved *first* and `hasGradientAt_of_dirDeriv_eq`
+is that statement read at an arbitrary basis — the reverse of the book's order. Three further
+hypotheses fall away with it: sufficiency needs **neither Theorem 7.2, nor Theorem 4.8, nor Theorem
+23.2** (the book routes "dom `f'(x;·)` = ℝⁿ ⇒ proper ⇒ linear ⇒ `∂f x` a singleton ⇒ differentiable",
+where the estimate gives `f'(x; v) ≤ ⟨v, y₀⟩` in every direction directly and Theorem 23.1 supplies
+the reverse), and **neither properness nor `x ∈ int (dom f)`** — the two-sided estimate
+`f x + ⟨z - x, y₀⟩ ≤ f z ≤ f x + ⟨z - x, y₀⟩ + ε‖z - x‖` produces local finiteness by itself, which
+makes Corollary 25.1.1 a consequence here rather than a prerequisite.
 
 **`HasGradientAt f f' x` packages the hypothesis pair.** It is `∃ g : E → ℝ, f =ᶠ[𝓝 x] (g · : EReal)
 ∧ HasFDerivAt g f' x`, with `DifferentiableAtFn f x := ∃ f', HasGradientAt f f' x`. Use the dot
@@ -1267,18 +1347,25 @@ relative-interiority", which the project does not have). Cor 25.1.3's "non-empty
 `C`" is unnecessary — `C` is `supportSet B.flip g`, automatically closed and convex, and emptiness
 is harmless.
 
-**Not done**: Thms 25.3–25.7 (25.3 rests on Thm 24.1; 25.4 on Thm 24.5; 25.5 is Rademacher plus
-Thm 24.4; 25.6 and 25.7 rest on 25.5 and Thms 10.6–10.9), and the *differentiability* reading of
-Cors 25.1.2–25.1.3 — "the exposed points of `epi f*` are the `(x*, f*(x*))` with `f` differentiable
+**Not done**: Thms 25.5–25.7 (25.5 is Rademacher plus Thm 24.4; 25.6 and 25.7 rest on 25.5 and
+Thms 10.6–10.9) — Thms 25.3 and 25.4 are in `Subgradient/Differentiability.lean` — and the
+*differentiability* reading of Cors 25.1.2–25.1.3 — "the exposed points of `epi f*` are the `(x*, f*(x*))` with `f` differentiable
 at some `x` and `∇f x = x*`". The geometry gives `∂f x = {x*}`; upgrading that to differentiability
 is exactly **the converse half of Theorem 25.1**. The route, worked out but not started: (a) `∂f x`
 a singleton ⇒ the normal cone of `dom f` at `x` is trivial ⇒ `x ∈ int (dom f)`, a
 separation/normal-cone argument; (b) hence `f'(x; ·)` is finite everywhere, so convex, continuous
 and closed, which removes the closure subtlety in Rockafellar's proof and lets
 `clFn_dirDeriv_eq_of_subgradient_eq_singleton` (Thm 23.2) give `f'(x; ·)` linear *everywhere*;
-(c) a compactness step on the unit sphere — cheaper than the book's polytope-covering-the-ball
-argument: for each `u` on the sphere pick a parameter making the difference quotient small, use
-continuity near `u`, take a finite subcover, and use monotonicity of the quotient.
+(c) a compactness step on the unit sphere.
+
+**Only step (a) of that route is still missing.** Step (c) is now free — it is
+`hasGradientAt_of_dirDeriv_eq`, and the cross-polytope argument removed the compactness — and step
+(b) follows from `clFn_dirDeriv_eq_of_subgradient_eq_singleton` once (a) holds. What (a) needs,
+precisely, is: *for a convex `C` in finite dimensions and `x ∈ C`, `normalCone B C x = {0}` implies
+`x ∈ interior C`* (Theorem 11.6 territory — a separation argument with a case split on whether
+`interior C` is empty). Its easy companion
+`subgradient B f x + normalCone B (dom f) x ⊆ subgradient B f x` is three lines from the
+definitions and is not present either.
 
 **Relocation candidates**: `mem_exposedPoints_prod_Ici_iff` is a general fact about exposed points
 of a half-cylinder and belongs beside `epi_indicatorFn` in `Indicator.lean` or in a general
@@ -4259,6 +4346,67 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      A file importing `Convergence.lean` and `Subgradient/Bounded.lean` reports
      "Unknown identifier `IsExposed`", and with `relaxedAutoImplicit = false` the follow-up error is
      a bare "Invalid ⟨…⟩ notation". Add the Mathlib import directly.
+
+206. **Extract `Convex.sum_mem`-on-`epi f` as a lemma before using it.** Applied inline it drags
+     `Prod.fst_sum` / `Prod.snd_sum` bookkeeping into every consumer, and its higher-order
+     unification of `?u j` against a compound point is fragile. `ConvexFn.sum_le` states the
+     already-projected form; land its instantiation in an explicitly typed `have`, so that `exact`
+     beta-reduces, rather than using the application directly.
+
+205. **A `field_simp` that closes the goal makes a following `ring` an error, not a no-op.**
+     `by rw [h]; field_simp; ring` fails with "No goals to be solved", and `try ring` then runs into
+     gotcha 181's style linters. Build once with `field_simp` alone and add `ring` only if a goal
+     survives — the two cases sat three lines apart in the same proof.
+
+204. **`EReal.lt_neg_of_lt_neg` is the strict analogue of `EReal.le_neg`, and it is `protected`.**
+     `_root_.EReal.lt_neg_of_lt_neg (h : a < -b) : b < -a`. It is what turns an upper-semicontinuity
+     bound on `f'(z; -y)` into a lower bound on `-f'(z; -y)`, in both directions of the same proof.
+     The two-step alternative is `EReal.neg_lt_neg_iff` (a `@[simp]` iff, `-a < -b ↔ b < a`) plus
+     `neg_neg`.
+
+203. **`eq_or_lt_of_le (le_top : f z ≤ ⊤)` gives `f z = ⊤`, not `⊤ = f z`.** Reaching for `.symm`
+     produces an "application type mismatch" naming `Eq.symm`, which reads like an orientation
+     problem in the consumer. `eq_or_lt_of_le : a ≤ b → a = b ∨ a < b` puts the subject first.
+
+202. **`Monotone.countable_not_continuousAt` applies verbatim to `EReal`-valued monotone
+     functions.** It wants `[TopologicalSpace β] [OrderTopology β] [SecondCountableTopology β]`, and
+     `instance : SecondCountableTopology EReal` exists — in
+     `Mathlib/Topology/MetricSpace/ProperSpace/Real.lean`, of all places. "A monotone function has
+     countably many discontinuities" therefore needs no jump-summing argument at all. Its companion
+     `Set.Countable.dense_compl` takes the scalar field explicitly —
+     `Set.Countable.dense_compl ℝ hs : Dense sᶜ`, in
+     `Mathlib/Topology/Algebra/Module/Cardinality.lean` — and is filed as a *cardinality* fact, so
+     searching for "a countable set has empty interior" does not find it.
+
+201. **`ContinuousAt` is a `def` unfolding to `Tendsto`, so it cannot be passed positionally to
+     `Filter.Tendsto.comp`.** `Filter.Tendsto.comp hc hray` fails with "expected `Tendsto iInf ?m …`"
+     — the elaborator whnf's the wrong head. Bind it first, as
+     `have hc' : Tendsto (fun z => …) (𝓝 x) (𝓝 …) := hc`, then `hc'.comp hray`. Gotcha 63 in a
+     third guise. Relatedly, `tendsto_order.2` leaves its goals un-beta-reduced, so a hypothesis of
+     the shape `a < (fun z => g z y) x` defeats `rw [h]` with "did not find an occurrence of the
+     pattern"; bind that too.
+
+200. **`[Fintype ι]` trips `linter.unusedFintypeInType` whenever the theorem's *statement* only
+     mentions `Module.Basis ι ℝ E`.** The `∑ j` lives in the proof. Declare `[Finite ι]` and open
+     with `obtain ⟨hι⟩ := nonempty_fintype ι` — gotcha 56, met here for a basis rather than a
+     simplex.
+
+199. **`Basis` is `Module.Basis` in this Mathlib.** `Basis ι ℝ E` gives "Unknown identifier
+     `Basis`" *even with the right import*, and with `relaxedAutoImplicit = false` that single error
+     becomes a landslide of "Unknown identifier `ι`" (gotcha 11 again) that looks like a
+     `variable`-scoping problem. Dot notation (`b.repr`, `b.equivFun`, `b.constr`,
+     `b.sum_equivFun`, `b.coord_apply`) works unchanged; only prefix forms need the namespace, e.g.
+     `Module.Basis.equivFun_apply`.
+
+198. **The unused-simp-argument linter fires on the lemmas that look most essential.** After
+     `set ξ := fun j => b.repr w j with hξdef`, the goal `∑ j, ξ j • b j = w` is closed by
+     `simp [hξdef]` alone; supplying `Module.Basis.equivFun_apply` and `b.sum_equivFun w` as well is
+     an error-level warning. Build with the minimal list and add only what the error demands.
+
+197. **`set x := e` with an unused `with h` does not trip the linter** — see gotcha 195; recorded
+     twice because two agents hit it from opposite directions.
+
+196. **`Prod.ext` needs its component equalities beta-reduced** — see gotcha 194.
 
 185. **`include B in` is the light fix for gotcha 157.** When a theorem's *conclusion* does not
      mention the pairing `B`, the section variable is not inserted and the statement fails with

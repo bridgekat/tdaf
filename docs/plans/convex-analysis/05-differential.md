@@ -279,10 +279,11 @@ limit set `∂(f'(x; ·))(y)` with the face of `∂f x` exposed by `y`.
 Note that Corollary 31.5.2 (`∂f` is maximal *monotone*) is a different and easier statement, proved
 from Moreau's theorem in §31, and does not wait on any of this.
 
-## 5.4 `Subgradient/Gradient.lean` — §25
+## 5.4 `Subgradient/Gradient.lean` and `Differentiability.lean` — §25
 
-**Status: Theorem 25.1 is done in full, with Corollary 25.1.1 and the necessity half of
-Theorem 25.2.**
+**Status: Theorems 25.1, 25.2 and 25.3 are done in full, with Corollary 25.1.1 and Theorem 25.4's
+continuity and density clauses.** `Gradient.lean` holds the Frechet theory (25.1, 25.2);
+`Differentiability.lean` holds the one-variable theory (25.3, 25.4).
 
 | Lean name | book | status |
 |---|---|---|
@@ -292,9 +293,11 @@ Theorem 25.2.**
 | — | Cor 25.1.2, Cor 25.1.3, differentiability form | **not done** — needs the converse half of Thm 25.1 |
 | `dirDeriv_eq_of_hasFDerivAt` | **Thm 25.2**, necessity | done |
 | `subgradient_eq_singleton_of_dirDeriv_eq`, `clFn_dirDeriv_eq_of_subgradient_eq_singleton` | **Thm 25.2**, the algebraic content of sufficiency | done |
-| — | **Thm 25.2**, sufficiency proper (linear `f'(x; ·)` ⇒ differentiable) | **not done** |
-| `countable_nondifferentiable_of_dim_one` | Thm 25.3 | **not done** |
-| `ae_twoSided_dirDeriv` | Thm 25.4 | **not done** |
+| `ConvexFn.sum_le`, `exists_forall_abs_le_of_dirDeriv_eq`, `exists_le_of_forall_basis_dirDeriv_eq`, `dirDeriv_eq_of_forall_basis_dirDeriv_eq`, `hasGradientAt_of_forall_basis_dirDeriv_eq`, `hasGradientAt_of_dirDeriv_eq`, `differentiableAtFn_iff_exists_dirDeriv_eq` | **Thm 25.2**, sufficiency, and the theorem in full | done — by a **cross-polytope** decomposition, so no compactness of the unit sphere, no continuity of `f`, and neither Thm 7.2 nor Thm 4.8 nor Thm 23.2 |
+| `differentiableAtFn_of_forall_basis_dirDeriv_eq` | **Thm 25.2**, last sentence (the `n` two-sided partials) | done — and it is the *primitive* statement, the general form being it read at an arbitrary basis |
+| `continuousAt_rightDeriv_iff`, `countable_leftDeriv_ne_rightDeriv`, `differentiableAtFn_iff_leftDeriv_eq_rightDeriv`, `countable_not_differentiableAtFn`, `continuousAt_rightDeriv_of_differentiableAtFn`, `subset_closure_differentiableAtFn` | **Thm 25.3**, all three assertions | done, `Differentiability.lean` — two of the three need neither closedness nor the book's extension step, and the monotonicity clause is `monotone_rightDeriv`, unrestricted |
+| `convexFn_lineRestrict`, `proper_lineRestrict`, `dirDeriv_lineRestrict`, `upperSemicontinuousAt_dirDeriv_left`, `dirDeriv_sub_smul_le`, `continuousAt_dirDeriv_iff`, `subset_closure_twoSided_dirDeriv` | **Thm 25.4**, continuity and density | done, `Differentiability.lean` — no `y ≠ 0`, no one-dimensional limit theory, and the density clause needs no finite-dimensionality |
+| — | Thm 25.4, the measure-zero clause and the `Sₖ` decomposition | **not done** — needs Haar measure on `E` and Fubini; and "a bounded monotone function has finitely many jumps of size `≥ 1/k`", an induction over an ordered `Finset` |
 | `ae_differentiableAt_and_continuousOn_gradient` | **Thm 25.5**, Cor 25.5.1 | **not done** |
 | `subgradient_eq_convexHull_limits_gradient` | Thm 25.6 | **not done** |
 | `tendsto_gradient_of_tendsto` | Thm 25.7 | **not done** |
