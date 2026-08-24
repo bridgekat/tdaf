@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Tdaf.Analysis.Convex.Duality.SupportRelint
 import Tdaf.Analysis.Convex.Homogenize
 import Tdaf.Analysis.Convex.Recession.ConeHull
 import Tdaf.Analysis.Convex.Recession.Conjugate
@@ -53,7 +54,9 @@ therefore developed here, since §13.5 is its first consumer.
 
 ### Theorem 13.4
 
-* `supportFn_neg_eq_neg_iff` — `δ*(-y | s) = -δ*(y | s)` iff `⟨·, y⟩` is constant on `s`.
+* `mem_linealitySpaceFn_conj_iff` — `y` is a direction of affineness of `f*` exactly when
+  `⟨·, y⟩` is constant on `dom f`. The support-function fact behind it,
+  `supportFn_neg_eq_neg_iff`, is in `Duality/SupportRelint.lean`.
 * `linealitySpaceFn_conj`, `linealitySpaceFn_conj_eq_annihilator` — the lineality space of `f*` is
   the annihilator of the subspace parallel to `aff (dom f)`;
   `linealitySpaceFn_eq_annihilator_dom_conj` is the dual assertion.
@@ -64,18 +67,29 @@ therefore developed here, since §13.5 is its first consumer.
 * `recessionFn_eq_supportFn_dom_conj` — **Theorem 13.3**, second assertion.
 * `closure_dom_conj_eq_univ_iff` — the infinite-dimensional form: `dom f*` is *dense* iff `f` is
   co-finite.
-* `zero_mem_closure_dom_conj_iff` — **Corollary 13.3.4(a)** at the origin, which is the first
-  sentence of **Theorem 27.1(i)**.
+* `mem_closure_dom_conj_iff`, `mem_relint_dom_conj_iff`, `mem_interior_dom_conj_iff`,
+  `mem_affineSpan_dom_conj_iff` — **Corollary 13.3.4**, its four clauses: where a point sits
+  relative to `dom f*` is decided by the sign of `f 0⁺ - ⟨·, y₀⟩`.
+* `zero_mem_closure_dom_conj_iff` — clause (a) at the origin, which is the first sentence of
+  **Theorem 27.1(i)**.
+* `separatingRight_flip_of_separatingDual` — a compatible pairing with a separating dual separates
+  the points of `E`, which is what clause (c) needs in place of the book's `y ≠ 0`.
 * `dom_conj_eq_univ_iff`, `cofinite_iff_dom_conj_eq_univ`, `cofinite_iff_forall_conj_lt_top` — the
   book's form, under `FiniteDimensional ℝ F`.
+
+### Corollary 13.4.2
+
+* `interior_dom_conj_nonempty_iff` — `dom f*` has nonempty interior exactly when the lineality
+  space of `f` is trivial.
 
 ## What is not here
 
 * Corollary 8.5.2, which is what identifies `cl (hom f)` with Rockafellar's explicit `k` in
   Corollary 13.5.1; it is a §8 statement and belongs with `Recession/Function.lean`.
-* The dimension formulas of Theorem 13.4 (`lineality f* = n - dim f`) and Corollaries 13.4.1–13.4.2,
-  which need finite dimension and a `finrank` count of an annihilator.
-* Corollaries 13.3.2–13.3.4, which belong with `Recession/Conjugate.lean`.
+* The dimension formulas of Theorem 13.4 (`lineality f* = n - dim f`) and Corollary 13.4.1, which
+  need finite dimension and a `finrank` count of an annihilator. Corollary 13.4.2 needs no count
+  and is here, as `interior_dom_conj_nonempty_iff`.
+* Corollaries 13.3.2 and 13.3.3, which belong with `Recession/Conjugate.lean`.
 
 ## Design notes
 
@@ -551,43 +565,7 @@ vanish in both directions, and it is the lineality space that Theorem 13.4 is ab
 section Theorem134
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Set E} {f : E → EReal}
-
-/-- **A support function is additively reversible in the direction `y` exactly when `⟨·, y⟩` is
-constant on the set.**
-
-This is the support-function content of Theorem 13.4: `δ*(-y | s) = -δ*(y | s)` says that the
-supremum and the infimum of `⟨·, y⟩` over `s` agree. Nonemptiness of `s` is needed — for `s = ∅`
-both sides are `-∞` and `-(-∞) = +∞`. -/
-theorem supportFn_neg_eq_neg_iff (hs : s.Nonempty) (y : F) :
-    supportFn B s (-y) = -supportFn B s y ↔ ∃ c : ℝ, ∀ x ∈ s, B x y = c := by
-  obtain ⟨x₀, hx₀⟩ := hs
-  constructor
-  · intro h
-    have hbot : supportFn B s y ≠ ⊥ := supportFn_ne_bot ⟨x₀, hx₀⟩ y
-    have hbot' : supportFn B s (-y) ≠ ⊥ := supportFn_ne_bot ⟨x₀, hx₀⟩ (-y)
-    have htop : supportFn B s y ≠ ⊤ := by
-      intro ht
-      rw [ht, _root_.EReal.neg_top] at h
-      exact hbot' h
-    obtain ⟨c, hc⟩ :=
-      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hbot (lt_top_iff_ne_top.2 htop)
-    refine ⟨c, fun x hx => ?_⟩
-    have h1 : B x y ≤ c := supportFn_le_coe_iff.1 hc.le x hx
-    have h2 : B x (-y) ≤ -c := by
-      refine supportFn_le_coe_iff.1 ?_ x hx
-      rw [h, hc, ← _root_.EReal.coe_neg]
-    rw [map_neg] at h2
-    linarith
-  · rintro ⟨c, hc⟩
-    have hy : supportFn B s y = ((c : ℝ) : EReal) :=
-      le_antisymm (supportFn_le_coe_iff.2 fun x hx => (hc x hx).le)
-        (by rw [← hc x₀ hx₀]; exact le_supportFn hx₀ y)
-    have hy' : supportFn B s (-y) = ((-c : ℝ) : EReal) := by
-      refine le_antisymm (supportFn_le_coe_iff.2 fun x hx => ?_)
-        (by rw [show (-c : ℝ) = B x₀ (-y) by rw [map_neg, hc x₀ hx₀]]; exact le_supportFn hx₀ (-y))
-      rw [map_neg, hc x hx]
-    rw [hy, hy', _root_.EReal.coe_neg]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
 
 /-- **Rockafellar, Theorem 13.4**, unfolded: `y` is a direction of affineness of `f*` exactly when
 `⟨·, y⟩` is constant on `dom f`. -/
@@ -748,17 +726,46 @@ theorem closure_dom_conj_eq_univ_iff [SeparatingDual ℝ E] (hf : ClosedProperCo
     rw [h y hy0] at hle
     exact absurd hle (by simp)
 
-/-- **Rockafellar, Corollary 13.3.4(a)** at the origin — the first sentence of **Theorem 27.1(i)**:
-the origin lies in the closure of `dom f*` exactly when `f` recedes nowhere at a negative rate.
+omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
+  [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
+  [IsCompatiblePairing B.flip] in
+/-- **A compatible pairing whose left space has a separating dual separates the points of that
+space**: if `⟨x, y⟩ = 0` for every `y`, then every continuous linear functional kills `x`.
 
-Theorem 13.1 for `dom f*` says that a point lies in the closure exactly when it satisfies every
-inequality the support function records, and Theorem 13.3 says that support function is `f 0⁺`. -/
+This replaces Rockafellar's identification of `Rⁿ` with its dual wherever a statement quantifies
+over the *nonzero* vectors of `E`, as the interior clause of Theorem 13.1 does. -/
+theorem separatingRight_flip_of_separatingDual (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [SeparatingDual ℝ E] : B.flip.SeparatingRight := by
+  intro x hx
+  by_contra hne
+  obtain ⟨g, hg⟩ := SeparatingDual.exists_ne_zero (R := ℝ) hne
+  obtain ⟨y, hy⟩ := exists_pairing_eq B g
+  exact hg (by rw [hy x]; simpa using hx y)
+
+/-! ### Corollary 13.3.4
+
+Where a point `y₀` sits relative to `dom f*` — in its closure, its relative interior, its interior
+or its affine hull — is decided by the recession function of `f`, through Theorem 13.1 applied to
+`dom f*` and Theorem 13.3 identifying its support function as `f 0⁺`.
+
+Rockafellar states the four clauses for the translated function `g = f - ⟨·, y₀⟩`, whose recession
+function is `g 0⁺ = f 0⁺ - ⟨·, y₀⟩`; "`(g 0⁺)(y) ≥ 0`" and "`⟨y, y₀⟩ ≤ (f 0⁺)(y)`" are the same
+inequality, and the translation is what the statements below avoid having to name. -/
+
+/-- **Rockafellar, Corollary 13.3.4(a)**: `y₀` lies in the closure of `dom f*` exactly when the
+recession function of `f` dominates the linear function `⟨·, y₀⟩`. -/
+theorem mem_closure_dom_conj_iff (hf : ClosedProperConvexFn f) (y₀ : F) :
+    y₀ ∈ closure (dom (conj B f)) ↔ ∀ y : E, ((B y y₀ : ℝ) : EReal) ≤ recessionFn f y := by
+  have hconv : Convex ℝ (dom (conj B f)) := (convexFn_conj B f).convex_dom
+  rw [← hconv.convexHull_eq, mem_closure_convexHull_iff_le_supportFn (B := B.flip)]
+  simp only [LinearMap.flip_apply, ← recessionFn_eq_supportFn_dom_conj (B := B) hf]
+
+/-- **Rockafellar, Corollary 13.3.4(a)** at the origin — the first sentence of **Theorem 27.1(i)**:
+the origin lies in the closure of `dom f*` exactly when `f` recedes nowhere at a negative rate. -/
 theorem zero_mem_closure_dom_conj_iff (hf : ClosedProperConvexFn f) :
     (0 : F) ∈ closure (dom (conj B f)) ↔ ∀ y : E, 0 ≤ recessionFn f y := by
-  have hconv : Convex ℝ (dom (conj B f)) := (convexFn_conj B f).convex_dom
-  have hpair : ∀ y : E, ((B.flip (0 : F) y : ℝ) : EReal) = 0 := by simp
-  rw [← hconv.convexHull_eq, mem_closure_convexHull_iff_le_supportFn (B := B.flip)]
-  simp only [hpair, ← recessionFn_eq_supportFn_dom_conj (B := B) hf]
+  rw [mem_closure_dom_conj_iff (B := B) hf]
+  simp
 
 end CofiniteMain
 
@@ -799,6 +806,98 @@ theorem cofinite_iff_forall_conj_lt_top (hf : ClosedProperConvexFn f) :
     Cofinite f ↔ ∀ y : F, conj B f y < ⊤ := by
   rw [cofinite_iff_dom_conj_eq_univ (B := B) hf]
   exact ⟨fun h y => by rw [← mem_dom, h]; trivial, fun h => eq_univ_of_forall fun y => h y⟩
+
+omit [SeparatingDual ℝ E] in
+/-- **Rockafellar, Corollary 13.3.4(b)**: `y₀` lies in the *relative* interior of `dom f*` exactly
+when the recession function of `f` dominates `⟨·, y₀⟩`, strictly in every direction in which it is
+not additively reversible.
+
+The exceptional directions — those with `-(f 0⁺)(-y) = (f 0⁺)(y)` — are the ones along which
+`dom f*` lies in a hyperplane; the book records them as the `y` with
+`-(g 0⁺)(-y) = (g 0⁺)(y) = 0`, which is the same condition once the inequality at `-y` is used. -/
+theorem mem_relint_dom_conj_iff (hf : ClosedProperConvexFn f) (y₀ : F) :
+    y₀ ∈ ri (dom (conj B f)) ↔ (∀ y : E, ((B y y₀ : ℝ) : EReal) ≤ recessionFn f y) ∧
+      ∀ y : E, -recessionFn f (-y) ≠ recessionFn f y →
+        ((B y y₀ : ℝ) : EReal) < recessionFn f y := by
+  have hconv : Convex ℝ (dom (conj B f)) := (convexFn_conj B f).convex_dom
+  rw [mem_relint_iff_lt_supportFn (B := B.flip) hconv y₀]
+  simp only [LinearMap.flip_apply, ← recessionFn_eq_supportFn_dom_conj (B := B) hf]
+
+/-- **Rockafellar, Corollary 13.3.4(c)**: `y₀` lies in the interior of `dom f*` exactly when the
+recession function of `f` strictly dominates `⟨·, y₀⟩` in every nonzero direction. -/
+theorem mem_interior_dom_conj_iff (hf : ClosedProperConvexFn f) (y₀ : F) :
+    y₀ ∈ interior (dom (conj B f)) ↔
+      ∀ y : E, y ≠ 0 → ((B y y₀ : ℝ) : EReal) < recessionFn f y := by
+  have hconv : Convex ℝ (dom (conj B f)) := (convexFn_conj B f).convex_dom
+  rw [mem_interior_iff_lt_supportFn (B := B.flip) hconv (proper_conj hf).dom_nonempty
+    (separatingRight_flip_of_separatingDual B) y₀]
+  simp only [LinearMap.flip_apply, ← recessionFn_eq_supportFn_dom_conj (B := B) hf]
+
+omit [SeparatingDual ℝ E] in
+/-- **Rockafellar, Corollary 13.3.4(d)**: `y₀` lies in the affine hull of `dom f*` exactly when
+`⟨·, y₀⟩` agrees with the recession function of `f` in every direction in which the latter is
+additively reversible. -/
+theorem mem_affineSpan_dom_conj_iff (hf : ClosedProperConvexFn f) (y₀ : F) :
+    y₀ ∈ affineSpan ℝ (dom (conj B f)) ↔
+      ∀ y : E, -recessionFn f (-y) = recessionFn f y →
+        ((B y y₀ : ℝ) : EReal) = recessionFn f y := by
+  rw [mem_affineSpan_iff_eq_supportFn (B := B.flip) (proper_conj hf).dom_nonempty y₀]
+  simp only [LinearMap.flip_apply, ← recessionFn_eq_supportFn_dom_conj (B := B) hf]
+
+/-- **Rockafellar, Corollary 13.4.2**: `dom f*` has nonempty interior exactly when the lineality
+space of `f` is trivial — when there is no line along which `f` is finite and affine.
+
+Theorem 13.4 (`linealitySpaceFn_eq_annihilator_dom_conj`) presents that lineality space as the
+annihilator of the subspace parallel to `aff (dom f*)`, and an annihilator is trivial exactly when
+the subspace it annihilates is everything. -/
+theorem interior_dom_conj_nonempty_iff (hf : ClosedProperConvexFn f) :
+    (interior (dom (conj B f))).Nonempty ↔ linealitySpaceFn f = {0} := by
+  have hconv : Convex ℝ (dom (conj B f)) := (convexFn_conj B f).convex_dom
+  have hnedom : (dom (conj B f)).Nonempty := (proper_conj hf).dom_nonempty
+  rw [hconv.interior_nonempty_iff_affineSpan_eq_top,
+    AffineSubspace.affineSpan_eq_top_iff_vectorSpan_eq_top_of_nonempty ℝ F F hnedom,
+    linealitySpaceFn_eq_annihilator_dom_conj (B := B) hf]
+  constructor
+  · intro htop
+    ext x
+    simp only [Set.mem_ofPred_eq, Set.mem_singleton_iff]
+    refine ⟨fun hx => separatingRight_flip_of_separatingDual B x fun w => ?_, ?_⟩
+    · simpa using hx w (by rw [htop]; exact Submodule.mem_top)
+    · rintro rfl w -
+      simp
+  · intro hlin
+    by_contra hcon
+    obtain ⟨w₀, hw₀⟩ : ∃ w₀ : F, w₀ ∉ vectorSpan ℝ (dom (conj B f)) := by
+      by_contra hall
+      push Not at hall
+      exact hcon (eq_top_iff.2 fun w _ => hall w)
+    obtain ⟨φ, u, v, hφw, huv, hφV⟩ := geometric_hahn_banach_compact_closed
+      (convex_singleton w₀) isCompact_singleton (vectorSpan ℝ (dom (conj B f))).convex
+      (vectorSpan ℝ (dom (conj B f))).closed_of_finiteDimensional
+      (Set.disjoint_singleton_left.2 hw₀)
+    have hzero : ∀ w ∈ vectorSpan ℝ (dom (conj B f)), φ w = 0 := by
+      intro w hw
+      by_contra hne
+      have hb : ∀ t : ℝ, v < t * φ w := fun t => by
+        simpa using hφV (t • w) ((vectorSpan ℝ (dom (conj B f))).smul_mem t hw)
+      have hcontra := hb ((v - 1) / φ w)
+      rw [div_mul_cancel₀ _ hne] at hcontra
+      linarith
+    have hv0 : v < 0 := by
+      have hz := hφV 0 (Submodule.zero_mem _)
+      rwa [hzero 0 (Submodule.zero_mem _)] at hz
+    have hw0ne : φ w₀ ≠ 0 := by
+      have h₁ : φ w₀ < u := hφw w₀ rfl
+      linarith
+    obtain ⟨x, hx⟩ := exists_pairing_eq B.flip φ
+    have hbx : ∀ w : F, B x w = φ w := fun w => (hx w).symm
+    have hxne : x ≠ 0 := by
+      rintro rfl
+      exact hw0ne (by rw [← hbx w₀]; simp)
+    have hmem : x ∈ {z : E | ∀ w ∈ vectorSpan ℝ (dom (conj B f)), B z w = 0} :=
+      fun w hw => by rw [hbx w]; exact hzero w hw
+    rw [hlin] at hmem
+    exact hxne hmem
 
 end CofiniteFiniteDim
 
