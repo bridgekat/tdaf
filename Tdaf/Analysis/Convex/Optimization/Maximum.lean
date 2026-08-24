@@ -3,7 +3,9 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
-import Tdaf.Analysis.Convex.Face
+import Tdaf.Analysis.Convex.Continuity
+import Tdaf.Analysis.Convex.Polyhedral.Defs
+import Tdaf.Analysis.Convex.Representation
 import Tdaf.Analysis.Convex.Subgradient.Defs
 
 /-!
@@ -20,8 +22,24 @@ live on the boundary — on faces, and ultimately on extreme points.
   `C` on which `f` is constant, so the maximiser set is a union of faces.
 * `ConvexFn.iSup_convexHull`, `exists_eq_of_isMaxOn_convexHull` — **Theorem 32.2**: `conv` neither
   raises the supremum of a convex function nor creates maximisers.
+* `ConvexFn.iSup_sdiff_relint`, `exists_notMem_relint_eq_of_isMaxOn` — **Corollary 32.2.1**: the
+  supremum over `C` is already the supremum over the relative boundary of `C`.
+* `ConvexFn.add_le_of_mem_recessionCone` — a convex function bounded above on `C` does not increase
+  along a direction of recession of `C`. This is the analytic core of Theorem 32.3.
+* `ConvexFn.iSup_extremePoints_of_containsNoLine`,
+  `exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine` — **Theorem 32.3**: for a closed
+  convex `C` containing no lines and a convex `f` bounded above on `C`, the supremum over `C` is
+  the supremum over the extreme points, and a maximiser can be replaced by an extreme point.
+* `ConvexFn.iSup_extremePoints_add_coneHull` — Theorem 32.3 in representation form, with no
+  boundedness hypothesis: the supremum over `C` is the supremum over the sums of an extreme point
+  and a non-negative combination of extreme directions.
+* `ConvexFn.eq_of_forall_le` — a convex function bounded above on the whole space is constant.
+* `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` — Theorem 32.3 for a finitely generated
+  (polyhedral) set: there the supremum is a maximum, attained at an extreme point.
 * `ConvexFn.iSup_extremePoints`, `exists_mem_extremePoints_eq_of_isMaxOn` — **Corollary 32.3.2**
   for compact `C`: the supremum is already the supremum over the extreme points.
+* `exists_mem_extremePoints_isMaxOn_of_isCompact` — the "supremum is attained" clause of
+  **Corollary 32.3.2**, for a compact `C` inside `ri (dom f)`.
 * `mem_normalCone_of_mem_subgradient_of_isMaxOn`, `ne_zero_of_mem_subgradient_of_isMaxOn` —
   **Theorem 32.4**: at a maximiser every subgradient is normal to `C`, and is non-zero as soon as
   `f` is not constant there.
@@ -41,23 +59,46 @@ topology or a dimension bound, which is why this section sits over `Module ℝ E
 `∂f x ⊆ N_{lev}(x)`; read directly it is one line, because the subgradient inequality at `z` and
 maximality at `z` sandwich the pairing term between `f x` and `f x`.
 
+**Theorem 32.3 is Theorem 18.5 plus one inequality.** Writing `x ∈ C` as `u + v` with `u` in the
+convex hull of the extreme points and `v` in the cone of the extreme directions
+(`convexHullPD_extremePoints_extremeDirections`), the half-line `u + t • v`, `t ≥ 0`, lies in `C`,
+so boundedness above forces `f (u + v) ≤ f u` (`ConvexFn.add_le_of_mem_recessionCone`): a convex
+function bounded above on a half-line is non-increasing along it. Theorem 32.2 then removes the
+convex hull. Boundedness cannot be dropped — `f x = x` on `C = [0, ∞)` has supremum `⊤` over `C`
+and `0` over the single extreme point — but the representation form
+`ConvexFn.iSup_extremePoints_add_coneHull`, which keeps the directions, needs no hypothesis.
+
+**The relative-boundary corollary is stated with `¬ IsAffineHalf C`, not with `ContainsNoLine C`.**
+Rockafellar's Theorem 18.4 excludes the affine sets and the closed halves of affine sets, and both
+exclusions are needed in §32 too: for `C = [0, ∞)` the relative boundary is `{0}`, and
+`f x = x` has supremum `⊤` over `C`. Containing no lines is not enough by itself; it *is* enough
+in dimension at least two (`ConvexFn.iSup_sdiff_relint_of_containsNoLine`, via
+`not_containsNoLine_of_isAffineHalf`), which is the case Rockafellar has in mind.
+
 ## What is not here
 
-**Theorem 32.3 and Corollaries 32.3.1, 32.3.3, 32.3.4.** They rest on Theorem 18.5 for *unbounded*
-closed convex sets — the representation by extreme points *and extreme directions* — which
-`Face.lean` has only in the bounded case (`convexHull_extremePoints`, Corollary 18.5.1).
-`ConvexFn.iSup_extremePoints` is that bounded case, and it is Corollary 32.3.2 without the
-"the supremum is attained" clause, which additionally needs Theorem 10.1 (continuity of a convex
-function on the relative interior of its domain).
+**Corollaries 32.3.1, 32.3.3 and 32.3.4.** Their statements could not be checked against the book
+in the session that wrote this file, and nothing here is named after them. Theorem 32.3 itself is
+present in both of its clauses, and the two specialisations that Rockafellar's corollaries are most
+likely to be — to a finitely generated set and to the whole space — are here as
+`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` and `ConvexFn.eq_of_forall_le`, stated
+without a book number.
 
-**Corollary 32.2.1** (the supremum over `C` equals the supremum over its relative boundary) needs
-Theorem 18.4 in full generality, which `Face.lean` also has only for compact sets.
+**The unqualified "supremum is attained" clause of Corollary 32.3.2.** It is false for a merely
+compact convex `C ⊆ dom f`: take `C` the closed unit disc in `ℝ²`, `f = 0` on the open disc and
+`f (cos θ, sin θ) = 1 - θ` for `θ ∈ (0, 2π]`, `f = 0` at `(1, 0)`. Chords between distinct boundary
+points meet the circle only at their endpoints, so `f` is convex; its supremum over `C` is `1` and
+is not attained. `exists_mem_extremePoints_isMaxOn_of_isCompact` therefore asks for
+`C ⊆ ri (dom f)`, where Theorem 10.1 (`ConvexFn.continuousOn_relint_dom`) supplies the continuity
+that compactness needs.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §32 (Theorems 32.1,
-  32.2, 32.4, Corollaries 32.1.1, 32.3.2 and 32.4.1).
+  32.2, 32.3, 32.4, Corollaries 32.1.1, 32.2.1, 32.3.2 and 32.4.1).
 -/
+
+open scoped Pointwise
 
 namespace Tdaf.ConvexAnalysis
 
@@ -145,6 +186,244 @@ theorem exists_eq_of_isMaxOn_convexHull (hf : ConvexFn f) {x : E} (hx : x ∈ co
 
 end Hull
 
+/-! ### Corollary 32.2.1: the supremum over the relative boundary -/
+
+section Boundary
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal} {C : Set E}
+
+/-- **Rockafellar, Theorem 18.4**, in hull form: a closed convex set that is neither an affine set
+nor a closed half of an affine set is the convex hull of its relative boundary.
+
+`exists_notMem_relint_mem_segment_of_not_isAffineHalf` is the pointwise form Theorem 18.4's proof
+produces; this is the packaging §32 consumes. -/
+theorem convexHull_sdiff_relint (hC : Convex ℝ C) (hCcl : IsClosed C) (hhalf : ¬ IsAffineHalf C) :
+    convexHull ℝ (C \ ri C) = C := by
+  refine subset_antisymm (convexHull_min Set.sdiff_subset hC) fun w hw => ?_
+  by_cases hwri : w ∈ ri C
+  · obtain ⟨a, haC, b, hbC, hari, hbri, hseg⟩ :=
+      exists_notMem_relint_mem_segment_of_not_isAffineHalf hC hCcl hhalf hwri
+    exact (convex_convexHull ℝ _).segment_subset (subset_convexHull ℝ (C \ ri C) ⟨haC, hari⟩)
+      (subset_convexHull ℝ (C \ ri C) ⟨hbC, hbri⟩) hseg
+  · exact subset_convexHull ℝ (C \ ri C) ⟨hw, hwri⟩
+
+/-- **Rockafellar, Corollary 32.2.1**: the supremum of a convex function over a closed convex set
+is already its supremum over the relative boundary of that set.
+
+The hypothesis is Rockafellar's exceptional-case hypothesis in Theorem 18.4 — `C` is neither an
+affine set nor a closed half of an affine set — and it cannot be dropped: over the half-line
+`[0, ∞)` the relative boundary is the single point `0`, while `f x = x` has supremum `⊤`. -/
+theorem ConvexFn.iSup_sdiff_relint (hf : ConvexFn f) (hC : Convex ℝ C) (hCcl : IsClosed C)
+    (hhalf : ¬ IsAffineHalf C) : (⨆ x ∈ C, f x) = ⨆ x ∈ C \ ri C, f x := by
+  conv_lhs => rw [← convexHull_sdiff_relint hC hCcl hhalf]
+  exact hf.iSup_convexHull _
+
+/-- **Rockafellar, Corollary 32.2.1**, attainment clause: a maximiser over `C` can be replaced by
+a maximiser on the relative boundary of `C`. This is the second half of Theorem 32.2 read through
+Theorem 18.4, and it is Theorem 32.1 again in disguise. -/
+theorem exists_notMem_relint_eq_of_isMaxOn (hf : ConvexFn f) (hC : Convex ℝ C) (hCcl : IsClosed C)
+    (hhalf : ¬ IsAffineHalf C) {x : E} (hx : x ∈ C) (hmax : ∀ z ∈ C, f z ≤ f x) :
+    ∃ z ∈ C \ ri C, f z = f x := by
+  rw [← convexHull_sdiff_relint hC hCcl hhalf] at hx hmax
+  exact exists_eq_of_isMaxOn_convexHull hf hx hmax
+
+/-- **Rockafellar, Corollary 32.2.1** under his standing hypothesis of §18: a closed convex set of
+dimension at least two containing no lines is neither an affine set nor a closed half of one
+(`not_containsNoLine_of_isAffineHalf`), so its supremum is carried by its relative boundary. -/
+theorem ConvexFn.iSup_sdiff_relint_of_containsNoLine (hf : ConvexFn f) (hC : Convex ℝ C)
+    (hCcl : IsClosed C) (hnl : ContainsNoLine C) (hne : C.Nonempty)
+    (hdim : 2 ≤ Module.finrank ℝ (vectorSpan ℝ C)) :
+    (⨆ x ∈ C, f x) = ⨆ x ∈ C \ ri C, f x :=
+  hf.iSup_sdiff_relint hC hCcl fun h => not_containsNoLine_of_isAffineHalf h hne hdim hnl
+
+end Boundary
+
+/-! ### Theorem 32.3: the extreme point principle -/
+
+section Ray
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal} {C : Set E}
+
+/-- **A convex function bounded above on a half-line does not increase along it.** If
+`f (u + t • v) ≤ β` for every `t ≥ 0`, then `f (u + v) ≤ f u`: the endpoint of the half-line
+already sees the largest value on it.
+
+The proof is the usual "a convex function bounded above on `[0, ∞)` is non-increasing": `u + v` is
+the convex combination of `u` and the far point `u + t • v` with weights `1 - t⁻¹` and `t⁻¹`, so
+`f (u + v) ≤ ξ + t⁻¹ (β - ξ)` for every `ξ > f u` and every `t ≥ 1`, and `t` can be taken large. -/
+theorem ConvexFn.add_le_of_forall_add_smul_le (hf : ConvexFn f) {u v : E} {β : ℝ}
+    (hray : ∀ t : ℝ, 0 ≤ t → f (u + t • v) ≤ (β : EReal)) : f (u + v) ≤ f u := by
+  by_contra hcon
+  have hlt : f u < f (u + v) := not_le.1 hcon
+  obtain ⟨ξ, hξ1, hξ2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hlt
+  obtain ⟨η, hη1, hη2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hξ2
+  have hξη : ξ < η := by exact_mod_cast hη1
+  set t : ℝ := max 1 (1 + (β - ξ) / (η - ξ)) with ht
+  have ht1 : (1 : ℝ) ≤ t := le_max_left _ _
+  have ht0 : (0 : ℝ) < t := lt_of_lt_of_le one_pos ht1
+  have hcancel : (β - ξ) / (η - ξ) * (η - ξ) = β - ξ := div_mul_cancel₀ _ (by linarith)
+  have hkey : β - ξ < t * (η - ξ) := by
+    nlinarith [le_max_right (1 : ℝ) (1 + (β - ξ) / (η - ξ))]
+  have hcomb := hf.epi_combo hξ1.le (hray t ht0.le) (a := 1 - t⁻¹) (b := t⁻¹)
+    (by simp [inv_le_one_of_one_le₀ ht1]) (by positivity) (by ring)
+  have hpt : (1 - t⁻¹) • u + t⁻¹ • (u + t • v) = u + v := by
+    rw [smul_add, smul_smul, inv_mul_cancel₀ ht0.ne', one_smul, sub_smul, one_smul]
+    abel
+  rw [hpt] at hcomb
+  have hηlt : (η : EReal) < (((1 - t⁻¹) * ξ + t⁻¹ * β : ℝ) : EReal) := lt_of_lt_of_le hη2 hcomb
+  have hηlt' : η < (1 - t⁻¹) * ξ + t⁻¹ * β := by exact_mod_cast hηlt
+  have hinv0 : (0 : ℝ) < t⁻¹ := inv_pos.2 ht0
+  have hmul : t⁻¹ * (β - ξ) < η - ξ := by
+    have h := mul_lt_mul_of_pos_left hkey hinv0
+    rwa [← mul_assoc, inv_mul_cancel₀ ht0.ne', one_mul] at h
+  linarith
+
+/-- **A convex function bounded above on `C` does not increase along a direction of recession of
+`C`.** This is `ConvexFn.add_le_of_forall_add_smul_le` fed with the half-line `u + t • v`, `t ≥ 0`,
+which a direction of recession keeps inside `C`. It is the analytic core of Theorem 32.3. -/
+theorem ConvexFn.add_le_of_mem_recessionCone (hf : ConvexFn f) {β : ℝ}
+    (hbdd : ∀ x ∈ C, f x ≤ (β : EReal)) {u v : E} (hu : u ∈ C) (hv : v ∈ recessionCone C) :
+    f (u + v) ≤ f u :=
+  hf.add_le_of_forall_add_smul_le fun t ht => hbdd _ (hv u hu t ht)
+
+/-- **A convex function bounded above on the whole space is constant.** Applying
+`ConvexFn.add_le_of_forall_add_smul_le` at `x` in the direction `y - x` and at `y` in the direction
+`x - y` gives the two inequalities at once.
+
+This is the unbounded companion of the maximum principle: there `ri C` forced constancy, here the
+absence of any boundary does. -/
+theorem ConvexFn.eq_of_forall_le (hf : ConvexFn f) {β : ℝ} (hbdd : ∀ x : E, f x ≤ (β : EReal))
+    (x y : E) : f x = f y := by
+  have key : ∀ u v : E, f (u + v) ≤ f u := fun u v =>
+    hf.add_le_of_forall_add_smul_le fun t _ => hbdd _
+  have hxy : x + (y - x) = y := by abel
+  have hyx : y + (x - y) = x := by abel
+  have h₁ := key x (y - x)
+  have h₂ := key y (x - y)
+  rw [hxy] at h₁
+  rw [hyx] at h₂
+  exact le_antisymm h₂ h₁
+
+end Ray
+
+section ExtremeUnbounded
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal} {C : Set E}
+
+/-- **Every point of `C` is dominated by a point of the convex hull of the extreme points**, for a
+convex function bounded above on a closed convex `C` containing no lines.
+
+Theorem 18.5 splits `x` as `u + v` with `u ∈ conv (ext C)` and `v` a non-negative combination of
+extreme directions, hence a direction of recession of `C`; `ConvexFn.add_le_of_mem_recessionCone`
+then gives `f x ≤ f u`. -/
+theorem ConvexFn.exists_mem_convexHull_extremePoints_le (hf : ConvexFn f) (hC : Convex ℝ C)
+    (hCcl : IsClosed C) (hnl : ContainsNoLine C) {β : ℝ} (hbdd : ∀ x ∈ C, f x ≤ (β : EReal))
+    {x : E} (hx : x ∈ C) : ∃ u ∈ convexHull ℝ (C.extremePoints ℝ), f x ≤ f u := by
+  have hrep := convexHullPD_extremePoints_extremeDirections hC hCcl hnl
+  have hx' : x ∈ convexHullPD (C.extremePoints ℝ) (extremeDirections C) := by rw [hrep]; exact hx
+  obtain ⟨u, hu, v, hv, rfl⟩ := mem_convexHullPD.1 hx'
+  refine ⟨u, hu, hf.add_le_of_mem_recessionCone hbdd ?_ ?_⟩
+  · rw [← hrep]
+    exact convexHull_subset_convexHullPD _ _ hu
+  · rw [← hrep]
+    exact coneHull_subset_recessionCone_convexHullPD _ _ hv
+
+/-- **Rockafellar, Theorem 32.3**: the supremum of a convex function bounded above on a closed
+convex set `C` containing no lines is its supremum over the extreme points of `C`.
+
+Boundedness above is essential, and is what makes the extreme *directions* invisible in the
+answer: `f x = x` on `C = [0, ∞)` has supremum `⊤` over `C` and `0` over the extreme points. -/
+theorem ConvexFn.iSup_extremePoints_of_containsNoLine (hf : ConvexFn f) (hC : Convex ℝ C)
+    (hCcl : IsClosed C) (hnl : ContainsNoLine C) {β : ℝ} (hbdd : ∀ x ∈ C, f x ≤ (β : EReal)) :
+    (⨆ x ∈ C, f x) = ⨆ x ∈ C.extremePoints ℝ, f x := by
+  refine le_antisymm (iSup₂_le fun x hx => ?_)
+    (iSup₂_le fun x hx => le_iSup₂ (f := fun z (_ : z ∈ C) => f z) x (extremePoints_subset hx))
+  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hC hCcl hnl hbdd hx
+  refine hle.trans ?_
+  rw [← hf.iSup_convexHull (C.extremePoints ℝ)]
+  exact le_iSup₂ (f := fun z (_ : z ∈ convexHull ℝ (C.extremePoints ℝ)) => f z) u hu
+
+/-- **Rockafellar, Theorem 32.3**, attainment clause: a maximiser of a convex function over a
+closed convex set containing no lines can be replaced by an extreme point.
+
+No boundedness hypothesis is needed — a finite maximum is itself a bound — but `f x ≠ ⊤` is: for
+`C = [0, ∞)` and `f` equal to `0` on `[0, 1)` and `⊤` on `[1, ∞)`, the value `⊤` is a maximum,
+while the only extreme point carries the value `0`. Rockafellar's standing hypothesis
+`C ⊆ dom f` supplies it. -/
+theorem exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine (hf : ConvexFn f)
+    (hC : Convex ℝ C) (hCcl : IsClosed C) (hnl : ContainsNoLine C) {x : E} (hx : x ∈ C)
+    (hxt : f x ≠ ⊤) (hmax : ∀ z ∈ C, f z ≤ f x) : ∃ z ∈ C.extremePoints ℝ, f z = f x := by
+  rcases eq_or_ne (f x) ⊥ with hbot | hbot
+  · obtain ⟨z, hz⟩ := extremePoints_nonempty_of_containsNoLine hC hCcl hnl ⟨x, hx⟩
+    have hzle : f z ≤ ⊥ := hbot ▸ hmax z (extremePoints_subset hz)
+    exact ⟨z, hz, by rw [le_bot_iff.1 hzle, hbot]⟩
+  obtain ⟨r, hr⟩ := EReal.exists_coe_of_ne_bot_of_lt_top hbot (lt_top_iff_ne_top.2 hxt)
+  have hbdd : ∀ z ∈ C, f z ≤ (r : EReal) := fun z hz => hr ▸ hmax z hz
+  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hC hCcl hnl hbdd hx
+  have hsub : convexHull ℝ (C.extremePoints ℝ) ⊆ C := convexHull_min extremePoints_subset hC
+  have hux : f u = f x := le_antisymm (hmax u (hsub hu)) hle
+  obtain ⟨z, hz, hzu⟩ :=
+    exists_eq_of_isMaxOn_convexHull hf hu fun z hz => hux ▸ hmax z (hsub hz)
+  exact ⟨z, hz, by rw [hzu, hux]⟩
+
+/-- **Rockafellar, Theorem 32.3** in representation form, with no boundedness hypothesis: the
+supremum of a convex function over a closed convex set containing no lines is its supremum over
+the sums `u + v` of an extreme point `u` and a non-negative combination `v` of extreme directions.
+
+This is Theorem 18.5 fed to Theorem 32.2: `conv (ext C + cone (extremeDirections C))` is
+`conv (ext C) + cone (extremeDirections C)`, which is `C`. Boundedness above collapses the second
+summand and returns `ConvexFn.iSup_extremePoints_of_containsNoLine`. -/
+theorem ConvexFn.iSup_extremePoints_add_coneHull (hf : ConvexFn f) (hC : Convex ℝ C)
+    (hCcl : IsClosed C) (hnl : ContainsNoLine C) :
+    (⨆ x ∈ C, f x)
+      = ⨆ x ∈ C.extremePoints ℝ + (PointedCone.hull ℝ (extremeDirections C) : Set E), f x := by
+  have hcone : Convex ℝ ((PointedCone.hull ℝ (extremeDirections C) : Set E)) :=
+    ((PointedCone.hull ℝ (extremeDirections C) : ConvexCone ℝ E)).convex
+  have hhull : convexHull ℝ
+      (C.extremePoints ℝ + (PointedCone.hull ℝ (extremeDirections C) : Set E)) = C := by
+    rw [convexHull_add, hcone.convexHull_eq, ← convexHullPD_def]
+    exact convexHullPD_extremePoints_extremeDirections hC hCcl hnl
+  conv_lhs => rw [← hhull]
+  exact hf.iSup_convexHull _
+
+end ExtremeUnbounded
+
+/-! ### Theorem 32.3 for finitely generated sets -/
+
+section Polyhedral
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f : E → EReal} {C : Set E}
+
+/-- **A convex function bounded above on a nonempty finitely generated (polyhedral) convex set
+containing no lines attains its supremum at an extreme point.**
+
+The ingredient beyond Theorem 32.3 is Corollary 18.3.1 (`extremePoints_convexHullPD_subset`): a
+finitely generated set has only finitely many extreme points, so the supremum over them is a
+maximum, and the sublevel set at that maximum swallows their convex hull.
+
+Rockafellar's §32 has corollaries of Theorem 32.3 of this kind, but their statements could not be
+checked against the book in the session that wrote this file, so no book number is claimed. -/
+theorem exists_mem_extremePoints_isMaxOn_of_finitelyGenerated (hf : ConvexFn f)
+    (hC : FinitelyGenerated C) (hnl : ContainsNoLine C) (hne : C.Nonempty) {β : ℝ}
+    (hbdd : ∀ x ∈ C, f x ≤ (β : EReal)) : ∃ z ∈ C.extremePoints ℝ, ∀ w ∈ C, f w ≤ f z := by
+  have hcl : IsClosed C := hC.isClosed
+  obtain ⟨P, D, hCeq⟩ := hC
+  have hCPD : C = convexHullPD (P : Set E) (D : Set E) := hCeq
+  have hconv : Convex ℝ C := by rw [hCPD]; exact convex_convexHullPD _ _
+  have hsub : C.extremePoints ℝ ⊆ (P : Set E) := by
+    rw [hCPD]; exact extremePoints_convexHullPD_subset _ _
+  have hfin : (C.extremePoints ℝ).Finite := P.finite_toSet.subset hsub
+  obtain ⟨z, hz, hzmax⟩ := Set.exists_max_image (C.extremePoints ℝ) f hfin
+    (extremePoints_nonempty_of_containsNoLine hconv hcl hnl hne)
+  refine ⟨z, hz, fun w hw => ?_⟩
+  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hconv hcl hnl hbdd hw
+  exact hle.trans (convexHull_min (fun y hy => hzmax y hy) (hf.convex_le (f z)) hu)
+
+end Polyhedral
+
 /-! ### Corollary 32.3.2: the extreme point principle, compact case -/
 
 section Extreme
@@ -167,6 +446,20 @@ theorem exists_mem_extremePoints_eq_of_isMaxOn (hf : ConvexFn f) (hcomp : IsComp
     ∃ z ∈ C.extremePoints ℝ, f z = f x := by
   rw [← convexHull_extremePoints hcomp hconv] at hx hmax
   exact exists_eq_of_isMaxOn_convexHull hf hx hmax
+
+/-- **Rockafellar, Corollary 32.3.2**, the "supremum is attained" clause: a convex function attains
+its supremum over a nonempty compact convex set `C ⊆ ri (dom f)` at an extreme point of `C`.
+
+Compactness alone does not give attainment — see the module docstring for a convex function on the
+closed unit disc whose supremum is not attained — so the hypothesis is `C ⊆ ri (dom f)`, where
+Theorem 10.1 (`ConvexFn.continuousOn_relint_dom`) makes `f` continuous on `C`. -/
+theorem exists_mem_extremePoints_isMaxOn_of_isCompact (hf : ConvexFn f) (hp : Proper f)
+    (hcomp : IsCompact C) (hconv : Convex ℝ C) (hne : C.Nonempty) (hCri : C ⊆ ri (dom f)) :
+    ∃ z ∈ C.extremePoints ℝ, ∀ w ∈ C, f w ≤ f z := by
+  obtain ⟨x, hx, hxmax⟩ := hcomp.exists_isMaxOn hne ((hf.continuousOn_relint_dom hp).mono hCri)
+  obtain ⟨z, hz, hzx⟩ :=
+    exists_mem_extremePoints_eq_of_isMaxOn hf hcomp hconv hx fun w hw => isMaxOn_iff.1 hxmax w hw
+  exact ⟨z, hz, fun w hw => hzx ▸ isMaxOn_iff.1 hxmax w hw⟩
 
 end Extreme
 

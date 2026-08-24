@@ -1926,8 +1926,8 @@ genuinely do need Helly in the form of Thm 21.5.
 
 ### `Tdaf/Analysis/Convex/Optimization/Maximum.lean`
 
-§32: **Theorems 32.1, 32.2 and 32.4** with Corollaries 32.1.1, 32.4.1 and the compact case of
-Corollary 32.3.2.
+§32: **Theorems 32.1, 32.2, 32.3 and 32.4** with Corollaries 32.1.1, 32.2.1, 32.3.2 (both clauses)
+and 32.4.1.
 
 **Maximisation is `∀ z ∈ C, f z ≤ f x`, not `IsMaxOn`.** Every proof here applies the hypothesis at
 one specific point, and the unfolded form is what `ConvexFn.epi_combo` and the subgradient
@@ -1965,9 +1965,35 @@ at `z` sandwich `⟨z - x, y⟩` between `f x` and `f x`; extracting `f x` as a 
 (`le_of_mem_normalCone`) is `map_sub` plus `LinearMap.sub_apply` plus `linarith`, with no convexity
 hypothesis at all.
 
-**Not done**: Thm 32.3 and Cors 32.2.1, 32.3.1, 32.3.3, 32.3.4, all blocked on Theorems 18.4–18.5
-for *unbounded* closed convex sets (extreme directions), which `Face.lean` has only in the compact
-case; and the "supremum is attained" clause of Cor 32.3.2, which needs Thm 10.1.
+**Theorem 32.3 is `convexHullPD_extremePoints_extremeDirections` plus one inequality.** Split
+`x ∈ C` as `u + v` with `u ∈ conv (ext C)` and `v` in the cone of the extreme directions; the
+half-line `u + t • v`, `t ≥ 0`, then lies in `C`, and `ConvexFn.add_le_of_forall_add_smul_le` — a
+convex function bounded above on a half-line is non-increasing along it — gives `f x ≤ f u`.
+Theorem 32.2 removes the hull. The `EReal` bookkeeping is two applications of
+`EReal.lt_iff_exists_real_btwn` (one to get a bound `ξ` above `f u`, a second to get a value `η`
+strictly between `ξ` and `f (u + v)` to contradict) and then `t := max 1 (1 + (β - ξ) / (η - ξ))`;
+`linarith` closes it once `t⁻¹ * (β - ξ) < η - ξ` is available. Boundedness above cannot be dropped
+(`f x = x` on `[0, ∞)`), but `ConvexFn.iSup_extremePoints_add_coneHull`, which keeps the directions
+in the index set, is unconditional.
+
+**Corollary 32.2.1 wants `¬ IsAffineHalf C`, not `ContainsNoLine C`.** `convexHull_sdiff_relint`
+is Theorem 18.4 in hull form (`convexHull ℝ (C \ ri C) = C`, three lines from
+`exists_notMem_relint_mem_segment_of_not_isAffineHalf`), and the half-line shows the "no lines"
+reading is false. `ConvexFn.iSup_sdiff_relint_of_containsNoLine` adds `2 ≤ dim C` and goes through
+`not_containsNoLine_of_isAffineHalf`.
+
+**The attainment clause of Cor 32.3.2 needed a hypothesis, not just Thm 10.1.** For a merely
+compact convex `C ⊆ dom f` it is false: on the closed unit disc, `f = 0` on the open disc and
+`f (cos θ, sin θ) = 1 - θ` for `θ ∈ (0, 2π]` is convex with unattained supremum `1`.
+`exists_mem_extremePoints_isMaxOn_of_isCompact` asks for `C ⊆ ri (dom f)`, where
+`ConvexFn.continuousOn_relint_dom` applies; `IsCompact.exists_isMaxOn` then works directly on the
+`EReal`-valued `f`, with no `toReal` detour.
+
+**Not done**: Cors 32.3.1, 32.3.3 and 32.3.4. §18 is no longer the obstacle — what is missing is
+their *statements*, which could not be checked against the book. The file carries two unnumbered
+specialisations of Thm 32.3 that any of them plausibly is: `ConvexFn.eq_of_forall_le` (bounded
+above on the whole space ⇒ constant) and `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated`
+(finitely many extreme points by Cor 18.3.1, so the supremum is a maximum).
 
 ### `Tdaf/Analysis/Convex/Face.lean`
 
@@ -5405,6 +5431,28 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 268. **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State
 `have`s in the contracted form and let `funext` introduce the point.
+
+300. **`Set.diff_subset` is deprecated in favour of `Set.sdiff_subset`.** `convexHull_min
+     Set.diff_subset hC` compiles but emits a deprecation warning, which this project counts as a
+     failure. The same rename hits `Set.diff_subset_iff` and friends; grep for `Set.diff_` before
+     reaching for the old name.
+
+301. **`subset_convexHull ℝ _ ⟨h₁, h₂⟩` does not elaborate.** With the set left as `_`, the
+     anonymous constructor for the membership `x ∈ C \ ri C` has no expected type yet and the error
+     is "Invalid `⟨...⟩` notation: the expected type of this term could not be determined". Write
+     the set out: `subset_convexHull ℝ (C \ ri C) ⟨h₁, h₂⟩`. Same trap for any hull lemma applied to
+     a pair, an `Or`, or an existential.
+
+302. **`open scoped Pointwise` is per file.** `Representation.lean` and `HullDirections.lean` have
+     it, but a downstream file that merely *mentions* `P + (PointedCone.hull ℝ D : Set E)` in a
+     statement fails with "failed to synthesize `HAdd (Set E) (Set E) ?m`". Add the `open scoped`
+     line above `namespace Tdaf.ConvexAnalysis`, not inside a section.
+
+303. **`IsCompact.exists_isMaxOn` accepts an `EReal`-valued function.** `EReal` is a
+     `CompleteLinearOrder` with the order topology, so
+     `hcomp.exists_isMaxOn hne (hf.continuousOn_relint_dom hp).mono hCri` produces a maximiser of
+     `f : E → EReal` directly. There is no need to pass through
+     `ConvexFn.continuousOn_toReal_relint_dom` and transport the maximum back.
 
 ## 3. Build and verification
 

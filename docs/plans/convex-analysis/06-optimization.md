@@ -555,9 +555,9 @@ Theorem 27.2 in a Hilbert space, and `Optimization/Minimum.lean` has it only in 
 
 ## 6.6 `Optimization/Maximum.lean` — §32
 
-**Status: Theorems 32.1, 32.2 and 32.4 are done**, with Corollaries 32.1.1, 32.4.1 and the compact
-case of Corollary 32.3.2. Maximising a convex function is short and self-contained; it depends on
-§18 and on nothing later.
+**Status: Theorems 32.1, 32.2, 32.3 and 32.4 are done**, with Corollaries 32.1.1, 32.2.1, 32.3.2
+(both clauses) and 32.4.1. Maximising a convex function is short and self-contained; it depends on
+§18, on §10 for the one attainment statement, and on nothing later.
 
 ```lean
 theorem ConvexFn.eq_of_isMaxOn_mem_relint (hf : ConvexFn f) (hCdom : C ⊆ dom f) {z : E}
@@ -574,10 +574,13 @@ who arrives with `IsMaxOn`.
 | `ConvexFn.eq_of_isMaxOn_mem_relint` | **Thm 32.1** | done |
 | `exists_isFace_forall_eq_of_isMaxOn` | **Cor 32.1.1** | done |
 | `ConvexFn.iSup_convexHull`, `exists_eq_of_isMaxOn_convexHull` | **Thm 32.2**, both clauses | done |
-| — | **Cor 32.2.1** (supremum over the relative boundary) | not done — needs Thm 18.4 for unbounded sets |
+| `convexHull_sdiff_relint` (Thm 18.4, hull form), `ConvexFn.iSup_sdiff_relint`, `exists_notMem_relint_eq_of_isMaxOn`, `ConvexFn.iSup_sdiff_relint_of_containsNoLine` | **Cor 32.2.1** | done |
 | `ConvexFn.iSup_extremePoints`, `exists_mem_extremePoints_eq_of_isMaxOn` | **Cor 32.3.2**, compact case, without the "attained" clause | done |
-| — | **Thm 32.3**, Cors 32.3.1, 32.3.3, 32.3.4 | not done — need Thm 18.5 (extreme directions) |
-| — | **Cor 32.3.2**, the "supremum is attained" clause | not done — needs Thm 10.1 |
+| `ConvexFn.add_le_of_forall_add_smul_le`, `ConvexFn.add_le_of_mem_recessionCone`, `ConvexFn.exists_mem_convexHull_extremePoints_le`, `ConvexFn.iSup_extremePoints_of_containsNoLine`, `exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine` | **Thm 32.3**, both clauses | done |
+| `ConvexFn.iSup_extremePoints_add_coneHull` | Thm 32.3 in representation form (no boundedness hypothesis) | done |
+| `ConvexFn.eq_of_forall_le`, `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` | the two likely readings of Cors 32.3.1/32.3.3/32.3.4 | done, but **not** claimed to be those corollaries |
+| — | **Cors 32.3.1, 32.3.3, 32.3.4** | not done — the book's statements could not be verified (no access to the text) |
+| `exists_mem_extremePoints_isMaxOn_of_isCompact` | **Cor 32.3.2**, the "supremum is attained" clause, for `C ⊆ ri (dom f)` | done |
 | `mem_normalCone_of_mem_subgradient_of_isMaxOn`, `ne_zero_of_mem_subgradient_of_isMaxOn` | **Thm 32.4** | done |
 | `le_of_mem_normalCone` | **Cor 32.4.1** | done |
 
@@ -617,7 +620,40 @@ point where `f` differs from the maximum. Corollary 32.4.1 is then the definitio
 `normalCone`, so it is stated as `le_of_mem_normalCone` and holds with no convexity hypothesis at
 all.
 
-**What blocks the rest is uniformly the unbounded half of §18.** Theorem 32.3 and Corollaries
-32.2.1, 32.3.1, 32.3.3 and 32.3.4 all rest on the representation of a closed convex set by its
-extreme points *and extreme directions* (Theorems 18.4–18.5), which `Face.lean` currently has only
-for compact sets.
+**Theorem 32.3 is Theorem 18.5 plus one inequality, and the inequality is the whole content.**
+Writing `x ∈ C` as `u + v` with `u ∈ conv (ext C)` and `v` in the cone of the extreme directions
+(`convexHullPD_extremePoints_extremeDirections`) puts the half-line `u + t • v`, `t ≥ 0`, inside
+`C`; a convex function bounded above on a half-line is non-increasing along it
+(`ConvexFn.add_le_of_forall_add_smul_le`, proved by taking `t → ∞` in
+`f (u + v) ≤ (1 - t⁻¹) ξ + t⁻¹ β`), so `f (u + v) ≤ f u` and Theorem 32.2 removes the hull.
+Boundedness above cannot be dropped: `f x = x` on `C = [0, ∞)` has supremum `⊤` over `C` and `0` over its only
+extreme point. The *representation* form `ConvexFn.iSup_extremePoints_add_coneHull`, which keeps the
+directions in the index set, needs no hypothesis at all.
+
+**Corollary 32.2.1 is stated with `¬ IsAffineHalf C`, not with `ContainsNoLine C`.** The half-line
+is a counterexample to the "no lines" reading, and it is exactly the case Theorem 18.4 excludes:
+`convexHull_sdiff_relint` is Theorem 18.4 in hull form, and
+`ConvexFn.iSup_sdiff_relint_of_containsNoLine` recovers the reading Rockafellar has in mind by
+adding `2 ≤ dim C` (`not_containsNoLine_of_isAffineHalf`).
+
+**The attainment clause of Corollary 32.3.2 is false as the plan recorded it.** For a merely
+compact convex `C ⊆ dom f` the supremum need not be attained: on the closed unit disc, `f = 0` on
+the open disc and `f (cos θ, sin θ) = 1 - θ` for `θ ∈ (0, 2π]` is convex (chords between distinct
+boundary points meet the circle only at their endpoints) with an unattained supremum `1`.
+`exists_mem_extremePoints_isMaxOn_of_isCompact` therefore asks for `C ⊆ ri (dom f)`, which is where
+Theorem 10.1 (`ConvexFn.continuousOn_relint_dom`) applies — the prerequisite the plan named, but
+the hypothesis has to be in the statement, not only in the proof.
+
+**Corollaries 32.3.1, 32.3.3 and 32.3.4 are still open, for a different reason than recorded.**
+§18 is no longer the obstacle; what is missing is the *statements*. They could not be checked
+against the book, and rather than invent them the file carries two unnumbered specialisations of
+Theorem 32.3 that any of them plausibly is: `ConvexFn.eq_of_forall_le` (a convex function bounded
+above on the whole space is constant — the ray lemma applied in both directions) and
+`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` (over a finitely generated set the extreme
+points are finite in number by Corollary 18.3.1, so the supremum is a maximum).
+
+**Correction to the earlier status.** This section used to record Theorem 32.3 and Corollaries
+32.2.1, 32.3.1, 32.3.3 and 32.3.4 as blocked on Theorems 18.4–18.5 for *unbounded* closed convex
+sets, "which `Face.lean` currently has only for compact sets". Both halves of that are now out of
+date: the unbounded representation is `convexHullPD_extremePoints_extremeDirections` in
+`Representation.lean`, not `Face.lean`, and it is complete.
