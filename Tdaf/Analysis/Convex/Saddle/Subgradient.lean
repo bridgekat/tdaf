@@ -18,6 +18,8 @@ outside it.
 
 ## Main definitions
 
+* `IsBifunSubgradientPair Bu Bx F p q` — Rockafellar's condition (d) of Theorem 37.5, the
+  subdifferential of an equivalence class written without choosing a representative.
 * `concaveSubgradient B g x` — the superdifferential of a concave `g`, i.e. the `y` for which
   `g z ≤ g x + ⟨z - x, y⟩` for every `z`. The sign dictionary to `subgradient` is
   `mem_concaveSubgradient_iff_neg_mem_subgradient_neg`.
@@ -34,8 +36,18 @@ outside it.
 * `domSaddleSubgradient_subset_domSaddle`, `kernelSet_subset_domSaddleSubgradient`,
   `kernelSet_subset_domSaddleSubgradient_subset_domSaddle` — **Theorem 37.4**, second sentence:
   `ri (dom K) ⊆ dom ∂K ⊆ dom K`. The right-hand inclusion needs only properness.
-* `sub_coe_le_sub_coe_iff_le_add`, `sub_coe_le_sub_coe_iff_add_le` — the two `EReal`
-  cancellations the tilt runs on; relocation candidates for `Tdaf/Order/EReal.lean`.
+* `mem_saddleSubgradient_iff_isBifunSubgradientPair` — **Theorem 37.5**, (a) ⇔ (d): `∂K` is
+  the same relation for every `K` in a class `Ω (F)`, namely `IsBifunSubgradientPair` for `F`.
+* `mem_saddleSubgradient_upperConjSaddle_iff` — **Theorem 37.5**, (b) ⇔ (d): the
+  subdifferentials of conjugate classes are inverse to each other.
+* `mem_saddleSubgradient_upperConjSaddle_zero_iff`, `convex_setOf_isSaddlePoint`,
+  `exists_isSaddlePoint_iff_zero_mem_domSaddleSubgradient` — **Corollary 37.5.3**.
+* `exists_isSaddlePoint_of_zero_mem_kernelSet_upperConjSaddle`,
+  `exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle` — **Theorem 37.6**.
+* `sub_coe_le_sub_coe_iff_le_add`, `sub_coe_le_sub_coe_iff_add_le`, `sub_coe_eq_sub_coe_iff`,
+  `sub_coe_eq_sub_coe_iff_neg`, `coe_sub_coe_sub_self`, `eq_coe_sub_iff_coe_sub_eq`,
+  `neg_sub_coe`, `sub_coe_eq_sub_coe_comm`, `sub_coe_lt_top_iff`, `bot_lt_sub_coe_iff` — the
+  `EReal` cancellations §37 runs on; relocation candidates for `Tdaf/Order/EReal.lean`.
 
 ## Design notes
 
@@ -57,14 +69,29 @@ condition.
 
 ## What is not here
 
-**Corollary 37.4.1** (equivalent saddle-functions have the same subdifferential). Its proof
-needs `cl₁` and `cl₂` to commute with the tilt, i.e. `cl (f + ℓ) = cl f + ℓ` for a *continuous*
-linear `ℓ`, which the backbone has only in the form `clFn_add`, under properness hypotheses on
-both summands.
+**Corollary 37.4.1** for a general pair of equivalent saddle-functions. For the classes `Ω (F)`
+it is contained in `mem_saddleSubgradient_iff_isBifunSubgradientPair`, whose right-hand side does
+not mention `K`; the general statement needs `cl₁` and `cl₂` to commute with the tilt, i.e.
+`cl (f + ℓ) = cl f + ℓ` for a *continuous* linear `ℓ`, which the backbone has only as `clFn_add`,
+under properness hypotheses on both summands.
+
+**Theorem 37.5's condition (c)**, `(-v, y) ∈ ∂f (u, x)` for the graph function `f` of `F`. It is
+Theorem 23.5 for `f` composed with `adjointBifun_eq_neg_conj_graphFn`, but — unlike (a), (b) and
+(d) — it is **not** equivalent to them without properness: at `F u x = (F* y) v = ⊤` condition
+(d) reads `⊤ - r = ⊤ - s` and holds, while (c) reads `⊤ + ⊥ = ↑(…)` and fails. Rockafellar does
+not record the restriction. Under `Proper (graphFn F)` the gap closes, because `(F* y) v = ⊤`
+would make `f*` equal `⊥`.
+
+**Corollaries 37.5.1 and 37.5.2** (the graph of `∂K` is homeomorphic to `Rᵐ × Rⁿ`, and the
+partial reflection of `∂K` is maximal monotone). Both are (c) composed with §31's results about
+`∂f`, so they wait on (c).
+
+**Corollaries 37.6.1 and 37.6.2**, which need the `C*` half of Corollary 37.2.1 — see the "What
+is not here" note in `Saddle/Conjugate.lean`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35 and §37.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23, §35 and §37.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -129,6 +156,81 @@ theorem bot_lt_sub_coe_iff {z : EReal} {c : ℝ} : ⊥ < z - (c : EReal) ↔ ⊥
     refine iff_of_true ?_ (_root_.EReal.bot_lt_coe r)
     rw [← _root_.EReal.coe_sub]
     exact _root_.EReal.bot_lt_coe _
+
+/-- Subtracting from a real number is an involution of `EReal`: `r - (r - z) = z`. -/
+theorem coe_sub_coe_sub_self (r : ℝ) (z : EReal) : (r : EReal) - ((r : EReal) - z) = z := by
+  rw [Tdaf.EReal.coe_sub_coe_sub, sub_self, _root_.EReal.coe_zero, zero_add]
+
+/-- Moving an `EReal` across a subtraction from a real number: `z = r - w ↔ r - z = w`. This is
+`coe_sub_coe_sub_self` read as a bijection, and it is what turns the two clauses of Theorem 23.5
+into a common value. -/
+theorem eq_coe_sub_iff_coe_sub_eq {z w : EReal} {r : ℝ} :
+    z = (r : EReal) - w ↔ (r : EReal) - z = w := by
+  constructor
+  · intro h
+    rw [h, coe_sub_coe_sub_self]
+  · intro h
+    rw [← h, coe_sub_coe_sub_self]
+
+/-- Negating a subtraction by a real number: `-(z - r) = r - z`. -/
+theorem neg_sub_coe (z : EReal) (r : ℝ) : -(z - (r : EReal)) = (r : EReal) - z := by
+  induction z with
+  | bot => simp
+  | top => simp
+  | coe t =>
+    rw [← _root_.EReal.coe_sub, ← _root_.EReal.coe_neg, ← _root_.EReal.coe_sub,
+      _root_.EReal.coe_eq_coe_iff]
+    ring
+
+/-- Reflecting both sides of an equation between differences by real numbers:
+`z - r = w - s ↔ r - z = s - w`. -/
+theorem sub_coe_eq_sub_coe_comm {z w : EReal} {r s : ℝ} :
+    z - (r : EReal) = w - (s : EReal) ↔ (r : EReal) - z = (s : EReal) - w := by
+  rw [← neg_sub_coe z r, ← neg_sub_coe w s, _root_.neg_inj]
+
+/-- Equating two differences by real numbers: `z - r = w - s ↔ z + s = w + r`. The content is
+the identity `(z - r) + (r + s) = z + s`, plus the injectivity of `· + t` for real `t`. -/
+theorem sub_coe_eq_sub_coe_iff {z w : EReal} {r s : ℝ} :
+    z - (r : EReal) = w - (s : EReal) ↔ z + (s : EReal) = w + (r : EReal) := by
+  have hz : z - (r : EReal) + ((r + s : ℝ) : EReal) = z + (s : EReal) := by
+    induction z with
+    | bot => simp
+    | top => simp
+    | coe t =>
+      rw [← _root_.EReal.coe_sub, ← _root_.EReal.coe_add, ← _root_.EReal.coe_add,
+        _root_.EReal.coe_eq_coe_iff]
+      ring
+  have hw : w - (s : EReal) + ((r + s : ℝ) : EReal) = w + (r : EReal) := by
+    induction w with
+    | bot => simp
+    | top => simp
+    | coe t =>
+      rw [← _root_.EReal.coe_sub, ← _root_.EReal.coe_add, ← _root_.EReal.coe_add,
+        _root_.EReal.coe_eq_coe_iff]
+      ring
+  constructor
+  · intro h
+    rw [← hz, ← hw, h]
+  · intro h
+    have h2 : z - (r : EReal) + ((r + s : ℝ) : EReal)
+        = w - (s : EReal) + ((r + s : ℝ) : EReal) := by rw [hz, hw, h]
+    exact le_antisymm
+      ((_root_.EReal.addLECancellable_coe (r + s)).add_le_add_iff_right.1 h2.le)
+      ((_root_.EReal.addLECancellable_coe (r + s)).add_le_add_iff_right.1 h2.ge)
+
+/-- **The reflection that exchanges conditions (a) and (b) of Theorem 37.5**:
+`z - r = w - s ↔ -w - r = -z - s`. Both say `z + s = w + r`; the right-hand side is the left-hand
+side with the two `EReal`s negated and exchanged, which is what conjugating a bifunction does to
+`F u x` and `(F* y) v`. -/
+theorem sub_coe_eq_sub_coe_iff_neg {z w : EReal} {r s : ℝ} :
+    z - (r : EReal) = w - (s : EReal) ↔ -w - (r : EReal) = -z - (s : EReal) := by
+  have hw : -w - (r : EReal) = -(w + (r : EReal)) :=
+    (_root_.EReal.neg_add (.inr (_root_.EReal.coe_ne_top r))
+      (.inr (_root_.EReal.coe_ne_bot r))).symm
+  have hz : -z - (s : EReal) = -(z + (s : EReal)) :=
+    (_root_.EReal.neg_add (.inr (_root_.EReal.coe_ne_top s))
+      (.inr (_root_.EReal.coe_ne_bot s))).symm
+  rw [sub_coe_eq_sub_coe_iff, hw, hz, _root_.neg_inj, eq_comm]
 
 end ERealSub
 
@@ -433,4 +535,223 @@ theorem kernelSet_subset_domSaddleSubgradient_subset_domSaddle [IsCompatiblePair
 
 end Thm374Relint
 
+
+/-! ### Theorem 37.5: the subdifferential of an equivalence class -/
+
+section BifunPair
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- **Rockafellar's condition (d) of Theorem 37.5**: the point `p = (u, y)` and the pair
+`q = (v, x)` satisfy
+
+`(F u) x - ⟨x, y⟩ = (F* y) v - ⟨u, v⟩`.
+
+It is the equality case of the chain
+`⟨x, y⟩ - (F u) x ≤ ⟨F u, y⟩ ≤ ⟨u, F* y⟩ ≤ ⟨u, v⟩ - (F* y) v`, and Theorem 37.5 says it is
+exactly membership in `∂K` for *every* `K` in the equivalence class `Ω (F)`. So it is the
+subdifferential of the class, written without choosing a representative. -/
+def IsBifunSubgradientPair (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) (p : U × Y) (q : V × X) : Prop :=
+  F p.1 q.2 - ((Bx q.2 p.2 : ℝ) : EReal)
+    = adjointBifun Bu Bx F p.2 q.1 - ((Bu p.1 q.1 : ℝ) : EReal)
+
+/-- Condition (d) read through the reflection `z ↦ r - z`, which is the form the proof uses: both
+differences are then the common value of the squeezed chain, namely `K (u, y)`. -/
+theorem isBifunSubgradientPair_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) (p : U × Y) (q : V × X) :
+    IsBifunSubgradientPair Bu Bx F p q ↔
+      ((Bx q.2 p.2 : ℝ) : EReal) - F p.1 q.2
+        = ((Bu p.1 q.1 : ℝ) : EReal) - adjointBifun Bu Bx F p.2 q.1 :=
+  sub_coe_eq_sub_coe_comm
+
+/-- The defining equation of `IsBifunSubgradientPair`, as a rewriting rule. -/
+theorem isBifunSubgradientPair_def (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) (p : U × Y) (q : V × X) :
+    IsBifunSubgradientPair Bu Bx F p q ↔
+      F p.1 q.2 - ((Bx q.2 p.2 : ℝ) : EReal)
+        = adjointBifun Bu Bx F p.2 q.1 - ((Bu p.1 q.1 : ℝ) : EReal) := Iff.rfl
+
+end BifunPair
+
+section Thm375
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V] [LocallyConvexSpace ℝ V]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  {F : Bifun U X} {K : U × Y → EReal}
+
+/-- **Rockafellar, Theorem 37.5**, (a) ⇔ (d): for *any* `K` in the class `Ω (F)`, the
+subdifferential `∂K` is the relation `IsBifunSubgradientPair` attached to `F`. In particular `∂K`
+depends only on the class, which is Corollary 37.4.1 for the classes `Ω (F)`.
+
+Proof idea: `∂₂K (u, y)` is "the conjugate of the slice `K (u, ·)` is attained at `y`"
+(Theorem 23.5), and that conjugate is `F u` because `bifunOfSaddle Bx K = F` on `Ω (F)`;
+symmetrically `∂₁K (u, y)` is "the *concave* conjugate of the slice `K (·, y)` is attained at `v`",
+and that concave conjugate is `F* y`. Both conditions therefore say that a certain difference
+equals `K (u, y)`, so together they say the two differences are equal, which is (d). Conversely
+(d) squeezes the chain `⟨x, y⟩ - (F u) x ≤ ⟨F u, y⟩ ≤ K (u, y) ≤ ⟨u, F* y⟩ ≤ ⟨u, v⟩ - (F* y) v`
+between two equal ends. -/
+theorem mem_saddleSubgradient_iff_isBifunSubgradientPair (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) (p : U × Y) (q : V × X) :
+    q ∈ saddleSubgradient Bu Bx.flip K p ↔ IsBifunSubgradientPair Bu Bx F p q := by
+  have hA : conj Bx.flip (fun y => K (p.1, y)) = F p.1 :=
+    congrFun (bifunOfSaddle_eq_of_mem_bifunSaddleClass Bu Bx hF hcl hK) p.1
+  have hB : concaveConj Bu (fun u => K (u, p.2)) = adjointBifun Bu Bx F p.2 :=
+    concaveConj_slice_eq_adjointBifun Bu Bx hF hK p.2
+  have h1 : q.1 ∈ concaveSubgradient Bu (fun u => K (u, p.2)) p.1 ↔
+      ((Bu p.1 q.1 : ℝ) : EReal) - adjointBifun Bu Bx F p.2 q.1 = K p := by
+    rw [mem_concaveSubgradient_iff_concaveConj_eq, hB, eq_coe_sub_iff_coe_sub_eq]
+  have h2 : q.2 ∈ subgradient Bx.flip (fun y => K (p.1, y)) p.2 ↔
+      ((Bx q.2 p.2 : ℝ) : EReal) - F p.1 q.2 = K p := by
+    rw [mem_subgradient_iff_conj_eq, hA, LinearMap.flip_apply, eq_coe_sub_iff_coe_sub_eq]
+  rw [isBifunSubgradientPair_iff, mem_saddleSubgradient, h1, h2]
+  constructor
+  · rintro ⟨ha, hb⟩
+    rw [ha, hb]
+  · intro hd
+    have hle1 : ((Bx q.2 p.2 : ℝ) : EReal) - F p.1 q.2 ≤ K p :=
+      le_trans (sub_le_conj Bx (F p.1) q.2 p.2) (hK.1 p)
+    have hiinf : concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2
+        ≤ ((Bu p.1 q.1 : ℝ) : EReal) - adjointBifun Bu Bx F p.2 q.1 := by
+      rw [concaveBracket_apply]
+      exact iInf_le (fun v => ((Bu p.1 v : ℝ) : EReal) - adjointBifun Bu Bx F p.2 v) q.1
+    have hle2 : K p ≤ ((Bu p.1 q.1 : ℝ) : EReal) - adjointBifun Bu Bx F p.2 q.1 :=
+      le_trans (hK.2 p) hiinf
+    have hle2' : K p ≤ ((Bx q.2 p.2 : ℝ) : EReal) - F p.1 q.2 := by rw [hd]; exact hle2
+    have heq1 : ((Bx q.2 p.2 : ℝ) : EReal) - F p.1 q.2 = K p := le_antisymm hle1 hle2'
+    have heq2 : ((Bu p.1 q.1 : ℝ) : EReal) - adjointBifun Bu Bx F p.2 q.1 = K p := by
+      rw [← hd]; exact heq1
+    exact ⟨heq2, heq1⟩
+
+/-- **Rockafellar, Theorem 37.5**, (b) ⇔ (d): the same relation, read from the conjugate side.
+Since (a) ⇔ (d) as well, the subdifferentials of conjugate equivalence classes are inverse to
+each other, exactly as `∂(f*) = (∂f)⁻¹` for purely convex functions (Corollary 23.5.1).
+
+Proof idea: `K̄*` lies in the class `Ω (F_*^*)` at the flipped pairings (Corollary 37.1.2), so
+(a) ⇔ (d) applies to it verbatim; and the resulting condition is (d) with `F u x` and `(F* y) v`
+negated and exchanged, because `F_*^* v y = -(F* y) v` and `(F_*^*)^* = F_*` (the biadjoint
+identity). `sub_coe_eq_sub_coe_iff_neg` is that reflection. -/
+theorem mem_saddleSubgradient_upperConjSaddle_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) (p : U × Y) (q : V × X) :
+    p ∈ saddleSubgradient Bu.flip Bx (upperConjSaddle Bu Bx K) q ↔
+      IsBifunSubgradientPair Bu Bx F p q := by
+  have hbu : IsCompatiblePairing Bu.flip.flip := by rw [LinearMap.flip_flip]; infer_instance
+  have hbx : IsCompatiblePairing Bx.flip.flip := by rw [LinearMap.flip_flip]; infer_instance
+  have hGconv : ConvexBifun (inverseBifun (adjointBifun Bu Bx F)) :=
+    convexBifun_inverseBifun_adjointBifun Bu Bx F
+  have hGcl : ClosedBifun (inverseBifun (adjointBifun Bu Bx F)) :=
+    closedBifun_inverseBifun_adjointBifun Bu Bx F
+  have hKstar : upperConjSaddle Bu Bx K
+      ∈ bifunSaddleClass Bu.flip Bx.flip (inverseBifun (adjointBifun Bu Bx F)) := by
+    rw [saddleClass_conjSaddle Bu Bx hF hcl hK]
+    exact mem_saddleClass_right (partialCl₂_upperConjSaddle Bu Bx hF hcl hK)
+  have hmain := mem_saddleSubgradient_iff_isBifunSubgradientPair Bu.flip Bx.flip hGconv hGcl
+    hKstar q p
+  rw [LinearMap.flip_flip] at hmain
+  rw [hmain, isBifunSubgradientPair_def, isBifunSubgradientPair_def,
+    adjointBifun_flip_inverseBifun_adjointBifun Bu Bx hF hcl]
+  simp only [inverseBifun_apply, LinearMap.flip_apply]
+  exact sub_coe_eq_sub_coe_iff_neg.symm
+
+/-- **Rockafellar, Corollary 37.5.3**: `∂K* (0, 0)` *is* the set of saddle-points of `K`.
+
+Proof idea: `(u, y) ∈ ∂K* (0, 0)` is condition (b) at `q = 0`, hence condition (a) at `q = 0`,
+which by Theorem 37.4 says `(u, y)` is a saddle-point of `K` tilted by the zero functional. -/
+theorem mem_saddleSubgradient_upperConjSaddle_zero_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) (p : U × Y) :
+    p ∈ saddleSubgradient Bu.flip Bx (upperConjSaddle Bu Bx K) 0 ↔ IsSaddlePoint K p := by
+  rw [mem_saddleSubgradient_upperConjSaddle_iff Bu Bx hF hcl hK p 0,
+    ← mem_saddleSubgradient_iff_isBifunSubgradientPair Bu Bx hF hcl hK p 0,
+    mem_saddleSubgradient_iff_isSaddlePoint, saddleTilt_zero]
+
+/-- **Rockafellar, Corollary 37.5.3**, second sentence: the saddle-points of `K` form a convex
+product set. -/
+theorem convex_setOf_isSaddlePoint (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (hK : K ∈ bifunSaddleClass Bu Bx F) : Convex ℝ {p : U × Y | IsSaddlePoint K p} := by
+  have hset : {p : U × Y | IsSaddlePoint K p}
+      = saddleSubgradient Bu.flip Bx (upperConjSaddle Bu Bx K) 0 := by
+    ext p
+    exact (mem_saddleSubgradient_upperConjSaddle_zero_iff Bu Bx hF hcl hK p).symm
+  rw [hset]
+  exact convex_saddleSubgradient
+
+/-- **Rockafellar, Corollary 37.5.3**, last sentence: `K` has a saddle-point exactly when the
+origin lies in `dom ∂K*`. -/
+theorem exists_isSaddlePoint_iff_zero_mem_domSaddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    (∃ p, IsSaddlePoint K p) ↔
+      (0 : V × X) ∈ domSaddleSubgradient Bu.flip Bx (upperConjSaddle Bu Bx K) := by
+  constructor
+  · rintro ⟨p, hp⟩
+    exact ⟨p, (mem_saddleSubgradient_upperConjSaddle_zero_iff Bu Bx hF hcl hK p).2 hp⟩
+  · rintro ⟨p, hp⟩
+    exact ⟨p, (mem_saddleSubgradient_upperConjSaddle_zero_iff Bu Bx hF hcl hK p).1 hp⟩
+
+end Thm375
+
+
+/-! ### Theorem 37.6: existence of a saddle-point -/
+
+section Thm376
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {F : Bifun U X} {K : U × Y → EReal}
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ Y] in
+/-- **Rockafellar, Theorem 37.6**, in the form the book's proof establishes: if the origin lies in
+the relative interior of the effective domain `C* × D*` of the conjugate class, then `K` has a
+saddle-point.
+
+Proof idea: Theorem 37.4 applied to the conjugate saddle-function makes `∂K* (0, 0)` nonempty,
+and Corollary 37.5.3 says that set *is* the set of saddle-points of `K`. -/
+theorem exists_isSaddlePoint_of_zero_mem_kernelSet_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hpr : Proper (graphFn F)) (hK : K ∈ bifunSaddleClass Bu Bx F)
+    (h0 : (0 : V × X) ∈ kernelSet (upperConjSaddle Bu Bx K)) : ∃ p, IsSaddlePoint K p := by
+  have hcc : ConcaveConvexFn (upperConjSaddle Bu Bx K) :=
+    concaveConvexFn_upperConjSaddle Bu Bx hF hcl hK
+  have hprop : ProperSaddleFn (upperConjSaddle Bu Bx K) :=
+    properSaddleFn_upperConjSaddle Bu Bx hF hcl hpr hK
+  have hclosed : ClosedSaddleFn (upperConjSaddle Bu Bx K) :=
+    closedSaddleFn_of_mem_saddleClass (partialCl₁_lowerConjSaddle Bu Bx hF hcl hK)
+      (partialCl₂_upperConjSaddle Bu Bx hF hcl hK)
+      (mem_saddleClass_right (partialCl₂_upperConjSaddle Bu Bx hF hcl hK))
+  have hstruct : SaddleStructure (upperConjSaddle Bu Bx K) :=
+    (closedSaddleFn_iff_saddleStructure hcc hprop).1 hclosed
+  have hmem := kernelSet_subset_domSaddleSubgradient (Bu := Bu.flip) (Bx := Bx) hcc hstruct h0
+  exact (exists_isSaddlePoint_iff_zero_mem_domSaddleSubgradient Bu Bx hF hcl hK).2 hmem
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ Y] in
+/-- **Rockafellar, Theorem 37.6**, with the hypothesis in the `int` form Rockafellar states it in:
+`(0, 0) ∈ int (dom K*) = int C* × int D*`. -/
+theorem exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle
+    (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hpr : Proper (graphFn F))
+    (hK : K ∈ bifunSaddleClass Bu Bx F)
+    (h₁ : (0 : V) ∈ interior (dom₁ (upperConjSaddle Bu Bx K)))
+    (h₂ : (0 : X) ∈ interior (dom₂ (upperConjSaddle Bu Bx K))) : ∃ p, IsSaddlePoint K p :=
+  exists_isSaddlePoint_of_zero_mem_kernelSet_upperConjSaddle Bu Bx hF hcl hpr hK
+    ⟨interior_subset_intrinsicInterior h₁, interior_subset_intrinsicInterior h₂⟩
+
+end Thm376
 end Tdaf.ConvexAnalysis
