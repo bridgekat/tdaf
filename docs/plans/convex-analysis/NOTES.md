@@ -5522,6 +5522,20 @@ will not rewrite a goal containing `partialCl₁ g`, even though the two are eta
      from scratch in `Optimization/Minimum.lean` before the name clash surfaced at build time —
      grep for the *identifier alone* before writing anything, including three-line utilities.
 
+357. **A warm `.lake/build` copied into a fresh worktree can be silently stale, and `lake` will
+     not notice.** In `tdaf-wt/kernel34` the artifacts for `Analysis/Convex/Epigraph.lean` and
+     `Analysis/Convex/Recession/Function.lean` predated the checked-out commit — their `.trace`
+     files had been updated but their `.olean` files had not — so `lake build` reported
+     "Build completed successfully" while `#check` on a declaration added by a *merged* commit
+     failed with `Unknown identifier`. The symptom surfaces only when some *other* edit forces a
+     dependent module to rebuild, and then it looks like a mysterious missing lemma in a file
+     nobody touched (`convexFn_add_coe`, `recessionFn_slice_eq`). Diagnose by comparing olean
+     mtimes with the checkout time
+     (`find .lake/build/lib/lean/Tdaf -name '*.olean' ! -newermt <checkout>`) and confirm with a
+     scratch file that `#check`s the declaration; fix by deleting that module's `.olean`, `.trace`
+     and `.ilean` and rebuilding, which cascades correctly to its dependents. Touching the source
+     does **not** help — `lake` traces content, not mtime.
+
 ## 3. Build and verification
 
 From the repository (or worktree) root:
