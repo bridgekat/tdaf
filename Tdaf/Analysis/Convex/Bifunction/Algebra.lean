@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Tdaf.Analysis.Convex.Duality.ConcaveOps
 import Tdaf.Analysis.Convex.Duality.Exact
 import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Optimization.Fenchel
@@ -28,6 +29,8 @@ each behaves under taking adjoints.
 ## Main definitions
 
 * `infConvBifun F₁ F₂` — Rockafellar's `F₁ □ F₂`, infimal convolution in the second variable.
+* `supConvBifun G₁ G₂` — the concave mirror, supremal convolution in the second variable; this is
+  the shape the adjoint of `F₁ □ F₂` takes.
 * `smulRightBifun F l` — Rockafellar's `Fλ`.
 * `imageBifun F f` — Rockafellar's `Ff`, and `concaveImageBifun` for the concave orientation.
 * `compBifun G F` — Rockafellar's product `GF`, and `concaveCompBifun` for the concave one.
@@ -39,6 +42,8 @@ each behaves under taking adjoints.
 ## Main results
 
 * `domBifun_infConvBifun`, `convexBifun_infConvBifun`, `bracket_infConvBifun` — **Theorem 38.1**.
+* `adjointBifun_infConvBifun`, `adjointBifun_infConvBifun_eq_supConvBifun` — **Theorem 38.2**:
+  `(F₁ □ F₂)* = F₁* □ F₂*`, the right-hand `□` being supremal convolution of concave bifunctions.
 * `convexBifun_smulRightBifun`, `bracket_smulRightBifun` — **Theorem 38.3**.
 * `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq` — **Theorem 38.4**:
   `(Ff)* = F⁎* f*` with the infimum attained. `conj_imageBifun_of_bracket_eq_top` is
@@ -85,17 +90,28 @@ For proper `f` and proper concave `g` the excluded terms are `⊥` on the sup si
 side, so they do not move the extremum, and the plain `⨆`/`⨅` definitions used here agree with his.
 Every theorem below that needs the agreement carries the properness hypothesis explicitly.
 
+**Theorem 38.2 needs no image-closedness.** Rockafellar proves it by closing the image of a sum
+of epigraphs. Here `adjointBifun Bu Bx F y` is *by construction* `concaveConj Bu ⟨F·, y⟩`
+(`adjointBifun_eq_concaveConj_bracket`), so Theorem 38.2 is Theorem 38.1 followed by the concave
+orientation of Theorem 16.4 (`concaveConj_add_of_isExactSum`, `Duality/ConcaveOps.lean`), and the
+closure step never arises. The price is that the hypothesis is an `IsExactSum` on the two brackets,
+one for each `y`, rather than his single relative-interior condition; see the blocked note there.
+
 **`HasFenchelPairing` is a `def` unfolding to an equation, so dot notation is unavailable.**
 `h.conj` for `h : HasFenchelPairing B f g` resolves against `Eq`; the lemma is therefore named
 `hasFenchelPairing_conj` rather than `HasFenchelPairing.conj`.
 
 ## What is not here
 
-* The adjoint formulas of **Theorem 38.2** (`(F₁ □ F₂)* = F₁* □ F₂*`), of **Theorem 38.3**
-  (`(Fλ)* = F*λ`) and of **Theorem 38.5** (`(GF)* = F* G*`), with Corollaries 38.2.1, 38.4.1 and
-  38.5.1. Each needs the *concave* mirror of a §16 row — supremal convolution and concave right
-  scalar multiplication — which the library does not have; by gotcha 9 the mirror is not obtainable
-  by `simp`-normalising through negation, so each is a genuine piece of work.
+* The adjoint formulas of **Theorem 38.3** (`(Fλ)* = F*λ`) and of **Theorem 38.5**
+  (`(GF)* = F* G*`). Each needs the *concave* mirror of a further §16 row — concave right scalar
+  multiplication, concave composition — which the library does not have; by gotcha 9 the mirror is
+  not obtainable by `simp`-normalising through negation, so each is a genuine piece of work.
+* Corollaries 38.2.1, 38.4.1 and 38.5.1, which assert the *reverse* formulas
+  (`(F₁ + F₂)* = F₁* □ F₂*` and its relatives) by applying the theorems to adjoints and using
+  `F** = cl F`. The biadjoint identity for *concave* bifunctions — the concave mirror of
+  `concaveAdjointBifun_adjointBifun_eq_clBifun` — is what is missing; the same gap is recorded for
+  Corollary 37.1.2.
 * Corollary 38.7.2 and the co-finiteness discussion at the end of the section.
 
 ## References
@@ -216,6 +232,69 @@ theorem bracket_infConvBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F₁ F₂ :
   conj_infConv Bx (F₁ u) (F₂ u)
 
 end InfConvBifunConvex
+
+/-! ### Theorem 38.2: the adjoint of an infimal convolute -/
+
+section SupConvBifun
+
+variable {V Y : Type*} [AddCommGroup V]
+
+/-- The concave analogue of `infConvBifun`: `(G₁ □ G₂) y = G₁ y □ G₂ y`, with the *supremal*
+convolution in the second variable. Rockafellar writes `□` for both, the orientation of the
+bifunction deciding which is meant. -/
+noncomputable def supConvBifun (G₁ G₂ : Bifun Y V) : Bifun Y V := fun y => supConv (G₁ y) (G₂ y)
+
+theorem supConvBifun_apply (G₁ G₂ : Bifun Y V) (y : Y) :
+    supConvBifun G₁ G₂ y = supConv (G₁ y) (G₂ y) := rfl
+
+end SupConvBifun
+
+section Thm382
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- **Rockafellar, Theorem 38.2**: `(F₁ □ F₂)* = F₁* □ F₂*`, one dual vector at a time.
+
+The whole theorem is the concave Theorem 16.4 (`concaveConj_add_of_isExactSum`) applied to the two
+concave functions `u ↦ ⟨Fᵢ u, y⟩`: the adjoint at `y` *is* their concave conjugate
+(`adjointBifun_eq_concaveConj_bracket`), and Theorem 38.1 says the bracket of `F₁ □ F₂` is their
+sum. Rockafellar's opening paragraph — that `(F₁ □ F₂)*` is image-closed, so `(F₁ □ F₂)* y` is the
+conjugate of `cl_u ⟨(F₁ □ F₂)u, y⟩` — is not needed here, because the adjoint is *defined* as that
+conjugate.
+
+The hypothesis is Rockafellar's exactly. Its two properness fields say that neither
+`u ↦ ⟨Fᵢ u, y⟩` takes the value `+∞`, which is his branch condition
+`y ∈ dom F₁* ∩ dom F₂*`; the exactness field is what his relative-interior condition supplies. -/
+theorem adjointBifun_infConvBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F₁ F₂ : Bifun U X) {y : Y}
+    (hex : IsExactSum Bu (fun u => -(bracket Bx F₁ u y)) (fun u => -(bracket Bx F₂ u y))) :
+    adjointBifun Bu Bx (infConvBifun F₁ F₂) y
+      = supConv (adjointBifun Bu Bx F₁ y) (adjointBifun Bu Bx F₂ y) := by
+  have hadj : ∀ F : Bifun U X,
+      adjointBifun Bu Bx F y = concaveConj Bu (fun u => bracket Bx F u y) :=
+    fun F => funext fun v => adjointBifun_eq_concaveConj_bracket Bu Bx F y v
+  have hbr : (fun u => bracket Bx (infConvBifun F₁ F₂) u y)
+      = fun u => bracket Bx F₁ u y + bracket Bx F₂ u y :=
+    funext fun u => congrFun (bracket_infConvBifun Bx F₁ F₂ u) y
+  calc adjointBifun Bu Bx (infConvBifun F₁ F₂) y
+      = concaveConj Bu (fun u => bracket Bx (infConvBifun F₁ F₂) u y) := hadj _
+    _ = concaveConj Bu (fun u => bracket Bx F₁ u y + bracket Bx F₂ u y) := by rw [hbr]
+    _ = supConv (concaveConj Bu fun u => bracket Bx F₁ u y)
+          (concaveConj Bu fun u => bracket Bx F₂ u y) := concaveConj_add_of_isExactSum hex
+    _ = supConv (adjointBifun Bu Bx F₁ y) (adjointBifun Bu Bx F₂ y) := by
+          rw [hadj F₁, hadj F₂]
+
+/-- **Rockafellar, Theorem 38.2** as an identity of bifunctions, `(F₁ □ F₂)* = F₁* □ F₂*`. -/
+theorem adjointBifun_infConvBifun_eq_supConvBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F₁ F₂ : Bifun U X)
+    (hex : ∀ y : Y, IsExactSum Bu (fun u => -(bracket Bx F₁ u y))
+      (fun u => -(bracket Bx F₂ u y))) :
+    adjointBifun Bu Bx (infConvBifun F₁ F₂)
+      = supConvBifun (adjointBifun Bu Bx F₁) (adjointBifun Bu Bx F₂) :=
+  funext fun y => adjointBifun_infConvBifun Bu Bx F₁ F₂ (hex y)
+
+end Thm382
 
 /-! ### `EReal` bookkeeping -/
 

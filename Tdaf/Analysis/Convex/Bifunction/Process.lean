@@ -56,6 +56,10 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
   vector of `A⁻¹ 0` recedes `C`.
 * `ConvexProcess.adjointProcess_smul`, `coadjointProcess_smul` — **Theorem 39.6**:
   `(λ A)* = λ (A*)` for `λ > 0`, in both orientations.
+* `ConvexProcess.adjointProcess_add` — **Theorem 39.5**: `(A₁ + A₂)* = A₁* + A₂*`, under the
+  exactness hypothesis of Theorem 16.4 for the two support functions `⟨Aᵢ ·, x*⟩`. The auxiliary
+  `infConv_indicatorFn`, `supConv_neg_indicatorFn` and `indicatorFn_injective` are the dictionary
+  between sums of sets and (supremal or infimal) convolution of their indicators.
 * `ConvexProcess.bracket_indicatorBifun`, `bracket_indicatorBifun_apply`,
   `posHomogeneous_bracket_indicatorBifun`, `convexFn_bracket_indicatorBifun`,
   `closedFn_bracket_indicatorBifun`, `posHomogeneous_bracket_indicatorBifun_arg`,
@@ -93,6 +97,15 @@ would double every statement — the two adjoints are two definitions, `adjointP
 `coadjointProcess Bx.flip Bu.flip (adjointProcess Bu Bx A)`. This is not bookkeeping: with
 `adjointProcess` used twice the sign flips *add* instead of cancelling,
 and one gets `{p | ∀ w ∈ K°, 0 ≤ ⟨p, w⟩}` instead of the bipolar `K°°`.
+
+**Theorem 39.5 carries an `IsExactSum` per `x*`, not a relative-interior condition.**
+Rockafellar's hypothesis is `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅`. Converting it into the exactness of
+`(⟨A₁ ·, x*⟩ + ⟨A₂ ·, x*⟩)*` would go through `IsExactSum.of_relint`, which demands that both
+summands be *closed* proper convex functions; `u ↦ -⟨Aᵢ u, x*⟩` is proper and convex but is not
+concave-closed even for closed `Aᵢ` — its concave closure is `⟨u, Aᵢ* x*⟩`, and the gap between the
+two is exactly Theorem 39.3's third assertion. So the exactness is taken as the hypothesis, one
+instance per `x*`, and the relative-interior sufficient condition is left to whoever supplies a
+closedness-free `IsExactSum.of_relint`. The same remark applies to Theorem 38.2.
 
 **The adjoint is the polar of the graph, with a sign flip on one factor.**
 `mem_graph_adjointProcess_iff_mem_polarCone` says `(y, v) ∈ graph A*` if and only if
@@ -954,6 +967,113 @@ theorem concaveBracket_adjointBifun_indicatorBifun_eq_partialCl₁ (A : ConvexPr
 end ConvexProcess
 
 end ConcaveBracketClosure
+
+/-! ### Theorem 39.5: the adjoint of a sum -/
+
+section SupConvIndicator
+
+variable {W X : Type*} [AddCommGroup X]
+
+/-- The indicator function determines its set.
+
+Proof idea: `δ(· | S)` takes the value `0` exactly on `S` and `⊤` off it, and `0 ≠ ⊤` in
+`EReal`. -/
+theorem indicatorFn_injective : Function.Injective (indicatorFn : Set W → W → EReal) := by
+  intro S T h
+  ext w
+  constructor
+  · intro hw
+    by_contra hc
+    have h0 : indicatorFn S w = 0 := indicatorFn_of_mem hw
+    rw [h, indicatorFn_of_notMem hc] at h0
+    exact absurd h0 (by simp)
+  · intro hw
+    by_contra hc
+    have h0 : indicatorFn T w = 0 := indicatorFn_of_mem hw
+    rw [← h, indicatorFn_of_notMem hc] at h0
+    exact absurd h0 (by simp)
+
+/-- The concave mirror of `infConv_indicatorFn`: the supremal convolute of two *negated* indicator
+functions is the negated indicator function of the sum of the sets. Infimum-oriented convex sets
+are carried by `-δ(· | ·)` (see `ConvexProcess.adjointBifun_indicatorBifun`), so this is the form
+in which Theorem 38.2 speaks about processes.
+
+Proof idea: `supConv` is `infConv` conjugated by negation, so the two negations inside cancel and
+`infConv_indicatorFn` applies verbatim. -/
+theorem supConv_neg_indicatorFn (S T : Set X) :
+    supConv (fun x => -(indicatorFn S x)) (fun x => -(indicatorFn T x))
+      = fun x => -(indicatorFn (S + T) x) := by
+  funext x
+  change -(infConv (fun w => -(-(indicatorFn S w))) (fun w => -(-(indicatorFn T w))) x) = _
+  simp only [neg_neg]
+  rw [infConv_indicatorFn]
+
+end SupConvIndicator
+
+section Thm395
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.5**: `(A₁ + A₂)* = A₁* + A₂*`.
+
+Proof idea: pass to indicator bifunctions. `(A₁ + A₂)` has indicator bifunction `F₁ □ F₂`
+(`indicatorBifun_add`, Theorem 38.1), Theorem 38.2 (`adjointBifun_infConvBifun`) turns its adjoint
+into the supremal convolute of the two adjoints, and `adjointBifun_indicatorBifun` (Theorem 39.2)
+identifies each of those with `-δ(· | Aᵢ* y)`. `supConv_neg_indicatorFn` collapses the supremal
+convolute to `-δ(· | A₁* y + A₂* y)`, and `indicatorFn_injective` reads off the sets. Since a
+convex process is determined by its values, that is the theorem.
+
+The hypothesis is Rockafellar's relative-interior condition in `IsExactSum` form, one instance per
+`y` — the support functions `u ↦ ⟨A₁ u, y⟩` and `u ↦ ⟨A₂ u, y⟩` are the two concave functions of
+`u` whose sum must be conjugated exactly (Theorem 16.4). -/
+theorem adjointProcess_add (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A₁ A₂ : ConvexProcess U X)
+    (hex : ∀ y : Y, IsExactSum Bu (fun u => -(supportFn Bx (A₁.eval u) y))
+      (fun u => -(supportFn Bx (A₂.eval u) y))) :
+    adjointProcess Bu Bx (A₁ + A₂) = adjointProcess Bu Bx A₁ + adjointProcess Bu Bx A₂ := by
+  have hex' : ∀ y : Y, IsExactSum Bu (fun u => -(bracket Bx A₁.indicatorBifun u y))
+      (fun u => -(bracket Bx A₂.indicatorBifun u y)) := by
+    intro y
+    have e₁ : (fun u => -(bracket Bx A₁.indicatorBifun u y))
+        = fun u => -(supportFn Bx (A₁.eval u) y) :=
+      funext fun u => congrArg Neg.neg (congrFun (bracket_indicatorBifun Bx A₁ u) y)
+    have e₂ : (fun u => -(bracket Bx A₂.indicatorBifun u y))
+        = fun u => -(supportFn Bx (A₂.eval u) y) :=
+      funext fun u => congrArg Neg.neg (congrFun (bracket_indicatorBifun Bx A₂ u) y)
+    rw [e₁, e₂]
+    exact hex y
+  have key : ∀ y : Y, (adjointProcess Bu Bx (A₁ + A₂)).eval y
+      = (adjointProcess Bu Bx A₁ + adjointProcess Bu Bx A₂).eval y := by
+    intro y
+    have hL : (fun v => -(indicatorFn ((adjointProcess Bu Bx (A₁ + A₂)).eval y) v))
+        = adjointBifun Bu Bx (A₁ + A₂).indicatorBifun y :=
+      funext fun v => (adjointBifun_indicatorBifun Bu Bx (A₁ + A₂) y v).symm
+    have hR₁ : (fun v => -(indicatorFn ((adjointProcess Bu Bx A₁).eval y) v))
+        = adjointBifun Bu Bx A₁.indicatorBifun y :=
+      funext fun v => (adjointBifun_indicatorBifun Bu Bx A₁ y v).symm
+    have hR₂ : (fun v => -(indicatorFn ((adjointProcess Bu Bx A₂).eval y) v))
+        = adjointBifun Bu Bx A₂.indicatorBifun y :=
+      funext fun v => (adjointBifun_indicatorBifun Bu Bx A₂ y v).symm
+    have heq : (fun v => -(indicatorFn ((adjointProcess Bu Bx (A₁ + A₂)).eval y) v))
+        = fun v => -(indicatorFn ((adjointProcess Bu Bx A₁).eval y
+            + (adjointProcess Bu Bx A₂).eval y) v) := by
+      rw [hL, ← supConv_neg_indicatorFn, hR₁, hR₂, indicatorBifun_add]
+      exact adjointBifun_infConvBifun Bu Bx _ _ (hex' y)
+    have hsets : (adjointProcess Bu Bx (A₁ + A₂)).eval y
+        = (adjointProcess Bu Bx A₁).eval y + (adjointProcess Bu Bx A₂).eval y :=
+      indicatorFn_injective (funext fun v => neg_injective (congrFun heq v))
+    rw [hsets, eval_add]
+  refine ConvexProcess.ext (SetLike.ext fun q => ?_)
+  obtain ⟨y, v⟩ := q
+  rw [← mem_eval, ← mem_eval, key y]
+
+end ConvexProcess
+
+end Thm395
+
 
 /-! ### Theorem 39.1: bounded values force a linear transformation -/
 
