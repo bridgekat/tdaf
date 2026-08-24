@@ -27,7 +27,8 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
 * `ConvexProcess.ofLinearMap` — a linear transformation as a convex process.
 * `ConvexProcess.indicatorBifun` — the indicator bifunction `(F u)(x) = δ(x | A u)` of a
   supremum-oriented process.
-* `ConvexProcess.comp`, and the `Add` instance — the product `B A` and the sum `A₁ + A₂`.
+* `ConvexProcess.comp`, and the `Add` and `SMul` instances — the product `B A`, the sum
+  `A₁ + A₂` and the scalar multiple `λ A`.
 * `ConvexProcess.adjointProcess`, `ConvexProcess.coadjointProcess` — the adjoint `A*` of a
   supremum-oriented process, and the adjoint of an infimum-oriented one (the same definition with
   the inequality reversed).
@@ -53,6 +54,18 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
 * `ConvexProcess.isClosed_image`, `isClosed_image_of_isBounded` — **Corollary 39.7.1**: `A C` is
   closed when `A` is a closed convex process, `C` is a nonempty closed convex set, and no non-zero
   vector of `A⁻¹ 0` recedes `C`.
+* `ConvexProcess.adjointProcess_smul`, `coadjointProcess_smul` — **Theorem 39.6**:
+  `(λ A)* = λ (A*)` for `λ > 0`, in both orientations.
+* `ConvexProcess.bracket_indicatorBifun`, `bracket_indicatorBifun_apply`,
+  `posHomogeneous_bracket_indicatorBifun`, `convexFn_bracket_indicatorBifun`,
+  `closedFn_bracket_indicatorBifun`, `posHomogeneous_bracket_indicatorBifun_arg`,
+  `concaveFn_bracket_indicatorBifun` — **Theorem 39.3**, first two assertions: `⟨Au, x*⟩` is the
+  support function of `A u`, hence positively homogeneous, closed and convex in `x*`, and it is
+  positively homogeneous and concave in `u`.
+* `ConvexProcess.concaveBracket_adjointBifun_indicatorBifun` — the second of the two extremum
+  problems, `⟨u, A* x*⟩ = inf {⟨u, u*⟩ | u* ∈ A* x*}`.
+* `ConvexProcess.concaveBracket_adjointBifun_indicatorBifun_eq_partialCl₁` — **Theorem 39.3**,
+  third assertion: `⟨u, A* x*⟩ = cl_u ⟨Au, x*⟩`.
 
 ## Design notes
 
@@ -347,6 +360,27 @@ theorem smul_graph (A : ConvexProcess U X) {a : ℝ} (ha : 0 < a) :
     change a • a⁻¹ • p = p
     rw [smul_smul, mul_inv_cancel₀ ha.ne', one_smul]
 
+/-- **Rockafellar, §39**, axiom (b): `A (λ u) = λ (A u)` for `λ > 0`.
+
+Both inclusions are one application of `smul_mem_graph`, to `a` and to `a⁻¹`: a cone is stable
+under *both* directions of a positive scaling, which is what turns the inclusion Rockafellar's
+axiom would give into an equality. -/
+theorem eval_smul_arg (A : ConvexProcess U X) {a : ℝ} (ha : 0 < a) (u : U) :
+    A.eval (a • u) = a • A.eval u := by
+  ext x
+  constructor
+  · intro hx
+    have hmem : ((u, a⁻¹ • x) : U × X) ∈ A.graph := by
+      have h := smul_mem_graph (A := A) (inv_nonneg.2 ha.le) hx
+      rwa [Prod.smul_mk, smul_smul, inv_mul_cancel₀ ha.ne', one_smul] at h
+    have hval : a • a⁻¹ • x = x := by rw [smul_smul, mul_inv_cancel₀ ha.ne', one_smul]
+    exact ⟨a⁻¹ • x, hmem, hval⟩
+  · rintro ⟨z, hz, hzx⟩
+    have hzx' : a • z = x := hzx
+    have h := smul_mem_graph (A := A) ha.le (show ((u, z) : U × X) ∈ A.graph from hz)
+    rw [Prod.smul_mk, hzx'] at h
+    exact h
+
 end ConvexProcess
 
 end Indicator
@@ -416,6 +450,46 @@ instance : Add (ConvexProcess U X) where
     exact ⟨⟨x, hx⟩, ⟨y, hy⟩⟩
   · rintro ⟨⟨x, hx⟩, ⟨y, hy⟩⟩
     exact ⟨x + y, x, hx, y, hy, rfl⟩
+
+/-- **Rockafellar, §39**: the **scalar multiple** `λ A`, defined by `(λ A) u = λ (A u)`.
+
+The graph `{(u, λ x) | (u, x) ∈ graph A}` is a pointed convex cone for *every* real `λ`, so the
+definition needs no positivity; Rockafellar's `λ > 0` is needed only from Theorem 39.6 on, where
+the inverse scaling is used. The action is a `MulAction` — `1 • A = A` and `(ab) • A = a • (b • A)`
+both hold — but it is not additive: `2 • A` and `A + A` differ. -/
+instance : SMul ℝ (ConvexProcess U X) where
+  smul a A :=
+    { graph :=
+        { carrier := {p : U × X | ∃ x, (p.1, x) ∈ A.graph ∧ p.2 = a • x}
+          zero_mem' := ⟨0, A.zero_mem_graph, (smul_zero a).symm⟩
+          add_mem' := by
+            rintro ⟨u₁, z₁⟩ ⟨u₂, z₂⟩ ⟨x₁, h₁, hz₁⟩ ⟨x₂, h₂, hz₂⟩
+            refine ⟨x₁ + x₂, add_mem_graph h₁ h₂, ?_⟩
+            have hz₁' : z₁ = a • x₁ := hz₁
+            have hz₂' : z₂ = a • x₂ := hz₂
+            change z₁ + z₂ = a • (x₁ + x₂)
+            rw [smul_add, hz₁', hz₂']
+          smul_mem' := by
+            rintro c ⟨u, z⟩ ⟨x, h, hz⟩
+            refine ⟨(c : ℝ) • x, smul_mem_graph c.2 h, ?_⟩
+            have hz' : z = a • x := hz
+            change (c : ℝ) • z = a • (c : ℝ) • x
+            rw [hz', smul_comm] } }
+
+@[simp] theorem mem_graph_smul {a : ℝ} {A : ConvexProcess U X} {p : U × X} :
+    p ∈ (a • A).graph ↔ ∃ x, (p.1, x) ∈ A.graph ∧ p.2 = a • x := Iff.rfl
+
+/-- **Rockafellar, §39**: `(λ A) u = λ (A u)`, the defining equation of the scalar multiple. -/
+@[simp] theorem eval_smul (a : ℝ) (A : ConvexProcess U X) (u : U) :
+    (a • A).eval u = a • A.eval u := by
+  ext x
+  constructor
+  · rintro ⟨z, hz, hx⟩
+    have hx' : x = a • z := hx
+    exact ⟨z, hz, hx'.symm⟩
+  · rintro ⟨z, hz, hx⟩
+    have hx' : a • z = x := hx
+    exact ⟨z, hz, hx'.symm⟩
 
 /-- **Rockafellar, §39**: the **product** of convex processes, `(B A) u = B (A u)`. -/
 def comp (B : ConvexProcess X Z) (A : ConvexProcess U X) : ConvexProcess U Z where
@@ -607,6 +681,80 @@ theorem graph_coadjointProcess_adjointProcess (Bu : U →ₗ[ℝ] V →ₗ[ℝ] 
     simp only [map_neg] at hb
     linarith
 
+/-- Dividing an inequality by a positive real, as an iff. Used twice in Theorem 39.6, once in each
+direction of the set equality. -/
+private theorem mul_le_iff_le_inv_mul {a : ℝ} (ha : 0 < a) (r s : ℝ) :
+    a * r ≤ s ↔ r ≤ a⁻¹ * s := by
+  constructor
+  · intro h
+    have h' := mul_le_mul_of_nonneg_left h (inv_nonneg.2 ha.le)
+    rwa [← mul_assoc, inv_mul_cancel₀ ha.ne', one_mul] at h'
+  · intro h
+    have h' := mul_le_mul_of_nonneg_left h ha.le
+    rwa [← mul_assoc, mul_inv_cancel₀ ha.ne', one_mul] at h'
+
+/-- The mirror of `mul_le_iff_le_inv_mul`, for the infimum-oriented adjoint. -/
+private theorem le_mul_iff_inv_mul_le {a : ℝ} (ha : 0 < a) (r s : ℝ) :
+    s ≤ a * r ↔ a⁻¹ * s ≤ r := by
+  constructor
+  · intro h
+    have h' := mul_le_mul_of_nonneg_left h (inv_nonneg.2 ha.le)
+    rwa [← mul_assoc, inv_mul_cancel₀ ha.ne', one_mul] at h'
+  · intro h
+    have h' := mul_le_mul_of_nonneg_left h ha.le
+    rwa [← mul_assoc, mul_inv_cancel₀ ha.ne', one_mul] at h'
+
+/-- **Rockafellar, Theorem 39.6**: `(λ A)* = λ (A*)` for `λ > 0`.
+
+Rockafellar deduces this from Theorem 38.3, the adjoint formula for `Fλ`. It is cheaper here as a
+direct computation on cones: `(y, v) ∈ graph (λA)*` says `λ⟨x, y⟩ ≤ ⟨u, v⟩` on `graph A`, which is
+`(y, λ⁻¹ v) ∈ graph A*` after dividing by `λ`, and that is exactly `v ∈ λ (A* y)`. Positivity of
+`λ` is used only to divide. -/
+theorem adjointProcess_smul (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) {a : ℝ}
+    (ha : 0 < a) (A : ConvexProcess U X) :
+    adjointProcess Bu Bx (a • A) = a • adjointProcess Bu Bx A := by
+  refine ConvexProcess.ext (SetLike.ext fun q => ?_)
+  simp only [mem_graph_adjointProcess, mem_graph_smul]
+  constructor
+  · intro h
+    refine ⟨a⁻¹ • q.2, fun p hp => ?_, ?_⟩
+    · have hmem : ((p.1, a • p.2) : U × X) ∈ (a • A).graph := ⟨p.2, hp, rfl⟩
+      have h' := h (p.1, a • p.2) hmem
+      simp only [map_smul, LinearMap.smul_apply, smul_eq_mul] at h' ⊢
+      exact (mul_le_iff_le_inv_mul ha _ _).1 h'
+    · rw [smul_smul, mul_inv_cancel₀ ha.ne', one_smul]
+  · rintro ⟨w, hw, hv⟩ p ⟨x, hx, hz⟩
+    have hz' : p.2 = a • x := hz
+    have hv' : q.2 = a • w := hv
+    have hle := hw (p.1, x) hx
+    rw [hz', hv']
+    simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
+    exact mul_le_mul_of_nonneg_left hle ha.le
+
+/-- **Rockafellar, Theorem 39.6** for an infimum-oriented process: `(λ A)* = λ (A*)`, with the
+adjoint taken in the reversed sense. The proof is `adjointProcess_smul` with both inequalities
+turned round. -/
+theorem coadjointProcess_smul (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) {a : ℝ}
+    (ha : 0 < a) (A : ConvexProcess U X) :
+    coadjointProcess Bu Bx (a • A) = a • coadjointProcess Bu Bx A := by
+  refine ConvexProcess.ext (SetLike.ext fun q => ?_)
+  simp only [mem_graph_coadjointProcess, mem_graph_smul]
+  constructor
+  · intro h
+    refine ⟨a⁻¹ • q.2, fun p hp => ?_, ?_⟩
+    · have hmem : ((p.1, a • p.2) : U × X) ∈ (a • A).graph := ⟨p.2, hp, rfl⟩
+      have h' := h (p.1, a • p.2) hmem
+      simp only [map_smul, LinearMap.smul_apply, smul_eq_mul] at h' ⊢
+      exact (le_mul_iff_inv_mul_le ha _ _).1 h'
+    · rw [smul_smul, mul_inv_cancel₀ ha.ne', one_smul]
+  · rintro ⟨w, hw, hv⟩ p ⟨x, hx, hz⟩
+    have hz' : p.2 = a • x := hz
+    have hv' : q.2 = a • w := hv
+    have hle := hw (p.1, x) hx
+    rw [hz', hv']
+    simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
+    exact mul_le_mul_of_nonneg_left hle ha.le
+
 end ConvexProcess
 
 end Adjoint
@@ -677,6 +825,135 @@ end Bipolar
 end ConvexProcess
 
 end AdjointTopology
+
+/-! ### Theorem 39.3: the two inner products
+
+`⟨Au, x*⟩` is §33's bracket of the indicator bifunction of `A`, and `⟨u, A* x*⟩` is the concave
+bracket of its adjoint. Both are ordinary extremum problems over the values of a process: a
+maximisation of `⟨·, x*⟩` over `A u`, and a minimisation of `⟨u, ·⟩` over `A* x*`. -/
+
+section Bracket
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.3**: the inner product `⟨Au, x*⟩` is the **support function** of the
+convex set `A u`. Every clause of Theorem 39.3 about the `x*` variable is a property of support
+functions, cited from §13; the identity itself is `supportFn_eq_conj_indicatorFn` read backwards,
+since `⟨Fu, ·⟩` is by definition the conjugate of `F u = δ(· | A u)`. -/
+theorem bracket_indicatorBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) :
+    bracket Bx A.indicatorBifun u = supportFn Bx (A.eval u) :=
+  (supportFn_eq_conj_indicatorFn Bx (A.eval u)).symm
+
+/-- The first of Rockafellar's two extremum problems: `⟨Au, x*⟩ = sup {⟨x, x*⟩ | x ∈ A u}`. -/
+theorem bracket_indicatorBifun_apply (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U)
+    (y : Y) : bracket Bx A.indicatorBifun u y = ⨆ x ∈ A.eval u, ((Bx x y : ℝ) : EReal) := by
+  rw [bracket_indicatorBifun, supportFn_apply]
+
+/-- **Rockafellar, Theorem 39.3**: `⟨Au, ·⟩` is positively homogeneous, being a support
+function. -/
+theorem posHomogeneous_bracket_indicatorBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X)
+    (u : U) : PosHomogeneous (bracket Bx A.indicatorBifun u) := by
+  rw [bracket_indicatorBifun]
+  exact posHomogeneous_supportFn Bx _
+
+/-- **Rockafellar, Theorem 39.3**: `⟨Au, ·⟩` is convex, being a conjugate. -/
+theorem convexFn_bracket_indicatorBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) :
+    ConvexFn (bracket Bx A.indicatorBifun u) :=
+  convexFn_bracket Bx A.indicatorBifun u
+
+/-- **Rockafellar, Theorem 39.3**: `⟨A ·, x*⟩` is positively homogeneous. This is the one clause
+that uses the definition of a convex process rather than §33: `A (λ u) = λ (A u)` is axiom (b)
+(`eval_smul_arg`), and the support function of a positive multiple of a set is the corresponding
+multiple of the support function. -/
+theorem posHomogeneous_bracket_indicatorBifun_arg (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A : ConvexProcess U X) (y : Y) :
+    PosHomogeneous fun u => bracket Bx A.indicatorBifun u y := by
+  intro a ha u
+  change bracket Bx A.indicatorBifun (a • u) y = (a : EReal) * bracket Bx A.indicatorBifun u y
+  rw [bracket_indicatorBifun, bracket_indicatorBifun, eval_smul_arg A ha, supportFn_smul Bx ha]
+
+/-- **Rockafellar, Theorem 39.3**: `⟨A ·, x*⟩` is concave. This is Theorem 33.1 for the indicator
+bifunction, which is convex. -/
+theorem concaveFn_bracket_indicatorBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X)
+    (y : Y) : ConcaveFn fun u => bracket Bx A.indicatorBifun u y :=
+  concaveFn_bracket A.convexBifun_indicatorBifun Bx y
+
+end ConvexProcess
+
+end Bracket
+
+section BracketClosed
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+  {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsContinuousPairing Bx.flip]
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.3**: `⟨Au, ·⟩` is closed as well as convex and positively
+homogeneous. -/
+theorem closedFn_bracket_indicatorBifun (A : ConvexProcess U X) (u : U) :
+    ClosedFn (bracket Bx A.indicatorBifun u) :=
+  closedFn_bracket (F := A.indicatorBifun) u
+
+end ConvexProcess
+
+end BracketClosed
+
+section ConcaveBracket
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+/-- The second of Rockafellar's two extremum problems: `⟨u, A* x*⟩ = inf {⟨u, u*⟩ | u* ∈ A* x*}`.
+
+Together with `bracket_indicatorBifun_apply` this is the pair of linear programs displayed after
+Theorem 39.4, whose values agree "usually" by Theorem 39.3. The proof is the definition of the
+concave bracket plus `adjointBifun_indicatorBifun` (Theorem 39.2): the indicator of `A* x*` turns
+the unrestricted infimum into a restricted one. -/
+theorem concaveBracket_adjointBifun_indicatorBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) (y : Y) :
+    concaveBracket Bu (adjointBifun Bu Bx A.indicatorBifun) u y
+      = ⨅ v ∈ (adjointProcess Bu Bx A).eval y, ((Bu u v : ℝ) : EReal) := by
+  rw [concaveBracket_apply]
+  refine iInf_congr fun v => ?_
+  rw [adjointBifun_indicatorBifun]
+  by_cases hv : v ∈ (adjointProcess Bu Bx A).eval y
+  · rw [indicatorBifun_apply, indicatorFn_of_mem hv, neg_zero, sub_zero, iInf_pos hv]
+  · rw [indicatorBifun_apply, indicatorFn_of_notMem hv, iInf_neg hv]
+    simp
+
+end ConvexProcess
+
+end ConcaveBracket
+
+section ConcaveBracketClosure
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace U]
+  [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.3**, third assertion: `⟨u, A* x*⟩ = cl_u ⟨Au, x*⟩`.
+
+The concave closure in the first variable is the *only* difference between the two inner products,
+for every convex process — closedness of `A` plays no part. This is Theorem 33.2's first equation
+(`concaveBracket_adjointBifun_eq_partialCl₁`) applied to the indicator bifunction. -/
+theorem concaveBracket_adjointBifun_indicatorBifun_eq_partialCl₁ (A : ConvexProcess U X) (y : Y) :
+    (fun u => concaveBracket Bu (adjointBifun Bu Bx A.indicatorBifun) u y)
+      = fun u => partialCl₁ (fun p : U × Y => bracket Bx A.indicatorBifun p.1 p.2) (u, y) :=
+  concaveBracket_adjointBifun_eq_partialCl₁ A.convexBifun_indicatorBifun y
+
+end ConvexProcess
+
+end ConcaveBracketClosure
 
 /-! ### Theorem 39.1: bounded values force a linear transformation -/
 
