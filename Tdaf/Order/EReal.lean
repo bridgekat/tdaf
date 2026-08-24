@@ -244,6 +244,15 @@ theorem coe_sub_eq_bot_iff {a : ℝ} {z : EReal} : (a : EReal) - z = ⊥ ↔ z =
     rw [← _root_.EReal.coe_sub]
     exact _root_.EReal.coe_ne_bot _
 
+/-- Moving a real summand across an inequality against a real coercion.
+
+The three copies this replaced — in `Subgradient/Approx.lean`, `Saddle/Defs.lean` and
+`Saddle/Correspondence.lean` — arose because none of those files imports the others. -/
+theorem add_coe_le_coe_iff {z : EReal} {c m : ℝ} :
+    z + (c : EReal) ≤ (m : EReal) ↔ z ≤ ((m - c : ℝ) : EReal) := by
+  rw [_root_.EReal.coe_sub, _root_.EReal.le_sub_iff_add_le (.inl (_root_.EReal.coe_ne_bot c))
+    (.inl (_root_.EReal.coe_ne_top c))]
+
 /-- Subtracting a value below `⊤` from a real number cannot give `⊥`. -/
 theorem coe_sub_ne_bot {a : ℝ} {z : EReal} (h : z ≠ ⊤) : (a : EReal) - z ≠ ⊥ := fun hc =>
   h (coe_sub_eq_bot_iff.1 hc)
