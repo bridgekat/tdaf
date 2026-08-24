@@ -100,8 +100,9 @@ attained throughout `C`".
 **The polyhedral refinement of Theorem 27.3 is blocked upstream of §27, but Corollary 27.3.2 is
 not.** Rockafellar proves the refinement from Helly's theorem in the form of Theorem 21.5, applied
 to the collection consisting of `C` and the level sets `lev_α h`, `α > inf`. Theorem 21.5 is not
-formalised — and its real obstruction is not the one `Helly.lean` used to name; see that file's
-`NOTES.md` entry. Theorem 27.1(f), which the refinement also wants, **is** now available.
+formalised. Its obstruction is **no longer** the closedness hypothesis in Theorems 16.4 and 20.1 —
+that is fixed, see `04-representation.md` — but Corollary 19.1.2 for *functions* and the
+identification `kⱼ* = δ(· ∣ Cⱼ)` inside Theorem 21.4. Theorem 27.1(f), which the refinement also wants, **is** now available.
 
 **Corollary 27.3.2 does not need any of that.** The book derives it from 27.3.1;
 `argmin_nonempty_of_polyhedralFn` gets it directly from the finitely generated description of the

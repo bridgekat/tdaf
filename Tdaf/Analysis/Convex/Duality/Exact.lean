@@ -22,10 +22,11 @@ Attouch–Brezis/Rockafellar–Robinson conditions in Banach spaces.
 
 This file names the **conclusion**. `IsExactSum` and `IsExactImage` are hypothesis-only interfaces;
 the sufficient conditions for them are proved elsewhere, each in the module that owns its
-hypothesis (`IsExactSum.of_relint` in `RelativeInterior.lean`, `IsExactSum.of_polyhedral` in
-`Polyhedral/Duality.lean`, and so on). Downstream — Theorems 16.3 and 16.4, Theorems 23.8 and 23.9,
-Fenchel's duality theorem, and §38 — every consumer is reduced to these two interfaces once and for
-all.
+hypothesis (`IsExactSum.of_relint` in `Duality/Relint.lean`, `IsExactSum.of_polyhedral` in
+`Polyhedral/Duality.lean`, and so on; each has an `…_closed` variant carrying the argument, and the
+unprimed name is the book's proper-convex statement). Downstream — Theorems 16.3 and 16.4,
+Theorems 23.8 and 23.9, Fenchel's duality theorem, and §38 — every consumer is reduced to these two
+interfaces once and for all.
 
 ## Main definitions
 

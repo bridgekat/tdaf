@@ -449,11 +449,30 @@ unsatisfiable for e.g. `A = 0`. The sum side needs no guard because `y = y + 0` 
 ### `Tdaf/Analysis/Convex/Duality/Relint.lean`
 
 The only file that *produces* a D5 interface. `IsExactImage.of_relint` (**Thm 16.3**) and
-`IsExactSum.of_relint` (**Thm 16.4**), plus the three steps they are assembled from:
-`mem_constancySpace_conj_of_relint`, `le_of_mk_mem_recessionCone_epi_conj`,
-`mk_mem_linealitySpace_epi_conj_of_relint`. Layers differ between the two: the image rule needs
-`FiniteDimensional ℝ G` and `ℝ H` (Thm 9.2 runs in `H`), the sum rule needs `FiniteDimensional ℝ F`
-(Cor 9.1.1 runs in `F × ℝ`); `E` is only ever a normed space.
+`IsExactSum.of_relint_closed` (**Thm 16.4** for closed proper convex summands), plus the three steps
+they are assembled from: `mem_constancySpace_conj_of_relint`,
+`le_of_mk_mem_recessionCone_epi_conj`, `mk_mem_linealitySpace_epi_conj_of_relint`. Layers differ
+between the two: the image rule needs `FiniteDimensional ℝ G` and `ℝ H` (Thm 9.2 runs in `H`), the
+sum rule needs `FiniteDimensional ℝ F` (Cor 9.1.1 runs in `F × ℝ`); `E` is only ever a normed space.
+
+A second section, `Closure`, removes the closedness hypothesis and so makes `IsExactSum.of_relint`
+the book's Theorem 16.4 (*proper convex*, common relative interior point). It also adds
+`FiniteDimensional ℝ E`, because Thm 7.4 (`ConvexFn.proper_clFn`) is finite-dimensional. The
+machinery:
+
+* `TendstoClFnAlongSegment f x₀` — `∀ y, Tendsto (fun a => f ((1-a)•x₀ + a•y)) (𝓝[<] 1)
+  (𝓝 (clFn f y))`. Two producers: `ConvexFn.tendstoClFnAlongSegment` (**Thm 7.5**,
+  `x₀ ∈ ri (dom f)`) and `ClosedProperConvexFn.tendstoClFnAlongSegment` (**Cor 7.5.1**,
+  `x₀ ∈ dom f`). Naming the hypothesis is what lets §16 and §20 share one closure lemma.
+* `conj_add_eq_conj_clFn_add_clFn` — **Thm 9.3** in conjugate form: `(f + g)* = (cl f + cl g)*`.
+  The easy half is `cl ≤ id` plus `conj_antitone`; the hard half compares affine minorants through
+  `conj_le_coe_iff` and one `le_of_tendsto_of_tendsto'`.
+  The book's own form of Thm 9.3, `cl (f + g) = cl f + cl g`, is `clFn_add` in
+  `Recession/Closedness.lean` — it was already there, and it is *not* usable in §20: it needs
+  Thm 6.5 to put `x₀ ∈ ri (dom (f + g))`, hence a relative interior point of both domains, whereas
+  Theorem 20.1 has only a point of `dom f`.
+* `IsExactSum.of_clFn` — exactness transfers from `cl f, cl g` to `f, g` given the conjugate
+  identity. Needs `[IsContinuousPairing B]` (for `conj_clFn`), nothing more.
 
 ### `Tdaf/Analysis/Convex/Duality/Continuity.lean`
 
@@ -673,11 +692,14 @@ the `⊥`/`⊤` values uniformly.
 
 ### `Tdaf/Analysis/Convex/Polyhedral/Duality.lean`
 
-**Thm 20.1** as `IsExactSum.of_polyhedral`, with `of_polyhedral_pair` (both functions polyhedral,
-so only `dom f ∩ dom g ≠ ∅` is asked) as the base case. `of_polyhedral_pair` is `of_relint`'s proof
+**Thm 20.1** as `IsExactSum.of_polyhedral` (`f` polyhedral proper, `g` *proper convex*), with
+`of_polyhedral_closed` (`g` closed proper convex) carrying the argument and `of_polyhedral_pair`
+(both functions polyhedral, so only `dom f ∩ dom g ≠ ∅` is asked) as the base case. The closedness
+removal is one line: `conj_add_eq_conj_clFn_add_clFn` with Cor 7.5.1 on the polyhedral side and
+Thm 7.5 on the other. `of_polyhedral_pair` is `of_relint_closed`'s proof
 with Corollary 9.1.1 replaced by polyhedrality: both proofs need only that `epi f* + epi g*` is
-closed. `of_polyhedral` follows Rockafellar — put `δ = δ(· | aff (dom g))`, apply `of_relint` to
-`δ + f` and `g`, the pair case to `δ` and `f`, and re-absorb `δ*` using `δ + g = g`
+closed. `of_polyhedral_closed` follows Rockafellar — put `δ = δ(· | aff (dom g))`, apply
+`of_relint_closed` to `δ + f` and `g`, the pair case to `δ` and `f`, and re-absorb `δ*` using `δ + g = g`
 (`indicatorFn_add_eq_self`). The step he states in a clause is
 `relint_inter_relint_nonempty_of_subset_affineSpan`: if `D₁ ⊆ aff D₂`, `x₀ ∈ D₁ ∩ ri D₂`, then
 `ri D₁ ∩ ri D₂ ≠ ∅` — prolong the segment from a point of `ri D₁` *through* `x₀` to land in `D₂`
@@ -1923,15 +1945,24 @@ tolerance `ε/λ`, which makes the summed inequality *strict*; `EReal` is not a 
 monoid, so `Finset.sum_lt_sum` is unavailable there (gotcha 117). Tolerance `ε/(2λ)` keeps every
 step non-strict and the proof goes through unchanged.
 
-**Not here**: Theorems 21.4 and 21.5. The real obstruction is not either of the two pieces this
-entry used to name. `IsExactSum.of_relint` and `IsExactSum.of_polyhedral` — the project's Theorems
-16.4 and 20.1 — are **strictly weaker than the book's**: they require `ClosedProperConvexFn` where
-the book requires only *proper convex*. Rockafellar's 21.4 applies Theorem 20.1 to a *generated*
-positively homogeneous function, which is in general neither closed nor proper, so the gap is
-`cl (f + g) = cl (cl f + cl g)` under `ri (dom f) ∩ ri (dom g) ≠ ∅`, threaded through Theorem 16.4.
-That is a §16 project, not a §21 one; closedness is load-bearing inside
+**Not here**: Theorems 21.4 and 21.5. The obstruction this entry used to name — that
+`IsExactSum.of_relint`/`of_polyhedral` were strictly weaker than the book's Theorems 16.4 and 20.1,
+requiring `ClosedProperConvexFn` — is **fixed**. Both now carry the book's hypotheses; see the
+`Duality/Relint.lean` entry. The diagnosis "closedness is load-bearing inside
 `conj_add_eq_clFn_infConv`, and replacing `f, g` by their closures moves the inequality the wrong
-way.
+way" was wrong: `conj_add_eq_clFn_infConv` is applied to `cl f, cl g`, where it is exactly as
+strong as before, and the only step that has to be repaired is the comparison of `(f + g)*` with
+`(cl f + cl g)*` — and those two are *equal*, by one passage to the limit along a segment. The
+proposed repair `cl (f + g) = cl (cl f + cl g)` was in the project all along (**Thm 9.3**,
+`clFn_add` in `Recession/Closedness.lean`) and is *not* the one §20 can use, since it needs a
+relative interior point of both domains.
+
+What is left of 21.4 is **Corollary 19.1.2 for functions** (`k₀` polyhedral: `epi k₀` is the cone
+generated by finitely many points plus `(0,1)`, but nothing identifies `posHomGenCone (convFn …)`
+with a finitely generated cone) and the identification `kⱼ* = δ(· ∣ Cⱼ)` with the Theorem 20.2
+separation step. The epigraph-sum description of `conv {k₀, k₁}` is needed only in the direction
+`k 0 ≤ k₀ (-z) + k₁ z`, which is `posHomGen_mono` plus "`epi k` is a convex cone containing
+`epi k₀ ∪ epi k₁`".
 
 Three smaller pieces are missing as well: the epigraph-sum description of `conv {k₀, k₁}` (Theorem
 3.8 for positively homogeneous functions); polyhedrality of the positively homogeneous function
@@ -4986,6 +5017,36 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`
 will not rewrite a goal containing `partialCl₁ g`, even though the two are eta-equal. State
 `have`s in the contracted form and let `funext` introduce the point.
+
+460. **`conj_clFn` (Thm 12.2, first half) asks for `[IsContinuousPairing B]`, not for nothing.**
+     Most of `Duality/Conjugate.lean` is hypothesis-free on the pairing, so a new lemma whose only
+     conjugacy step is "`(cl f)* = f*`" fails instance synthesis in a section whose variables carry
+     no pairing class, with the goal `⊢ IsContinuousPairing B` printed after the real hypotheses.
+     `IsCompatiblePairing extends IsContinuousPairing`, so any caller that already has the
+     compatible instance is fine; add `[IsContinuousPairing B]` to the intermediate lemma rather
+     than strengthening it to `IsCompatiblePairing`.
+
+461. **`EReal` has no `Filter.Tendsto.add`; use `EReal.continuousAt_add` and `prodMk_nhds`.**
+     Addition is discontinuous at `(⊥, ⊤)` and `(⊤, ⊥)`, so the idiom is
+     `(EReal.continuousAt_add h h').tendsto.comp (h₁.prodMk_nhds h₂)` with
+     `h : p.1 ≠ ⊤ ∨ p.2 ≠ ⊥` and `h' : p.1 ≠ ⊥ ∨ p.2 ≠ ⊤`. When both limits are `≠ ⊥` — which is
+     what properness of a *closure* gives (Thm 7.4) — both side conditions are `Or.inr _` and
+     `Or.inl _`. The composite's `Function.comp` unifies definitionally with
+     `fun a => (f + g) (…)`, so `exact` closes the goal without `Pi.add_apply`.
+
+462. **To compare two `EReal` conjugates, go through real upper bounds and `by_contra`.**
+     `conj_le_iff` relates `f*` to a *function*, not to another conjugate, so the way to prove
+     `conj B h₁ y ≤ conj B h₂ y` is: prove `∀ c : ℝ, conj B h₂ y ≤ c → conj B h₁ y ≤ c` (each side
+     unfolds by `conj_le_coe_iff` into a statement about affine minorants, where limits can be
+     taken), then `by_contra` and `EReal.lt_iff_exists_real_btwn` to produce the separating real.
+     This also handles `⊤` and `⊥` with no case split.
+
+463. **Rewrite the *argument* of a pairing before applying a real-valued `Tendsto` lemma.**
+     `simp only [affineFn_eq_coe, hlin]` with
+     `hlin : ∀ a, B ((1-a)•x₀ + a•x) y = (1-a)*B x₀ y + a*B x y` turns the goal into a coerced real
+     limit, and `EReal.tendsto_coe.2` then discharges it from `tendsto_affine_nhdsLT_one`. Going
+     the other way — `(EReal.continuous_coe_real_ereal.tendsto _).comp _` — leaves a
+     `Function.comp` that does not always unify.
 
 ## 3. Build and verification
 

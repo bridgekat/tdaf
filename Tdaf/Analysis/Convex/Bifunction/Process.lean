@@ -120,8 +120,10 @@ Rockafellar's hypothesis is `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅`. Convertin
 summands be *closed* proper convex functions; `u ↦ -⟨Aᵢ u, x*⟩` is proper and convex but is not
 concave-closed even for closed `Aᵢ` — its concave closure is `⟨u, Aᵢ* x*⟩`, and the gap between the
 two is exactly Theorem 39.3's third assertion. So the exactness is taken as the hypothesis, one
-instance per `x*`, and the relative-interior sufficient condition is left to whoever supplies a
-closedness-free `IsExactSum.of_relint`. The same remark applies to Theorem 38.2.
+instance per `x*`. `IsExactSum.of_relint` no longer demands closedness (it asks only for proper
+convex summands with a common relative interior point of the effective domains), so discharging the
+hypothesis from Rockafellar's `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅` is now available and simply has not
+been done. The same remark applies to Theorem 38.2.
 
 **Theorem 39.8 does not need Theorem 38.5.** Rockafellar deduces `(BA)* = A* B*` from the adjoint
 formula for a product of bifunctions. Read directly, `(z*, u*) ∈ (BA)*` says that the concave
@@ -1233,8 +1235,8 @@ into the two inequalities.
 
 The hypothesis is Rockafellar's `ri (range A) ∩ ri (dom B) ≠ ∅` in `IsExactSum` form, one instance
 per `(z*, u*)`: the two effective domains involved *are* `range A` and `dom B`. As for Theorem
-39.5, the exactness is taken as the hypothesis because the available producer
-`IsExactSum.of_relint` demands closed summands, which these are not. -/
+39.5, the exactness is taken as the hypothesis rather than derived; `IsExactSum.of_relint` no longer
+demands closed summands, so the derivation is available and simply has not been done. -/
 theorem adjointProcess_comp (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (Bz : Z →ₗ[ℝ] W →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (B : ConvexProcess X Z)
     (hex : ∀ (w : W) (v : V), IsExactSum Bx
