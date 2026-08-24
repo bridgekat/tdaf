@@ -1821,8 +1821,8 @@ below any prescribed bound.
 
 **Not here**: Theorem 30.4 (g)–(j), which route through Theorem 27.1(d)/(f). **Theorem 14.2 is now
 formalized** (`Recession/Conjugate.lean`) and with it Theorem 27.1(f), so what remains is
-Corollary 13.3.4's clauses (b)–(d), which need Theorem 13.1's `ri`/`int`/`aff` clauses, and
-`int (dom (F 0)*) = int (domConcave F*)`, a Corollary 7.4.1-type result.
+`int (dom (F 0)*) = int (domConcave F*)`, a Corollary 7.4.1-type result. **Corollary 13.3.4 is now
+done in all four clauses** (`Duality/Level.lean`), so that is the only remaining obstruction.
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -2238,6 +2238,38 @@ gauges, so it belongs to §15 — three lines from `lscHull_posHomGen_eq`); Coro
 (superseded by `Caratheodory.lean`); Corollary 9.8.3 (needs `convHullFn` for a finite *family*,
 which is §5 work).
 
+### `Tdaf/Analysis/Convex/Duality/SupportRelint.lean`
+
+**Theorem 13.1's `ri`, `int` and `aff` clauses**, and **Corollary 1.4.1** in the pointwise form the
+last of them is.
+
+```lean
+theorem neg_supportFn_neg_eq_iff …            -- the "reversible direction" predicate
+theorem exists_forall_eq_of_notMem_affineSpan …                       -- Cor 1.4.1
+theorem mem_relint_iff_lt_supportFn …                                 -- Thm 13.1, ri
+theorem mem_interior_iff_lt_supportFn …                               -- Thm 13.1, int
+theorem mem_affineSpan_iff_eq_supportFn …                             -- Thm 13.1, aff
+```
+
+**A thin module between `Duality/Support.lean` and `Duality/Level.lean`, and it has to be.** The
+closure clause of Theorem 13.1 is layer C and lives with the rest of the support-function API; these
+three are layer D *and* need `intrinsicInterior`, i.e. `RelativeInterior.lean`, which is not below
+`Support.lean`. Importing it there would put `Barrier`, `Gauge`, `Ops`, `Polar`,
+`Polyhedral/Separation`, `Recession/Conjugate` and `Subgradient/Defs` downstream of it.
+`supportFn_neg_eq_neg_iff` moved here from `Level.lean`, which only held it because Theorem 13.4
+happened to be its first consumer.
+
+**All three clauses are genuinely finite-dimensional**, and one counterexample kills all three at
+once: `C = ker φ` for a discontinuous functional `φ`. Then `ri C = aff C = C`, `int C = ∅`, the
+reversible directions are exactly the `y` with `⟨·, y⟩ = 0`, and `δ*(y | C) = +∞` elsewhere — so all
+three stated conditions hold at *every* point of the space.
+
+**Two corrections to the book's Theorem 13.1.** The `int` clause is false for `C = ∅` over the zero
+space (the condition is vacuous while `int ∅ = ∅`), so `C.Nonempty` is assumed; and over a pairing it
+needs `B.SeparatingRight`, because `y ≠ 0` and `⟨·, y⟩ ≠ 0` are different conditions once
+`Rⁿ = (Rⁿ)*` is given up. The `aff` clause, on the other hand, needs **no convexity** — Corollary
+1.4.1 is about arbitrary sets, and the proof separates a point from the affine subspace `aff C`.
+
 ### `Tdaf/Analysis/Convex/Duality/Level.lean`
 
 Rockafellar §13's conjugate-and-recession part: **Theorem 13.5** (the support function of
@@ -2271,6 +2303,24 @@ half that the ray description gives *without* convexity of the minorant, which i
 Also here: `posHomogeneous_ofEpi` (a cone's `ofEpi` is positively homogeneous — no convexity),
 `posHomogeneous_pairing`, `convexFn_pairing`, Theorem 13.4's `linealitySpaceFn_conj`, and Corollary
 13.3.1's `Cofinite` / `cofinite_iff_dom_conj_eq_univ`.
+
+**Corollary 13.3.4 is here in all four clauses** — `mem_closure_dom_conj_iff`,
+`mem_relint_dom_conj_iff`, `mem_interior_dom_conj_iff`, `mem_affineSpan_dom_conj_iff`, with
+`zero_mem_closure_dom_conj_iff` kept as a two-line specialisation so that its call sites did not
+move — together with **Corollary 13.4.2** (`interior_dom_conj_nonempty_iff`) and
+`separatingRight_flip_of_separatingDual`.
+
+**Corollary 13.3.4 needs neither Theorem 12.3 nor the translation by `-y₀`.** Rockafellar sets
+`g = f - ⟨·, y₀⟩`, computes `dom g* = (dom f*) - y₀`, and applies Theorem 13.1 to that translate.
+Stating the four clauses through `recessionFn f` and `⟨y, y₀⟩` instead of through `g 0⁺` makes the
+translation disappear. Two further observations the book does not make: the exception set in (b),
+`-(g0⁺)(-y) = (g0⁺)(y) = 0`, is **`y₀`-independent** — it is `-(f0⁺)(-y) = (f0⁺)(y)` — and its
+"`= 0`" is forced by the inequality at `-y`, so (b) really is Theorem 13.1's shape verbatim.
+
+**Corollary 13.4.2 needs no `finrank` count**, contrary to what this entry used to say by grouping
+it with Corollary 13.4.1. "`dim f*` = n iff lineality `f` = 0" unwinds to
+`vectorSpan (dom f*) = ⊤` iff the annihilator is trivial, which is Hahn–Banach, not dimension
+arithmetic. Only Corollary 13.4.1, about *rank*, needs the count.
 
 **Theorem 13.3's dual form and Corollary 13.3.4(a) are here for the same reason.**
 `recessionFn_eq_supportFn_dom_conj` — the recession function of a closed proper convex `f` is the
@@ -3791,6 +3841,33 @@ noncomputable, so even `fun q => -(K (q.2, q.1))` needs the keyword; the error n
      level".** `{t | 0 ≤ t ∧ g t ≤ α}` is `Ici 0 ∩ g ⁻¹' Iic α`, closed via
      `lowerSemicontinuous_iff_isClosed_preimage`, and its `sSup` lies in it. That replaces an entire
      `liminf`/sequence argument. (In `Mathlib/Topology/Order/Monotone.lean`.)
+
+165. **`AffineSubspace.affineSpan_eq_top_iff_vectorSpan_eq_top_of_nonempty` is namespaced and takes
+     `k V P` explicitly.** Mathlib's own proof calls its neighbour
+     `vectorSpan_eq_top_of_affineSpan_eq_top k V P` unqualified, which makes the pair look
+     root-level; both are inside `namespace AffineSubspace`. The call is
+     `AffineSubspace.affineSpan_eq_top_iff_vectorSpan_eq_top_of_nonempty ℝ F F hne`. Unqualified use
+     reports "unknown identifier", and the enclosing `rw` then reports a second, spurious "unsolved
+     goals".
+
+166. **`rw [← hy x]` with `hy : ∀ x, g x = B x y` points the wrong way half the time.**
+     `g x → B x y` is `rw [hy x]`; `rw [← hy x]` is `B x y → g x`. A proof that mixes a functional
+     obtained from separation with the pairing form from `exists_pairing_eq` needs both directions
+     within a few lines, and the error is always "did not find an occurrence of the pattern",
+     naming the side you did not want.
+
+167. **A support-function theorem's `ri`/`int`/`aff` clauses cannot sit beside its closure clause.**
+     The closure clause is layer C; the others are layer D *and* need `intrinsicInterior`, i.e.
+     `RelativeInterior.lean`, which is not below `Duality/Support.lean` and cannot be put there
+     cheaply — seven modules would inherit the dependency. Insert a thin module between
+     `Support.lean` and its consumer instead. This is the general shape of the layer-D/topology
+     tension, not a one-off.
+
+168. **Separating a point from a `Submodule` gives "constant on it" only after a scaling argument.**
+     `eq_of_le_on_affineSubspace` wants an `AffineSubspace`, and a `Submodule` reaches one only
+     through `Submodule.toAffineSubspace`, which type ascription does not trigger (gotcha 53).
+     Feeding `geometric_hahn_banach_compact_closed` the submodule as a *set* and then running
+     `t • w ∈ V` for all `t : ℝ` through the bound is three lines and dodges the coercion entirely.
 
 
 **`rw` needs the eta-contracted form.** A hypothesis stated as `(fun p => partialCl₁ g p) = …`

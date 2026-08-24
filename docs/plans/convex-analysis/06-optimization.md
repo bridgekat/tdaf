@@ -32,7 +32,7 @@ of the nine are now in; what is left is (c), which needs Theorem 23.3 in full, (
 | `recessionCone_setOf_le_eq_polarCone_dom_conj`, `recessionCone_argmin_eq_polarCone_dom_conj` | **Thm 27.1(f)** | done — Thm 8.7 composed with Thm 14.2, which is now in `Recession/Conjugate.lean` |
 | `supportFn_setOf_le`, `supportFn_argmin`, `conj_flip_conj_add_coe` | **Thm 27.1(g)**, both sentences | done. The first needs **no shifted-function API**: Cor 13.2.1 computes the closure of a generated function as a support function directly, and `conj_flip_conj_add_coe` identifies the level set it produces as `{x ∣ f**(x) - α ≤ 0}`. The second is Thm 27.1(b) plus Thm 23.2 |
 | `iInf_supportFn_setOf_le`, `epsSubgradient_conj_zero` | **Thm 27.1(h)** | done — Thm 23.6 for `f*` at the origin, once the level sets of `f` above `inf f` are identified with the ε-subdifferentials of `f*` |
-| `zero_mem_closure_dom_conj_iff` (in `Duality/Level.lean`) | **Thm 27.1(i)**, first sentence | done — it is Cor 13.3.4(a) at the origin. The second sentence needs Thm 8.5 |
+| `zero_mem_closure_dom_conj_iff` (in `Duality/Level.lean`) | **Thm 27.1(i)**, first sentence | done — it is Cor 13.3.4(a) at the origin, which is now available for a general `y₀` as `mem_closure_dom_conj_iff`. The second sentence needs only Thm 8.5's difference formula, `recessionFn_apply_eq_iSup_sub`, which is in `Recession/Function.lean` |
 | `argmin_nonempty_of_recessionConeFn_eq_zero`, `isCompact_argmin_of_recessionConeFn_eq_zero`, `exists_pos_forall_exists_mem_argmin_dist_lt` | **Thm 27.2**, all three assertions | done |
 | `tendsto_infDist_argmin`, `isBounded_range_of_tendsto_iInf`, `mem_argmin_of_mapClusterPt` | Cor 27.2.1 | done |
 | `tendsto_of_argmin_eq_singleton` | Cor 27.2.2 | done |
@@ -407,7 +407,7 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 | `le_limsup_nhds`, `clConcave_eq_limsup_or`, `liminf_infBifun_eq_iSup_adjointBifun`, `limsup_supBifun_adjointBifun_eq` | **Cor 30.2.3** (the `liminf` form) | done — on `clFn_eq_liminf_or`, now in `Closure.lean` |
 | `ConcaveKuhnTucker`, `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker`, `concaveNormal_of_concaveKuhnTucker_nonempty`, `normal_of_concaveKuhnTucker_adjointBifun_nonempty` | **Thm 30.4(d)** | done |
 | `PolyhedralBifun.normal`, `ConcavePolyhedralBifun`, `ConcavePolyhedralBifun.concaveNormal`, `normal_of_concavePolyhedral_adjointBifun` | **Thm 30.4(e), (f)** | done |
-| — | Thm 30.4 (g)–(j) | not done — they route through Thm 27.1(d)/(f). **Thm 14.2 and with it Thm 27.1(f) are now done**, so what remains is Cor 13.3.4's clauses (b)–(d), which need Thm 13.1's `ri`/`int`/`aff` clauses, and `int (dom (F 0)*) = int (domConcave F*)`, a Cor 7.4.1-type result |
+| — | Thm 30.4 (g)–(j) | not done — they route through Thm 27.1(d)/(f), **both now done**, and through Cor 13.3.4, **now done in all four clauses**. The only remaining obstruction is `int (dom (F 0)*) = int (domConcave F*)`, a Cor 7.4.1-type result |
 | `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | Cor 30.5.1 (saddle points of `L`) | done — in `Saddle/Minimax.lean` |
 
 ### What actually happened

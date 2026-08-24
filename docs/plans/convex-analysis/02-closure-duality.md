@@ -232,14 +232,17 @@ theorem supportFn_eq_conj_indicator : supportFn B s = conj B (indicatorFn s)
 
 | Lean name | book |
 |---|---|
-| `mem_closure_iff_le_supportFn` | **Thm 13.1** |
+| `mem_closure_convexHull_iff_le_supportFn` — **done**, in `Duality/Support.lean` | **Thm 13.1**, closure clause — the only one of the four that survives outside finite dimensions |
+| `mem_relint_iff_lt_supportFn`, `mem_interior_iff_lt_supportFn`, `mem_affineSpan_iff_eq_supportFn`, `neg_supportFn_neg_eq_iff`, `exists_forall_eq_of_notMem_affineSpan` — **done**, in `Duality/SupportRelint.lean` | **Thm 13.1**, the `ri`, `int` and `aff` clauses, the last being **Cor 1.4.1**. All three are genuinely layer D: for `C = ker φ` with `φ` discontinuous, `ri C = aff C = C` and `int C = ∅` while all three stated conditions hold at *every* point. The `int` clause additionally needs `C.Nonempty` (false over the zero space otherwise) and `B.SeparatingRight`, since over a pairing `y ≠ 0` and `⟨·, y⟩ ≠ 0` differ; the `aff` clause needs **no convexity** |
 | `conj_indicator`, `conj_supportFn` — indicator and support function are conjugate | **Thm 13.2** |
 | `posHomogeneous_closed_iff_isSupportFn` — the closed proper positively homogeneous convex functions *are* the support functions | **Thm 13.2** |
 | `clFn_eq_supportFn_of_posHomogeneous` | Cor 13.2.1 |
 | `isSupportFn_bounded_iff_finite` | Cor 13.2.2 |
 | `recessionFn_conj` : `(conj B f) 0⁺ = δ*(·|dom f)` — **formalized**, in `Recession/Conjugate.lean`; with `constancySpace_conj` | **Thm 13.3** |
 | `conj_finite_iff_cofinite` | Cor 13.3.1 |
+| `mem_closure_dom_conj_iff`, `mem_relint_dom_conj_iff`, `mem_interior_dom_conj_iff`, `mem_affineSpan_dom_conj_iff` — **done**, in `Duality/Level.lean` | **Cor 13.3.4**, all four clauses. They need **neither Thm 12.3 nor the translation by `-y₀`**: stating them through `recessionFn f` and `⟨y, y₀⟩` rather than through `g 0⁺` makes the translation vanish. The book's exception set in (b) is `y₀`-independent, and its "`= 0`" is forced by the inequality at `-y` |
 | `lineality_conj_eq_orthogonal_aff_dom` | Thm 13.4 *(finite-dim)* |
+| `interior_dom_conj_nonempty_iff` — **done**, in `Duality/Level.lean` | **Cor 13.4.2**. It needs **no `finrank` count**: "dim `f*` = n ⇺ lineality `f` = 0" is `vectorSpan (dom f*) = ⊤ ⇺ annihilator = {0}`, i.e. Hahn–Banach. Only Cor 13.4.1 (rank) needs the count |
 | `supportFn_level_eq_clFn_hom_conj` | **Thm 13.5** |
 
 Theorem 13.2 is the reason support functions are not a separate theory: they are conjugates of
