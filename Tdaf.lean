@@ -4,6 +4,7 @@ import Tdaf.Analysis.Convex.Concave
 import Tdaf.Analysis.Convex.Continuity
 import Tdaf.Analysis.Convex.Convergence
 import Tdaf.Analysis.Convex.Helly
+import Tdaf.Analysis.Convex.HellyRefined
 import Tdaf.Analysis.Convex.Simplicial
 import Tdaf.Analysis.Convex.Bifunction.Algebra
 import Tdaf.Analysis.Convex.Bifunction.Process
