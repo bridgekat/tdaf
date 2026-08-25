@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Subgradient.EssentiallySmooth
+import Tdaf.Analysis.Convex.Duality.InnerPairing
 
 /-!
 # Essential strict convexity
@@ -23,8 +24,6 @@ smoothness on the other.
 
 * `mem_subgradient_of_combo`, `le_combo_of_mem_subgradient` — a subgradient shared by two points
   is a subgradient at every point between them, and `f` is affine along that segment.
-* `isContinuousPairing_flip_innerL`, `isCompatiblePairing_flip_innerL` — the two instances that
-  let `(innerₗ E).flip` be used without unfolding `LinearMap.flip` at every call site.
 * `mem_subgradient_conj_innerL_iff`, `subsingleton_subgradient_conj_iff`,
   `pairwise_disjoint_subgradient_conj_iff` — Corollary 23.5.1 for the self-pairing, and the two
   transfers it gives between single-valuedness and injectivity.
@@ -304,21 +303,6 @@ section Conjugate
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
-
-/-- The flip of the self-pairing of an inner-product space is continuous.
-
-Instance search does not see through `LinearMap.flip`, so every appeal to `closedFn_conj` for
-`innerₗ E` would otherwise have to discharge this by hand. -/
-instance isContinuousPairing_flip_innerL : IsContinuousPairing ((innerₗ E).flip) := by
-  rw [flip_innerₗ]; infer_instance
-
-/-- The flip of the self-pairing of an inner-product space is a compatible pairing.
-
-The same obstruction as for `isContinuousPairing_flip_innerL`: instance search does not see through
-`LinearMap.flip`, so every appeal to §13's duality for `innerₗ E` — Corollary 13.3.1 among them —
-would otherwise have to discharge this by hand. -/
-instance isCompatiblePairing_flip_innerL : IsCompatiblePairing ((innerₗ E).flip) := by
-  rw [flip_innerₗ]; infer_instance
 
 /-- **Corollary 23.5.1 for the self-pairing of an inner-product space**: `∂f*` is the inverse of
 `∂f`. The flip of `innerₗ E` is discharged once here so that no later rewrite has to reach inside

@@ -22,7 +22,9 @@ the graph function of `F` — the conjugate taken in the second variable only �
 
 * `ConcaveConvexFn`, `ConvexConcaveFn`, `SaddleFn` — the three predicates of §33.
 * `dom₁`, `dom₂` — the two effective domains of a saddle-function (§34).
-* `partialConj₂ Bx f` — the conjugate of `f : U × X → EReal` in its second variable only.
+* `partialConj₂ Bx f` — the conjugate of `f : U × X → EReal` in its second variable only. This is
+  the uncurried reading of `bracket`; `partialConj₂_graphFn` is the `rfl` bridge. The development
+  below is written against `bracket`, because bifunctions are curried.
 * `partialCl₁`, `partialCl₂` — Rockafellar's `cl₁` and `cl₂`. `cl₂` closes convexly and `cl₁`
   closes *concavely*; the asymmetry is genuine.
 * `bracket Bx F` — Rockafellar's `⟨Fu, y⟩`.
@@ -202,7 +204,11 @@ section PartialConj
 
 variable {U X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- The conjugate of `f` **in the second variable only**. -/
+/-- The conjugate of `f` **in the second variable only**.
+
+Kept for the statement of `partialConj₂_graphFn`, which is what makes precise the claim that the
+bracket, the Lagrangian, `cl₁`/`cl₂` and the adjoint are all one operation. Downstream code uses
+the curried form `bracket`. -/
 noncomputable def partialConj₂ (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (f : U × X → EReal) : U × Y → EReal :=
   fun p => conj Bx (fun x => f (p.1, x)) p.2
 

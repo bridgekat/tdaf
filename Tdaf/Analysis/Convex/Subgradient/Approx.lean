@@ -416,7 +416,6 @@ operation — by Theorem 9.7. -/
 theorem supportFn_epsSubgradient [IsCompatiblePairing B] (hf : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) (hr : f x = (r : EReal)) (hε : 0 < ε) :
     supportFn B.flip (epsSubgradient B ε f x) = posHomGen (shiftFn f x (ε - r)) := by
-  have hbridge : IsCompatiblePairing B.flip.flip := ‹IsCompatiblePairing B›
   rw [epsSubgradient_eq_setOf_conj_le hr ε]
   exact supportFn_setOf_conj_le_zero (B := B.flip)
     (closedFn_posHomGen_shiftFn hf hp hc hr hε)

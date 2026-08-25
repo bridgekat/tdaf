@@ -74,7 +74,8 @@ pure reindexing, and then Theorem 30.2 finishes.
 **The pairing flips, and the two spaces exchange roles.** `K̲*` and `K̄*` live on `V × X`, and the
 convex bifunction behind them goes from `V` to `Y`. So every §33 lemma is used at `Bu.flip` and
 `Bx.flip`, which is why `[IsCompatiblePairing Bu.flip]` and `[IsCompatiblePairing Bx.flip]` appear
-throughout, and why `Bx.flip.flip` has to be bridged by hand (it is not found by instance search).
+throughout, and why `Bx.flip.flip` keeps appearing; `instIsCompatiblePairingFlipFlip` in
+`Duality/Pairing.lean` discharges it, so no bridging is needed at the use sites.
 
 **Properness of the conjugate splits unevenly.** `dom₂ K̄* ≠ ∅` is one line from properness of the
 graph function; `dom₁ K̄* ≠ ∅` is the existence of an affine minorant of the graph function, i.e.
@@ -238,7 +239,6 @@ theorem partialCl₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsC
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (hK : K ∈ bifunSaddleClass Bu Bx F) :
     partialCl₂ (upperConjSaddle Bu Bx K) = lowerConjSaddle Bu Bx K := by
-  have hflip : IsCompatiblePairing Bx.flip.flip := by rw [LinearMap.flip_flip]; infer_instance
   have hG : ConvexBifun (inverseBifun (adjointBifun Bu Bx F)) :=
     convexBifun_inverseBifun_adjointBifun Bu Bx F
   have hGcl : ClosedBifun (inverseBifun (adjointBifun Bu Bx F)) :=

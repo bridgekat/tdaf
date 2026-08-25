@@ -88,6 +88,12 @@ arguments move. In `ℝⁿ` the hypothesis is automatic; here it is an explicit
 **Local boundedness of `∂f`** lives in `Tdaf.Analysis.Convex.Subgradient.Bounded`, which imports
 this file.
 
+**Maximal *monotonicity* of `∂f`** (Corollary 31.5.2) is `isMaximalMonotoneRel_subgradientRel` in
+`Tdaf.Analysis.Convex.Optimization.Prox`, aliased as `subgradient_maximalMonotone`. It cannot live
+here: its proof is Moreau's theorem, and `Optimization/Prox.lean` imports this file. What *is* here
+is the maximal **cyclic** monotonicity of Theorem 24.9, and line 9631 of Rockafellar warns
+explicitly that neither implies the other.
+
 **The one-dimensional theory is absent**: the description of the subdifferential of a closed proper
 convex function on `ℝ` as a complete nondecreasing curve, and the recovery of the function from that
 curve by integration. It needs one-sided derivatives `f'₊`, `f'₋` for `EReal`-valued functions on

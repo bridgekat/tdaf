@@ -181,7 +181,6 @@ whole space, so Rockafellar's relative-interior condition in Theorem 16.4 is sat
 origin and `IsExactSum.of_relint` applies with no work. -/
 theorem Cofinite.isExactSum_conj (hf : Cofinite f) (hg : Cofinite g) :
     IsExactSum B.flip (conj B f) (conj B g) := by
-  have hbb : IsCompatiblePairing B.flip.flip := ‹IsCompatiblePairing B›
   have hdf : (0 : F) ∈ ri (dom (conj B f)) := by
     rw [Cofinite.dom_conj_eq_univ (B := B) hf, intrinsicInterior_univ]; trivial
   have hdg : (0 : F) ∈ ri (dom (conj B g)) := by

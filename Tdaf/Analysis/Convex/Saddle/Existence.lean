@@ -50,9 +50,9 @@ therefore its `D*` companion read at the swapped data, and no new duality is nee
 
 **The swap needs the pairings negated, not merely flipped.** `saddleSwap` negates values, so the
 linear terms `⟨u, v⟩ + ⟨x, y⟩` in the two conjugates come back with the opposite sign; only
-`-Bx.flip` and `-Bu.flip` restore them. `isCompatiblePairing_neg` and `flip_neg` (in
-`Saddle/Minimax.lean`, written for Theorem 36.5) are what make the negated pairings usable, and
-`separatingRight_neg_flip` is the third lemma of that family.
+`-Bx.flip` and `-Bu.flip` restore them. `isCompatiblePairing_neg`, `isCompatiblePairing_flip_neg`
+and `flip_neg` (in `Duality/Pairing.lean`) are instances, so the negated pairings are usable with
+no `have`; `separatingRight_neg_flip` is the third lemma of that family.
 
 **The bifunction of the swapped class is `F♯ = -F*` with its arguments exchanged, not `F_*^*`.**
 `F_*^* = inverseBifun (adjointBifun Bu Bx F)` is a bifunction from `V` to `Y` and belongs to the
@@ -376,11 +376,6 @@ theorem zero_mem_interior_dom₁_lowerConjSaddle_iff (Bu : U →ₗ[ℝ] V →�
     (hKcc : ConcaveConvexFn K) (hp : ProperSaddleFn K) (hs : SaddleStructure K) :
     (0 : V) ∈ interior (dom₁ (lowerConjSaddle Bu Bx K)) ↔
       ∀ z : U, z ≠ 0 → ∃ y ∈ ri (dom₂ K), 0 < recessionFn (fun u => -(K (u, y))) z := by
-  have hbu : IsCompatiblePairing (-Bu.flip) := isCompatiblePairing_neg Bu.flip
-  have hbx : IsCompatiblePairing (-Bx.flip) := isCompatiblePairing_neg Bx.flip
-  have hbuf : IsCompatiblePairing (-Bu.flip).flip := by
-    rw [flip_neg, LinearMap.flip_flip]
-    exact isCompatiblePairing_neg Bu
   have hswap := saddleSwap_mem_bifunSaddleClass Bu Bx hF hcl hK
   have hprF : Proper (graphFn (swapAdjointBifun Bu Bx F)) :=
     proper_graphFn_of_properSaddleFn (-Bx.flip) (-Bu.flip) hswap hp.saddleSwap

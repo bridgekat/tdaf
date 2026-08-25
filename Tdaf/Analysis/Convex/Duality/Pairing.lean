@@ -470,6 +470,42 @@ instance instIsCompatiblePairingFlipFlip (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [
     IsCompatiblePairing B.flip.flip :=
   ‹IsCompatiblePairing B›
 
+/-! #### Negated pairings
+
+`-B` is a pairing of the same two spaces, and Rockafellar's minimax development uses it constantly:
+the concave argument of a saddle-function pairs against `-Bu`, so §36's Lagrangian correspondence
+and §37's conjugates are all stated at negated pairings. These are instances rather than theorems
+because every such statement would otherwise open with the same `have`. -/
+
+omit [TopologicalSpace E] in
+/-- Negation commutes with flipping. Needed because `(-B).flip` is not syntactically `-(B.flip)`,
+so instance search cannot get from one to the other on its own. -/
+theorem flip_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : (-B).flip = -B.flip :=
+  LinearMap.ext fun _ => LinearMap.ext fun _ => rfl
+
+/-- A negated pairing is still continuous. -/
+instance isContinuousPairing_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] :
+    IsContinuousPairing (-B) :=
+  ⟨fun y => (continuous_pairing B y).neg⟩
+
+/-- A negated pairing is still compatible: `g = ⟨·, y⟩` for `-B` exactly when `-g = ⟨·, y⟩`
+for `B`. -/
+instance isCompatiblePairing_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B] :
+    IsCompatiblePairing (-B) where
+  surjective_eval := fun g => by
+    obtain ⟨y, hy⟩ := exists_pairing_eq B (-g)
+    refine ⟨y, ContinuousLinearMap.ext fun x => ?_⟩
+    have h : (-B) x y = -(B x y) := rfl
+    rw [evalCLM_apply, h, ← hy]
+    exact neg_neg _
+
+/-- The flip of a negated pairing, which `flip_neg` puts back in reach of the instance above.
+Every §34/§37 statement that conjugates on both sides of a negated pairing asks for this. -/
+instance isCompatiblePairing_flip_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [TopologicalSpace F]
+    [IsCompatiblePairing B.flip] : IsCompatiblePairing (-B).flip := by
+  rw [flip_neg]
+  infer_instance
+
 end Compatible
 
 section CompatibleInstances

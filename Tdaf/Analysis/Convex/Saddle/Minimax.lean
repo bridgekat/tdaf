@@ -113,9 +113,10 @@ Rockafellar reads the Lagrangian as `L (v, x) = ⟨v, F_* x⟩`, a bracket of th
 `F_*`, and appeals to a concave mirror of Theorem 33.3 that the backbone does not have. The same
 identity read after `saddleSwap` — which negates and exchanges the variables — is
 `saddleSwap L = ⟨(flip F) x, v⟩` for the pairing `-Bu` (`saddleSwap_saddleLagrangian`), so the
-*convex* Theorem 33.3 applies verbatim. The price is two instances,
-`isCompatiblePairing_neg` and `flip_neg`, both three lines: negating a pairing preserves
-continuity, and `g = ⟨·, y⟩` for `-B` exactly when `-g = ⟨·, y⟩` for `B`.
+*convex* Theorem 33.3 applies verbatim. The price is the negated-pairing instances in
+`Duality/Pairing.lean` — `isCompatiblePairing_neg`, `isCompatiblePairing_flip_neg` and `flip_neg`,
+three lines each: negating a pairing preserves continuity, and `g = ⟨·, y⟩` for `-B` exactly when
+`-g = ⟨·, y⟩` for `B`.
 
 **`(F_*)^* = (F^*)_*` is taken as a definition, not proved.** Rockafellar writes the bifunction
 behind the lower conjugate as `F_*^*`, the adjoint of the *concave* inverse, and then observes
@@ -724,34 +725,6 @@ end Thm366Slater
 
 /-! ### Theorem 36.5: Lagrangians are exactly the upper closed concave-convex functions -/
 
-section NegPairing
-
-variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
-  [AddCommGroup F] [Module ℝ F]
-
-/-- A negated pairing is still continuous. -/
-theorem isContinuousPairing_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] :
-    IsContinuousPairing (-B) :=
-  ⟨fun y => (continuous_pairing B y).neg⟩
-
-/-- A negated pairing is still compatible: `g = ⟨·, y⟩` for `-B` exactly when `-g = ⟨·, y⟩`
-for `B`. -/
-theorem isCompatiblePairing_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B] :
-    IsCompatiblePairing (-B) :=
-  have : IsContinuousPairing (-B) := isContinuousPairing_neg B
-  { surjective_eval := fun g => by
-      obtain ⟨y, hy⟩ := exists_pairing_eq B (-g)
-      refine ⟨y, ContinuousLinearMap.ext fun x => ?_⟩
-      have h : (-B) x y = -(B x y) := rfl
-      rw [evalCLM_apply, h, ← hy]
-      exact neg_neg _ }
-
-omit [TopologicalSpace E] in
-theorem flip_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : (-B).flip = -B.flip :=
-  LinearMap.ext fun _ => LinearMap.ext fun _ => rfl
-
-end NegPairing
-
 section FlipBifun
 
 variable {U X : Type*}
@@ -852,10 +825,6 @@ upper closed concave-convex function. -/
 theorem upperClosedFn_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     (hF : ConvexBifun F) (hcl : ClosedBifun F) : UpperClosedFn (saddleLagrangian Bu F) := by
-  have h1 : IsCompatiblePairing (-Bu) := isCompatiblePairing_neg Bu
-  have h2 : IsCompatiblePairing (-Bu).flip := by
-    rw [flip_neg]
-    exact isCompatiblePairing_neg Bu.flip
   have h : LowerClosedFn (saddleSwap (saddleLagrangian Bu F)) := by
     rw [saddleSwap_saddleLagrangian]
     exact lowerClosedFn_bracket Bx (-Bu) (convexBifun_flipBifun hF) (closedBifun_flipBifun hcl)
@@ -870,10 +839,6 @@ theorem exists_unique_closedBifun_saddleLagrangian_eq (Bu : U →ₗ[ℝ] V →�
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] (hL : ConcaveConvexFn L) (huc : UpperClosedFn L) :
     ∃! G : Bifun U X, ConvexBifun G ∧ ClosedBifun G ∧ saddleLagrangian Bu G = L := by
-  have h1 : IsCompatiblePairing (-Bu) := isCompatiblePairing_neg Bu
-  have h2 : IsCompatiblePairing (-Bu).flip := by
-    rw [flip_neg]
-    exact isCompatiblePairing_neg Bu.flip
   have hsw : ConcaveConvexFn (saddleSwap L) := concaveConvexFn_saddleSwap hL
   have hlc : LowerClosedFn (saddleSwap L) := by
     refine lowerClosedFn_iff_upperClosedFn_saddleSwap.2 ?_
@@ -1308,7 +1273,6 @@ theorem lowerClosedFn_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [Is
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
     LowerClosedFn (lowerConjSaddle Bu Bx K) := by
-  have : IsCompatiblePairing Bx.flip.flip := by rw [LinearMap.flip_flip]; infer_instance
   rw [lowerConjSaddle_eq_bracket_inverseBifun Bu Bx hF hK]
   exact lowerClosedFn_bracket Bu.flip Bx.flip (convexBifun_inverseBifun_adjointBifun Bu Bx F)
     (closedBifun_inverseBifun_adjointBifun Bu Bx F)

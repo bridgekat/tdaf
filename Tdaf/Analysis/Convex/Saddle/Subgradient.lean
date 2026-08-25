@@ -644,8 +644,6 @@ theorem mem_saddleSubgradient_upperConjSaddle_iff (Bu : U →ₗ[ℝ] V →ₗ[�
     (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) (p : U × Y) (q : V × X) :
     p ∈ saddleSubgradient Bu.flip Bx (upperConjSaddle Bu Bx K) q ↔
       IsBifunSubgradientPair Bu Bx F p q := by
-  have hbu : IsCompatiblePairing Bu.flip.flip := by rw [LinearMap.flip_flip]; infer_instance
-  have hbx : IsCompatiblePairing Bx.flip.flip := by rw [LinearMap.flip_flip]; infer_instance
   have hGconv : ConvexBifun (inverseBifun (adjointBifun Bu Bx F)) :=
     convexBifun_inverseBifun_adjointBifun Bu Bx F
   have hGcl : ClosedBifun (inverseBifun (adjointBifun Bu Bx F)) :=

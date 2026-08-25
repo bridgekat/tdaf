@@ -134,7 +134,6 @@ theorem isClosed_add_of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing 
     (h₂ : Convex ℝ C₂) (hcl₂ : IsClosed C₂) (hne₂ : C₂.Nonempty)
     (hrec : ∀ v ∈ recessionCone C₁, -v ∈ recessionCone C₂ → v ∈ recessionCone C₂) :
     IsClosed (C₁ + C₂) := by
-  have : IsCompatiblePairing B.flip.flip := ‹IsCompatiblePairing B›
   obtain ⟨x₀, hx₀₁, hx₀₂⟩ :=
     nonempty_dom_supportFn_inter_relint (B := B) h₁ hne₁ h₂ hcl₂ hne₂ hrec
   have hfn₁ : PolyhedralFn (supportFn B C₁) := by

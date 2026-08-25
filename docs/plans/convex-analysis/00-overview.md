@@ -450,6 +450,15 @@ adjoints and dual programs (§30) and the conjugate saddle-function theory (§37
 one operator plus Fenchel–Moreau. Rockafellar develops these four times over; the backbone should
 develop them once.
 
+**Amended after the review.** The operator the development is actually written against is `bracket`,
+the *curried* form on bifunctions — `bracket Bx F u y = (F u)* y` — which appears in thirteen
+modules; `partialConj₂` itself has no consumer outside `Saddle/Defs.lean`. That is not a defect:
+`bracket` and `partialConj₂` are the curried and uncurried readings of one operation, and
+`partialConj₂_graphFn` states so by `rfl`. But the decision should be read as “the organizing
+operation is partial conjugation, realised on bifunctions as `bracket`”, not as a claim that
+`partialConj₂` is load-bearing in its own right. The uncurried form is kept because it is what makes
+the identity above expressible, and because `conj_prodPairing` below is stated in it.
+
 **What makes this work, and was missing (review finding B4).** The full conjugate on `U × X` needs a
 pairing on `U × X` built from `Bu` and `Bx` *with a sign flip on the first factor*. Before any
 `Optimization/` code, `Duality/Pairing.lean` must supply
