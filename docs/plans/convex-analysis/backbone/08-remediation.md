@@ -405,3 +405,80 @@ complete, and §9 is 16 of 18 — Corollary 9.2.1 and Corollary 9.8.3 are the tw
 * **The barycentric fact Theorem 10.2 rests on is called "intuitively obvious" (book line 3417) and
   never proved**, and Theorem 20.5 supplies it by assertion. The backbone proves it outright — see
   above — so neither assertion is inherited.
+
+---
+
+## 10. Gaps reported by the Part III surface round
+
+The §11–§16 round. Five labels have no declaration and are marked **blocking** below; everything
+else is friction that a section absorbed.
+
+| # | item | reported by | status |
+|---|---|---|---|
+| 10.1 | **Theorem 11.2 for a general affine `M` does not exist.** `Separation.lean` has the *open*-`C` form; `RelativeInterior.lean` has the relatively open form only for `M` a point. The missing step — thicken to `C + M.direction`, apply the point case, then `eq_of_le_on_affineSubspace` — cost §11 a 45-line proof, the one piece of real work in that file. Belongs beside `exists_lt_of_notMem_relint` | §11 | open |
+| 10.2 | **Theorem 11.6 in the `ri` form does not exist.** The backbone has only `exists_isSupporting_iff_disjoint_interior`, with `interior` and an extra `(interior C).Nonempty`. The `ri` version is Theorem 11.3 plus `ri D ⊆ D`, ~25 lines in §11. Belongs in `RelativeInterior.lean` | §11 | open |
+| 10.3 | **`Convex.isClosed_add_of_neg_notMem_recessionCone` is stated for `C + D`, not `C - D`**, so Corollary 11.4.1 has to introduce `-C₂` and rewrite through `recessionCone_neg` and `sub_eq_add_neg`. A `_sub_` mirror removes three lines per call site | §11 | open — friction |
+| 10.4 | **Corollary 11.7.1's backbone form re-uses `K` on both sides of the equation**, so `rw [← isClosed_convex_isCone_eq_iInter_halfSpaceCone …]` rewrites the index condition too (`gotchas.md` EL4). A pointwise membership companion, the way `mem_iff_forall_le_halfSpace` accompanies Theorem 11.5, would be easier to consume | §11 | open — friction |
+| 10.5 | **`proper_conj_iff` carries a `ClosedFn f` hypothesis the book does not have.** On `ℝⁿ` the closed form is strictly weaker | §12, §13 | **closed** — `proper_conj_of_proper` in `Duality/Relint.lean` |
+| 10.6 | **Monotone conjugacy is duplicated.** `Duality/GaugeLike.lean` has `monotoneConj` / `MonotoneHalfLineFn` / `monotoneConj_monotoneConj` on `[0,∞) ⊂ ℝ`; that is exactly `n = 1` of Theorem 12.4, and `iSup_sub_monotoneConj` is exactly §12's `conj_posPart` in one variable. §12's `monotoneConjOrthant` should replace it in the backbone with the half-line version derived. **The largest gap the round hit** | §12 | open |
+| 10.7 | **No orthant support in the backbone.** `convex_nonnegOrthant`, `isClosed_nonnegOrthant`, `inner_rn` and the positive-part / mask constructions were written from scratch in §12; `Duality/Polar.lean`'s `section Orthant` has only `polarCone_nonnegOrthant`. Remediation §6 plans to move that section to the surface — it should move *and grow* | §12 | open — refines §6 |
+| 10.8 | **`ClosedFn.restrict` is in `Duality/GaugeLike.lean`**, whose own docstring says it belongs beside `ConvexFn.restrict` in `Operations/Basic.lean`. §12 imports a §15 module for one three-line lemma | §12 | open — a move, not a proof |
+| 10.9 | **Corollary 7.3.4 exists only as a *surface* declaration**, in `Part2/Section07.lean`, with an inline proof; `corollary_12_2_2` therefore imports a sibling surface module rather than the backbone. It should be `clFn_restrict_relint_dom` in the backbone | §12 | open |
+| 10.10 | **`Duality/Support.lean` has no `api.md` record.** Every other `Duality/*` module has one. Cost §13 a detour | §13 | open — documentation |
+| 10.11 | **Corollary 13.3.3 is not in the backbone at all** — `dom f*` bounded ⟺ `f` globally Lipschitz. §13 assembles it in ~20 lines from `recessionFn_isLeast`, Theorem 13.3's dual form, `supportFn_closedBall` and Corollary 13.1.1. `corollary_13_3_3_least` should be hoisted into `Duality/Level.lean` | §13 | open |
+| 10.12 | **`supportFn_closedBall` is in `Subgradient/Convergence.lean`**, so §13 imports the whole subgradient-convergence tower for one lemma. `api.md` already flags it as a relocation candidate for `Duality/Support.lean` | §13 | open — a move |
+| 10.13 | **No `dim` or `rank` for convex functions.** Theorem 13.4's two dimensionality formulas were done by hand from `Submodule.finrank_add_finrank_orthogonal` and `finrank_euclideanSpace_fin`; §13 defines `rankFn` and §14 defines `rankSet`, both surface-side, because §8's surface deferred rank for want of §1's `dim` | §13, §14 | open — refines §9.6 |
+| 10.14 | **Theorem 14.3 needs one lemma**: `{x \| (cl (posHomGen f)) x ≤ 0} = closure (PointedCone.hull ℝ {x \| f x ≤ 0})` for closed proper convex `f` with `f 0 > 0 > inf f`. Everything else it needs (`supportFn_setOf_conj_le_zero`, `polarCone_recessionConeFn`) is present. Belongs in `Recession/` or `Duality/Level.lean` | §14 | open — **blocking**, no §14 declaration |
+| 10.15 | **Theorem 14.4** additionally needs the `ℝⁿ × ℝ × ℝ` ↔ `ℝⁿ⁺²` transport (§4.8), and the recession function of `posHomGen f` — an unstated part of Theorem 13.5 that `Duality/Polar.lean` already defers | §14 | open — **blocking**, no §14 declaration |
+| 10.16 | **Corollary 14.5.1 has no backbone statement.** §14 assembles it in eight lines from `isBounded_iff_recessionCone_eq_zero`, `recessionCone_eq_polarCone_polarSet` and `zero_mem_interior_iff_polarCone_eq_zero`. `Duality/Polar.lean`'s docstring defers it to a gauge module, but the route used needs no gauge at all | §14 | open |
+| 10.17 | **`recessionConeFn_conj_hull` takes `Proper f` *and* `Proper (conj B f)`** where the book says only "proper convex". Now dischargeable by `proper_conj_of_proper`, but the hypothesis should come off | §14 | open — friction, cheap |
+| 10.18 | **`.flip` on a self-paired space.** Eight backbone statements hand back `polarCone B.flip …` / `polarSet B.flip …`, and three more hand back `polarGauge`/`polarFn` against `B.flip` | §14, §15 | **closed for `polarCone`/`polarSet`** — `Surface/Common/Euclidean.lean`; `polarGauge_flip_pairing` / `polarFn_flip_pairing` still open |
+| 10.19 | **A norm's closedness is not in the backbone.** §15 wrote `isNorm_closedFn_rn` from `ConvexFn.continuous_of_dom_eq_univ` and three statements use it. A finite-dimensional section of `Duality/Gauge.lean` should carry `IsNorm.closedFn` | §15 | open |
+| 10.20 | **Theorem 15.2's set-side translation is missing** — the other face of §4.7, which closed the function side. Wanted: `absorbsAll_iff_zero_mem_interior`, `rayFree_iff_isBounded` for closed convex sets, and pairing forms of both. Every `ℝⁿ` statement re-derives four translations by hand | §15 | open |
+| 10.21 | **No `polarFn_indicatorFn` / `obverse_indicatorFn`**, for which two §15 remarks are deferred | §15 | open |
+| 10.22 | **`IsExactImage.of_relint` still demands `ClosedProperConvexFn`** while `IsExactSum.of_relint` was relaxed to proper convex. §16 redoes the `clFn` reduction by hand twice, 5 lines apiece. Mirroring the sum-side relaxation makes both one-liners and matches the book | §16 | open — friction, cheap |
+| 10.23 | **`IsExactSum` is binary** where the book states Theorem 16.4 and Corollary 16.4.1 for `f₁ + ⋯ + fₘ`. The `m`-ary *identities* are now present (`conj_sum_toInfConvFn`); the exact forms are not | §16 | open — refines §4.4 |
+| 10.24 | **`Duality/Polar.lean` has no `polarCone_add`, `polarSet_convexHull`, `polarSet_iUnion`, `polarSet_smul`.** `polarCone_iUnion` exists; its `polarSet` twin does not. Three §16 proofs run 12–18 lines for this reason alone | §16 | open |
+| 10.25 | **`Convex ℝ {x \| B x y ≤ 1}` is missing** — the backbone has only the `EReal` form `convex_setOf_pairing_le`, and the real form is what cuts out a polar set | §16 | open — one line |
+| 10.26 | **`conj B 0 = δ(· \| 0)` is missing**, the converse of `conj_indicatorFn_zero` and the other half of Rockafellar's one-sentence proof of Theorem 16.1 at `λ = 0` | §16 | open — one line |
+| 10.27 | **Lemma 16.2, Corollaries 16.2.1 and 16.2.2** — the recession-form dual of §9's constraint qualification. The backbone routes around the recession step entirely, so stating them means assembling Theorems 11.1, 11.3 and 13.3 into a new result | §16 | open — **blocking**, three §16 labels |
+| 10.28 | **No `a • (s + t) = a • s + a • t` for `Set`**, in Mathlib or here; proved inline in §16 | §16 | open — one line, Mathlib-shaped |
+
+### What the round closed
+
+* **§4.3, the bundled bipolar** — `Duality/Polar.lean` now carries the whole Theorem 14.1 family in
+  `PointedCone` form. §14 confirms no statement discharges the hypothesis triple by hand.
+* **§4.7, `IsNorm` → `Seminorm`** — at layer A, not layer D, and the "not here" note that declined
+  it was wrong about why.
+* **The §16 half of §4.4** — `conj_sum_toInfConvFn`, Theorem 16.4 in the book's `m`-ary form.
+* **§4.1, the adjoint, needs no work on the surface side.** The backbone already had
+  `isAdjointPair_adjoint` for `innerₗ E`, and `pairing n` is an `abbrev` for it. §16 writes every
+  `A*` as `LinearMap.adjoint A` and carries no adjoint hypothesis. What remains of §4.1 is the
+  *backbone-internal* threading of `(A') (hA : IsAdjointPair …)` through ~100 statements, which the
+  surface does not pay for.
+
+### Documentation errors the round found
+
+* **`Duality/Gauge.lean` said Theorem 15.3 and its corollaries were absent** because the
+  one-dimensional monotone-conjugate theory does not exist. It does exist, in
+  `Duality/GaugeLike.lean`, and §15's centrepiece was nearly deferred on the strength of the note.
+  Fixed.
+* **`isAdjointPair_adjoint` was written twice** — once in the backbone, once in the shared surface
+  header by this session — making every use ambiguous. The surface copy is gone. `gotchas.md` LIB1
+  again: grep before naming.
+
+### Book findings from the round
+
+* **Corollaries 11.5.2 and 11.7.3 need `C.Nonempty`** in addition to `C ≠ ℝⁿ`: in `ℝ⁰` the empty
+  set is a proper convex subset and no non-zero `b` exists.
+* **Theorem 12.4 is printed with no proof at all**, and the symmetrisation its surrounding prose
+  suggests is not the shortest route. §12 proves it directly: `f*(y⁺) = f*(y)` for a function that
+  is `+∞` off the orthant and non-decreasing on it, by zeroing the coordinates where `y < 0` in any
+  competitor.
+* **Theorem 14.7's closedness hypothesis is unnecessary**; `Duality/Gauge.lean` already recorded
+  this and the surface states the weaker hypothesis.
+* **Corollary 13.3.2's delegated step ("as an exercise in separation theory") needs no separation.**
+  A non-empty convex `C` is affine iff every linear function bounded above on it is constant on it,
+  and both directions follow from Theorem 13.1 plus Theorem 6.1's line-segment principle.
+* **Corollary 9.8.2 is not a §9 result** — `IsCompact.isCompact_convexHull` (Corollary 17.2.1) is
+  shorter and needs neither convexity nor non-emptiness. Recorded under §9 as well.

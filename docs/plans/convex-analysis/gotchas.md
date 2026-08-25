@@ -218,6 +218,42 @@ because `f` is determined only by the `EqOn` proof, which is still a hole. Bind 
 typed `have` first — `have : ContinuousOn (fun _ : Rn n => (⊥ : EReal)) C := continuousOn_const` —
 and use dot notation on that. Same family as EL9.
 
+**EL18. `rw` with a biconditional-shaped equation rewrites *every* occurrence, including the one
+inside the operator you are rewriting under.** Three instances, all from the Part III round:
+
+* `rw [← hbi]` with `hbi : f** = f` rewrites the `f` under `monotoneConjOrthant f` as well, and the
+  goal only becomes unprovable several lines later.
+* `rw [conj_apply, conj_apply]` rewrites the *left*-hand side twice — after the first rewrite the
+  inner `conj B f y` matches again — instead of left-then-right.
+* `rw [← isClosed_convex_isCone_eq_iInter_halfSpaceCone …]`, whose right-hand side is `K` and whose
+  left-hand side *indexes* over `∀ y ∈ K`, rewrites the index condition too.
+
+The reliable shape is to name both unfoldings as `have`s and rewrite with those, or `refine
+Eq.trans ?_ thm` when only one side should move. Same family as EL4.
+
+**EL19. Defeq is not syntactic equality, and `rw` only sees the syntax.** `inner ℝ x y` and
+`pairing n x y` are definitionally equal — `pairing` is an `abbrev` for `innerₗ` — but a surface
+statement written in the book's `⟨x, x*⟩` makes `rw [backbone_lemma]` fail with *"did not find an
+occurrence of the pattern"* while `exact` succeeds. The idiom that works: instantiate the backbone
+lemma as a `have`, `rw` the *set-level* hypotheses into that, and close with `exact`. §13 hit it
+five times in one file. The same asymmetry is why `rw [← flip_pairing n]` can time out `isDefEq`
+where the targeted `conj_flip_pairing` / `polarCone_flip_pairing` rewrite goes straight through:
+prefer the specific `*_flip_pairing` lemma whenever the `.flip` sits under an operator.
+
+**EL20. `rw` will not unfold `Ne`.** `rw [← linFn_eq_zero_iff]` on a goal `b ≠ 0` reports
+*"did not find `?m = 0`"*. Lead with `rw [Ne, …]`, or better `intro hzero` and work forwards.
+
+**EL21. A lambda whose binder type is only inferable from the *expected* type needs an ascription.**
+`fun x hx => le_of_lt hx` inside `mem_interior.2 ⟨…⟩` fails with a metavariable type mismatch,
+because `x ∈ {x | k x ≤ 1}` is not yet known to be what `le_of_lt` should produce. Write
+`fun x (hx : k x < 1) => le_of_lt hx`. Same root as EL17: an implicit argument determined only by a
+term that is still a hole.
+
+**EL22. An `EReal`-valued bridge lemma cannot rewrite a real-valued goal.**
+`IsNorm.coe_toSeminorm` reads `((p x : ℝ) : EReal) = k x`, so it does nothing to `0 < p (x - y)`.
+Rewrite the `EReal` hypothesis backwards — `rw [← hk.coe_toSeminorm z] at h` — and finish with
+`exact_mod_cast`.
+
 ---
 
 ## LINT — Linters and the zero-warning bar
@@ -310,6 +346,11 @@ hypothesis.** Unfolding `mem_recessionCone`'s `∀ x ∈ C, ∀ a : ℝ, 0 ≤ a
 `hl : 0 ≤ l` mentions it. Make the binder anonymous. This hits every eta-expansion of a
 `∀ a, 0 ≤ a → …` predicate.
 
+**LINT11. Two tactics that fail the zero-warning bar by succeeding too well.** `field_simp`
+frequently closes the goal outright, and the `ring` written after it out of habit then errors with
+*"No goals"*. And a `change` added defensively in front of a `rw` that would have gone through
+anyway trips `linter.unusedTactic`. Add neither pre-emptively; run the proof without them first.
+
 ---
 
 ## DEP — Deprecated and renamed Mathlib
@@ -398,6 +439,12 @@ The last two are the trap: `eq_add_inter_of_isCompl Submodule.isCompl_orthogonal
 type mismatch and `closure_empty_iff.1` reports *"Invalid projection … has function type"*. Write
 `Submodule.isCompl_orthogonal _` and `(closure_empty_iff T).1`. Both old names still appear in
 backbone docstrings.
+
+**DEP7. Three more renames from the v4.34.0-rc1 pin.** `ContinuousLinearMap.zero_apply` and
+`ContinuousLinearMap.neg_apply` are deprecated in favour of the *root* `zero_apply` / `neg_apply`,
+so dot notation has to change, not just the name; and the `push_neg` tactic is deprecated in favour
+of `push Not`. A `simp only` list naming any deprecated lemma builds but warns, and a warning
+fails the bar.
 
 ---
 
@@ -646,6 +693,13 @@ typed `have`; and do not `rw [Function.comp_def]` to line up a composed sequence
 whereas `Set.singleton x` is `{y | y = x}` — the other orientation. The error names
 `indicatorFn (Eq ?m) ?m`, which looks like an elaboration bug and is not. Use `Set.mem_singleton _`.
 
+**SET9. Building an element of `Rn n = EuclideanSpace ℝ (Fin n)` from coordinates.** A bare
+`(fun j => …)` does not elaborate at that type; the spelling is `WithLp.toLp 2 fun j => …`, and
+`toLp p x j = x j` is `rfl`, so the `@[simp]` `_apply` lemma costs nothing. Reading goes the other
+way: `x j` displays as `x.ofLp j`. Coordinate continuity is
+`PiLp.continuous_apply (p := 2) (fun _ : Fin n => ℝ) j` — `β` is explicit and `p` is not inferable
+from the goal, so both must be supplied or the application silently eats `j` as `β`.
+
 ---
 
 ## PAIR — The pairing classes
@@ -728,6 +782,14 @@ carries, provided its continuous dual is the `F` side of the pairing — that is
 `IsCompatiblePairing`, and it is trivial when `E` is paired with its own dual. `σ(E, F)` is one
 instance of it, the coarsest, never the mechanism. `WeakBilin B` is besides a type synonym, so
 `simp`/`rw` do not fire through it.
+
+**PAIR10. On a self-paired space every polarity theorem hands back `B.flip`.** `polarSet_polarSet`,
+the four bundled Theorem 14.1 statements, `polarCone_setOf_forall_le_zero`,
+`recessionCone_eq_polarCone_polarSet`, `polarGauge_polarGauge`, `polarFn_polarFn` — all of them.
+`flip_pairing` is a `simp` lemma but *not* a `rfl`, so `exact` fails where `simpa using` succeeds.
+`Surface/Common/Euclidean.lean` carries six `*_flip_pairing` rewrites for the heads that occur
+(`conj`, `subgradient`, `supportSet`, `supportFn`, `polarCone`, `polarSet`); `polarGauge` and
+`polarFn` are not yet among them. Add the rewrite there rather than `simpa`-ing at each site.
 
 ---
 

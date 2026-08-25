@@ -292,3 +292,31 @@ Two findings of the Part II round are worth promoting out of the remediation lis
 * **Rockafellar's `λ ≥ 0⁺` convention is modelled, not case-split.** §9 introduces `ExtCoeff`
   (`ofReal t | zeroPlus`) with actions on sets and on functions, so Theorems 9.6–9.8 are literally
   unions and infima over the book's index set. §19 inherits it.
+
+**Part III — all six sections written**, 259 declarations for 72 of the Part's 77 numbered results.
+
+| § | module | declarations | labels |
+|---|---|---|---|
+| 11 | `Part3/Section11.lean` | 30 | 16 |
+| 12 | `Part3/Section12.lean` | 47 | 9 |
+| 13 | `Part3/Section13.lean` | 48 | 15 |
+| 14 | `Part3/Section14.lean` | 45 | 9 of 11 |
+| 15 | `Part3/Section15.lean` | 55 | 11 |
+| 16 | `Part3/Section16.lean` | 34 | 12 of 15 |
+
+The five absent labels are **Theorems 14.3 and 14.4** and **Lemma 16.2 with Corollaries 16.2.1 and
+16.2.2**; each is one named backbone result away and each is recorded in its own module.
+
+**This is the Part that tests [D3](#d3-duality-is-developed-for-a-dual-pair-not-for-ℝⁿ-and-not-for-the-dual-space),
+and D3 holds.** Not one §11–§16 statement needed the dual pair to be relaxed: `pairing n` discharges
+every pairing class by instance search, and the only recurring friction is cosmetic — a backbone
+statement hands back `B.flip` where the surface wants `B`, which six `*_flip_pairing` rewrites in
+the shared header absorb. The adjoint decision holds too, for a reason the plan did not predict:
+remediation §4.1 proposed bundling the adjoint into a class because "~100 statements thread `(A')`
+plus `IsAdjointPair`", but the *surface* pays none of that — `isAdjointPair_adjoint` already exists
+in `Duality/Pairing.lean` for `innerₗ E`, so §16 writes every `A*` as `LinearMap.adjoint A` and
+carries no adjoint hypothesis at all. What remains of §4.1 is backbone-internal.
+
+The three sections whose gates were closed before the round — §14 (bundled bipolar), §15
+(`IsNorm.toSeminorm`), §16 (the `m`-ary Theorem 16.4) — report that the gates worked: no §14
+statement discharges the cone hypothesis triple by hand, and §16 did no induction over `□`.
