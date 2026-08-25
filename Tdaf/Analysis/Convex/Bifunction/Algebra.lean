@@ -1927,4 +1927,43 @@ theorem lowerAdjointBifun_infConvBifun_eq_clBifun (hF₁ : ClosedProperConvexFn 
 
 end Cor3821Adjoint
 
+/-! ### Corollary 38.7.2: the inner products of a product of bifunctions -/
+
+section Cor3872
+
+variable {U X W Y Z : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup W] [Module ℝ W]
+  [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z] {F : Bifun U X} {G : Bifun X Y}
+
+omit [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] in
+/-- **A slice of a product is the image of a slice**: `(GF)u = G(Fu)`. Both sides are
+`⨅ x, (Fu)(x) + (Gx)(y)`, so this is `rfl`; it is what makes every statement about `⟨GFu, ·⟩` a
+statement about an image, and hence a case of Theorem 38.4 and Corollary 38.7.1. -/
+theorem compBifun_slice (G : Bifun X Y) (F : Bifun U X) (u : U) :
+    compBifun G F u = imageBifun G (F u) := rfl
+
+/-- **Rockafellar, Corollary 38.7.2**, the existence clause: `⟨Fu, G* z⟩` exists.
+
+Rockafellar derives the hypothesis, `ri (dom (Fu))` meets `ri (dom G)`, from his condition on
+`ri (dom F⁎) ∩ ri (dom G)` by a calculus of relative interiors that he leaves to the reader; here
+it is the `IsExactSum` the proof actually consumes, one instance per `(u, z)`. -/
+theorem hasFenchelPairing_adjointBifun_slice (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
+    (hbG : ∀ x y, G x y ≠ ⊥) {u : U} (hFu : Proper (F u)) {z : Z}
+    (hex : IsExactSum Bx (F u) (fun x => -(bracket By G x z))) :
+    HasFenchelPairing Bx (F u) (adjointBifun Bx By G z) :=
+  hasFenchelPairing_adjointBifun hbG hFu hex
+
+/-- **Rockafellar, Corollary 38.7.2**, first equality: `⟨GFu, z⟩ = ⟨Fu, G* z⟩`.
+
+This is Corollary 38.7.1 (`conj_imageBifun_eq_fenchelPairing`) read at the slice `Fu`, since
+`(GF)u = G(Fu)`. The remaining equality `⟨GFu, z⟩ = ⟨u, F* G* z⟩` is Corollary 33.2.1 together
+with Theorem 38.5 and needs a relative interior; it is
+`bracket_compBifun_eq_concaveBracket_concaveCompBifun` in `Bifunction/Cofinite.lean`. -/
+theorem bracket_compBifun_eq_fenchelPairing (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
+    (hbG : ∀ x y, G x y ≠ ⊥) {u : U} (hFu : Proper (F u)) {z : Z}
+    (hex : IsExactSum Bx (F u) (fun x => -(bracket By G x z))) :
+    bracket By (compBifun G F) u z = fenchelPairing Bx (F u) (adjointBifun Bx By G z) :=
+  conj_imageBifun_eq_fenchelPairing hbG hFu hex
+
+end Cor3872
+
 end Tdaf.ConvexAnalysis

@@ -7,6 +7,7 @@ import Tdaf.Analysis.Convex.Helly
 import Tdaf.Analysis.Convex.HellyRefined
 import Tdaf.Analysis.Convex.Simplicial
 import Tdaf.Analysis.Convex.Bifunction.Algebra
+import Tdaf.Analysis.Convex.Bifunction.Cofinite
 import Tdaf.Analysis.Convex.Bifunction.Process
 import Tdaf.Analysis.Convex.Bifunction.ProcessDuality
 import Tdaf.Analysis.Convex.Duality.Barrier
