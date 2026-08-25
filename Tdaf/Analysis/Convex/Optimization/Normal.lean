@@ -79,12 +79,11 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
-/-- Negating a difference whose minuend is finite. -/
+/-- `Tdaf.EReal.neg_coe_sub` with the difference read as a sum. -/
 private theorem neg_coe_sub_eq {c : ℝ} {w : EReal} :
     -(((c : ℝ) : EReal) - w) = w + ((-c : ℝ) : EReal) := by
-  rw [sub_eq_add_neg, _root_.EReal.neg_add (.inl (_root_.EReal.coe_ne_bot _))
-      (.inl (_root_.EReal.coe_ne_top _)), sub_eq_add_neg, neg_neg, ← _root_.EReal.coe_neg,
-    add_comm]
+  rw [Tdaf.EReal.neg_coe_sub]
+  rfl
 
 /-- **Fenchel–Moreau at the origin.** For a convex `f`, the closure at `0` is the supremum over the
 dual variable of the infimum of the affine functions `x ↦ ⟨x, y⟩ + f x`.

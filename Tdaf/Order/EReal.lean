@@ -357,6 +357,16 @@ theorem neg_iInf {ι : Sort*} (u : ι → EReal) : -(⨅ i, u i) = ⨆ i, -(u i)
   eq_of_forall_ge_iff fun z => by
     simp only [iSup_le_iff, _root_.EReal.neg_le, le_iInf_iff]
 
+/-- **Negating a difference whose minuend is a *real* number turns it around**, with no side
+condition whatsoever: the finite term rules out both `∞ - ∞` collisions by itself. The unrestricted
+`EReal.neg_sub` needs two hypotheses; this is the case that actually occurs, where the minuend is a
+pairing value. -/
+theorem neg_coe_sub (r : ℝ) (z : EReal) : -((r : EReal) - z) = z - (r : EReal) := by
+  induction z with
+  | bot => simp
+  | coe s => norm_cast; ring
+  | top => simp
+
 /-- A positive real scalar commutes with a supremum. Mathlib has no `EReal.mul_iSup`; the proof is
 the standard one for an order isomorphism, run by hand because multiplication by `a` is not
 registered as one. -/
@@ -392,6 +402,23 @@ theorem iSup_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
       ≤ ((⨆ i, (u i + (r : EReal))) + ((-r : ℝ) : EReal)) + (r : EReal) := add_le_add h le_rfl
     _ = ⨆ i, (u i + (r : EReal)) := by
         rw [_root_.EReal.coe_neg, ← sub_eq_add_neg, _root_.EReal.sub_add_cancel]
+
+/-- **A constant that is not `-∞` slides out of a supremum as a subtrahend.**
+
+The hypothesis is exactly what rules out the disagreement at `c = ⊥`: there `(⨆ i, u i) - ⊥` is
+`⊤` as soon as the supremum is not `⊥`, while `u i - ⊥` is `⊤` only where `u i ≠ ⊥`. No
+`[Nonempty ι]` is needed — over an empty index set both sides are `⊥`. -/
+theorem iSup_sub_of_ne_bot {ι : Sort*} (u : ι → EReal) {c : EReal} (hc : c ≠ ⊥) :
+    (⨆ i, u i) - c = ⨆ i, (u i - c) := by
+  induction c with
+  | bot => exact absurd rfl hc
+  | coe r =>
+    rw [sub_eq_add_neg, ← _root_.EReal.coe_neg, iSup_add_coe]
+    exact iSup_congr fun i => by rw [sub_eq_add_neg, ← _root_.EReal.coe_neg]
+  | top =>
+    have h : ∀ x : EReal, x - (⊤ : EReal) = ⊥ := fun x => by
+      rw [sub_eq_add_neg, _root_.EReal.neg_top, _root_.EReal.add_bot]
+    simp only [h, iSup_bot]
 
 /-- A *real* constant may be moved in and out of an infimum. This is the dual of
 `Tdaf.EReal.iSup_add_coe` and, like it, needs no hypothesis: the constant is finite, so no `∞ - ∞`

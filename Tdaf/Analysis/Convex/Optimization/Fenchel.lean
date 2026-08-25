@@ -171,22 +171,6 @@ end Fenchel
 
 section Comp
 
-/-- A constant slides out of a supremum as a subtrahend, provided it is not `-∞`.
-
-The hypothesis is exactly what rules out the disagreement at `c = ⊥`: there `(⨆ i, u i) - ⊥` is
-`⊤` as soon as the supremum is not `⊥`, while every `u i - ⊥` is `⊤` only where `u i ≠ ⊥`. -/
-private theorem iSup_sub_of_ne_bot {ι : Sort*} (u : ι → EReal) {c : EReal} (hc : c ≠ ⊥) :
-    (⨆ i, u i) - c = ⨆ i, (u i - c) := by
-  induction c with
-  | bot => exact absurd rfl hc
-  | coe r =>
-    rw [sub_eq_add_neg, ← _root_.EReal.coe_neg, Tdaf.EReal.iSup_add_coe]
-    exact iSup_congr fun i => by rw [sub_eq_add_neg, ← _root_.EReal.coe_neg]
-  | top =>
-    have h : ∀ x : EReal, x - (⊤ : EReal) = ⊥ := fun x => by
-      rw [sub_eq_add_neg, _root_.EReal.neg_top, _root_.EReal.add_bot]
-    simp only [h, iSup_bot]
-
 variable {E F G H : Type*}
   [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [AddCommGroup G] [Module ℝ G] [AddCommGroup H] [Module ℝ H]
@@ -233,9 +217,9 @@ theorem iSup_concaveConj_compLin_sub_conj (hA : IsAdjointPair B B' A A')
   have key : ∀ y : F, concaveConj B (compLin g A) y - conj B f y
       = ⨆ z : H, ⨆ _ : A' z = y, (concaveConj B' g z - conj B f (A' z)) := by
     intro y
-    rw [concaveConj_compLin hA himg y, iSup_sub_of_ne_bot _ (hb y)]
+    rw [concaveConj_compLin hA himg y, Tdaf.EReal.iSup_sub_of_ne_bot _ (hb y)]
     refine iSup_congr fun z => ?_
-    rw [iSup_sub_of_ne_bot _ (hb y)]
+    rw [Tdaf.EReal.iSup_sub_of_ne_bot _ (hb y)]
     exact iSup_congr fun hz => by rw [hz]
   refine le_antisymm (iSup_le fun y => ?_) (iSup_le fun z => ?_)
   · rw [key y]

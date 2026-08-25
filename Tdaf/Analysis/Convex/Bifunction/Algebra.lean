@@ -389,11 +389,6 @@ private theorem add_iSup_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal)
   rw [add_comm, iSup_add_of_ne_top u hc]
   exact iSup_congr fun i => add_comm _ _
 
-/-- A constant that is not `⊥` moves inside a supremum, as a subtrahend. -/
-private theorem iSup_sub_of_ne_bot {ι : Sort*} [Nonempty ι] (u : ι → EReal) {c : EReal}
-    (hc : c ≠ ⊥) : (⨆ i, u i) - c = ⨆ i, (u i - c) :=
-  iSup_add_of_ne_top u (by rw [Ne, _root_.EReal.neg_eq_top_iff]; exact hc)
-
 /-- A constant that is not `⊤` turns an infimum into a supremum of differences. -/
 private theorem sub_iInf_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal) {c : EReal}
     (hc : c ≠ ⊤) : c - (⨅ i, u i) = ⨆ i, (c - u i) := by
@@ -422,14 +417,6 @@ private theorem coe_sub_iInf {ι : Sort*} (r : ℝ) (u : ι → EReal) :
     (r : EReal) - ⨅ i, u i = ⨆ i, ((r : EReal) - u i) := by
   rw [sub_eq_add_neg, Tdaf.EReal.neg_iInf, add_comm, Tdaf.EReal.iSup_add_coe]
   exact iSup_congr fun i => by rw [add_comm, ← sub_eq_add_neg]
-
-/-- Negating a difference with a *real* minuend turns it around, with no side condition: the
-finite term rules out both `∞ - ∞` collisions by itself. -/
-private theorem neg_coe_sub (r : ℝ) (b : EReal) : -((r : EReal) - b) = b - (r : EReal) := by
-  have h : -((r : EReal) + -b) = -(r : EReal) + -(-b) :=
-    _root_.EReal.neg_add (.inl (_root_.EReal.coe_ne_bot r)) (.inl (_root_.EReal.coe_ne_top r))
-  change -((r : EReal) + -b) = b + -(r : EReal)
-  rw [h, neg_neg, add_comm]
 
 /-- A constant moves inside an infimum whose value is not `⊥`. Only `c = ⊤` needs an argument, and
 there `⨅ u ≠ ⊥` is what makes every `u i + ⊤` equal to `⊤`. -/
@@ -1121,7 +1108,7 @@ theorem fenchelSup_imageBifun_lowerAdjointBifun (hf : Proper f) (hgd : (domConca
     refine iSup_congr fun v => ?_
     rw [neg_sub_swap (hane v)
         (concaveImageBifun_adjointBifun_ne_top Bu Bx hF hgb hgt v),
-      concaveImageBifun_apply, iSup_sub_of_ne_bot _ (hane v)]
+      concaveImageBifun_apply, Tdaf.EReal.iSup_sub_of_ne_bot _ (hane v)]
   rw [hL, hR, iSup_comm]
   exact iSup_congr fun v => iSup_congr fun y => sub_sub_eq_add_sub (hane v) (hcne y v)
 
@@ -1362,7 +1349,7 @@ theorem conj_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx 
     conj Bx (concaveBracket Bu.flip (invBifun F) v) w = -(adjointBifun Bu Bx F w v) := by
   rw [concaveBracket_invBifun, conj_imageBifun_eq_iSup hbF (fun _ => _root_.EReal.coe_ne_bot _),
     adjointBifun_eq_concaveConj_bracket, concaveConj_apply, Tdaf.EReal.neg_iInf]
-  exact iSup_congr fun u => (neg_coe_sub _ _).symm
+  exact iSup_congr fun u => (Tdaf.EReal.neg_coe_sub _ _).symm
 
 omit [AddCommGroup X] [Module ℝ X] in
 /-- **The primal problem behind Theorem 38.5.** `((GF)* z)(v)` is the infimum over `x` of the
@@ -1381,7 +1368,7 @@ theorem adjointBifun_compBifun_eq_iInf (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (B
   have hgb : ∀ x : X, (⨅ y, (G x y - ((By y z : ℝ) : EReal))) = -(bracket By G x z) := by
     intro x
     rw [bracket_apply, Tdaf.EReal.neg_iSup]
-    exact iInf_congr fun y => (neg_coe_sub _ _).symm
+    exact iInf_congr fun y => (Tdaf.EReal.neg_coe_sub _ _).symm
   have hfa : ∀ x : X, (⨅ u, (((Bu u v : ℝ) : EReal) + F u x))
       = concaveBracket Bu.flip (invBifun F) v x := by
     intro x
