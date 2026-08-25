@@ -6466,10 +6466,14 @@ named lemmas are `EReal.sub_bot (h : a ≠ ⊥)`, `EReal.sub_top`, `EReal.bot_ad
 `EReal.sub_add_cancel : a - (b : ℝ) + b = a` and `EReal.add_sub_cancel_right : a + (b : ℝ) - b = a`
 are hypothesis-free — the subtrahend is a *real* by the statement, not an `EReal`.
 
-312. **`Tdaf.lean` is not actually sorted.** `Tdaf.Analysis.Convex.Optimization.Maximum` sits after
-`…Prox`, not between `…Lagrangian` and `…Minimum`. Nothing depends on the order, but a future
-"insert alphabetically" instruction will look wrong wherever you put the new line; the fix is a
-separate one-line commit, not a drive-by.
+312. **`Tdaf.lean` was not actually sorted, in three places at once** —
+`…Optimization.Maximum` after `…Optimization.Prox`, the whole `…Bifunction.*` block after
+`…Caratheodory`, and `…Helly`/`…HellyRefined`/`…Simplicial` at the head of the file instead of
+at their alphabetical positions. It is one flat list ordered by full module path, with no grouping
+by directory, so `grep "^import " Tdaf.lean | LC_ALL=C sort -c` is the check; nothing depends on
+the order, but a future "insert alphabetically" instruction looks wrong wherever you put the new
+line. Fixed in a separate commit of its own, not as a drive-by — which is also why the defect
+survived long enough to acquire two more instances.
 
 313. **`if_pos` and `if_neg` are deprecated** (use `ite_eq_left` / `ite_eq_right`), and a statement
      of the form `f y = if y = a then c else ⊤` needs a `Decidable (y = a)` instance that no

@@ -1,15 +1,12 @@
+import Tdaf.Analysis.Convex.Bifunction.Algebra
+import Tdaf.Analysis.Convex.Bifunction.Cofinite
+import Tdaf.Analysis.Convex.Bifunction.Process
+import Tdaf.Analysis.Convex.Bifunction.ProcessDuality
 import Tdaf.Analysis.Convex.Caratheodory
 import Tdaf.Analysis.Convex.Closure
 import Tdaf.Analysis.Convex.Concave
 import Tdaf.Analysis.Convex.Continuity
 import Tdaf.Analysis.Convex.Convergence
-import Tdaf.Analysis.Convex.Helly
-import Tdaf.Analysis.Convex.HellyRefined
-import Tdaf.Analysis.Convex.Simplicial
-import Tdaf.Analysis.Convex.Bifunction.Algebra
-import Tdaf.Analysis.Convex.Bifunction.Cofinite
-import Tdaf.Analysis.Convex.Bifunction.Process
-import Tdaf.Analysis.Convex.Bifunction.ProcessDuality
 import Tdaf.Analysis.Convex.Duality.Barrier
 import Tdaf.Analysis.Convex.Duality.ConcaveConj
 import Tdaf.Analysis.Convex.Duality.ConcaveOps
@@ -29,6 +26,8 @@ import Tdaf.Analysis.Convex.Duality.SupportRelint
 import Tdaf.Analysis.Convex.Epigraph
 import Tdaf.Analysis.Convex.Exposed
 import Tdaf.Analysis.Convex.Face
+import Tdaf.Analysis.Convex.Helly
+import Tdaf.Analysis.Convex.HellyRefined
 import Tdaf.Analysis.Convex.Homogeneous
 import Tdaf.Analysis.Convex.Homogenize
 import Tdaf.Analysis.Convex.HullDirections
@@ -45,6 +44,7 @@ import Tdaf.Analysis.Convex.Optimization.Adjoint
 import Tdaf.Analysis.Convex.Optimization.ConeDuality
 import Tdaf.Analysis.Convex.Optimization.Fenchel
 import Tdaf.Analysis.Convex.Optimization.Lagrangian
+import Tdaf.Analysis.Convex.Optimization.Maximum
 import Tdaf.Analysis.Convex.Optimization.Minimum
 import Tdaf.Analysis.Convex.Optimization.Moreau
 import Tdaf.Analysis.Convex.Optimization.MoreauGradient
@@ -52,7 +52,6 @@ import Tdaf.Analysis.Convex.Optimization.Normal
 import Tdaf.Analysis.Convex.Optimization.Perturbation
 import Tdaf.Analysis.Convex.Optimization.Program
 import Tdaf.Analysis.Convex.Optimization.Prox
-import Tdaf.Analysis.Convex.Optimization.Maximum
 import Tdaf.Analysis.Convex.Polyhedral.Closedness
 import Tdaf.Analysis.Convex.Polyhedral.Cone
 import Tdaf.Analysis.Convex.Polyhedral.Conjugate
@@ -85,6 +84,7 @@ import Tdaf.Analysis.Convex.Saddle.Monotone
 import Tdaf.Analysis.Convex.Saddle.Rademacher
 import Tdaf.Analysis.Convex.Saddle.Subgradient
 import Tdaf.Analysis.Convex.Separation
+import Tdaf.Analysis.Convex.Simplicial
 import Tdaf.Analysis.Convex.Subgradient.Approx
 import Tdaf.Analysis.Convex.Subgradient.BoundaryDirDeriv
 import Tdaf.Analysis.Convex.Subgradient.Bounded
