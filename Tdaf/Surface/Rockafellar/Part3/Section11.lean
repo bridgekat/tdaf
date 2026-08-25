@@ -40,10 +40,10 @@ closed half-spaces — and closed by specialising the backbone.
 
 ## The section's definitions
 
-* `Rockafellar.linFn b` — the vector `b` read as the linear function `⟨·, b⟩`. The book quantifies
-  over vectors where the backbone quantifies over continuous linear functionals; `exists_linFn`
-  says the two are the same quantification in `ℝⁿ`, and every statement below is stated over
-  vectors.
+* `Tdaf.Surface.linFn b` — the vector `b` read as the linear function `⟨·, b⟩`. It lives in the
+  shared surface header, not here, because §13, §14 and §18 want it too. The book quantifies over
+  vectors where the backbone quantifies over continuous linear functionals; `exists_linFn` says the
+  two are the same quantification in `ℝⁿ`, and every statement below is stated over vectors.
 * `Rockafellar.SeparatesRn b β C₁ C₂`, `SeparatesProperlyRn`, `SeparatesStrictlyRn`,
   `SeparatesStronglyRn` — the four notions of p. 95, each carrying `b ≠ 0` so that
   `{x | ⟨x, b⟩ = β}` really is a hyperplane (Theorem 1.3). `SeparatesStronglyRn` is written the way
@@ -100,34 +100,9 @@ variable {n : ℕ}
 /-! ### Vectors as linear functions
 
 Rockafellar writes a hyperplane as `{x | ⟨x, b⟩ = β}` and quantifies over the vector `b`; the
-backbone quantifies over a continuous linear functional. In `ℝⁿ` the two quantifications agree,
-and `linFn` together with `exists_linFn` is the translation. -/
-
-/-- The vector `b ∈ ℝⁿ` read as the linear function `⟨·, b⟩ : ℝⁿ → ℝ`. -/
-noncomputable def linFn (b : Rn n) : Rn n →L[ℝ] ℝ := innerSL ℝ b
-
-@[simp] theorem linFn_apply (b x : Rn n) : linFn b x = pairing n x b := by
-  simp only [linFn, pairing_apply]
-  exact real_inner_comm x b
-
-/-- `⟨·, b⟩` is the zero function exactly when `b` is the zero vector: this is what makes `b ≠ 0`
-and "`{x | ⟨x, b⟩ = β}` is a hyperplane" the same condition. -/
-theorem linFn_eq_zero_iff {b : Rn n} : linFn b = 0 ↔ b = 0 := by
-  constructor
-  · intro h
-    have hb : pairing n b b = 0 := by rw [← linFn_apply b b, h]; rfl
-    exact inner_self_eq_zero.1 hb
-  · rintro rfl
-    ext x
-    simp
-
-/-- **Every continuous linear function on `ℝⁿ` is `⟨·, b⟩`.** This is the Fréchet–Riesz
-identification, and it is what lets each statement below quantify over vectors while its proof
-quantifies over functionals. -/
-theorem exists_linFn (f : Rn n →L[ℝ] ℝ) : ∃ b : Rn n, linFn b = f :=
-  ⟨(InnerProductSpace.toDual ℝ (Rn n)).symm f, by
-    ext x
-    exact InnerProductSpace.toDual_symm_apply (x := x)⟩
+backbone quantifies over a continuous linear functional. In `ℝⁿ` the two quantifications agree, and
+`linFn` together with `exists_linFn` is the translation. Both live in
+`Tdaf/Surface/Common/Euclidean.lean`, since §13, §14 and §18 want them too. -/
 
 /-! ### The four notions of separation (p. 95) -/
 

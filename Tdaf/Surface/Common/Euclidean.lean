@@ -12,6 +12,7 @@ import Tdaf.Analysis.Convex.Simplicial
 import Tdaf.Analysis.Convex.Subgradient.Defs
 import Tdaf.LinearAlgebra.Subspace
 import Mathlib.Analysis.Convex.Join
+import Mathlib.Analysis.InnerProductSpace.Dual
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 import Mathlib.Tactic.TFAE
 
@@ -36,8 +37,13 @@ a gap gets closed once rather than once per surface.
 * `pairing_apply` — the pairing is the inner product.
 * `flip_pairing` — the pairing is its own flip, so no statement needs `(pairing n).flip` in a form
   instance search cannot see.
-* `conj_flip_pairing`, `subgradient_flip_pairing` — the two places a `.flip` survives into a
-  statement, rewritten away once here rather than at every call site.
+* `conj_flip_pairing`, `subgradient_flip_pairing`, `supportSet_flip_pairing`,
+  `supportFn_flip_pairing` — the places a `.flip` survives into a statement, rewritten away once
+  here rather than at every call site.
+* `linFn`, `exists_linFn` — the Fréchet–Riesz translation between the book's vector `b` and the
+  backbone's continuous linear functional.
+* `isAdjointPair_adjoint` — Mathlib's `LinearMap.adjoint` is Rockafellar's `A*` for the Euclidean
+  pairings, so a surface statement never has to carry an adjoint argument *and* its hypothesis.
 
 ## Design notes
 
@@ -170,6 +176,75 @@ variable {n : ℕ}
     subgradient (pairing n).flip f x = subgradient (pairing n) f x := by
   rw [flip_pairing]
 
+@[simp] theorem supportSet_flip_pairing (f : Rn n → EReal) :
+    supportSet (pairing n).flip f = supportSet (pairing n) f := by
+  rw [flip_pairing]
+
+@[simp] theorem supportFn_flip_pairing (s : Set (Rn n)) :
+    supportFn (pairing n).flip s = supportFn (pairing n) s := by
+  rw [flip_pairing]
+
 end Flip
+
+/-! ### The vector picture of a linear function
+
+A textbook in `ℝⁿ` writes a linear function as `⟨·, b⟩` and quantifies over the vector `b`; the
+backbone quantifies over a continuous linear functional, because that is what separation theory
+produces in general. `linFn` and `exists_linFn` are the Fréchet–Riesz translation between the two,
+and every surface statement about a hyperplane pays exactly one round trip through them. -/
+
+section LinFn
+
+variable {n : ℕ}
+
+/-- The vector `b` read as the linear function `⟨·, b⟩`. -/
+noncomputable def linFn (b : Rn n) : Rn n →L[ℝ] ℝ := innerSL ℝ b
+
+@[simp] theorem linFn_apply (b x : Rn n) : linFn b x = pairing n x b := by
+  simp only [linFn, pairing_apply]
+  exact real_inner_comm x b
+
+/-- `⟨·, b⟩` is the zero function exactly when `b` is the zero vector: this is what makes `b ≠ 0`
+and "`{x | ⟨x, b⟩ = β}` is a hyperplane" the same condition. -/
+theorem linFn_eq_zero_iff {b : Rn n} : linFn b = 0 ↔ b = 0 := by
+  constructor
+  · intro h
+    have hb : pairing n b b = 0 := by rw [← linFn_apply b b, h]; rfl
+    exact inner_self_eq_zero.1 hb
+  · rintro rfl
+    ext x
+    simp
+
+/-- **Every continuous linear function on `ℝⁿ` is `⟨·, b⟩`.** This is the Fréchet–Riesz
+identification, and it is what lets a surface statement quantify over vectors while its proof
+quantifies over functionals. -/
+theorem exists_linFn (f : Rn n →L[ℝ] ℝ) : ∃ b : Rn n, linFn b = f :=
+  ⟨(InnerProductSpace.toDual ℝ (Rn n)).symm f, by
+    ext x
+    exact InnerProductSpace.toDual_symm_apply (x := x)⟩
+
+end LinFn
+
+/-! ### The canonical adjoint
+
+The backbone keeps the adjoint as *data* (design decision D3): between arbitrarily paired spaces a
+transpose need not exist, so `IsAdjointPair B B' A A'` is a hypothesis and `A'` is an argument. On
+`ℝⁿ` the transpose does exist and is canonical, and it is Mathlib's `LinearMap.adjoint`. This is
+the one lemma that lets a surface section write the book's `A*` and discharge the hypothesis by
+name rather than threading both. -/
+
+section Adjoint
+
+variable {m n : ℕ}
+
+/-- **`A* = LinearMap.adjoint A` is adjoint to `A` for the Euclidean pairings.** Rockafellar's
+`A*` is this, and every backbone statement taking `(A') (hA : IsAdjointPair …)` is fed
+`(LinearMap.adjoint A) (isAdjointPair_adjoint A)`. -/
+theorem isAdjointPair_adjoint (A : Rn n →ₗ[ℝ] Rn m) :
+    IsAdjointPair (pairing n) (pairing m) A (LinearMap.adjoint A) := fun x z => by
+  simp only [pairing_apply]
+  exact (LinearMap.adjoint_inner_right A x z).symm
+
+end Adjoint
 
 end Tdaf.Surface
