@@ -1498,4 +1498,413 @@ end ConvexProcess
 
 end Closedness
 
+/-! ### The reflected process, and the dictionary between the two orientations -/
+
+section Reflect
+
+variable {U X Z : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Z] [Module ℝ Z]
+
+namespace ConvexProcess
+
+/-- The **reflection** of a convex process: the process whose graph is the reflection of
+`graph A` through the origin, so that `(A.reflect) u = -(A (-u))`.
+
+Reflection is what exchanges the two orientations. Rockafellar defines the adjoint of an
+infimum-oriented process by reversing the inequality; reversing the inequality is the same as
+reflecting the graph, so `adjointProcess Bu Bx A.reflect = coadjointProcess Bu Bx A`
+(`adjointProcess_reflect`). Every infimum-oriented statement about `A` is therefore a
+supremum-oriented statement about `A.reflect`, which is how the mirrors of Theorems 39.5 and 39.8
+are obtained. -/
+def reflect (A : ConvexProcess U X) : ConvexProcess U X where
+  graph :=
+    { carrier := {p : U × X | -p ∈ A.graph}
+      zero_mem' := by
+        change -(0 : U × X) ∈ A.graph
+        rw [_root_.neg_zero]
+        exact A.graph.zero_mem
+      add_mem' := by
+        intro p q hp hq
+        change -(p + q) ∈ A.graph
+        rw [_root_.neg_add]
+        exact A.graph.add_mem hp hq
+      smul_mem' := by
+        intro c p hp
+        change -(c • p) ∈ A.graph
+        rw [← smul_neg]
+        exact Submodule.smul_mem A.graph c hp }
+
+@[simp] theorem mem_graph_reflect {A : ConvexProcess U X} {p : U × X} :
+    p ∈ A.reflect.graph ↔ -p ∈ A.graph := Iff.rfl
+
+/-- Reflection is an involution. -/
+@[simp] theorem reflect_reflect (A : ConvexProcess U X) : A.reflect.reflect = A := by
+  refine ConvexProcess.ext (SetLike.ext fun p => ?_)
+  rw [mem_graph_reflect, mem_graph_reflect, _root_.neg_neg]
+
+/-- The values of the reflected process: `(A.reflect) u = -(A (-u))`. -/
+theorem eval_reflect (A : ConvexProcess U X) (u : U) : A.reflect.eval u = -(A.eval (-u)) := by
+  ext x
+  change -((u, x) : U × X) ∈ A.graph ↔ x ∈ -(A.eval (-u))
+  rw [Set.mem_neg]
+  exact Iff.rfl
+
+/-- Reflection distributes over sums of processes. -/
+theorem reflect_add (A₁ A₂ : ConvexProcess U X) :
+    (A₁ + A₂).reflect = A₁.reflect + A₂.reflect := by
+  refine ConvexProcess.ext (SetLike.ext fun p => ?_)
+  obtain ⟨u, x⟩ := p
+  rw [← mem_eval, ← mem_eval, eval_reflect, eval_add, eval_add, eval_reflect, eval_reflect,
+    _root_.neg_add]
+
+/-- Reflection distributes over products of processes. -/
+theorem reflect_comp (B : ConvexProcess X Z) (A : ConvexProcess U X) :
+    (B.comp A).reflect = B.reflect.comp A.reflect := by
+  refine ConvexProcess.ext (SetLike.ext fun p => ?_)
+  constructor
+  · rintro ⟨x, h, k⟩
+    exact ⟨-x, by simpa using h, by simpa using k⟩
+  · rintro ⟨x, h, k⟩
+    exact ⟨-x, by simpa using h, by simpa using k⟩
+
+end ConvexProcess
+
+end Reflect
+
+section ReflectAdjoint
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+/-- **Reversing the inequality is reflecting the graph**: the supremum-oriented adjoint of the
+reflected process is the infimum-oriented adjoint of the original one. -/
+theorem adjointProcess_reflect (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A : ConvexProcess U X) :
+    adjointProcess Bu Bx A.reflect = coadjointProcess Bu Bx A := by
+  refine ConvexProcess.ext (SetLike.ext fun q => ?_)
+  have hx : ∀ (p : U × X), Bx (-p).2 q.1 = -(Bx p.2 q.1) := fun p => by
+    rw [Prod.snd_neg, map_neg Bx p.2, LinearMap.neg_apply]
+  have hu : ∀ (p : U × X), Bu (-p).1 q.2 = -(Bu p.1 q.2) := fun p => by
+    rw [Prod.fst_neg, map_neg Bu p.1, LinearMap.neg_apply]
+  simp only [mem_graph_adjointProcess, mem_graph_coadjointProcess, mem_graph_reflect]
+  constructor
+  · intro h p hp
+    have hpp := h (-p) (by rw [_root_.neg_neg]; exact hp)
+    rw [hx p, hu p] at hpp
+    linarith
+  · intro h p hp
+    have hpp := h (-p) hp
+    rw [hx p, hu p] at hpp
+    linarith
+
+/-- The mirror of `adjointProcess_reflect`: reflection also carries the infimum-oriented adjoint
+back to the supremum-oriented one. -/
+theorem coadjointProcess_reflect (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A : ConvexProcess U X) :
+    coadjointProcess Bu Bx A.reflect = adjointProcess Bu Bx A := by
+  rw [← adjointProcess_reflect Bu Bx A.reflect, reflect_reflect]
+
+/-- The infimum-oriented adjoint is the reflection of the supremum-oriented one. Together with
+`adjointProcess_reflect` this is the whole content of "the adjoint of an infimum-oriented process
+is defined in the same way, except that the inequality is reversed". -/
+theorem coadjointProcess_eq_reflect_adjointProcess (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) :
+    coadjointProcess Bu Bx A = (adjointProcess Bu Bx A).reflect := by
+  refine ConvexProcess.ext (SetLike.ext fun q => ?_)
+  have hx : ∀ (p : U × X), Bx p.2 (-q).1 = -(Bx p.2 q.1) := fun p => by
+    rw [Prod.fst_neg, map_neg (Bx p.2) q.1]
+  have hu : ∀ (p : U × X), Bu p.1 (-q).2 = -(Bu p.1 q.2) := fun p => by
+    rw [Prod.snd_neg, map_neg (Bu p.1) q.2]
+  simp only [mem_graph_coadjointProcess, mem_graph_reflect, mem_graph_adjointProcess]
+  constructor
+  · intro h p hp
+    rw [hx p, hu p]
+    linarith [h p hp]
+  · intro h p hp
+    have hpp := h p hp
+    rw [hx p, hu p] at hpp
+    linarith
+
+end ConvexProcess
+
+end ReflectAdjoint
+
+section ReflectTopology
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+section ReflectClosed
+
+variable [TopologicalSpace U] [IsTopologicalAddGroup U] [TopologicalSpace X]
+  [IsTopologicalAddGroup X]
+
+/-- Reflection preserves closedness: it is a preimage under the homeomorphism `p ↦ -p`. -/
+theorem isClosed_graph_reflect {A : ConvexProcess U X}
+    (hA : IsClosed (A.graph : Set (U × X))) : IsClosed (A.reflect.graph : Set (U × X)) :=
+  hA.preimage (continuous_neg (G := U × X))
+
+end ReflectClosed
+
+section CoadjointClosed
+
+variable [TopologicalSpace V] [IsTopologicalAddGroup V] [TopologicalSpace Y]
+  [IsTopologicalAddGroup Y]
+
+/-- **Rockafellar, Theorem 39.2**, first assertion for the infimum orientation: the adjoint of an
+infimum-oriented convex process is closed. -/
+theorem isClosed_graph_coadjointProcess (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsContinuousPairing Bu.flip] [IsContinuousPairing Bx.flip] (A : ConvexProcess U X) :
+    IsClosed ((coadjointProcess Bu Bx A).graph : Set (Y × V)) := by
+  rw [coadjointProcess_eq_reflect_adjointProcess]
+  exact isClosed_graph_reflect (isClosed_graph_adjointProcess Bu Bx A)
+
+end CoadjointClosed
+
+section Bipolar
+
+variable [TopologicalSpace U] [TopologicalSpace X] [IsTopologicalAddGroup U]
+  [IsTopologicalAddGroup X] [ContinuousSMul ℝ U] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ U]
+  [LocallyConvexSpace ℝ X]
+
+/-- **Rockafellar, Theorem 39.2**, second assertion in the other order: taking the
+infimum-oriented adjoint and then the supremum-oriented one also returns `cl A`.
+
+This is `graph_coadjointProcess_adjointProcess_eq_closure` read through
+`adjointProcess_reflect`; the two sign flips still cancel, and it is what turns the closed halves
+of Theorems 39.5 and 39.8 into corollaries of their open halves. -/
+theorem graph_adjointProcess_coadjointProcess_eq_closure (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu] [IsCompatiblePairing Bx]
+    (A : ConvexProcess U X) :
+    ((adjointProcess Bx.flip Bu.flip (coadjointProcess Bu Bx A)).graph : Set (U × X))
+      = closure (A.graph : Set (U × X)) := by
+  rw [coadjointProcess_eq_reflect_adjointProcess, adjointProcess_reflect]
+  exact graph_coadjointProcess_adjointProcess_eq_closure Bu Bx A
+
+/-- **Rockafellar, Theorem 39.2** in the other order: a convex process is closed exactly when the
+supremum-oriented adjoint of its infimum-oriented adjoint is itself. -/
+theorem adjointProcess_coadjointProcess_eq_self_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu] [IsCompatiblePairing Bx]
+    (A : ConvexProcess U X) :
+    adjointProcess Bx.flip Bu.flip (coadjointProcess Bu Bx A) = A ↔
+      IsClosed (A.graph : Set (U × X)) := by
+  rw [coadjointProcess_eq_reflect_adjointProcess, adjointProcess_reflect]
+  exact coadjointProcess_adjointProcess_eq_self_iff Bu Bx A
+
+end Bipolar
+
+end ConvexProcess
+
+end ReflectTopology
+
+/-! ### Theorems 39.5 and 39.8 for infimum-oriented processes -/
+
+section MirrorAlgebra
+
+variable {U V X Y Z W : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
+  [AddCommGroup W] [Module ℝ W]
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.5**, for two *infimum-oriented* processes:
+`(A₁ + A₂)* = A₁* + A₂*`.
+
+Rockafellar states Theorem 39.5 for two processes "with the same orientation" and leaves the
+infimum-oriented case implicit. It is the supremum-oriented theorem applied to the reflected
+processes: reflection distributes over sums (`reflect_add`) and exchanges the two adjoints
+(`adjointProcess_reflect`). The hypothesis is Theorem 39.5's, taken at the reflections;
+`eval_reflect` translates it into a statement about `A₁` and `A₂` themselves. -/
+theorem coadjointProcess_add (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (A₁ A₂ : ConvexProcess U X)
+    (hex : ∀ y : Y, IsExactSum Bu (fun u => -(supportFn Bx (A₁.reflect.eval u) y))
+      (fun u => -(supportFn Bx (A₂.reflect.eval u) y))) :
+    coadjointProcess Bu Bx (A₁ + A₂)
+      = coadjointProcess Bu Bx A₁ + coadjointProcess Bu Bx A₂ := by
+  rw [← adjointProcess_reflect Bu Bx (A₁ + A₂), ← adjointProcess_reflect Bu Bx A₁,
+    ← adjointProcess_reflect Bu Bx A₂, reflect_add,
+    adjointProcess_add Bu Bx A₁.reflect A₂.reflect hex]
+
+/-- **Rockafellar, Theorem 39.8**, for two *infimum-oriented* processes: `(BA)* = A* B*`.
+
+Like `coadjointProcess_add`, this is the supremum-oriented theorem applied to the reflections;
+`reflect_comp` is what makes the product come out in the same order. -/
+theorem coadjointProcess_comp (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (Bz : Z →ₗ[ℝ] W →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (B : ConvexProcess X Z)
+    (hex : ∀ (w : W) (v : V), IsExactSum Bx
+      (fun x => ⨅ u ∈ A.reflect.inv.eval x, ((Bu u v : ℝ) : EReal))
+      (fun x => -(⨆ z ∈ B.reflect.eval x, ((Bz z w : ℝ) : EReal)))) :
+    coadjointProcess Bu Bz (B.comp A)
+      = (coadjointProcess Bu Bx A).comp (coadjointProcess Bx Bz B) := by
+  rw [← adjointProcess_reflect Bu Bz (B.comp A), ← adjointProcess_reflect Bu Bx A,
+    ← adjointProcess_reflect Bx Bz B, reflect_comp,
+    adjointProcess_comp Bu Bx Bz A.reflect B.reflect hex]
+
+end ConvexProcess
+
+end MirrorAlgebra
+
+/-! ### The closed halves of Theorems 39.5 and 39.8 -/
+
+section ClosedHalves
+
+variable {U V X Y Z W : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
+  [AddCommGroup W] [Module ℝ W]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Z] [IsTopologicalAddGroup Z] [ContinuousSMul ℝ Z] [LocallyConvexSpace ℝ Z]
+
+namespace ConvexProcess
+
+/-- The sum of two closed convex processes is the infimum-oriented adjoint of the sum of their
+adjoints, provided the two adjoints add exactly. This is the identity both halves of Theorem
+39.5's second statement come from. -/
+theorem add_eq_coadjointProcess_add (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bx] {A₁ A₂ : ConvexProcess U X}
+    (hA₁ : IsClosed (A₁.graph : Set (U × X))) (hA₂ : IsClosed (A₂.graph : Set (U × X)))
+    (hex : ∀ u : U, IsExactSum Bx.flip
+      (fun y => -(supportFn Bu.flip ((adjointProcess Bu Bx A₁).reflect.eval y) u))
+      (fun y => -(supportFn Bu.flip ((adjointProcess Bu Bx A₂).reflect.eval y) u))) :
+    A₁ + A₂ = coadjointProcess Bx.flip Bu.flip
+      (adjointProcess Bu Bx A₁ + adjointProcess Bu Bx A₂) := by
+  rw [coadjointProcess_add Bx.flip Bu.flip _ _ hex,
+    (coadjointProcess_adjointProcess_eq_self_iff Bu Bx A₁).2 hA₁,
+    (coadjointProcess_adjointProcess_eq_self_iff Bu Bx A₂).2 hA₂]
+
+/-- **Rockafellar, Theorem 39.5**, closed half, first assertion: the sum of two closed convex
+processes is closed. It is an adjoint, and an adjoint is always closed. -/
+theorem isClosed_graph_add (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bx] {A₁ A₂ : ConvexProcess U X}
+    (hA₁ : IsClosed (A₁.graph : Set (U × X))) (hA₂ : IsClosed (A₂.graph : Set (U × X)))
+    (hex : ∀ u : U, IsExactSum Bx.flip
+      (fun y => -(supportFn Bu.flip ((adjointProcess Bu Bx A₁).reflect.eval y) u))
+      (fun y => -(supportFn Bu.flip ((adjointProcess Bu Bx A₂).reflect.eval y) u))) :
+    IsClosed (((A₁ + A₂).graph : Set (U × X))) := by
+  rw [add_eq_coadjointProcess_add Bu Bx hA₁ hA₂ hex]
+  exact isClosed_graph_coadjointProcess Bx.flip Bu.flip _
+
+end ConvexProcess
+
+end ClosedHalves
+
+section ClosedHalvesAdjoint
+
+variable {U V X Y Z W : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
+  [AddCommGroup W] [Module ℝ W]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Z] [IsTopologicalAddGroup Z] [ContinuousSMul ℝ Z] [LocallyConvexSpace ℝ Z]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V] [LocallyConvexSpace ℝ V]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  [TopologicalSpace W] [IsTopologicalAddGroup W] [ContinuousSMul ℝ W] [LocallyConvexSpace ℝ W]
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.5**, closed half, second assertion: `(A₁ + A₂)*` is the closure of
+`A₁* + A₂*`. -/
+theorem graph_adjointProcess_add_eq_closure (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bx] [IsCompatiblePairing Bu.flip]
+    [IsCompatiblePairing Bx.flip] {A₁ A₂ : ConvexProcess U X}
+    (hA₁ : IsClosed (A₁.graph : Set (U × X))) (hA₂ : IsClosed (A₂.graph : Set (U × X)))
+    (hex : ∀ u : U, IsExactSum Bx.flip
+      (fun y => -(supportFn Bu.flip ((adjointProcess Bu Bx A₁).reflect.eval y) u))
+      (fun y => -(supportFn Bu.flip ((adjointProcess Bu Bx A₂).reflect.eval y) u))) :
+    ((adjointProcess Bu Bx (A₁ + A₂)).graph : Set (Y × V))
+      = closure (((adjointProcess Bu Bx A₁ + adjointProcess Bu Bx A₂).graph : Set (Y × V))) := by
+  have h := graph_adjointProcess_coadjointProcess_eq_closure Bx.flip Bu.flip
+    (adjointProcess Bu Bx A₁ + adjointProcess Bu Bx A₂)
+  simp only [LinearMap.flip_flip] at h
+  rw [add_eq_coadjointProcess_add Bu Bx hA₁ hA₂ hex, h]
+
+end ConvexProcess
+
+end ClosedHalvesAdjoint
+
+section ClosedHalvesComp
+
+variable {U V X Y Z W : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
+  [AddCommGroup W] [Module ℝ W]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Z] [IsTopologicalAddGroup Z] [ContinuousSMul ℝ Z] [LocallyConvexSpace ℝ Z]
+
+namespace ConvexProcess
+
+/-- The product of two closed convex processes is the infimum-oriented adjoint of the product of
+their adjoints. This is the identity both halves of Theorem 39.8's second statement come from. -/
+theorem comp_eq_coadjointProcess_comp (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (Bz : Z →ₗ[ℝ] W →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu] [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bz] {A : ConvexProcess U X} {B : ConvexProcess X Z}
+    (hA : IsClosed (A.graph : Set (U × X))) (hB : IsClosed (B.graph : Set (X × Z)))
+    (hex : ∀ (u : U) (z : Z), IsExactSum Bx.flip
+      (fun y => ⨅ w ∈ (adjointProcess Bx Bz B).reflect.inv.eval y, ((Bz z w : ℝ) : EReal))
+      (fun y => -(⨆ v ∈ (adjointProcess Bu Bx A).reflect.eval y, ((Bu u v : ℝ) : EReal)))) :
+    B.comp A = coadjointProcess Bz.flip Bu.flip
+      ((adjointProcess Bu Bx A).comp (adjointProcess Bx Bz B)) := by
+  rw [coadjointProcess_comp Bz.flip Bx.flip Bu.flip _ _ hex,
+    (coadjointProcess_adjointProcess_eq_self_iff Bx Bz B).2 hB,
+    (coadjointProcess_adjointProcess_eq_self_iff Bu Bx A).2 hA]
+
+/-- **Rockafellar, Theorem 39.8**, closed half, first assertion: the product of two closed convex
+processes is closed. -/
+theorem isClosed_graph_comp (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (Bz : Z →ₗ[ℝ] W →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu] [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bz] {A : ConvexProcess U X} {B : ConvexProcess X Z}
+    (hA : IsClosed (A.graph : Set (U × X))) (hB : IsClosed (B.graph : Set (X × Z)))
+    (hex : ∀ (u : U) (z : Z), IsExactSum Bx.flip
+      (fun y => ⨅ w ∈ (adjointProcess Bx Bz B).reflect.inv.eval y, ((Bz z w : ℝ) : EReal))
+      (fun y => -(⨆ v ∈ (adjointProcess Bu Bx A).reflect.eval y, ((Bu u v : ℝ) : EReal)))) :
+    IsClosed (((B.comp A).graph : Set (U × Z))) := by
+  rw [comp_eq_coadjointProcess_comp Bu Bx Bz hA hB hex]
+  exact isClosed_graph_coadjointProcess Bz.flip Bu.flip _
+
+end ConvexProcess
+
+end ClosedHalvesComp
+
+section ClosedHalvesCompAdjoint
+
+variable {U V X Y Z W : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
+  [AddCommGroup W] [Module ℝ W]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace Z] [IsTopologicalAddGroup Z] [ContinuousSMul ℝ Z] [LocallyConvexSpace ℝ Z]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V] [LocallyConvexSpace ℝ V]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  [TopologicalSpace W] [IsTopologicalAddGroup W] [ContinuousSMul ℝ W] [LocallyConvexSpace ℝ W]
+
+namespace ConvexProcess
+
+omit [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y]
+  [LocallyConvexSpace ℝ Y] in
+/-- **Rockafellar, Theorem 39.8**, closed half, second assertion: `(BA)*` is the closure of
+`A* B*`. -/
+theorem graph_adjointProcess_comp_eq_closure (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (Bz : Z →ₗ[ℝ] W →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu] [IsCompatiblePairing Bx]
+    [IsCompatiblePairing Bz] [IsCompatiblePairing Bu.flip] [IsCompatiblePairing Bz.flip]
+    {A : ConvexProcess U X} {B : ConvexProcess X Z}
+    (hA : IsClosed (A.graph : Set (U × X))) (hB : IsClosed (B.graph : Set (X × Z)))
+    (hex : ∀ (u : U) (z : Z), IsExactSum Bx.flip
+      (fun y => ⨅ w ∈ (adjointProcess Bx Bz B).reflect.inv.eval y, ((Bz z w : ℝ) : EReal))
+      (fun y => -(⨆ v ∈ (adjointProcess Bu Bx A).reflect.eval y, ((Bu u v : ℝ) : EReal)))) :
+    ((adjointProcess Bu Bz (B.comp A)).graph : Set (W × V))
+      = closure ((((adjointProcess Bu Bx A).comp
+          (adjointProcess Bx Bz B)).graph : Set (W × V))) := by
+  have h := graph_adjointProcess_coadjointProcess_eq_closure Bz.flip Bu.flip
+    ((adjointProcess Bu Bx A).comp (adjointProcess Bx Bz B))
+  simp only [LinearMap.flip_flip] at h
+  rw [comp_eq_coadjointProcess_comp Bu Bx Bz hA hB hex, h]
+
+end ConvexProcess
+
+end ClosedHalvesCompAdjoint
+
 end Tdaf.ConvexAnalysis
