@@ -238,6 +238,242 @@ end IsExactSum
 
 end SumInterface
 
+/-! ### Sums over a `Finset`: the unconditional half -/
+
+section FinsetSum
+
+variable {ι E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E → EReal}
+
+omit [AddCommGroup E] [Module ℝ E] in
+/-- The effective domain of a finite sum is the intersection of the effective domains: `dom_add`
+over a `Finset`, with the same `≠ ⊥` hypothesis and for the same reason. -/
+theorem dom_finsetSum (hf : ∀ i ∈ s, ∀ x, f i x ≠ ⊥) :
+    dom (∑ i ∈ s, f i) = ⋂ i ∈ s, dom (f i) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    rw [Finset.sum_empty]
+    ext x
+    simp
+  | cons i t hi ih =>
+    have hbot : ∀ x, (∑ j ∈ t, f j) x ≠ ⊥ := fun x => by
+      rw [Finset.sum_apply]
+      exact Tdaf.EReal.sum_ne_bot fun j hj => hf j (by simp [hj]) x
+    rw [Finset.sum_cons, dom_add (hf i (by simp)) hbot, ih fun j hj => hf j (by simp [hj])]
+    ext x
+    simp [Finset.mem_cons]
+
+/-- Affine minorants of `f₁, …, fₘ` add to an affine minorant of `f₁ + ⋯ + fₘ`. This is
+`conj_add_le_coe_add` over a `Finset`, and like it, it needs no hypothesis whatsoever. -/
+theorem conj_finsetSum_le_coe_sum {y : ι → F} {c : ι → ℝ}
+    (h : ∀ i ∈ s, conj B (f i) (y i) ≤ (c i : EReal)) :
+    conj B (∑ i ∈ s, f i) (∑ i ∈ s, y i) ≤ ((∑ i ∈ s, c i : ℝ) : EReal) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    simp only [Finset.sum_empty]
+    rw [conj_le_coe_iff]
+    intro x
+    rw [affineFn_eq_coe]
+    simp
+  | cons i t hi ih =>
+    simp only [Finset.sum_cons]
+    exact conj_add_le_coe_add (h i (by simp)) (ih fun j hj => h j (by simp [hj]))
+
+/-- The pointwise `m`-ary form: `(f₁ + ⋯ + fₘ)* (y₁ + ⋯ + yₘ) ≤ f₁* y₁ + ⋯ + fₘ* yₘ`.
+
+As in the binary case (`conj_add_le_add_conj`) this is *not* unconditional: non-empty effective
+domains are what keep the right-hand side from collapsing to `⊥` through a `⊤ + ⊥`. -/
+theorem conj_finsetSum_le_sum_conj (hf : ∀ i ∈ s, (dom (f i)).Nonempty) (y : ι → F) :
+    conj B (∑ i ∈ s, f i) (∑ i ∈ s, y i) ≤ ∑ i ∈ s, conj B (f i) (y i) := by
+  rcases eq_or_ne (∑ i ∈ s, conj B (f i) (y i)) ⊤ with htop | htop
+  · rw [htop]; exact le_top
+  have hbot : ∀ i ∈ s, conj B (f i) (y i) ≠ ⊥ := fun i hi => conj_ne_bot (hf i hi) (y i)
+  have hfin : ∀ i ∈ s, conj B (f i) (y i) ≠ ⊤ :=
+    Tdaf.EReal.forall_ne_top_of_sum_ne_top s _ hbot htop
+  have hci : ∀ i ∈ s, conj B (f i) (y i) = (((conj B (f i) (y i)).toReal : ℝ) : EReal) :=
+    fun i hi => (_root_.EReal.coe_toReal (hfin i hi) (hbot i hi)).symm
+  have hsum : ∑ i ∈ s, conj B (f i) (y i)
+      = ((∑ i ∈ s, (conj B (f i) (y i)).toReal : ℝ) : EReal) := by
+    rw [Tdaf.EReal.coe_sum]
+    exact Finset.sum_congr rfl hci
+  rw [hsum]
+  exact conj_finsetSum_le_coe_sum fun i hi => (hci i hi).le
+
+/-- **Half of Rockafellar's Theorem 16.4 in the book's `m`-ary form, unconditionally**:
+`(f₁ + ⋯ + fₘ)* ≤ f₁* □ ⋯ □ fₘ*`, the `□`-product being the `AddCommMonoid` sum of
+`InfConvFn F`.
+
+No properness is needed anywhere, and none may be assumed at the intermediate stages: `□` does not
+preserve properness, so the induction runs on `infConv_mono` and never re-enters the infimum
+formula. -/
+theorem conj_finsetSum_le_sum_toInfConvFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Finset ι)
+    (f : ι → E → EReal) :
+    conj B (∑ i ∈ s, f i) ≤ ofInfConvFn (∑ i ∈ s, toInfConvFn (conj B (f i))) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    simp only [Finset.sum_empty, ofInfConvFn_zero]
+    intro y
+    rcases eq_or_ne y 0 with rfl | hy
+    · rw [indicatorFn_of_mem (s := ({0} : Set F)) (Set.mem_singleton_iff.2 rfl), conj_apply]
+      refine iSup_le fun x => ?_
+      simp
+    · rw [indicatorFn_of_notMem (s := ({0} : Set F)) (by simpa using hy)]
+      exact le_top
+  | cons i t hi ih =>
+    simp only [Finset.sum_cons, ofInfConvFn_add, ofInfConvFn_toInfConvFn]
+    exact (conj_add_le_infConv B (f i) _).trans (infConv_mono le_rfl ih)
+
+end FinsetSum
+
+/-! ### Sums over a `Finset`: the interface -/
+
+section FinsetSumInterface
+
+variable {ι E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E → EReal}
+
+/-- A finite family `(fᵢ)_{i ∈ s}` **adds exactly** with respect to the pairing `B`: every member
+is proper, and the `m`-fold infimal convolution `f₁* □ ⋯ □ fₘ*` is attained at every point —
+equivalently (`IsExactFinsetSum.conj_finsetSum`), the conjugate of `f₁ + ⋯ + fₘ` *is*
+`f₁* □ ⋯ □ fₘ*`.
+
+This is the conclusion of Rockafellar's Theorem 16.4 and of its polyhedral refinement
+Theorem 20.1, both of which the book states for `m` summands; `IsExactSum` is the case of two.
+Nothing here is special to `m = 2` reached by iteration: `IsExactFinsetSum.cons` and
+`IsExactFinsetSum.of_split` build a family interface out of binary ones, and every consequence
+below is proved once, for the family. -/
+structure IsExactFinsetSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Finset ι) (f : ι → E → EReal) : Prop where
+  /-- Every member of the family is proper. -/
+  proper : ∀ i ∈ s, Proper (f i)
+  /-- At every `y` the `m`-fold infimal convolution defining `(f₁ + ⋯ + fₘ)*` is attained: some
+  splitting `y = y₁ + ⋯ + yₘ` already achieves the value. The reverse inequality is unconditional
+  (`conj_finsetSum_le_sum_toInfConvFn`), so this is the entire content. -/
+  exact_le : ∀ y : F, ∃ y' : ι → F, ∑ i ∈ s, y' i = y ∧
+    ∑ i ∈ s, conj B (f i) (y' i) ≤ conj B (∑ i ∈ s, f i) y
+
+namespace IsExactFinsetSum
+
+variable (h : IsExactFinsetSum B s f)
+include h
+
+/-- The sum of an exactly-adding family never takes the value `⊥`. -/
+theorem finsetSum_ne_bot (x : E) : (∑ i ∈ s, f i) x ≠ ⊥ := by
+  rw [Finset.sum_apply]
+  exact Tdaf.EReal.sum_ne_bot fun i hi => (h.proper i hi).ne_bot x
+
+/-- **The interface rules out effective domains with empty intersection**, exactly as in the
+binary case (`IsExactSum.proper_add`): if `⋂ dom fᵢ = ∅` then `f₁ + ⋯ + fₘ ≡ +∞` and its
+conjugate is `≡ -∞`, which no sum of conjugates of proper functions bounds from above. -/
+theorem proper_finsetSum : Proper (∑ i ∈ s, f i) := by
+  have hb : conj B (∑ i ∈ s, f i) 0 ≠ ⊥ := by
+    obtain ⟨y', -, hle⟩ := h.exact_le 0
+    intro hc
+    rw [hc, le_bot_iff] at hle
+    exact Tdaf.EReal.sum_ne_bot
+      (fun i hi => conj_ne_bot (h.proper i hi).dom_nonempty (y' i)) hle
+  refine ⟨?_, h.finsetSum_ne_bot⟩
+  by_contra hd
+  rw [Set.not_nonempty_iff_eq_empty, Set.eq_empty_iff_forall_notMem] at hd
+  exact hb (conj_eq_bot_iff.2 fun x => top_le_iff.1 (not_lt.1 (hd x)))
+
+theorem sum_toInfConvFn_le_conj_finsetSum :
+    ofInfConvFn (∑ i ∈ s, toInfConvFn (conj B (f i))) ≤ conj B (∑ i ∈ s, f i) := by
+  intro y
+  obtain ⟨y', hy, hle⟩ := h.exact_le y
+  refine le_trans ?_ hle
+  rw [← hy]
+  exact sum_toInfConvFn_le_sum (fun i hi x => conj_ne_bot (h.proper i hi).dom_nonempty x) y'
+
+/-- **Rockafellar's Theorem 16.4** in the book's `m`-ary form, exact half: the conjugate of a
+finite sum is the infimal convolution of the conjugates. -/
+theorem conj_finsetSum :
+    conj B (∑ i ∈ s, f i) = ofInfConvFn (∑ i ∈ s, toInfConvFn (conj B (f i))) :=
+  le_antisymm (conj_finsetSum_le_sum_toInfConvFn B s f) h.sum_toInfConvFn_le_conj_finsetSum
+
+/-- **The `m`-fold infimal convolution is attained**, which is the half of Theorem 16.4 that the
+constraint qualifications are for:
+`(f₁ + ⋯ + fₘ)* y = inf {f₁* y₁ + ⋯ + fₘ* yₘ | y₁ + ⋯ + yₘ = y}`, with the infimum attained. -/
+theorem exists_conj_finsetSum_eq (y : F) :
+    ∃ y' : ι → F, ∑ i ∈ s, y' i = y ∧
+      ∑ i ∈ s, conj B (f i) (y' i) = conj B (∑ i ∈ s, f i) y := by
+  obtain ⟨y', hy, hle⟩ := h.exact_le y
+  refine ⟨y', hy, le_antisymm hle ?_⟩
+  rw [← hy]
+  exact conj_finsetSum_le_sum_conj (fun i hi => (h.proper i hi).dom_nonempty) y'
+
+end IsExactFinsetSum
+
+/-- A one-element family adds exactly as soon as its member is proper: there is nothing to
+split. This is the base case of every `m`-ary constraint qualification. -/
+theorem IsExactFinsetSum.singleton {i : ι} (hf : Proper (f i)) :
+    IsExactFinsetSum B ({i} : Finset ι) f where
+  proper j hj := by rw [Finset.mem_singleton.1 hj]; exact hf
+  exact_le y := ⟨fun _ => y, by simp, by simp⟩
+
+/-- **Adjoining one summand.** A family adds exactly as soon as its tail does and the new summand
+adds exactly to the sum of the tail.
+
+This is the induction step every `m`-ary constraint qualification runs on; what each of them has
+to supply is the *binary* hypothesis `hbin`, and that is where the convexity, properness and
+relative-interior facts about `f₁ + ⋯ + fₘ₋₁` are consumed. -/
+theorem IsExactFinsetSum.cons {i : ι} {t : Finset ι} (hi : i ∉ t)
+    (hbin : IsExactSum B (f i) (∑ j ∈ t, f j)) (ht : IsExactFinsetSum B t f) :
+    IsExactFinsetSum B (Finset.cons i t hi) f := by
+  classical
+  refine ⟨fun j hj => ?_, fun y => ?_⟩
+  · rcases Finset.mem_cons.1 hj with rfl | hj'
+    · exact hbin.proper_left
+    · exact ht.proper j hj'
+  · obtain ⟨y₁, y₂, hy, hle⟩ := hbin.exact_le y
+    obtain ⟨y', hy', hle'⟩ := ht.exact_le y₂
+    obtain ⟨w, hwi, hwt⟩ : ∃ w : ι → F, w i = y₁ ∧ ∀ j ∈ t, w j = y' j :=
+      ⟨Function.update y' i y₁, Function.update_self _ _ _,
+        fun j hj => Function.update_of_ne (by rintro rfl; exact hi hj) _ _⟩
+    refine ⟨w, ?_, ?_⟩
+    · rw [Finset.sum_cons, hwi, Finset.sum_congr rfl hwt, hy', hy]
+    · rw [Finset.sum_cons, Finset.sum_cons, hwi]
+      have hcongr : ∑ j ∈ t, conj B (f j) (w j) = ∑ j ∈ t, conj B (f j) (y' j) :=
+        Finset.sum_congr rfl fun j hj => by rw [hwt j hj]
+      rw [hcongr]
+      exact le_trans (add_le_add le_rfl hle') hle
+
+/-- **Gluing two exactly-adding subfamilies.** If `s` splits into disjoint `t` and `u`, both of
+which add exactly, and the two partial sums add exactly to each other, then `s` adds exactly.
+
+The splitting is spelled as `∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u` rather than `s = t ∪ u` so that the
+statement needs no `DecidableEq` instance, which a caller supplying `Classical.propDecidable` could
+not match. This is the form Rockafellar's proof of Theorem 20.1 uses: `t` the polyhedral indices,
+`u` the rest. -/
+theorem IsExactFinsetSum.of_split {t u : Finset ι} (hdisj : Disjoint t u)
+    (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
+    (ht : IsExactFinsetSum B t f) (hu : IsExactFinsetSum B u f)
+    (hbin : IsExactSum B (∑ i ∈ t, f i) (∑ i ∈ u, f i)) :
+    IsExactFinsetSum B s f := by
+  classical
+  have hsu : s = t ∪ u := Finset.ext fun i => by rw [hmem i, Finset.mem_union]
+  subst hsu
+  refine ⟨fun i hi => ?_, fun y => ?_⟩
+  · rcases Finset.mem_union.1 hi with hi' | hi'
+    · exact ht.proper i hi'
+    · exact hu.proper i hi'
+  · obtain ⟨y₁, y₂, hy, hle⟩ := hbin.exact_le y
+    obtain ⟨a, ha, hlea⟩ := ht.exact_le y₁
+    obtain ⟨b, hb, hleb⟩ := hu.exact_le y₂
+    obtain ⟨w, hwt, hwu⟩ : ∃ w : ι → F, (∀ i ∈ t, w i = a i) ∧ ∀ i ∈ u, w i = b i :=
+      ⟨fun i => if i ∈ t then a i else b i, fun i hi => by simp [hi],
+        fun i hi => by simp [Finset.disjoint_right.1 hdisj hi]⟩
+    refine ⟨w, ?_, ?_⟩
+    · rw [Finset.sum_union hdisj, Finset.sum_congr rfl hwt, Finset.sum_congr rfl hwu, ha, hb, hy]
+    · rw [Finset.sum_union hdisj, Finset.sum_union hdisj]
+      have h₁ : ∑ i ∈ t, conj B (f i) (w i) = ∑ i ∈ t, conj B (f i) (a i) :=
+        Finset.sum_congr rfl fun i hi => by rw [hwt i hi]
+      have h₂ : ∑ i ∈ u, conj B (f i) (w i) = ∑ i ∈ u, conj B (f i) (b i) :=
+        Finset.sum_congr rfl fun i hi => by rw [hwu i hi]
+      rw [h₁, h₂]
+      exact le_trans (add_le_add hlea hleb) hle
+
+end FinsetSumInterface
+
 /-! ### Images -/
 
 section Image

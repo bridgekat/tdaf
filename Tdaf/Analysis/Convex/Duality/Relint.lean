@@ -38,6 +38,9 @@ what discharge them.
   `(f + g)* = (cl f + cl g)*`. The book's own form `cl (f + g) = cl f + cl g` is `clFn_add` in
   `Recession/Closedness.lean`; it is *not* what §20 can use, see the design notes.
 * `IsExactSum.of_clFn` — exactness transfers from the closures.
+* `IsExactFinsetSum.of_relint` — **Theorem 16.4** for `m` summands, with `Theorem 6.5` over a
+  `Finset` (`Convex.relint_biInter_finset`) supplying the relative interior of the partial sums'
+  effective domain.
 * `proper_conj_of_proper` — **Theorem 12.2** in the form §13 uses it: in finite dimensions
   `f` proper convex already gives `f*` proper, with no closedness hypothesis.
 
@@ -438,5 +441,89 @@ theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip
       (hf.tendstoClFnAlongSegment hpf hxf) (hg.tendstoClFnAlongSegment hpg hxg))
 
 end Closure
+
+/-! ### Theorem 16.4 for `m` summands -/
+
+section FinsetSum
+
+variable {ι : Type*} {E F : Type*}
+  [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E → EReal}
+
+omit [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F] in
+/-- **Rockafellar, Theorem 6.5** over a `Finset`: the relative interior of a finite intersection
+is the intersection of the relative interiors, as soon as the latter has a point in common.
+
+`Convex.relint_iInter` read over the subtype `↥s`, which is finite. It belongs beside that lemma
+in `RelativeInterior.lean`; it is here because the `m`-ary constraint qualifications are its only
+consumers so far. -/
+theorem Convex.relint_biInter_finset {C : ι → Set E} (hC : ∀ i ∈ s, Convex ℝ (C i)) {x₀ : E}
+    (hx₀ : ∀ i ∈ s, x₀ ∈ ri (C i)) : ri (⋂ i ∈ s, C i) = ⋂ i ∈ s, ri (C i) := by
+  have hbi : ∀ D : ι → Set E, (⋂ i ∈ s, D i) = ⋂ i : {j // j ∈ s}, D i := by
+    intro D
+    ext x
+    simp
+  rw [hbi C, hbi fun i => ri (C i)]
+  exact Convex.relint_iInter (fun i => hC i i.2) ⟨x₀, Set.mem_iInter.2 fun i => hx₀ i i.2⟩
+
+omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
+/-- The sum of a finite family of proper convex functions with a common domain point, packaged as
+the three facts the binary constraint qualifications ask about it. -/
+theorem properConvexFn_finsetSum (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i))
+    {x₀ : E} (hx₀ : ∀ i ∈ s, x₀ ∈ dom (f i)) :
+    ConvexFn (∑ i ∈ s, f i) ∧ Proper (∑ i ∈ s, f i) ∧ dom (∑ i ∈ s, f i) = ⋂ i ∈ s, dom (f i) := by
+  have hbot : ∀ i ∈ s, ∀ x, f i x ≠ ⊥ := fun i hi x => (hpf i hi).ne_bot x
+  have hdom : dom (∑ i ∈ s, f i) = ⋂ i ∈ s, dom (f i) := dom_finsetSum hbot
+  have hfun : (∑ i ∈ s, f i) = fun x => ∑ i ∈ s, f i x := by
+    funext x
+    rw [Finset.sum_apply]
+  refine ⟨by rw [hfun]; exact ConvexFn.sum hf hbot, ⟨⟨x₀, ?_⟩, fun x => ?_⟩, hdom⟩
+  · rw [hdom]
+    exact Set.mem_iInter₂.2 hx₀
+  · rw [Finset.sum_apply]
+    exact Tdaf.EReal.sum_ne_bot fun i hi => hbot i hi x
+
+private theorem isExactFinsetSum_of_relint_aux [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (f : ι → E → EReal) (x₀ : E) : ∀ t : Finset ι, t.Nonempty → (∀ i ∈ t, ConvexFn (f i)) →
+      (∀ i ∈ t, Proper (f i)) → (∀ i ∈ t, x₀ ∈ ri (dom (f i))) → IsExactFinsetSum B t f := by
+  intro t
+  induction t using Finset.cons_induction with
+  | empty => intro hne; exact absurd hne (by simp)
+  | cons i t hi ih =>
+    intro _ hf hpf hx₀
+    have hmt : ∀ j ∈ t, j ∈ Finset.cons i t hi := fun j hj => Finset.mem_cons_of_mem hj
+    rcases Finset.eq_empty_or_nonempty t with rfl | htne
+    · rw [Finset.cons_empty]
+      exact IsExactFinsetSum.singleton (hpf i (by simp))
+    refine IsExactFinsetSum.cons hi ?_
+      (ih htne (fun j hj => hf j (hmt j hj)) (fun j hj => hpf j (hmt j hj))
+        (fun j hj => hx₀ j (hmt j hj)))
+    obtain ⟨hconv, hprop, hdom⟩ :=
+      properConvexFn_finsetSum (fun j hj => hf j (hmt j hj)) (fun j hj => hpf j (hmt j hj))
+        (fun j hj => intrinsicInterior_subset (hx₀ j (hmt j hj)))
+    have hri : x₀ ∈ ri (dom (∑ j ∈ t, f j)) := by
+      rw [hdom, Convex.relint_biInter_finset (fun j hj => (hf j (hmt j hj)).convex_dom)
+        (fun j hj => hx₀ j (hmt j hj))]
+      exact Set.mem_iInter₂.2 fun j hj => hx₀ j (hmt j hj)
+    exact IsExactSum.of_relint (hf i (by simp)) (hpf i (by simp)) hconv hprop
+      (hx₀ i (by simp)) hri
+
+/-- **Rockafellar, Theorem 16.4** in the book's own `m`-ary form: finitely many proper convex
+functions add exactly as soon as the relative interiors of their effective domains have a point in
+common.
+
+The induction is genuinely available here, and it is `IsExactFinsetSum.cons`; what it needs beyond
+the binary Theorem 16.4 are the two facts about a partial sum `f₁ + ⋯ + fₘ₋₁` that the binary
+statement consumes — that its effective domain is `⋂ dom fᵢ` (`dom_finsetSum`) and that `x₀` is in
+the relative interior of that intersection, which is **Theorem 6.5**
+(`Convex.relint_biInter_finset`). Properness of the partial sum is then the common domain point,
+not a separate hypothesis. -/
+theorem IsExactFinsetSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hs : s.Nonempty) (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i)) {x₀ : E}
+    (hx₀ : ∀ i ∈ s, x₀ ∈ ri (dom (f i))) : IsExactFinsetSum B s f :=
+  isExactFinsetSum_of_relint_aux f x₀ s hs hf hpf hx₀
+
+end FinsetSum
 
 end Tdaf.ConvexAnalysis
