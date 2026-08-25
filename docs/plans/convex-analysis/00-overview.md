@@ -95,7 +95,7 @@ What the Mathlib survey established:
   two locally convex topologies with the same continuous dual. The names are
   `Convex.toWeakSpace_closure`, `LinearMap.image_closure_of_convex` and
   `LinearEquiv.image_closure_of_convex`. No declaration in that file contains the word "compatible",
-  so only a semantic search finds it — see `NOTES.md` gotcha 29.
+  so only a semantic search finds it — see `gotchas.md` DEP4.
 
 Two concrete Mathlib mismatches to be careful about:
 
@@ -513,7 +513,7 @@ on top of this library without the seams showing. Concretely:
   theorem often splits into several backbone lemmas with different hypotheses. When the book's
   statement bundles clauses that have different natural homes, split them; when the book's
   hypotheses are stronger than the proof needs, weaken them. Every such divergence is recorded as a
-  correction in `NOTES.md`.
+  correction in [`api.md`](api.md).
 * **Module docstrings lead with the mathematics.** "Gauges, polars of convex functions, and
   obverses — four correspondences, each an involution on a characterised class" is a docstring;
   "Rockafellar's §15" is a *reference*, and belongs in the `## References` section at the bottom
@@ -896,7 +896,7 @@ picking the plan up:
 | §22 elementary vectors (Lemmas 22.4, 22.5, Cor 22.4.1, Thm 22.6) | a substantial body of combinatorial matroid theory, not convex analysis |
 | Thm 24.2's integral formula | a substantial body of one-dimensional integration theory, not convex analysis |
 | Thm 27.1(e) | unstatable without a reflexive pairing: it is a claim about `E**` |
-| Cors 17.1.4 and 17.1.6 | **false as Rockafellar states them**; the counterexample (`f₁ y = -y`, `f₂ y = y` on `ℝ¹`) is in `NOTES.md`'s `Caratheodory.lean` record |
+| Cors 17.1.4 and 17.1.6 | **false as Rockafellar states them**; the counterexample (`f₁ y = -y`, `f₂ y = y` on `ℝ¹`) is in `api.md`'s `Caratheodory.lean` record |
 | Cor 31.4.1, Thm 28.3, §12's Tucker representation | surface layer (coordinates on `ℝⁿ`), by the backbone/surface split of §4 |
 | Thm 39.3's fourth and last assertions, infimum-oriented | a placement decision, not a gap: they are `partialCl₂`/`ri` statements belonging beside the supremum-oriented forms in `Bifunction/ProcessDuality.lean`, and `coBracket_eq_neg_bracket` transports them mechanically |
 
@@ -965,8 +965,8 @@ minorant of `f` that is nonpositive at the origin, with convexity and maximality
 hypothesis on `f`. `Duality/Level.lean` holds the ray description
 `posHomGenCone f = {0} ∪ ⋃_{a>0} a • epi f`, the identification `posHomGenCone_eq_coe_hull` for
 convex `f`, and every formula Rockafellar states against it. The two were independently developed
-by two agents and collided at the top-level import; the episode is recorded as gotcha 74 in
-`NOTES.md`.
+by two agents and collided at the top-level import; the episode is recorded as G1 in
+[`gotchas.md`](gotchas.md).
 
 **§10 is complete through Theorem 10.5.** Two things it did not cost. Theorem 10.4 needed no new
 analysis: `exists_chart_retraction` packages the Theorem 10.1 chart with a *continuous linear*
@@ -1340,7 +1340,7 @@ budgeted as a file in §3, is a page of corollaries over Mathlib's `WeakSpace.le
   no convexity in them, and they are the clearest Mathlib gap this project found. There is no
   policy for them yet. Until there is: name each one as Mathlib would, so that a later upstream
   replaces it by deletion, and keep in mind that inside `namespace Tdaf` a local `EReal.foo` would
-  silently shadow a future Mathlib `EReal.foo` (gotcha 34).
+  silently shadow a future Mathlib `EReal.foo` (gotcha LIB1).
 
 ## 9. Corrections to Rockafellar and to this plan
 

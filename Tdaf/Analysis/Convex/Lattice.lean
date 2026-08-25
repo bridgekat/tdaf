@@ -64,7 +64,7 @@ the meets exist, they are simply not computed pointwise, and discarding them wou
 the half of Rockafellar's sentence that carries content. Nor is
 `ClosureOperator.Closeds`-style packaging appropriate: `conv` is *contracting*, so it is a closure
 operator only on `(E → EReal)ᵒᵈ`, and the `OrderDual` transport does not simplify away
-(`NOTES.md` gotcha 18, and the design note in `Operations/Hull.lean`). The honestly monotone
+(`gotchas.md` LIB5, and the design note in `Operations/Hull.lean`). The honestly monotone
 coreflection `gci_val_convHullFn` supplies `CompleteLattice` directly.
 
 **Why an `abbrev`.** `ConvexFns E` is a reducible abbreviation for the very subtype that

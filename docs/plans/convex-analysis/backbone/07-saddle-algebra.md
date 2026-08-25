@@ -289,7 +289,7 @@ slices plus `clFn`/`clConcave` of an improper slice.
 `lscHull_eq_of_eqOn_relint_dom`, `clFn_eq_of_eqOn_relint_dom`, `clConcave_eq_of_eqOn_relint_domConcave`,
 `Convex.relint_eq_of_subset_of_subset_closure` (the Cor 6.3.1 sandwich),
 `ConcaveFn.clConcave_eq_of_mem_relint_domConcave` (Theorem 7.4's concave mirror, also proved
-independently in `Optimization/Normal.lean` — see gotcha 74), `clFn_eq_bot_of_eq_bot`,
+independently in `Optimization/Normal.lean` — see gotcha LIB1), `clFn_eq_bot_of_eq_bot`,
 `clConcave_eq_top_of_eq_top`, `domConcave_neg`, and the `closedFn_restrict_coe` family. They belong
 in `RelativeInterior.lean`, `Closure.lean`, `Concave.lean` and `ConcaveConj.lean`; the blocker is
 that `ConcaveConj.lean` is layer C and does not import `RelativeInterior`. The fix is to split

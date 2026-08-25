@@ -130,10 +130,13 @@ each, with the surface declaration that hit it. These become remediation items.
   `lean_multi_attempt`). `lean_local_search` before guessing a lemma name; `lean_leansearch` and
   `lean_loogle` for Mathlib.
 * Grep the backbone before writing anything. Nearly every result you need is there under a
-  descriptive name; `docs/plans/convex-analysis/NOTES.md` has a per-module record of what is in each
-  file, and `Tdaf/Analysis/Convex/Eponyms.lean` maps the famous names.
-* **Read `NOTES.md` §2 (gotchas) before starting.** 355 entries of things that have already cost
-  someone an hour.
+  descriptive name; `docs/plans/convex-analysis/api.md` has a per-module record of what is in each
+  file, and `Tdaf/Analysis/Convex/Eponyms.lean` maps the famous names. **Grep `api.md`; do not read
+  it** — it is 4,700 lines of reference.
+* **Read `docs/plans/convex-analysis/gotchas.md` §EL before starting**, and grep the rest of it when
+  something goes wrong. It is grouped by cause, and §EL (elaboration, unification, rewriting) is
+  where nine tenths of the lost hours are. `NOTES.md` itself is short: house style and the
+  verification bar.
 
 ## Your inputs
 
@@ -152,4 +155,4 @@ Keep it short and factual:
 2. Anything in the three "not here" categories, with the reason.
 3. `## Backbone gaps and friction` — the list described above.
 4. The `lake build` result and the `#print axioms` result.
-5. Anything that cost you more than twenty minutes, phrased as a gotcha for `NOTES.md`.
+5. Anything that cost you more than twenty minutes, phrased as a gotcha for `gotchas.md`, named by the section it belongs under.

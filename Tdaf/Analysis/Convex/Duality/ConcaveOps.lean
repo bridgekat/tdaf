@@ -46,7 +46,7 @@ three fields of `IsExactSum`. The relative-interior condition supplies the third
 **Negation distributes over an `EReal` sum in two dual situations.**
 `Tdaf.EReal.neg_add_of_ne_top` covers the convex-to-concave direction; `neg_add_of_ne_bot` here is
 its mirror and is what turns `⨅ (-g₁ + -g₂)` into `⨆ (g₁ + g₂)`. It is *not* obtainable by `simp`
-(gotcha 9), and it is derived from the existing lemma by negating both arguments.
+(gotcha ER5), and it is derived from the existing lemma by negating both arguments.
 
 ## What is not here
 

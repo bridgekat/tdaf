@@ -22,7 +22,7 @@ the positively homogeneous function generated is `−∞` everywhere, while at `
 representation uses a single index and gives `−1` or `1`. (Root cause: an *affine* dependency has
 coefficients summing to zero, so both signs occur; a *conical* dependency can have every coefficient
 of one sign, and then the book's "minimal `α′` on the vertical line" does not exist.) Recorded in
-`NOTES.md`'s `Caratheodory.lean` record. This is the third category of the alignment checklist —
+`api.md`'s `Caratheodory.lean` record. This is the third category of the alignment checklist —
 neither proved nor silently omitted.
 
 ## Deferred by scope

@@ -37,8 +37,7 @@ inequalities, one for each `z`, and neither it nor Theorem 23.5 uses any topolog
   `mem_subgradient_iff_conj_eq`, `mem_subgradient_iff_add_conj_le`,
   `Proper.mem_subgradient_iff_add_conj_eq` — **Theorem 23.5**, conditions (a)–(d). The first
   four are *unconditional*: neither convexity nor properness is used. Only the passage from the
-  inequality (c) to the equality (d) needs `Proper`, for the reason recorded in `NOTES.md`
-  gotcha 22.
+  inequality (c) to the equality (d) needs `Proper`, for the reason recorded in `gotchas.md` LIB8.
 * `mem_subgradient_clFn_iff`, `mem_subgradient_conj_iff` — **Theorem 23.5**, the extra
   conditions `(a*)`, `(b*)` and `(a**)` available when `(cl f) x = f x`.
 * `subgradientRel_conj_eq_inv` — **Corollary 23.5.1**: for a closed proper convex `f` the
@@ -279,7 +278,7 @@ at `(x, y)`.
 
 Properness is not decorative. For `f ≡ ⊤` every `y` is a subgradient at every `x` (the subgradient
 inequality reads `⊤ ≤ ⊤`), while `f* ≡ ⊥` and so `f x + f* y = ⊤ + ⊥ = ⊥ ≠ ⟨x, y⟩`. This is the
-trap `le_add_conj` carries too; see `NOTES.md` gotcha 22. -/
+trap `le_add_conj` carries too; see `gotchas.md` LIB8. -/
 theorem Proper.mem_subgradient_iff_add_conj_eq (hp : Proper f) :
     y ∈ subgradient B f x ↔ f x + conj B f y = ((B x y : ℝ) : EReal) := by
   rw [mem_subgradient_iff_add_conj_le]

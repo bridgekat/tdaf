@@ -113,10 +113,10 @@ existed: the classes are stated about the bilinear map, so a pointwise fact cann
 
 **`pairing n` must be an `abbrev`.** As a plain `def` instance search does not unfold it, and not
 one of the classes above is found — `IsInnerPairing (pairing n)` already fails. This is the first
-thing a new `Setup.lean` gets wrong; see gotcha 356.
+thing a new `Setup.lean` gets wrong; see gotcha PAIR2.
 
 No `local instance` shims are needed. The three backbone sites that work around instance-search
-failure with `rw [flip_innerₗ]; infer_instance` are `maxSynthPendingDepth` artefacts (gotcha 355)
+failure with `rw [flip_innerₗ]; infer_instance` are `maxSynthPendingDepth` artefacts (gotcha PAIR5)
 and do not recur here.
 
 
@@ -189,7 +189,7 @@ Carry these in the surface docstrings; a reader checking alignment must not conc
 formalization is wrong.
 
 **False as stated.** Corollaries 17.1.4 and 17.1.6 (counterexample recorded in
-`NOTES.md`'s `Caratheodory.lean` record). **Corollary 29.4.1** drops the properness hypothesis its
+`api.md`'s `Caratheodory.lean` record). **Corollary 29.4.1** drops the properness hypothesis its
 own Theorem 29.4 carries, and its clause about the perturbation functions agreeing near `0` is
 false without it — found independently from the Lean side and from the text.
 

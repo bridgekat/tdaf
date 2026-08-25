@@ -84,7 +84,7 @@ which is what `ConvexProcess.indicatorBifun_injective` and Theorem 33.3's own un
 
 The infimum-oriented mirror of Theorem 39.4. Rockafellar states the correspondence for
 supremum-oriented processes and notes that the infimum-oriented one is the same statement with
-convexity and concavity exchanged; by gotcha 9 that mirror is not obtainable by `simp`-normalising
+convexity and concavity exchanged; by gotcha ER5 that mirror is not obtainable by `simp`-normalising
 through negation, so it is a separate piece of work.
 
 ## References

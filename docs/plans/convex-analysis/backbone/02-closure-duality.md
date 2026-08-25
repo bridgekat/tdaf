@@ -329,7 +329,7 @@ theorem gaugeFn_eq_gauge (h : Absorbent ℝ C) (x) : gaugeFn C x = (gauge C x : 
 
 Rockafellar's own remark in §14 — that the general polarity of sets "is not mentioned subsequently"
 outside §15 — made §14 beyond Theorem 14.1, and all of §15, low priority. They are nonetheless done;
-see `NOTES.md` §1 under `Duality/Gauge.lean` for the design decisions and the corrections
+see [`api.md`](../api.md) under `Duality/Gauge.lean` for the design decisions and the corrections
 established while proving them.
 
 **`gaugeFn` is a third gauge, and the plan's suggestion to reuse `egauge` was rejected.** `egauge ℝ≥0`

@@ -319,7 +319,7 @@ theorem le_of_forall_coe_le {u v : EReal} (h : ∀ s : ℝ, v ≤ (s : EReal) �
   | top => exact le_top
 
 /-- Multiplication by a positive real commutes with an infimum. `EReal` has `PosMulMono` but no
-`PosMulStrictMono` (`NOTES.md` gotcha 12), so the reverse inequality goes through `a⁻¹`. -/
+`PosMulStrictMono` (`gotchas.md` ER1), so the reverse inequality goes through `a⁻¹`. -/
 theorem coe_mul_iInf {ι : Sort*} {a : ℝ} (ha : 0 < a) (g : ι → EReal) :
     (a : EReal) * ⨅ i, g i = ⨅ i, (a : EReal) * g i := by
   have hcancel : ∀ z : EReal, ((a⁻¹ : ℝ) : EReal) * ((a : EReal) * z) = z := fun z => by
@@ -464,7 +464,7 @@ theorem biSup_add_biSup {α β : Type*} {s : Set α} {t : Set β} {u : α → ER
 and arbitrary `u : EReal`.
 
 `EReal` is not a `SubNegMonoid`, so `sub_eq_add_neg` does not fire and `abel` cannot see the `-`;
-the proof unfolds `a - b` to `a + -b` by `rfl` and then rearranges (see `NOTES.md` gotcha 40). -/
+the proof unfolds `a - b` to `a + -b` by `rfl` and then rearranges (see `gotchas.md` ER2). -/
 theorem coe_add_sub (p q : ℝ) (u : EReal) :
     ((p + q : ℝ) : EReal) - u = (((p : ℝ) : EReal) - u) + ((q : ℝ) : EReal) := by
   rw [_root_.EReal.coe_add]

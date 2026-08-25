@@ -49,7 +49,7 @@ through it.
 
 **Everything is derived through the dictionary.** Concavity is defined geometrically in
 `Concave.lean` and `-g` appears only in transfer lemmas; the same discipline is followed here.
-The transfers are one or two lines each and are written by hand: `NOTES.md` gotcha 9 records that a
+The transfers are one or two lines each and are written by hand: `gotchas.md` ER5 records that a
 `simp` set normalising through `EReal` negation loops.
 
 **The mirror is not perfectly symmetric, and `add_concaveConj_le` is where it shows.** Rockafellar's

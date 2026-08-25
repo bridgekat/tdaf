@@ -278,7 +278,7 @@ instance (priority := 100) isContinuousPairing_of_isContinuousInnerPairing
       (continuous_self_pairing' B)).sub continuous_const).div_const 2
 
 /-- The flip of an inner pairing is continuous, which instance search cannot see through
-`LinearMap.flip` on its own — the same trap as gotcha 275. -/
+`LinearMap.flip` on its own — the same trap as gotcha PAIR1. -/
 instance isContinuousPairing_flip_of_isContinuousInnerPairing
     (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsContinuousInnerPairing B] : IsContinuousPairing B.flip := by
   rw [flip_eq_self]

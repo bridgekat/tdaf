@@ -59,7 +59,7 @@ closedness, the nest, and `posHomGen_shiftFn` — is layer A or B.
 **`shiftFn` adds a real constant rather than subtracting `f x`.** `f (x + w) - f x` and
 `f (x + w) + (-f x)` agree when `f x` is finite, which is the standing hypothesis, but the second
 form keeps the constant a *real* coercion, and `EReal` addition of a real coercion is far better
-behaved than `EReal` subtraction (`NOTES.md` gotchas 23, 40, 41). Every lemma below therefore
+behaved than `EReal` subtraction (`gotchas.md` ER4, ER2, ER3). Every lemma below therefore
 carries `f x = (r : ℝ)` and uses `shiftFn f x (ε - r)`.
 
 ## References

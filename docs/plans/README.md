@@ -20,7 +20,9 @@ a divergence.
 ```
 convex-analysis/
   00-overview.md            root plan: design decisions, module hierarchy, split test, status
-  NOTES.md                  the central record: per-module notes, gotchas, build and verification
+  NOTES.md                  house style, the verification bar, and where everything else is
+  api.md                    one record per backbone module: what is in it, what is not, and why
+  gotchas.md                Lean and Mathlib traps, grouped by cause
   backbone/
     01-foundations.md … 07-saddle-algebra.md    the general library, by layer
     08-remediation.md                           work the surface will otherwise pay for per-statement
@@ -33,5 +35,6 @@ convex-analysis/
 
 A plan is a living document: it is written before formalization begins, reviewed whenever the
 formalization pushes back on it, and updated when the library changes shape. The `Status` section of
-a root plan records what has actually been formalized; `NOTES.md` records what was learned doing it,
+a root plan records what has actually been formalized; `NOTES.md` and its two reference files record
+what was learned doing it,
 including the places where the book is wrong.
