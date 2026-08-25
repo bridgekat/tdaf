@@ -573,6 +573,40 @@ machinery:
 * `IsExactSum.of_clFn` — exactness transfers from `cl f, cl g` to `f, g` given the conjugate
   identity. Needs `[IsContinuousPairing B]` (for `conj_clFn`), nothing more.
 
+### `Tdaf/Analysis/Convex/Duality/RelintSeparation.lean`
+
+```lean
+theorem exists_pairing_le_iff_disjoint_relint (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂)
+    (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty) :
+    (∃ y : F, (∀ x₁ ∈ C₁, ∀ x₂ ∈ C₂, B x₁ y ≤ B x₂ y) ∧ ∃ …) ↔ Disjoint (ri C₁) (ri C₂)
+theorem submodule_inter_relint_nonempty_iff        (L : Submodule ℝ E) (hC : Convex ℝ C) …
+theorem submodule_inter_relint_nonempty_iff_supportFn (L : Submodule ℝ E) …
+theorem submodule_inter_relint_dom_nonempty_iff    (L : Submodule ℝ E) (hf : ConvexFn f) …
+theorem exists_apply_mem_relint_dom_iff (hB : B.SeparatingRight) (hA : IsAdjointPair B B' A A') …
+theorem forall_mem_range_eq_zero_iff    (hB : B.SeparatingRight) (hA : IsAdjointPair B B' A A') …
+theorem supportFn_le_zero_iff  : supportFn B s y ≤ 0 ↔ ∀ x ∈ s, B x y ≤ 0
+theorem zero_lt_supportFn_iff  : 0 < supportFn B s y ↔ ∃ x ∈ s, 0 < B x y
+theorem forall_pairing_eq_zero_of_forall_le {L : Submodule ℝ E} (h : ∀ x ∈ L, B x y ≤ c) : …
+theorem intrinsicInterior_coe_submodule (L : Submodule ℝ E) : ri (L : Set E) = (L : Set E)
+```
+
+**Lemma 16.2 and Corollary 16.2.1** (remediation §10.27), assembled from Theorems 11.1, 11.3 and
+13.3 — the backbone routes around the recession step everywhere else, so the assembly needed a
+module of its own. Everything is over a dual pair; there is no `ℝⁿ`.
+
+Two things about the shape. The **annihilator condition is derived, not assumed**:
+`forall_pairing_eq_zero_of_forall_le` turns "bounded above on a subspace" into "zero on it", which
+is why `submodule_inter_relint_nonempty_iff` needs no hypothesis about `L`. And Corollary 16.2.1's
+identification of `(range A)⊥` with `ker A*` needs the pairing to **separate on the right** over a
+general dual pair, so `forall_mem_range_eq_zero_iff` carries `B.SeparatingRight`; the surface
+discharges it with `separatingRight_pairing`.
+
+`supportFn_le_zero_iff` and `zero_lt_supportFn_iff` are the missing `c = 0` companions of
+`supportFn_le_coe_iff` and belong in `Duality/Support.lean` (remediation §11.16); they are here
+because this is where they were first needed.
+
+**Corollary 16.2.2 is not here** and is not a §16 problem: see remediation §11.14.
+
 ### `Tdaf/Analysis/Convex/Duality/Continuity.lean`
 
 The second producer of a D5 interface, and the one that survives into infinite dimensions.
@@ -758,6 +792,45 @@ which establishes both halves in one circle; splitting them would mean proving t
 the closure is enough, and that ray issues from a point of `Cᵢ`, which is why both statements insist
 the sets are nonempty. Rockafellar's `⋃ {λ₁C₁ + λ₂C₂}`-with-`0⁺`-substituted description is not
 formalised — `conv (C₁ ∪ C₂) + (0⁺C₁ + 0⁺C₂)` says the same thing without a convention.
+
+### `Tdaf/Analysis/Convex/Polyhedral/NormalForm.lean`
+
+```lean
+noncomputable def maxAffineFn (s : Finset ((E →ₗ[ℝ] ℝ) × ℝ)) : E → EReal :=
+  fun x => ⨆ q ∈ s, ((q.1 x - q.2 : ℝ) : EReal)
+theorem maxAffineFn_le_coe : maxAffineFn s x ≤ (c : EReal) ↔ ∀ q ∈ s, q.1 x - q.2 ≤ c
+theorem coe_le_maxAffineFn (hq : q ∈ s) : ((q.1 x - q.2 : ℝ) : EReal) ≤ maxAffineFn s x
+theorem maxAffineFn_ne_bot (hs : s.Nonempty) (x : E) : maxAffineFn s x ≠ ⊥
+@[simp] theorem maxAffineFn_empty : maxAffineFn ∅ = fun _ : E => ⊥
+theorem polyhedralFn_maxAffineFn (s) : PolyhedralFn (maxAffineFn s)
+theorem polyhedralFn_bot : PolyhedralFn (fun _ : E => (⊥ : EReal))
+theorem polyhedralFn_maxAffineFn_add_indicatorFn (s) (hC : Polyhedral C) :
+    PolyhedralFn (maxAffineFn s + indicatorFn C)
+theorem PolyhedralFn.exists_maxAffineFn_add_indicatorFn_dom (hf : PolyhedralFn f)
+    (hb : ∀ x, f x ≠ ⊥) : ∃ s, f = maxAffineFn s + indicatorFn (dom f)
+theorem polyhedralFn_iff_maxAffineFn_add_indicatorFn (hb : ∀ x, f x ≠ ⊥) :
+    PolyhedralFn f ↔ ∃ s C, Polyhedral C ∧ f = maxAffineFn s + indicatorFn C
+```
+
+The **`h + δ(· | C)` normal form** of the book's unnumbered paragraph at 6771–6779 (remediation
+§11.5). Nothing numbered in §19 depends on it — `PolyhedralFn.add` proves Theorem 19.4 from the
+epigraph instead — so this is the structural characterisation for its own sake.
+
+**The book states it as an unconditional "if and only if" and it is not one.** With `⊥ + ⊤ = ⊥` a
+right-hand side can take the value `⊥` only *inside* `C`, and the function that is `⊥` on a proper
+non-empty polyhedral `C` and `⊤` off it is convex, has polyhedral epigraph `C ×ˢ univ`, and has no
+normal form. `∀ x, f x ≠ ⊥` is the exact weakening, and it is weaker than properness; Rockafellar's
+standing convention that polyhedral convex functions are proper covers the case, and the printed
+paragraph does not say so.
+
+**Sharper than the book**: the set can always be taken to be `dom f`. The vertical inequalities cut
+out a polyhedral set that may be strictly larger, but off `dom f` the function is `⊤` anyway. The
+book's `k ≥ 1` is silent but forced, and *derived* rather than assumed — if every inequality of a
+system for `epi f` had zero vertical coefficient then `epi f` would be a full cylinder.
+
+`PolyhedralFn.exists_maxAffineFn_add_indicatorFn_dom` does **not** use `[FiniteDimensional ℝ E]`,
+and the unused-section-variable linter is what found that: splitting a polyhedral system for `epi f`
+into vertical and non-vertical groups is linear algebra, and only the converse touches Theorem 19.1.
 
 ### `Tdaf/Analysis/Convex/Polyhedral/Recession.lean`
 
@@ -4759,3 +4832,26 @@ is not done.
 `Optimization/Fenchel.lean`, where it had been written from scratch. Both belong beside
 `polarCone_coe_submodule` and `smul_coe_pointedCone`, and §12's partial-affine formula needs them
 here.
+
+### `Tdaf/Analysis/Convex/Duality/PolarBounded.lean`
+
+```lean
+theorem recessionCone_polarSet (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
+    recessionCone (polarSet B C) = polarCone B C
+theorem isBounded_polarSet_iff_zero_mem_interior (hconv) (hcl) (h0) :
+    IsBounded (polarSet B C) ↔ (0 : E) ∈ interior C
+theorem isBounded_iff_zero_mem_interior_polarSet (hconv) (hcl) (h0) :
+    IsBounded C ↔ (0 : F) ∈ interior (polarSet B C)
+```
+
+**Corollary 14.5.1** over a dual pair (remediation §10.16). Theorem 8.4 turns boundedness of `C°`
+into triviality of its recession cone, Theorem 14.6 identifies that recession cone with the polar
+*cone* of `C`, and Corollary 6.4.1 reads a trivial polar cone as interiority of the origin.
+
+`Duality/Polar.lean`'s deferral note said this corollary "quantifies over the gauge". It does not —
+only Rockafellar's *proof* does, through Corollary 13.2.2 and finiteness of `γ(· | C)`. The
+recession-cone route needs no gauge at all, which is why the module has no gauge import.
+
+`recessionCone_polarSet` needs no finite dimension and belongs at layer C beside
+`recessionCone_eq_polarCone_polarSet` in `Duality/Gauge.lean` (remediation §11.18); it is here under
+an `omit` only because the two theorems that consume it are finite-dimensional.

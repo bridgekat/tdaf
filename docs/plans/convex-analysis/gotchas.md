@@ -275,6 +275,28 @@ unfolding.
 `simp [Finset.forall_mem_image]` changes nothing and reports no error. Apply it by hand:
 `Finset.forall_mem_image.2 fun q hq => …`.
 
+**EL26. Three more places the elaborator needs a type it cannot infer.**
+
+* **A `Finset` coercion in a position whose expected type is still a hole** elaborates to a
+  metavariable, and the error names something else entirely: `↑p` for `p : Finset E` inside a
+  statement about `Set.InjOn` produced *"stuck at solving universe constraint"* and a type mismatch
+  at three unrelated lines. **Always ascribe: `(↑p : Set E)`.**
+* **`▸` fails against a `def`-wrapped predicate.** `hlift ▸ h` for a goal whose head is a `def` and
+  an equation whose sides are the unfolded form reports *"the equality does not contain the expected
+  result type on either the left or the right hand side"*. `change` to the unfolded form, then `rw`.
+  Same family as EL7.
+* **`Submodule.span_induction` hands the `add` step its induction hypotheses as set membership**, so
+  `add_le_add hy hz` fails with *"`hz` has type `z ∈ {x | … ≤ 0}` but is expected to have type
+  `?a ≤ ?b`"* — while the `mem` and `zero` branches close by `exact` and take the defeq step
+  silently. Three of four branches green is the tell. Ascribe as in EL5.
+
+**EL27. `IsExposed 𝕜 A B` is `B.Nonempty → ∃ l, …`, so the empty case can vanish on one side of a
+construction and reappear on the other.** `isExposed_empty` is free, but `0⁺∅ = univ` is never
+empty, so a theorem transporting exposedness through `recessionCone` must case-split on `C' = ∅`
+and *produce* a functional (`l = 0`, via `IsExposed.refl`). The extreme/face version needs no split,
+because its extremality clause is vacuous over an empty face. Symptom: the proof works for every set
+you test and then a hole opens at the `⟨l, …⟩`.
+
 ---
 
 ## LINT — Linters and the zero-warning bar
@@ -371,6 +393,14 @@ hypothesis.** Unfolding `mem_recessionCone`'s `∀ x ∈ C, ∀ a : ℝ, 0 ≤ a
 frequently closes the goal outright, and the `ring` written after it out of habit then errors with
 *"No goals"*. And a `change` added defensively in front of a `rw` that would have gone through
 anyway trips `linter.unusedTactic`. Add neither pre-emptively; run the proof without them first.
+
+**LINT12. Two more, both from porting a proof rather than writing one.** `letI` is rejected for a
+*data* class when the goal is a proposition — `letI : Fintype ↥b := …` warns *"the goal is a
+proposition, so `let` is preferred"*; anonymous `let : Fintype ↥b := …` is accepted and still
+participates in instance search (LINT5 records only the `haveI`/Prop case). And **a `simp only`
+copied from a binary lemma often closes the `Set.pi` version outright**, so the copied trailing
+`tauto` errors with "No goals to be solved" at a line that points at the closer, not at the simp
+set. When porting `Prod` → `Set.pi`, drop the closer and re-add it only if needed.
 
 ---
 
@@ -613,6 +643,19 @@ minorants at all**, because `u + v ≤ c` is not a condition on `u` and `v` sepa
 `conj_infConv` goes through `conj_ofEpi` and `biSup_add_biSup`, interchanging two suprema over the
 epigraphs, and is the only row of §16 that does.
 
+**ER11. `EReal` is not cancellative, but two-sided bounds pin equality, and
+`Tdaf.EReal.le_coe_of_add_le_coe_add` is the tool.** From `↑p ≤ u`, `↑q ≤ v` and `u + v ≤ ↑(p+q)` it
+concludes `u ≤ ↑p`. Symptom: you have `x + ↑ν ≤ 0`, want `x ≤ ↑(-ν)`, reach for
+`EReal.le_sub_iff_add_le`, and then fight `0 - ↑ν` (there is no `zero_sub`, ER1) plus two side
+conditions. Applying the lemma twice with the summands swapped gives both bounds with no subtraction
+and no `⊥`/`⊤` split.
+
+**ER12. `bot_add` is not a root name on `EReal`.** `exact bot_add _` reports *"unknown identifier"*
+inside `namespace Tdaf.ConvexAnalysis`; write `_root_.EReal.bot_add`. Same family as the
+`neg_bot`/`neg_zero` split in ER2. Relatedly, do not hand an `EReal` coercion side goal to `simp`:
+discharging `¬ (↑(a - b) ≤ ⊥)` by `simp` leaves `¬ ↑a - ↑b = ⊥`, because `simp` pushes the coercion
+apart. Use `le_bot_iff.1` and `_root_.EReal.coe_ne_bot`.
+
 ---
 
 ## SET — Sets, products, cones
@@ -815,6 +858,13 @@ the four bundled Theorem 14.1 statements, `polarCone_setOf_forall_le_zero`,
 (`conj`, `subgradient`, `supportSet`, `supportFn`, `polarCone`, `polarSet`); `polarGauge` and
 `polarFn` are not yet among them. Add the rewrite there rather than `simpa`-ing at each site.
 
+**SET10. `Set E` under `open scoped Pointwise` is an ordered additive monoid, so the `Finset.sum`
+API applies verbatim.** `∑ i ∈ s, A i ⊆ ∑ i ∈ s, B i` is `Finset.sum_le_sum h` — no set-specific
+lemma and no hand induction. Note `∑ i ∈ (∅ : Finset ι), A i` is `0 = {0}`, **not** `∅`; that,
+together with `∅ + {0} = ∅`, is why an `m`-ary statement about `⋃ i ∈ s` needs no `s.Nonempty`.
+The way in and out of `{x ∈ A | p x}` is `Set.mem_sep_iff`, which both destructures and constructs
+without tripping EL6.
+
 ---
 
 ## LIB — Working in this library
@@ -995,6 +1045,28 @@ by their bare names from inside `namespace Rockafellar`, and the error is the un
 *"unknown identifier"* rather than an ambiguity. Qualify as `Tdaf.EReal.…`, the way the backbone
 does at its own call sites, or add the `open`.
 
+**LIB14. `recessionCone` is not monotone, and no lemma pretends it is.** `C' ⊆ C` does *not* give
+`0⁺C' ⊆ 0⁺C` — that direction is Theorem 8.3 and needs `C` closed convex and `C'` non-empty.
+Symptom: you reach for a `recessionCone_mono` that does not exist, then weaken the theorem. The
+right move is to make `0⁺C' ⊆ 0⁺C` a *hypothesis*: the resulting statement is layer A and the closed
+convex case is a one-line corollary.
+
+**LIB15. Two names worth knowing before you write them yourself.**
+`exists_linearIndepOn_id_extension` (Mathlib) extends a linearly independent subset to a maximal one
+*drawn from the same ambient set* — exactly "choose additional vectors from `S′` to make a basis";
+`LinearIndependent.finite_of_isNoetherian` then makes it finite (there is no `LinearIndepOn.finite`,
+and dot notation on `LinearIndepOn` dies per EL1). It is `Set.ncard_coe_finset`, lowercase `f`.
+There is no `Submodule.finrank_prod`: for `finrank (A ⊔ B)` with `A ⊓ B = ⊥` use
+`Submodule.finrank_sup_add_finrank_inf_eq` with `finrank_bot ℝ M`.
+
+**LIB16. LIB1's eighth and ninth instances, both found by agents who then wrote the third copy.**
+`polarCone_hull` (`Duality/Polar.lean`, `@[simp]`) and `polarCone_coe_hull`
+(`Recession/Conjugate.lean`) are the same statement proved twice, and each has its own callers. And
+a "what is not here" note may be false rather than merely stale: `Recession/ConeHull.lean` declined
+Corollary 9.8.3 because "the project has the convex hull only for a single function", while both
+`convFn` and `convFn₂` had existed all along. **A note naming a reason is a claim; check it before
+believing it**, and when you close a gap, fix the note that pointed away from it.
+
 ---
 
 ## BLD — Toolchain, build, worktrees
@@ -1086,3 +1158,30 @@ Import a project module instead — it is already built.
 The check is `grep "^import " Tdaf.lean | LC_ALL=C sort -c`. Nothing depends on the order, but a
 future "insert alphabetically" instruction looks wrong wherever you put the new line — which is how
 three separate violations accumulated before anyone checked.
+
+**BLD11. Do not edit anything while a `lake build` is in flight.** The build completes, reports
+success, and the artifact was produced from the *pre-edit* source — indistinguishable from BLD2
+staleness afterwards. Adding an import to `Tdaf.lean` mid-build is worse: it fails with
+`object file '….olean' of module … does not exist`, naming a module that was never scheduled. A
+one-word docstring fix costs a full rebuild of that module's dependent tree, which for
+`Duality/Polar.lean` is 100 modules and twelve minutes. **Make every edit before starting the
+build.** After a terminal crash, an orphaned build may still be writing to the worktree's
+`.lake/build`: wait until `find .lake/build -newermt '-70 seconds' -type f` comes back empty rather
+than looking for `lean.exe` in `ps -W`, which shows every worktree's processes.
+
+**BLD12. `grep -c "theorem <name>\b"` under-counts any name ending in a subscript.** `\b` after
+`₂` — a non-ASCII, non-word character — does not match, so the LIB1 duplicate-name check reports
+zero for `epi_convFn₂` even though it is right there. Use a trailing space:
+`grep -rn "theorem [A-Za-z._]*<name> "`.
+
+**BLD13. Two more contention symptoms that are not signals about your proof.** `Lean exited with
+code 3221226505` (Windows `STATUS_STACK_BUFFER_OVERRUN`) on a module that built fine minutes
+earlier, and `failed to read file '….olean'` naming a file that is present and unchanged. Both went
+away on a bare re-run; each happened about once in five full builds. **Re-run before
+investigating** — this is BLD2's second paragraph, now with two more faces.
+
+**BLD14. Piping a patch script to `python -` through a bash heredoc decodes stdin with the Windows
+locale, not UTF-8.** A script whose match strings contain `⋯`, `—` or subscripts then fails its own
+`assert count == 1` on a substring you can read verbatim in the file. Escape every non-ASCII
+character as `\uXXXX`, or write the script to the scratchpad with the `Write` tool and run it by
+path. Same family as BLD5's surrogate-pair bullet.

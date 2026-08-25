@@ -245,114 +245,128 @@ The hard gate is closed: remediation §1.2, §1.3 and §4.2 are done, and
 a regression test. There is no `Setup.lean`/`Notation.lean` pair — `Euclidean.lean` is that file,
 and it lives under `Surface/Common/` because a second surface over `ℝⁿ` would want the same one.
 
-**Part I — all five sections written**, 147 declarations for the Part's 49 numbered results.
+**Counts are declarations and labels.** A *declaration* is any `theorem`, `lemma`, `def`, `abbrev`,
+`structure` or `instance` in the module; a *label* is a numbered result of the book claimed by a
+declaration's own doc comment, so a label mentioned only in prose — in a `## What is not here`
+paragraph, say — does not count. Earlier versions of this table used a narrower declaration count;
+the tables below are all on the one method, and the label columns are unchanged in meaning.
+
+**Part I — all five sections written**, 185 declarations for all 49 of the Part's numbered results.
 
 | § | module | declarations | labels |
 |---|---|---|---|
-| 1 | `Part1/Section01.lean` | 50 | 8 |
+| 1 | `Part1/Section01.lean` | 49 | 8 |
 | 2 | `Part1/Section02.lean` | 23 | 13 |
-| 3 | `Part1/Section03.lean` | 36 | 9 |
-| 4 | `Part1/Section04.lean` | 12 | 11 |
-| 5 | `Part1/Section05.lean` | 26 | 8 |
+| 3 | `Part1/Section03.lean` | 46 | 9 |
+| 4 | `Part1/Section04.lean` | 21 | 11 |
+| 5 | `Part1/Section05.lean` | 46 | 8 |
 
-The declaration count runs to three times the label count because the book states existence and
-uniqueness in one sentence (§1), splits a theorem across unlettered clauses (§3, §5, §2's
-Theorem 2.7), and defines as much as it proves — every surface definition carries its bridge
-lemma.
+The declaration count runs to nearly four times the label count because the book states existence
+and uniqueness in one sentence (§1), splits a theorem across unlettered clauses (§3, §5, §2's
+Theorem 2.7), and defines as much as it proves — every surface definition carries its bridge lemma.
 
-The order of §6 was not followed for Part I: §1–§5 were written together, because the five files
-are independent and the point of the first round was to test the *backbone*, not to sequence the
-book. What the round found is in
-[`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) §8 — seventeen backbone gaps,
-two scheduled items demoted, and five places where the book is wrong. Two of the seventeen are
-already closed (`Analysis/Convex/Line.lean`, and Jensen moved to `Epigraph.lean`). Ten are
-closed now: the two above plus the eight of the Batch A sweep, one of which — extending a linear
-isomorphism between subspaces — turned out never to have been a gap at all.
+The order of §6 was not followed for Part I: §1–§5 were written together, because the five files are
+independent and the point of the first round was to test the *backbone*, not to sequence the book.
+What that round found is in [`../../backbone/08-remediation.md`](../../backbone/08-remediation.md)
+§8 — seventeen backbone gaps, two scheduled items demoted, and five places where the book is wrong.
+Ten are closed, one of which — extending a linear isomorphism between subspaces — turned out never
+to have been a gap at all.
 
-**Part II — all five sections written**, 216 declarations for 82 of the Part's 84 numbered results.
+**Part II — all five sections written**, 222 declarations for all 84 of the Part's numbered results.
 
 | § | module | declarations | labels |
 |---|---|---|---|
 | 6 | `Part2/Section06.lean` | 52 | 18 |
-| 7 | `Part2/Section07.lean` | 25 | 17 |
+| 7 | `Part2/Section07.lean` | 24 | 17 |
 | 8 | `Part2/Section08.lean` | 59 | 18 |
-| 9 | `Part2/Section09.lean` | 53 | 16 of 18 |
+| 9 | `Part2/Section09.lean` | 60 | 18 |
 | 10 | `Part2/Section10.lean` | 27 | 13 |
 
-The two absent labels are **Corollary 9.2.1** and **Corollary 9.8.3**, each waiting on a named
-backbone lemma; both are recorded in `Section09`'s `## What is not here`.
+**Parts I and II are complete.** Corollaries 9.2.1 and 9.8.3 were the last two absent labels and the
+gap round closed both (remediation §9.19, §9.20). Like the rest of §9 they are stated for two
+functions; the `m`-ary forms stay in `Section09`'s `## What is not here`, and their obstacle is
+recorded as remediation §9.18 — Rockafellar's own route runs Theorem 9.2 on `Eᵐ` against the sum
+map, which needs an `m`-ary `infConv` and the recession function of a separable sum.
 
 Two findings of the Part II round are worth promoting out of the remediation list:
 
 * **The §10/§20 dependency does not exist.** `Analysis/Convex/Simplicial.lean` proves upper
   semicontinuity relative to a simplex at *every* point of it, not only at a vertex, so
-  Rockafellar's triangulation step — the "intuitively obvious" barycentric fact he never proves,
-  and which Theorem 20.5 supplies by assertion — is never invoked. Theorem 10.2 is unconditional
-  here, and §20's author inherits no obligation from §10.
+  Rockafellar's triangulation step — the "intuitively obvious" barycentric fact he never proves, and
+  which Theorem 20.5 supplies by assertion — is never invoked. Theorem 10.2 is unconditional here,
+  and §20's author inherits no obligation from §10. §20 later confirmed this from its own side.
 * **Rockafellar's `λ ≥ 0⁺` convention is modelled, not case-split.** §9 introduces `ExtCoeff`
   (`ofReal t | zeroPlus`) with actions on sets and on functions, so Theorems 9.6–9.8 are literally
-  unions and infima over the book's index set. §19 inherits it.
+  unions and infima over the book's index set. §19 inherited it unchanged.
 
-**Part III — all six sections written**, 259 declarations for 72 of the Part's 77 numbered results.
+**Part III — all six sections written**, 263 declarations for 75 of the Part's 77 numbered results.
 
 | § | module | declarations | labels |
 |---|---|---|---|
 | 11 | `Part3/Section11.lean` | 30 | 16 |
 | 12 | `Part3/Section12.lean` | 47 | 9 |
-| 13 | `Part3/Section13.lean` | 48 | 15 |
-| 14 | `Part3/Section14.lean` | 45 | 9 of 11 |
-| 15 | `Part3/Section15.lean` | 55 | 11 |
-| 16 | `Part3/Section16.lean` | 34 | 12 of 15 |
+| 13 | `Part3/Section13.lean` | 47 | 15 |
+| 14 | `Part3/Section14.lean` | 47 | 10 of 11 |
+| 15 | `Part3/Section15.lean` | 56 | 11 |
+| 16 | `Part3/Section16.lean` | 36 | 14 of 15 |
 
-The five absent labels are **Theorems 14.3 and 14.4** and **Lemma 16.2 with Corollaries 16.2.1 and
-16.2.2**; each is one named backbone result away and each is recorded in its own module.
+The two absent labels are **Theorem 14.4**, which waits on the `ℝᵐ × ℝⁿ ≃ ℝᵐ⁺ⁿ` transport
+(remediation §4.8), and **Corollary 16.2.2**, which the gap round showed is not a §16 problem at
+all: it is Lemma 16.2 applied in `ι → E` to the diagonal subspace, and what it needs is a `supportFn`
+of a `Set.pi` as a sum — the same product-of-`ι` tower that §4.4 and §9.18 want (remediation §11.14).
 
 **This is the Part that tests [D3](#d3-duality-is-developed-for-a-dual-pair-not-for-ℝⁿ-and-not-for-the-dual-space),
 and D3 holds.** Not one §11–§16 statement needed the dual pair to be relaxed: `pairing n` discharges
 every pairing class by instance search, and the only recurring friction is cosmetic — a backbone
-statement hands back `B.flip` where the surface wants `B`, which six `*_flip_pairing` rewrites in
+statement hands back `B.flip` where the surface wants `B`, which eight `*_flip_pairing` rewrites in
 the shared header absorb. The adjoint decision holds too, for a reason the plan did not predict:
 remediation §4.1 proposed bundling the adjoint into a class because "~100 statements thread `(A')`
 plus `IsAdjointPair`", but the *surface* pays none of that — `isAdjointPair_adjoint` already exists
 in `Duality/Pairing.lean` for `innerₗ E`, so §16 writes every `A*` as `LinearMap.adjoint A` and
 carries no adjoint hypothesis at all. What remains of §4.1 is backbone-internal.
 
-The three sections whose gates were closed before the round — §14 (bundled bipolar), §15
-(`IsNorm.toSeminorm`), §16 (the `m`-ary Theorem 16.4) — report that the gates worked: no §14
-statement discharges the cone hypothesis triple by hand, and §16 did no induction over `□`.
-
-**Part IV — all six sections written**, 177 declarations for 65 of the Part's 70 numbered results.
+**Part IV — all six sections written**, 180 declarations for 65 of the Part's 70 numbered results.
 
 | § | module | declarations | labels |
 |---|---|---|---|
-| 17 | `Part4/Section17.lean` | 27 | 10 |
-| 18 | `Part4/Section18.lean` | 43 | 16 |
-| 19 | `Part4/Section19.lean` | 38 | 17 |
+| 17 | `Part4/Section17.lean` | 24 | 10 |
+| 18 | `Part4/Section18.lean` | 49 | 16 |
+| 19 | `Part4/Section19.lean` | 41 | 17 |
 | 20 | `Part4/Section20.lean` | 19 | 8 |
 | 21 | `Part4/Section21.lean` | 27 | 10 |
-| 22 | `Part4/Section22.lean` | 23 | 4 of 9 |
+| 22 | `Part4/Section22.lean` | 20 | 4 of 9 |
 
 The five absent labels are all in §22 and all one item: **Lemmas 22.4 and 22.5, Corollary 22.4.1,
 and Theorems 22.6 and 22.7**, the elementary-vector development and Tucker's complementarity
 theorem. They are *deferred by scope* — elementary vectors are the minimal-support vectors of a
 subspace and their theory is combinatorial matroid theory, which the book itself presents as
 independent of all convexity theory. **This is the only place in §§1–22 where a label is absent for
-a reason other than a named backbone gap**, and it is the first time the scope rule has bitten.
-Theorems 22.1–22.3 and Farkas' Lemma are here.
+a reason other than a named backbone gap.** Theorems 22.1–22.3 and Farkas' Lemma are here.
 
-Two of the round's findings are worth promoting out of the remediation list:
+Three of the round's findings are worth promoting out of the remediation list:
 
 * **Corollaries 17.1.4 and 17.1.6 are false as Rockafellar states them, and §17 refutes them in
   Lean** rather than dropping them — `corollary_17_1_4_false`, `corollary_17_1_6_false`, both on
-  `ℝ¹`. This is the *stated and refuted* category of the alignment checklist §3, and Part IV is
-  what it was written for.
+  `ℝ¹`. This is the *stated and refuted* category of the alignment checklist §3, and Part IV is what
+  it was written for. Theorem 17.3 is false as printed too; the backbone already carried the missing
+  hypothesis `0 ∉ S*`.
 * **Theorem 20.5 supplies `LocallySimplicial` instances; it does not repair §10.** The Part II
   finding is confirmed from the §20 side, and by a stronger route: `Polyhedral.locallySimplicial`
   takes a coordinate cube for the neighbourhood and produces the simplices explicitly, so it never
   makes the appeal to Carathéodory's count that the book asserts without proof.
+* **The book's own proof of Theorem 17.1's simplex clause needs `S₀ ≠ ∅` and does not say so.**
+  Rockafellar extends to a basis of `span S′` and calls its dimension `d + 1`; if `S` has directions
+  only then `C = ∅` and `dim C = −1` by his own p. 154 convention, so the arithmetic fails even
+  though the clause is vacuous. `theorem_17_1_simplex` carries the hypothesis.
 
-Across §§1–22, **268 of the 280 numbered results have declarations**. Of the twelve that do not,
-five are §22's scope deferral above and seven are blocked on a named backbone gap: Corollaries
-9.2.1 and 9.8.3, Theorems 14.3 and 14.4, and Lemma 16.2 with Corollaries 16.2.1 and 16.2.2. What
-the round found is in
-[`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) §11.
+## 8. Where §§1–22 stand
+
+**273 of the 280 numbered results have declarations.** The seven that do not are §22's five
+scope-deferred elementary-vector results, Theorem 14.4, and Corollary 16.2.2 — and the last two are
+one item each in [`../../backbone/08-remediation.md`](../../backbone/08-remediation.md), §4.8 and
+§11.14 respectively. No section is blocked; nothing is waiting on a proof nobody knows how to write.
+
+Both remaining backbone items are **product transports** rather than convex analysis: `ℝᵐ × ℝⁿ`
+against `ℝᵐ⁺ⁿ` for Theorem 14.4 and §22's interval reading, and a finite product `ι → E` for
+Corollary 16.2.2, the `m`-ary constraint qualifications of §§9, 16 and 20, and the `m`-ary infimal
+convolution. That is a single piece of scaffolding, and it is what the next round should build.
