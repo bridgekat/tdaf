@@ -91,9 +91,10 @@ instances.
 
 ## What is not here
 
-**The `C*` halves of Theorem 37.2, Corollary 37.2.1, Theorem 37.3 and Corollary 37.3.1.** They are
-the same statements read through `saddleSwap`, at the negated flipped pairings `-Bx.flip`,
-`-Bu.flip`; what is missing is the dictionary carrying `bifunSaddleClass` across that swap.
+**The `C*` halves of Theorem 37.2, Corollary 37.2.1, Theorem 37.3 and Corollary 37.3.1** are in
+`Saddle/Existence.lean`. They are the same statements read through `saddleSwap`, at the negated
+flipped pairings `-Bx.flip`, `-Bu.flip`, and the dictionary carrying `bifunSaddleClass` across that
+swap is `saddleSwap_mem_bifunSaddleClass`.
 
 **Theorems 37.4–37.6**, which rest on §35's subdifferential `∂K = ∂₁K × ∂₂K`; they live in
 `Saddle/Subgradient.lean`.

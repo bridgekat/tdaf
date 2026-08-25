@@ -754,4 +754,31 @@ theorem exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle
     ⟨interior_subset_intrinsicInterior h₁, interior_subset_intrinsicInterior h₂⟩
 
 end Thm376
+
+/-! ### Theorem 36.6 in subgradient form -/
+
+section Thm366
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {F : Bifun U X} {v : V} {x : X}
+
+/-- **Rockafellar, Theorem 36.6** in its subgradient form: `(0, 0) ∈ ∂L (v, x)` exactly when `v` is
+a Kuhn–Tucker vector for `(P)` and `x` is an optimal solution to `(P)`.
+
+Theorem 37.4 (`mem_saddleSubgradient_iff_isSaddlePoint`) turns `(0, 0) ∈ ∂L (v, x)` into "`(v, x)`
+is a saddle-point of `L` tilted by the origin", which is `L` itself, and Theorem 29.3
+(`isSaddlePoint_lagrangian_iff`) reads that off. The pairing `Bx` on the second variable is
+arbitrary data: the subgradient tested there is `0`, so no property of it is used. -/
+theorem zero_mem_saddleSubgradient_saddleLagrangian_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hpr : Proper (graphFn F)) :
+    (0 : U × Y) ∈ saddleSubgradient Bu.flip Bx (saddleLagrangian Bu F) (v, x)
+      ↔ v ∈ KuhnTucker Bu F ∧ x ∈ argmin (F 0) := by
+  rw [mem_saddleSubgradient_iff_isSaddlePoint, saddleTilt_zero]
+  exact isSaddlePoint_lagrangian_iff hF hcl hpr
+
+end Thm366
+
 end Tdaf.ConvexAnalysis

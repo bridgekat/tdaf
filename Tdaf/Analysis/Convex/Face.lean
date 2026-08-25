@@ -40,17 +40,13 @@ Extreme points and exposed faces are Mathlib's `Set.extremePoints` and `IsExpose
 
 ## What is not here
 
-**Theorem 18.5 for unbounded sets, and with it Theorems 18.3, 18.6, 18.7 and 18.8, are not
-formalised.** All of them are stated in terms of Rockafellar's `conv S` for an `S` containing both
-points *and directions*, and that object has no definition in this development yet: §17 delivers
-only the pointwise statement `exists_of_mem_convexHull_add_coneHull` about
-`conv P + cone D`. Theorem 18.3 additionally needs the relative interior of such a hull
-(Rockafellar's Theorem 6.4 in its positive-coefficients form, not the prolongation form that
-`Convex.mem_relint_iff_prolong` provides), Theorem 18.4 in full generality needs the classification
-of closed convex sets that are affine sets or closed halves of them together with Corollary 8.4.1,
-Theorem 18.6 (Straszewicz) needs the farthest-point construction, and Theorems 18.7 and 18.8 need
-both. The bounded case — which is what §19's polyhedral theory and the Krein–Milman corollaries
-actually consume — is complete here.
+**Theorem 18.5 for unbounded sets, and with it Theorems 18.3, 18.4 in general, 18.6, 18.7 and
+18.8, are elsewhere.** All of them are stated in terms of Rockafellar's `conv S` for an `S`
+containing both points *and directions*, which is `convexHullPD P D` in `HullDirections.lean`;
+`Representation.lean` then carries Theorems 18.3, 18.4, 18.5 and 18.6 (Straszewicz) with
+Corollaries 18.3.1 and 18.5.2–18.5.3, and `Exposed.lean` and `Tangent.lean` carry Theorems 18.7
+and 18.8. What is here is the bounded case, which is what §19's polyhedral theory and the
+Krein–Milman corollaries actually consume.
 
 ## Design notes
 

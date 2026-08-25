@@ -134,19 +134,20 @@ each other's partial closures.
 
 ## What is not here
 
-**The subgradient form of the Kuhn–Tucker condition** `(0, 0) ∈ ∂L (v̄, x̄)` needs §35's
-`∂L = ∂₁L × ∂₂L`, which is not formalized. `isSaddlePoint_lagrangian_iff` gives the equivalent
-"optimal solution plus Kuhn–Tucker vector" form, which is what Rockafellar's Theorem 36.6 is a
-restatement of.
+**The subgradient form of the Kuhn–Tucker condition** `(0, 0) ∈ ∂L (v̄, x̄)` is
+`zero_mem_saddleSubgradient_saddleLagrangian_iff` in `Saddle/Subgradient.lean`, where §37's
+`saddleSubgradient` lives. It is Theorem 37.4 applied to the tilt by the origin on top of
+`isSaddlePoint_lagrangian_iff`, which is the "optimal solution plus Kuhn–Tucker vector" form
+Rockafellar's Theorem 36.6 restates.
 
-**The rest of §37.** Corollary 37.1.2 (the two conjugates are a closure pair with the Theorem 34.3
-structure), Corollary 37.1.3 (the origin in the relative interior forces the saddle-value),
-Theorem 37.2 (the support functions of `C*` and `D*`) and the existence theorems 37.3–37.6 are not
-written. Corollary 37.1.2 needs the biadjoint identity `(F_*^*)^* = F_*` to put `K̲*` and `K̄*` into
-the *same* class the way `partialCl₁_bracket` and `partialCl₂_concaveBracket_adjoint` do for `F`;
-Theorem 37.2 needs Theorem 6.8 (relative interiors of images), which is not formalized. Corollary
-37.6.2, the classical minimax theorem, should come from Mathlib's `Mathlib/Topology/Sion.lean`
-rather than be reproved.
+**The rest of §37 is in `Saddle/{Conjugate,Subgradient,Existence,Monotone}.lean`.** Corollary
+37.1.2 (the two conjugates are a closure pair with the Theorem 34.3 structure), Corollary 37.1.3,
+Theorem 37.2 and the existence theorems 37.3–37.6 are all there. Corollary 37.1.2 needed the
+biadjoint identity `(F_*^*)^* = F_*` to put `K̲*` and `K̄*` into the *same* class the way
+`partialCl₁_bracket` and `partialCl₂_concaveBracket_adjoint` do for `F`, and Theorem 37.2 needed
+Theorem 6.8 (relative interiors of images). Corollary 37.6.2, the classical minimax theorem, is
+proved from Rockafellar's own unbounded machinery rather than from Mathlib's
+`Mathlib/Topology/Sion.lean`, because the unbounded theorems it specializes are wanted anyway.
 
 ## References
 

@@ -4246,6 +4246,17 @@ closedness proof is what let `Saddle/Monotone.lean` be short.
 generalized off `innerₗ E`. `Subgradient/Monotone.lean` has maximal *cyclic* monotonicity, which is
 a different statement.
 
+### Stale "what is not here" paragraphs, corrected
+
+Five module docstrings still listed as missing results that had since landed elsewhere. Each now
+names the module the result is in: §18's unbounded case in `Face.lean` (it is in
+`Representation.lean`, `Exposed.lean` and `Tangent.lean`), Theorem 23.10 in
+`Subgradient/Calculus.lean` (`Subgradient/Existence.lean`), §33's corollaries in `Saddle/Defs.lean`
+(`Saddle/Correspondence.lean`, `Saddle/Kernel.lean`), the `C*` halves of §37 in
+`Saddle/Conjugate.lean` (`Saddle/Existence.lean`), and the rest of §37 in `Saddle/Minimax.lean`.
+Worth a sweep after every merge: a "what is not here" note is written once and then silently rots,
+and it is the first thing a fresh agent reads.
+
 ### `Tdaf/Analysis/Convex/Duality/ConcaveOps.lean`
 
 Supremal convolution and the concave Theorem 16.4, which §38 needs for the adjoint of `F₁ □ F₂`.

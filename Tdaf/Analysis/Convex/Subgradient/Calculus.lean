@@ -42,9 +42,10 @@ tight must each be tight. That is where the properness in `IsExactSum` is spent.
 no splitting to do, and spends its properness on a single point instead: it must know `g (A x) ≠ ⊥`
 to see that `(g A)* y` is finite, which is what unlocks the `< ⊤`-guarded `IsExactImage.exact_le`.
 
-**Theorem 23.10 is not here.** It asks for `∂f x ≠ ∅` at every point of `dom f` for polyhedral `f`,
-and `PolyhedralFn` (§19) does not exist yet. It is a *nonemptiness* statement rather than a calculus
-rule, and belongs with Theorem 23.4.
+**Theorem 23.10 is in `Subgradient/Existence.lean`.** It asks for `∂f x ≠ ∅` at every point of
+`dom f` for polyhedral `f`, which is a *nonemptiness* statement rather than a calculus rule, so it
+belongs with Theorem 23.4 (`subgradient_nonempty_of_polyhedralFn`,
+`polyhedral_subgradient_of_polyhedralFn`).
 
 ## References
 

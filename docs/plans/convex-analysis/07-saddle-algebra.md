@@ -431,6 +431,7 @@ below are the ones actually used; each plan entry above split into several state
 | `SaddleEquiv.iInf_slice_eq`, `.iSup_slice_eq`, `.maximin_eq`, `.minimax_eq`, `.hasSaddleValue_iff`, `.isSaddlePoint_iff` | **Thm 36.4** | done — layer B |
 | `saddleSwap_saddleLagrangian`, `concaveConvexFn_saddleLagrangian`, `upperClosedFn_saddleLagrangian`, `exists_unique_closedBifun_saddleLagrangian_eq` | **Thm 36.5** | done |
 | `mem_argmin_iff_exists_isSaddlePoint_lagrangian`, `isSaddlePoint_lagrangian_iff_mem_kuhnTucker`, `…_of_stronglyConsistent` | **Thm 36.6** (= Cor 29.3.1) | done |
+| `zero_mem_saddleSubgradient_saddleLagrangian_iff` | **Thm 36.6**, subgradient form `(0, 0) ∈ ∂L (v̄, x̄)` | done (`Saddle/Subgradient.lean`) — Thm 37.4 at the tilt by the origin, on top of Thm 29.3 |
 | `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — `Optimization/Lagrangian.lean` lists it as missing |
 | `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | **Cor 30.5.1** | done — `Optimization/Normal.lean` lists it as "needs §36" |
 | `inverseBifun`, `inverseBifun_inverseBifun`, `convexBifun_inverseBifun`, `closedBifun_inverseBifun` | `F_*` and its involution | done |

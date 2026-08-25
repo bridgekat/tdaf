@@ -78,16 +78,16 @@ Theorem 5.7 (`convexFn_iInf_right`) after `-⨆ = ⨅ -`.
 
 ## What is not here
 
-**Corollaries 33.1.2, 33.1.3, 33.2.1, 33.2.2 and Theorem 33.3.** Corollary 33.1.2 is the
-bijection between convex-closed concave-convex functions and image-closed convex bifunctions; both
-halves of it are proved here as separate statements, but packaging them as an `Equiv` needs an
-`ImageClosed` predicate and a subtype, which belongs with §34's equivalence classes.
-Corollary 33.1.3 is the polyhedral case and needs `PolyhedralFn` transported to bifunctions.
-Corollaries 33.2.1 and 33.2.2 say that the two brackets agree off a small set — on
-`ri (dom F)`, and everywhere but one exceptional pair in the polyhedral case — which is §7's
-"a closed concave function agrees with its closure on the relative interior of its effective
-domain" applied to `⟨F·, y⟩`. Theorem 33.3 and all of §34 (`cl₁ cl₂` idempotence, equivalence
-classes, kernels) are the next file.
+**Corollaries 33.1.2, 33.1.3, 33.2.1, 33.2.2 and Theorem 33.3 are in the next two files.**
+Corollary 33.1.2 — the bijection between convex-closed concave-convex functions and image-closed
+convex bifunctions — has both halves here as separate statements; packaging them as an `Equiv`
+needs the `ImageClosedBifun` predicate and a subtype, so `bifunSaddleEquiv` lives in
+`Saddle/Correspondence.lean` beside Theorem 33.3. Corollary 33.1.3 (the polyhedral case) is there
+too. Corollaries 33.2.1 and 33.2.2 — the two brackets agree on `ri (dom F)`, and everywhere but one
+exceptional pair in the polyhedral case — are in `Saddle/Kernel.lean`; both are §7's "a closed
+concave function agrees with its closure on the relative interior of its effective domain" applied
+to `⟨F·, y⟩`. All of §34 (`cl₁ cl₂` idempotence, equivalence classes, kernels) follows in
+`Saddle/{Closure,Equiv,Kernel}.lean`.
 
 ## References
 
