@@ -299,21 +299,22 @@ Two findings of the Part II round are worth promoting out of the remediation lis
   (`ofReal t | zeroPlus`) with actions on sets and on functions, so Theorems 9.6–9.8 are literally
   unions and infima over the book's index set. §19 inherited it unchanged.
 
-**Part III — all six sections written**, 263 declarations for 75 of the Part's 77 numbered results.
+**Part III — all six sections written**, 276 declarations for all 77 of the Part's numbered results.
 
 | § | module | declarations | labels |
 |---|---|---|---|
 | 11 | `Part3/Section11.lean` | 30 | 16 |
 | 12 | `Part3/Section12.lean` | 47 | 9 |
 | 13 | `Part3/Section13.lean` | 47 | 15 |
-| 14 | `Part3/Section14.lean` | 47 | 10 of 11 |
+| 14 | `Part3/Section14.lean` | 54 | 11 |
 | 15 | `Part3/Section15.lean` | 56 | 11 |
-| 16 | `Part3/Section16.lean` | 36 | 14 of 15 |
+| 16 | `Part3/Section16.lean` | 42 | 15 |
 
-The two absent labels are **Theorem 14.4**, which waits on the `ℝᵐ × ℝⁿ ≃ ℝᵐ⁺ⁿ` transport
-(remediation §4.8), and **Corollary 16.2.2**, which the gap round showed is not a §16 problem at
-all: it is Lemma 16.2 applied in `ι → E` to the diagonal subspace, and what it needs is a `supportFn`
-of a `Set.pi` as a sum — the same product-of-`ι` tower that §4.4 and §9.18 want (remediation §11.14).
+**Part III is complete.** Its last two absent labels were Theorem 14.4 and Corollary 16.2.2, and
+both turned out to want a product transport rather than convex analysis — `ℝᵐ × ℝⁿ ≃ ℝᵐ⁺ⁿ` for the
+first, `ι → E` for the second. Neither transport existed; both do now
+(`Analysis/Convex/EuclideanProd.lean` and `Duality/FiniteProduct.lean`), and each closed something
+outside its motivating label on the way: §22's interval reading and §9.18's sum map respectively.
 
 **This is the Part that tests [D3](#d3-duality-is-developed-for-a-dual-pair-not-for-ℝⁿ-and-not-for-the-dual-space),
 and D3 holds.** Not one §11–§16 statement needed the dual pair to be relaxed: `pairing n` discharges
@@ -325,16 +326,16 @@ plus `IsAdjointPair`", but the *surface* pays none of that — `isAdjointPair_ad
 in `Duality/Pairing.lean` for `innerₗ E`, so §16 writes every `A*` as `LinearMap.adjoint A` and
 carries no adjoint hypothesis at all. What remains of §4.1 is backbone-internal.
 
-**Part IV — all six sections written**, 180 declarations for 65 of the Part's 70 numbered results.
+**Part IV — all six sections written**, 206 declarations for 65 of the Part's 70 numbered results.
 
 | § | module | declarations | labels |
 |---|---|---|---|
 | 17 | `Part4/Section17.lean` | 24 | 10 |
 | 18 | `Part4/Section18.lean` | 49 | 16 |
-| 19 | `Part4/Section19.lean` | 41 | 17 |
-| 20 | `Part4/Section20.lean` | 19 | 8 |
+| 19 | `Part4/Section19.lean` | 44 | 17 |
+| 20 | `Part4/Section20.lean` | 26 | 8 |
 | 21 | `Part4/Section21.lean` | 27 | 10 |
-| 22 | `Part4/Section22.lean` | 20 | 4 of 9 |
+| 22 | `Part4/Section22.lean` | 36 | 4 of 9 |
 
 The five absent labels are all in §22 and all one item: **Lemmas 22.4 and 22.5, Corollary 22.4.1,
 and Theorems 22.6 and 22.7**, the elementary-vector development and Tucker's complementarity
@@ -361,12 +362,28 @@ Three of the round's findings are worth promoting out of the remediation list:
 
 ## 8. Where §§1–22 stand
 
-**273 of the 280 numbered results have declarations.** The seven that do not are §22's five
-scope-deferred elementary-vector results, Theorem 14.4, and Corollary 16.2.2 — and the last two are
-one item each in [`../../backbone/08-remediation.md`](../../backbone/08-remediation.md), §4.8 and
-§11.14 respectively. No section is blocked; nothing is waiting on a proof nobody knows how to write.
+**275 of the 280 numbered results have declarations, and the five that do not are deferred by
+scope, not blocked.** They are §22's elementary-vector development — Lemmas 22.4 and 22.5, Corollary
+22.4.1, and Theorems 22.6 and 22.7 — which is combinatorial matroid theory that the book itself
+presents as independent of all convexity theory.
 
-Both remaining backbone items are **product transports** rather than convex analysis: `ℝᵐ × ℝⁿ`
-against `ℝᵐ⁺ⁿ` for Theorem 14.4 and §22's interval reading, and a finite product `ι → E` for
-Corollary 16.2.2, the `m`-ary constraint qualifications of §§9, 16 and 20, and the `m`-ary infimal
-convolution. That is a single piece of scaffolding, and it is what the next round should build.
+**Parts I, II and III are complete**, and Part IV is complete apart from that one deferral. Nothing
+in §§1–22 is waiting on a backbone gap.
+
+What is left in [`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) is no longer
+blocking anything: `recessionFn` of a separable sum (§9.18's last piece), two relative-interior
+lemmas parked above their home (§11.21), three `api.md` records (§11.22), and the friction items
+that individual sections absorbed. The next round is §§23–39 — Parts V–VIII, 191 numbered results —
+not more scaffolding.
+
+### What the four rounds cost, and what they were worth
+
+Sixteen agents over four rounds: two surface rounds writing §§17–22, a gap round closing six of the
+seven blocked labels, and a product round closing the seventh and eleven other items. The
+recurring lesson is in `gotchas.md` LIB17 and it is about **this repository's own records rather
+than about Lean**: nine times across the two closing rounds, a remediation item named a home, a
+prerequisite, or a cost, and the claim was wrong — an isometry that cannot exist, a theorem not on
+the route, a module that does not define the function it is about, a cost estimate wrong twice in
+the same direction. Every one was found by an agent that checked the claim instead of planning
+around it, and one of them (§11.4) had cost a full round of deferral. An item that names something
+is making a claim, and it gets checked.
