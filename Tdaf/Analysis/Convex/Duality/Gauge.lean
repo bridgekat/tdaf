@@ -33,6 +33,8 @@ with it. Four correspondences live here, all of them involutions on a characteri
 * `IsPolarFn f` — nonnegative, closed, convex, `f 0 = 0`: the class of Corollary 15.4.1.
 * `obverse f` — `inf {λ > 0 ∣ (fλ)(x) ≤ 1}`, Rockafellar's obverse.
 * `IsNorm k` — a gauge that is finite, symmetric and positive off the origin (§15).
+* `IsNorm.toSeminorm` — a norm in Rockafellar's sense is a Mathlib `Seminorm`, with
+  `IsNorm.apply_smul` (absolute homogeneity) as the step positive homogeneity does not give.
 * `AbsorbsAll C`, `RayFree C` — the two conditions on `C` that make `γ(· ∣ C)` a norm.
 * `epiPairing B`, `vNeg X`, `mulPairing` — the pairing of `E × ℝ` with `F × ℝ` and the vertical
   reflection, the apparatus in which Theorem 15.4 is proved.
@@ -125,8 +127,11 @@ invisible to a positively homogeneous function — and Theorem 15.4 does the res
   functions on `[0, +∞]` and their *monotone conjugates* `g⁺`; that is a one-dimensional theory
   of its own which this project does not have, and building it here would dwarf §15.
 * A bridge to `egauge` — see the design note above.
-* `Seminorm`/`NormedSpace` instances from `IsNorm`: a Rockafellar norm need not be continuous in
-  general, so it is not a `Seminorm` for the ambient topology.
+* A `NormedSpace` instance from `IsNorm`. A Rockafellar norm need not be continuous, so it does
+  not make `E` a normed space for the ambient topology. The **`Seminorm` is here**
+  (`IsNorm.toSeminorm`): `Seminorm ℝ E` is purely algebraic and asks nothing about a topology, and
+  an earlier note in this file wrongly declined it on the continuity grounds that apply only to
+  `NormedSpace`.
 
 ## References
 
@@ -2164,6 +2169,55 @@ theorem isNorm_iff :
       (gaugeFn_level_one hk.nonneg hk.posHomogeneous hk.map_zero).symm⟩
   · rintro ⟨C, hC, h0, hsymm, habs, hray, rfl⟩
     exact isNorm_gaugeFn hC h0 hsymm habs hray
+
+/-! #### A norm is a `Seminorm`
+
+Mathlib's `Seminorm 𝕜 E` is purely algebraic — subadditive, absolutely homogeneous, and nothing
+about a topology — so a Rockafellar norm is one on the nose. It is *not* a `NormedSpace` norm
+unless it happens to be continuous, which in general it is not; that is the distinction, and it is
+the only one. -/
+
+/-- A norm is real-valued: the `EReal` value coerces back. -/
+theorem IsNorm.coe_toReal (hk : IsNorm k) (x : E) : (((k x).toReal : ℝ) : EReal) = k x :=
+  _root_.EReal.coe_toReal (hk.ne_top x) (hk.toIsGauge.ne_bot x)
+
+/-- **A norm is absolutely homogeneous**, not merely positively homogeneous: symmetry upgrades
+`k (a • x) = a * k x` for `a > 0` to `k (a • x) = |a| * k x` for every real `a`. -/
+theorem IsNorm.apply_smul (hk : IsNorm k) (a : ℝ) (x : E) :
+    k (a • x) = ((|a| : ℝ) : EReal) * k x := by
+  rcases lt_trichotomy a 0 with h | h | h
+  · have hx : a • x = -((-a) • x) := by rw [neg_smul, neg_neg]
+    rw [hx, hk.map_neg, hk.toIsGauge.posHomogeneous (-a) (neg_pos.2 h) x, abs_of_neg h]
+  · subst h
+    simp [hk.toIsGauge.map_zero]
+  · rw [hk.toIsGauge.posHomogeneous a h x, abs_of_pos h]
+
+/-- **A Rockafellar norm is a `Seminorm`.** `Seminorm ℝ E` asks for subadditivity (Theorem 4.7,
+from convexity and positive homogeneity), invariance under negation, and absolute homogeneity —
+all three of which `IsNorm` carries, and none of which mentions a topology.
+
+This is the bridge that lets a surface over `ℝⁿ` hand a Rockafellar norm to Mathlib's seminorm
+API. What it does *not* give is a `NormedSpace`: for that the norm must be continuous, and
+Rockafellar gets continuity from Theorem 10.1, which is finite-dimensional. -/
+noncomputable def IsNorm.toSeminorm (hk : IsNorm k) : Seminorm ℝ E where
+  toFun x := (k x).toReal
+  map_zero' := by simp [hk.toIsGauge.map_zero]
+  add_le' x y := by
+    have hsub :=
+      (PosHomogeneous.convexFn_iff_subadditive hk.toIsGauge.posHomogeneous
+        hk.toIsGauge.ne_bot).1 hk.toIsGauge.convexFn x y
+    have hcoe : (((k (x + y)).toReal : ℝ) : EReal)
+        ≤ (((k x).toReal + (k y).toReal : ℝ) : EReal) := by
+      rw [hk.coe_toReal, _root_.EReal.coe_add, hk.coe_toReal, hk.coe_toReal]
+      exact hsub
+    exact_mod_cast hcoe
+  neg' x := by rw [hk.map_neg]
+  smul' a x := by
+    rw [hk.apply_smul a x, _root_.EReal.toReal_mul, _root_.EReal.toReal_coe, Real.norm_eq_abs]
+
+/-- The `Seminorm` really is `k`. -/
+@[simp] theorem IsNorm.coe_toSeminorm (hk : IsNorm k) (x : E) :
+    ((hk.toSeminorm x : ℝ) : EReal) = k x := hk.coe_toReal x
 
 end Norm
 

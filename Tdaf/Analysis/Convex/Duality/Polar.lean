@@ -41,6 +41,12 @@ cones. That restriction is polarity, and it is proved here from
   is what §31 pairs with `K`; the last is `K** = K` for a nonempty closed convex cone.
 * `polarSet_polarSet` — **Theorem 14.5**, first assertion: `C°° = C` for a closed convex `C`
   containing the origin.
+* **The bundled family.** Every Theorem 14.1 statement above takes `Convex ℝ K`,
+  `∀ a > 0, a • K = K` and `K.Nonempty` separately, because that is the generality in which the
+  separation argument runs. A `PointedCone ℝ E` supplies all three, so each has a `_pointedCone`
+  companion — `polarCone_polarCone_pointedCone`, `…_eq_closure`,
+  `neg_polarCone_neg_polarCone_pointedCone`, `conj_indicatorFn_polarCone_pointedCone`. A surface
+  section stating Theorem 14.1 for cones should use those and never discharge the triple by hand.
 * `polarSubmodule`, `partialAffineFn`, `conj_partialAffineFn` — the polar of a subspace bundled
   as a submodule, and the **conjugate of a partial affine function** (Rockafellar §12, the display
   preceding Theorem 12.3): `(δ(· | L + a) + ⟨·, a*⟩ + α)* = δ(· | L^⊥ + a*) + ⟨a, ·⟩ + α*`.
@@ -540,6 +546,12 @@ theorem polarCone_polarCone_pointedCone (K : PointedCone ℝ E) (hcl : IsClosed 
   polarCone_polarCone_of_isClosed (K : ConvexCone ℝ E).convex
     (smul_coe_pointedCone K) ⟨0, K.zero_mem⟩ hcl
 
+/-- The bipolar of a bundled cone is its closure — `polarCone_polarCone` with the three
+hypotheses supplied by the bundling. -/
+theorem polarCone_polarCone_pointedCone_eq_closure (K : PointedCone ℝ E) :
+    polarCone B.flip (polarCone B (K : Set E)) = closure (K : Set E) :=
+  polarCone_polarCone (K : ConvexCone ℝ E).convex (smul_coe_pointedCone K) ⟨0, K.zero_mem⟩
+
 /-- **Rockafellar, Theorem 14.1** in the form §31 states it: `K** = K` for a nonempty closed convex
 cone, where `K* = -K°` is the dual cone of Theorem 31.4. The two sign flips cancel against the one
 of `polarCone_neg`. -/
@@ -547,6 +559,13 @@ theorem neg_polarCone_neg_polarCone (hconv : Convex ℝ K)
     (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (hcl : IsClosed K) :
     -(polarCone B.flip (-(polarCone B K))) = K := by
   rw [polarCone_neg, neg_neg, polarCone_polarCone_of_isClosed hconv hcone hne hcl]
+
+/-- `K** = K` for a closed bundled cone. -/
+theorem neg_polarCone_neg_polarCone_pointedCone (K : PointedCone ℝ E)
+    (hcl : IsClosed (K : Set E)) :
+    -(polarCone B.flip (-(polarCone B (K : Set E)))) = (K : Set E) :=
+  neg_polarCone_neg_polarCone (K : ConvexCone ℝ E).convex (smul_coe_pointedCone K)
+    ⟨0, K.zero_mem⟩ hcl
 
 /-- **Rockafellar, Theorem 14.1**, third assertion, in the remaining direction: for a nonempty
 closed convex cone the indicator of `K°` conjugates back to the indicator of `K`. -/
@@ -556,6 +575,13 @@ theorem conj_indicatorFn_polarCone (hconv : Convex ℝ K)
   rw [conj_indicatorFn_eq_indicatorFn_polarCone (B := B.flip) (smul_polarCone B K)
       (polarCone_nonempty B K),
     polarCone_polarCone_of_isClosed hconv hcone hne hcl]
+
+/-- `δ(· ∣ K°)* = δ(· ∣ K)` for a closed bundled cone. -/
+theorem conj_indicatorFn_polarCone_pointedCone (K : PointedCone ℝ E)
+    (hcl : IsClosed (K : Set E)) :
+    conj B.flip (indicatorFn (polarCone B (K : Set E))) = indicatorFn (K : Set E) :=
+  conj_indicatorFn_polarCone (K : ConvexCone ℝ E).convex (smul_coe_pointedCone K)
+    ⟨0, K.zero_mem⟩ hcl
 
 end Theorem141
 
