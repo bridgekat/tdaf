@@ -4855,3 +4855,113 @@ recession-cone route needs no gauge at all, which is why the module has no gauge
 `recessionCone_polarSet` needs no finite dimension and belongs at layer C beside
 `recessionCone_eq_polarCone_polarSet` in `Duality/Gauge.lean` (remediation §11.18); it is here under
 an `omit` only because the two theorems that consume it are finite-dimensional.
+
+### `Tdaf/Analysis/Convex/EuclideanProd.lean`
+
+```lean
+noncomputable def euclideanProdIsometry (m n : ℕ) :
+    WithLp 2 (EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n)) ≃ₗᵢ[ℝ]
+      EuclideanSpace ℝ (Fin (m + n))
+noncomputable def euclideanProdEquiv (m n : ℕ) :
+    (EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n)) ≃L[ℝ] EuclideanSpace ℝ (Fin (m + n))
+noncomputable def euclideanOne : ℝ ≃L[ℝ] EuclideanSpace ℝ (Fin 1)
+noncomputable def euclideanTripleEquiv (n : ℕ) :
+    ((ℝ × EuclideanSpace ℝ (Fin n)) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 2))
+
+theorem inner_euclideanProdEquiv (p q) :
+    inner ℝ (euclideanProdEquiv m n p) (euclideanProdEquiv m n q)
+      = inner ℝ p.1 q.1 + inner ℝ p.2 q.2
+theorem inner_euclideanTripleEquiv (p q) :
+    inner ℝ (euclideanTripleEquiv n p) (euclideanTripleEquiv n q)
+      = p.1.1 * q.1.1 + inner ℝ p.1.2 q.1.2 + p.2 * q.2
+theorem isAdjointPair_euclideanProdEquiv :
+    IsAdjointPair (innerₗ _) (prodPairing (innerₗ _) (innerₗ _)) ↑(euclideanProdEquiv m n).symm
+      ↑(euclideanProdEquiv m n)
+```
+
+**The move a text written in `ℝⁿ` makes without comment.** `ℝᵐ × ℝⁿ` and `ℝᵐ⁺ⁿ` are different
+types, and so are `ℝ × ℝⁿ × ℝ` and `ℝⁿ⁺²`; this module is the concatenation between them, together
+with the transport of the five operations a convexity statement is made of — `conj`
+(`conj_comp_euclideanProdEquiv`), `subgradient` (`subgradient_comp_euclideanProdEquiv`), `ri`
+(`relint_image_euclideanProdEquiv` and its `symm` companion), the polar
+(`polarCone_image_of_pairing_eq`) and the pointed-cone hull (`coe_hull_image`). The closure
+transports because the maps are homeomorphisms (`closure_image_euclideanProdEquiv`,
+`closure_image_euclideanTripleEquiv`).
+
+**The isometry is out of `WithLp 2 (ℝᵐ × ℝⁿ)`, the transports are out of the plain product.**
+Mathlib's product norm is the supremum norm (`gotchas.md` SET4), so concatenation is an isometry
+only for the Euclidean structure — but `conj`, `subgradient` and `ri` need only the linear
+structure and the topology, which the two norms share. Keeping the transport lemmas on `≃L` out of
+the plain product means no consumer has to move a `Convex`, a `ConvexFn` or an `IsClosed` across a
+type synonym. `euclideanProdEquiv_eq_isometry` records that the two maps agree.
+
+**The pairing is the whole content.** The backbone pairs `E × F` with itself through `prodPairing`
+and `ℝᵐ⁺ⁿ` with itself through its inner product; `inner_euclideanProdEquiv` says these are the
+same form, `isAdjointPair_euclideanProdEquiv` packages it as the datum of design decision D3, and
+every transport is `conj_comp_linearEquiv` or an analogue applied to it.
+`subgradient_comp_linearEquiv` and `polarCone_image_of_pairing_eq` are those analogues, stated for
+an arbitrary adjoint pair of
+isomorphisms because that is the generality the concatenation is an instance of; `coe_hull_image`
+is `Submodule.map_span` over the non-negative reals, restated on underlying sets, and needs only a
+linear map.
+
+**What is not here.**
+
+* **Coordinate formulas for `euclideanTripleEquiv`.** `euclideanProdEquiv` has them
+  (`…_apply_castAdd`, `…_apply_natAdd`, `…_symm_apply`) because they are what proved
+  `inner_euclideanProdEquiv`. The triple concatenation deliberately has none: which `Fin (n + 2)`
+  index carries the leading scalar is an artefact of how the composite was assembled from
+  `PiLp.sumPiLpEquivProdLpPiLp`, `LinearIsometryEquiv.piLpCongrLeft` and a `finCongr`, and no
+  statement should depend on it. `inner_euclideanTripleEquiv` is the interface.
+* **A general `WithLp` on sigma types.** `PiLp.sumPiLpEquivProdLpPiLp` and
+  `LinearIsometryEquiv.piLpCongrLeft` are the two Mathlib facts the module is built from, and
+  everything beyond them is coordinate bookkeeping for `Fin (m + n)`.
+* **Anything about `Rn`.** `Rn` and `pairing` are surface notation
+  (`Surface/Common/Euclidean.lean`, which imports this file); the module is stated in
+  `EuclideanSpace ℝ (Fin n)` so that it stays backbone.
+
+### `Tdaf/Analysis/Convex/Duality/HomConePolar.lean`
+
+```lean
+abbrev homConePairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
+    ((ℝ × E) × ℝ) →ₗ[ℝ] ((ℝ × F) × ℝ) →ₗ[ℝ] ℝ := epiPairing (prodPairing mulPairing B)
+def homCoord (F) : ((ℝ × F) × ℝ) →ₗ[ℝ] ℝ                    -- (λ*, y, μ*) ↦ λ*
+def negSwapEnds (F) : ((ℝ × F) × ℝ) →ₗ[ℝ] (ℝ × F) × ℝ       -- (λ*, y, μ*) ↦ (-μ*, y, -λ*)
+
+theorem conj_le_coe_iff_forall_mem_epi :
+    conj B f y ≤ (c : EReal) ↔ ∀ p ∈ epi f, B p.1 y - p.2 ≤ c
+theorem mem_homCone_conj_iff_of_pos (hf : ConvexFn f) (ha : 0 < q.1.1) :
+    q ∈ homCone (conj B f) ↔ negSwapEnds F q ∈ polarCone (homConePairing B) (homCone f)
+theorem closure_homCone_conj [IsContinuousPairing B.flip] (hf : ConvexFn f)
+    (hdom : (dom f).Nonempty) (hdom' : (dom (conj B f)).Nonempty) :
+    closure (homCone (conj B f)) = negSwapEnds F ⁻¹' polarCone (homConePairing B) (homCone f)
+```
+
+**Theorem 14.4**: the conjugate read off the polar of the cone generated by `{1} × epi f`, one
+dimension up. Rockafellar derives polarity of cones from conjugacy of functions in §14; this is the
+derivation in the other direction, and it is why `Duality/Polar.lean` has a "Deferred" entry
+pointing here. The `ℝⁿ⁺²` packaging is the surface's `theorem_14_4`
+(`Surface/Rockafellar/Part3/Section14.lean`), through `euclideanTripleEquiv`.
+
+**The hypotheses are weaker than "closed proper convex".** What the proof needs is `ConvexFn f`,
+`dom f ≠ ∅` and `dom f* ≠ ∅`; closedness enters only through `proper_conj`, at the call site. So
+the module sits in the topological layer: no local convexity, no `IsCompatiblePairing`, no finite
+dimension. Only `IsContinuousPairing B.flip` — for closedness of the polar — and a topological
+vector space structure on `F`.
+
+**No bipolar theorem and no `cl K`.** The printed proof reads the two half-space facts off `cl K`
+("it contains `(0, 0, 1)` but not `(0, 0, -1)`") and needs `K°° = cl K` to convert them. Both are
+visible in `K` itself: the vertical ray `(1, x₀, r + t)`, `t ≥ 0`, over a point of `dom f` forces
+`λ* ≥ 0` on the polar (`nonneg_homCoord_of_mem_polarCone`), and a single affine minorant of `f`
+produces a point of the polar with `λ* = 1`. That is what keeps the module below Theorem 14.1.
+
+**The density step is `Convex.closure_inter_setOf_pos`** (`RelativeInterior.lean`), which
+Rockafellar cites Corollary 6.5.2 for: a convex set on which a linear functional is non-negative
+and somewhere positive is the closure of the part where it is positive. It is a segment argument in
+a topological vector space and needs no continuity of the functional and no relative interiors,
+which is why it is not stated with `ri`.
+
+**What is not here.** The description of `cl (homCone f)` itself — `λ > 0` and `μ ≥ (fλ)(x)`, or
+`λ = 0` and `μ ≥ (f0⁺)(x)`. That is the unnumbered paragraph *preceding* Theorem 14.4 in the book,
+it is a `recessionFn` statement, and the theorem does not use it. Two notes in this repository
+recorded it as Theorem 14.4's prerequisite; both were wrong.
