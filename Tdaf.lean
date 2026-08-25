@@ -121,3 +121,4 @@ import Tdaf.Surface.Rockafellar.Part1.Section03
 import Tdaf.Surface.Rockafellar.Part1.Section04
 import Tdaf.Surface.Rockafellar.Part1.Section05
 import Tdaf.Surface.Rockafellar.Part2.Section06
+import Tdaf.Surface.Rockafellar.Part2.Section07
