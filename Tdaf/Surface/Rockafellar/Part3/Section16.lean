@@ -7,6 +7,7 @@ import Tdaf.Analysis.Convex.Duality.Exact
 import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Duality.Polar
 import Tdaf.Analysis.Convex.Duality.Relint
+import Tdaf.Analysis.Convex.Duality.RelintSeparation
 import Tdaf.Analysis.Convex.Recession.Closedness
 import Tdaf.Surface.Rockafellar.Part3.Section13
 
@@ -40,8 +41,8 @@ reusable.
   `theorem_16_1_right_zero` |
 | Corollary 16.1.1 | `corollary_16_1_1` |
 | Corollary 16.1.2 | `corollary_16_1_2` |
-| Lemma 16.2 | *omitted*, see below |
-| Corollary 16.2.1 | *omitted*, see below |
+| Lemma 16.2 | `lemma_16_2` |
+| Corollary 16.2.1 | `corollary_16_2_1` |
 | Corollary 16.2.2 | *omitted*, see below |
 | Theorem 16.3 | `theorem_16_3_image`, `theorem_16_3_closure`, `theorem_16_3_exact`,
   `theorem_16_3_attained` |
@@ -67,15 +68,14 @@ carries an `IsAdjointPair` hypothesis even though every backbone statement it sp
 
 ## What is not here
 
-* **Lemma 16.2, Corollary 16.2.1 and Corollary 16.2.2** — *omitted with a reason*. These dualize
-  the constraint qualifications of §9 into recession-function form: `L` meets `ri (dom f)` if and
-  only if no `x* ∈ L⊥` has `(f*0⁺)(x*) ≤ 0 < (f*0⁺)(-x*)`. The backbone never states them, because
-  it never needs them: `IsExactImage.of_relint` and `IsExactSum.of_relint` take the
-  relative-interior condition *directly* to the conclusion (through `constancySpace_conj` and
-  `Convex.isClosed_add`), so the recession-function form is a step Rockafellar takes and the
-  backbone routes around. Recording them here would mean assembling Theorem 11.1, Theorem 11.3 and
-  Theorem 13.3 into a new result in the surface, which is a backbone gap and not surface work; see
-  the report.
+* **Corollary 16.2.2** — *omitted with a reason*. Lemma 16.2 and Corollary 16.2.1 are here, built
+  on the backbone module `Tdaf.Analysis.Convex.Duality.RelintSeparation`; the many-function form is
+  not. Rockafellar proves it by applying the lemma inside `ℝᵐⁿ`, to the diagonal subspace and to
+  `f(x₁, …, xₘ) = f₁(x₁) + ⋯ + fₘ(xₘ)`. Three pieces of that transport are missing and none of them
+  is about §16: a compatible pairing on a finite product `ι → E`, the relative interior of a
+  product set as the product of the relative interiors, and the support function of a product set
+  as a sum of support functions. They belong in the backbone, beside the binary
+  `intrinsicInterior_prod_eq` and `instIsCompatiblePairingProd` that already exist.
 * **The opening paragraph's translation rules** (book, lines 5661–5667) — *deferred by scope*:
   `(h(· - a))* = h* + ⟨a, ·⟩`, `(h + ⟨·, a*⟩)* = h*(· - a*)`, `(h + α)* = h* - α`, and
   `δ*(· | C + a) = δ*(· | C) + ⟨a, ·⟩`. Rockafellar himself says these are "already covered by
@@ -214,6 +214,45 @@ theorem corollary_16_1_2 (C : Set (Rn n)) {l : ℝ} (hl : 0 < l) :
     change pairing n (l • x) y ≤ 1
     rw [key]
     exact h x hx
+
+/-! ### Lemma 16.2: the constraint qualifications of §9, dualized
+
+Rockafellar's proof is three theorems in a row: Theorem 11.3 separates `L` and `dom f` properly
+exactly when their relative interiors are disjoint, Theorem 11.1 turns proper separation into a
+pair of inequalities between the extrema of `⟨·, x*⟩`, and Theorem 13.3 identifies those extrema
+over `dom f` as `f* 0⁺`. The backbone carries that assembly in
+`Tdaf.Analysis.Convex.Duality.RelintSeparation`, for a subspace of any finite-dimensional space
+paired with any other. -/
+
+/-- **Rockafellar, Lemma 16.2.** Let `L` be a subspace of `ℝⁿ` and let `f` be a proper convex
+function. Then `L` meets `ri (dom f)` if and only if there exists no vector `x* ∈ Lᗮ` such that
+`(f* 0⁺)(x*) ≤ 0` and `(f* 0⁺)(-x*) > 0`.
+
+Specialises `submodule_inter_relint_dom_nonempty_iff`. `Lᗮ` *is* the annihilator of `L` for the
+pairing: `Submodule.mem_orthogonal` is `∀ u ∈ L, ⟨u, x*⟩ = 0` definitionally, and so is
+`pairing_apply`. Properness of `f*` is discharged by `proper_conj_of_proper`, which is Theorem 12.2
+read in finite dimensions. -/
+theorem lemma_16_2 (L : Submodule ℝ (Rn n)) {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
+    ((L : Set (Rn n)) ∩ ri (dom f)).Nonempty ↔
+      ¬ ∃ x' ∈ Lᗮ, recessionFn (conj (pairing n) f) x' ≤ 0 ∧
+        0 < recessionFn (conj (pairing n) f) (-x') :=
+  submodule_inter_relint_dom_nonempty_iff (B := pairing n) L hf hp (proper_conj_of_proper hf hp)
+
+/-- **Rockafellar, Corollary 16.2.1.** Let `A` be a linear transformation from `ℝⁿ` to `ℝᵐ` and let
+`g` be a proper convex function on `ℝᵐ`. In order that there exist no vector `y* ∈ ℝᵐ` with
+`A*y* = 0`, `(g* 0⁺)(y*) ≤ 0` and `(g* 0⁺)(-y*) > 0`, it is necessary and sufficient that
+`Ax ∈ ri (dom g)` for at least one `x ∈ ℝⁿ`.
+
+Lemma 16.2 for the subspace `L = range A`, whose orthogonal complement is `ker A*`. The backbone
+form asks in addition that the pairing separate on the right, which on `ℝⁿ` is
+`separatingRight_pairing`. -/
+theorem corollary_16_2_1 (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (hg : ConvexFn g)
+    (hp : Proper g) :
+    (¬ ∃ y' : Rn m, LinearMap.adjoint A y' = 0 ∧
+        recessionFn (conj (pairing m) g) y' ≤ 0 ∧
+        0 < recessionFn (conj (pairing m) g) (-y')) ↔ ∃ x, A x ∈ ri (dom g) :=
+  (exists_apply_mem_relint_dom_iff (separatingRight_pairing n) (isAdjointPair_adjoint A) hg hp
+    (proper_conj_of_proper hg hp)).symm
 
 /-! ### Theorem 16.3: linear transformations -/
 
