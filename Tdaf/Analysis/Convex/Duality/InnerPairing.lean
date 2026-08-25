@@ -21,10 +21,16 @@ to be transported. Generalising the pairing costs one class and leaves the topol
 ## Main definitions
 
 * `IsInnerPairing B` — `B` is symmetric, positive semidefinite, and definite.
+* `IsContinuousInnerPairing B` — an inner pairing whose quadratic form `x ↦ B x x` is continuous.
+  This is the only topological fact Moreau's theorem needs, and it holds for `innerₗ E` on **any**
+  real inner-product space, which is what keeps §31 free of finite-dimensionality.
 * `pairingNorm B x` — the induced norm `√(B x x)`.
 
 ## Main results
 
+* `self_pairing_add`, `self_pairing_sub`, `self_pairing_combo_le` — the quadratic expansions, and
+  convexity of `½ B z z` with its defect visible. These replace `norm_add_sq_real` and friends in
+  every §31 proof.
 * `pairing_sq_le_mul` — **Cauchy–Schwarz** for a positive semidefinite symmetric form. Only
   `self_nonneg` is used, not definiteness.
 * `pairingNorm_add_le` — the triangle inequality, hence `pairingNorm` is a genuine norm.
@@ -82,6 +88,11 @@ theorem pairing_comm (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsInnerPairing B] (x
 theorem self_pairing_nonneg (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsInnerPairing B] (x : E) : 0 ≤ B x x :=
   IsInnerPairing.self_nonneg B x
 
+/-- A symmetric pairing is its own flip. This is what lets `closedFn_conj` — which asks for
+`IsContinuousPairing B.flip` — be applied to an inner pairing without a detour. -/
+@[simp] theorem flip_eq_self (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsInnerPairing B] : B.flip = B :=
+  LinearMap.ext fun x => LinearMap.ext fun y => pairing_comm B y x
+
 @[simp] theorem self_pairing_eq_zero_iff : B x x = 0 ↔ x = 0 :=
   ⟨IsInnerPairing.eq_zero_of_self_eq_zero B x, fun h => by rw [h]; simp⟩
 
@@ -95,6 +106,51 @@ theorem self_pairing_add_smul (t : ℝ) (x y : E) :
   simp only [map_add, LinearMap.add_apply, map_smul, LinearMap.smul_apply, smul_eq_mul]
   rw [pairing_comm B y x]
   ring
+
+/-! #### Expansions
+
+The quadratic identities `‖x ± y‖² = ‖x‖² ± 2⟪x, y⟫ + ‖y‖²` and their companions, which is
+everything §31's proofs use the inner product for. -/
+
+theorem self_pairing_add (x y : E) : B (x + y) (x + y) = B x x + 2 * B x y + B y y := by
+  have h := self_pairing_add_smul (B := B) 1 x y
+  rw [one_smul] at h
+  rw [h]; ring
+
+theorem self_pairing_sub (x y : E) : B (x - y) (x - y) = B x x - 2 * B x y + B y y := by
+  have h := self_pairing_add_smul (B := B) (-1) x y
+  rw [neg_one_smul, ← sub_eq_add_neg] at h
+  rw [h]; ring
+
+omit [IsInnerPairing B] in
+@[simp] theorem self_pairing_neg (x : E) : B (-x) (-x) = B x x := by
+  simp only [map_neg, LinearMap.neg_apply, neg_neg]
+
+omit [IsInnerPairing B] in
+theorem self_pairing_sub_rev (x y : E) : B (x - y) (x - y) = B (y - x) (y - x) := by
+  rw [show y - x = -(x - y) by abel, self_pairing_neg]
+
+omit [IsInnerPairing B] in
+theorem self_pairing_smul (a : ℝ) (x : E) : B (a • x) (a • x) = a ^ 2 * B x x := by
+  simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
+
+/-- **Convexity of the quadratic form**, with the defect `a b B (u - v) (u - v) ≥ 0` visible. This
+is the one inequality that makes `w z = ½ B z z` a convex function. -/
+theorem self_pairing_combo_le {u v : E} {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) (hab : a + b = 1) :
+    B (a • u + b • v) (a • u + b • v) / 2 ≤ a * (B u u / 2) + b * (B v v / 2) := by
+  have hexp : B (a • u + b • v) (a • u + b • v)
+      = a ^ 2 * B u u + 2 * (a * b * B u v) + b ^ 2 * B v v := by
+    rw [self_pairing_add, self_pairing_smul, self_pairing_smul]
+    congr 1
+    congr 1
+    simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
+    ring
+  have hdef : 0 ≤ a * b * (B u u - 2 * B u v + B v v) := by
+    rw [← self_pairing_sub]
+    exact mul_nonneg (mul_nonneg ha hb) (self_pairing_nonneg B (u - v))
+  have hb' : b = 1 - a := by linarith
+  subst hb'
+  nlinarith [hexp, hdef]
 
 /-- **Cauchy–Schwarz** for a symmetric positive semidefinite pairing. Definiteness is not used. -/
 theorem pairing_sq_le_mul (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsInnerPairing B] (x y : E) :
@@ -184,6 +240,52 @@ theorem pairingNorm_sub_le (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsInnerPairing
 
 end Defs
 
+/-! ### Inner pairings with a continuous quadratic form -/
+
+section Continuous
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+
+/-- An inner pairing whose **quadratic form is continuous**.
+
+Continuity of `x ↦ B x x` is the only topological fact Moreau's theorem needs about the pairing,
+and it does not follow from `IsContinuousPairing`, which gives continuity only in the first
+variable with the second held fixed. Keeping it as its own class is what lets §31 stay valid in an
+arbitrary real Hilbert space while §37 uses it on a finite-dimensional `U × X`. -/
+class IsContinuousInnerPairing (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) : Prop extends IsInnerPairing B where
+  /-- The quadratic form is continuous. -/
+  continuous_self (B) : Continuous fun x : E => B x x
+
+theorem continuous_self_pairing' (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsContinuousInnerPairing B] :
+    Continuous fun x : E => B x x :=
+  IsContinuousInnerPairing.continuous_self B
+
+variable [IsTopologicalAddGroup E]
+
+/-- **Polarization makes the diagonal do all the work.** A symmetric form whose quadratic form is
+continuous is continuous in each variable separately, because
+`B x y = ½ (B (x + y) (x + y) - B x x - B y y)`. So `IsContinuousInnerPairing` subsumes
+`IsContinuousPairing`, and no proof has to carry both. -/
+instance (priority := 100) isContinuousPairing_of_isContinuousInnerPairing
+    (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsContinuousInnerPairing B] : IsContinuousPairing B where
+  continuous_left y := by
+    have h : (fun x : E => B x y) = fun x : E => (B (x + y) (x + y) - B x x - B y y) / 2 := by
+      funext x
+      rw [self_pairing_add]
+      ring
+    rw [h]
+    exact ((((continuous_self_pairing' B).comp (continuous_id.add continuous_const)).sub
+      (continuous_self_pairing' B)).sub continuous_const).div_const 2
+
+/-- The flip of an inner pairing is continuous, which instance search cannot see through
+`LinearMap.flip` on its own — the same trap as gotcha 275. -/
+instance isContinuousPairing_flip_of_isContinuousInnerPairing
+    (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsContinuousInnerPairing B] : IsContinuousPairing B.flip := by
+  rw [flip_eq_self]
+  infer_instance
+
+end Continuous
+
 /-! ### The inner product of an inner-product space -/
 
 section Inner
@@ -204,6 +306,17 @@ instance isInnerPairing_innerL : IsInnerPairing (innerₗ E) where
 
 @[simp] theorem pairingNorm_innerL (x : E) : pairingNorm (innerₗ E) x = ‖x‖ := by
   rw [pairingNorm, innerₗ_apply_apply, real_inner_self_eq_norm_sq, Real.sqrt_sq (norm_nonneg x)]
+
+/-- The inner product of a real inner-product space has a continuous quadratic form — `‖·‖ ^ 2` —
+with **no finite-dimensionality needed**. This is the instance that keeps Moreau's theorem valid in
+an arbitrary real Hilbert space. -/
+instance isContinuousInnerPairing_innerL : IsContinuousInnerPairing (innerₗ E) where
+  continuous_self := by
+    have h : (fun x : E => (innerₗ E) x x) = fun x : E => ‖x‖ ^ 2 := by
+      funext x
+      rw [innerₗ_apply_apply, real_inner_self_eq_norm_sq]
+    rw [h]
+    exact (continuous_norm.pow 2)
 
 end Inner
 
@@ -233,6 +346,17 @@ instance isInnerPairing_prodPairing [IsInnerPairing Bu] [IsInnerPairing Bx] :
       le_antisymm (by linarith [self_pairing_nonneg Bu p.1]) (self_pairing_nonneg Bx p.2)
     exact Prod.ext (self_pairing_eq_zero_iff.1 h1) (self_pairing_eq_zero_iff.1 h2)
 
+/-- A product of continuous inner pairings has a continuous quadratic form. -/
+instance isContinuousInnerPairing_prodPairing [TopologicalSpace U] [TopologicalSpace X]
+    [IsContinuousInnerPairing Bu] [IsContinuousInnerPairing Bx] :
+    IsContinuousInnerPairing (prodPairing Bu Bx) where
+  continuous_self := by
+    have h : (fun p : U × X => (prodPairing Bu Bx) p p)
+        = fun p : U × X => Bu p.1 p.1 + Bx p.2 p.2 := rfl
+    rw [h]
+    exact ((continuous_self_pairing' Bu).comp continuous_fst).add
+      ((continuous_self_pairing' Bx).comp continuous_snd)
+
 end Prod
 
 /-! ### Equivalence with the ambient norm, in finite dimensions -/
@@ -256,6 +380,11 @@ theorem continuous_self_pairing : Continuous fun x : E => B x x := by
   rw [heq]
   exact (isBoundedBilinearMap_apply (𝕜 := ℝ) (E := E) (F := ℝ)).continuous.comp
     (hTc.prodMk continuous_id)
+
+/-- In finite dimensions every inner pairing has a continuous quadratic form. -/
+instance (priority := 100) isContinuousInnerPairing_of_finiteDimensional :
+    IsContinuousInnerPairing B where
+  continuous_self := continuous_self_pairing
 
 omit [IsInnerPairing B] in
 /-- `pairingNorm B` is continuous. -/
