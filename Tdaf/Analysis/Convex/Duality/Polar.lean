@@ -50,6 +50,10 @@ cones. That restriction is polarity, and it is proved here from
 * `polarSubmodule`, `partialAffineFn`, `conj_partialAffineFn` — the polar of a subspace bundled
   as a submodule, and the **conjugate of a partial affine function** (Rockafellar §12, the display
   preceding Theorem 12.3): `(δ(· | L + a) + ⟨·, a*⟩ + α)* = δ(· | L^⊥ + a*) + ⟨a, ·⟩ + α*`.
+* `polarSet_union`, `polarSet_iUnion`, `polarSet_convexHull`, `polarSet_smul`,
+  `polarCone_add` — the lattice and scaling identities, in the `polarSet` forms that only
+  `polarCone` had. `polarSet_convexHull` is the reason `convex_setOf_pairing_le_coe` is here: a
+  polar set is an intersection of closed half-spaces, so polarity does not see the convex hull.
 * `polarCone_coe_submodule`, `polarCone_hull_range`,
   `polarCone_setOf_forall_le_zero`, `polarCone_nonnegOrthant` — the examples of §14:
   the polar of a subspace is its annihilator, the polar of a generated cone is the solution set of
@@ -179,6 +183,23 @@ theorem polarCone_iUnion {ι : Sort*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (u :
   ext y
   simp only [mem_polarCone, Set.mem_iInter, Set.mem_iUnion]
   exact ⟨fun h i x hx => h x ⟨i, hx⟩, fun h x hx => hx.elim fun i hi => h i x hi⟩
+
+/-- The polar of a union is the intersection of the polars. -/
+theorem polarSet_union (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C D : Set E) :
+    polarSet B (C ∪ D) = polarSet B C ∩ polarSet B D := by
+  ext y
+  simp only [polarSet, Set.mem_ofPred, Set.mem_inter_iff, Set.mem_union]
+  exact ⟨fun h => ⟨fun x hx => h x (Or.inl hx), fun x hx => h x (Or.inr hx)⟩,
+    fun h x hx => hx.elim (h.1 x) (h.2 x)⟩
+
+/-- The polar of an indexed union is the intersection of the polars. This is the `polarSet`
+counterpart of `polarCone_iUnion`. -/
+theorem polarSet_iUnion {ι : Sort*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (u : ι → Set E) :
+    polarSet B (⋃ i, u i) = ⋂ i, polarSet B (u i) := by
+  ext y
+  simp only [polarSet, Set.mem_ofPred, Set.mem_iInter, Set.mem_iUnion]
+  exact ⟨fun h i x hx => h x ⟨i, hx⟩, fun h x hx => hx.elim fun i hi => h i x hi⟩
+
 
 /-- **Rockafellar's remark in §14**: for a cone the two polars coincide, because the half-space
 `{x | ⟨x, y⟩ ≤ 1}` contains a cone exactly when `{x | ⟨x, y⟩ ≤ 0}` does. -/
@@ -310,6 +331,63 @@ def polarPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : Pointed
 /-- The polar of any set is convex. -/
 theorem convex_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : Convex ℝ (polarCone B K) :=
   ((polarPointedCone B K : ConvexCone ℝ F)).convex
+
+/-- **A closed half-space of the pairing is convex**, in the real-valued form that cuts out a polar
+set. `convex_setOf_pairing_le` (`Duality/Support.lean`) is the `EReal` form; this is the one the
+polar API needs, and `polarSet_convexHull` is what it is for. -/
+theorem convex_setOf_pairing_le_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (y : F) (c : ℝ) :
+    Convex ℝ {x : E | B x y ≤ c} := by
+  intro u hu v hv a b ha hb hab
+  have hu' : B u y ≤ c := hu
+  have hv' : B v y ≤ c := hv
+  have : B (a • u + b • v) y = a * B u y + b * B v y := by
+    simp [map_add, map_smul, smul_eq_mul]
+  change B (a • u + b • v) y ≤ c
+  rw [this]
+  calc a * B u y + b * B v y ≤ a * c + b * c := by
+        exact add_le_add (mul_le_mul_of_nonneg_left hu' ha) (mul_le_mul_of_nonneg_left hv' hb)
+    _ = c := by rw [← add_mul, hab, one_mul]
+
+/-- **Polarity does not see the convex hull.** The polar is cut out by the closed half-spaces
+`{x | ⟨x, y⟩ ≤ 1}`, each of which is convex, so a set and its convex hull have the same polar. The
+`polarCone` counterpart is `polarCone_hull`. -/
+@[simp] theorem polarSet_convexHull (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) :
+    polarSet B (convexHull ℝ C) = polarSet B C := by
+  refine Set.Subset.antisymm (polarSet_anti (subset_convexHull ℝ C)) fun y hy => ?_
+  exact fun x hx => convexHull_min (fun z hz => (hy z hz : B z y ≤ 1))
+    (convex_setOf_pairing_le_coe B y 1) hx
+
+/-- **Dilating a set inverts the dilation of its polar**: `(aC)° = a⁻¹ C°` for `a > 0`. -/
+theorem polarSet_smul (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) {a : ℝ} (ha : 0 < a) (C : Set E) :
+    polarSet B (a • C) = a⁻¹ • polarSet B C := by
+  have key : ∀ (c : ℝ) (x : E) (z : F), B (c • x) z = B x (c • z) := fun c x z => by
+    simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
+  ext y
+  constructor
+  · intro hy
+    refine ⟨a • y, fun x hx => ?_, inv_smul_smul₀ ha.ne' y⟩
+    have h := hy (a • x) ⟨x, hx, rfl⟩
+    rwa [key] at h
+  · rintro ⟨z, hz, rfl⟩ _ ⟨x, hx, rfl⟩
+    have h := hz x hx
+    have hval : B (a • x) (a⁻¹ • z) = B x z := by
+      simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
+      rw [← mul_assoc, inv_mul_cancel₀ ha.ne', one_mul]
+    rw [hval]
+    exact h
+
+/-- **The polar of a sum is the intersection of the polars**, for sets containing the origin —
+the additive counterpart of `polarCone_union`. -/
+theorem polarCone_add (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) {K L : Set E} (hK : (0 : E) ∈ K)
+    (hL : (0 : E) ∈ L) : polarCone B (K + L) = polarCone B K ∩ polarCone B L := by
+  refine Set.Subset.antisymm (fun y hy => ⟨fun x hx => ?_, fun x hx => ?_⟩) ?_
+  · simpa using hy (x + 0) ⟨x, hx, 0, hL, rfl⟩
+  · simpa using hy (0 + x) ⟨0, hK, x, hx, rfl⟩
+  · rintro y ⟨h₁, h₂⟩ _ ⟨x₁, hx₁, x₂, hx₂, rfl⟩
+    have hsum : B (x₁ + x₂) y = B x₁ y + B x₂ y := by simp
+    change B (x₁ + x₂) y ≤ 0
+    rw [hsum]
+    simpa using add_le_add (h₁ x₁ hx₁) (h₂ x₂ hx₂)
 
 /-- The underlying set of a pointed cone is a cone in Rockafellar's sense. -/
 theorem smul_coe_pointedCone (K : PointedCone ℝ E) (a : ℝ) (ha : 0 < a) :

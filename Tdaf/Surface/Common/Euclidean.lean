@@ -7,6 +7,7 @@ import Tdaf.Analysis.Convex.Continuity
 import Tdaf.Analysis.Convex.Convergence
 import Tdaf.Analysis.Convex.Duality.Conjugate
 import Tdaf.Analysis.Convex.Duality.InnerPairing
+import Tdaf.Analysis.Convex.Duality.GaugeLike
 import Tdaf.Analysis.Convex.Duality.Relint
 import Tdaf.Analysis.Convex.Operations.Basic
 import Tdaf.Analysis.Convex.Recession.Cone
@@ -40,7 +41,8 @@ a gap gets closed once rather than once per surface.
 * `flip_pairing` — the pairing is its own flip, so no statement needs `(pairing n).flip` in a form
   instance search cannot see.
 * `conj_flip_pairing`, `subgradient_flip_pairing`, `supportSet_flip_pairing`,
-  `supportFn_flip_pairing`, `polarCone_flip_pairing`, `polarSet_flip_pairing` — the places a
+  `supportFn_flip_pairing`, `polarCone_flip_pairing`, `polarSet_flip_pairing`,
+  `polarGauge_flip_pairing`, `polarFn_flip_pairing` — the places a
   `.flip` survives into a statement, rewritten away once here rather than at every call site. On a
   self-paired space every bipolar theorem hands one back, and `flip_pairing` is a `simp` lemma but
   not a `rfl`, so `exact` fails where these make it succeed.
@@ -192,6 +194,14 @@ variable {n : ℕ}
 
 @[simp] theorem polarSet_flip_pairing (C : Set (Rn n)) :
     polarSet (pairing n).flip C = polarSet (pairing n) C := by
+  rw [flip_pairing]
+
+@[simp] theorem polarGauge_flip_pairing (k : Rn n → EReal) :
+    polarGauge (pairing n).flip k = polarGauge (pairing n) k := by
+  rw [flip_pairing]
+
+@[simp] theorem polarFn_flip_pairing (f : Rn n → EReal) :
+    polarFn (pairing n).flip f = polarFn (pairing n) f := by
   rw [flip_pairing]
 
 end Flip

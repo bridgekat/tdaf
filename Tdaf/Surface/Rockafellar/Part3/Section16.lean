@@ -126,20 +126,13 @@ variable {m n : ℕ}
 Rockafellar's proof of Theorem 16.1 at `λ = 0` is the single sentence "the constant function `0`
 is conjugate to the indicator function `δ(· | 0)`". Both halves of that sentence are used below. -/
 
-/-- **Rockafellar, §16, p. 141**: the conjugate of the constant function `0` is `δ(· | 0)`. -/
+/-- **Rockafellar, §16, p. 141**: the conjugate of the constant function `0` is `δ(· | 0)`.
+
+Specialises `conj_zero_eq_indicatorFn`; `Rn n` is a `SeparatingDual`, asserted in the shared
+header. -/
 theorem conj_zero_rn : conj (pairing n) (0 : Rn n → EReal) = indicatorFn ({0} : Set (Rn n)) := by
-  have hzero : (0 : Rn n → EReal) = indicatorFn (univ : Set (Rn n)) := by
-    funext x
-    rw [indicatorFn_of_mem (mem_univ x)]
-    rfl
-  rw [hzero, ← supportFn_eq_conj_indicatorFn]
-  funext y
-  by_cases hy : y = 0
-  · subst hy
-    rw [supportFn_apply, indicatorFn_of_mem (show (0 : Rn n) ∈ ({0} : Set (Rn n)) from rfl)]
-    refine le_antisymm (iSup₂_le fun x _ => ?_) (le_iSup₂_of_le 0 (mem_univ _) ?_) <;> simp
-  · rw [indicatorFn_of_notMem (by simpa using hy)]
-    simpa using supportFn_univ_of_ne_zero (B := pairing n) hy
+  have h := conj_zero_eq_indicatorFn (B := pairing n) (E := Rn n) (F := Rn n)
+  rwa [conj_flip_pairing] at h
 
 /-- The conjugate of `δ(· | 0)` is the constant function `0`, the other half of the same sentence.
 Specialises `conj_indicatorFn_zero`. -/

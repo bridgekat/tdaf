@@ -695,6 +695,29 @@ theorem supportFn_univ_of_ne_zero [SeparatingDual ℝ E] {y : E} (hy : y ≠ 0) 
   rw [map_smul, smul_eq_mul, div_mul_cancel₀ _ hBw] at hstep
   linarith
 
+omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
+  [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
+  [IsCompatiblePairing B.flip] in
+/-- **The conjugate of the constant function `0` is `δ(· | 0)`.** This is the other half of
+Rockafellar's one-sentence proof of Theorem 16.1 at `λ = 0`; `conj_indicatorFn_zero`
+(`Duality/Ops.lean`) is the half that runs the other way.
+
+It carries the same separation hypothesis as `supportFn_univ_of_ne_zero`, and for the same reason:
+`0` is the indicator of the whole space, so its conjugate is the support function of the whole
+space, which is `+∞` away from the origin exactly when the pairing separates points. -/
+theorem conj_zero_eq_indicatorFn [SeparatingDual ℝ E] :
+    conj B.flip (0 : F → EReal) = indicatorFn ({0} : Set E) := by
+  have hzero : (0 : F → EReal) = indicatorFn (univ : Set F) := by
+    funext x
+    rw [indicatorFn_of_mem (mem_univ x)]
+    rfl
+  rw [hzero, ← supportFn_eq_conj_indicatorFn]
+  funext y
+  by_cases hy : y = 0
+  · subst hy
+    rw [indicatorFn_of_mem (Set.mem_singleton _), supportFn_zero ⟨0, mem_univ 0⟩]
+  · rw [indicatorFn_of_notMem (by simpa using hy), supportFn_univ_of_ne_zero (B := B) hy]
+
 /-- **Rockafellar, Corollary 13.3.1**, in the form that survives infinite dimensions: `dom f*` is
 *dense* if and only if `f` is co-finite.
 
