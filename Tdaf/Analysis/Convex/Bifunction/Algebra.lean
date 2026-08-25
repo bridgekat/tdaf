@@ -20,6 +20,7 @@ each behaves under taking adjoints.
 | operation | here | linear-algebra analogue |
 |---|---|---|
 | `F₁ □ F₂` | `infConvBifun` | `A₁ + A₂` |
+| `H₁ ⊡ H₂` | `infConvFstBifun` | the same, in the *first* variable |
 | `Fλ` | `smulRightBifun` | `λ A` |
 | `Ff` | `imageBifun` | `A x` |
 | `GF` | `compBifun` | `B ∘ A` |
@@ -31,6 +32,9 @@ each behaves under taking adjoints.
 * `infConvBifun F₁ F₂` — Rockafellar's `F₁ □ F₂`, infimal convolution in the second variable.
 * `supConvBifun G₁ G₂` — the concave mirror, supremal convolution in the second variable; this is
   the shape the adjoint of `F₁ □ F₂` takes.
+* `infConvFstBifun H₁ H₂` — infimal convolution in the *first* variable, pointwise in the second.
+  This is the operation Corollary 38.2.1 applies to the lower adjoints, `infConvBifun` convolving
+  in the wrong variable for that purpose.
 * `smulRightBifun F l` — Rockafellar's `Fλ`.
 * `imageBifun F f` — Rockafellar's `Ff`, and `concaveImageBifun` for the concave orientation.
 * `compBifun G F` — Rockafellar's product `GF`, and `concaveCompBifun` for the concave one.
@@ -66,6 +70,13 @@ each behaves under taking adjoints.
   `exists_compBifun_eq`, `lowerAdjointBifun_compBifun_eq_clBifun` — **Corollary 38.5.1**:
   for closed proper convex `F` and `G`, `GF` is closed, the infimum defining `((GF)u)(y)` is
   attained, and `(GF)⁎* = cl (G⁎* F⁎*)`.
+* `convexBifun_infConvFstBifun`, `graphFn_infConvFstBifun`, `lowerAdjointBifun_infConvFstBifun` —
+  the first-variable convolution and the one theorem Corollary 38.2.1 needs about it:
+  `(H₁ ⊡ H₂)⁎* = H₁⁎* □ H₂⁎*`.
+* `lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun`,
+  `infConvBifun_eq_lowerAdjointBifun_infConvFstBifun`, `closedBifun_infConvBifun`,
+  `lowerAdjointBifun_infConvBifun_eq_clBifun` — **Corollary 38.2.1**: `F₁ □ F₂` is closed for
+  closed proper convex `F₁`, `F₂`, and `(F₁ □ F₂)⁎* = cl (F₁⁎* ⊡ F₂⁎*)`.
 * `fenchelSup_le_fenchelInf` — weak duality for the inner product, with no hypothesis.
 * `hasFenchelPairing_conj`, `fenchelPairing_conj` — **Lemma 38.6**: `⟨f*, g*⟩ = -⟨f, g⟩`.
 * `hasFenchelPairing_adjointBifun`, `conj_imageBifun_eq_fenchelPairing` — **Corollary 38.7.1**:
@@ -73,6 +84,10 @@ each behaves under taking adjoints.
 * `fenchelSup_imageBifun_lowerAdjointBifun`,
   `fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun` — **Theorem 38.7**: adjoints move across
   the inner product.
+* `compBifun_slice`, `hasFenchelPairing_adjointBifun_slice`,
+  `bracket_compBifun_eq_fenchelPairing` — **Corollary 38.7.2**, first equality:
+  `⟨GFu, z⟩ = ⟨Fu, G* z⟩`, which is Corollary 38.7.1 at the slice `Fu`, a slice of a product
+  being the image of a slice.
 
 ## Design notes
 
@@ -132,26 +147,29 @@ orientation of Theorem 16.4 (`concaveConj_add_of_isExactSum`, `Duality/ConcaveOp
 closure step never arises. The price is that the hypothesis is an `IsExactSum` on the two brackets,
 one for each `y`, rather than his single relative-interior condition; see the blocked note there.
 
+**Corollary 38.2.1 convolves in the other variable, and stays convex.** It is Theorem 38.2
+applied to the adjoints, whose convolution is in the *first* variable of the bifunction. Rather
+than build the concave first-variable convolution the book's phrasing calls for, `infConvFstBifun`
+is the convex one and it is applied to the *lower* adjoints, exactly as Corollary 38.5.1 is
+Theorem 38.5 applied to theirs; the whole corollary then stays between convex bifunctions and
+needs no concave closure. The bridge is
+`lowerAdjointBifun_eq_conj_concaveBracket_invBifun`: with `φᵢ y = ⨅ v, (Hᵢ v y + ⟨u, v⟩)` the lower
+adjoint of `Hᵢ` at `u` *is* `φᵢ*`, `φ = φ₁ + φ₂` holds for a first-variable convolute with no
+hypothesis (`conj_infConv`, the unconditional row of Theorem 16.4, plus one `EReal.neg_add`), and
+`IsExactSum.conj_add` turns `(φ₁ + φ₂)*` into the second-variable convolution.
+
 **`HasFenchelPairing` is a `def` unfolding to an equation, so dot notation is unavailable.**
 `h.conj` for `h : HasFenchelPairing B f g` resolves against `Eq`; the lemma is therefore named
 `hasFenchelPairing_conj` rather than `HasFenchelPairing.conj`.
 
 ## What is not here
 
-* **Corollary 38.2.1**, `(F₁ □ F₂)* = cl (F₁* □ F₂*)` with `F₁ □ F₂` closed. It is Theorem 38.2
-  applied to the adjoints, which convolve in the *first* variable of the bifunction;
-  `infConvBifun` convolves in the second, so the mirror operation and its adjoint formula have to
-  be built first. Following Corollary 38.4.1 the right packaging is the convex one: a
-  first-variable convolution `infConvFstBifun H₁ H₂ v w = ⨅ {v₁ + v₂ = v}, H₁ v₁ w + H₂ v₂ w` of
-  the lower adjoints, closed with `clBifun`, so no concave closure is needed for it either. The
-  one theorem to prove is that the lower adjoint of a first-variable convolution is the
-  second-variable convolution of the lower adjoints. Writing `φᵢ w = ⨅ v, (Hᵢ v w + ⟨v, u⟩)`,
-  the lower adjoint of `Hᵢ` at `u` is `conj Bx' φᵢ` by definition; `φ = φ₁ + φ₂` for a
-  first-variable convolution by the unconditional half of Theorem 16.4 (`conj_infConv`) plus one
-  `EReal.neg_add` splitting, and `IsExactSum.conj_add` then turns `conj Bx' (φ₁ + φ₂)` into the
-  infimal convolution. Corollary 38.2.1 is that theorem applied to the lower adjoints of `F₁` and
-  `F₂`, exactly as Corollary 38.5.1 is Theorem 38.5 applied to theirs.
-* Corollary 38.7.2 and the co-finiteness discussion at the end of the section.
+* **Corollary 38.7.2**'s second equality `⟨GFu, z⟩ = ⟨u, F* G* z⟩`, which is Corollary 33.2.1 at a
+  relative interior point of `dom (GF)` and hence layer D; it is
+  `bracket_compBifun_eq_concaveBracket_concaveCompBifun` in `Bifunction/Cofinite.lean`. The first
+  equality needs no relative interior and is here.
+* The **co-finiteness discussion** that closes §38, which needs Corollary 13.3.1 and therefore
+  finite dimensions; it is `Bifunction/Cofinite.lean`.
 
 ## References
 

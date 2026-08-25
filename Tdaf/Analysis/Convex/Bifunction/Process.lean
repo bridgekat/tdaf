@@ -32,6 +32,11 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
 * `ConvexProcess.adjointProcess`, `ConvexProcess.coadjointProcess` — the adjoint `A*` of a
   supremum-oriented process, and the adjoint of an infimum-oriented one (the same definition with
   the inequality reversed).
+* `ConvexProcess.reflect` — the reflection of a process through the origin, `graph = -graph`. It
+  is the single dictionary entry between the two orientations: `coadjointProcess` is the reflection
+  of `adjointProcess`, and vice versa.
+* `ConvexProcess.coBracket` — the inner product `⟨Au, x*⟩ = inf {⟨x, x*⟩ | x ∈ A u}` of an
+  **infimum-oriented** process, the concave conjugate of the concave indicator `-δ(· | A u)`.
 
 ## Main results
 
@@ -86,6 +91,27 @@ linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embed
 * `ConvexProcess.conj_imageBifun_indicatorBifun`,
   `ConvexProcess.exists_imageBifun_indicatorBifun_adjointProcess_eq` — **Theorem 39.7**, first
   two assertions: `(Af)* = A*⁻¹ f*`, with the infimum defining `(A*⁻¹ f*)(x*)` attained.
+* `ConvexProcess.reflect_add`, `reflect_comp`, `adjointProcess_reflect`, `coadjointProcess_reflect`,
+  `coadjointProcess_eq_reflect_adjointProcess` — the orientation dictionary: reflection is an
+  automorphism of the algebra of processes and exchanges the two adjoints.
+* `ConvexProcess.isClosed_graph_coadjointProcess`,
+  `graph_adjointProcess_coadjointProcess_eq_closure`, `adjointProcess_coadjointProcess_eq_self_iff`
+  — **Theorem 39.2** for an infimum-oriented process: `A*` is closed, `A** = cl A`, and `A** = A`
+  exactly for closed `A`, the biadjoint now being `adjointProcess ∘ coadjointProcess`.
+* `ConvexProcess.coadjointProcess_add`, `coadjointProcess_comp` — **Theorems 39.5 and 39.8** for
+  infimum-oriented processes.
+* `ConvexProcess.add_eq_coadjointProcess_add`, `isClosed_graph_add`,
+  `graph_adjointProcess_add_eq_closure` — **Theorem 39.5**, closed half: `A₁ + A₂` is closed and
+  `(A₁ + A₂)* = cl (A₁* + A₂*)`.
+* `ConvexProcess.comp_eq_coadjointProcess_comp`, `isClosed_graph_comp`,
+  `graph_adjointProcess_comp_eq_closure` — **Theorem 39.8**, closed half: `BA` is closed and
+  `(BA)* = cl (A* B*)`.
+* `ConvexProcess.coBracket_eq_neg_bracket`, `posHomogeneous_coBracket`, `concaveFn_coBracket`,
+  `closedConcaveFn_coBracket`, `posHomogeneous_coBracket_arg`, `convexFn_coBracket_arg`,
+  `coBracket_zero_zero`, `iSup_coadjointProcess_eq_neg_concaveBracket`,
+  `iSup_coadjointProcess_eq_clFn` — **Theorem 39.3** for infimum-oriented processes: `⟨Au, x*⟩` is
+  positively homogeneous, closed and *concave* in `x*` and positively homogeneous and *convex* in
+  `u`, and `⟨u, A* x*⟩ = cl_u ⟨Au, x*⟩` with the ordinary convex closure.
 
 ## Design notes
 
@@ -113,6 +139,25 @@ would double every statement — the two adjoints are two definitions, `adjointP
 `coadjointProcess Bx.flip Bu.flip (adjointProcess Bu Bx A)`. This is not bookkeeping: with
 `adjointProcess` used twice the sign flips *add* instead of cancelling,
 and one gets `{p | ∀ w ∈ K°, 0 ≤ ⟨p, w⟩}` instead of the bipolar `K°°`.
+
+**The infimum-oriented statements are reflections, not `simp`-normalisations.** Reflecting the
+graph through the origin exchanges the two adjoints (`adjointProcess_reflect`), commutes with sums
+and products (`reflect_add`, `reflect_comp`), and preserves closedness, so every infimum-oriented
+statement of §39 is the supremum-oriented one applied to `A.reflect` and read back. The one place
+where this is not a pure transport is Theorem 39.3: reflection alone flips the *dual* variable of
+the inner product, and `coBracket_eq_neg_bracket` records the resulting sign, `⟨Au, x*⟩` for the
+infimum orientation being minus the supremum-oriented inner product at `-x*`. The primal variable
+is untouched, which is why the mirror of the third assertion comes out as an honest convex closure
+in `u` rather than a reindexed one.
+
+**The closed halves of Theorems 39.5 and 39.8 do not need Corollaries 38.2.1 and 38.5.1.**
+Rockafellar deduces them from the bifunction corollaries. But `A₁ + A₂` is *equal* to the
+infimum-oriented adjoint of `A₁* + A₂*` whenever the two adjoints add exactly
+(`add_eq_coadjointProcess_add`), because `A₁** = A₁` and `A₂** = A₂` for closed processes and
+`coadjointProcess_add` is the open half read in the other orientation. An adjoint is closed with no
+hypothesis, so closedness is free, and the closure formula for `(A₁ + A₂)*` is then the mirrored
+bipolar theorem `graph_adjointProcess_coadjointProcess_eq_closure`. The same argument gives
+Theorem 39.8's closed half from `coadjointProcess_comp`. No bifunction corollary is used.
 
 **Theorem 39.5 carries an `IsExactSum` per `x*`, not a relative-interior condition.**
 Rockafellar's hypothesis is `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅`. Converting it into the exactness of
@@ -147,16 +192,9 @@ transporting the pairing instance across `LinearMap.flip`), and `polarCone_polar
   saddle-like kernels `K (u, x*) = ⟨Au, x*⟩`. It needs the closure operations of §33 and hence a
   topology, so it lives in `Bifunction/ProcessDuality.lean` with the rest of the layer-B material;
   the two ingredients contributed from this side are listed above.
-* The closed halves of **Theorems 39.5 and 39.8** — `A₁ + A₂` and `BA` closed, with the adjoint
-  the closure of the sum resp. product of the adjoints. They specialize Corollaries 38.2.1 and
-  38.5.1, neither of which is available; see the `What is not here` list in
-  `Bifunction/Algebra.lean` for what each is blocked on.
 * The closed half of **Theorem 39.7** — `Af` closed, its infimum attained, and
   `(Af)* = cl (A*⁻¹ f*)`. It needs a topology, so it lives in `Bifunction/ProcessDuality.lean`
   with the rest of the layer-B material; the open half is here.
-* The infimum-oriented mirrors of Theorems 39.3, 39.5 and 39.8. Rockafellar states each for both
-  orientations with "convexity and concavity reversed"; only the supremum-oriented one is here,
-  and by gotcha 9 the mirror is not obtainable by `simp`-normalising through negation.
 
 ## References
 

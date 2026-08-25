@@ -535,6 +535,7 @@ The "convex algebra": operations on bifunctions mirroring the linear algebra of 
 | operation | definition | linear-algebra analogue |
 |---|---|---|
 | `F₁ □ F₂` | infimal convolution in the second variable, pointwise in the first | `A₁ + A₂` |
+| `H₁ ⊡ H₂` | infimal convolution in the *first* variable, pointwise in the second | the same, on adjoints |
 | `F λ` | right scalar multiplication | `λ A` |
 | `F f` | image of a convex function under a bifunction | `A x` |
 | `G ∘ F` | composition | `B ∘ A` |
@@ -546,22 +547,26 @@ noncomputable def fenchelPairing (f : E → EReal) (g : E → EReal) : EReal :=
   ⨅ x, f x - g x     -- when it equals ⨆ y, g* y - f* y; existence is part of the theory
 ```
 
-**Status: done except Corollary 38.2.1, Corollary 38.7.2 and the co-finiteness remark.**
-The operations are `infConvBifun`, `smulRightBifun`, `imageBifun` / `concaveImageBifun`,
-`compBifun` / `concaveCompBifun`, `invBifun` (`F⫶`) and `lowerAdjointBifun` (`F⫶*`); the inner
-product is `fenchelSup` / `fenchelInf` with `HasFenchelPairing` and `fenchelPairing`.
+**Status: §38 is done.** The second equality of Corollary 38.7.2 and the co-finiteness remark
+need a relative interior and a finite dimension, so they are in `Bifunction/Cofinite.lean` (§7.5a);
+everything else is here. The operations are `infConvBifun`, `infConvFstBifun`, `smulRightBifun`,
+`imageBifun` / `concaveImageBifun`, `compBifun` / `concaveCompBifun`, `invBifun` (`F⫶`) and
+`lowerAdjointBifun` (`F⫶*`); the inner product is `fenchelSup` / `fenchelInf` with
+`HasFenchelPairing` and `fenchelPairing`.
 
 | Lean name | book | status |
 |---|---|---|
 | `domBifun_infConvBifun`, `convexBifun_infConvBifun`, `graphFn_infConvBifun`, `bracket_infConvBifun` | **Thm 38.1** | done |
 | `adjointBifun_infConvBifun`, `adjointBifun_infConvBifun_eq_supConvBifun`, `supConvBifun` | **Thm 38.2** | done, against one `IsExactSum` per `y` |
-| — | Cor 38.2.1 | not done — needs infimal convolution in the *first* bifunction variable and its adjoint formula; see `Bifunction/Algebra.lean`, `What is not here` |
+| `infConvFstBifun`, `convexBifun_infConvFstBifun`, `lowerAdjointBifun_infConvFstBifun`, `lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun`, `closedBifun_infConvBifun`, `lowerAdjointBifun_infConvBifun_eq_clBifun` | **Cor 38.2.1** | done — packaged convexly, as `(F₁ □ F₂)⁎* = cl (F₁⁎* ⊡ F₂⁎*)`, so no concave closure is needed; the one new theorem is that the lower adjoint of a first-variable convolution is the second-variable convolution of the lower adjoints |
 | `convexBifun_smulRightBifun`, `graphFn_smulRightBifun`, `bracket_smulRightBifun`, `adjointBifun_smulRightBifun` | **Thm 38.3** | done, including the adjoint formula |
 | `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq`, `conj_imageBifun_eq_iSup`, `conj_imageBifun_of_bracket_eq_top`, `lowerAdjointBifun_eq_concaveAdjointBifun`, `convexBifun_lowerAdjointBifun` | **Thm 38.4** | done, against `IsExactSum` |
 | `convexBifun_compBifun`, `invBifun_compBifun`, `adjointBifun_compBifun`, `exists_adjointBifun_compBifun_eq`, `lowerAdjointBifun_compBifun` | **Thm 38.5** | done |
 | `conj_imageBifun_lowerAdjointBifun`, `closedFn_imageBifun`, `exists_imageBifun_eq`, `conj_imageBifun_eq_clFn` | **Cor 38.4.1** | done |
 | `lowerAdjointBifun_compBifun_lowerAdjointBifun`, `closedBifun_compBifun`, `exists_compBifun_eq`, `lowerAdjointBifun_compBifun_eq_clBifun` | **Cor 38.5.1** | done |
-| — | Cor 38.7.2, co-finiteness | not done — Rockafellar derives 38.7.2 from Cor 38.2.1 |
+| `compBifun_slice`, `hasFenchelPairing_adjointBifun_slice`, `bracket_compBifun_eq_fenchelPairing` | **Cor 38.7.2**, 1st equality | done — `⟨GFu, z⟩ = ⟨Fu, G* z⟩` is Cor 38.7.1 at the slice `Fu`, since `(GF)u = G(Fu)` is `rfl`. Rockafellar's derivation from Cor 38.2.1 is not needed |
+| `bracket_compBifun_eq_concaveBracket_concaveCompBifun` | **Cor 38.7.2**, 2nd equality | done (`Bifunction/Cofinite.lean`) — it is Cor 33.2.1 at a relative interior point of `dom (GF)`, hence layer D |
+| `CofiniteBifun`, `cofiniteBifun_infConvBifun`, `adjointBifun_infConvBifun_of_cofinite` | the co-finiteness remark | done (`Bifunction/Cofinite.lean`) — see §7.5a |
 | `hasFenchelPairing_conj`, `fenchelPairing_conj`, `fenchelSup_le_fenchelInf`, `hasFenchelPairing_of_le` | **Lemma 38.6** | done |
 | `hasFenchelPairing_adjointBifun`, `conj_imageBifun_eq_fenchelPairing` | **Cor 38.7.1** | done |
 | `fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun` and its supports | **Thm 38.7** | done |
@@ -588,6 +593,28 @@ Theorem 38.7 is the payoff — "adjoints move across the inner product", exactly
 — and Rockafellar calls it "remarkable and non-trivial". Its hypotheses are again `ri`-intersection
 conditions, so it should be stated against `IsExactSum`/`IsExactImage`.
 
+## 7.5a `Bifunction/Cofinite.lean` — the closing remark of §38
+
+Rockafellar ends §38 by observing that co-finiteness makes the whole algebra unconditional: for
+co-finite bifunctions every relative-interior hypothesis of the section is automatically satisfied.
+
+**Status: done, for `F₁ □ F₂`.** `CofiniteBifun F` is `ConvexBifun F` together with
+`Cofinite (F u)` for every `u`. The bridge is Corollary 13.3.1 slice by slice
+(`CofiniteBifun.bracket_lt_top`, `cofiniteBifun_of_forall_bracket_lt_top`): a closed convex
+bifunction is co-finite exactly when the inner product `⟨Fu, y⟩` is finite everywhere. Then
+`domBifun F = U`, `IsExactSum.of_relint` applies at the origin, and `cofiniteBifun_infConvBifun`
+and `adjointBifun_infConvBifun_of_cofinite` state Theorems 38.1 and 38.2 with no hypothesis beyond
+co-finiteness. This is the only finite-dimensional module in §38.
+
+`cofinite_infConv` — the infimal convolution of two co-finite convex *functions* is co-finite — has
+nothing to do with bifunctions and is a relocation candidate for `Duality/Level.lean`.
+
+**Not done**: that `Fλ` is co-finite (blocked on the closedness and properness of `smulRight`,
+Theorem 38.3's second clause, which the library does not have); that `GF` and `F*` are co-finite
+(each needs a co-finite specialization of Theorem 38.5 with `IsExactSum` instances over four
+spaces); and Theorem 34.2's characterisation, "a closed convex bifunction is co-finite if and only
+if `dom F = U` and `dom F* = Y`".
+
 ## 7.6 `Bifunction/Process.lean` — §39
 
 ```lean
@@ -598,10 +625,11 @@ structure ConvexProcess (U X : Type*) [AddCommGroup U] [Module ℝ U] … where
   zero_mem : (0, 0) ∈ graph
 ```
 
-**Status: Theorems 39.1–39.8 and Corollary 39.7.1 are done**, except for the *closed halves* of Theorems 39.5 and 39.8 and the infimum-oriented mirrors. `ConvexProcess U X` wraps a
+**Status: §39 is done** — Theorems 39.1–39.8 and Corollary 39.7.1, in both orientations, with the
+closed halves of Theorems 39.5, 39.7 and 39.8. `ConvexProcess U X` wraps a
 `PointedCone ℝ (U × X)` — not a raw `Set` with side conditions, as this plan sketched — with
 `eval`, `dom`, `range`, `image`, `inv`, `ofLinearMap`, `comp`, an `Add` instance,
-`indicatorBifun`, `adjointProcess` and `coadjointProcess`.
+`indicatorBifun`, `adjointProcess`, `coadjointProcess`, `reflect` and `coBracket`.
 
 | Lean name | book | status |
 |---|---|---|
@@ -615,8 +643,9 @@ structure ConvexProcess (U X : Type*) [AddCommGroup U] [Module ℝ U] … where
 | `ConvexProcess.adjointProcess_smul`, `coadjointProcess_smul` | **Thm 39.6** | done (`Bifunction/Process.lean`) — Rockafellar's `λ > 0` is needed only from here on |
 | `ConvexProcess.exists_imageBifun_indicatorBifun_adjointProcess_eq` (open half), `ConvexProcess.conj_imageBifun_indicatorBifun_eq_clFn` and companions (closed half) | **Thm 39.7** | done — the open half in `Bifunction/Process.lean`, the closed half (`Af` closed, its infimum attained, `(Af)* = cl (A*⁻¹ f*)`) in `Bifunction/ProcessDuality.lean`, which is where the topology lives |
 | `comp_adjointProcess_le`, `ConvexProcess.adjointProcess_comp` | **Thm 39.8**, the adjoint formula | done (`Bifunction/Process.lean`) — `(BA)* = A* B*` under the exactness hypothesis of Thm 16.4; it does **not** need Thm 38.5 |
-| — | the **closed halves** of Thms 39.5 and 39.8 | not done — `A₁ + A₂` and `BA` closed, with the adjoint the closure of the sum resp. the product of the adjoints. They specialize **Cor 38.2.1**, which is blocked on infimal convolution in the *first* bifunction variable; see the `What is not here` list in `Bifunction/Process.lean` |
-| — | the infimum-oriented mirrors of Thms 39.3, 39.5, 39.8 | not done — Rockafellar states each for both orientations, and by gotcha 9 the mirror is not obtainable by `simp`-normalising through negation |
+| `add_eq_coadjointProcess_add`, `isClosed_graph_add`, `graph_adjointProcess_add_eq_closure`, `comp_eq_coadjointProcess_comp`, `isClosed_graph_comp`, `graph_adjointProcess_comp_eq_closure` | the **closed halves** of Thms 39.5 and 39.8 | done — and they do **not** specialize Cor 38.2.1, contrary to what this plan said. A closed `A₁ + A₂` *equals* the infimum-oriented adjoint of `A₁* + A₂*`, so closedness is free (adjoints are always closed) and the closure formula is the mirrored bipolar theorem |
+| `reflect`, `reflect_add`, `reflect_comp`, `adjointProcess_reflect`, `coadjointProcess_reflect`, `coadjointProcess_eq_reflect_adjointProcess`, `isClosed_graph_coadjointProcess`, `graph_adjointProcess_coadjointProcess_eq_closure`, `adjointProcess_coadjointProcess_eq_self_iff`, `coadjointProcess_add`, `coadjointProcess_comp` | the infimum-oriented mirrors of Thms 39.2, 39.5, 39.8 | done — reflection through the origin exchanges the two adjoints and commutes with sums and products, so each mirror is the supremum-oriented theorem applied to `A.reflect` |
+| `coBracket`, `coBracket_eq_neg_bracket`, `posHomogeneous_coBracket`, `concaveFn_coBracket`, `closedConcaveFn_coBracket`, `posHomogeneous_coBracket_arg`, `convexFn_coBracket_arg`, `coBracket_zero_zero`, `iSup_coadjointProcess_eq_neg_concaveBracket`, `iSup_coadjointProcess_eq_clFn` | the infimum-oriented mirror of Thm 39.3 | done — the one mirror that is not a pure transport: reflection flips only the *dual* variable of the inner product, so `⟨Au, x*⟩` for the infimum orientation is minus the supremum-oriented one at `-x*`, and the third assertion comes out with an ordinary convex closure in `u` |
 
 **Corollary 39.7.1 is Theorem 9.1, not Theorem 39.7.** Rockafellar derives it by specializing
 Theorem 39.7 and separating the barrier cone of `C` from the range of `A*`. But `A C` is the
@@ -635,10 +664,11 @@ and `A** = cl A` becomes **false**. Two separate definitions — `adjointProcess
 `coadjointProcess` — is the right formalization; a boolean orientation field would double every
 statement.
 
-Convex processes are exactly `ConvexCone ℝ (U × X)` viewed as relations, so Mathlib's `ConvexCone`
-should carry most of the structure. Corollary 39.7.1 (`A C` closed when `A` is a closed convex
-process and `C` is compact, or more generally under a recession condition) is the §9-flavoured
-result that makes processes useful; note it is the natural generalisation of Theorem 9.1.
+Convex processes are exactly pointed convex cones in `U × X` viewed as relations, and Mathlib's
+`PointedCone` — a `Submodule` over `ℝ≥0` — carries the structure: every elementary property of a
+process is a `Submodule` fact in disguise. Corollary 39.7.1 (`A C` closed under a recession
+condition) is the §9-flavoured result that makes processes useful; it is the natural generalisation
+of Theorem 9.1, and is proved from Theorem 9.1 directly.
 
 Convex processes are also the right home for the "positively homogeneous" fragment of set-valued
 analysis (`SetValued`/`Rel` in Mathlib terms) and are the algebraic skeleton behind linear

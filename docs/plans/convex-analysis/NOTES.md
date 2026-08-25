@@ -4263,11 +4263,13 @@ the hypothesis is exactly `IsExactSum B (-g₁) (-g₂)`.
 ### `Tdaf/Analysis/Convex/Bifunction/Algebra.lean`
 
 The **convex algebra** of bifunctions: the operations that mirror the linear algebra of linear
-maps, and the inner product that adjoints move across. §38, except Corollary 38.2.1,
-Corollary 38.7.2 and the co-finiteness remark.
+maps, and the inner product that adjoints move across. All of §38 except the second equality of
+Corollary 38.7.2 and the co-finiteness remark, which need a relative interior and a finite
+dimension and are in `Bifunction/Cofinite.lean`.
 
 ```lean
 noncomputable def infConvBifun …    -- `F₁ □ F₂`, the analogue of `A₁ + A₂`
+noncomputable def infConvFstBifun … -- `H₁ ⊡ H₂`, the same in the *first* variable
 noncomputable def smulRightBifun …  -- `Fλ`
 noncomputable def imageBifun … ; noncomputable def concaveImageBifun …   -- `Ff`
 noncomputable def compBifun … ; noncomputable def concaveCompBifun …     -- `GF`
@@ -4279,6 +4281,10 @@ theorem conj_imageBifun …                                                -- Th
 theorem invBifun_compBifun …                                             -- Thm 38.5
 theorem fenchelPairing_conj …                                            -- Lemma 38.6
 theorem fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun …           -- **Thm 38.7**
+theorem lowerAdjointBifun_infConvFstBifun …                              -- the key to Cor 38.2.1
+theorem closedBifun_infConvBifun …
+theorem lowerAdjointBifun_infConvBifun_eq_clBifun …                      -- **Cor 38.2.1**
+theorem bracket_compBifun_eq_fenchelPairing …                            -- **Cor 38.7.2**, 1st
 ```
 
 **Rockafellar's `⟨f, g⟩` is not §31's Fenchel setup.** His inner product pairs a convex `f` on `E`
@@ -4297,31 +4303,81 @@ already excludes the degenerate branch, which is stated separately and unconditi
 **`(F* g*)(v) ≠ ⊤` is not automatic** — a supremum of finite terms can be `⊤` — but it is bounded
 uniformly in `y`, because the two `⟨x₀, y⟩` terms cancel (`concaveImageBifun_adjointBifun_ne_top`).
 
-**Not here**: Corollary 38.2.1 (`(F₁ □ F₂)* = cl (F₁* □ F₂*)`). Theorem 38.2 *is* here — it is
-Theorem 38.1 followed by `concaveConj_add_of_isExactSum` (`Duality/ConcaveOps.lean`), so the
-closure step of Rockafellar's proof never arises. The corollary is Theorem 38.2 applied to the
-adjoints, which convolve in the *first* variable of the bifunction, and that convolution
-together with its adjoint formula does not exist yet; the `What is not here` list in
-`Bifunction/Algebra.lean` spells out the two-step proof. Corollaries 38.4.1 and 38.5.1 are
-both here now: each exhibits its composite as a `lowerAdjointBifun`, which is closed with no
-hypothesis (`closedBifun_lowerAdjointBifun`), so "closure commutes with `imageBifun` /
-`compBifun`" is never needed.
+**Corollary 38.2.1 convolves in the other variable.** It is Theorem 38.2 applied to the adjoints,
+which convolve in the *first* variable of the bifunction, so `infConvFstBifun` had to be built
+first; following Corollaries 38.4.1 and 38.5.1 it is packaged convexly, as a convolution of the
+*lower* adjoints, and the whole corollary stays between convex bifunctions with no concave closure
+anywhere. The one new theorem is `lowerAdjointBifun_infConvFstBifun`, `(H₁ ⊡ H₂)⁎* = H₁⁎* □ H₂⁎*`:
+with `φᵢ y = ⨅ v, (Hᵢ v y + ⟨u, v⟩)` the lower adjoint of `Hᵢ` at `u` *is* `φᵢ*`
+(`lowerAdjointBifun_eq_conj_concaveBracket_invBifun`), `φ = φ₁ + φ₂` holds unconditionally
+(`conj_infConv` plus one `EReal.neg_add`), and `IsExactSum.conj_add` finishes. Corollaries 38.4.1
+and 38.5.1 are the same shape: each exhibits its composite as a `lowerAdjointBifun`, which is
+closed with no hypothesis (`closedBifun_lowerAdjointBifun`), so "closure commutes with
+`imageBifun` / `compBifun`" is never needed.
+
+**Corollary 38.7.2's first equality is Corollary 38.7.1 at a slice.** `compBifun_slice`,
+`(GF)u = G(Fu)`, is `rfl`, so `⟨GFu, z⟩ = ⟨Fu, G* z⟩` needs nothing new. Only the second equality
+`⟨GFu, z⟩ = ⟨u, F* G* z⟩` is Corollary 33.2.1 and hence layer D.
 
 **Relocation candidate**: `infConv_indicatorFn` (`δ(·∣S) □ δ(·∣T) = δ(·∣S+T)`) belongs in
 `Operations/InfConv.lean`, which currently has only the singleton case.
 
+### `Tdaf/Analysis/Convex/Bifunction/Cofinite.lean`
+
+**Co-finite bifunctions**: the closing remark of §38, and the half of Corollary 38.7.2 that needs a
+relative interior. The only finite-dimensional module in §38.
+
+```lean
+structure CofiniteBifun (F : Bifun U X) : Prop where convexBifun … ; cofinite_apply …
+theorem CofiniteBifun.bracket_lt_top … ; theorem cofiniteBifun_of_forall_bracket_lt_top …
+theorem cofinite_infConv …                     -- `f □ g` co-finite, a function-level lemma
+theorem cofiniteBifun_infConvBifun … ; theorem adjointBifun_infConvBifun_of_cofinite …
+theorem CofiniteBifun.bracket_eq_concaveBracket_adjointBifun …
+theorem bracket_compBifun_eq_concaveBracket_concaveCompBifun …   -- **Cor 38.7.2**, 2nd
+```
+
+**Co-finiteness is what makes the `IsExactSum` hypotheses of §38 discharge themselves.** A
+co-finite bifunction has `domBifun F = U` and `⟨Fu, y⟩` finite for every `u` and `y`
+(Corollary 13.3.1, slice by slice), so `IsExactSum.of_relint` applies at the origin and
+Rockafellar's relative-interior conditions become vacuous. That is the whole content of his closing
+remark, and it is why this is the one place in §38 that needs `FiniteDimensional`.
+
+**`CofiniteBifun` carries `ConvexBifun` as a field.** Rockafellar defines co-finiteness for convex
+bifunctions only, and the convexity is genuinely extra data: a bifunction whose slices are all
+convex need not have a convex graph function on `U × X`.
+
+**Relocation candidate**: `cofinite_infConv` (the infimal convolution of two co-finite convex
+*functions* is co-finite) has nothing to do with bifunctions and belongs in `Duality/Level.lean`
+next to the rest of Corollary 13.3.1.
+
+**Not here**: that `Fλ` is co-finite (blocked on the closedness and properness of `smulRight`,
+Theorem 38.3's second clause, which the library does not have); that `GF` and `F*` are co-finite
+(each needs a co-finite specialization of Theorem 38.5 with `IsExactSum` instances over four
+spaces); and Theorem 34.2, "a closed convex bifunction is co-finite iff `dom F = U` and
+`dom F* = Y`".
+
 ### `Tdaf/Analysis/Convex/Bifunction/Process.lean`
 
 **Convex processes** — multivalued maps whose graph is a pointed convex cone — and the dictionary
-that identifies them with indicator bifunctions. §39's Theorems 39.1, 39.2 and Corollary 39.7.1.
+that identifies them with indicator bifunctions. All of §39 except Theorem 39.4 and the parts of
+Theorems 39.3 and 39.7 that need a topology, which are in `Bifunction/ProcessDuality.lean`. Both
+orientations throughout.
 
 ```lean
 structure ConvexProcess (U X : Type*) … where graph : PointedCone ℝ (U × X)
 def eval … ; def dom … ; def range … ; def image … ; def inv …
 def ofLinearMap … ; def comp … ; instance : Add …
 noncomputable def indicatorBifun … ; def adjointProcess … ; def coadjointProcess …
+def reflect … ; noncomputable def coBracket …
 theorem exists_linearMap_of_isBounded …                    -- Thm 39.1
 theorem coadjointProcess_adjointProcess_eq_self_iff …       -- Thm 39.2, `A** = cl A`
+theorem adjointProcess_coadjointProcess_eq_self_iff …       -- Thm 39.2, other orientation
+theorem coBracket_eq_neg_bracket …                          -- Thm 39.3, the sign dictionary
+theorem iSup_coadjointProcess_eq_clFn …                     -- Thm 39.3, 3rd, other orientation
+theorem adjointProcess_add … ; theorem coadjointProcess_add …           -- Thm 39.5
+theorem isClosed_graph_add … ; theorem graph_adjointProcess_add_eq_closure …  -- Thm 39.5, closed
+theorem adjointProcess_comp … ; theorem coadjointProcess_comp …         -- Thm 39.8
+theorem isClosed_graph_comp … ; theorem graph_adjointProcess_comp_eq_closure … -- Thm 39.8, closed
 theorem isClosed_image …                                    -- Cor 39.7.1
 ```
 
@@ -4344,9 +4400,26 @@ supremum-oriented definition twice gives `{p | ∀ w ∈ K°, 0 ≤ ⟨p, w⟩}`
 and `A** = cl A` becomes false. `adjointProcess` and `coadjointProcess` are separate; a boolean
 orientation field would double every statement.
 
-**Not here**: Theorems 39.3–39.6 and 39.8. 39.3 and 39.4 specialize Theorems 33.1–33.3 and
-Corollary 33.2.1 to processes, all of which are now in `Saddle/Correspondence.lean` and
-`Saddle/Kernel.lean`, so they should be short.
+**Every infimum-oriented statement is a reflection.** `reflect` sends `graph A` to `-graph A`; it
+exchanges `adjointProcess` and `coadjointProcess`, commutes with sums and products, and preserves
+closedness, so the mirrors of Theorems 39.2, 39.5 and 39.8 are the supremum-oriented theorems
+applied to `A.reflect`. Theorem 39.3 is the exception: reflection flips only the *dual* variable of
+the inner product, so `coBracket Bx A u y = -(bracket Bx A.indicatorBifun u (-y))` — same `u`,
+negated `y` — and that single equation (`coBracket_eq_neg_bracket`) carries every clause of the
+mirror, including the third assertion, which comes out with an honest `clFn` in `u` where the
+supremum-oriented statement has `partialCl₁`.
+
+**The closed halves of Theorems 39.5 and 39.8 do not specialize Corollaries 38.2.1 and 38.5.1**,
+contrary to what this file and `07-saddle-algebra.md` used to say. For closed `A₁`, `A₂` with
+exactly adding adjoints, `A₁ + A₂` is *equal* to the infimum-oriented adjoint of `A₁* + A₂*`
+(`add_eq_coadjointProcess_add`), because `Aᵢ** = Aᵢ` and `coadjointProcess_add` is the open half in
+the other orientation. Adjoints are closed with no hypothesis, so the closedness clause is free,
+and the closure formula is the mirrored bipolar theorem. Same for `BA`. No bifunction corollary is
+involved.
+
+**Not here**: Theorem 39.4, the fourth and last assertions of Theorem 39.3, and the closed half of
+Theorem 39.7 — all of them need §33's closure operations and hence a topology, and all of them are
+in `Bifunction/ProcessDuality.lean`.
 
 ### `Tdaf/Analysis/Convex/Bifunction/ProcessDuality.lean`
 
@@ -6276,6 +6349,48 @@ separate one-line commit, not a drive-by.
      keyword argument explicitly, or strip the carriage returns with `sed` over the touched files
      before committing. Run `git diff --stat <base>` before every commit: if the numbers are far
      larger than the edit you made, this is why.
+
+700. **`rw [neg_neg]` does not fire on `a - -b`.** After an `EReal.neg_add` rewrite the goal reads
+     `a - -b = a + b`, but `HSub.hSub` is a separate head symbol, so the pattern `- -?x` is not
+     syntactically present and `rw [neg_neg]` reports "did not find an occurrence". Insert
+     `change a + -(-b) = a + b` first; then `rw [neg_neg]` closes it. The same applies to
+     `sub_neg_eq_add` when the `Sub` is the `EReal` one.
+
+701. **`EReal.neg_zero` does not exist, but the root `neg_zero` applies to `EReal`.** `EReal` picks
+     up `neg_zero`, `neg_neg` and `mul_neg` from its `InvolutiveNeg`/`HasDistribNeg` instances, so
+     `_root_.neg_zero` and friends rewrite `EReal` goals; `neg_bot`, `neg_top`, `coe_neg`,
+     `coe_add` and `coe_eq_coe_iff` live in the `EReal` namespace instead. Inside
+     `namespace Tdaf.ConvexAnalysis` the unqualified names do not resolve at all ("unknown
+     identifier `neg_bot`") and the half-qualified `EReal.neg_bot` can be captured by
+     `Tdaf.EReal`; write `_root_.EReal.neg_bot`, as the rest of the bifunction files do.
+
+702. **`norm_num` re-splits a coercion goal that `rw` has just assembled.** After
+     `rw [← EReal.coe_add, ← EReal.coe_neg, ← EReal.coe_sub]` the goal is `↑p = ↑q` between two
+     real coercions; `norm_num` pushes the coercions back apart and leaves unsolved goals.
+     `rw [_root_.EReal.coe_eq_coe_iff]` followed by `ring` is the reliable finisher.
+
+703. **A hypothesis obtained by instantiating a `∀` over a lambda has an un-beta-reduced left-hand
+     side, so `rw` fails on it.** `posHomogeneous_bracket_indicatorBifun_arg Bx A y a ha u` has type
+     `(fun u ↦ bracket … u y) (a • u) = ↑a * (fun u ↦ …) u`, and `rw` reports "did not find an
+     occurrence of the pattern `(fun u ↦ …) (a • u)`" even though the goal *is* the beta-reduced
+     statement. `exact` and `congrArg` unify up to beta, so `exact congrArg Neg.neg h` succeeds
+     where `rw [h]` does not; `simp only at h` beta-reduces the hypothesis when a rewrite is really
+     wanted. `PosHomogeneous f` is `∀ a, 0 < a → ∀ x, f (a • x) = ↑a * f x`, so every `…_arg`
+     homogeneity lemma stated at a lambda has this shape.
+
+704. **`#print axioms` wraps long declaration names, so grepping its output under-counts.**
+     Verifying a batch by piping `lake env lean scratch.lean` through
+     `grep 'depends on axioms: \[propext, Classical.choice, Quot.sound\]'` silently misses every
+     declaration whose name pushes the list past the pretty-printer width — the output breaks after
+     `[propext,`. Collapse whitespace first (`re.sub(r'\s+', ' ', out)`) and then match
+     `'(name)' depends on axioms: [(list)]`, and check the record count against the number of
+     `#print axioms` lines you emitted.
+
+705. **Nothing in Mathlib reindexes a supremum over a reflected set.** `⨆ v ∈ -s, f v` and
+     `⨆ v ∈ s, f (-v)` are equal, `Set.mem_neg` is `Iff.rfl`, and there is still no lemma: the
+     reindexing has to be done by hand with `le_antisymm` and two `iSup₂_le` / `le_iSup₂_of_le`
+     steps. `ConvexProcess.iSup_mem_neg` in `Bifunction/Process.lean` is a private four-line proof
+     and a Mathlib relocation candidate.
 
 ## 3. Build and verification
 
