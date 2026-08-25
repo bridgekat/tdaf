@@ -62,6 +62,7 @@ import Tdaf.Analysis.Convex.Polyhedral.Cone
 import Tdaf.Analysis.Convex.Polyhedral.Conjugate
 import Tdaf.Analysis.Convex.Polyhedral.Defs
 import Tdaf.Analysis.Convex.Polyhedral.Duality
+import Tdaf.Analysis.Convex.Polyhedral.Faces
 import Tdaf.Analysis.Convex.Polyhedral.Function
 import Tdaf.Analysis.Convex.Polyhedral.Homogeneous
 import Tdaf.Analysis.Convex.Polyhedral.NormalForm
