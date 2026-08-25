@@ -5,6 +5,7 @@ Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Duality.Pairing
 import Tdaf.Analysis.Convex.Operations.Basic
+import Tdaf.Order.GaloisConnection
 
 /-!
 # Conjugates of convex functions
@@ -536,6 +537,19 @@ conjugacy is the statement that `f*` is unchanged by closure (Rockafellar's Theo
 conjugate function). -/
 theorem conj_biconj (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) : conj B (biconj B f) = conj B f :=
   le_antisymm (conj_le_iff.2 (le_refl (biconj B f))) (conj_antitone B (biconj_le B f))
+
+/-- **Conjugacy is an order anti-isomorphism between the biconjugation-fixed functions.**
+
+This is the order-theoretic content of the adjunction, obtained from
+`GaloisConnection.closedsOrderIso` with no further work. It is weaker in hypotheses and stronger in
+conclusion than `conjEquiv` below, and neither subsumes the other: this one needs no topology and
+carries the order, while `conjEquiv` is about the *proper* closed convex functions, a strictly
+smaller class that `f** = f` does not pin down — the improper `f ≡ +∞` and `f ≡ -∞` are fixed by
+biconjugation too. -/
+noncomputable def conjOrderIso (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
+    {f : (E → EReal)ᵒᵈ // toDual (conj B.flip (conj B (ofDual f))) = f} ≃o
+      {g : F → EReal // conj B (ofDual (toDual (conj B.flip g))) = g} :=
+  (gc_conj_conj B).closedsOrderIso
 
 end Galois
 

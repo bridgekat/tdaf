@@ -591,13 +591,26 @@ objects is **inert**: each is referenced only by its own `_apply` and `isClosed_
 `subset_polarCone_polarCone`, `polarCone_polarCone_polarCone` and `conj_biconj` duplicate
 `GaloisConnection.le_u_l` and `l_u_l_eq_l` by hand.
 
-Each correspondence's "involution on a characterised class" bijection is the **restriction of its
-Galois connection to the closed elements**, and is an `OrderIso` to the order dual, not a bare
-`Equiv`. Mathlib does not have that restriction — `ClosureOperator.gi` is only the one-sided
-`GaloisInsertion` — so the backbone supplies it as `GaloisConnection.closedsOrderIso`, a 12-line
-lemma that is an upstreaming candidate and the common generalisation of `conjEquiv`, `gaugeEquiv`,
-`polarFnEquiv`, `polarGaugeEquiv`, `supportEquiv` and Theorem 14.1 — six bijections currently
-written out longhand with `toFun`/`invFun`/`left_inv`/`right_inv`.
+Each correspondence also restricts to an order isomorphism between the closed elements. Mathlib
+does not have that restriction — `ClosureOperator.gi` is only the one-sided `GaloisInsertion` — so
+the backbone supplies it as `GaloisConnection.closedsOrderIso` in `Tdaf/Order/GaloisConnection.lean`:
+twelve lines, no analysis, an upstreaming candidate. `conjOrderIso`, `polarConeOrderIso` and
+`polarSetOrderIso` are the instantiations, and each is a one-line application.
+
+**Amended after building it.** The review proposed re-expressing the six longhand bijections —
+`conjEquiv`, `gaugeEquiv`, `polarFnEquiv`, `polarGaugeEquiv`, `supportEquiv`, `bifunSaddleEquiv` —
+as `closedsOrderIso` instances. That is wrong for at least `conjEquiv`, and the reason generalises:
+**the Galois-closed class is not the class the book's theorem is about.** `conjEquiv` states
+Rockafellar's Corollary 12.2.1, a correspondence between the *closed proper* convex functions; the
+elements fixed by biconjugation are the closed convex functions *including the improper* `f ≡ +∞`
+and `f ≡ -∞`. The two statements are incomparable — `closedsOrderIso` needs no topology and carries
+the order, `conjEquiv` pins down a strictly smaller class — and both belong in the library. Check the
+class before replacing a bijection; the order iso is an addition, not a substitute.
+
+Likewise the three "duplicated" proofs the review named are already one-liners off the adjunction
+(`subset_polarCone_polarCone` is `subset_polarCone_comm.1 (subset_refl _)`), so rewriting them
+through `GaloisConnection.le_u_l` buys nothing. What was genuinely missing was the order structure,
+and that is what the three new `OrderIso`s add.
 
 ---
 

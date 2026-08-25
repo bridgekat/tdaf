@@ -5,6 +5,7 @@ Authors: TDAF contributors
 -/
 import Mathlib.Geometry.Convex.Cone.Dual
 import Tdaf.Analysis.Convex.Duality.Support
+import Tdaf.Order.GaloisConnection
 
 /-!
 # Polars of convex sets and convex cones
@@ -255,6 +256,26 @@ theorem polarCone_polarCone_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K :
     polarCone B (polarCone B.flip (polarCone B K)) = polarCone B K :=
   subset_antisymm (polarCone_anti (subset_polarCone_polarCone B K))
     (subset_polarCone_comm.2 (subset_refl _))
+
+/-- **Polarity is an order anti-isomorphism between the bipolar-closed sets.**
+
+Rockafellar's Theorem 14.1 says polarity is a one-to-one correspondence between the closed convex
+cones containing the origin on the two sides. This is that correspondence with its order structure,
+and with no topology: the bipolar-closed sets are exactly those cones once `E` and `F` carry
+compatible topologies (`polarCone_polarCone_of_isClosed`), and the inclusion-reversal is what makes
+the statement an *anti*-isomorphism. Free from `GaloisConnection.closedsOrderIso`. -/
+def polarConeOrderIso (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
+    {K : Set E // polarCone B.flip (polarCone B K) = K} ≃o
+      {L : (Set F)ᵒᵈ //
+        OrderDual.toDual (polarCone B (polarCone B.flip (OrderDual.ofDual L))) = L} :=
+  (gc_polarCone_polarCone B).closedsOrderIso
+
+/-- The same for polars of sets: **Theorem 14.5** in order form. -/
+def polarSetOrderIso (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
+    {C : Set E // polarSet B.flip (polarSet B C) = C} ≃o
+      {L : (Set F)ᵒᵈ //
+        OrderDual.toDual (polarSet B (polarSet B.flip (OrderDual.ofDual L))) = L} :=
+  (gc_polarSet_polarSet B).closedsOrderIso
 
 /-! ### The polar cone as a `PointedCone` -/
 
