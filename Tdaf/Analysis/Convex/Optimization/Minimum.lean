@@ -47,6 +47,10 @@ convex set, and the optimality condition `0 ∈ ∂h x + N_C(x)`.
   polyhedral refinement: for polyhedral `C` the linearity requirement drops.
   `argmin_nonempty_of_recessionConeFn_subset_constancySpace` is its unconstrained case, and
   `exists_linearProj` is the projection that both run on.
+* `exists_forall_le_of_polyhedral_of_recessionConeFn_subset_linealitySpaceFn` —
+  **Corollary 27.3.1**: if every direction of recession of `h` is a direction in which `h` is
+  *affine*, then `h` attains its infimum over any nonempty polyhedral `C` on which it is bounded
+  below.
 * `argmin_nonempty_of_polyhedralFn` — a polyhedral convex function bounded below attains its
   infimum; `exists_forall_le_of_polyhedralFn_of_polyhedral` is the same statement relative to a
   polyhedral convex set, **Corollary 27.3.2**.
@@ -111,16 +115,6 @@ function directly, and the level set it produces is `{x | f**(x) - α ≤ 0}`.
 natural home is beside `supportFn_setOf_le_zero` in `Duality/Level.lean`; it is here because that
 module sits below this one and because §27 is where level sets of `f` are the subject.
 
-**Corollary 27.3.1**, whose wording is: *let `h` be a closed proper convex function such that every
-direction of recession of `h` is a direction in which `h` is **affine**; then `h` attains its
-infimum relative to any polyhedral convex set `C` on which it is bounded below.* It is a genuine
-strengthening of what is here, not a restatement:
-`argmin_nonempty_of_recessionConeFn_subset_constancySpace` asks for directions of **constancy** and
-needs no boundedness, whereas 27.3.1 allows a nonzero slope along a direction of recession and pays
-for it with boundedness below on `C`. Closing the gap means showing that the slope along such a
-direction is `≥ 0` when `h` is bounded below on `C`, and then running the polyhedral refinement on
-the affine — rather than constant — directions.
-
 **The polyhedral refinement of Theorem 27.3 does not need Helly.** Rockafellar derives it from
 Theorem 21.5, applied to `C` together with the level sets `lev_α h`; Theorem 21.5 is still not
 formalised (see `Helly.lean`), and the refinement no longer waits for it. The directions of
@@ -138,7 +132,8 @@ route through Corollary 27.3.1.
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §27 (Theorem 27.1(a),
   (b), (d), (f), (g), (h), Theorem 27.2 with Corollaries 27.2.1–27.2.2, Theorem 27.3 with
-  Corollaries 27.3.2 and 27.3.3, Theorem 27.4). Theorem 27.3's general and polyhedral recession
+  Corollaries 27.3.1, 27.3.2 and 27.3.3, Theorem 27.4). Theorem 27.3's general and polyhedral
+  recession
   hypotheses are stated as the book's constancy/linearity conditions; the derivation is not the
   book's.
 -/
@@ -815,6 +810,36 @@ theorem exists_forall_le_of_polyhedral_of_inter_subset_constancySpace
   refine ⟨x, hxC, fun z hz => ?_⟩
   rw [eq_of_sub_mem_constancySpace (hsub x), eq_of_sub_mem_constancySpace (hsub z)]
   exact hx'min (A z) ⟨z, hz, rfl⟩
+
+/-- **Rockafellar, Corollary 27.3.1**: a closed proper convex `h` every direction of recession of
+which is a direction in which `h` is *affine* attains its infimum relative to any nonempty
+polyhedral convex set `C` on which it is bounded below.
+
+Rockafellar's hypothesis `recessionConeFn h ⊆ linealitySpaceFn h` is weaker than the
+`recessionConeFn h ⊆ constancySpace h` of
+`exists_forall_le_of_polyhedral_of_inter_subset_constancySpace`, and the price is the lower bound
+on `C`: a direction of recession in which `h` is affine has slope `ν = (h0⁺) y ≤ 0`, and a lower
+bound along the half-lines of `C` in that direction forces `ν = 0`
+(`mem_constancySpace_of_mem_linealitySpaceFn`), which is constancy. The lower bound cannot be
+dropped — `h(x₁, x₂) = x₁` on `ℝ²` is affine in every direction, and its infimum over
+`C = {x | x₂ = 0}` is `-∞`.
+
+The hypothesis holds for every affine or convex quadratic `h`, and more generally whenever
+`dom h*` is affine (Corollary 13.3.2). -/
+theorem exists_forall_le_of_polyhedral_of_recessionConeFn_subset_linealitySpaceFn
+    (hh : ClosedProperConvexFn h) (hC : Polyhedral C) (hCne : C.Nonempty)
+    (hrec : recessionConeFn h ⊆ linealitySpaceFn h) {β : ℝ}
+    (hbdd : ∀ x ∈ C, (β : EReal) ≤ h x) : ∃ x ∈ C, ∀ z ∈ C, h x ≤ h z := by
+  rcases Set.eq_empty_or_nonempty (C ∩ dom h) with hemp | ⟨x₀, hx₀C, hx₀⟩
+  · obtain ⟨x, hx⟩ := hCne
+    have htop : ∀ z ∈ C, h z = ⊤ := fun z hz => by
+      by_contra hcon
+      exact (Set.eq_empty_iff_forall_notMem.1 hemp z) ⟨hz, lt_top_iff_ne_top.2 hcon⟩
+    exact ⟨x, hx, fun z hz => by rw [htop x hx, htop z hz]⟩
+  · refine exists_forall_le_of_polyhedral_of_inter_subset_constancySpace hh hC hCne ?_
+    rintro y ⟨hy1, hy2⟩
+    exact mem_constancySpace_of_mem_linealitySpaceFn hh.proper hy1 (hrec hy1) hx₀
+      fun a ha => hbdd _ (hy2 x₀ hx₀C a ha)
 
 /-- The unconstrained case of the polyhedral refinement: a closed proper convex function whose
 recession cone consists entirely of directions of constancy — equivalently, whose recession cone is

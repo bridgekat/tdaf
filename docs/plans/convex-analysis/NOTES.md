@@ -2056,7 +2056,8 @@ and belongs in `Optimization/Moreau.lean`, with `moreau_add` rewritten to use it
 ### `Tdaf/Analysis/Convex/Optimization/Minimum.lean`
 
 §27: **Theorems 27.1(a), 27.1(b), 27.2 with Corollaries 27.2.1–27.2.2, Theorem 27.3 in full — the
-general case, the polyhedral refinement, and Corollaries 27.3.2 and 27.3.3 — and Theorem 27.4**.
+general case, the polyhedral refinement, and Corollaries 27.3.1, 27.3.2 and 27.3.3 — and
+Theorem 27.4**.
 
 **Theorem 27.3's polyhedral refinement does not need Helly.** Rockafellar derives it from
 Theorem 21.5 applied to `C` together with the level sets `lev_α h`; the proof here projects `E`
@@ -2066,16 +2067,25 @@ once, through `Polyhedral.recessionCone_image`. The same projection, run along
 `constancySubmodule h ⊓ linealitySubmodule C`, strengthens the *general* case from
 `0⁺h ∩ 0⁺C = {0}` to Rockafellar's constancy/linearity hypothesis
 (`exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace`); there the image of `C` is
-literally `C ∩ N` and no polyhedrality is used. **Corollary 27.3.1 is not done**; its wording is
-now verified (every direction of recession a direction in which `h` is *affine* ⟹ the infimum is
-attained over any polyhedral `C` on which `h` is bounded below), and it is strictly stronger than
-`argmin_nonempty_of_recessionConeFn_subset_constancySpace`, which asks for *constancy* directions
-and needs no boundedness.
+literally `C ∩ N` and no polyhedrality is used. **Corollary 27.3.1** is
+`exists_forall_le_of_polyhedral_of_recessionConeFn_subset_linealitySpaceFn`: hypothesis
+`recessionConeFn h ⊆ linealitySpaceFn h` — every direction of recession is one in which `h` is
+*affine* — plus a real lower bound on `C`. A common direction of recession `y` of `h` and `C` then
+satisfies `h (x + a • y) = h x + a ν` with `ν = (h0⁺) y ≤ 0` (Theorem 8.8) along a half-line that
+stays in `C`, so the lower bound forces `ν = 0` and `y ∈ constancySpace h` (Corollary 8.6.1); the
+polyhedral refinement applies verbatim. That slope step is
+`mem_constancySpace_of_mem_linealitySpaceFn`, layer A, in `Recession/Function.lean`. The lower
+bound is essential — `h(x₁, x₂) = x₁` is affine in every direction and has infimum `-∞` over
+`C = {x | x₂ = 0}` — and the degenerate case `C ∩ dom h = ∅` is dispatched separately, so only
+`C.Nonempty` is asked for.
 
 **Relocation candidates.** `eq_of_sub_mem_constancySpace` and `exists_linearProj` are general facts
 about `constancySpace` and about subspaces; they belong in `Recession/Function.lean` and in a linear
 algebra file respectively, and are here only to avoid rebuilding the whole project from
-`Recession/Function.lean`.
+`Recession/Function.lean`. Both are also *mis-layered*: they sit inside a
+`[NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]` section with only
+`omit [FiniteDimensional ℝ E]`, although neither proof uses a norm — `exists_linearProj` is pure
+linear algebra over `Module ℝ E`. Cf. D9.
 
 ```lean
 def argmin (f : E → EReal) : Set E := {x | ∀ z, f x ≤ f z}
@@ -2184,8 +2194,8 @@ genuinely do need Helly in the form of Thm 21.5.
 
 ### `Tdaf/Analysis/Convex/Optimization/Maximum.lean`
 
-§32: **Theorems 32.1, 32.2, 32.3 and 32.4** with Corollaries 32.1.1, 32.2.1, 32.3.2 (both clauses)
-and 32.4.1.
+§32 in full: **Theorems 32.1, 32.2, 32.3 and 32.4** with Corollaries 32.1.1, 32.2.1, 32.3.1,
+32.3.2 (both clauses), 32.3.3, 32.3.4 and 32.4.1.
 
 **Maximisation is `∀ z ∈ C, f z ≤ f x`, not `IsMaxOn`.** Every proof here applies the hypothesis at
 one specific point, and the unfolded form is what `ConvexFn.epi_combo` and the subgradient
@@ -2255,9 +2265,31 @@ the text afterwards, Cor 32.3.1 is Thm 32.3's attainment clause
 `ConvexFn.eq_of_forall_le` (bounded above on the whole space ⇒ constant) is *not* one of them and
 stays unnumbered.
 
-**Not done**: Cor 32.3.3, which replaces "contains no lines" by "no half-line in `C` on which `f`
-is unbounded above". That needs the lineality space of `C` quotiented out first, the manoeuvre
-`Optimization/Minimum.lean` uses for Thm 27.3's polyhedral refinement.
+```lean
+def BddAboveOnRays (f : E → EReal) (C : Set E) : Prop :=
+  ∀ u v : E, (∀ t : ℝ, 0 ≤ t → u + t • v ∈ C) →
+    ∃ β : ℝ, ∀ t : ℝ, 0 ≤ t → f (u + t • v) ≤ (β : EReal)
+```
+
+**`BddAboveOnRays` is Thm 32.3's hypothesis, and it carries `C ⊆ dom f` with it.** The degenerate
+ray `v = 0` says every point of `C` is below some real, i.e. `C ⊆ dom f`
+(`BddAboveOnRays.subset_dom`), which is Rockafellar's other standing hypothesis in §32; so one
+predicate covers both. A uniform bound is `bddAboveOnRays_of_forall_le`.
+`ConvexFn.exists_mem_convexHull_extremePoints_le` was *generalised* to it rather than duplicated:
+its proof only ever used the bound on the single half-line `u + t • v` it constructs, so the proof
+did not change, and Cor 32.3.4 (`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated`) is now one
+line off the generalised finitely-generated statement.
+
+**Cor 32.3.3 quotients out the lineality space by intersecting, not by projecting.** Rockafellar
+takes `D = C ∩ L^⊥`; `eq_add_inter_of_isCompl` (`Recession/Cone.lean`) gives `C = L + (C ∩ N)` for
+*any* complement `N` of `L`, which is all the argument needs and keeps the statement free of an
+inner product. `f` is constant along `L` (`ConvexFn.add_eq_of_mem_linealitySpace`: `y` and `−y` are
+both in `0⁺C`, so the two applications of `ConvexFn.add_le_of_bddAboveOnRays` close on each other);
+`C ∩ N` is polyhedral by `Polyhedral.inter` and `polyhedral_coe_submodule`, nonempty by the
+decomposition, and contains no lines because a line direction of it lies in `L ⊓ N = ⊥`. The
+maximiser is an extreme point of `C ∩ N`, not of `C`, and depends on `N` — hence the conclusion is
+bare attainment, `∃ z ∈ C, ∀ w ∈ C, f w ≤ f z`. `Maximum.lean` therefore does **not** depend on
+`Minimum.lean`'s `exists_linearProj`; it only gained an import of `Polyhedral/Ops.lean`.
 
 ### `Tdaf/Analysis/Convex/Face.lean`
 
@@ -5826,6 +5858,37 @@ unfolding, because `Function.comp_apply` is `rfl`.
 Reaching for `Tendsto.isBoundedUnder_le` gives only an eventual bound and then forces a reindexing
 `ws i = vs (i + N)` to feed `IsCompact.tendsto_subseq`, which wants `∀ n, xs n ∈ K`. The range
 version removes the reindexing entirely.
+
+500. **Destructuring a membership in a `Set` sum leaves a beta-redex that `rw` cannot see.**
+`eq_add_inter_of_isCompl` gives `C = L + (C ∩ N)`, and
+`obtain ⟨p, hp, q, hq, rfl⟩ := (hdec ▸ hw : w ∈ (L : Set E) + (C ∩ N))` substitutes
+`w := (fun x1 x2 => x1 + x2) p q`, because `Set` addition is `Set.image2 (· + ·)`. A following
+`rw [show p + q = q + p by abel]` then fails with "did not find an occurrence of the pattern
+`p + q`", and the printed goal shows the lambda. Put a `change f (p + q) = f q` first — it works
+up to defeq, so it beta-reduces the goal and the rewrite fires. It must be `change`, not `show`:
+`linter.style.show` errors on a `show` that actually *changes* the goal, which is exactly what
+this one does.
+
+501. **Proving `ContainsNoLine (C ∩ N)` by contradiction beats
+`containsNoLine_iff_linealitySpace_eq_zero`.** The iff route needs `C ∩ N` nonempty, closed and
+convex *and* a computation of `recessionCone (C ∩ N)` through `recessionCone_inter`, which itself
+wants closedness of both factors and nonemptiness of the intersection. Unfolding the definition is
+three lines: `intro a y hy0; by_contra hcon; push Not at hcon` gives `∀ t, a + t • y ∈ C ∩ N`; then
+`mem_recessionCone_of_exists_ray` (Thm 8.3) twice — once for `y`, once for `-y` after
+`rw [show a + t • (-y) = a + (-t) • y by module]` — puts `y` in the lineality space of `C`, and
+`N.sub_mem (hcon 1).2 (hcon 0).2` with `show a + (1:ℝ) • y - (a + (0:ℝ) • y) = y by module` puts it
+in `N`. Finish with `simpa using hN.disjoint.le_bot ⟨hyL, hyN⟩`: `IsCompl.disjoint.le_bot` lands in
+`y ∈ (⊥ : Submodule ℝ E)`, and the `simpa` is what turns that into `y = 0`.
+
+502. **Two ways to quotient out a subspace; pick by what the conclusion is about.**
+`exists_linearProj` (`Optimization/Minimum.lean`) builds a projection `A` and works with `A '' C`;
+that is right when the target theorem is about an *image*, because then
+`Polyhedral.recessionCone_image` is the load-bearing step. When the conclusion only needs "every
+point of `C` carries the same value as some point of `C ∩ N`", `eq_add_inter_of_isCompl` is
+strictly cheaper: `Submodule.exists_isCompl` supplies `N`, the decomposition is immediate, and
+`C ∩ N` is polyhedral by `Polyhedral.inter` with `polyhedral_coe_submodule` — no image lemma, no
+`recessionCone_image`, no dependency on `Minimum.lean`. Cor 32.3.3 takes the second route,
+Thm 27.3's polyhedral refinement the first.
 
 ## 3. Build and verification
 
