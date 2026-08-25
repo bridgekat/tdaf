@@ -678,9 +678,33 @@ genuinely finite-dimensional work and is the main risk (see §6 below).
 
 ## 7. Status
 
-The library compiles with no `sorry`, no warnings, and `#print axioms` showing only `propext`,
-`Classical.choice`, `Quot.sound`. Progress is tracked by **section**; the stage table of §5 is only
-the original size estimate.
+**The backbone is complete.** Every section §2–§39 is done except the deliberate exclusions listed
+below. The library compiles with no `sorry`, no warnings, and `#print axioms` showing only
+`propext`, `Classical.choice`, `Quot.sound`. Progress is tracked by **section**; the stage table of
+§5 is only the original size estimate.
+
+**Deliberately excluded, each for a stated reason** — these are not gaps to be filled by someone
+picking the plan up:
+
+| result | why it is not here |
+|---|---|
+| §22 elementary vectors (Lemmas 22.4, 22.5, Cor 22.4.1, Thm 22.6) | a substantial body of combinatorial matroid theory, not convex analysis |
+| Thm 24.2's integral formula | a substantial body of one-dimensional integration theory, not convex analysis |
+| Thm 27.1(e) | unstatable without a reflexive pairing: it is a claim about `E**` |
+| Cors 17.1.4 and 17.1.6 | **false as Rockafellar states them**; the counterexample (`f₁ y = -y`, `f₂ y = y` on `ℝ¹`) is in `NOTES.md`'s `Caratheodory.lean` record |
+| Cor 31.4.1, Thm 28.3, §12's Tucker representation | surface layer (coordinates on `ℝⁿ`), by the backbone/surface split of §4 |
+| Thm 39.3's fourth and last assertions, infimum-oriented | a placement decision, not a gap: they are `partialCl₂`/`ri` statements belonging beside the supremum-oriented forms in `Bifunction/ProcessDuality.lean`, and `coBracket_eq_neg_bracket` transports them mechanically |
+
+Two places where the development is deliberately *stronger* than the book, rather than weaker, are
+worth knowing before reading a statement and finding it does not match: Corollary 32.3.3 quotients
+the lineality space out by an arbitrary complement (`eq_add_inter_of_isCompl`) instead of `L⊥`, so
+it needs no inner product; and Theorem 15.3's converse is layer B, using no pairing, no local
+convexity and no conjugation, though the book's proof and the biconditional both do.
+
+The remaining planned work is the **surface library** (`08-surface.md`) and then the **D10**
+refactor, which decouples the backbone's naming and docstrings from Rockafellar. D10 is scheduled
+*after* the surface work, deliberately: the surface layer is what shows which of the backbone's
+Rockafellar-shaped statements are the ones applications actually reach for.
 
 | section | state |
 |---|---|
