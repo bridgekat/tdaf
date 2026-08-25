@@ -333,6 +333,24 @@ def negFst (B : (U × X) →ₗ[ℝ] (V × Y) →ₗ[ℝ] ℝ) : (U × X) →ₗ
   LinearMap.ext fun p => LinearMap.ext fun q => by
     simp
 
+/-- **The sign flip of a product pairing is a product pairing**, with the first factor negated.
+
+`negFst_prodPairing_apply` says this pointwise, which is enough to rewrite inside a `conj` but not
+enough to hand to instance search: the pairing classes are stated about a `LinearMap`, not about its
+values. This is the equation of linear maps, and it is what lets `negFst (prodPairing Bu Bx)` — the
+pairing Rockafellar's adjoint `F*` is conjugated against throughout §30 — inherit continuity and
+compatibility from the factors instead of carrying them as hypotheses. -/
+theorem negFst_prodPairing (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) :
+    negFst (prodPairing Bu Bx) = prodPairing (-Bu) Bx :=
+  LinearMap.ext fun p => LinearMap.ext fun q => by
+    simp
+
+/-- Flipping the sign-flipped product pairing, in the form instance search meets it. -/
+theorem negFst_prodPairing_flip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) :
+    (negFst (prodPairing Bu Bx)).flip = prodPairing (-Bu.flip) Bx.flip :=
+  LinearMap.ext fun q => LinearMap.ext fun p => by
+    simp
+
 end Prod
 
 /-! ### The topological dual of `E × ℝ`
@@ -608,6 +626,24 @@ instance instIsCompatiblePairingProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx 
     rw [evalCLM_apply, prodPairing_apply, ← hv, ← hy]
     simpa using (map_add g ((p.1, 0) : U × X) ((0, p.2) : U × X)).symm.trans (by rw [hsplit])
 
+/-- The pairing §30's adjoint is conjugated against is continuous whenever the factors are. -/
+instance instIsContinuousPairingNegFstProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsContinuousPairing Bu] [IsContinuousPairing Bx] :
+    IsContinuousPairing (negFst (prodPairing Bu Bx)) := by
+  rw [negFst_prodPairing]
+  infer_instance
+
+/-- The pairing §30's adjoint is conjugated against is compatible whenever the factors are.
+
+Without this, every statement about `adjointBifun` — and so every §29–§30 surface statement — would
+have to carry the two classes for `negFst (prodPairing Bu Bx)` explicitly, because instance search
+cannot see past `negFst`. -/
+instance instIsCompatiblePairingNegFstProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bx] :
+    IsCompatiblePairing (negFst (prodPairing Bu Bx)) := by
+  rw [negFst_prodPairing]
+  infer_instance
+
 end ProdInstances
 
 section ProdDualInstances
@@ -627,6 +663,22 @@ theorem isContinuousPairing_prodPairing_flip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
     [IsContinuousPairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] :
     IsContinuousPairing (prodPairing Bu Bx).flip := by
   rw [prodPairing_flip]
+  infer_instance
+
+/-- The dual side of §30's pairing. Unlike `isContinuousPairing_prodPairing_flip` this *is* an
+instance, because `(negFst (prodPairing Bu Bx)).flip` is a syntactic match — instance search meets
+it in exactly this shape whenever a §30 statement conjugates on both sides. -/
+instance instIsContinuousPairingNegFstProdFlip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsContinuousPairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] :
+    IsContinuousPairing (negFst (prodPairing Bu Bx)).flip := by
+  rw [negFst_prodPairing_flip]
+  infer_instance
+
+/-- The compatible counterpart of `instIsContinuousPairingNegFstProdFlip`. -/
+instance instIsCompatiblePairingNegFstProdFlip (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip] :
+    IsCompatiblePairing (negFst (prodPairing Bu Bx)).flip := by
+  rw [negFst_prodPairing_flip]
   infer_instance
 
 end ProdDualInstances

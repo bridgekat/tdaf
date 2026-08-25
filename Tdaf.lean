@@ -111,3 +111,4 @@ import Tdaf.Analysis.Convex.Subgradient.StrictlyConvex
 import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 import Tdaf.Analysis.Convex.Tangent
 import Tdaf.Order.EReal
+import Tdaf.Surface.Common.Euclidean
