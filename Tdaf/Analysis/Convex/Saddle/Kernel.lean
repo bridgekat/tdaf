@@ -1931,17 +1931,50 @@ variable {U X : Type*} {C : Set U} {D : Set X} {K : U × X → ℝ}
 noncomputable def upperSimpleExt (C : Set U) (D : Set X) (K : U × X → ℝ) : U × X → EReal :=
   fun p => restrict D (fun x => restrictConcave C (fun u => (K (u, x) : EReal)) p.1) p.2
 
+/-- The real-valued companion of `saddleSwap`: negate and exchange the two arguments.
+
+Note that `swapReal (swapReal K) = K` is **not** `rfl` — the negation is on `ℝ` values, so it needs
+`neg_neg` — even though the pair-swap half is. -/
+def swapReal (K : U × X → ℝ) : X × U → ℝ := fun q => -K (q.2, q.1)
+
+@[simp] theorem swapReal_swapReal (K : U × X → ℝ) : swapReal (swapReal K) = K := by
+  funext q
+  simp [swapReal]
+
+/-- **The upper simple extension is the lower one, swapped.**
+
+This one identity is the whole of the upper theory. Rockafellar develops `K₁` and `K₂` in parallel
+and the parallel is exact: exchanging the two arguments turns `C` into `D`, the concave restriction
+into the convex one, and `-∞` into `+∞`, which is precisely what `saddleSwap` does on the value
+side and `swapReal` on the real side. Every lemma below is a rewrite along it, and the hypotheses
+come out identical to what a direct proof would need — the involution never reaches a statement.
+
+Per [D11](../../../../docs/plans/convex-analysis/00-overview.md), this is the template: one
+dictionary entry, then transport. -/
+theorem upperSimpleExt_eq_saddleSwap (C : Set U) (D : Set X) (K : U × X → ℝ) :
+    upperSimpleExt C D K = saddleSwap (lowerSimpleExt D C (swapReal K)) := by
+  funext p
+  obtain ⟨u, x⟩ := p
+  by_cases hx : x ∈ D <;> by_cases hu : u ∈ C <;>
+    simp [upperSimpleExt, lowerSimpleExt, saddleSwap, swapReal, hu, hx]
+
 @[simp] theorem upperSimpleExt_of_mem {p : U × X} (hu : p.1 ∈ C) (hx : p.2 ∈ D) :
     upperSimpleExt C D K p = (K p : EReal) := by
-  simp [upperSimpleExt, hu, hx]
+  rw [upperSimpleExt_eq_saddleSwap, saddleSwap_apply,
+    lowerSimpleExt_of_mem (p := (p.2, p.1)) hx hu]
+  simp [swapReal]
 
 @[simp] theorem upperSimpleExt_of_notMem_right {p : U × X} (hx : p.2 ∉ D) :
     upperSimpleExt C D K p = ⊤ := by
-  simp [upperSimpleExt, hx]
+  rw [upperSimpleExt_eq_saddleSwap, saddleSwap_apply,
+    lowerSimpleExt_of_notMem_left (p := (p.2, p.1)) hx]
+  simp
 
 @[simp] theorem upperSimpleExt_of_notMem_left {p : U × X} (hu : p.1 ∉ C) (hx : p.2 ∈ D) :
     upperSimpleExt C D K p = ⊥ := by
-  simp [upperSimpleExt, hu, hx]
+  rw [upperSimpleExt_eq_saddleSwap, saddleSwap_apply,
+    lowerSimpleExt_of_notMem_right (p := (p.2, p.1)) hx hu]
+  simp
 
 /-- Over `C` the convex slice of `K₂` agrees with that of `K₁`. -/
 theorem upperSimpleExt_slice₂_of_mem {u : U} (hu : u ∈ C) :
@@ -1969,33 +2002,13 @@ theorem upperSimpleExt_slice₁_of_notMem {x : X} (hx : x ∉ D) :
 
 /-- **Rockafellar, §33**: the upper simple extension has `dom₁ K₂ = C`. -/
 theorem dom₁_upperSimpleExt (hD : D.Nonempty) : dom₁ (upperSimpleExt C D K) = C := by
-  obtain ⟨x₀, hx₀⟩ := hD
-  ext u
-  refine ⟨fun hu => ?_, fun hu x => ?_⟩
-  · by_contra h
-    have := hu x₀
-    rw [upperSimpleExt_of_notMem_left (p := (u, x₀)) h hx₀] at this
-    exact absurd this (lt_irrefl ⊥)
-  · by_cases hx : x ∈ D
-    · rw [upperSimpleExt_of_mem (p := (u, x)) hu hx]
-      exact EReal.bot_lt_coe _
-    · rw [upperSimpleExt_of_notMem_right (p := (u, x)) hx]
-      exact bot_lt_top
+  rw [upperSimpleExt_eq_saddleSwap, dom₁_saddleSwap]
+  exact dom₂_lowerSimpleExt hD
 
 /-- **Rockafellar, §33**: the upper simple extension has `dom₂ K₂ = D`. -/
 theorem dom₂_upperSimpleExt (hC : C.Nonempty) : dom₂ (upperSimpleExt C D K) = D := by
-  obtain ⟨u₀, hu₀⟩ := hC
-  ext x
-  refine ⟨fun hx => ?_, fun hx u => ?_⟩
-  · by_contra h
-    have := hx u₀
-    rw [upperSimpleExt_of_notMem_right (p := (u₀, x)) h] at this
-    exact absurd this (lt_irrefl ⊤)
-  · by_cases hu : u ∈ C
-    · rw [upperSimpleExt_of_mem (p := (u, x)) hu hx]
-      exact EReal.coe_lt_top _
-    · rw [upperSimpleExt_of_notMem_left (p := (u, x)) hu hx]
-      exact bot_lt_top
+  rw [upperSimpleExt_eq_saddleSwap, dom₂_saddleSwap]
+  exact dom₁_lowerSimpleExt hC
 
 /-- The interval between the two simple extensions is exactly the set of extensions of `K` with
 Rockafellar's prescribed infinite values off `C × D` — the class `Ω` of **Corollary 34.2.4**. The
@@ -2043,24 +2056,18 @@ variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module 
   {C : Set U} {D : Set X} {K : U × X → ℝ}
 
 /-- **Rockafellar, §33**: the upper simple extension of a finite concave-convex function on
-`C × D` is concave-convex on all of `U × X`. -/
+`C × D` is concave-convex on all of `U × X`.
+
+Transported from `concaveConvexFn_lowerSimpleExt`: the swap exchanges the convexity and concavity
+hypotheses and negates each, which is exactly `ConvexOn.neg` and `ConcaveOn.neg`. -/
 theorem concaveConvexFn_upperSimpleExt (hD : Convex ℝ D)
     (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
     (hconc : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x)) :
     ConcaveConvexFn (upperSimpleExt C D K) := by
-  constructor
-  · intro x
-    by_cases hx : x ∈ D
-    · rw [upperSimpleExt_slice₁_of_mem hx]
-      exact (concaveOn_iff_concaveFn C fun u => K (u, x)).1 (hconc x hx)
-    · rw [upperSimpleExt_slice₁_of_notMem hx]
-      exact concaveFn_const ⊤
-  · intro u
-    by_cases hu : u ∈ C
-    · rw [upperSimpleExt_slice₂_of_mem hu]
-      exact (convexOn_iff_convexFn D fun x => K (u, x)).1 (hconv u hu)
-    · rw [upperSimpleExt_slice₂_of_notMem hu]
-      exact (convexFn_const ⊥).restrict hD
+  rw [upperSimpleExt_eq_saddleSwap]
+  exact concaveConvexFn_saddleSwap
+    (concaveConvexFn_lowerSimpleExt hD (fun x hx => (hconc x hx).neg)
+      (fun u hu => (hconv u hu).neg))
 
 end UpperSimpleExtConvex
 
@@ -2111,23 +2118,17 @@ theorem partialCl₁_lowerSimpleExt (hCcl : IsClosed C) (hCne : C.Nonempty)
     rw [congrFun h u, upperSimpleExt_of_notMem_right (p := (u, x)) hx]
 
 omit [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U] in
-/-- `cl₂` carries the upper simple extension back to the lower one. -/
+/-- `cl₂` carries the upper simple extension back to the lower one.
+
+The mirror of `partialCl₁_lowerSimpleExt`, transported rather than re-proved:
+`partialCl₂_saddleSwap` exchanges the two closures, `upperSimpleExt_eq_saddleSwap` exchanges the
+two extensions, and the continuity hypothesis passes through as `ContinuousOn.neg`. -/
 theorem partialCl₂_upperSimpleExt (hDcl : IsClosed D) (hDne : D.Nonempty)
     (hcont : ∀ u ∈ C, ContinuousOn (fun x => K (u, x)) D) :
     partialCl₂ (upperSimpleExt C D K) = lowerSimpleExt C D K := by
-  funext p
-  obtain ⟨u, x⟩ := p
-  by_cases hu : u ∈ C
-  · have h : (fun x => partialCl₂ (upperSimpleExt C D K) (u, x))
-        = restrict D fun x => (K (u, x) : EReal) := by
-      rw [partialCl₂_slice (upperSimpleExt C D K) u, upperSimpleExt_slice₂_of_mem hu]
-      exact closedFn_restrict_coe hDcl (hcont u hu)
-    rw [congrFun h x, ← congrFun (lowerSimpleExt_slice₂_of_mem (K := K) hu) x]
-  · obtain ⟨x₀, hx₀⟩ := hDne
-    have h : (fun x => partialCl₂ (upperSimpleExt C D K) (u, x)) = fun _ => (⊥ : EReal) := by
-      rw [partialCl₂_slice (upperSimpleExt C D K) u, upperSimpleExt_slice₂_of_notMem hu]
-      exact clFn_eq_bot_of_eq_bot (x₀ := x₀) (by simp [hx₀])
-    rw [congrFun h x, lowerSimpleExt_of_notMem_left (p := (u, x)) hu]
+  rw [upperSimpleExt_eq_saddleSwap, partialCl₂_saddleSwap,
+    partialCl₁_lowerSimpleExt hDcl hDne (fun u hu => (hcont u hu).neg),
+    upperSimpleExt_eq_saddleSwap, swapReal_swapReal, saddleSwap_saddleSwap]
 
 /-- **Rockafellar, Corollary 34.2.4**: every member of `Ω` is a closed saddle-function. -/
 theorem closedSaddleFn_of_mem_saddleClass_simpleExt (hCcl : IsClosed C) (hDcl : IsClosed D)

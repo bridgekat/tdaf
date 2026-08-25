@@ -20,6 +20,8 @@ scaffolding the surface library will otherwise pay for per-statement.
 | §1.4 relocate `isMaximalMonotoneRel_subgradientRel` | **not done, and cannot be** — see below |
 | §1.5 `Eponyms.lean` | **done** — nine aliases |
 | §1.6 delete `partialConj₂` | **not done, deliberately** — D8 amended instead |
+| §2.1 `saddleSwap` transport | **done** — 58 duplicated proof lines → 17; see the correction below |
+| §3 `closedsOrderIso` | **done** — plus three instantiations; D12 amended |
 | §4.2 `negFst` pairing instances | **done** — this was the `Setup.lean` blocker, and it is closed |
 | everything else | open |
 
@@ -99,9 +101,18 @@ theorem upperSimpleExt_eq_saddleSwap (C : Set U) (D : Set X) (K : U × X → ℝ
     simp [upperSimpleExt, lowerSimpleExt, saddleSwap, swapReal, hu, hx]
 ```
 
-184 lines → 61, over 14 declarations, and — the point — **the transported hypotheses come out
-identical to the re-proved ones**, so no caller changes. This is the leak-free transport that §2.2
-is about.
+**Done.** And the headline number was wrong: 184 → 61 counted statements and docstrings as
+duplication. What was actually duplicated was four proofs — `dom₁_upperSimpleExt` (13 lines),
+`dom₂_upperSimpleExt` (13), `concaveConvexFn_upperSimpleExt` (14) and `partialCl₂_upperSimpleExt`
+(18) — which come to **58 proof lines, now 17**. The four slice lemmas and
+`mem_saddleClass_simpleExt_iff` are two-line `simp` calls either way and are left alone; the
+`lowerClosedFn`/`upperClosedFn` pair was already two lines each. Net file size is unchanged, because
+the 41 lines saved are spent on `swapReal`, the dictionary entry and their docstrings.
+
+The line count was never the point, and the real result stands: **the transported hypotheses come
+out identical to the re-proved ones**, so no caller changed, and Part VII now has *one*
+orientation-flipping lemma to cite instead of two parallel developments to keep aligned. This is the
+leak-free transport that §2.2 is about, and it is the template D11 asks for.
 
 ### 2.2 De-leak `reflect`'s mirror statements
 
