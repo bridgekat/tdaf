@@ -32,6 +32,9 @@ interfaces once and for all.
 
 * `IsExactSum B f g` — `f` and `g` **add exactly**: both are proper, and the infimal convolution
   defining `(f + g)*` is attained.
+* `IsExactFinsetSum B s f` — the same for a finite family: `(fᵢ)_{i ∈ s}` are proper and the
+  `m`-fold infimal convolution defining `(∑ fᵢ)*` is attained. This is the form Rockafellar states
+  Theorems 16.4, 20.1 and 23.8 in.
 * `IsExactImage B B' A A' hA g` — `g` **pulls back exactly** along `A`: `g` is proper, and the
   infimum defining `(g A)*` over the fibres of the transpose `A'` is attained.
 
@@ -44,8 +47,15 @@ interfaces once and for all.
   exact half: `(f + g)* = f* □ g*`, with the infimal convolution attained.
 * `IsExactImage.conj_compLin`, `IsExactImage.exists_conj_compLin_eq` — **Rockafellar's
   Theorem 16.3**, exact half: `(g A)* = A' (g*)`, with the infimum over the fibre attained.
-* `IsExactSum.proper_add`, `IsExactImage.proper_compLin` — the interfaces are not vacuous, and
-  they are unsatisfiable when the effective domains miss each other.
+* `conj_finsetSum_le_sum_toInfConvFn` — the unconditional half for `m` summands.
+* `IsExactFinsetSum.conj_finsetSum`, `IsExactFinsetSum.exists_conj_finsetSum_eq` —
+  **Theorem 16.4** in the book's `m`-ary form: `(f₁ + ⋯ + fₘ)* = f₁* □ ⋯ □ fₘ*`, attained.
+* `IsExactFinsetSum.singleton`, `IsExactFinsetSum.cons`, `IsExactFinsetSum.of_split` — the family
+  interface built out of binary ones, which is how every `m`-ary constraint qualification is
+  discharged.
+* `IsExactSum.proper_add`, `IsExactFinsetSum.proper_finsetSum`, `IsExactImage.proper_compLin` —
+  the interfaces are not vacuous, and they are unsatisfiable when the effective domains miss each
+  other.
 
 ## Design notes
 
@@ -71,6 +81,17 @@ already breaks it. The guard costs nothing downstream: every consumer, from
 `exists_conj_compLin_eq` to `IsExactImage.subgradient_compLin`, is looking at a point where the
 value is finite anyway, and
 properness of `g A` supplies the missing `≠ ⊥` on the other side.
+
+**The family interface is not an iterated binary one, and it is empty at `s = ∅`.** Its
+consequences are proved once for the family rather than by re-entering the binary lemma: the
+`m`-ary infimum bound `sum_toInfConvFn_le_sum` (`Operations/InfConv.lean`) puts its `≠ ⊥`
+hypothesis on each `fᵢ` and never on a partial convolute, because `□` does not preserve `≠ ⊥`, so
+the binary `infConv_le_add` cannot be iterated at all. What *does* iterate is the construction:
+`IsExactFinsetSum.cons` reduces a family to a binary hypothesis about `fᵢ` and `∑_{j ∈ t} fⱼ`, and
+that is where each constraint qualification does its work. Note that `exact_le` demands a splitting
+`y = ∑_{i ∈ s} yᵢ` for *every* `y`, so `IsExactFinsetSum B ∅ f` forces every `y : F` to be `0`:
+the empty family is not exact, in the same way and for the same reason that two functions with
+disjoint effective domains are not.
 
 **The transpose is data, not a function of `A`.** Between arbitrarily paired spaces a linear map
 need not have an adjoint, so `IsExactImage` carries `A'` and the adjointness datum
