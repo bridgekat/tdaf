@@ -113,3 +113,5 @@ import Tdaf.Analysis.Convex.Tangent
 import Tdaf.Order.EReal
 import Tdaf.Order.GaloisConnection
 import Tdaf.Surface.Common.Euclidean
+import Tdaf.Surface.Rockafellar.Part1.Section01
+import Tdaf.Surface.Rockafellar.Part1.Section02
