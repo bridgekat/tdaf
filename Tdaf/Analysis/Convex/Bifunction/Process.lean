@@ -1907,4 +1907,195 @@ end ConvexProcess
 
 end ClosedHalvesCompAdjoint
 
+/-! ### Theorem 39.3 for infimum-oriented processes
+
+For an infimum-oriented process the indicator bifunction is the *concave* function `-δ(· | A u)`,
+and the inner product `⟨Au, x*⟩` is its concave conjugate: an infimum over `A u` rather than a
+supremum. As with `adjointProcess`/`coadjointProcess`, the two orientations are separate
+definitions rather than two branches of one flag, and the whole mirror is driven by the single
+sign dictionary `coBracket_eq_neg_bracket`. -/
+
+section CoBracket
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+/-- The inner product `⟨Au, x*⟩` of an **infimum-oriented** convex process:
+`⟨Au, x*⟩ = inf {⟨x, x*⟩ | x ∈ A u}`.
+
+This is the concave conjugate of the concave indicator `-δ(· | A u)`, exactly as
+`bracket _ A.indicatorBifun u` is the convex conjugate of `δ(· | A u)`. -/
+noncomputable def coBracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) (y : Y) :
+    EReal :=
+  ⨅ x ∈ A.eval u, ((Bx x y : ℝ) : EReal)
+
+/-- The first extremum problem of Theorem 39.3 in infimum-oriented form:
+`⟨Au, x*⟩ = inf {⟨x, x*⟩ | x ∈ A u}`. -/
+theorem coBracket_apply (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) (y : Y) :
+    coBracket Bx A u y = ⨅ x ∈ A.eval u, ((Bx x y : ℝ) : EReal) := rfl
+
+/-- The **sign dictionary** between the two orientations: the infimum-oriented inner product is
+minus the supremum-oriented one, read at the reflected dual vector. Note that only the dual
+variable is reflected — the primal variable `u` is untouched, because reversing the orientation
+of a process does not reverse its argument. -/
+theorem coBracket_eq_neg_bracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U)
+    (y : Y) : coBracket Bx A u y = -(bracket Bx A.indicatorBifun u (-y)) := by
+  rw [coBracket_apply, bracket_indicatorBifun_apply, Tdaf.EReal.neg_iSup]
+  refine iInf_congr fun x => ?_
+  rw [Tdaf.EReal.neg_iSup]
+  refine iInf_congr fun _ => ?_
+  rw [← _root_.EReal.coe_neg, map_neg (Bx x) y, _root_.neg_neg]
+
+/-- The sign dictionary as an equation between functions of the primal variable. -/
+theorem coBracket_eq_neg_bracket_fun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (y : Y) :
+    (fun u => coBracket Bx A u y) = fun u => -(bracket Bx A.indicatorBifun u (-y)) :=
+  funext fun u => coBracket_eq_neg_bracket Bx A u y
+
+/-- The infimum-oriented inner product is minus a support function, read at the reflected dual
+vector. -/
+theorem coBracket_eq_neg_supportFn (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U)
+    (y : Y) : coBracket Bx A u y = -(supportFn Bx (A.eval u) (-y)) := by
+  rw [coBracket_eq_neg_bracket, bracket_indicatorBifun]
+
+/-- The negative of `⟨Au, ·⟩` is the supremum-oriented inner product composed with the linear
+reflection `x* ↦ -x*`. This is the form in which the sign dictionary feeds the convexity and
+closedness lemmas of §5 and §7. -/
+theorem neg_coBracket_eq_compLin (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) :
+    (fun y => -(coBracket Bx A u y))
+      = compLin (bracket Bx A.indicatorBifun u) (-LinearMap.id : Y →ₗ[ℝ] Y) := by
+  funext y
+  rw [coBracket_eq_neg_bracket, _root_.neg_neg]
+  simp only [compLin, Function.comp_apply, LinearMap.neg_apply, LinearMap.id_coe, id_eq]
+
+/-- **Rockafellar, Theorem 39.3**, infimum-oriented mirror: `⟨Au, ·⟩` is positively
+homogeneous. -/
+theorem posHomogeneous_coBracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) :
+    PosHomogeneous (coBracket Bx A u) := by
+  intro a ha y
+  rw [coBracket_eq_neg_bracket, coBracket_eq_neg_bracket, ← smul_neg,
+    posHomogeneous_bracket_indicatorBifun Bx A u a ha (-y), ← _root_.mul_neg]
+
+/-- **Rockafellar, Theorem 39.3**, infimum-oriented mirror: `⟨Au, ·⟩` is **concave**, being a
+concave conjugate. -/
+theorem concaveFn_coBracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) :
+    ConcaveFn (coBracket Bx A u) := by
+  rw [concaveFn_iff_convexFn_neg, neg_coBracket_eq_compLin]
+  exact convexFn_compLin _ (convexFn_bracket_indicatorBifun Bx A u)
+
+/-- **Rockafellar, Theorem 39.3**, infimum-oriented mirror: `⟨A ·, x*⟩` is positively
+homogeneous. -/
+theorem posHomogeneous_coBracket_arg (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (y : Y) :
+    PosHomogeneous fun u => coBracket Bx A u y := by
+  intro a ha u
+  change coBracket Bx A (a • u) y = (a : EReal) * coBracket Bx A u y
+  rw [coBracket_eq_neg_bracket, coBracket_eq_neg_bracket, _root_.mul_neg]
+  exact congrArg Neg.neg (posHomogeneous_bracket_indicatorBifun_arg Bx A (-y) a ha u)
+
+/-- **Rockafellar, Theorem 39.3**, infimum-oriented mirror: `⟨A ·, x*⟩` is **convex**, where in the
+supremum-oriented case it is concave. Reversing the orientation of a process exchanges convexity
+and concavity in both variables at once. -/
+theorem convexFn_coBracket_arg (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (y : Y) :
+    ConvexFn fun u => coBracket Bx A u y := by
+  rw [coBracket_eq_neg_bracket_fun]
+  exact concaveFn_iff_convexFn_neg.1 (concaveFn_bracket_indicatorBifun Bx A (-y))
+
+/-- **Rockafellar, Theorem 39.4**, infimum-oriented mirror: the inner product vanishes at the
+origin. -/
+@[simp] theorem coBracket_zero_zero (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) :
+    coBracket Bx A 0 (0 : Y) = 0 := by
+  rw [coBracket_eq_neg_bracket, _root_.neg_zero, bracket_indicatorBifun_zero_zero,
+    _root_.neg_zero]
+
+end ConvexProcess
+
+end CoBracket
+
+section CoBracketClosed
+
+variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
+  [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+  {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsContinuousPairing Bx.flip]
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.3**, infimum-oriented mirror: `⟨Au, ·⟩` is a closed concave
+function, the reflection `x* ↦ -x*` being a homeomorphism. -/
+theorem closedConcaveFn_coBracket (A : ConvexProcess U X) (u : U) :
+    ClosedConcaveFn (coBracket Bx A u) := by
+  rw [closedConcaveFn_iff, neg_coBracket_eq_compLin]
+  exact closedFn_compLin (closedFn_bracket_indicatorBifun A u) (continuous_neg (G := Y))
+
+end ConvexProcess
+
+end CoBracketClosed
+
+section CoBracketAdjoint
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+namespace ConvexProcess
+
+omit [Module ℝ U] [Module ℝ V] [AddCommGroup X] [Module ℝ X] [AddCommGroup Y]
+  [Module ℝ Y] in
+/-- A supremum over a reflected set is the supremum of the reflected integrand. -/
+private theorem iSup_mem_neg (s : Set V) (f : V → EReal) :
+    ⨆ v ∈ -s, f v = ⨆ v ∈ s, f (-v) := by
+  refine le_antisymm (iSup₂_le fun v hv => ?_) (iSup₂_le fun v hv => ?_)
+  · rw [Set.mem_neg] at hv
+    exact le_iSup₂_of_le (-v) hv (le_of_eq (by rw [_root_.neg_neg]))
+  · refine le_iSup₂_of_le (-v) ?_ le_rfl
+    rw [Set.mem_neg, _root_.neg_neg]
+    exact hv
+
+/-- The second extremum problem of Theorem 39.3 in infimum-oriented form:
+`⟨u, A* x*⟩ = sup {⟨u, u*⟩ | u* ∈ A* x*}`, where `A*` is now the infimum-oriented adjoint
+`coadjointProcess`, whose values are the reflections of those of `adjointProcess`. -/
+theorem iSup_coadjointProcess_eq_neg_concaveBracket (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (u : U) (y : Y) :
+    ⨆ v ∈ (coadjointProcess Bu Bx A).eval y, ((Bu u v : ℝ) : EReal)
+      = -(concaveBracket Bu (adjointBifun Bu Bx A.indicatorBifun) u (-y)) := by
+  rw [concaveBracket_adjointBifun_indicatorBifun, coadjointProcess_eq_reflect_adjointProcess,
+    eval_reflect, iSup_mem_neg, Tdaf.EReal.neg_iInf]
+  refine iSup_congr fun v => ?_
+  rw [Tdaf.EReal.neg_iInf]
+  refine iSup_congr fun _ => ?_
+  rw [map_neg (Bu u) v, _root_.EReal.coe_neg]
+
+end ConvexProcess
+
+end CoBracketAdjoint
+
+section CoBracketClosure
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace U]
+  [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+
+namespace ConvexProcess
+
+/-- **Rockafellar, Theorem 39.3**, third assertion, infimum-oriented mirror:
+`⟨u, A* x*⟩ = cl_u ⟨Au, x*⟩`.
+
+The closure is now the ordinary convex closure `clFn`, because `⟨A ·, x*⟩` is convex rather than
+concave (`convexFn_coBracket_arg`); in the supremum-oriented statement
+`concaveBracket_adjointBifun_indicatorBifun_eq_partialCl₁` it is the concave closure `clConcave`
+packaged as `partialCl₁`. As there, closedness of `A` plays no part. -/
+theorem iSup_coadjointProcess_eq_clFn (A : ConvexProcess U X) (y : Y) :
+    (fun u => ⨆ v ∈ (coadjointProcess Bu Bx A).eval y, ((Bu u v : ℝ) : EReal))
+      = fun u => clFn (fun u' => coBracket Bx A u' y) u := by
+  funext u
+  have h := congrFun (concaveBracket_adjointBifun_indicatorBifun_eq_partialCl₁
+    (Bu := Bu) (Bx := Bx) A (-y)) u
+  simp only [partialCl₁_apply, clConcave_apply] at h
+  rw [iSup_coadjointProcess_eq_neg_concaveBracket Bu Bx, h, coBracket_eq_neg_bracket_fun,
+    _root_.neg_neg]
+
+end ConvexProcess
+
+end CoBracketClosure
+
 end Tdaf.ConvexAnalysis
