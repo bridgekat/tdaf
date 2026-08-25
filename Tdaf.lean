@@ -40,6 +40,7 @@ import Tdaf.Analysis.Convex.Operations.Hull
 import Tdaf.Analysis.Convex.Operations.Image
 import Tdaf.Analysis.Convex.Operations.InfConv
 import Tdaf.Analysis.Convex.Optimization.Adjoint
+import Tdaf.Analysis.Convex.Optimization.ConeDuality
 import Tdaf.Analysis.Convex.Optimization.Fenchel
 import Tdaf.Analysis.Convex.Optimization.Lagrangian
 import Tdaf.Analysis.Convex.Optimization.Minimum

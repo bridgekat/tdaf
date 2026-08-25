@@ -1113,23 +1113,11 @@ theorem argmin_nonempty_and_isBounded_iff_exists_setOf_le (hf : ConvexFn f) (hc 
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] [IsCompatiblePairing B]
   [IsCompatiblePairing B.flip] in
-/-- Raising the conjugate by a real constant lowers the biconjugate by the same constant. -/
+/-- Raising the conjugate by a real constant lowers the biconjugate by the same constant. This is
+the constant row of **Theorem 12.3** (`conj_add_const`) read on the dual pair. -/
 theorem conj_flip_conj_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α : ℝ) (x : E) :
-    conj B.flip (fun y => conj B f y + (α : EReal)) x = biconj B f x - (α : EReal) := by
-  have hpt : ∀ (u : ℝ) (c : EReal), (u : EReal) - (c + (α : EReal))
-      = ((u : EReal) - c) + ((-α : ℝ) : EReal) := by
-    intro u c
-    induction c with
-    | bot => simp
-    | top => simp
-    | coe d =>
-        rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub,
-          ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff]
-        ring
-  rw [conj_apply]
-  simp only [hpt]
-  rw [← Tdaf.EReal.iSup_add_coe, _root_.EReal.coe_neg, ← sub_eq_add_neg]
-  rfl
+    conj B.flip (fun y => conj B f y + (α : EReal)) x = biconj B f x - (α : EReal) :=
+  conj_add_const B.flip (conj B f) α x
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
 /-- **Rockafellar, Theorem 27.1(g)**, first sentence: for each real `α` the support function of

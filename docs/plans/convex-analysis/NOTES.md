@@ -26,7 +26,21 @@ theorem coe_sub_le_comm {a : ℝ} {z w : EReal} : (a : EReal) - z ≤ w ↔ (a :
 theorem le_coe_sub_comm {a : ℝ} {z w : EReal} : z ≤ (a : EReal) - w ↔ w ≤ (a : EReal) - z
 theorem neg_iSup {ι : Sort*} (u : ι → EReal) : -(⨆ i, u i) = ⨅ i, -(u i)
 theorem neg_iInf {ι : Sort*} (u : ι → EReal) : -(⨅ i, u i) = ⨆ i, -(u i)
+theorem coe_add_sub (p q : ℝ) (u : EReal) :
+    ((p + q : ℝ) : EReal) - u = (((p : ℝ) : EReal) - u) + ((q : ℝ) : EReal)
+theorem coe_sub_add_coe (p q : ℝ) (u : EReal) :
+    ((p : ℝ) : EReal) - (u + ((q : ℝ) : EReal)) = ((p - q : ℝ) : EReal) - u
+theorem iSup_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
+    (⨆ i, u i) + (r : EReal) = ⨆ i, (u i + (r : EReal))
+theorem biInf_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
+    (⨅ a ∈ s, u a) + (r : EReal) = ⨅ a ∈ s, (u a + (r : EReal))
+theorem add_coe_right_cancel {u v : EReal} {r : ℝ} (h : u + (r : EReal) = v + (r : EReal)) : u = v
 ```
+
+`coe_add_sub` and `coe_sub_add_coe` are the pair that make **Theorem 12.3** hypothesis-free: a
+*real* summand slides across a difference from either side with no side condition, because it
+cannot produce `∞ - ∞`. `biInf_add_coe` and `add_coe_right_cancel` are what let Corollary 31.4.3
+move its constant `⟨z, z*⟩` in and out of an infimum.
 
 `coe_sub_le_comm` carries §12; `le_coe_sub_comm` is its mirror and carries the concave §12. Both are
 unconditional because `a` is finite. `neg_iSup`/`neg_iInf` are what make the sign dictionary of
@@ -88,6 +102,8 @@ theorem le_iff_epi_subset {f g : E → EReal} : f ≤ g ↔ epi g ⊆ epi f
 
 def dom (f : E → EReal) : Set E := {x | f x < ⊤}
 @[simp] theorem mem_dom {f : E → EReal} {x : E} : x ∈ dom f ↔ f x < ⊤
+theorem ConvexFn.comp_add_left {f : E → EReal} (hf : ConvexFn f) (a : E) :
+    ConvexFn (fun x => f (a + x))
 
 structure Proper (f : E → EReal) : Prop where
   dom_nonempty : (dom f).Nonempty
@@ -389,6 +405,47 @@ needs properness, see gotcha 23), `conj_le_iff` (the adjunction, unconditional),
 `gc_conj_conj`/`conjClosure`, and two instantiations, both in the space's *own* topology:
 `_topDual` (a locally convex space against its continuous dual — so, a Banach space in its norm
 topology) and `_inner` (Hilbert/`ℝⁿ`, via Fréchet–Riesz).
+
+Since §31, the file also carries **Theorem 12.3**, the table of elementary conjugacy operations,
+one named lemma per row and all of them **layer A with no hypothesis on `h` whatsoever**:
+
+```lean
+theorem conj_comp_sub (B) (h) (a : E) (y : F) :
+    conj B (fun x => h (x - a)) y = conj B h y + ((B a y : ℝ) : EReal)
+theorem conj_add_pairing (B) (h) (b : F) (y : F) :
+    conj B (fun x => h x + ((B x b : ℝ) : EReal)) y = conj B h (y - b)
+theorem conj_add_const (B) (h) (α : ℝ) (y : F) :
+    conj B (fun x => h x + (α : EReal)) y = conj B h y - (α : EReal)
+theorem conj_comp_linearEquiv (A : E ≃ₗ[ℝ] G) (A' : H ≃ₗ[ℝ] F)
+    (hA : IsAdjointPair B B' A A') (h : G → EReal) (y : F) :
+    conj B (fun x => h (A x)) y = conj B' h (A'.symm y)
+theorem conj_comp_affine (A) (A') (hA) (h) (a : E) (b : F) (α : ℝ) (y : F) :
+    conj B (fun x => h (A (x - a)) + ((B x b : ℝ) : EReal) + (α : EReal)) y
+      = conj B' h (A'.symm (y - b)) + ((B a y : ℝ) : EReal) + ((-α - B a b : ℝ) : EReal)
+```
+
+with `conj_comp_add` and `conj_sub_pairing` for the two rows written with the opposite sign, and
+`conj_comp_add_sub_pairing` for the instance §31 runs on,
+`(h (z + ·) - ⟨·, z*⟩)* = h* (z* + ·) - ⟨z, ·⟩ - ⟨z, z*⟩`.
+
+**Why every row is hypothesis-free.** What is slid across `⟨x, y⟩ - h x` is always a *real* number,
+so `Tdaf.EReal.coe_add_sub` and `Tdaf.EReal.coe_sub_add_coe` apply with no side condition and the
+identities hold for improper `h` too. Rockafellar's own statement asks for `h` convex; that is not
+needed.
+
+**The substitution row carries its transpose as data.** Rockafellar writes `A*⁻¹`, presuming that
+`A` has an adjoint and that the adjoint is invertible. Over a general pairing neither is automatic,
+so `conj_comp_linearEquiv` takes the inverse pair `A`, `A'` together with
+`IsAdjointPair B B' A A'`. With `B` and `B'` separating nothing is lost. The scaling rows of the
+same table are Theorem 16.1 (`conj_smul`, `conj_smulRight`, `Duality/Ops.lean`), which were already
+there.
+
+**One row of Theorem 12.3 was already in the library under another name.**
+`conj_flip_conj_add_coe` in `Optimization/Minimum.lean` — "raising the conjugate by a real constant
+lowers the biconjugate by the same constant" — is exactly `conj_add_const B.flip (conj B f) α x`,
+and its fifteen-line `induction`-on-`EReal` proof is now that one term. Anything else in the library
+that hand-rolls an `EReal` constant or linear shift under a `conj` should be checked against this
+section before being written again.
 
 ### `Tdaf/Analysis/Convex/Duality/ConcaveConj.lean`
 
@@ -1956,10 +2013,58 @@ reindexing is not bookkeeping, it is exactly the step that converts `K°` into `
 `∀ a : ℝ, 0 < a → a • K = K` fails to elaborate without it, with a
 `failed to synthesize HSMul ℝ (Set E)` error that does not mention the missing `open`.
 
-**Not done**: Thm 31.2 and Cors 31.2.1, 31.4.1. Thm 31.2 is stated for bifunctions and waits on
-§§29–30; Cor 31.2.1 (a linear map interposed) needs `conj (f ∘ A)` as an image, the sup-analogue of
-`mapLin`; Cor 31.4.1 is Thm 31.4 for the non-negative orthant of a coordinate space and belongs to
-the surface layer.
+**Theorem 31.4's attainment clauses were missing, and one of them is free.** The file had only
+the duality *equation* `iInf_mem_eq_neg_iInf_mem_neg_polarCone`. Rockafellar's "under (a) the
+infimum of `f*` over `K*` is attained" is `IsExactSum.exact_le` read at the origin: exactness
+supplies a splitting `0 = y₁ + y₂` with `f* y₁ + (δ(·|K))* y₂ ≤ (f + δ(·|K))* 0`, the second
+conjugate is `δ(· | K°)` by Theorem 14.1, so `y₂ ∈ K°`, `y₁ = -y₂ ∈ K*`, and
+`(f + δ(·|K))* 0` *is* the dual infimum (`conj_add_indicatorFn_zero_eq_iInf_mem_neg_polarCone`,
+which is Theorem 27.1(a) composed with the duality equation). No separation argument at all. The
+degenerate branch `y₂ ∉ K°` forces the dual infimum to be `⊤`, which the origin attains.
+
+Attainment of the *primal* infimum — Rockafellar's condition (b) — is that statement applied with
+`B.flip`, `f*` and `K*`, closed by `K** = K` (`neg_polarCone_neg_polarCone`, added to
+`Duality/Polar.lean`) and by Fenchel–Moreau. `biconj B f = f` is taken as a hypothesis rather than
+derived, so the statement needs no compatibility assumption on the `F` side; only the bipolar makes
+`exists_mem_eq_iInf_of_isExactSum_conj` layer C rather than layer A.
+
+`iInf_mem_eq_iInf_add_indicatorFn` was `private`; Corollary 31.4.3 needs it, so it is now public.
+It is a **relocation candidate** — it says nothing about pairings and belongs with `indicatorFn`.
+
+**Not done**: Cor 31.4.1, Thm 31.4 for the non-negative orthant of a coordinate space, which
+belongs to the surface layer.
+
+### `Tdaf/Analysis/Convex/Optimization/ConeDuality.lean`
+
+§31's **Corollary 31.4.3**: for `h` convex, finite everywhere and co-finite and `K` a nonempty
+convex cone,
+
+```lean
+theorem iInf_mem_add_iInf_mem_neg_polarCone_eq_pairing (hcof : Cofinite h) (hdom : dom h = univ)
+    (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (z : E) (z' : F) :
+    (⨅ x ∈ K, (h (z + x) - ((B x z' : ℝ) : EReal)))
+        + (⨅ w ∈ -(polarCone B K), (conj B h (z' + w) - ((B z w : ℝ) : EReal)))
+      = ((B z z' : ℝ) : EReal)
+```
+
+with `exists_iInf_mem_eq_of_cofinite` / `exists_iInf_mem_neg_polarCone_eq_of_cofinite` for
+attainment and `exists_iInf_mem_eq_coe_of_cofinite` /
+`exists_iInf_mem_neg_polarCone_eq_coe_of_cofinite` for finiteness.
+
+**The whole proof is Theorem 12.3 then Theorem 31.4.** `f = h (z + ·) - ⟨·, z*⟩` has `dom f = E`
+because `h` is finite and `dom f* = F` because `h` is co-finite (Corollary 13.3.1), so Corollary
+10.1.1 makes both `f` and `f*` continuous and `IsExactSum.of_continuousAt` discharges *both* of
+Rockafellar's conditions. The constant `⟨z, z*⟩` is the `α*` of Theorem 12.3.
+
+**A separate module, not an addition to `Fenchel.lean`.** The corollary needs `Continuity.lean`
+(Theorem 10.1) and `Duality/Continuity.lean` (`IsExactSum.of_continuousAt`), neither of which
+`Fenchel.lean` imports; putting it there would drag layer-D dependencies into a file whose §31
+content is layer A and layer C. The general attainment lemmas *did* go into `Fenchel.lean`, because
+they need nothing new.
+
+**Closedness of `K` is used only for the primal attainment**, through the bipolar. Rockafellar
+states `K` closed for the whole corollary; the identity, the finiteness of both infima and the dual
+attainment hold for any nonempty convex cone.
 
 ### `Tdaf/Analysis/Convex/Optimization/Moreau.lean`
 
@@ -5966,7 +6071,9 @@ C/c := rfl` cannot be `rw`-ed in — the reported failure is an "Application typ
 
 299. **The `unusedSectionVars` linter cascades, and over-`omit`ting turns a warning into an error
 one declaration later.** Each `omit` you add changes what the *next* declaration needs, so the
-warnings have to be driven to a fixed point — six rounds for `Optimization/Prox.lean`. And an
+warnings have to be driven to a fixed point — six rounds for `Optimization/Prox.lean`, four for
+`Optimization/ConeDuality.lean` — and the reported line numbers move each round, since every
+`omit` inserts a line. And an
 `omit` guessed from a warning that does not list its variables (the linter sometimes prints only
 the declaration name) can remove an instance the proof does use; the next build then reports
 "failed to synthesize" at a line the warning never mentioned.
@@ -6018,6 +6125,55 @@ strictly cheaper: `Submodule.exists_isCompl` supplies `N`, the decomposition is 
 `C ∩ N` is polyhedral by `Polyhedral.inter` with `polyhedral_coe_submodule` — no image lemma, no
 `recessionCone_image`, no dependency on `Minimum.lean`. Cor 32.3.3 takes the second route,
 Thm 27.3's polyhedral refinement the first.
+
+306. **`rw` rewrites *every* occurrence of the instantiated pattern, so repeating the rewrite
+fails.** `rw [← polarCone_neg, ← polarCone_neg]` on
+`a • -(polarCone B K) = -(polarCone B K)` errors on the *second* rewrite with "did not find an
+occurrence", because the first already turned both sides into `polarCone B (-K)`. The habit of
+listing one rewrite per occurrence is wrong; list one per *distinct instantiation*.
+
+307. **A bare `rw [map_sub]` or `rw [map_neg]` in a goal with nested applications hits the wrong
+one.** In `conj B' h (A'.symm (y - b)) + ↑(B a (y - b)) - ↑α = …`, `rw [map_sub]` unifies with
+`A'.symm (y - b)` and silently splits the *substitution* instead of the pairing. Worse,
+`map_neg`'s pattern `?f (-?a)` matches both `B (-x)` (with `f := B`) and `(B (-x)) (-y)` (with
+`f := B (-x)`). Always supply the arguments: `map_sub (B a) y b`, `map_neg B x`,
+`map_neg (B x) y`. For `B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ`, note that `map_sub (B a) y b` already produces
+`B a y - B a b` — a following `LinearMap.sub_apply` then fails with "no occurrence", whereas
+`map_sub B x y` produces `(B x - B y)` and *does* need it.
+
+308. **`IsAdjointPair B B' ↑A ↑A'` will not `rw` into a goal that mentions `A x` for a
+`LinearEquiv` `A`.** `↑(↑A : E →ₗ[ℝ] G) x` and `⇑A x` are definitionally equal but not
+syntactically equal, and `rw` sees only the latter in a goal built by reindexing along
+`A.toEquiv`. Re-ascribe the datum once —
+`have hAx : ∀ (x : E) (z : H), B' (A x) z = B x (A' z) := hA` — and rewrite with `hAx`. The `have`
+typechecks by `rfl`. The same trick fixes `hbi : biconj B f = f` failing to rewrite a goal in which
+the `abbrev` has already been unfolded to `conj B.flip (conj B f)`.
+
+309. **Chain the rows of Theorem 12.3 with typed `have`s, not with `rw`.** Rewriting
+`conj B (fun x => h (A (x - a)) + ⟨x, b⟩ + α) y` by `conj_comp_sub` asks `rw` to solve
+`?f (x - a) =?= h (A (x - a))`, which is *not* a Miller pattern, so unification either fails or
+picks a constant `?f`. Writing
+`have e3 : conj B (fun x => h (A (x - a))) (y - b) = … :=`
+`conj_comp_sub B (fun x => h (A x)) a (y - b)` instead makes the beta-reduction a *typechecking* obligation, which Lean discharges by `rfl`, and
+the resulting equations chain by an ordinary `rw [e1, e2, e3, e4]`.
+
+310. **`biInf_le` does not exist in this Mathlib; the name is `iInf₂_le`.** And `iInf₂_le i hi`
+cannot elaborate without an expected type, because the family `f` is a metavariable: write
+`have h : (⨅ w ∈ S, g w) ≤ g y := iInf₂_le y hy`, not `have h := iInf₂_le y hy`. In `exact`
+position, where the goal fixes `f`, the bare form is fine.
+
+311. **`simp` does not close the `⊥` and `⊤` branches of an `EReal` subtraction identity.** For
+`(p : EReal) - (u + (q : EReal)) = ((p - q : ℝ) : EReal) - u`, `induction u with | bot => simp`
+leaves `⊤ = ↑p - ↑q - ⊥`: `simp` pushes the coercion apart and then has no lemma for `_ - ⊥`. The
+named lemmas are `EReal.sub_bot (h : a ≠ ⊥)`, `EReal.sub_top`, `EReal.bot_add` and
+`EReal.top_add_coe`, and spelling them out is shorter than making `simp` work. Note also that
+`EReal.sub_add_cancel : a - (b : ℝ) + b = a` and `EReal.add_sub_cancel_right : a + (b : ℝ) - b = a`
+are hypothesis-free — the subtrahend is a *real* by the statement, not an `EReal`.
+
+312. **`Tdaf.lean` is not actually sorted.** `Tdaf.Analysis.Convex.Optimization.Maximum` sits after
+`…Prox`, not between `…Lagrangian` and `…Minimum`. Nothing depends on the order, but a future
+"insert alphabetically" instruction will look wrong wherever you put the new line; the fix is a
+separate one-line commit, not a drive-by.
 
 ## 3. Build and verification
 

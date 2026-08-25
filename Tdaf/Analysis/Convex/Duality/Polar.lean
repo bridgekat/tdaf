@@ -35,6 +35,9 @@ cones. That restriction is polarity, and it is proved here from
   operator.
 * `isClosed_polarCone`, `polarPointedCone` — **Theorem 14.1**, first assertion: `K°` is a
   nonempty closed convex cone, for *any* `K`.
+* `polarCone_neg`, `smul_neg_polarCone`, `zero_mem_neg_polarCone`, `convex_neg_polarCone`,
+  `neg_polarCone_neg_polarCone` — the same facts for Rockafellar's *dual* cone `K* = -K°`, which
+  is what §31 pairs with `K`; the last is `K** = K` for a nonempty closed convex cone.
 * `polarSet_polarSet` — **Theorem 14.5**, first assertion: `C°° = C` for a closed convex `C`
   containing the origin.
 * `polarCone_coe_submodule`, `polarCone_hull_range`,
@@ -290,6 +293,41 @@ theorem smul_coe_pointedCone (K : PointedCone ℝ E) (a : ℝ) (ha : 0 < a) :
 theorem smul_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) (a : ℝ) (ha : 0 < a) :
     a • polarCone B K = polarCone B K := smul_coe_pointedCone (polarPointedCone B K) a ha
 
+/-- **Negating the cone negates its polar**: `(-K)° = -(K°)`. Together with Theorem 14.1 this is
+what makes Rockafellar's dual cone `K* = -K°` an involution — see
+`neg_polarCone_neg_polarCone`. -/
+theorem polarCone_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
+    polarCone B (-K) = -(polarCone B K) := by
+  ext y
+  rw [Set.mem_neg, mem_polarCone, mem_polarCone]
+  refine ⟨fun hy u hu => ?_, fun hy x hx => ?_⟩
+  · have h := hy (-u) (Set.mem_neg.2 (by rwa [neg_neg]))
+    rw [map_neg B u, LinearMap.neg_apply] at h
+    rwa [map_neg (B u) y]
+  · have h := hy (-x) (Set.mem_neg.1 hx)
+    rwa [map_neg B x, LinearMap.neg_apply, map_neg (B x) y, neg_neg] at h
+
+/-- Rockafellar's dual cone `K* = -K°` is itself invariant under every positive scaling, so it
+meets the cone hypothesis of Theorem 31.4. -/
+theorem smul_neg_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) (a : ℝ) (ha : 0 < a) :
+    a • (-(polarCone B K)) = -(polarCone B K) := by
+  rw [← polarCone_neg]
+  exact smul_polarCone B (-K) a ha
+
+/-- The origin lies in Rockafellar's dual cone `K* = -K°`, whatever `K` is. -/
+theorem zero_mem_neg_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
+    (0 : F) ∈ -(polarCone B K) := by
+  rw [Set.mem_neg, neg_zero, mem_polarCone]
+  exact fun x _ => le_of_eq (map_zero (B x))
+
+/-- Rockafellar's dual cone `K* = -K°` is nonempty: it always contains the origin. -/
+theorem neg_polarCone_nonempty (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
+    (-(polarCone B K)).Nonempty := ⟨0, zero_mem_neg_polarCone B K⟩
+
+/-- Rockafellar's dual cone `K* = -K°` is convex. -/
+theorem convex_neg_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
+    Convex ℝ (-(polarCone B K)) := (convex_polarCone B K).neg
+
 /-! ### Bridges to Mathlib -/
 
 /-- **Mathlib's dual cone is the inner one.** `PointedCone.dual B s = {y | ∀ x ∈ s, 0 ≤ ⟨x, y⟩}`, so
@@ -464,6 +502,14 @@ theorem polarCone_polarCone_pointedCone (K : PointedCone ℝ E) (hcl : IsClosed 
     polarCone B.flip (polarCone B (K : Set E)) = (K : Set E) :=
   polarCone_polarCone_of_isClosed (K : ConvexCone ℝ E).convex
     (smul_coe_pointedCone K) ⟨0, K.zero_mem⟩ hcl
+
+/-- **Rockafellar, Theorem 14.1** in the form §31 states it: `K** = K` for a nonempty closed convex
+cone, where `K* = -K°` is the dual cone of Theorem 31.4. The two sign flips cancel against the one
+of `polarCone_neg`. -/
+theorem neg_polarCone_neg_polarCone (hconv : Convex ℝ K)
+    (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (hcl : IsClosed K) :
+    -(polarCone B.flip (-(polarCone B K))) = K := by
+  rw [polarCone_neg, neg_neg, polarCone_polarCone_of_isClosed hconv hcone hne hcl]
 
 /-- **Rockafellar, Theorem 14.1**, third assertion, in the remaining direction: for a nonempty
 closed convex cone the indicator of `K°` conjugates back to the indicator of `K`. -/

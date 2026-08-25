@@ -26,6 +26,8 @@ following Rockafellar, *Convex Analysis*, §4.
   strict inequalities. This is the form that avoids `∞ - ∞` entirely.
 * `convexFn_iff_le` — Rockafellar's Theorem 4.1, the familiar inequality, valid when `f` never
   takes the value `⊥`.
+* `convexFn_add_coe`, `ConvexFn.comp_add_left` — the two elementary operations that preserve
+  convexity outright: adding a real-valued affine coordinate, and translating the argument.
 * `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — Theorem 4.6.
 * `convexOn_iff_convexFn` — the bridge to Mathlib's `ConvexOn`.
 
@@ -194,6 +196,16 @@ theorem convexFn_add_coe {f : E → EReal} (hf : ConvexFn f) {l : E → ℝ}
   refine Tdaf.EReal.add_coe_le_coe_iff.2 (hcomb.trans (le_of_eq ?_))
   rw [_root_.EReal.coe_eq_coe_iff, hl x y a b hab]
   ring
+
+/-- **Translating the argument preserves convexity.** `x ↦ f (a + x)` is convex whenever `f` is,
+for any `a`; the epigraph of the translate is the translate of the epigraph. -/
+theorem ConvexFn.comp_add_left {f : E → EReal} (hf : ConvexFn f) (a : E) :
+    ConvexFn (fun x => f (a + x)) := by
+  refine convexFn_of_epi_combo fun x y μ ν hx hy s t hs ht hst => ?_
+  have hcombo := hf.epi_combo (x := a + x) (y := a + y) hx hy hs ht hst
+  have hkey : s • (a + x) + t • (a + y) = a + (s • x + t • y) := by
+    rw [smul_add, smul_add, add_add_add_comm, ← add_smul, hst, one_smul]
+  rwa [hkey] at hcombo
 
 /-! ### Theorem 4.2 -/
 

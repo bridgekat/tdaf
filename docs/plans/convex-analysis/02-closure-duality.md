@@ -198,7 +198,13 @@ noncomputable abbrev biconj (B) (f : E → EReal) : E → EReal := conj B.flip (
 | `biconj_eq_clFn` | `biconj B f = clFn f` for convex `f` — **Fenchel–Moreau** | **Thm 12.2** |
 | `conjEquiv` | the induced involution on `ClosedProperConvexFn` | Cor 12.2.1 |
 | `conj_eq_iSup_relint` | the sup may be restricted to `ri (dom f)` | Cor 12.2.2 *(finite-dim)* |
-| `conj_comp_affine` | conjugate of `f ∘ T` for an affine `T` | Thm 12.3 |
+| `conj_comp_sub`, `conj_comp_add` — **done**, in `Duality/Conjugate.lean` | `(h(· - a))* = h* + ⟨a, ·⟩` — the translation row | **Thm 12.3** |
+| `conj_add_pairing`, `conj_sub_pairing` — **done** | `(h + ⟨·, b⟩)* = h*(· - b)` — the tilting row | **Thm 12.3** |
+| `conj_add_const` — **done** | `(h + α)* = h* - α` — the constant row | **Thm 12.3** |
+| `conj_comp_linearEquiv` — **done** | `(h A)* = h* (A'⁻¹ ·)` for an invertible `A` — the substitution row. Over a general pairing the transpose is *data*: the statement takes `A : E ≃ₗ G`, `A' : H ≃ₗ F` and `IsAdjointPair B B' A A'`, because between arbitrarily paired spaces a linear map need not have an adjoint and an adjoint need not be invertible | **Thm 12.3** |
+| `conj_comp_affine` — **done** | the book's combined formula `f = h(A(· - a)) + ⟨·, a*⟩ + α ↦ f* = h*(A*⁻¹(· - a*)) + ⟨a, ·⟩ + α*`, `α* = -α - ⟨a, a*⟩`; `conj_comp_add_sub_pairing` is the instance §31 runs on | **Thm 12.3** |
+| — | the *scaling* rows of the same table | **Thm 16.1** — `conj_smul`, `conj_smulRight` in `Duality/Ops.lean`, already done |
+| — | the partial affine functions: `f = δ(· \| L + a) + ⟨·, a*⟩ + α` has `f* = δ(· \| L^⊥ + a*) + ⟨·, a⟩ + α*`, and the Tucker-representation form | §12, not done. The first is Thm 12.3 at `h = δ(· \| L)`, `A = I`, and needs only `conj_indicatorFn_eq_indicatorFn_polarCone` plus `polarCone_coe_submodule'`; the Tucker form is a statement about coordinates on `Rᴺ` and belongs to the surface layer |
 | `monotoneConj`, `monotoneConj_monotoneConj` — **done**, in `Duality/GaugeLike.lean` | the monotone conjugate `g⁺`, in one dimension | **Thm 12.4**. Stated as a genuine involution by *truncating* `g⁺` to `+∞` off the half-line; the proof is Fenchel–Moreau for `mulPairing`. There is no general-cone version: the `ℝⁿ` orthant proof uses `y ↦ max(y,0)`, which no general cone supplies |
 
 **Proof plan for `biconj_eq_clFn`.**
