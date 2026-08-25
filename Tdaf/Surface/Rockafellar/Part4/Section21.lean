@@ -47,7 +47,7 @@ two declarations: `theorem_21_k` is the disjunction — the half with content �
 | Theorem 21.5 | `theorem_21_5` |
 | Theorem 21.6 | `theorem_21_6` |
 | Corollary 21.6.1 | `corollary_21_6_1` |
-| Corollary 21.6.2 | `corollary_21_6_2` |
+| Corollary 21.6.2 | `corollary_21_6_2`, `corollary_21_6_2_affine` |
 
 ## Two hypotheses that look like typos and are not
 
@@ -77,12 +77,8 @@ No `0⁺` bookkeeping appears anywhere in this section.
   exercise." It is unnumbered, the book supplies no proof, and its forward direction needs the
   recession-cone-of-an-intersection theory of §8 in a form the backbone states only for finitely
   many closed convex sets with a common point.
-* **Corollary 21.6.2 for Theorem 21.2** — *omitted with a reason*, and it is a backbone gap. The
-  book's Corollary 21.6.2 covers Theorems 21.1 *and* 21.2; `sparse_alternative_of_convex_system`
-  covers only 21.1. The missing step is Corollary 21.6.1 applied to a *mixed* system whose weak
-  part is affine, followed by Theorem 21.2 on the selected subsystem, with the multiplier count
-  taken over `ι ⊕ κ` rather than over `ι`; that is a backbone theorem, not surface work. See the
-  report.
+
+Everything else in the section's range is here.
 
 ## A citation the book gets wrong
 
@@ -508,8 +504,8 @@ The sparsity is stated as a `Finset` `S` of size at most `n + 1` outside which e
 which avoids having to decide `λᵢ ≠ 0`. Extending a short multiplier vector by zeros is harmless
 precisely because `0 · (+∞) = 0` in `EReal`.
 
-**The book states this for Theorem 21.2 as well**; that half is a backbone gap and is recorded in
-the module docstring.
+**The book states this for Theorem 21.2 as well**; that half is `corollary_21_6_2_affine`, which
+the backbone does not have and which is proved here from Corollary 21.6.1 and Theorem 21.2.
 
 Specialises `sparse_alternative_of_convex_system`. -/
 theorem corollary_21_6_2 {ι : Type*} [Fintype ι] [Nonempty ι] {C : Set (Rn n)}
@@ -520,5 +516,99 @@ theorem corollary_21_6_2 {ι : Type*} [Fintype ι] [Nonempty ι] {C : Set (Rn n)
         (∀ i, 0 ≤ l i) ∧ l ≠ 0 ∧ ∀ x ∈ C, (0 : EReal) ≤ ∑ i, (l i : EReal) * f i x := by
   simpa only [finrank_euclideanSpace_fin] using
     sparse_alternative_of_convex_system hC hf hp hdom
+
+/-- A real affine function of `ℝⁿ`, read into `EReal`, is a convex function. This is what lets the
+affine constraints of Theorem 21.2 enter Corollary 21.6.1's finite collection of convex sets. -/
+theorem convexFn_coe_affineMap (g : Rn n →ᵃ[ℝ] ℝ) : ConvexFn (fun x => ((g x : ℝ) : EReal)) := by
+  refine convexFn_of_epi_combo fun x y p q hx hy s t hs ht hst => ?_
+  rw [_root_.EReal.coe_le_coe_iff] at hx hy ⊢
+  rw [Convex.combo_affine_apply hst]
+  simp only [smul_eq_mul]
+  nlinarith
+
+/-- **Rockafellar, Corollary 21.6.2** for **Theorem 21.2**: if alternative (b) holds there, the
+`λ₁, …, λ_m` can be chosen so that no more than `n + 1` of them differ from `0` — the count running
+over the affine multipliers as well as the convex ones, since the book's `λ₁, …, λ_m` is one list.
+
+The book's proof, verbatim: if alternative (a) fails it already fails for a subsystem of at most
+`n + 1` inequalities (Corollary 21.6.1, with the affine constraints read as the convex functions
+`x ↦ ⟨aⱼ, x⟩ - αⱼ`), and Theorem 21.2 applied to that subsystem produces multipliers which extend
+by zero. Unlike `corollary_21_6_2` there is no degenerate case to dispose of: an *empty* convex
+part would make the subsystem solvable at the feasible point supplied by `hfeas`, contradicting
+its selection. -/
+theorem corollary_21_6_2_affine {ι κ : Type*} [Fintype ι] [Fintype κ] {C : Set (Rn n)}
+    {f : ι → Rn n → EReal} {a : κ → (Rn n →ᵃ[ℝ] ℝ)} (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
+    (hp : ∀ i, Proper (f i)) (hdom : ∀ i, ri C ⊆ dom (f i))
+    (hfeas : ∃ x ∈ ri C, ∀ j, a j x ≤ 0) :
+    (∃ x ∈ C, (∀ i, f i x < 0) ∧ ∀ j, a j x ≤ 0) ∨
+      ∃ (S : Finset ι) (T : Finset κ) (l : ι → ℝ) (μ : κ → ℝ),
+        S.card + T.card ≤ n + 1 ∧ (∀ i ∉ S, l i = 0) ∧ (∀ j ∉ T, μ j = 0) ∧
+          (∀ i, 0 ≤ l i) ∧ (∀ j, 0 ≤ μ j) ∧ l ≠ 0 ∧
+          ∀ x ∈ C, (0 : EReal)
+            ≤ (∑ i, (l i : EReal) * f i x) + ((∑ j, μ j * a j x : ℝ) : EReal) := by
+  classical
+  by_cases halt : ∃ x ∈ C, (∀ i, f i x < 0) ∧ ∀ j, a j x ≤ 0
+  · exact Or.inl halt
+  refine Or.inr ?_
+  have hsmall : ∃ (S : Finset ι) (T : Finset κ), S.card + T.card ≤ n + 1 ∧
+      ¬ ∃ x ∈ C, (∀ i ∈ S, f i x < 0) ∧ ∀ j ∈ T, a j x ≤ 0 := by
+    by_contra hcon
+    push Not at hcon
+    have hsub : ∀ (S : Finset ι) (T : Finset κ), S.card + T.card ≤ n + 1 →
+        ∃ x ∈ C, (∀ i ∈ S, f i x < 0) ∧ ∀ j ∈ T, ((a j x : ℝ) : EReal) ≤ 0 := by
+      intro S T hST
+      obtain ⟨x, hx, hxf, hxa⟩ := hcon S T hST
+      exact ⟨x, hx, hxf, fun j hj => by exact_mod_cast hxa j hj⟩
+    obtain ⟨x, hx, hxf, hxa⟩ :=
+      corollary_21_6_1 (g := fun j x => ((a j x : ℝ) : EReal)) hC hf
+        (fun j => convexFn_coe_affineMap (a j)) hsub
+    exact halt ⟨x, hx, hxf, fun j => by exact_mod_cast hxa j⟩
+  obtain ⟨S, T, hcard, hSalt⟩ := hsmall
+  obtain ⟨y₀, hy₀, hy₀a⟩ := hfeas
+  rcases theorem_21_2 (ι := ↥S) (κ := ↥T) (f := fun i : ↥S => f i) (a := fun j : ↥T => a j) hC
+      (fun i => hf i) (fun i => hp i) (fun i => hdom i) ⟨y₀, hy₀, fun j => hy₀a j⟩ with
+    ⟨x, hx, hxf, hxa⟩ | ⟨l', μ', hl'0, hμ'0, hl'ne, hl'⟩
+  · exact absurd ⟨x, hx, fun i hi => hxf ⟨i, hi⟩, fun j hj => hxa ⟨j, hj⟩⟩ hSalt
+  refine ⟨S, T, fun i => if h : i ∈ S then l' ⟨i, h⟩ else 0,
+    fun j => if h : j ∈ T then μ' ⟨j, h⟩ else 0, hcard, fun i hi => by simp [hi],
+    fun j hj => by simp [hj], ?_, ?_, ?_, ?_⟩
+  · intro i
+    by_cases h : i ∈ S
+    · simpa [h] using hl'0 ⟨i, h⟩
+    · simp [h]
+  · intro j
+    by_cases h : j ∈ T
+    · simpa [h] using hμ'0 ⟨j, h⟩
+    · simp [h]
+  · intro hzero
+    obtain ⟨i₀, hi₀⟩ : ∃ i₀ : ↥S, l' i₀ ≠ 0 := by
+      by_contra hcon
+      push Not at hcon
+      exact hl'ne (funext hcon)
+    have h := congrFun hzero (i₀ : ι)
+    simp only [i₀.2, Pi.zero_apply, Subtype.coe_eta, ↓reduceDIte] at h
+    exact hi₀ h
+  · intro x hx
+    have hshrinkl : ∑ i, ((if h : i ∈ S then l' ⟨i, h⟩ else 0 : ℝ) : EReal) * f i x
+        = ∑ i ∈ S, ((if h : i ∈ S then l' ⟨i, h⟩ else 0 : ℝ) : EReal) * f i x := by
+      refine (Finset.sum_subset (Finset.subset_univ S) ?_).symm
+      intro i _ hi
+      simp [hi]
+    have hshrinkm : ∑ j, (if h : j ∈ T then μ' ⟨j, h⟩ else 0 : ℝ) * a j x
+        = ∑ j ∈ T, (if h : j ∈ T then μ' ⟨j, h⟩ else 0 : ℝ) * a j x := by
+      refine (Finset.sum_subset (Finset.subset_univ T) ?_).symm
+      intro j _ hj
+      simp [hj]
+    rw [hshrinkl, hshrinkm, ← Finset.sum_coe_sort S, ← Finset.sum_coe_sort T]
+    have hcl : ∀ i : ↥S, ((if h : (i : ι) ∈ S then l' ⟨(i : ι), h⟩ else 0 : ℝ) : EReal)
+        * f i x = (l' i : EReal) * f i x := by
+      intro i
+      simp only [i.2, Subtype.coe_eta, ↓reduceDIte]
+    have hcm : ∀ j : ↥T, (if h : (j : κ) ∈ T then μ' ⟨(j : κ), h⟩ else 0 : ℝ) * a j x
+        = μ' j * a j x := by
+      intro j
+      simp only [j.2, Subtype.coe_eta, ↓reduceDIte]
+    rw [Finset.sum_congr rfl fun i _ => hcl i, Finset.sum_congr rfl fun j _ => hcm j]
+    exact hl' x hx
 
 end Rockafellar
