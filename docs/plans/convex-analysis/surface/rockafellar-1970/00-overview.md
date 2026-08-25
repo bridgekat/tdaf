@@ -320,3 +320,39 @@ carries no adjoint hypothesis at all. What remains of §4.1 is backbone-internal
 The three sections whose gates were closed before the round — §14 (bundled bipolar), §15
 (`IsNorm.toSeminorm`), §16 (the `m`-ary Theorem 16.4) — report that the gates worked: no §14
 statement discharges the cone hypothesis triple by hand, and §16 did no induction over `□`.
+
+**Part IV — all six sections written**, 177 declarations for 65 of the Part's 70 numbered results.
+
+| § | module | declarations | labels |
+|---|---|---|---|
+| 17 | `Part4/Section17.lean` | 27 | 10 |
+| 18 | `Part4/Section18.lean` | 43 | 16 |
+| 19 | `Part4/Section19.lean` | 38 | 17 |
+| 20 | `Part4/Section20.lean` | 19 | 8 |
+| 21 | `Part4/Section21.lean` | 27 | 10 |
+| 22 | `Part4/Section22.lean` | 23 | 4 of 9 |
+
+The five absent labels are all in §22 and all one item: **Lemmas 22.4 and 22.5, Corollary 22.4.1,
+and Theorems 22.6 and 22.7**, the elementary-vector development and Tucker's complementarity
+theorem. They are *deferred by scope* — elementary vectors are the minimal-support vectors of a
+subspace and their theory is combinatorial matroid theory, which the book itself presents as
+independent of all convexity theory. **This is the only place in §§1–22 where a label is absent for
+a reason other than a named backbone gap**, and it is the first time the scope rule has bitten.
+Theorems 22.1–22.3 and Farkas' Lemma are here.
+
+Two of the round's findings are worth promoting out of the remediation list:
+
+* **Corollaries 17.1.4 and 17.1.6 are false as Rockafellar states them, and §17 refutes them in
+  Lean** rather than dropping them — `corollary_17_1_4_false`, `corollary_17_1_6_false`, both on
+  `ℝ¹`. This is the *stated and refuted* category of the alignment checklist §3, and Part IV is
+  what it was written for.
+* **Theorem 20.5 supplies `LocallySimplicial` instances; it does not repair §10.** The Part II
+  finding is confirmed from the §20 side, and by a stronger route: `Polyhedral.locallySimplicial`
+  takes a coordinate cube for the neighbourhood and produces the simplices explicitly, so it never
+  makes the appeal to Carathéodory's count that the book asserts without proof.
+
+Across §§1–22, **268 of the 280 numbered results have declarations**. Of the twelve that do not,
+five are §22's scope deferral above and seven are blocked on a named backbone gap: Corollaries
+9.2.1 and 9.8.3, Theorems 14.3 and 14.4, and Lemma 16.2 with Corollaries 16.2.1 and 16.2.2. What
+the round found is in
+[`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) §11.

@@ -254,6 +254,27 @@ term that is still a hole.
 Rewrite the `EReal` hypothesis backwards — `rw [← hk.coe_toSeminorm z] at h` — and finish with
 `exact_mod_cast`.
 
+**EL23. `IsFace` and `IsExtreme` are structures, not `And`s, and `.1`/`.2` land on fields.**
+`IsExtreme 𝕜 A B` has fields `subset` and `left_mem_of_mem_openSegment` — the *right*-endpoint
+clause is the separate lemma `IsExtreme.right_mem_of_mem_openSegment`, not `.2.2`. This library's
+`IsFace C C'` has fields `toIsExtreme` and `convex`, so `h.1` is the extreme-set structure and not
+the convexity that reads first in the docstring. Both mistakes typecheck far enough to be reported
+somewhere else entirely: because `𝕜 := ℝ` the unifier ends up comparing `Real`'s `CauSeq`
+representation, and the error names `CauSeq.Completion` at a line with no `ℝ` in it. **Write the
+field name.**
+
+**EL24. Two more beta-redex sites, both from the Part IV round** (the general rule is EL2).
+`refine ⟨(a, b), ?_, ?_⟩` against `∃ p, P p.1 ∧ Q p.2` leaves goals displayed as `P (a, b).1`,
+which `rw` will not match — `dsimp only` first, or supply the pair with `exact ⟨_, _⟩` and let
+elaboration reduce it. And `x ∈ S + T` unfolds to `∃ a ∈ S, ∃ b ∈ T, (fun x₁ x₂ => x₁ + x₂) a b = x`,
+so every `rw` against the membership fails; go through `Set.mem_add` / `Set.add_mem_add` instead of
+unfolding.
+
+**EL25. A lemma with strict-implicit binders `⦃x⦄` does not fire under `simp`.**
+`Finset.forall_mem_image : (∀ y ∈ s.image f, p y) ↔ ∀ ⦃x⦄, x ∈ s → p (f x)` is the one that bites —
+`simp [Finset.forall_mem_image]` changes nothing and reports no error. Apply it by hand:
+`Finset.forall_mem_image.2 fun q hq => …`.
+
 ---
 
 ## LINT — Linters and the zero-warning bar
@@ -445,6 +466,9 @@ backbone docstrings.
 so dot notation has to change, not just the name; and the `push_neg` tactic is deprecated in favour
 of `push Not`. A `simp only` list naming any deprecated lemma builds but warns, and a warning
 fails the bar.
+
+**DEP8. `abs_add` is gone; the name is `abs_add_le`.** And grepping Mathlib for either finds
+nothing, because both are `to_additive`-generated from `mabs_mul_le` — DEP3 in its purest form.
 
 ---
 
@@ -964,6 +988,12 @@ mismatch rather than "explicit argument missing".
 **LIB12. EL1's list is not a blanket rule.** Dot notation *does* work on `Convex` in a surface file
 (`hC.closure`) and on the surface's own `IsAffineSet` (`h.toAffineSubspace`). EL1 names the
 predicates where it fails; it is not a reason to avoid dot notation everywhere.
+
+**LIB13. `open Tdaf.ConvexAnalysis` does not open `Tdaf.EReal`.** So
+`exists_coe_of_ne_bot_of_lt_top`, `coe_mul_le` and the rest of the `EReal` helpers are unreachable
+by their bare names from inside `namespace Rockafellar`, and the error is the unhelpful
+*"unknown identifier"* rather than an ambiguity. Qualify as `Tdaf.EReal.…`, the way the backbone
+does at its own call sites, or add the `open`.
 
 ---
 

@@ -482,3 +482,90 @@ else is friction that a section absorbed.
   and both directions follow from Theorem 13.1 plus Theorem 6.1's line-segment principle.
 * **Corollary 9.8.2 is not a §9 result** — `IsCompact.isCompact_convexHull` (Corollary 17.2.1) is
   shorter and needs neither convexity nor non-emptiness. Recorded under §9 as well.
+
+## 11. Gaps reported by the Part IV surface round
+
+The §17–§22 round. **No label is blocked by a backbone gap.** Part IV's five absent labels are
+§22's elementary-vector development (Lemmas 22.4 and 22.5, Corollary 22.4.1, Theorems 22.6
+and 22.7), deferred by the standing scope rule — combinatorial matroid theory, not convex
+analysis — and the one clause below marked **partial** is the *second sentence* of Theorem 17.1,
+whose first sentence is `theorem_17_1`.
+
+| # | item | reported by | status |
+|---|---|---|---|
+| 11.1 | **Corollary 17.2.1 is mislabelled and the real one is missing.** `Caratheodory.lean` puts the label on `IsCompact.isCompact_convexHull`, which is Theorem 17.2's *second sentence*. The actual Corollary 17.2.1 — `conv f` is a closed proper convex function when the `fᵢ` are proper convex with a common affine minorant — has no backbone counterpart; §17 proves it against `Operations/Epi.lean`'s `IsEpiLike`. Hoist it and move the label | §17 | open |
+| 11.2 | **`exists_of_mem_convexHull_add_coneHull` discards the linear independence its own proof establishes.** `exists_linearIndepOn_of_mem_coneHull` produces it and the Carathéodory bound throws it away, so the affine independence of the surviving generators cannot be recovered downstream | §17 | open — **partial**, Theorem 17.1's simplex clause, and §18's vertex theory wants the same |
+| 11.3 | **"Every extreme direction of `C` is an extreme direction of `0⁺C`"** (p. 163), and its exposed analogue. The backbone has only `extremeDirections_subset_recessionCone` — an extreme direction *is a* direction of recession. The sharpening is the book's `C' ⊆ x + 0⁺C ⊆ C` argument | §18 | open |
+| 11.4 | **Theorem 19.1's implications out of clause (b)** — finitely many faces ⇒ finitely generated. The book routes through Theorem 18.5, a lineality-space reduction and Theorem 18.8; the backbone has nothing deriving finite generation from finiteness of the face set. The two implications *into* (b) are present | §19 | open |
+| 11.5 | **The `f = h + δ(· \| C)` normal form for a polyhedral convex function** (book 6771–6779): a maximum of finitely many affine functions plus the indicator of a polyhedral convex set. Unnumbered, but it is how the book proves Theorem 19.4; the backbone proves 19.4 from the epigraph instead (`PolyhedralFn.add`), so nothing is blocked — the normal form is wanted for its own sake | §19 | open |
+| 11.6 | **Theorem 20.1 and Corollary 20.1.1 are binary** where the book states them for `f₁ + ⋯ + fₘ` with `f₁, …, f_k` polyhedral. Identical to §16's Theorem 16.4 omission (§10.23); the two must be lifted together, and by the same `m`-ary `IsExactSum` | §20 | open — refines §4.4 |
+| 11.7 | **Theorem 19.6 is two-set only** — `polyhedral_closure_convexHull_union`. The `m`-set form is the evident induction | §19 | open — cheap |
+| 11.8 | **The recession-hypothesis exercise of §21** (book 7601): assuming every finite subcollection is non-empty, the recession hypothesis of Helly's theorem holds iff some finite subcollection has bounded intersection. Its forward direction needs the recession cone of an *arbitrary* intersection of closed convex sets; the backbone states that only for finitely many with a common point | §21 | open |
+| 11.9 | **§22's interval reading of `Ax ≤ a` and of `x ≥ 0, Ax = a`** needs the `ℝᵐ × ℝⁿ ≃ ℝᵐ⁺ⁿ` transport. The vocabulary (`Rectangle`, `posIntervalCombo`) is on the surface; the correspondence is not statable without it | §22 | open — refines §4.8 |
+| 11.10 | **`Module.finrank ℝ (Rn n) = n` is not a `simp` lemma.** `finrank_euclideanSpace_fin` is rewritten by hand at 22 sites across §1, §13, §14, §17 and §21, eleven of them in §21 alone | §13, §14, §17, §21 | **done** — the shared header gives it the `simp` attribute |
+| 11.11 | **`pairing n` is symmetric and nothing says so.** Rockafellar writes every system as `⟨aᵢ, x⟩ ≤ αᵢ` and the backbone quantifies the other way round; §22 defined `pairing_comm`, `forall_pairing_le_comm` and `forall_pairing_lt_comm` locally | §22 | **done** — all three moved to `Surface/Common/Euclidean.lean` |
+| 11.12 | **`(pairing n).SeparatingRight` is re-derived at every call site** from `separatingRight_flip_of_separatingDual` plus `flip_pairing`, four times across §13 and §21 | §13, §21 | **done** — `separatingRight_pairing` in the shared header |
+| 11.13 | **`Analysis.Convex.HullDirections` is imported per-section** by §8 and §17, and is the module the mixed points-and-directions modelling decision runs on | §8, §17 | **done** — a header import |
+
+### What the round settled
+
+* **The `λ ≥ 0⁺` convention is inherited, not re-invented.** §19's Theorems 19.5.1, 19.6 and 19.7
+  reuse §9's `ExtCoeff` unchanged. This was the one Part II decision Part IV was going to test.
+* **Theorem 20.5 supplies `LocallySimplicial` instances; it does not repair §10.** The Part II
+  round's finding is confirmed from the §20 side, and by a stronger route than expected:
+  `Polyhedral.locallySimplicial` does not follow the book's sketch at all — it takes a coordinate
+  cube for the neighbourhood and produces the simplices explicitly as the convex hulls of the
+  affinely independent subsets of a generating `Finset` (`convexHull_eq_union`), so it never
+  appeals to Carathéodory's count, which is the step the book asserts without proof.
+* **The `dom` / `ri dom` asymmetry of Theorem 20.1 is already factored correctly.**
+  `IsExactSum.of_polyhedral_pair` and `IsExactSum.of_polyhedral` split it exactly where the book
+  does, and the two segment lemmas they pay — Corollary 7.5.1 for the polyhedral side (a proper
+  polyhedral function is already closed) and Theorem 7.5 for the other — are where the asymmetry
+  lives. No §20 statement had to weaken a hypothesis.
+
+### Book findings from the round
+
+**False as stated.** **Corollaries 17.1.4 and 17.1.6.** Both are *stated and refuted* in
+`Part4/Section17.lean` — `corollary_17_1_4_false` and `corollary_17_1_6_false`, on `ℝ¹`. The
+failing step is Rockafellar's passage to "a minimal `α′` on the vertical line", which does not
+exist when the generated function is improper; the affine elimination that rescues Corollary 17.1.3
+has no conical analogue, because an affine dependency has coefficients summing to zero — so both
+signs occur — while a conical one can have every coefficient of one sign. **Theorem 17.3** is also
+false as printed, and the backbone already carries the missing hypothesis `0 ∉ S*`; conversely the
+book's `x* ≠ 0` is not needed.
+
+**Stated with no proof at all.** **Corollary 18.7.1** (supplied here by citing the argument the
+book gives one layer up, for Corollary 18.5.2 — which is how the backbone's
+`closure_coneHull_exposedDirections` is proved) and **Theorem 19.6** (the book derives it in
+running text at 6949–6971, and that is what the backbone formalises).
+
+**Defective printed argument.** **Theorem 19.1's (b) ⇒ (a)** opens "It suffices to treat the case
+where `C` is `n`-dimensional in `Rⁿ`" and never says why. **Theorem 20.5's** proof is a two-line
+sketch that asserts the Carathéodory triangulation of a polytope; see above.
+
+**Hypotheses the book carries and the mathematics does not.** Theorem 18.3 does not need the face
+to be non-empty. Corollaries 18.5.2 and 18.7.1 do not need the cone to be "more than just the
+origin" — for `K = {0}` there are no extreme or exposed directions, the hypothesis is vacuous and
+both sides are `{0}`. **Theorem 20.4 needs neither convexity nor non-emptiness of `C`**: the
+backbone's `exists_polyhedral_between` is a finite subcover argument and never combines two points
+of `C` convexly.
+
+**An extension the book calls obvious and never states.** Theorem 18.5 "extends obviously to closed
+convex sets of arbitrary lineality" (p. 166). It is cheap over the backbone and is here as
+`theorem_18_5_lineality`, via `eq_add_inter_of_isCompl`.
+
+**Two hypotheses that look like typos and are not.** Theorem 21.1 asks `dom fᵢ ⊇ ri C`, not
+`⊇ C`, and that is exactly what its proof uses. Alternative (b) of Theorems 21.1–21.3 is read in
+`EReal`, where `0 · (+∞) = 0`; the convention is load-bearing, because Corollary 21.6.2 extends a
+short multiplier vector by zeros and would otherwise be false.
+
+**A citation to a result that does not exist.** The Comments and References for Part IV (book line
+17309) cite a "Corollary 21.3.3". §21 has Corollaries 21.3.1 and 21.3.2 and nothing further; the
+intended reference is 21.3.2, Helly's theorem.
+
+**A section-plan error, corrected.** `part4.md` records the definition of an elementary vector as
+OCR-truncated in the source text. It is not truncated: the text reads "a non-zero `z ∈ L` whose
+support is minimal with respect to `L`, i.e. does not properly include the support of any other
+non-zero vector of `L`".
+
+---
