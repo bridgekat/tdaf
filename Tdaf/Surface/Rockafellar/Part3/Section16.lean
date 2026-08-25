@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Duality.Exact
+import Tdaf.Analysis.Convex.Duality.FiniteProduct
 import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Duality.Polar
 import Tdaf.Analysis.Convex.Duality.Relint
@@ -68,14 +69,6 @@ carries an `IsAdjointPair` hypothesis even though every backbone statement it sp
 
 ## What is not here
 
-* **Corollary 16.2.2** — *omitted with a reason*. Lemma 16.2 and Corollary 16.2.1 are here, built
-  on the backbone module `Tdaf.Analysis.Convex.Duality.RelintSeparation`; the many-function form is
-  not. Rockafellar proves it by applying the lemma inside `ℝᵐⁿ`, to the diagonal subspace and to
-  `f(x₁, …, xₘ) = f₁(x₁) + ⋯ + fₘ(xₘ)`. Three pieces of that transport are missing and none of them
-  is about §16: a compatible pairing on a finite product `ι → E`, the relative interior of a
-  product set as the product of the relative interiors, and the support function of a product set
-  as a sum of support functions. They belong in the backbone, beside the binary
-  `intrinsicInterior_prod_eq` and `instIsCompatiblePairingProd` that already exist.
 * **The opening paragraph's translation rules** (book, lines 5661–5667) — *deferred by scope*:
   `(h(· - a))* = h* + ⟨a, ·⟩`, `(h + ⟨·, a*⟩)* = h*(· - a*)`, `(h + α)* = h* - α`, and
   `δ*(· | C + a) = δ*(· | C) + ⟨a, ·⟩`. Rockafellar himself says these are "already covered by
@@ -253,6 +246,30 @@ theorem corollary_16_2_1 (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (hg : 
         0 < recessionFn (conj (pairing m) g) (-y')) ↔ ∃ x, A x ∈ ri (dom g) :=
   (exists_apply_mem_relint_dom_iff (separatingRight_pairing n) (isAdjointPair_adjoint A) hg hp
     (proper_conj_of_proper hg hp)).symm
+
+/-- **Rockafellar, Corollary 16.2.2.** Let `f₁, …, fₘ` be proper convex functions on `ℝⁿ`. In
+order that there exist no vectors `x₁*, …, xₘ*` with
+
+`x₁* + ⋯ + xₘ* = 0`,
+`(f₁* 0⁺)(x₁*) + ⋯ + (fₘ* 0⁺)(xₘ*) ≤ 0`,
+`(f₁* 0⁺)(-x₁*) + ⋯ + (fₘ* 0⁺)(-xₘ*) > 0`,
+
+it is necessary and sufficient that `ri (dom f₁) ∩ ⋯ ∩ ri (dom fₘ) ≠ ∅`.
+
+Rockafellar proves this by applying Lemma 16.2 inside `ℝᵐⁿ` to the diagonal subspace
+`L = {x | x₁ = ⋯ = xₘ}`, whose orthogonal complement is `{x* | x₁* + ⋯ + xₘ* = 0}`. The backbone
+carries that transport as `iInter_relint_dom_nonempty_iff`, over an arbitrary compatible pairing
+and an arbitrary finite index type; here `separatingRight_pairing` turns the annihilator of the
+diagonal into the condition `∑ i, xᵢ* = 0`, and `proper_conj_of_proper` supplies properness of each
+conjugate. -/
+theorem corollary_16_2_2 {ι : Type*} [Fintype ι] (f : ι → Rn n → EReal)
+    (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i)) :
+    (¬ ∃ x' : ι → Rn n, (∑ i, x' i = 0) ∧
+        (∑ i, recessionFn (conj (pairing n) (f i)) (x' i)) ≤ 0 ∧
+        0 < ∑ i, recessionFn (conj (pairing n) (f i)) (-(x' i)))
+      ↔ (⋂ i, ri (dom (f i))).Nonempty :=
+  (iInter_relint_dom_nonempty_iff (separatingRight_pairing n) f hf hp
+    fun i => proper_conj_of_proper (hf i) (hp i)).symm
 
 /-! ### Theorem 16.3: linear transformations -/
 
