@@ -46,8 +46,6 @@ a gap gets closed once rather than once per surface.
   not a `rfl`, so `exact` fails where these make it succeed.
 * `linFn`, `exists_linFn` — the Fréchet–Riesz translation between the book's vector `b` and the
   backbone's continuous linear functional.
-* `isAdjointPair_adjoint` — Mathlib's `LinearMap.adjoint` is Rockafellar's `A*` for the Euclidean
-  pairings, so a surface statement never has to carry an adjoint argument *and* its hypothesis.
 
 ## Design notes
 
@@ -241,22 +239,12 @@ end LinFn
 
 The backbone keeps the adjoint as *data* (design decision D3): between arbitrarily paired spaces a
 transpose need not exist, so `IsAdjointPair B B' A A'` is a hypothesis and `A'` is an argument. On
-`ℝⁿ` the transpose does exist and is canonical, and it is Mathlib's `LinearMap.adjoint`. This is
-the one lemma that lets a surface section write the book's `A*` and discharge the hypothesis by
-name rather than threading both. -/
+`ℝⁿ` the transpose does exist and is canonical, and it is Mathlib's `LinearMap.adjoint`.
 
-section Adjoint
-
-variable {m n : ℕ}
-
-/-- **`A* = LinearMap.adjoint A` is adjoint to `A` for the Euclidean pairings.** Rockafellar's
-`A*` is this, and every backbone statement taking `(A') (hA : IsAdjointPair …)` is fed
-`(LinearMap.adjoint A) (isAdjointPair_adjoint A)`. -/
-theorem isAdjointPair_adjoint (A : Rn n →ₗ[ℝ] Rn m) :
-    IsAdjointPair (pairing n) (pairing m) A (LinearMap.adjoint A) := fun x z => by
-  simp only [pairing_apply]
-  exact (LinearMap.adjoint_inner_right A x z).symm
-
-end Adjoint
+**Nothing is needed here.** `Tdaf.ConvexAnalysis.isAdjointPair_adjoint`
+(`Duality/Pairing.lean`) already states it for `innerₗ E` in finite dimension, and `pairing n` is
+an `abbrev` for `innerₗ (Rn n)`, so it applies verbatim: a surface section writes Rockafellar's
+`A*` as `LinearMap.adjoint A` and discharges the hypothesis with `isAdjointPair_adjoint A`. This
+paragraph exists because the lemma was independently rewritten here once — `gotchas.md` LIB1. -/
 
 end Tdaf.Surface

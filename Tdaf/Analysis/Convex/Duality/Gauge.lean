@@ -122,10 +122,13 @@ invisible to a positively homogeneous function — and Theorem 15.4 does the res
 
 ## What is not here
 
-* **Theorem 15.3** and its corollaries, on gauge-like closed proper convex functions
-  `f = g ∘ k`. The statement quantifies over the nondecreasing lower semicontinuous convex
-  functions on `[0, +∞]` and their *monotone conjugates* `g⁺`; that is a one-dimensional theory
-  of its own which this project does not have, and building it here would dwarf §15.
+* **Theorem 15.3** and its corollaries — **but only in this file.** The one-dimensional theory
+  they quantify over (the nondecreasing lower semicontinuous convex functions on `[0, +∞]` and
+  their monotone conjugates `g⁺`) is real, and it is built: `Duality/GaugeLike.lean` has
+  `IsGaugeLike`, `MonotoneHalfLineFn`, `monotoneConj`, `conj_monotoneComp` and the full
+  `closedProperConvexFn_and_isGaugeLike_iff`, together with the power / Young's-inequality cluster
+  that Corollaries 15.3.1 and 15.3.2 need. This note previously said the results were absent, and
+  a surface section reading only this file deferred §15's centrepiece on the strength of it.
 * A bridge to `egauge` — see the design note above.
 * A `NormedSpace` instance from `IsNorm`. A Rockafellar norm need not be continuous, so it does
   not make `E` a normed space for the ambient topology. The **`Seminorm` is here**

@@ -177,7 +177,7 @@ are conjugate. This is the clause the book's proof singles out. -/
 theorem theorem_16_1_left_zero {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
     conj (pairing n) (fun x => (0 : EReal) * f x) = smulRight (conj (pairing n) f) 0 := by
   have hdom : (dom (conj (pairing n) f)).Nonempty :=
-    (proper_conj_of_proper f hf hp).dom_nonempty
+    (proper_conj_of_proper hf hp).dom_nonempty
   simp only [zero_mul]
   rw [smulRight_zero hdom]
   exact conj_zero_rn
@@ -231,7 +231,7 @@ Unconditional: no convexity, no properness, no closure. Specialises `conj_mapLin
 input is the adjointness datum, supplied by `isAdjointPair_adjoint`. -/
 theorem theorem_16_3_image (A : Rn n →ₗ[ℝ] Rn m) (f : Rn n → EReal) :
     conj (pairing m) (mapLin A f) = compLin (conj (pairing n) f) (LinearMap.adjoint A) :=
-  conj_mapLin (Tdaf.Surface.isAdjointPair_adjoint A) f
+  conj_mapLin (isAdjointPair_adjoint A) f
 
 /-- **Rockafellar, Theorem 16.3**, second formula: `((cl g)A)* = cl(A*g*)` for any convex `g`
 on `ℝᵐ`.
@@ -241,7 +241,7 @@ back through `(cl g)* = g*`. -/
 theorem theorem_16_3_closure (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (hg : ConvexFn g) :
     conj (pairing n) (compLin (clFn g) A)
       = clFn (mapLin (LinearMap.adjoint A) (conj (pairing m) g)) := by
-  rw [conj_compLin_eq_clFn_mapLin (Tdaf.Surface.isAdjointPair_adjoint A) (convexFn_clFn hg)
+  rw [conj_compLin_eq_clFn_mapLin (isAdjointPair_adjoint A) (convexFn_clFn hg)
     (closedFn_clFn g), conj_clFn]
 
 /-- **Rockafellar, Theorem 16.3**, the exact half: if there is an `x` with `Ax ∈ ri (dom g)`, the
@@ -256,7 +256,7 @@ theorem theorem_16_3_exact (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (hg 
   have hcl : ClosedProperConvexFn (clFn g) :=
     ⟨convexFn_clFn hg, closedFn_clFn g, hg.proper_clFn hp⟩
   have hri : A x₀ ∈ ri (dom (clFn g)) := by rw [hg.relint_dom_clFn hp]; exact hx₀
-  have hstep := (IsExactImage.of_relint (Tdaf.Surface.isAdjointPair_adjoint A) hcl hri).conj_compLin
+  have hstep := (IsExactImage.of_relint (isAdjointPair_adjoint A) hcl hri).conj_compLin
   rw [← conj_clFn (B := pairing n) (compLin g A), clFn_compLin hg hp A hx₀, hstep, conj_clFn]
 
 /-- **Rockafellar, Theorem 16.3**, the attainment: under the same qualification, for each `x*` the
@@ -275,7 +275,7 @@ theorem theorem_16_3_attained (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (
   have hcomp : conj (pairing n) (compLin (clFn g) A) = conj (pairing n) (compLin g A) := by
     rw [← clFn_compLin hg hp A hx₀, conj_clFn]
   obtain ⟨z, hz, heq⟩ :=
-    (IsExactImage.of_relint (Tdaf.Surface.isAdjointPair_adjoint A) hcl hri).exists_conj_compLin_eq
+    (IsExactImage.of_relint (isAdjointPair_adjoint A) hcl hri).exists_conj_compLin_eq
       (y := y) (by rwa [hcomp])
   exact ⟨z, hz, by rwa [conj_clFn, hcomp] at heq⟩
 
@@ -323,7 +323,7 @@ theorem corollary_16_3_2_image (A : Rn n →ₗ[ℝ] Rn m) (C : Set (Rn n)) :
     polarSet (pairing m) (A '' C) = LinearMap.adjoint A ⁻¹' polarSet (pairing n) C := by
   ext y
   simp only [mem_polarSet, Set.mem_preimage, Set.forall_mem_image]
-  exact forall₂_congr fun x _ => by rw [Tdaf.Surface.isAdjointPair_adjoint A x y]
+  exact forall₂_congr fun x _ => by rw [isAdjointPair_adjoint A x y]
 
 /-- **Rockafellar, Corollary 16.3.2**, the unconditional half of the second formula:
 `A*(D°) ⊆ (A⁻¹D)°`. Equality holds after a closure, and without one under Corollary 16.3.1's
@@ -331,7 +331,7 @@ qualification; see the module docstring for why the closed form is not here. -/
 theorem corollary_16_3_2_preimage (A : Rn n →ₗ[ℝ] Rn m) (D : Set (Rn m)) :
     LinearMap.adjoint A '' polarSet (pairing m) D ⊆ polarSet (pairing n) (A ⁻¹' D) := by
   rintro _ ⟨y, hy, rfl⟩ x hx
-  rw [← Tdaf.Surface.isAdjointPair_adjoint A x y]
+  rw [← isAdjointPair_adjoint A x y]
   exact hy (A x) hx
 
 /-! ### Theorem 16.4: addition and infimal convolution -/
