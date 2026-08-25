@@ -175,6 +175,12 @@ theorem ConvexBifun.convexFn_apply (hF : ConvexBifun F) (u : U) : ConvexFn (F u)
     rw [Prod.smul_mk, Prod.smul_mk, Prod.mk_add_mk, ← add_smul, hab, one_smul]
   rwa [hu] at h
 
+/-- The effective domain of a convex bifunction is convex: it is the effective domain of the
+perturbation function (`dom_infBifun`), which is convex by Theorem 29.1. -/
+theorem convex_domBifun (hF : ConvexBifun F) : Convex ℝ (domBifun F) := by
+  rw [← dom_infBifun]
+  exact ConvexFn.convex_dom (convexFn_infBifun hF)
+
 end Convex
 
 /-! ### Consistency -/
