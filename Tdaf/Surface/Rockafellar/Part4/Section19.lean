@@ -7,6 +7,7 @@ import Tdaf.Analysis.Convex.HellyRefined
 import Tdaf.Analysis.Convex.Optimization.Perturbation
 import Tdaf.Analysis.Convex.Polyhedral.Closedness
 import Tdaf.Analysis.Convex.Polyhedral.Conjugate
+import Tdaf.Analysis.Convex.Polyhedral.NormalForm
 import Tdaf.Analysis.Convex.Polyhedral.Recession
 import Tdaf.Analysis.Convex.Polyhedral.Simplicial
 import Tdaf.Analysis.Convex.Representation
@@ -60,9 +61,11 @@ book's union over weights.
 | Corollary 19.3.3 | `corollary_19_3_3` |
 | Corollary 19.3.4 | `corollary_19_3_4`, `corollary_19_3_4_attained` |
 | Theorem 19.4 | `theorem_19_4` |
+| §19, the normal form | `polyhedralFn_iff_normalForm` |
 | Theorem 19.5 | `theorem_19_5_smul`, `theorem_19_5_recession`, `theorem_19_5_generators` |
 | Corollary 19.5.1 | `corollary_19_5_1` |
-| Theorem 19.6 | `theorem_19_6`, `theorem_19_6_iUnion` |
+| Theorem 19.6 | `theorem_19_6`, `theorem_19_6_iUnion`, `theorem_19_6_biUnion`,
+  `theorem_19_6_biUnion_add` |
 | Theorem 19.7 | `theorem_19_7`, `theorem_19_7_iUnion` |
 | Corollary 19.7.1 | `corollary_19_7_1` |
 
@@ -78,17 +81,14 @@ book's union over weights.
   Theorem 18.8, and the backbone has no result deriving finite generation from finiteness of the
   face set. Recorded as a backbone gap. Note also that the book's own proof of (b) ⇒ (a) opens
   "It suffices to treat the case where `C` is `n`-dimensional in `Rⁿ`" and never says why.
-* **Theorem 19.6 for `m > 2`.** The backbone proves the two-set case
-  (`polyhedral_closure_convexHull_union`); the `m`-set statement is the evident induction and
-  nothing downstream asks for it.
 * **Theorem 19.5's `λ < 0` and `λ = 0` case analysis.** `Polyhedral.smul` covers every real `λ`
   in one statement, so the book's three-way split is not reproduced. Rockafellar's `0C = {0}`
   convention differs from Lean's `(0 : ℝ) • C`, which is `∅` for `C = ∅`; both are polyhedral.
-* **The `f = h + δ(· | C)` normal form** (6771–6779): the unnumbered paragraph characterising a
-  polyhedral convex function as a maximum of finitely many affine functions plus the indicator of
-  a polyhedral convex set. The backbone has no counterpart, and nothing *numbered* in §19 depends
-  on it — the book proves Theorem 19.4 with it, but `PolyhedralFn.add` proves Theorem 19.4 from
-  the epigraph instead. Recorded as a backbone gap.
+* **Theorem 19.6's `λ ≥ 0⁺` union formula for `m > 2`.** The polyhedrality clause and the
+  convention-free identity are here for a `Finset` of sets (`theorem_19_6_biUnion`,
+  `theorem_19_6_biUnion_add`); the union-over-weights spelling is here only for `m = 2`
+  (`theorem_19_6_iUnion`), because it rests on §9's `iUnion_extCoeff_pair`, and `Part2/Section09`
+  records the `m`-ary forms of §9 as deferred by scope. This is a §9 gap, not a §19 one.
 * **The unnumbered examples and exercises** — `‖·‖₁` and `‖·‖∞` as polyhedral norms (6841–6867),
   the Tchebycheff-approximation illustration (6885–6915), the "umbra and penumbra" exercise
   (7000) — carry no numbered label.
@@ -478,6 +478,68 @@ theorem theorem_19_4 {f₁ f₂ : Rn n → EReal} (h₁ : PolyhedralFn f₁) (h�
     (hp₁ : Proper f₁) (hp₂ : Proper f₂) : PolyhedralFn (f₁ + f₂) :=
   h₁.add h₂ hp₁.ne_bot hp₂.ne_bot
 
+/-! ### The normal form `f = h + δ(· | C)` -/
+
+/-- **Rockafellar, §19**, the unnumbered characterisation of a polyhedral convex function: `f` is
+polyhedral convex if and only if it can be written
+
+`f x = h x + δ(x | C)`, with `h x = max {⟨x, b₁⟩ - β₁, …, ⟨x, bₖ⟩ - βₖ}` and
+`C = {x | ⟨x, bₖ₊₁⟩ ≤ βₖ₊₁, …, ⟨x, bₘ⟩ ≤ βₘ}`.
+
+The two families are the two kinds of closed half-space that can bound `epi f` in `ℝⁿ⁺¹`: those
+that are epigraphs of affine functions and those that are "vertical". The book uses this to prove
+Theorem 19.4; here `theorem_19_4` is proved from the epigraph instead, so the normal form is
+recorded for its own sake.
+
+`∀ x, f x ≠ ⊥` is the `ne_bot` half of properness, which the book's convention supplies, and it
+cannot be dropped: `EReal` has `⊥ + ⊤ = ⊥`, so a right-hand side of this shape can take the value
+`⊥` only *inside* `C`, whereas the function that is `⊥` on a proper non-empty polyhedral `C` and
+`⊤` outside it is convex with polyhedral epigraph `C ×ˢ univ`. Specialises
+`polyhedralFn_iff_maxAffineFn_add_indicatorFn`, whose `h` is written with linear functionals; the
+translation to the book's vectors `bᵢ` is the one `theorem_19_1_pairing` performs for sets. -/
+theorem polyhedralFn_iff_normalForm {f : Rn n → EReal} (hb : ∀ x, f x ≠ ⊥) :
+    PolyhedralFn f ↔ ∃ (s : Finset (Rn n × ℝ)) (C : Set (Rn n)), Polyhedral C ∧
+      ∀ x, f x = (⨆ q ∈ s, ((pairing n x q.1 - q.2 : ℝ) : EReal)) + indicatorFn C x := by
+  classical
+  have hrep : ∀ φ : Rn n →ₗ[ℝ] ℝ, ∃ a : Rn n, ∀ x, φ x = pairing n x a := by
+    intro φ
+    obtain ⟨a, ha⟩ := exists_pairing_eq (pairing n) (LinearMap.toContinuousLinearMap φ)
+    exact ⟨a, fun x => ha x⟩
+  choose rep hrep using hrep
+  constructor
+  · intro hf
+    obtain ⟨s, C, hC, hfC⟩ := (polyhedralFn_iff_maxAffineFn_add_indicatorFn hb).1 hf
+    refine ⟨s.image fun q => (rep q.1, q.2), C, hC, fun x => ?_⟩
+    have hval : f x = maxAffineFn s x + indicatorFn C x := congrFun hfC x
+    have hunfold : maxAffineFn s x = ⨆ q ∈ s, ((q.1 x - q.2 : ℝ) : EReal) := rfl
+    have hmax : maxAffineFn s x
+        = ⨆ q ∈ s.image fun q => (rep q.1, q.2), ((pairing n x q.1 - q.2 : ℝ) : EReal) := by
+      rw [hunfold]
+      refine le_antisymm (iSup₂_le fun ψ hψ => ?_) (iSup₂_le fun ψ hψ => ?_)
+      · refine le_iSup₂_of_le (rep ψ.1, ψ.2) (Finset.mem_image_of_mem _ hψ) (le_of_eq ?_)
+        rw [hrep ψ.1 x]
+      · obtain ⟨q, hq, rfl⟩ := Finset.mem_image.1 hψ
+        refine le_iSup₂_of_le q hq (le_of_eq ?_)
+        rw [hrep q.1 x]
+    rw [hval, hmax]
+  · rintro ⟨s, C, hC, hfC⟩
+    refine (polyhedralFn_iff_maxAffineFn_add_indicatorFn hb).2
+      ⟨s.image fun q => ((pairing n).flip q.1, q.2), C, hC, funext fun x => ?_⟩
+    have hunfold : maxAffineFn (s.image fun q => ((pairing n).flip q.1, q.2)) x
+        = ⨆ ψ ∈ s.image fun q => ((pairing n).flip q.1, q.2),
+            ((ψ.1 x - ψ.2 : ℝ) : EReal) := rfl
+    have hmax : maxAffineFn (s.image fun q => ((pairing n).flip q.1, q.2)) x
+        = ⨆ q ∈ s, ((pairing n x q.1 - q.2 : ℝ) : EReal) := by
+      rw [hunfold]
+      refine le_antisymm (iSup₂_le fun ψ hψ => ?_) (iSup₂_le fun q hq => ?_)
+      · obtain ⟨q, hq, rfl⟩ := Finset.mem_image.1 hψ
+        exact le_iSup₂_of_le q hq (le_of_eq rfl)
+      · exact le_iSup₂_of_le ((pairing n).flip q.1, q.2)
+          (Finset.mem_image_of_mem _ hq) (le_of_eq rfl)
+    change f x = maxAffineFn (s.image fun q => ((pairing n).flip q.1, q.2)) x + indicatorFn C x
+    rw [hmax]
+    exact hfC x
+
 /-! ### Theorem 19.5 and its corollary -/
 
 /-- **Rockafellar, Theorem 19.5**, first assertion: `λC` is polyhedral for every scalar `λ`.
@@ -561,6 +623,29 @@ theorem theorem_19_6_iUnion {C₁ C₂ : Set (Rn n)} (h₁ : Polyhedral C₁) (h
             p.1.smulSet C₁ + p.2.smulSet C₂ := by
   rw [iUnion_extCoeff_pair h₁.convex hne₁ h₂.convex hne₂]
   exact (finitelyGenerated_closure_convexHull_union h₁ hne₁ h₂ hne₂).2
+
+/-- **Rockafellar, Theorem 19.6** for general `m`. If `C₁, …, Cₘ` are non-empty polyhedral convex
+sets in `ℝⁿ`, then `C = cl (conv (C₁ ∪ ⋯ ∪ Cₘ))` is a polyhedral convex set.
+
+Indexed by a `Finset`, which subsumes the book's `i = 1, …, m` and also allows the empty family,
+where both sides are `∅`. Specialises `polyhedral_closure_convexHull_biUnion`. -/
+theorem theorem_19_6_biUnion {ι : Type*} {s : Finset ι} {C : ι → Set (Rn n)}
+    (hC : ∀ i ∈ s, Polyhedral (C i)) (hne : ∀ i ∈ s, (C i).Nonempty) :
+    Polyhedral (closure (convexHull ℝ (⋃ i ∈ s, C i))) :=
+  polyhedral_closure_convexHull_biUnion hC hne
+
+/-- **Rockafellar, Theorem 19.6** for general `m`, the formula
+
+`cl (conv (C₁ ∪ ⋯ ∪ Cₘ)) = conv (C₁ ∪ ⋯ ∪ Cₘ) + (0⁺C₁ + ⋯ + 0⁺Cₘ)`.
+
+This is the convention-free form: the book writes the right-hand side as a union over weights
+`λᵢ ≥ 0` with `∑ λᵢ = 1` and `0⁺Cᵢ` substituted for `0Cᵢ`, which for `m = 2` is
+`theorem_19_6_iUnion`. Adding the recession cones says the same and needs no convention. -/
+theorem theorem_19_6_biUnion_add {ι : Type*} {s : Finset ι} {C : ι → Set (Rn n)}
+    (hC : ∀ i ∈ s, Polyhedral (C i)) (hne : ∀ i ∈ s, (C i).Nonempty) :
+    closure (convexHull ℝ (⋃ i ∈ s, C i))
+      = convexHull ℝ (⋃ i ∈ s, C i) + ∑ i ∈ s, recessionCone (C i) :=
+  (finitelyGenerated_closure_convexHull_biUnion hC hne).2
 
 /-- **The `λ ≥ 0⁺` convention for a single set**, reduced to the backbone. For a convex `C`,
 Rockafellar's `⋃ {λC | λ > 0 or λ = 0⁺}` is exactly `cone C + 0⁺C`. Theorem 19.7 asks that `C` be
