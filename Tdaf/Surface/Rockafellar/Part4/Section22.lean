@@ -47,7 +47,8 @@ combinatorial development through elementary vectors — is deferred; see below.
 The book writes `⟨aᵢ, x⟩` with the coefficient vector first; the backbone writes `B x (a i)`,
 because in general the solution vector and the coefficient vectors live in different spaces. On
 `ℝⁿ` the pairing is symmetric, and `pairing_comm` (with `forall_pairing_le_comm` and
-`forall_pairing_lt_comm`) is the only translation any statement below needs.
+`forall_pairing_lt_comm`, all three in `Surface/Common/Euclidean.lean`) is the only translation any
+statement below needs.
 
 ## What is not here
 
@@ -105,22 +106,6 @@ namespace Rockafellar
 open Tdaf.ConvexAnalysis Tdaf.Surface
 
 variable {m n : ℕ}
-
-/-! ### The two orientations of the pairing -/
-
-/-- The pairing of `ℝⁿ` with itself is symmetric, so the book's `⟨aᵢ, x⟩` and the backbone's
-`B x (a i)` are the same number. -/
-theorem pairing_comm (x y : Rn n) : pairing n x y = pairing n y x := real_inner_comm y x
-
-/-- A system of weak inequalities read in the book's orientation and in the backbone's. -/
-theorem forall_pairing_le_comm {ι : Sort*} (a : ι → Rn n) (α : ι → ℝ) (x : Rn n) :
-    (∀ i, pairing n (a i) x ≤ α i) ↔ ∀ i, pairing n x (a i) ≤ α i :=
-  forall_congr' fun i => by rw [pairing_comm]
-
-/-- A system of strict inequalities read in the book's orientation and in the backbone's. -/
-theorem forall_pairing_lt_comm {ι : Sort*} (a : ι → Rn n) (α : ι → ℝ) (x : Rn n) :
-    (∀ i, pairing n (a i) x < α i) ↔ ∀ i, pairing n x (a i) < α i :=
-  forall_congr' fun i => by rw [pairing_comm]
 
 /-! ### Theorem 22.1: the alternative for a system of weak inequalities -/
 

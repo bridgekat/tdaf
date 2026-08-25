@@ -413,9 +413,7 @@ theorem theorem_21_4 {ι : Type*} {f : ι → Rn n → EReal} (hf : ∀ i, Close
     (∃ x : Rn n, ∀ i, f i x ≤ 0) ∨
       ∃ (t : Finset ι) (l : ι → ℝ) (ε : ℝ), (∀ i, 0 ≤ l i) ∧ (∀ i ∉ t, l i = 0) ∧ 0 < ε ∧
         t.card ≤ n + 1 ∧ ∀ x : Rn n, (ε : EReal) ≤ ∑ i ∈ t, (l i : EReal) * f i x := by
-  have hB : (pairing n).SeparatingRight := by
-    have h := separatingRight_flip_of_separatingDual (pairing n)
-    rwa [flip_pairing] at h
+  have hB := separatingRight_pairing n
   simpa only [finrank_euclideanSpace_fin] using
     alternative_infinite_system_univ_of_affine_tail (B := pairing n) hB hf I₀
       (fun i hi => isAffineFn_iff_eq_affineFn.1 (haff i hi)) hrec
@@ -431,9 +429,7 @@ theorem theorem_21_4_subsystem {ι : Type*} {f : ι → Rn n → EReal}
     (hsub : ∀ ε : ℝ, 0 < ε → ∀ S : Finset ι, S.card ≤ n + 1 →
       ∃ x : Rn n, ∀ i ∈ S, f i x < (ε : EReal)) :
     ∃ x : Rn n, ∀ i, f i x ≤ 0 := by
-  have hB : (pairing n).SeparatingRight := by
-    have h := separatingRight_flip_of_separatingDual (pairing n)
-    rwa [flip_pairing] at h
+  have hB := separatingRight_pairing n
   refine exists_forall_le_zero_of_forall_subsystem_of_affine_tail (B := pairing n) hB hf I₀
     (fun i hi => isAffineFn_iff_eq_affineFn.1 (haff i hi)) hrec ?_
   simpa only [finrank_euclideanSpace_fin] using hsub
@@ -453,9 +449,7 @@ theorem theorem_21_5 {ι : Type*} {K : ι → Set (Rn n)} (hconv : ∀ i, Convex
     (hrec : ∀ y : Rn n, (∀ i, y ∈ recessionCone (K i)) → ∀ i ∉ I₀, y ∈ linealitySpace (K i))
     (hinter : ∀ S : Finset ι, S.card ≤ n + 1 → (⋂ i ∈ S, K i).Nonempty) :
     (⋂ i, K i).Nonempty := by
-  have hB : (pairing n).SeparatingRight := by
-    have h := separatingRight_flip_of_separatingDual (pairing n)
-    rwa [flip_pairing] at h
+  have hB := separatingRight_pairing n
   refine helly_of_polyhedral_tail (B := pairing n) hB hconv hcl hne I₀ hpoly hrec ?_
   simpa only [finrank_euclideanSpace_fin] using hinter
 

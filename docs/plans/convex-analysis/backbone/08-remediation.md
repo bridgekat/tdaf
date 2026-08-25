@@ -505,7 +505,7 @@ whose first sentence is `theorem_17_1`.
 | 11.10 | **`Module.finrank ℝ (Rn n) = n` is not a `simp` lemma.** `finrank_euclideanSpace_fin` is rewritten by hand at 22 sites across §1, §13, §14, §17 and §21, eleven of them in §21 alone | §13, §14, §17, §21 | **done** — the shared header gives it the `simp` attribute |
 | 11.11 | **`pairing n` is symmetric and nothing says so.** Rockafellar writes every system as `⟨aᵢ, x⟩ ≤ αᵢ` and the backbone quantifies the other way round; §22 defined `pairing_comm`, `forall_pairing_le_comm` and `forall_pairing_lt_comm` locally | §22 | **done** — all three moved to `Surface/Common/Euclidean.lean` |
 | 11.12 | **`(pairing n).SeparatingRight` is re-derived at every call site** from `separatingRight_flip_of_separatingDual` plus `flip_pairing`, four times across §13 and §21 | §13, §21 | **done** — `separatingRight_pairing` in the shared header |
-| 11.13 | **`Analysis.Convex.HullDirections` is imported per-section** by §8 and §17, and is the module the mixed points-and-directions modelling decision runs on | §8, §17 | **done** — a header import |
+| 11.13 | **`Analysis.Convex.HullDirections` is the module the mixed points-and-directions modelling decision runs on**, and only §17 imports it. §18 and §19 use `convexHullPD` forty times between them and reach it only by accident, through `Analysis.Convex.Representation` | §17, §18, §19 | **done** — a header import, and §17 drops its own |
 
 ### What the round settled
 

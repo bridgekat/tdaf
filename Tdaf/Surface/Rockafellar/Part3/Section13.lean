@@ -230,9 +230,7 @@ without it — over the zero space the condition is vacuous while `int ∅ = ∅
 theorem theorem_13_1_int {C : Set (Rn n)} (hC : Convex ℝ C) (hne : C.Nonempty) (x : Rn n) :
     x ∈ interior C ↔
       ∀ y : Rn n, y ≠ 0 → ((inner ℝ x y : ℝ) : EReal) < supportFn (pairing n) C y := by
-  refine mem_interior_iff_lt_supportFn (B := pairing n) hC hne ?_ x
-  have h := separatingRight_flip_of_separatingDual (pairing n)
-  rwa [flip_pairing] at h
+  exact mem_interior_iff_lt_supportFn (B := pairing n) hC hne (separatingRight_pairing n) x
 
 /-- **Rockafellar, Theorem 13.1**, fourth clause. Assuming `C ≠ ∅`, `x ∈ aff C` if and only if
 `⟨x, x*⟩ = δ*(x* | C)` for every `x*` with `-δ*(-x* | C) = δ*(x* | C)`.

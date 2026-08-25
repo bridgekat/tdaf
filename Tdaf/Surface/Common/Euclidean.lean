@@ -8,7 +8,9 @@ import Tdaf.Analysis.Convex.Convergence
 import Tdaf.Analysis.Convex.Duality.Conjugate
 import Tdaf.Analysis.Convex.Duality.InnerPairing
 import Tdaf.Analysis.Convex.Duality.GaugeLike
+import Tdaf.Analysis.Convex.Duality.Level
 import Tdaf.Analysis.Convex.Duality.Relint
+import Tdaf.Analysis.Convex.HullDirections
 import Tdaf.Analysis.Convex.Operations.Basic
 import Tdaf.Analysis.Convex.Recession.Cone
 import Tdaf.Analysis.Convex.Simplicial
@@ -46,6 +48,12 @@ a gap gets closed once rather than once per surface.
   `.flip` survives into a statement, rewritten away once here rather than at every call site. On a
   self-paired space every bipolar theorem hands one back, and `flip_pairing` is a `simp` lemma but
   not a `rfl`, so `exact` fails where these make it succeed.
+* `pairing_comm`, `forall_pairing_le_comm`, `forall_pairing_lt_comm` — the pairing is symmetric.
+  A book writes a linear system as `⟨aᵢ, x⟩ ≤ αᵢ` and the backbone quantifies the other way round;
+  these are the translation.
+* `separatingRight_pairing` — `(pairing n).SeparatingRight`, which several backbone theorems ask
+  for as a hypothesis and which is otherwise re-derived, at every call site, from
+  `separatingRight_flip_of_separatingDual`.
 * `linFn`, `exists_linFn` — the Fréchet–Riesz translation between the book's vector `b` and the
   backbone's continuous linear functional.
 
@@ -69,9 +77,12 @@ Mathlib or backbone module the four original imports did not reach used to impor
 five of the ten sections written so far did. The ones that recurred are here: `Continuity`,
 `Convergence`, `Simplicial` and `Operations.Basic` from the backbone; `Mathlib.Tactic.TFAE`, which
 any section transcribing a book "the following are equivalent" needs; `Mathlib.Analysis.Convex.Join`
-for `Convex.convexHull_union`; and `Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional`, which
-every section that counts dimensions wants. Adding one here costs a rebuild of the surface and
-saves a section from discovering an "unknown constant" that is really a missing import.
+for `Convex.convexHull_union`; `Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional`, which
+every section that counts dimensions wants; `Duality.Level`, which is where the level-set duality
+and `separatingRight_flip_of_separatingDual` live; and `HullDirections`, which is the module the
+mixed points-and-directions modelling decision of §§8, 17, 18 and 19 runs on. Adding one here
+costs a rebuild of the surface and saves a section from discovering an "unknown constant" that is
+really a missing import.
 
 **`pairingProd` is not `Rn (m + n)`.** Rockafellar moves freely between `ℝᵐ × ℝⁿ` and `ℝᵐ⁺ⁿ`; those
 are different types here, and the transport between them is separate work (remediation §4.8). What
@@ -101,6 +112,29 @@ noncomputable abbrev pairing (n : ℕ) : Rn n →ₗ[ℝ] Rn n →ₗ[ℝ] ℝ :
 @[simp] theorem flip_pairing (n : ℕ) : (pairing n).flip = pairing n :=
   flip_eq_self (pairing n)
 
+/-- **The pairing is symmetric.** Rockafellar writes a linear system as `⟨aᵢ, x⟩ ≤ αᵢ`, with the
+data on the left; the backbone's `B x y` puts the variable there. On a self-paired space the two
+readings are the same number, and this is the lemma that says so. -/
+theorem pairing_comm {n : ℕ} (x y : Rn n) : pairing n x y = pairing n y x := real_inner_comm y x
+
+/-- A system of weak inequalities read in the book's orientation and in the backbone's. -/
+theorem forall_pairing_le_comm {n : ℕ} {ι : Sort*} (a : ι → Rn n) (α : ι → ℝ) (x : Rn n) :
+    (∀ i, pairing n (a i) x ≤ α i) ↔ ∀ i, pairing n x (a i) ≤ α i :=
+  forall_congr' fun i => by rw [pairing_comm]
+
+/-- A system of strict inequalities read in the book's orientation and in the backbone's. -/
+theorem forall_pairing_lt_comm {n : ℕ} {ι : Sort*} (a : ι → Rn n) (α : ι → ℝ) (x : Rn n) :
+    (∀ i, pairing n (a i) x < α i) ↔ ∀ i, pairing n x (a i) < α i :=
+  forall_congr' fun i => by rw [pairing_comm]
+
+/-- **`pairing n` separates on the right**, which is the hypothesis the backbone's level-set and
+recession duality asks for in place of a book's `y ≠ 0`. It follows from
+`separatingRight_flip_of_separatingDual` because `Rn n` is a `SeparatingDual` and the pairing is
+its own flip — a two-line derivation that four call sites across §13 and §21 used to repeat. -/
+theorem separatingRight_pairing (n : ℕ) : (pairing n).SeparatingRight := by
+  have h := separatingRight_flip_of_separatingDual (pairing n)
+  rwa [flip_pairing] at h
+
 /-- The **product pairing** on `Rn m × Rn n`, which is what a bifunction from `ℝᵐ` to `ℝⁿ` is
 conjugated against. -/
 noncomputable abbrev pairingProd (m n : ℕ) : (Rn m × Rn n) →ₗ[ℝ] (Rn m × Rn n) →ₗ[ℝ] ℝ :=
@@ -110,6 +144,15 @@ noncomputable abbrev pairingProd (m n : ℕ) : (Rn m × Rn n) →ₗ[ℝ] (Rn m 
 bifunction is stated against. -/
 noncomputable abbrev pairingAdjoint (m n : ℕ) : (Rn m × Rn n) →ₗ[ℝ] (Rn m × Rn n) →ₗ[ℝ] ℝ :=
   negFst (pairingProd m n)
+
+/-! ### Dimension
+
+`Module.finrank ℝ (Rn n) = n` is `finrank_euclideanSpace_fin`, and Mathlib does not mark it `simp`.
+Every surface section that states one of the book's dimension counts needs it, and twenty-two sites
+across §1, §13, §14, §17 and §21 rewrote it by hand — eleven in §21 alone. Give it the attribute
+once, here. -/
+
+attribute [simp] finrank_euclideanSpace_fin
 
 /-! ### Instance discharge
 
