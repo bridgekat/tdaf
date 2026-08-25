@@ -33,9 +33,10 @@ does not exist.
 ## Design notes
 
 **The index is a `Fintype` and the product is non-dependent.** `piPairing` sums over `Finset.univ`,
-so finiteness is data, not a proposition; and the only consumer — the diagonal subspace of
-`ι → E` — needs all the factors to be the *same* space. `Convex.relint_univ_pi` would hold verbatim
-for a dependent product `(i : ι) → E i`; nothing here needs it.
+so finiteness has to be data there; `Convex.relint_univ_pi`, which mentions no sum, asks only for
+`[Finite ι]`. Non-dependence is forced by the one consumer: the diagonal subspace of `ι → E` needs
+all the factors to be the *same* space. Everything up to and including `Convex.relint_univ_pi`
+would hold verbatim for a dependent product `(i : ι) → E i`; nothing here needs it.
 
 **The separable-sum route is not taken.** A family `f₁, …, fₘ` could be packaged as the single
 function `x ↦ ∑ i, fᵢ (xᵢ)` on `ι → E`, whose conjugate is the corresponding separable sum. That
