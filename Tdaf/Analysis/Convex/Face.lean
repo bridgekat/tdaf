@@ -116,6 +116,13 @@ protected theorem IsFace.mono (h : IsFace C C'') (hDC : D ⊆ C) (hC''D : C'' �
 protected theorem IsFace.inter (h₁ : IsFace C C') (h₂ : IsFace C C'') : IsFace C (C' ∩ C'') :=
   ⟨h₁.toIsExtreme.inter h₂.toIsExtreme, h₁.convex.inter h₂.convex⟩
 
+/-- **Cutting a face and its ambient set by the same convex set leaves a face.** Note that `D` is
+cut out of *both* sides, so this is not `IsFace.inter`, which intersects two faces of one set. -/
+theorem IsFace.inter_convex (h : IsFace C C') (hD : Convex ℝ D) : IsFace (C ∩ D) (C' ∩ D) :=
+  ⟨⟨inter_subset_inter_left D h.subset, fun _ hu _ hv _ hz hseg =>
+      ⟨h.left_mem_of_mem_openSegment hu.1 hv.1 hz.1 hseg, hu.2⟩⟩,
+    h.convex.inter hD⟩
+
 /-- The intersection of a nonempty family of faces is a face. Together with `Convex.isFace_self`
 and `IsFace.empty` this makes the faces of `C` a complete lattice under inclusion. -/
 theorem isFace_sInter {F : Set (Set E)} (hF : F.Nonempty) (h : ∀ B ∈ F, IsFace C B) :

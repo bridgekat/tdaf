@@ -2473,8 +2473,10 @@ structure IsFace (C C' : Set E) : Prop extends IsExtreme ℝ C C' where
 
 **Rockafellar's face is not Mathlib's `IsExtreme`, even for convex `C`.** `{0, 1}` is an extreme
 subset of `[0, 1]` and is not convex, so it is not a face. The convexity field is therefore real,
-and everything else is inherited: `IsFace.trans`, `.inter`, `.mono`, `isFace_sInter`,
-`isFace_singleton : IsFace C {x} ↔ x ∈ C.extremePoints ℝ`, `IsExposed.isFace`.
+and everything else is inherited: `IsFace.trans`, `.inter`, `.inter_convex`, `.mono`,
+`isFace_sInter`, `isFace_singleton : IsFace C {x} ↔ x ∈ C.extremePoints ℝ`, `IsExposed.isFace`.
+`.inter_convex` cuts *both* the set and its face with the same convex set, which is the forward
+map of the p. 166 face correspondence in `Representation.lean`.
 
 The rest of the file:
 
@@ -3775,6 +3777,8 @@ theorem extremePoints_subset_closure_exposedPoints …           -- Thm 18.6
 theorem closure_exposedPoints_eq_closure_extremePoints …       -- Thm 18.6, the equality form
 theorem isFace_recessionCone …                                 -- p. 163, the algebraic core
 theorem extremeDirections_subset_extremeDirections_recessionCone …  -- p. 163
+theorem IsFace.linealitySpace_subset …                         -- p. 166
+def isFaceEquivInter …                                         -- p. 166, the face correspondence
 ```
 
 **Corrections.** Theorem 18.3 needs neither Theorem 6.4 nor the positive-coefficient description of
@@ -3787,6 +3791,13 @@ unbounded one-dimensional case needs `exists_eq_halfLine`), but the induction is
 book's: Minkowski discharges the bounded case in every dimension. Straszewicz is cleaner with a
 nearest-point projection than with Rockafellar's `ε` — project `x` onto `conv (cl (exp C))`, set
 `d = x - v`, `λ = (r²+1)/(2‖d‖²)`, `y = x - λ•d`; no Hahn–Banach, no Riesz, no unit normalisation.
+
+**The p. 166 face correspondence needs nothing at all.** `isFaceEquivInter` is stated for an
+arbitrary subspace `N` of the lineality space and an arbitrary complement `M`, with no closedness,
+no convexity of `C` and no finite dimension; the book's `L` and `L^⊥` are one instance. Its engine
+is `IsFace.linealitySpace_subset` — a face is linear in every direction in which `C` is, because
+`x` is the midpoint of the segment from `x - y` to `x + y` — which is also what lets
+`eq_add_inter_of_isCompl_of_le` be applied to a face.
 
 **The p. 163 remark "every extreme direction of `C` is an extreme direction of `0⁺C`" needs no
 closedness.** Rockafellar's `C' ⊆ x + 0⁺C ⊆ C` argument is purely algebraic once one knows that the
