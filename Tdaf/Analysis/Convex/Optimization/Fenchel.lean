@@ -811,19 +811,6 @@ theorem neg_polarCone_coe_submodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : S
     rwa [map_neg, neg_eq_zero] at hu'
   · rw [map_neg, h u hu, neg_zero]
 
-/-- A subspace is invariant under every positive scaling, so it satisfies the cone hypothesis of
-Theorem 31.4. -/
-theorem smul_coe_submodule (M : Submodule ℝ E) {a : ℝ} (ha : 0 < a) :
-    a • (M : Set E) = (M : Set E) := by
-  ext z
-  constructor
-  · rintro ⟨u, hu, rfl⟩
-    exact M.smul_mem a hu
-  · intro hz
-    refine ⟨a⁻¹ • z, M.smul_mem _ hz, ?_⟩
-    change a • a⁻¹ • z = z
-    rw [smul_smul, mul_inv_cancel₀ ha.ne', one_smul]
-
 /-- **Rockafellar, Corollary 31.4.2**: `inf {f x | x ∈ L} = -inf {f*(y) | y ∈ L^⊥}` for a subspace
 `L`. This is Theorem 31.4 with `K = L`, where `K* = -K°` collapses to `K°` itself. -/
 theorem iInf_mem_submodule_eq_neg_iInf_mem_polarCone {M : Submodule ℝ E}

@@ -7,6 +7,7 @@ import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Analysis.MeanInequalities
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Tdaf.Analysis.Convex.Duality.Gauge
+import Tdaf.Analysis.Convex.Operations.Closed
 
 /-!
 # Monotone conjugacy on the half-line, and the convex functions built from a gauge
@@ -470,6 +471,36 @@ theorem MonotoneHalfLineFn.exists_monotoneConj_ne_top (hg : MonotoneHalfLineFn g
       rw [← _root_.EReal.coe_sub, EReal.coe_le_coe_iff]
       nlinarith
   exact ne_top_of_le_ne_top (EReal.coe_ne_top _) hbound
+
+/-- **The monotone conjugate of a function finite at a positive level is non-constant.** The term
+of the defining supremum at that level is an affine function of `s` with positive slope, so `g⁺`
+grows without bound. Together with `MonotoneHalfLineFn.exists_monotoneConj_ne_top` this is
+Rockafellar's "`g⁺` satisfies the same conditions as `g`", and it shows that conjugacy *exchanges*
+the two side conditions. -/
+theorem MonotoneHalfLineFn.exists_lt_monotoneConj (hg : MonotoneHalfLineFn g)
+    (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤) :
+    ∃ s : ℝ, 0 < s ∧ monotoneConj g 0 < monotoneConj g s := by
+  obtain ⟨ζ, hζ, hζt⟩ := hfin
+  obtain ⟨b, hb⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hg.ne_bot 0)
+    (lt_top_iff_ne_top.2 hg.zero_ne_top)
+  obtain ⟨c, hc⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hg.ne_bot ζ)
+    (lt_top_iff_ne_top.2 hζt)
+  refine ⟨max 1 ((c - b + 1) / ζ), lt_of_lt_of_le one_pos (le_max_left _ _), ?_⟩
+  have hs0 : (0 : ℝ) ≤ max 1 ((c - b + 1) / ζ) := le_trans zero_le_one (le_max_left _ _)
+  have hkey : c - b < ζ * max 1 ((c - b + 1) / ζ) := by
+    have h1 := (div_le_iff₀ hζ).1 (le_max_right 1 ((c - b + 1) / ζ))
+    linarith
+  have hterm : ((ζ * max 1 ((c - b + 1) / ζ) : ℝ) : EReal) - g ζ
+      ≤ monotoneConj g (max 1 ((c - b + 1) / ζ)) := by
+    rw [monotoneConj_of_nonneg g hs0]
+    exact le_trans (le_iSup (fun _ : (0 : ℝ) ≤ ζ =>
+        ((ζ * max 1 ((c - b + 1) / ζ) : ℝ) : EReal) - g ζ) hζ.le)
+      (le_iSup (fun t : ℝ => ⨆ _ : (0 : ℝ) ≤ t,
+        ((t * max 1 ((c - b + 1) / ζ) : ℝ) : EReal) - g t) ζ)
+  refine lt_of_lt_of_le ?_ hterm
+  rw [monotoneConj_zero hg, hb, hc, ← _root_.EReal.coe_neg, ← _root_.EReal.coe_sub,
+    EReal.coe_lt_coe_iff]
+  linarith
 
 /-- The set of levels at which a non-constant function of the half-line is below a given real
 bound is bounded above: past the affine minorant, `c₀ + m t ≤ α` caps `t`. -/
@@ -1318,5 +1349,328 @@ theorem polarSet_setOf_le_inv :
     polarGauge_degGauge hpq hconv hcl hpr hf, setOf_degGauge_le_one hpq.symm.pos hcnn]
 
 end PowConj
+
+
+/-! ### Gauge-like functions, and the converse half of Theorem 15.3
+
+Rockafellar calls `f` **gauge-like** when `f 0 = inf f` and the sublevel sets `{f ≤ α}` above that
+infimum are all positive multiples of one set. `setOf_monotoneComp_le_eq_smul` says that `g ∘ k` is
+gauge-like; this section proves the converse — a gauge-like closed proper convex function *is* such
+a composite — and assembles the two halves into Theorem 15.3.
+
+The reconstruction is Rockafellar's. The gauge is the gauge of one sublevel set,
+`k = γ(· | {f ≤ f 0 + 1})`, and then *every* sublevel set of `f` is a sublevel set of `k`
+(`IsGaugeLike.exists_isGauge_setOf_le_eq`). That one fact carries the whole proof: it makes `f` a
+nondecreasing function of `k` (`le_of_forall_setOf_le_eq`, `eq_top_of_forall_setOf_le_eq`), so
+`f x` depends on
+`x` only through `k x`. The half-line factor is then read off along a ray, `g ζ = f (ζ • x₁)` with
+`k x₁ = 1` — Rockafellar's own device, and what makes `g` convex and closed for free. Such a ray
+exists unless `k` takes only the values `0` and `+∞`, that is, unless the sublevel sets are a
+single cone; in that degenerate case `f` is `f 0` on that cone and `+∞` off it, and the half-line
+factor is the two-valued step function `f 0 + δ(· | [0, 1])`. -/
+
+section IsGaugeLike
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f k : E → EReal} {a₀ : ℝ}
+
+/-- **A gauge-like function** (Rockafellar §15, the paragraph before Theorem 15.3): the infimum of
+`f` is attained at the origin, and the sublevel sets strictly above that infimum are all positive
+multiples of a single set. -/
+structure IsGaugeLike (f : E → EReal) : Prop where
+  /-- The infimum of `f` is attained at the origin. -/
+  map_zero_eq_iInf : f 0 = ⨅ x, f x
+  /-- The sublevel sets above the infimum are proportional to one another. -/
+  exists_setOf_le_eq_smul : ∃ C : Set E, ∀ α : ℝ, f 0 < (α : EReal) →
+    ∃ l : ℝ, 0 < l ∧ {x : E | f x ≤ (α : EReal)} = l • C
+
+/-- The origin minimises a gauge-like function. -/
+theorem IsGaugeLike.map_zero_le (hgl : IsGaugeLike f) (x : E) : f 0 ≤ f x := by
+  rw [hgl.map_zero_eq_iInf]
+  exact iInf_le f x
+
+/-- Any two sublevel sets above the infimum are positive multiples of *each other* — the form the
+reconstruction uses, with no reference to the auxiliary set. -/
+theorem IsGaugeLike.exists_setOf_le_eq_smul_setOf_le (hgl : IsGaugeLike f) {α β : ℝ}
+    (hα : f 0 < (α : EReal)) (hβ : f 0 < (β : EReal)) :
+    ∃ c : ℝ, 0 < c ∧ {x : E | f x ≤ (α : EReal)} = c • {x : E | f x ≤ (β : EReal)} := by
+  obtain ⟨C, hC⟩ := hgl.exists_setOf_le_eq_smul
+  obtain ⟨a, ha, hseta⟩ := hC α hα
+  obtain ⟨b, hb, hsetb⟩ := hC β hβ
+  refine ⟨a / b, by positivity, ?_⟩
+  rw [hseta, hsetb, smul_smul, div_mul_cancel₀ _ hb.ne']
+
+/-- `f 0` is a real number, for a proper gauge-like `f`: it is finite below by properness, and
+above because it is bounded by any value in the effective domain. -/
+theorem IsGaugeLike.exists_map_zero_eq_coe (hgl : IsGaugeLike f) (hpr : Proper f) :
+    ∃ a : ℝ, f 0 = (a : EReal) := by
+  obtain ⟨x, hx⟩ := hpr.dom_nonempty
+  exact Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hpr.ne_bot 0)
+    (lt_of_le_of_lt (hgl.map_zero_le x) (mem_dom.1 hx))
+
+omit [AddCommGroup E] [Module ℝ E] in
+/-- **`f` is a nondecreasing function of `k`.** If every sublevel set of `f` above its infimum
+`a₀` is a sublevel set of `k`, then `k u ≤ k v` forces `f u ≤ f v`. -/
+theorem le_of_forall_setOf_le_eq (hbot : ∀ x, f x ≠ ⊥) (hmin : ∀ x, (a₀ : EReal) ≤ f x)
+    (hlev : ∀ α : ℝ, a₀ < α → ∃ c : ℝ, 0 < c ∧
+      {x : E | f x ≤ (α : EReal)} = {x : E | k x ≤ (c : EReal)})
+    (u v : E) (huv : k u ≤ k v) : f u ≤ f v := by
+  rcases eq_or_lt_of_le (le_top (a := f v)) with htop | hlt
+  · rw [htop]
+    exact le_top
+  obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hbot v) hlt
+  rw [hr]
+  refine le_coe_of_forall_gt_le fun d hd => ?_
+  have ha₀ : a₀ < d := by
+    have hr' : (a₀ : EReal) ≤ (r : EReal) := by rw [← hr]; exact hmin v
+    exact lt_of_le_of_lt (_root_.EReal.coe_le_coe_iff.1 hr') hd
+  obtain ⟨c, -, hset⟩ := hlev d ha₀
+  have hv : k v ≤ (c : EReal) := by
+    have hmem : v ∈ {x : E | f x ≤ (d : EReal)} := by
+      change f v ≤ (d : EReal)
+      rw [hr]
+      exact_mod_cast hd.le
+    rwa [hset] at hmem
+  have hu : u ∈ {x : E | f x ≤ (d : EReal)} := by
+    rw [hset]
+    exact le_trans huv hv
+  exact hu
+
+omit [AddCommGroup E] [Module ℝ E] in
+/-- **`f` is `+∞` wherever `k` is.** Same hypotheses as `le_of_forall_setOf_le_eq`: a finite value
+of `f` at `u` would put `u` in a sublevel set of `k`. -/
+theorem eq_top_of_forall_setOf_le_eq (hbot : ∀ x, f x ≠ ⊥) (hmin : ∀ x, (a₀ : EReal) ≤ f x)
+    (hlev : ∀ α : ℝ, a₀ < α → ∃ c : ℝ, 0 < c ∧
+      {x : E | f x ≤ (α : EReal)} = {x : E | k x ≤ (c : EReal)})
+    (u : E) (hu : k u = ⊤) : f u = ⊤ := by
+  by_contra hne
+  obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hbot u) (lt_top_iff_ne_top.2 hne)
+  have ha₀ : a₀ ≤ r := by
+    have hr' : (a₀ : EReal) ≤ (r : EReal) := by rw [← hr]; exact hmin u
+    exact _root_.EReal.coe_le_coe_iff.1 hr'
+  obtain ⟨c, -, hset⟩ := hlev (r + 1) (by linarith)
+  have hmem : u ∈ {x : E | f x ≤ ((r + 1 : ℝ) : EReal)} := by
+    change f u ≤ ((r + 1 : ℝ) : EReal)
+    rw [hr]
+    exact_mod_cast (by linarith : r ≤ r + 1)
+  rw [hset] at hmem
+  have hc : (⊤ : EReal) ≤ (c : EReal) := by
+    have hmem' : k u ≤ (c : EReal) := hmem
+    rwa [hu] at hmem'
+  exact absurd (top_le_iff.1 hc) (_root_.EReal.coe_ne_top c)
+
+/-- A gauge either takes the value `1` somewhere — supplying Rockafellar's ray — or takes only the
+values `0` and `+∞`, in which case its sublevel sets are a single cone. -/
+theorem IsGauge.exists_eq_one_or_forall_eq_zero_or_eq_top (hk : IsGauge k) :
+    (∃ x₁ : E, k x₁ = 1) ∨ ∀ x : E, k x = 0 ∨ k x = ⊤ := by
+  by_cases hray : ∃ x₁ : E, k x₁ = 1
+  · exact Or.inl hray
+  refine Or.inr fun x => ?_
+  by_contra hcon
+  push Not at hcon
+  obtain ⟨hne0, hnetop⟩ := hcon
+  obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hk.ne_bot x)
+    (lt_top_iff_ne_top.2 hnetop)
+  have hr0 : (0 : ℝ) ≤ r := by
+    have h := hk.nonneg x
+    rw [hr] at h
+    exact_mod_cast h
+  have hrne : r ≠ 0 := fun h => hne0 (by rw [hr, h, _root_.EReal.coe_zero])
+  have hrpos : 0 < r := lt_of_le_of_ne hr0 (Ne.symm hrne)
+  refine hray ⟨r⁻¹ • x, ?_⟩
+  rw [hk.posHomogeneous r⁻¹ (inv_pos.2 hrpos) x, hr, Tdaf.EReal.coe_mul_coe,
+    inv_mul_cancel₀ hrne, _root_.EReal.coe_one]
+
+end IsGaugeLike
+
+section IsGaugeLikeTopology
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] {f : E → EReal} {g : ℝ → EReal} {k : E → EReal}
+
+/-- **The gauge attached to a gauge-like function**: the gauge of one sublevel set, of which every
+sublevel set of `f` above the infimum is again a sublevel set. -/
+theorem IsGaugeLike.exists_isGauge_setOf_le_eq (hgl : IsGaugeLike f) (hconv : ConvexFn f)
+    (hcl : ClosedFn f) {a₀ : ℝ} (h0 : f 0 = (a₀ : EReal)) :
+    ∃ k : E → EReal, IsGauge k ∧ ClosedFn k ∧ ∀ α : ℝ, a₀ < α → ∃ c : ℝ, 0 < c ∧
+      {x : E | f x ≤ (α : EReal)} = {x : E | k x ≤ (c : EReal)} := by
+  have hβ : f 0 < ((a₀ + 1 : ℝ) : EReal) := by
+    rw [h0]
+    exact_mod_cast lt_add_one a₀
+  have hD0 : (0 : E) ∈ {x : E | f x ≤ ((a₀ + 1 : ℝ) : EReal)} := le_of_lt hβ
+  have hDconv : Convex ℝ {x : E | f x ≤ ((a₀ + 1 : ℝ) : EReal)} := hconv.convex_le _
+  have hDcl : IsClosed {x : E | f x ≤ ((a₀ + 1 : ℝ) : EReal)} :=
+    (ClosedFn.lowerSemicontinuous hcl).isClosed_preimage _
+  refine ⟨gaugeFn {x : E | f x ≤ ((a₀ + 1 : ℝ) : EReal)}, isGauge_gaugeFn hDconv ⟨0, hD0⟩,
+    closedFn_gaugeFn hDconv hD0 hDcl, fun α hα => ?_⟩
+  have hα' : f 0 < (α : EReal) := by
+    rw [h0]
+    exact_mod_cast hα
+  obtain ⟨c, hc, hset⟩ := hgl.exists_setOf_le_eq_smul_setOf_le hα' hβ
+  exact ⟨c, hc, by rw [hset, setOf_gaugeFn_le_pos hDconv hD0 hDcl hc]⟩
+
+/-- **Rockafellar, Theorem 15.3**, the converse half: a gauge-like closed proper convex function is
+`g ∘ k` for a closed gauge `k` and a non-constant nondecreasing closed convex function `g` of the
+half-line that is finite at some positive level. -/
+theorem IsGaugeLike.exists_eq_monotoneComp (hgl : IsGaugeLike f) (hconv : ConvexFn f)
+    (hcl : ClosedFn f) (hpr : Proper f) :
+    ∃ (g : ℝ → EReal) (k : E → EReal), MonotoneHalfLineFn g ∧
+      (∃ t : ℝ, 0 < t ∧ g 0 < g t) ∧ (∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤) ∧
+      IsGauge k ∧ ClosedFn k ∧ f = monotoneComp g k := by
+  obtain ⟨a₀, h0⟩ := hgl.exists_map_zero_eq_coe hpr
+  obtain ⟨k, hkg, hkc, hlev⟩ := hgl.exists_isGauge_setOf_le_eq hconv hcl h0
+  have hmin : ∀ x, (a₀ : EReal) ≤ f x := fun x => by
+    rw [← h0]
+    exact hgl.map_zero_le x
+  have hmono : ∀ u v : E, k u ≤ k v → f u ≤ f v :=
+    le_of_forall_setOf_le_eq hpr.ne_bot hmin hlev
+  have htop : ∀ u : E, k u = ⊤ → f u = ⊤ :=
+    eq_top_of_forall_setOf_le_eq hpr.ne_bot hmin hlev
+  obtain ⟨c₁, hc₁, hset₁⟩ := hlev (a₀ + 1) (lt_add_one a₀)
+  rcases hkg.exists_eq_one_or_forall_eq_zero_or_eq_top with ⟨x₁, hx₁⟩ | hcone
+  · -- The generic case: `k` takes the value `1`, and the half-line factor is `f` along the ray.
+    have hkray : ∀ t : ℝ, 0 ≤ t → k (t • x₁) = (t : EReal) := by
+      intro t ht
+      rcases eq_or_lt_of_le ht with rfl | htpos
+      · rw [zero_smul, hkg.map_zero, _root_.EReal.coe_zero]
+      · rw [hkg.posHomogeneous t htpos x₁, hx₁, mul_one]
+    have hAcont : Continuous ((LinearMap.toSpanSingleton ℝ E x₁ : ℝ →ₗ[ℝ] E) : ℝ → E) := by
+      have hc : Continuous fun t : ℝ => t • x₁ := continuous_id.smul continuous_const
+      exact hc
+    set gray : ℝ → EReal :=
+      ConvexAnalysis.restrict (Set.Ici 0) (compLin f (LinearMap.toSpanSingleton ℝ E x₁)) with hgray
+    have hgval : ∀ t : ℝ, 0 ≤ t → gray t = f (t • x₁) := fun t ht =>
+      restrict_of_mem (Set.mem_Ici.2 ht)
+    have hgmono : MonotoneOn gray (Set.Ici 0) := by
+      intro s hs t ht hst
+      rw [hgval s (Set.mem_Ici.1 hs), hgval t (Set.mem_Ici.1 ht)]
+      refine hmono _ _ ?_
+      rw [hkray s (Set.mem_Ici.1 hs), hkray t (Set.mem_Ici.1 ht)]
+      exact_mod_cast hst
+    have hg0 : gray 0 = (a₀ : EReal) := by rw [hgval 0 le_rfl, zero_smul, h0]
+    refine ⟨gray, k, ⟨fun t ht => restrict_of_notMem (by simpa using not_le.2 ht), hgmono,
+      ConvexFn.restrict (convexFn_compLin _ hconv) (convex_Ici 0),
+      ClosedFn.restrict (closedFn_compLin hcl hAcont) (fun _ => hpr.ne_bot _) isClosed_Ici,
+      by rw [hg0]; exact _root_.EReal.coe_ne_top a₀⟩, ⟨c₁ + 1, by linarith, ?_⟩,
+      ⟨c₁, hc₁, ?_⟩, hkg, hkc, ?_⟩
+    · have hnot : ¬ k ((c₁ + 1) • x₁) ≤ (c₁ : EReal) := by
+        rw [hkray _ (by linarith : (0 : ℝ) ≤ c₁ + 1)]
+        exact_mod_cast (by linarith : ¬ c₁ + 1 ≤ c₁)
+      have hnotf : ¬ f ((c₁ + 1) • x₁) ≤ ((a₀ + 1 : ℝ) : EReal) := fun hmem => hnot (by
+        have hmem' : ((c₁ + 1) • x₁) ∈ {x : E | f x ≤ ((a₀ + 1 : ℝ) : EReal)} := hmem
+        rwa [hset₁] at hmem')
+      rw [hg0, hgval _ (by linarith : (0 : ℝ) ≤ c₁ + 1)]
+      refine lt_of_lt_of_le ?_ (not_le.1 hnotf).le
+      exact_mod_cast lt_add_one a₀
+    · have hkm : (c₁ • x₁) ∈ {x : E | k x ≤ (c₁ : EReal)} := le_of_eq (hkray _ hc₁.le)
+      rw [← hset₁] at hkm
+      have hkm' : f (c₁ • x₁) ≤ ((a₀ + 1 : ℝ) : EReal) := hkm
+      rw [hgval _ hc₁.le]
+      exact ne_top_of_le_ne_top (_root_.EReal.coe_ne_top _) hkm'
+    · funext x
+      rcases eq_top_or_exists_coe_of_nonneg (hkg.nonneg x) with hx | ⟨c, hc0, hx⟩
+      · rw [monotoneComp_of_eq_top _ hx]
+        exact htop x hx
+      · rw [monotoneComp_of_eq_coe hgmono hc0 hx, hgval c hc0]
+        refine le_antisymm (hmono _ _ (le_of_eq ?_)) (hmono _ _ (le_of_eq ?_))
+        · rw [hx, hkray c hc0]
+        · rw [hx, hkray c hc0]
+  · -- The degenerate case: the sublevel sets are a single cone, and the factor is a step function.
+    set gstep : ℝ → EReal :=
+      ConvexAnalysis.restrict (Set.Icc (0 : ℝ) 1) (fun _ => (a₀ : EReal)) with hgstep
+    have hgin : ∀ t : ℝ, t ∈ Set.Icc (0 : ℝ) 1 → gstep t = (a₀ : EReal) :=
+      fun _ ht => restrict_of_mem ht
+    have hgout : ∀ t : ℝ, t ∉ Set.Icc (0 : ℝ) 1 → gstep t = ⊤ := fun _ ht => restrict_of_notMem ht
+    have hzero : gstep 0 = (a₀ : EReal) := hgin 0 (Set.mem_Icc.2 ⟨le_rfl, zero_le_one⟩)
+    have hgmono : MonotoneOn gstep (Set.Ici 0) := by
+      intro s hs t _ hst
+      by_cases htm : t ∈ Set.Icc (0 : ℝ) 1
+      · rw [hgin t htm,
+          hgin s (Set.mem_Icc.2 ⟨Set.mem_Ici.1 hs, le_trans hst (Set.mem_Icc.1 htm).2⟩)]
+      · rw [hgout t htm]
+        exact le_top
+    refine ⟨gstep, k, ⟨fun t ht => hgout t fun h => absurd (Set.mem_Icc.1 h).1 (not_le.2 ht),
+      hgmono, ConvexFn.restrict (convexFn_const _) (convex_Icc 0 1),
+      ClosedFn.restrict ((closedFn_iff_lowerSemicontinuous
+        (fun _ => _root_.EReal.coe_ne_bot a₀)).2 lowerSemicontinuous_const)
+        (fun _ => _root_.EReal.coe_ne_bot a₀) isClosed_Icc,
+      by rw [hzero]; exact _root_.EReal.coe_ne_top a₀⟩, ⟨2, by norm_num, ?_⟩,
+      ⟨1, one_pos, ?_⟩, hkg, hkc, ?_⟩
+    · rw [hzero, hgout 2 (by norm_num)]
+      exact _root_.EReal.coe_lt_top a₀
+    · rw [hgin 1 (Set.mem_Icc.2 ⟨zero_le_one, le_rfl⟩)]
+      exact _root_.EReal.coe_ne_top a₀
+    · funext x
+      rcases hcone x with hx | hx
+      · rw [monotoneComp_of_eq_coe hgmono le_rfl (by rw [hx, _root_.EReal.coe_zero]), hzero, ← h0]
+        exact le_antisymm (hmono x 0 (by rw [hx, hkg.map_zero])) (hgl.map_zero_le x)
+      · rw [monotoneComp_of_eq_top _ hx]
+        exact htop x hx
+
+/-- **Rockafellar, Theorem 15.3**, the forward half in the packaging the converse produces: `g ∘ k`
+is gauge-like. This is `setOf_monotoneComp_le_eq_smul` with the auxiliary set named. -/
+theorem isGaugeLike_monotoneComp (hk : IsGauge k) (hkc : ClosedFn k) (hg : MonotoneHalfLineFn g)
+    (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤) :
+    IsGaugeLike (monotoneComp g k) := by
+  have h0 : monotoneComp g k (0 : E) = g 0 :=
+    monotoneComp_of_eq_coe hg.monotoneOn le_rfl (by rw [hk.map_zero, _root_.EReal.coe_zero])
+  refine ⟨?_, ⟨{x : E | k x ≤ 1}, fun α hα => ?_⟩⟩
+  · refine le_antisymm (le_iInf fun x => ?_) (iInf_le _ 0)
+    rw [h0]
+    exact le_iInf fun t => le_iInf fun _ => hg.zero_le t
+  · rw [h0] at hα
+    exact ⟨levelSup g α, levelSup_pos hg hne hfin hα,
+      setOf_monotoneComp_le_eq_smul hk hkc hg hne hfin hα⟩
+
+end IsGaugeLikeTopology
+
+/-! ### Theorem 15.3
+
+The two halves, assembled. The pairing enters only through the forward implication, where
+closedness of `g ∘ k` comes from Fenchel–Moreau. -/
+
+section Theorem153
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
+  [AddCommGroup F] [Module ℝ F] [TopologicalSpace F] [IsTopologicalAddGroup F]
+  [ContinuousSMul ℝ F] {f : E → EReal}
+
+omit [LocallyConvexSpace ℝ E] in
+/-- **Rockafellar, Theorem 15.3**, the second assertion: the conjugate of a gauge-like closed
+proper convex function is gauge-like too. `conj_monotoneComp` says which composite it is; what has
+to be checked is that `g⁺` satisfies the same two side conditions as `g`, and conjugacy *exchanges*
+them — `g` finite at a positive level makes `g⁺` non-constant, and `g` non-constant makes `g⁺`
+finite at a positive level. -/
+theorem isGaugeLike_conj_monotoneComp (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B.flip]
+    {g : ℝ → EReal} {k : E → EReal} (hk : IsGauge k) (hkc : ClosedFn k)
+    (hg : MonotoneHalfLineFn g) (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤)
+    (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) : IsGaugeLike (conj B (monotoneComp g k)) := by
+  rw [conj_monotoneComp hk hkc hg hfin]
+  exact isGaugeLike_monotoneComp (isGauge_polarGauge hk.nonneg hk.posHomogeneous hk.map_zero)
+    (closedFn_polarGauge hk.nonneg hk.posHomogeneous hk.map_zero)
+    (monotoneHalfLineFn_monotoneConj hg) (MonotoneHalfLineFn.exists_lt_monotoneConj hg hfin)
+    (MonotoneHalfLineFn.exists_monotoneConj_ne_top hg hne)
+
+/-- **Rockafellar, Theorem 15.3.** A function is a gauge-like closed proper convex function exactly
+when it is `g ∘ k` for a closed gauge `k` and a non-constant nondecreasing closed convex function
+`g` of the half-line which is finite at some positive level.
+
+The conjugacy formula that accompanies the theorem is `conj_monotoneComp`, `(g ∘ k)* = g⁺ ∘ k°`;
+it needs neither the pairing hypotheses of the forward implication nor non-constancy. -/
+theorem closedProperConvexFn_and_isGaugeLike_iff (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [IsContinuousPairing B.flip] :
+    (ClosedProperConvexFn f ∧ IsGaugeLike f) ↔
+      ∃ (g : ℝ → EReal) (k : E → EReal),
+        (MonotoneHalfLineFn g ∧ (∃ t : ℝ, 0 < t ∧ g 0 < g t) ∧ (∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤)) ∧
+        (IsGauge k ∧ ClosedFn k) ∧ f = monotoneComp g k := by
+  constructor
+  · rintro ⟨⟨hconv, hcl, hpr⟩, hgl⟩
+    obtain ⟨g, k, hgm, hne, hfin, hkg, hkc, hf⟩ := hgl.exists_eq_monotoneComp hconv hcl hpr
+    exact ⟨g, k, ⟨hgm, hne, hfin⟩, ⟨hkg, hkc⟩, hf⟩
+  · rintro ⟨g, k, ⟨hgm, hne, hfin⟩, ⟨hkg, hkc⟩, rfl⟩
+    exact ⟨closedProperConvexFn_monotoneComp B hkg hkc hgm hfin hne,
+      isGaugeLike_monotoneComp hkg hkc hgm hne hfin⟩
+
+end Theorem153
 
 end Tdaf.ConvexAnalysis

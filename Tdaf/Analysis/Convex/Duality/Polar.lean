@@ -40,6 +40,9 @@ cones. That restriction is polarity, and it is proved here from
   is what §31 pairs with `K`; the last is `K** = K` for a nonempty closed convex cone.
 * `polarSet_polarSet` — **Theorem 14.5**, first assertion: `C°° = C` for a closed convex `C`
   containing the origin.
+* `polarSubmodule`, `partialAffineFn`, `conj_partialAffineFn` — the polar of a subspace bundled
+  as a submodule, and the **conjugate of a partial affine function** (Rockafellar §12, the display
+  preceding Theorem 12.3): `(δ(· | L + a) + ⟨·, a*⟩ + α)* = δ(· | L^⊥ + a*) + ⟨a, ·⟩ + α*`.
 * `polarCone_coe_submodule`, `polarCone_hull_range`,
   `polarCone_setOf_forall_le_zero`, `polarCone_nonnegOrthant` — the examples of §14:
   the polar of a subspace is its annihilator, the polar of a generated cone is the solution set of
@@ -288,6 +291,19 @@ theorem smul_coe_pointedCone (K : PointedCone ℝ E) (a : ℝ) (ha : 0 < a) :
   refine ⟨?_, fun hx => ⟨a⁻¹ • x, K.smul_mem (inv_pos.2 ha).le hx, smul_inv_smul₀ ha.ne' x⟩⟩
   rintro ⟨z, hz, rfl⟩
   exact K.smul_mem ha.le hz
+
+/-- A subspace is invariant under every positive scaling: it is a cone in Rockafellar's sense,
+and a symmetric one. -/
+theorem smul_coe_submodule (M : Submodule ℝ E) {a : ℝ} (ha : 0 < a) :
+    a • (M : Set E) = (M : Set E) := by
+  ext z
+  constructor
+  · rintro ⟨u, hu, rfl⟩
+    exact M.smul_mem a hu
+  · intro hz
+    refine ⟨a⁻¹ • z, M.smul_mem _ hz, ?_⟩
+    change a • a⁻¹ • z = z
+    rw [smul_smul, mul_inv_cancel₀ ha.ne', one_smul]
 
 /-- The polar of any set is a cone in Rockafellar's sense. -/
 theorem smul_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) (a : ℝ) (ha : 0 < a) :
@@ -589,6 +605,16 @@ theorem polarCone_coe_submodule' (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Subm
   ext y
   simp [Submodule.mem_dualAnnihilator]
 
+/-- The polar of a **subspace**, bundled as a submodule of `F`: the annihilator of `M` pulled back
+along `B.flip`. Its carrier is `polarCone B M`, which for a subspace is Rockafellar's "orthogonally
+complementary subspace" (`polarCone_coe_submodule`). -/
+noncomputable def polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) : Submodule ℝ F :=
+  M.dualAnnihilator.comap B.flip
+
+@[simp] theorem coe_polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) :
+    (polarSubmodule B M : Set F) = polarCone B (M : Set E) :=
+  (polarCone_coe_submodule B M).symm
+
 /-- **The polar does not see the cone generated** (Rockafellar §14). -/
 @[simp] theorem polarCone_hull (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (S : Set E) :
     polarCone B (PointedCone.hull ℝ S : Set E) = polarCone B S := by
@@ -610,6 +636,62 @@ theorem polarCone_hull_range {ι : Sort*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) 
   exact ⟨fun h i => h (a i) ⟨i, rfl⟩, fun h _ ⟨i, hi⟩ => hi ▸ h i⟩
 
 end Examples
+
+/-! ### Partial affine functions
+
+Rockafellar's §12, the paragraph preceding Theorem 12.3. A *partial affine function* is a proper
+convex function whose effective domain is an affine set and which is affine on it; every such
+function can be written as `δ(· | L + a) + ⟨·, a*⟩ + α` for a subspace `L`. Conjugacy exchanges `L`
+with its polar, `a` with `a*`, and `α` with `-α - ⟨a, a*⟩`, so partial affine functions, like
+subspaces, come in dual pairs. The formula is Theorem 12.3 (`conj_comp_affine`) at
+`h = δ(· | L)` and `A = I`, fed by `conj_indicatorFn_eq_indicatorFn_polarCone`.
+
+It belongs here rather than in `Duality/Conjugate.lean` because the dual datum is a polar: the
+statement cannot be written before `polarCone` exists. Rockafellar makes the same remark about the
+subspace example it generalises — "this observation will be broadened at the beginning of §14". -/
+
+section PartialAffine
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+
+/-- **A partial affine function** in Rockafellar's normal form: `δ(· | L + a) + ⟨·, b⟩ + α`, for a
+subspace `L`, vectors `a` and `b`, and a real `α`. -/
+noncomputable def partialAffineFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (L : Submodule ℝ E) (a : E) (b : F)
+    (α : ℝ) : E → EReal :=
+  fun x => indicatorFn (a +ᵥ (L : Set E)) x + ((B x b : ℝ) : EReal) + (α : EReal)
+
+/-- The defining formula for a partial affine function. -/
+theorem partialAffineFn_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (L : Submodule ℝ E) (a : E) (b : F)
+    (α : ℝ) (x : E) : partialAffineFn B L a b α x
+      = indicatorFn (a +ᵥ (L : Set E)) x + ((B x b : ℝ) : EReal) + (α : EReal) := rfl
+
+/-- **The conjugate of a partial affine function** (Rockafellar §12, the display preceding
+Theorem 12.3): `(δ(· | L + a) + ⟨·, a*⟩ + α)* = δ(· | L^⊥ + a*) + ⟨a, ·⟩ + α*`, where `α*` is
+`-α - ⟨a, a*⟩`.
+
+The two sides are the *same* construction read through the polar pairing, which is the sense in
+which partial affine functions, like subspaces, come in dual pairs. -/
+theorem conj_partialAffineFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (L : Submodule ℝ E) (a : E) (b : F) (α : ℝ) :
+    conj B (partialAffineFn B L a b α)
+      = partialAffineFn B.flip (polarSubmodule B L) b a (-α - B a b) := by
+  have hcone : conj B (indicatorFn (L : Set E)) = indicatorFn (polarCone B (L : Set E)) :=
+    conj_indicatorFn_eq_indicatorFn_polarCone (fun _ hc => smul_coe_submodule L hc)
+      ⟨0, L.zero_mem⟩
+  have hfun : partialAffineFn B L a b α
+      = fun x : E => indicatorFn (L : Set E) (x - a) + ((B x b : ℝ) : EReal) + (α : EReal) := by
+    funext x
+    rw [partialAffineFn_apply, indicatorFn_vadd]
+  funext y
+  have e : conj B (fun x : E => indicatorFn (L : Set E) (x - a) + ((B x b : ℝ) : EReal)
+        + (α : EReal)) y
+      = conj B (indicatorFn (L : Set E)) (y - b) + ((B a y : ℝ) : EReal)
+        + ((-α - B a b : ℝ) : EReal) :=
+    conj_comp_affine (B := B) (B' := B) (LinearEquiv.refl ℝ E) (LinearEquiv.refl ℝ F)
+      (fun _ _ => rfl) (indicatorFn (L : Set E)) a b α y
+  rw [hfun, e, hcone, partialAffineFn_apply, indicatorFn_vadd, coe_polarSubmodule,
+    LinearMap.flip_apply]
+
+end PartialAffine
 
 section ExamplesTopology
 

@@ -742,19 +742,9 @@ The dimension relations `dim C° = n - lin C` and `lin C° = n - dim C`. They ar
 of Theorem 14.6 read through `finrank`: the polar of a *subspace* is its annihilator, and the
 annihilator of a subspace of a finite-dimensional space has the complementary dimension. -/
 
-section PolarSubmodule
+section VectorSpan
 
-variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-
-/-- The polar of a **subspace**, bundled as a submodule of `F`: the annihilator of `M` pulled back
-along `B.flip`. Its carrier is `polarCone B M`, which for a subspace is Rockafellar's "orthogonally
-complementary subspace" (`polarCone_coe_submodule`). -/
-noncomputable def polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) : Submodule ℝ F :=
-  M.dualAnnihilator.comap B.flip
-
-@[simp] theorem coe_polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) :
-    (polarSubmodule B M : Set F) = polarCone B (M : Set E) :=
-  (polarCone_coe_submodule B M).symm
+variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 /-- For a set containing the origin the affine hull and the linear hull agree — **Rockafellar,
 Theorem 1.1**, in the form Corollary 14.6.1 uses it. -/
@@ -765,7 +755,7 @@ theorem vectorSpan_eq_span_of_zero_mem {C : Set E} (h0 : (0 : E) ∈ C) :
   ext x
   simp
 
-end PolarSubmodule
+end VectorSpan
 
 section Corollary1461
 
