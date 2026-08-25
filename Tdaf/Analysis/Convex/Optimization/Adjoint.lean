@@ -187,6 +187,14 @@ theorem concaveBifun_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X
     (F : Bifun U X) : ConcaveBifun (adjointBifun Bu Bx F) :=
   concaveFn_graphFn_adjointBifun Bu Bx F
 
+/-- **Rockafellar, Theorem 30.1**, concavity half, negated: `-F*` is a *convex* bifunction.
+
+This is the shape in which the concave clauses of Theorem 30.4 consume the adjoint: a statement
+about the concave program `(P*)` is a statement about the convex program associated with `-F*`. -/
+theorem convexBifun_neg_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (F : Bifun U X) : ConvexBifun fun y v => -(adjointBifun Bu Bx F y v) :=
+  concaveFn_iff_convexFn_neg.1 (concaveFn_graphFn_adjointBifun Bu Bx F)
+
 end Closed
 
 section ClosedTopology
@@ -432,6 +440,22 @@ theorem adjointBifun_clBifun : adjointBifun Bu Bx (clBifun F) = adjointBifun Bu 
 
 end AdjointClosure
 
+section NegAdjointClosed
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace V]
+  [IsTopologicalAddGroup V] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsContinuousPairing (prodPairing Bu Bx).flip] {F : Bifun U X}
+
+/-- **Rockafellar, Theorem 30.1**, closedness half, negated: `-F*` is a closed bifunction, with no
+hypothesis on `F`. The companion of `convexBifun_neg_adjointBifun`. -/
+theorem closedBifun_neg_adjointBifun :
+    ClosedBifun fun y v => -(adjointBifun Bu Bx F y v) :=
+  closedConcaveFn_iff.1 closedConcaveFn_graphFn_adjointBifun
+
+end NegAdjointClosed
+
 /-! ### Theorem 30.1: `F** = cl F` -/
 
 section ConcaveAdjoint
@@ -568,5 +592,114 @@ theorem iSup_adjointBifun_zero_le (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X
   iSup_le (adjointBifun_zero_le Bu Bx F)
 
 end Dual
+
+/-! ### Corollary 29.4.1: closing a strongly consistent program changes nothing -/
+
+section Cor2941
+
+open Filter Topology
+
+variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {F : Bifun U X}
+
+/-- **Rockafellar, Corollary 29.4.1**, the domain clause: closing a proper convex bifunction leaves
+the relative interior of its effective domain alone.
+
+Theorem 29.4's two inclusions sandwich `dom (cl F)` between `dom F` and `cl (dom F)`, and
+Corollary 6.3.1 says such a sandwich has the same relative interior. -/
+theorem relint_domBifun_clBifun (hF : ConvexBifun F) (hp : Proper (graphFn F)) :
+    ri (domBifun (clBifun F)) = ri (domBifun F) := by
+  have hconv : Convex ℝ (domBifun F) := convex_domBifun hF
+  have hconvcl : Convex ℝ (domBifun (clBifun F)) := convex_domBifun (ConvexBifun.clBifun hF)
+  refine (Convex.closure_eq_iff_relint_eq hconvcl hconv).1 ?_
+  exact Convex.closure_eq_of_relint_subset_of_subset_closure hconv
+    (intrinsicInterior_subset.trans (domBifun_subset_domBifun_clBifun hF hp))
+    (domBifun_clBifun_subset_closure hF hp)
+
+/-- **Rockafellar, Corollary 29.4.1**, first clause: `(cl P)` is strongly consistent whenever
+`(P)` is. -/
+theorem stronglyConsistent_clBifun (hF : ConvexBifun F) (hp : Proper (graphFn F))
+    (hs : StronglyConsistent F) : StronglyConsistent (clBifun F) := by
+  rw [StronglyConsistent, relint_domBifun_clBifun hF hp]
+  exact hs
+
+/-- **Rockafellar, Corollary 29.4.1**, second clause: the objective function of `(cl P)` is the
+closure of the objective function of `(P)`. This is Theorem 29.4 read at the origin. -/
+theorem clBifun_zero_eq_clFn (hF : ConvexBifun F) (hs : StronglyConsistent F) :
+    clBifun F 0 = clFn (F 0) :=
+  clBifun_apply_eq_clFn hF hs
+
+/-- **Rockafellar, Corollary 29.4.1**, third clause: `(P)` and `(cl P)` have the same optimal
+value. -/
+theorem infBifun_clBifun_zero_eq (hF : ConvexBifun F) (hs : StronglyConsistent F) :
+    infBifun (clBifun F) 0 = infBifun F 0 :=
+  infBifun_clBifun_eq hF hs
+
+/-- **Rockafellar, Corollary 29.4.1**, fourth clause: every optimal solution to `(P)` is an
+optimal solution to `(cl P)`.
+
+A convex function and its closure have the same infimum, and the closure lies below the function,
+so a point where the function attains that infimum is a point where the closure does too. The
+inclusion is strict in general: closing can create new minimisers. -/
+theorem argmin_subset_argmin_clBifun (hF : ConvexBifun F) (hs : StronglyConsistent F) :
+    argmin (F 0) ⊆ argmin (clBifun F 0) := by
+  rw [clBifun_zero_eq_clFn hF hs]
+  intro x hx
+  rw [mem_argmin_iff_le_iInf] at hx ⊢
+  rw [iInf_clFn_eq_iInf]
+  exact le_trans (clFn_le _ x) hx
+
+/-- **Rockafellar, Corollary 29.4.1**, fifth clause: the perturbation functions of `(P)` and
+`(cl P)` agree on a neighbourhood of the origin.
+
+The book says "neighborhood" where Theorem 29.4 only supplies agreement on `ri (dom F)`, which is a
+*relative* neighbourhood; the two are reconciled by the points outside `aff (dom F)`, where both
+perturbation functions are `+∞`. Since `ri (dom F)` is relatively open (Corollary 6.3.1) and
+`dom (cl F) ⊆ cl (dom F) ⊆ aff (dom F)`, a small enough ball around the origin meets no other
+kind of point. -/
+theorem eventually_infBifun_clBifun_eq (hF : ConvexBifun F) (hp : Proper (graphFn F))
+    (hs : StronglyConsistent F) :
+    ∀ᶠ u in 𝓝 (0 : U), infBifun (clBifun F) u = infBifun F u := by
+  have hconv : Convex ℝ (domBifun F) := convex_domBifun hF
+  have h0 : (0 : U) ∈ ri (ri (domBifun F)) := by
+    rw [Convex.relint_relint hconv]
+    exact hs
+  obtain ⟨-, ε, hε, hball⟩ := mem_intrinsicInterior_iff.1 h0
+  rw [Metric.eventually_nhds_iff]
+  refine ⟨ε, hε, fun {u} hu => ?_⟩
+  by_cases haff : u ∈ affineSpan ℝ (domBifun F)
+  · refine infBifun_clBifun_eq hF (hball u ?_ hu)
+    rwa [Convex.affineSpan_relint hconv]
+  · have hcl : u ∉ domBifun (clBifun F) := fun hmem =>
+      haff (closure_subset_affineSpan _ (domBifun_clBifun_subset_closure hF hp hmem))
+    have hF0 : u ∉ domBifun F := fun hmem => haff (subset_affineSpan ℝ _ hmem)
+    rw [infBifun_eq_top_of_notMem_domBifun hcl, infBifun_eq_top_of_notMem_domBifun hF0]
+
+end Cor2941
+
+section Cor2941KuhnTucker
+
+variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [AddCommGroup V] [Module ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
+  [FiniteDimensional ℝ X] {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsContinuousPairing Bu] {F : Bifun U X}
+
+/-- **Rockafellar, Corollary 29.4.1**, last clause: `(P)` and `(cl P)` have the same Kuhn–Tucker
+vectors.
+
+The book deduces this from the agreement of the two perturbation functions near the origin. It is
+cheaper the other way round: a Kuhn–Tucker vector is a point where the dual objective attains the
+optimal value (`mem_kuhnTucker_iff_adjointBifun_zero_eq`), the adjoint does not see the closure at
+all (`adjointBifun_clBifun`), and strong consistency equates the two optimal values. The auxiliary
+pairing `Bx` is the one Theorem 30.1 needs to form the adjoint; nothing in the conclusion depends
+on it. -/
+theorem kuhnTucker_clBifun_eq {Y : Type*} [AddCommGroup Y] [Module ℝ Y]
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx] (hF : ConvexBifun F)
+    (hs : StronglyConsistent F) : KuhnTucker Bu (clBifun F) = KuhnTucker Bu F := by
+  have hval : infBifun (clBifun F) 0 = infBifun F 0 := infBifun_clBifun_eq hF hs
+  ext v
+  rw [mem_kuhnTucker_iff_adjointBifun_zero_eq (Bx := Bx),
+    mem_kuhnTucker_iff_adjointBifun_zero_eq (Bx := Bx), adjointBifun_clBifun, hval]
+
+end Cor2941KuhnTucker
 
 end Tdaf.ConvexAnalysis

@@ -2320,6 +2320,11 @@ composes the two. The book states only the second reading, in Theorem 30.4(g); b
 polyhedral refinement of Thm 27.3, Cor 27.3.1 and the polyhedral half of Cor 27.3.3, which
 genuinely do need Helly in the form of Thm 21.5.
 
+**`argmax` sits beside `argmin` and is `argmin` at the negation.** `argmax g = {x | ∀ z, g z ≤ g x}`
+with `argmax_eq_argmin_neg`; it is what "optimal solution" means for a *concave* program, and
+Theorem 30.4(j) is the first consumer. The two lemmas are three lines together and buy the book's
+own wording for every dual-side statement.
+
 ### `Tdaf/Analysis/Convex/Optimization/Maximum.lean`
 
 §32 in full: **Theorems 32.1, 32.2, 32.3 and 32.4** with Corollaries 32.1.1, 32.2.1, 32.3.1,
@@ -2680,7 +2685,14 @@ boundedness from Theorem 23.4's last clause — and only the last is a problem.
 all a general dual pair supports; Rockafellar's "closed bounded" is `Bornology.IsBounded`, and the
 upgrade is `isBounded_iff_forall_bddAbove` in `Duality/SupportRelint.lean`. It is what makes this
 one corollary need `FiniteDimensional ℝ V` and `IsCompatiblePairing B.flip` when nothing else in
-§29 does, so it lives in its own section.
+§29 does, so it lives in its own section. **Corollary 29.1.4 has no compactness clause at all** —
+it is nonemptiness plus the derivative formula, and under mere *strong* consistency the
+Kuhn–Tucker set need not be bounded, because Theorem 23.4 bounds `∂f x` only at *interior* points
+of `dom f`. Anything asking for "non-empty closed bounded convex" is Corollary 29.1.5.
+
+**`convex_domBifun` is `dom_infBifun` plus `ConvexFn.convex_dom`,** and it is worth having as a
+name: `domBifun F` is a `Set U` defined by an existential, so nothing about it is syntactically a
+`dom`, and every `ri`/`closure` argument about it starts by rewriting.
 
 **Not here**: Theorem 29.4, which is in `Optimization/Adjoint.lean` because `clBifun` is defined there; Theorem 29.3 is in `Saddle/Minimax.lean`, with §36.
 
@@ -2811,11 +2823,34 @@ assertion is then `iInf_clFn_eq_iInf`, and the third is Theorem 7.4's two domain
 (`dom_subset_dom_lscHull`, `dom_lscHull_subset_closure_dom`) pushed through `fst` with
 `image_closure_subset_closure_image`.
 
-**Corollary 29.4.1 is still not done.** It needs the perturbation functions of `(P)` and `(cl P)`
-to agree on a *neighbourhood* of `0`, which is `infBifun_clBifun_eq` plus the fact that strong
-consistency puts `0` in the relative interior — but "neighbourhood" there is relative, and the
-Kuhn–Tucker clause then needs `KuhnTucker B F = KuhnTucker B (clBifun F)`, which is
-`kuhnTucker_eq_neg_subgradient` at two functions that agree near `0`.
+**Corollary 29.4.1 is done**, in seven clauses: `relint_domBifun_clBifun`,
+`stronglyConsistent_clBifun`, `clBifun_zero_eq_clFn`, `infBifun_clBifun_zero_eq`,
+`argmin_subset_argmin_clBifun`, `eventually_infBifun_clBifun_eq`, `kuhnTucker_clBifun_eq`. Three
+things the book's half-page proof does not say:
+
+* **The Kuhn–Tucker clause does not go through the perturbation functions.** Rockafellar deduces
+  it from their agreement near `0`; but `adjointBifun_clBifun` already says the adjoint never sees
+  the closure, so `(P)` and `(cl P)` have the *same* dual objective, and
+  `mem_kuhnTucker_iff_adjointBifun_zero_eq` plus `infBifun_clBifun_eq` at `0` closes it in three
+  lines. That route also drops the properness hypothesis the neighbourhood route needs.
+* **"Agree on a neighbourhood of `0`" is true but is not Theorem 29.4.** Theorem 29.4 gives
+  agreement on `ri (dom F)`, a *relative* neighbourhood. What upgrades it is that `ri C` is
+  relatively open (`Convex.relint_relint`, so `mem_intrinsicInterior_iff` applied to `ri C` gives
+  an ambient ball meeting `aff C` only inside `ri C`) together with
+  `dom (cl F) ⊆ cl (dom F) ⊆ aff (dom F)`: a point of that ball is either in `ri (dom F)`, where
+  Theorem 29.4 applies, or outside `aff (dom F)`, where both perturbation functions are `+∞`.
+* **That clause is false without properness**, which the corollary does not assume although its
+  own Theorem 29.4 assumes it for the domain inclusions. Take `F u x = -∞` for `u` on a line `L`
+  through the origin and `+∞` off it: `(P)` is strongly consistent, `cl F ≡ -∞` (Rockafellar's own
+  convention for improper convex functions), so `inf (cl F) ≡ -∞` while `inf F = +∞` off `L`.
+  `relint_domBifun_clBifun` fails for the same `F` — `ri (dom (cl F)) = ℝᵐ` and `ri (dom F) = L`.
+
+**Theorem 30.1 negated is what the concave clauses of Theorem 30.4 consume.**
+`convexBifun_neg_adjointBifun` and `closedBifun_neg_adjointBifun` state that `-F*` is a closed
+convex bifunction with *no* hypothesis on `F`, so any statement about the concave program `(P*)`
+can be routed through the convex machinery at the flipped pairings. The first of the two used to
+be a private-looking restatement inside `Saddle/Minimax.lean`; it is a §30 fact and now lives
+here.
 
 ```lean
 noncomputable def adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
@@ -2972,7 +3007,7 @@ below any prescribed bound.
 ### `Tdaf/Analysis/Convex/Optimization/Normal.lean`
 
 §30 from Corollary 30.2.1 on: **Corollaries 30.2.1, 30.2.2** (both formulas) **and 30.2.3**,
-**Theorem 30.3** in full, **Theorem 30.4** clauses (a)–(g) and (i), and **Theorem 30.5**.
+**Theorem 30.3** in full, **Theorem 30.4** in all ten clauses, and **Theorem 30.5**.
 `ConcaveKuhnTucker` and `ConcavePolyhedralBifun` are the two definitions clauses (d)–(f) need;
 `forall_conj_eq_top_iff` is the single lemma both halves of Corollary 30.2.1 run on. Corollary
 30.5.1 is in `Saddle/Minimax.lean`, with §36.
@@ -3045,12 +3080,20 @@ minimum value, which is `argmin_nonempty_and_isBounded_iff_exists_setOf_le` — 
 zero-dimensional `X` the set of optimal solutions is non-empty and bounded while no level set is,
 so (i) is *not* literally contained in (g) as the book says.
 
-**Not here**: Theorem 30.4 (h) and (j), the concave mirrors of (g) and (i). They are the same
-argument applied to `F*`, and the obstruction is structural rather than mathematical: `F*` is a
-bifunction from `Y` to `V`, its slices are functions on `V`, and `V` — the space paired with the
-perturbation space `U` — is a plain module throughout §29 and §30. Theorem 27.1(d) and Corollary
-13.3.4(c) both need it finite-dimensional. Adding `[FiniteDimensional ℝ V]` to a mirror section
-would make them reachable at the cost of a fourth finite-dimensionality hypothesis.
+**Theorem 30.4 (h) and (j) are two lines each, and the "structural obstruction" recorded here
+before was not one.** The key is `concaveNormal_iff_normal_neg`: `ConcaveNormal G` is literally
+`Normal (fun y v => -(G y v))`, because `clConcave` is `-(clFn (-·))` and `sup G = -(inf (-G))`, so
+the two sides differ by `neg_inj`. Hence (h) is `normal_of_exists_setOf_le` and (j) is
+`normal_of_argmin_nonempty_and_isBounded`, both applied to `-F*` — a bifunction from `Y` to `V`,
+with `Bu := Bx.flip` and `Bx := Bu.flip` — followed by Theorem 30.3. The two hypotheses come free
+from Theorem 30.1 (`convexBifun_neg_adjointBifun`, `closedBifun_neg_adjointBifun`,
+`Optimization/Adjoint.lean`), and the superlevel set `{v | α ≤ (F* 0) v}` *is* the sublevel set
+`{v | -(F* 0) v ≤ -α}`. No concave mirror of Theorem 27.1(d) or of Corollary 13.3.4(c) is needed;
+the only price is `[FiniteDimensional ℝ V]`, which is what running the convex machinery on `V`
+costs. `[FiniteDimensional ℝ X]` is *not* needed — `X` plays the role of the dual space there.
+
+**The one new definition is `argmax`** (`Optimization/Minimum.lean`), so that (j) can say "the
+optimal solutions to `(P*)`" rather than "the minimisers of `-(F* 0)`".
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -4160,6 +4203,12 @@ The subgradient form of Kuhn–Tucker, `(0,0) ∈ ∂L(v̄, x̄)`, needs §35's 
 also absent — `isSaddlePoint_lagrangian_iff` gives the equivalent "optimal solution plus
 Kuhn–Tucker vector" form instead.
 
+**`convexBifun_neg_adjointBifun` moved out.** It was declared here and independently in
+`Optimization/Adjoint.lean` while §30's clauses (h) and (j) were being written — gotcha 800 — and
+the §30 file is where Theorem 30.1 lives, so the copy here is gone and
+`closedFn_neg_adjointBifun_apply` and `closedBifun_inverseBifun_adjointBifun` now quote
+`closedBifun_neg_adjointBifun` instead of re-deriving it.
+
 **Relocation candidates.** `ConvexFn.exists_mem_relint_dom_lt` and
 `ConvexFn.biInf_eq_iInf_of_relint_dom_subset` (Corollary 7.3.1) belong in `RelativeInterior.lean`;
 `iSup_clConcave_eq_iSup` and `concaveConj_clConcave` (Theorem 12.2's first half, concave side)
@@ -4869,6 +4918,11 @@ here.
     (`IsExactSum.of_polyhedral` and friends ask for both `B` and `B.flip`) applied at `B.flip`
     therefore needs `have : IsCompatiblePairing B.flip.flip := ‹IsCompatiblePairing B›` first —
     the two are definitionally equal, so the term-level bridge always typechecks.
+    **This half is now stale**: `instIsCompatiblePairingFlipFlip` was added to `Pairing.lean`
+    afterwards, so `IsCompatiblePairing B.flip.flip` *is* found from `[IsCompatiblePairing B]` —
+    Theorem 30.4(h)/(j) apply `normal_of_exists_setOf_le` at `(Bu := Bx.flip) (Bx := Bu.flip)` and
+    need no bridge. What still needs one is a flip that is not syntactically a double flip, e.g.
+    `(prodPairing Bu Bx).flip` (gotchas 102, 116).
 
 68. **`StrongDual ℝ E` is an `abbrev` for `E →L[ℝ] ℝ`, and `LinearMap.toContinuousLinearMap φ x = φ x`
     is `rfl`.** So `evalCLM B y` can be handed directly to anything expecting `E →L[ℝ] ℝ` (such as
@@ -6276,6 +6330,39 @@ separate one-line commit, not a drive-by.
      keyword argument explicitly, or strip the carriage returns with `sed` over the touched files
      before committing. Run `git diff --stat <base>` before every commit: if the numbers are far
      larger than the edit you made, this is why.
+
+800. **A three-line restatement of a theorem you are reading is exactly the kind of declaration
+     that already exists somewhere else.** `convexBifun_neg_adjointBifun` (`-F*` is a convex
+     bifunction) was written into `Optimization/Adjoint.lean` beside Theorem 30.1 while an
+     identical copy — same name, same statement, same one-line proof — had been sitting in
+     `Saddle/Minimax.lean` since §37. Per-module `lake build` is silent about it; the collision
+     surfaces only at the full build, as `has already been declared`, reported at the *older*
+     file. This is the fourth realisation of gotchas 34/74/136/155: run
+     `grep -rn "theorem <name>\b\|def <name>\b" Tdaf/` for every new name, including the ones you
+     are sure are new because you just invented them.
+
+801. **Before building a concave mirror, check whether the concave predicate is literally the
+     convex one at the negation.** `ConcaveNormal G` unfolds to `clConcave (sup G) 0 = sup G 0`,
+     and `clConcave = -(clFn (-·))`, `sup G = -(inf (-G))`, so it is `Normal (-G)` up to
+     `neg_inj` — one four-line lemma. That lemma turned Theorem 30.4's clauses (h) and (j), which
+     the plan had recorded as blocked on concave mirrors of Theorem 27.1(d) and Corollary 13.3.4,
+     into two-line corollaries of clauses (g) and (i) at the flipped pairings. The same question
+     is worth asking of `ConcaveConsistent`, `ConcaveStronglyConsistent` and
+     `ConcavePolyhedralBifun` before any of them acquires an API of its own.
+
+802. **`lake build` on this machine intermittently reports `failed to read file '….olean'` and
+     dies, naming a different file each run** — a Mathlib `.olean.private`, a `Tdaf` `.olean`, a
+     toolchain `Std` `.olean`. It is contention between parallel `lean` processes, not the stale
+     artifact of gotchas 269/290 and not a signal about your proof: the named file is present on
+     disk and re-running `lake build` gets further each time until it completes. Diagnose by
+     `ls`-ing the file the error names — if it exists, just re-run.
+
+803. **A hypothesis whose type is only β-equal to the expected one must be passed as an argument,
+     never rewritten into the goal.** Applying a bifunction theorem at `F := fun y v => -(G y v)`
+     leaves goals phrased with `(fun y v => -(G y v)) 0`, against which `rw [h]` for an `h` about
+     `fun v => -(G 0 v)` reports "did not find an occurrence". Build the fact as a `have` with the
+     β-reduced type and hand it to the theorem: argument positions are checked up to defeq, `rw`
+     is syntactic. Gotchas 137/206/219 in bifunction form.
 
 ## 3. Build and verification
 

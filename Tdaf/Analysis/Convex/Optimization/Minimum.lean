@@ -183,6 +183,18 @@ theorem argmin_eq_setOf_le {a : E} (ha : a ∈ argmin f) {μ : ℝ} (hμ : f a =
     rw [Set.mem_ofPred_eq, ← hμ] at hz
     exact le_trans hz (ha w)
 
+/-- The **maximum set** of `g`: the points where `g` attains its supremum. The concave mirror of
+`argmin`, and what "optimal solution" means for a concave program. -/
+def argmax (g : E → EReal) : Set E := {x | ∀ z, g z ≤ g x}
+
+omit [AddCommGroup E] [Module ℝ E] in
+theorem mem_argmax_iff {g : E → EReal} : x ∈ argmax g ↔ ∀ z, g z ≤ g x := Iff.rfl
+
+omit [AddCommGroup E] [Module ℝ E] in
+/-- Maximising `g` is minimising `-g`. -/
+theorem argmax_eq_argmin_neg (g : E → EReal) : argmax g = argmin fun z => -(g z) :=
+  Set.ext fun _ => forall_congr' fun _ => _root_.EReal.neg_le_neg_iff.symm
+
 /-- Minimising is `0 ∈ ∂f x`, by the definition of a subgradient. -/
 theorem mem_argmin_iff_zero_mem_subgradient (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (x : E) :
     x ∈ argmin f ↔ (0 : F) ∈ subgradient B f x := by

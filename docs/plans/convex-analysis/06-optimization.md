@@ -162,7 +162,7 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
 
 | Lean name | book | status |
 |---|---|---|
-| `convexFn_infBifun`, `dom_infBifun` | **Thm 29.1**, first assertion | done |
+| `convexFn_infBifun`, `dom_infBifun`, `convex_domBifun` | **Thm 29.1**, first assertion | done |
 | `mem_kuhnTucker_iff_forall_le` | the inequality reformulation the book gives next | done |
 | `mem_kuhnTucker_iff_neg_mem_subgradient` : `v ∈ KT ↔ -v ∈ ∂(inf F)(0)` | **Thm 29.1**, second assertion | done |
 | `kuhnTucker_eq_neg_subgradient`, `convex_kuhnTucker`, `isClosed_kuhnTucker` | **Cor 29.1.1**, the closed-convex clause | done |
@@ -178,7 +178,8 @@ def KuhnTucker (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) : Set V :=
 | `PolyhedralBifun`, `polyhedralBifun_iff`, `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`, `polyhedral_kuhnTucker_of_polyhedralBifun` | **Thm 29.2** (polyhedral case) | done |
 | `argmin_nonempty_of_polyhedralBifun`, `polyhedral_argmin_of_polyhedralBifun` | **Thm 29.2**, the optimal-solution clause | done — on Cor 27.3.2, which turned out not to need Helly. It needs **less** than the book asks: `inf F 0 ≠ -∞` suffices for existence (an optimal value of `+∞` makes every point optimal); finiteness is needed only for polyhedrality of the minimum set |
 | `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — in `Saddle/Minimax.lean`, where §36 is |
-| `domBifun_eq_image_dom_graphFn`, `mem_relint_slice`, `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq`, `domBifun_subset_domBifun_clBifun`, `domBifun_clBifun_subset_closure` | **Thm 29.4** | done, in `Optimization/Adjoint.lean` where `clBifun` is defined. **The note that it needed saddle-point existence (Thm 37.6) was wrong** — Theorem 29.4 is a §6/§7 statement about closures: Theorem 6.6 puts a relative interior point of `dom (graph F)` over `u`, the prolongation principle (Thm 6.4) makes its second coordinate relatively interior to the slice, and Theorem 7.5 writes `(cl F) u` and `cl (F u)` as the same limit along a segment. Cor 29.4.1 is still not done |
+| `domBifun_eq_image_dom_graphFn`, `mem_relint_slice`, `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq`, `domBifun_subset_domBifun_clBifun`, `domBifun_clBifun_subset_closure` | **Thm 29.4** | done, in `Optimization/Adjoint.lean` where `clBifun` is defined. **The note that it needed saddle-point existence (Thm 37.6) was wrong** — Theorem 29.4 is a §6/§7 statement about closures: Theorem 6.6 puts a relative interior point of `dom (graph F)` over `u`, the prolongation principle (Thm 6.4) makes its second coordinate relatively interior to the slice, and Theorem 7.5 writes `(cl F) u` and `cl (F u)` as the same limit along a segment |
+| `relint_domBifun_clBifun`, `stronglyConsistent_clBifun`, `clBifun_zero_eq_clFn`, `infBifun_clBifun_zero_eq`, `argmin_subset_argmin_clBifun`, `eventually_infBifun_clBifun_eq`, `kuhnTucker_clBifun_eq` | **Cor 29.4.1** | done, in `Optimization/Adjoint.lean` beside Thm 29.4. Two of the seven clauses need `Proper (graphFn F)`, which the corollary does not state although its own Thm 29.4 does — and without it the "neighbourhood of `0`" clause is **false**: for an improper `F` with `dom F` a line through the origin, `cl F ≡ -∞` has `dom (cl F) = ℝᵐ` while `inf F = +∞` off the line. The Kuhn–Tucker clause is cheaper the other way round from the book: `adjointBifun_clBifun` says the adjoint never sees the closure, so `(P)` and `(cl P)` have the same dual objective, and strong consistency equates the two optimal values |
 
 `Consistent`, `StronglyConsistent`, `StrictlyConsistent` are `0 ∈ dom F`, `0 ∈ ri (dom F)`,
 `0 ∈ int (dom F)` respectively. They are the constraint qualifications of Part VI and connect
@@ -404,9 +405,17 @@ Corollary 30.2.2 is `iInf_add_infBifun_le` from §6.2. `mem_kuhnTucker_iff_adjoi
 then says the Kuhn–Tucker vectors are exactly the dual-optimal `v` at which the duality gap closes,
 which is the half of Theorem 30.5 that needs no normality hypothesis.
 
+**Corollary 29.4.1's Kuhn–Tucker clause is a §30 statement, not a §29 one.** The book gets it from
+the agreement of the two perturbation functions near `0`; but `adjointBifun_clBifun` says the
+adjoint never sees the closure, so `(P)` and `(cl P)` have the same dual objective, and
+`mem_kuhnTucker_iff_adjointBifun_zero_eq` together with `infBifun_clBifun_eq` at the origin gives
+`KuhnTucker Bu (cl F) = KuhnTucker Bu F` in three lines — with no properness hypothesis, which the
+neighbourhood route does need. The auxiliary pairing `Bx` appears in the statement and not in the
+conclusion, exactly as in `mem_kuhnTucker_iff_adjointBifun_zero_eq`.
+
 ## 6.4a `Optimization/Normal.lean` — §30 from Corollary 30.2.2 on
 
-**Status: done** except clauses (h) and (j) of Theorem 30.4.
+**Status: done**, Theorem 30.4 included in all ten of its clauses.
 
 ```lean
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
@@ -434,7 +443,7 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 | `PolyhedralBifun.normal`, `ConcavePolyhedralBifun`, `ConcavePolyhedralBifun.concaveNormal`, `normal_of_concavePolyhedral_adjointBifun` | **Thm 30.4(e), (f)** | done |
 | `shiftBifun`, `infBifun_shiftBifun`, `convexBifun_shiftBifun`, `adjointBifun_shiftBifun_zero`, `supBifun_adjointBifun`, `mem_domConcaveBifun_adjointBifun`, `normal_of_exists_setOf_le` | **Thm 30.4(g)** | done — and the book's "i.e." is a theorem, not a step: `0 ∈ int (dom (F 0)*) ⇒ 0 ∈ int (domConcaveBifun F*)` needs *all slices of a closed convex bifunction have the same recession function* (`recessionFn_slice_eq`, Thm 8.3 on the epigraph). No properness assumed; the one §30 statement needing `FiniteDimensional ℝ U` |
 | `normal_of_argmin_nonempty_and_isBounded` | **Thm 30.4(i)** | done — with `Proper (F 0)`, which the book's "(i) is contained in (g)" quietly needs |
-| — | Thm 30.4 (h), (j) | not done — the concave mirrors, blocked structurally: they are (g), (i) applied to `F*`, whose slices live on `V`, and `V` is a plain module throughout §29–§30 while Thm 27.1(d) and Cor 13.3.4(c) need it finite-dimensional |
+| `concaveNormal_iff_normal_neg`, `normal_of_exists_setOf_ge_adjointBifun`, `normal_of_argmax_adjointBifun_nonempty_and_isBounded` | **Thm 30.4(h), (j)** | done — and the structural obstruction this row used to record was not one. Concave normality of `G` is ordinary normality of `-G`, so (h) and (j) are (g) and (i) read for the convex program associated with `-F*` at the flipped pairings `Bx.flip`, `Bu.flip`; no concave mirror of Thm 27.1(d) or Cor 13.3.4(c) is needed, only `[FiniteDimensional ℝ V]`. `convexBifun_neg_adjointBifun` and `closedBifun_neg_adjointBifun` (Thm 30.1, negated) supply the two hypotheses with nothing assumed about `F` |
 | `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | Cor 30.5.1 (saddle points of `L`) | done — in `Saddle/Minimax.lean` |
 
 ### What actually happened
@@ -455,6 +464,16 @@ negation reindexing closes it. Composing with `F** = cl F` gives the book's seco
 `ConcaveFn.clConcave_eq_of_mem_relint_domConcave` mirrors Theorem 7.4. The latter belongs with
 `clConcave` in `Duality/ConcaveConj.lean`, which is layer C and does not import
 `RelativeInterior`; it lives in `Normal.lean` until a second consumer appears.
+
+**Clauses (h) and (j) are the negation trick, not a concave development.** `ConcaveNormal G` is
+definitionally `Normal (-G)` up to `neg_inj` (`concaveNormal_iff_normal_neg`), so (h) is clause
+(g) and (j) is clause (i), each applied to the closed convex bifunction `-F*` from `Y` to `V` with
+the pairings flipped. The two hypotheses are Theorem 30.1 negated —
+`convexBifun_neg_adjointBifun`, `closedBifun_neg_adjointBifun` — which hold with nothing assumed
+about `F`, and the superlevel set `{v | α ≤ (F* 0) v}` is the sublevel set `{v | -(F* 0) v ≤ -α}`.
+The cost is `[FiniteDimensional ℝ V]`; `[FiniteDimensional ℝ X]` is not needed, since `X` plays
+the dual role in the flipped instantiation. `argmax` was added beside `argmin`
+(`Optimization/Minimum.lean`) so that (j) can be stated about "the optimal solutions to `(P*)`".
 
 ## 6.5 `Optimization/Fenchel.lean` and `Optimization/Moreau.lean` — §31
 

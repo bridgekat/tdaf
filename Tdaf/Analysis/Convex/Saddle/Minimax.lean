@@ -1070,12 +1070,6 @@ section AdjointStructure
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- The negated adjoint is a convex bifunction: this is the concavity half of Theorem 30.1, read
-through the sign dictionary. -/
-theorem convexBifun_neg_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
-    (F : Bifun U X) : ConvexBifun fun y v => -(adjointBifun Bu Bx F y v) :=
-  concaveFn_iff_convexFn_neg.1 (concaveBifun_adjointBifun Bu Bx F)
-
 /-- Each slice of the adjoint is a concave function. -/
 theorem concaveFn_adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) (y : Y) : ConcaveFn (adjointBifun Bu Bx F y) :=
@@ -1103,8 +1097,7 @@ theorem closedFn_neg_adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] (F : Bifun U X) (y : Y) :
     ClosedFn fun v => -(adjointBifun Bu Bx F y v) := by
   have := isContinuousPairing_prodPairing_flip Bu Bx
-  have h : ClosedBifun fun y v => -(adjointBifun Bu Bx F y v) :=
-    closedConcaveFn_iff.1 closedConcaveFn_graphFn_adjointBifun
+  have h : ClosedBifun fun y v => -(adjointBifun Bu Bx F y v) := closedBifun_neg_adjointBifun
   exact h.imageClosedBifun y
 
 /-- **The inverse of the adjoint is a closed bifunction.** -/
@@ -1112,7 +1105,7 @@ theorem closedBifun_inverseBifun_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] 
     [IsContinuousPairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip]
     (F : Bifun U X) : ClosedBifun (inverseBifun (adjointBifun Bu Bx F)) := by
   have := isContinuousPairing_prodPairing_flip Bu Bx
-  exact closedBifun_flipBifun (closedConcaveFn_iff.1 closedConcaveFn_graphFn_adjointBifun)
+  exact closedBifun_flipBifun closedBifun_neg_adjointBifun
 
 end AdjointClosed
 

@@ -179,6 +179,18 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 
 theorem concaveNormal_iff : ConcaveNormal G ↔ clConcave (supBifun G) 0 = supBifun G 0 := Iff.rfl
 
+/-- Concave normality of `G` is ordinary normality of `-G`: the concave closure of `sup G` is minus
+the closure of `inf (-G)`, and the two optimal values are opposite.
+
+This is what makes the concave clauses of Theorem 30.4 free — each of them is the corresponding
+convex clause read at `-F*`, with the pairings flipped. -/
+theorem concaveNormal_iff_normal_neg : ConcaveNormal G ↔ Normal fun y v => -(G y v) := by
+  have hval : ∀ y, infBifun (fun y' v => -(G y' v)) y = -(supBifun G y) :=
+    fun y => (congrFun (neg_supBifun G) y).symm
+  have hcl : clFn (infBifun fun y' v => -(G y' v)) 0 = -(clConcave (supBifun G) 0) := by
+    rw [clConcave_apply, neg_neg, neg_supBifun]
+  rw [concaveNormal_iff, normal_iff, hcl, hval 0, neg_inj]
+
 end ConcaveNormality
 
 section ConcaveStrongConsistency
@@ -628,6 +640,80 @@ theorem normal_of_argmin_nonempty_and_isBounded (hF : ConvexBifun F) (hcl : Clos
       ⟨hne, hbd⟩)
 
 end Thm304Main
+
+/-! ### Theorem 30.4(h) and (j): bounded level sets of the dual objective -/
+
+section Thm304DualBounded
+
+variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup X] [NormedSpace ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip]
+  {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+  {F : Bifun U X}
+
+/-- **Rockafellar, Theorem 30.4(h)**: if some superlevel set `{v | α ≤ (F* 0)(v)}` of the dual
+objective is non-empty and bounded, then normality holds for `(P)` and `(P*)`.
+
+The book calls this "a special case of (a)", the mirror of the way (g) is a special case of (b).
+Here it is literally clause (g) read for the *convex* program associated with `-F*`: that
+bifunction is convex and closed with no hypothesis on `F` at all (Theorem 30.1, in the form
+`convexBifun_neg_adjointBifun` and `closedBifun_neg_adjointBifun`), its objective is `-(F* 0)`, and
+its sublevel set at `-α` is the superlevel set of `F* 0` at `α`. Normality of that program is
+concave normality of `F*` (`concaveNormal_iff_normal_neg`), which is normality of `(P)` by
+Theorem 30.3.
+
+What the book's route needs and this one does not is a concave mirror of Theorem 27.1(d) and of
+Corollary 13.3.4 on `V`; the flip of the pairings supplies both. -/
+theorem normal_of_exists_setOf_ge_adjointBifun (hF : ConvexBifun F) (hcl : ClosedBifun F)
+    (h : ∃ α : ℝ, {v : V | (α : EReal) ≤ adjointBifun Bu Bx F 0 v}.Nonempty ∧
+      Bornology.IsBounded {v : V | (α : EReal) ≤ adjointBifun Bu Bx F 0 v}) :
+    Normal F := by
+  have hpair : IsContinuousPairing (prodPairing Bu Bx).flip :=
+    isContinuousPairing_prodPairing_flip Bu Bx
+  obtain ⟨α, hne, hbd⟩ := h
+  have hset : {v : V | -(adjointBifun Bu Bx F 0 v) ≤ ((-α : ℝ) : EReal)}
+      = {v : V | (α : EReal) ≤ adjointBifun Bu Bx F 0 v} := by
+    ext v
+    have hiff : (-(adjointBifun Bu Bx F 0 v) ≤ ((-α : ℝ) : EReal))
+        ↔ ((α : EReal) ≤ adjointBifun Bu Bx F 0 v) := by
+      rw [_root_.EReal.neg_le, _root_.EReal.coe_neg, neg_neg]
+    exact hiff
+  have hne' : {v : V | -(adjointBifun Bu Bx F 0 v) ≤ ((-α : ℝ) : EReal)}.Nonempty := by
+    rw [hset]; exact hne
+  have hbd' : Bornology.IsBounded {v : V | -(adjointBifun Bu Bx F 0 v) ≤ ((-α : ℝ) : EReal)} := by
+    rw [hset]; exact hbd
+  have hnormal : Normal fun y v => -(adjointBifun Bu Bx F y v) :=
+    normal_of_exists_setOf_le (Bu := Bx.flip) (Bx := Bu.flip)
+      (convexBifun_neg_adjointBifun Bu Bx F) closedBifun_neg_adjointBifun ⟨-α, hne', hbd'⟩
+  exact (normal_iff_concaveNormal_adjointBifun hF hcl).2 (concaveNormal_iff_normal_neg.2 hnormal)
+
+/-- **Rockafellar, Theorem 30.4(j)**: if the optimal solutions to `(P*)` form a non-empty bounded
+set — in particular if there is exactly one — then normality holds.
+
+Clause (i) read for the convex program associated with `-F*`, exactly as (h) is clause (g) read
+there. As in (i), properness of the objective is not removable: without it "optimal solution" and
+"optimal value" come apart. -/
+theorem normal_of_argmax_adjointBifun_nonempty_and_isBounded (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hp : Proper fun v => -(adjointBifun Bu Bx F 0 v))
+    (hne : (argmax (adjointBifun Bu Bx F 0)).Nonempty)
+    (hbd : Bornology.IsBounded (argmax (adjointBifun Bu Bx F 0))) :
+    Normal F := by
+  have hpair : IsContinuousPairing (prodPairing Bu Bx).flip :=
+    isContinuousPairing_prodPairing_flip Bu Bx
+  have harg : argmin (fun v : V => -(adjointBifun Bu Bx F 0 v))
+      = argmax (adjointBifun Bu Bx F 0) := (argmax_eq_argmin_neg _).symm
+  have hne' : (argmin fun v : V => -(adjointBifun Bu Bx F 0 v)).Nonempty := by
+    rw [harg]; exact hne
+  have hbd' : Bornology.IsBounded (argmin fun v : V => -(adjointBifun Bu Bx F 0 v)) := by
+    rw [harg]; exact hbd
+  have hnormal : Normal fun y v => -(adjointBifun Bu Bx F y v) :=
+    normal_of_argmin_nonempty_and_isBounded (Bu := Bx.flip) (Bx := Bu.flip)
+      (convexBifun_neg_adjointBifun Bu Bx F) closedBifun_neg_adjointBifun hp hne' hbd'
+  exact (normal_iff_concaveNormal_adjointBifun hF hcl).2 (concaveNormal_iff_normal_neg.2 hnormal)
+
+end Thm304DualBounded
 
 /-! ### Corollary 30.2.1: consistency of the two programs -/
 
