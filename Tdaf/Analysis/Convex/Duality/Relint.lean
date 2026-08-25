@@ -484,6 +484,16 @@ theorem properConvexFn_finsetSum (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i
   · rw [Finset.sum_apply]
     exact Tdaf.EReal.sum_ne_bot fun i hi => hbot i hi x
 
+omit [FiniteDimensional ℝ F] in
+/-- **Theorem 6.5 for effective domains**: a point lying in the relative interior of every
+`dom fᵢ` lies in the relative interior of `dom (f₁ + ⋯ + fₘ)`. Together with `dom_finsetSum` this
+is what the binary Theorem 16.4 needs before it can be re-entered at a partial sum. -/
+theorem mem_relint_dom_finsetSum (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i))
+    {x₀ : E} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (dom (f i))) : x₀ ∈ ri (dom (∑ i ∈ s, f i)) := by
+  rw [dom_finsetSum fun i hi x => (hpf i hi).ne_bot x,
+    Convex.relint_biInter_finset (fun i hi => (hf i hi).convex_dom) hx₀]
+  exact Set.mem_iInter₂.2 hx₀
+
 private theorem isExactFinsetSum_of_relint_aux [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (f : ι → E → EReal) (x₀ : E) : ∀ t : Finset ι, t.Nonempty → (∀ i ∈ t, ConvexFn (f i)) →
       (∀ i ∈ t, Proper (f i)) → (∀ i ∈ t, x₀ ∈ ri (dom (f i))) → IsExactFinsetSum B t f := by
@@ -499,15 +509,12 @@ private theorem isExactFinsetSum_of_relint_aux [IsCompatiblePairing B] [IsCompat
     refine IsExactFinsetSum.cons hi ?_
       (ih htne (fun j hj => hf j (hmt j hj)) (fun j hj => hpf j (hmt j hj))
         (fun j hj => hx₀ j (hmt j hj)))
-    obtain ⟨hconv, hprop, hdom⟩ :=
+    obtain ⟨hconv, hprop, -⟩ :=
       properConvexFn_finsetSum (fun j hj => hf j (hmt j hj)) (fun j hj => hpf j (hmt j hj))
         (fun j hj => intrinsicInterior_subset (hx₀ j (hmt j hj)))
-    have hri : x₀ ∈ ri (dom (∑ j ∈ t, f j)) := by
-      rw [hdom, Convex.relint_biInter_finset (fun j hj => (hf j (hmt j hj)).convex_dom)
-        (fun j hj => hx₀ j (hmt j hj))]
-      exact Set.mem_iInter₂.2 fun j hj => hx₀ j (hmt j hj)
-    exact IsExactSum.of_relint (hf i (by simp)) (hpf i (by simp)) hconv hprop
-      (hx₀ i (by simp)) hri
+    exact IsExactSum.of_relint (hf i (by simp)) (hpf i (by simp)) hconv hprop (hx₀ i (by simp))
+      (mem_relint_dom_finsetSum (fun j hj => hf j (hmt j hj)) (fun j hj => hpf j (hmt j hj))
+        (fun j hj => hx₀ j (hmt j hj)))
 
 /-- **Rockafellar, Theorem 16.4** in the book's own `m`-ary form: finitely many proper convex
 functions add exactly as soon as the relative interiors of their effective domains have a point in

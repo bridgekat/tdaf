@@ -41,13 +41,24 @@ In the binary form the surface states, the two halves come from two different ba
 everywhere", i.e. for the conclusion shared by Theorems 16.4 and 20.1; §16 already states the
 relative-interior form against the same interface.
 
+**The `m`-ary statements are not an induction over the binary ones.** `IsExactFinsetSum` is the
+same conclusion for a finite family, and its consequences — the identity, the attainment, the
+properness of the sum — are proved once, for the family. What the book's own proof of
+Theorem 20.1 contributes is `IsExactFinsetSum.of_split`: the polyhedral block `∑_{i ≤ k} fᵢ` is a
+single polyhedral summand (**Theorem 19.4**, `polyhedralFn_finsetSum`), the rest is a single proper
+convex one, the two add exactly by the *binary* Theorem 20.1, and each block adds exactly on its
+own. The index set is split membership-wise rather than as `s = t ∪ u`, so no `DecidableEq`
+instance reaches any statement.
+
 ## Contents
 
 | label | declaration |
 |---|---|
 | §20 opening, `k = m` | `theorem_20_1_pair_exact`, `theorem_20_1_pair_attained` |
-| Theorem 20.1 | `theorem_20_1_exact`, `theorem_20_1_attained` |
-| Corollary 20.1.1 | `corollary_20_1_1`, `corollary_20_1_1_attained` |
+| Theorem 20.1 | `theorem_20_1_exact`, `theorem_20_1_attained`, `theorem_20_1_exact_finset`,
+  `theorem_20_1_attained_finset` |
+| Corollary 20.1.1 | `corollary_20_1_1`, `corollary_20_1_1_attained`,
+  `corollary_20_1_1_finset`, `corollary_20_1_1_attained_finset` |
 | Theorem 20.2 | `theorem_20_2` |
 | Corollary 20.2.1 | `corollary_20_2_1` |
 | Theorem 20.3 | `theorem_20_3` |
@@ -75,13 +86,6 @@ would mean carrying a half-space description of a subset of `ℝⁿ × ℝ`, i.e
 
 ## What is not here
 
-* **The `m`-ary forms of Theorem 20.1 and Corollary 20.1.1** — *omitted with a reason*. The book
-  states both for `f₁ + ⋯ + fₘ` with `f₁, …, f_k` polyhedral; `IsExactSum` is a binary interface,
-  and the `m`-ary one is remediation §4.4, not surface work. §16 records the identical omission for
-  Theorem 16.4, and the two must be lifted together. The binary statements below carry the full
-  content: the book's own proof is the reduction `g₁ = f₁ + ⋯ + f_k`, `g₂ = f_{k+1} + ⋯ + f_m`
-  followed by the mixed binary case, and Theorem 19.4 (`PolyhedralFn.add`) is what makes `g₁`
-  polyhedral.
 * **The opening paragraph's `m`-fold all-polyhedral formula** (book, lines 7003–7028) — *stated*,
   in binary form, as `theorem_20_1_pair_exact` / `theorem_20_1_pair_attained`. It is unnumbered in
   the book, which presents it as the motivating computation for Theorem 20.1; it is the case
@@ -321,6 +325,114 @@ theorem corollary_20_1_1_attained (hf : PolyhedralFn f) (hcf : ClosedProperConve
   rw [infConv_eq_conj_add_conj hf hcf hg hxf hxg, ← hval, hff, hgg]
 
 end Corollary_20_1_1
+
+/-- **Rockafellar, Theorem 20.1** in the book's own `m`-ary form. Let `f₁, …, fₘ` be proper convex
+functions on `ℝⁿ` such that `f₁, …, f_k` are polyhedral, and assume that
+
+`dom f₁ ∩ ⋯ ∩ dom f_k ∩ ri (dom f_{k+1}) ∩ ⋯ ∩ ri (dom fₘ)`
+
+is not empty. Then `(f₁ + ⋯ + fₘ)* = f₁* □ ⋯ □ fₘ*`.
+
+`t` is the book's `{1, …, k}` and `u` its complement; the splitting of the index set is spelled
+membership-wise so that no `DecidableEq` instance enters the statement. Specialises
+`IsExactFinsetSum.of_polyhedral` and `IsExactFinsetSum.conj_finsetSum`. **The asymmetry is the
+point**: each polyhedral summand contributes only a point of `dom fᵢ`, each of the others a point
+of `ri (dom fᵢ)`. Compare `theorem_16_4_exact_finset`, which asks for a relative interior point on
+every index. -/
+theorem theorem_20_1_exact_finset {ι : Type*} {s t u : Finset ι} {f : ι → Rn n → EReal}
+    (hs : s.Nonempty) (hdisj : Disjoint t u) (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
+    (hpoly : ∀ i ∈ t, PolyhedralFn (f i)) (hconv : ∀ i ∈ u, ConvexFn (f i))
+    (hpf : ∀ i ∈ s, Proper (f i)) {x₀ : Rn n} (hxt : ∀ i ∈ t, x₀ ∈ dom (f i))
+    (hxu : ∀ i ∈ u, x₀ ∈ ri (dom (f i))) :
+    conj (pairing n) (∑ i ∈ s, f i)
+      = ofInfConvFn (∑ i ∈ s, toInfConvFn (conj (pairing n) (f i))) :=
+  (IsExactFinsetSum.of_polyhedral (B := pairing n) hs hdisj hmem hpoly hconv hpf hxt
+    hxu).conj_finsetSum
+
+/-- **Rockafellar, Theorem 20.1**, the attainment clause for `m` summands: under the same
+qualification, for each `x*` the infimum
+`inf {f₁*(x₁*) + ⋯ + fₘ*(xₘ*) | x₁* + ⋯ + xₘ* = x*}` is attained.
+
+Specialises `IsExactFinsetSum.exists_conj_finsetSum_eq`. -/
+theorem theorem_20_1_attained_finset {ι : Type*} {s t u : Finset ι} {f : ι → Rn n → EReal}
+    (hs : s.Nonempty) (hdisj : Disjoint t u) (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
+    (hpoly : ∀ i ∈ t, PolyhedralFn (f i)) (hconv : ∀ i ∈ u, ConvexFn (f i))
+    (hpf : ∀ i ∈ s, Proper (f i)) {x₀ : Rn n} (hxt : ∀ i ∈ t, x₀ ∈ dom (f i))
+    (hxu : ∀ i ∈ u, x₀ ∈ ri (dom (f i))) (y : Rn n) :
+    ∃ y' : ι → Rn n, ∑ i ∈ s, y' i = y ∧
+      ∑ i ∈ s, conj (pairing n) (f i) (y' i) = conj (pairing n) (∑ i ∈ s, f i) y :=
+  (IsExactFinsetSum.of_polyhedral (B := pairing n) hs hdisj hmem hpoly hconv hpf hxt
+    hxu).exists_conj_finsetSum_eq y
+
+section Corollary_20_1_1_finset
+
+variable {ι : Type*} {s t u : Finset ι} {f : ι → Rn n → EReal}
+variable (hs : s.Nonempty) (hdisj : Disjoint t u) (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
+variable (hpoly : ∀ i ∈ t, PolyhedralFn (f i)) (hcf : ∀ i ∈ s, ClosedProperConvexFn (f i))
+variable {x₀ : Rn n} (hxt : ∀ i ∈ t, x₀ ∈ dom (conj (pairing n) (f i)))
+variable (hxu : ∀ i ∈ u, x₀ ∈ ri (dom (conj (pairing n) (f i))))
+
+include hs hdisj hmem hpoly hcf hxt hxu
+
+/-- Theorem 20.1 applied to the conjugate functions, which is Rockafellar's one-line proof of
+Corollary 20.1.1. Private: the two public statements below are the corollary's two clauses. -/
+private theorem isExactFinsetSum_conj_of_polyhedral :
+    IsExactFinsetSum (pairing n) s fun i => conj (pairing n) (f i) :=
+  IsExactFinsetSum.of_polyhedral (B := pairing n) hs hdisj hmem
+    (fun i hi => PolyhedralFn.conj (B := pairing n) (hpoly i hi))
+    (fun i _ => convexFn_conj (pairing n) (f i)) (fun i hi => proper_conj (hcf i hi)) hxt hxu
+
+/-- The `m`-fold infimal convolution is the conjugate of the sum of the conjugates. Both clauses
+of Corollary 20.1.1 are read off this identity, exactly as in the binary case. -/
+private theorem sum_toInfConvFn_eq_conj_finsetSum_conj :
+    ofInfConvFn (∑ i ∈ s, toInfConvFn (f i))
+      = conj (pairing n) (∑ i ∈ s, conj (pairing n) (f i)) := by
+  have hbi : ∀ i ∈ s, conj (pairing n) (conj (pairing n) (f i)) = f i := fun i hi => by
+    rw [theorem_12_2_biconj (hcf i hi).convex]; exact (hcf i hi).closed
+  rw [(isExactFinsetSum_conj_of_polyhedral hs hdisj hmem hpoly hcf hxt hxu).conj_finsetSum]
+  exact congrArg ofInfConvFn
+    (Finset.sum_congr rfl fun i hi => congrArg toInfConvFn (hbi i hi).symm)
+
+/-- **Rockafellar, Corollary 20.1.1** in the book's own `m`-ary form. Let `f₁, …, fₘ` be closed
+proper convex functions on `ℝⁿ` such that `f₁, …, f_k` are polyhedral, and assume that
+
+`dom f₁* ∩ ⋯ ∩ dom f_k* ∩ ri (dom f_{k+1}*) ∩ ⋯ ∩ ri (dom fₘ*)`
+
+is not empty. Then `f₁ □ ⋯ □ fₘ` is a closed proper convex function.
+
+Rockafellar's proof verbatim: apply Theorem 20.1 to the conjugates. Each `fᵢ*` is polyhedral for
+`i ≤ k` by Theorem 19.2 (`PolyhedralFn.conj`), so `(f₁* + ⋯ + fₘ*)* = f₁** □ ⋯ □ fₘ** =
+f₁ □ ⋯ □ fₘ` by Theorem 12.2, and a conjugate is closed and convex outright. Properness is
+`IsExactFinsetSum.proper_finsetSum` followed by `proper_conj_of_proper`. -/
+theorem corollary_20_1_1_finset :
+    ClosedProperConvexFn (ofInfConvFn (∑ i ∈ s, toInfConvFn (f i))) := by
+  have hx₀ : ∀ i ∈ s, x₀ ∈ dom (conj (pairing n) (f i)) := fun i hi =>
+    (hmem i).1 hi |>.elim (fun h => hxt i h) fun h => intrinsicInterior_subset (hxu i h)
+  obtain ⟨hconvsum, -, -⟩ :=
+    properConvexFn_finsetSum (f := fun i => conj (pairing n) (f i))
+      (fun i _ => convexFn_conj (pairing n) (f i)) (fun i hi => proper_conj (hcf i hi)) hx₀
+  rw [sum_toInfConvFn_eq_conj_finsetSum_conj hs hdisj hmem hpoly hcf hxt hxu]
+  exact ⟨convexFn_conj _ _, closedFn_conj, proper_conj_of_proper hconvsum
+    (isExactFinsetSum_conj_of_polyhedral hs hdisj hmem hpoly hcf hxt hxu).proper_finsetSum⟩
+
+/-- **Rockafellar, Corollary 20.1.1**, the attainment clause: under the same hypothesis the
+infimum in the definition of `(f₁ □ ⋯ □ fₘ)(x)` is attained for every `x`.
+
+Specialises `IsExactFinsetSum.exists_conj_finsetSum_eq` applied to the conjugates, read back
+through Theorem 12.2. -/
+theorem corollary_20_1_1_attained_finset (x : Rn n) :
+    ∃ x' : ι → Rn n, ∑ i ∈ s, x' i = x ∧
+      ∑ i ∈ s, f i (x' i) = ofInfConvFn (∑ i ∈ s, toInfConvFn (f i)) x := by
+  have hbi : ∀ i ∈ s, conj (pairing n) (conj (pairing n) (f i)) = f i := fun i hi => by
+    rw [theorem_12_2_biconj (hcf i hi).convex]; exact (hcf i hi).closed
+  obtain ⟨x', hx', hval⟩ :=
+    (isExactFinsetSum_conj_of_polyhedral hs hdisj hmem hpoly hcf hxt hxu).exists_conj_finsetSum_eq
+      x
+  refine ⟨x', hx', ?_⟩
+  rw [sum_toInfConvFn_eq_conj_finsetSum_conj hs hdisj hmem hpoly hcf hxt hxu, ← hval]
+  exact Finset.sum_congr rfl fun i hi => congrArg (fun k => k (x' i)) (hbi i hi).symm
+
+end Corollary_20_1_1_finset
 
 /-! ### Theorem 20.2 and its corollary -/
 
