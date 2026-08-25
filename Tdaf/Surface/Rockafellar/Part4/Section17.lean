@@ -14,7 +14,8 @@ R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §17, pp. 153–161: Car
 for a set `S` that mixes **points and directions**, the closedness consequences of it, and the dual
 result on which half-spaces contain the solution set of a compact system of linear inequalities.
 
-All ten numbered results are here, stated over `Rn n = ℝⁿ`. Eight of them specialise
+All ten numbered results are here, stated over `Rn n = ℝⁿ`, and each in full — Theorem 17.1's
+simplex clause included. Eight of them specialise
 `Tdaf/Analysis/Convex/{Caratheodory, HullDirections}.lean`; two of them — Corollaries 17.1.4 and
 17.1.6 — are **false as the book states them**, and are stated and refuted rather than dropped.
 
@@ -22,7 +23,7 @@ All ten numbered results are here, stated over `Rn n = ℝⁿ`. Eight of them sp
 
 | label | declaration |
 |---|---|
-| Theorem 17.1 | `theorem_17_1` |
+| Theorem 17.1 | `theorem_17_1` (membership), `theorem_17_1_simplex` (the simplex clause) |
 | Corollary 17.1.1 | `corollary_17_1_1` |
 | Corollary 17.1.2 | `corollary_17_1_2` |
 | Corollary 17.1.3 | `corollary_17_1_3` |
@@ -62,21 +63,14 @@ notions, and the merge should keep one copy.
 
 **Deferred by scope.**
 
-* **Theorem 17.1's second sentence** — "in fact `C` is the union of all the generalized
-  `d`-dimensional simplices whose vertices belong to `S`, where `d = dim C`". The membership
-  criterion, which is the whole content of Carathéodory's theorem and everything §§18–21 consume,
-  is `theorem_17_1`. The simplex form additionally needs the *affine independence* of the surviving
-  generators and a padding to exactly `d + 1` of them; the backbone's
-  `exists_of_mem_convexHull_add_coneHull` discards the linear independence that
-  `exists_linearIndepOn_of_mem_coneHull` produces, so the clause cannot be recovered from it. See
-  `## Backbone gaps` below.
-* **The vertex vocabulary of pp. 154–155**: `aff S` and `dim S` for a mixed set, affine
-  independence of a mixed set, the *generalized `m`-dimensional simplex* with its ordinary vertices
-  and its vertices at infinity, the `m`-dimensional *skew orthant*, and the running-text facts that
+* **The `m`-dimensional skew orthants of pp. 154–155**, and with them the running-text facts that
   every generalized simplex is closed and that the `m`-dimensional orthants of `ℝⁿ` are exactly the
-  images of the non-negative orthant of `ℝᵐ` under injective affine maps. These are consumed by
-  §18's faces and extreme directions, not by any numbered result of §17; they belong with their
-  consumer.
+  images of the non-negative orthant of `ℝᵐ` under injective affine maps. A skew orthant is a
+  generalized simplex with a single ordinary vertex, so the predicate is already available as
+  `IsSimplexPD m` with a singleton point family; nothing in §17 consumes the closedness, and §18's
+  faces and extreme directions are where it belongs. The rest of the vertex vocabulary — `aff S`,
+  `dim S`, affine independence of a mixed set and the generalized `m`-dimensional simplex — is in
+  the backbone as `affineSpanPD`, `finrankPD`, `AffineIndepPD` and `IsSimplexPD`.
 
 **Stated and refuted.** Corollaries 17.1.4 and 17.1.6 are **false as Rockafellar states them**.
 Their statements are recorded as the propositions `corollary_17_1_4` and `corollary_17_1_6`, and
@@ -199,6 +193,33 @@ theorem theorem_17_1 (P D : Set (Rn n)) (x : Rn n) :
     exact ⟨p, d, a, b, hp, hd, ha, hb, hsum, hcard, hval⟩
   · rintro ⟨p, d, a, b, hp, hd, ha, hb, hsum, -, rfl⟩
     exact sum_mem_convexHullPD hp hd (fun y hy => (ha y hy).le) (fun y hy => (hb y hy).le) hsum
+
+/-- **Rockafellar, Theorem 17.1**, second sentence. In fact `C = conv S` is the union of all the
+generalized `d`-dimensional simplices whose vertices belong to `S`, where `d = dim C`.
+
+A *generalized `d`-dimensional simplex* is the convex hull of `d + 1` affinely independent points
+and directions (p. 155): the points are its ordinary vertices and the directions its vertices at
+infinity, and affine independence of a mixed set means that the lifted vectors `(1, xᵢ)` and
+`(0, xⱼ)` are linearly independent in `ℝⁿ⁺¹`. Both notions are the backbone's `AffineIndepPD` and
+`IsSimplexPD`, and `isSimplexPD_convexHullPD` says that each set in the union below really is a
+generalized `d`-dimensional simplex with vertices in `S`.
+
+Specialises `convexHullPD_eq_iUnion_simplex`. The hypothesis `S₀ ≠ ∅` is the book's convention
+`conv S = ∅` for a set of directions only. -/
+theorem theorem_17_1_simplex {P D : Set (Rn n)} (hP : P.Nonempty) {m : ℕ}
+    (hm : dim (convexHullPD P D) = (m : ℤ)) :
+    convexHullPD P D =
+      ⋃ (p : Finset (Rn n)) (d : Finset (Rn n)) (_ : ↑p ⊆ P) (_ : ↑d ⊆ D)
+        (_ : AffineIndepPD (↑p : Set (Rn n)) (↑d : Set (Rn n)))
+        (_ : p.card + d.card = m + 1),
+        convexHullPD (↑p : Set (Rn n)) (↑d : Set (Rn n)) := by
+  have hCne : (convexHullPD P D).Nonempty := hP.mono (subset_convexHullPD P D)
+  have hdim : finrankPD P D = m := by
+    rw [dim_of_nonempty hCne] at hm
+    rw [finrankPD_def]
+    exact_mod_cast hm
+  rw [← hdim]
+  exact convexHullPD_eq_iUnion_simplex hP
 
 /-- **Rockafellar, Corollary 17.1.1.** Let `{Cᵢ | i ∈ I}` be an arbitrary collection of convex sets
 in `ℝⁿ`, and let `C` be the convex hull of the union of the collection. Then every point of `C` can
