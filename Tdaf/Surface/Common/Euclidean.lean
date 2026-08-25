@@ -10,6 +10,7 @@ import Tdaf.Analysis.Convex.Duality.InnerPairing
 import Tdaf.Analysis.Convex.Duality.GaugeLike
 import Tdaf.Analysis.Convex.Duality.Level
 import Tdaf.Analysis.Convex.Duality.Relint
+import Tdaf.Analysis.Convex.EuclideanProd
 import Tdaf.Analysis.Convex.HullDirections
 import Tdaf.Analysis.Convex.Operations.Basic
 import Tdaf.Analysis.Convex.Recession.Cone
@@ -84,10 +85,14 @@ mixed points-and-directions modelling decision of §§8, 17, 18 and 19 runs on. 
 costs a rebuild of the surface and saves a section from discovering an "unknown constant" that is
 really a missing import.
 
-**`pairingProd` is not `Rn (m + n)`.** Rockafellar moves freely between `ℝᵐ × ℝⁿ` and `ℝᵐ⁺ⁿ`; those
-are different types here, and the transport between them is separate work (remediation §4.8). What
-this module supplies is the pairing on the *product*, which is what the backbone's bifunction
-theory is stated against.
+**`pairingProd` is the pairing on the product, and `Rn (m + n)` is one module away.** Rockafellar
+moves freely between `ℝᵐ × ℝⁿ` and `ℝᵐ⁺ⁿ`, and those are different types here.
+`Tdaf/Analysis/Convex/EuclideanProd.lean` is the concatenation of coordinates that identifies them,
+with the transport of `conj`, `subgradient` and `ri` across it; `pairingProd_euclideanProdEquiv`
+below is the one line of it a surface statement usually needs, and says that `pairingProd` **is**
+the inner product of `Rn (m + n)` read through the concatenation. What this module supplies on its
+own is the pairing on the *product*, which is what the backbone's bifunction theory is stated
+against.
 -/
 
 namespace Tdaf.Surface
@@ -144,6 +149,14 @@ noncomputable abbrev pairingProd (m n : ℕ) : (Rn m × Rn n) →ₗ[ℝ] (Rn m 
 bifunction is stated against. -/
 noncomputable abbrev pairingAdjoint (m n : ℕ) : (Rn m × Rn n) →ₗ[ℝ] (Rn m × Rn n) →ₗ[ℝ] ℝ :=
   negFst (pairingProd m n)
+
+/-- **The product pairing is the pairing of `Rn (m + n)`, read through the concatenation of
+coordinates** (`euclideanProdEquiv`, `Tdaf/Analysis/Convex/EuclideanProd.lean`). This is the
+identification a text in `ℝⁿ` makes silently whenever it writes a point of `ℝᵐ × ℝⁿ` as a point of
+`ℝᵐ⁺ⁿ`. -/
+theorem pairingProd_euclideanProdEquiv {m n : ℕ} (p q : Rn m × Rn n) :
+    pairingProd m n p q = pairing (m + n) (euclideanProdEquiv m n p) (euclideanProdEquiv m n q) :=
+  (inner_euclideanProdEquiv p q).symm
 
 /-! ### Dimension
 
