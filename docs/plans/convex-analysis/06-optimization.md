@@ -455,9 +455,21 @@ negation reindexing closes it. Composing with `F** = cl F` gives the book's seco
 
 ## 6.5 `Optimization/Fenchel.lean` and `Optimization/Moreau.lean` — §31
 
-**Status: Theorems 31.1–31.5 are done, with Corollaries 31.2.1, 31.3.1, 31.4.2, 31.5.1 and
-31.5.2.** What is left of §31 is Corollary 31.4.3 (which needs Theorem 12.3 and co-finiteness) and
-Corollary 31.4.1, which is deliberately left to the surface layer.
+**Status: Theorems 31.1–31.5 are done, with Corollaries 31.2.1, 31.3.1, 31.4.2, 31.4.3, 31.5.1
+and 31.5.2.** What is left of §31 is Corollary 31.4.1, which is deliberately left to the surface
+layer.
+
+**Corollary 31.4.3 is done** (`Optimization/ConeDuality.lean`), and the note below that it was
+blocked on Theorem 12.3 is now stale: Theorem 12.3 is in `Duality/Conjugate.lean`, row by row, and
+the instance the corollary needs is `conj_comp_add_sub_pairing`. Two things the plan did not
+anticipate: Theorem 31.4's **attainment clauses were missing** — `iInf_mem_eq_neg_iInf_mem_neg_polarCone`
+gave only the equation — so they had to be added first
+(`exists_mem_neg_polarCone_conj_eq_iInf` for condition (a),
+`exists_mem_eq_iInf_of_isExactSum_conj` for condition (b)); and the dual attainment turned out to
+need **no new argument at all**, being exactly `IsExactSum.exact_le` read at the origin, where
+`conj_indicatorFn_eq_indicatorFn_polarCone` identifies the second factor as `δ(· | K°)` and hence
+the splitting `0 = y₁ + y₂` as a minimising `y₁ ∈ K*`. Condition (b) is condition (a) on the dual
+pair, and needs the bipolar `K** = K` (`neg_polarCone_neg_polarCone`, new in `Duality/Polar.lean`).
 
 ```lean
 theorem fenchel_duality (hex : IsExactSum B f (-g)) :
@@ -494,7 +506,8 @@ supplies.
 | `add_conj_eq_zero_iff_mem_subgradient_and_pairing_eq_zero`, `forall_le_of_mem_subgradient_of_pairing_eq_zero`, `conj_le_conj_of_mem_subgradient_of_pairing_eq_zero` | **Thm 31.4**, the optimality conditions | done |
 | `neg_polarCone_coe_submodule`, `smul_coe_submodule`, `iInf_mem_submodule_eq_neg_iInf_mem_polarCone`, `add_conj_eq_zero_iff_mem_subgradient_of_mem_submodule` | **Cor 31.4.2** (a subspace) | done. `K = L` makes `K* = -K°` collapse to `K°`, which for a subspace is the annihilator `L^⊥` (`polarCone_coe_submodule'`), and Theorem 31.4's orthogonality condition `⟨x, y⟩ = 0` becomes automatic |
 | — | **Cor 31.4.1** (the orthant) | deliberately not stated — the componentwise complementarity `ξⱼ ξⱼ* = 0` is a statement about `EuclideanSpace ℝ (Fin n)`, not about the pairing, so it belongs to the surface layer |
-| — | **Cor 31.4.3** | not done — it needs **Theorem 12.3** (the conjugate of `h(z + ·) - ⟨z*, ·⟩`), which is not in the library, and co-finiteness of `h`, which §26 now expresses as `dom h* = E` |
+| `conj_add_indicatorFn_zero_eq_iInf_mem_neg_polarCone`, `exists_mem_neg_polarCone_conj_eq_iInf`, `exists_mem_eq_iInf_of_isExactSum_conj`, `iInf_mem_add_iInf_mem_neg_polarCone_eq_zero` | **Thm 31.4**, the attainment clauses under conditions (a) and (b) | done. These were missing: the file had the duality *equation* only. Attainment under (a) is `IsExactSum.exact_le` read at the origin and needs no separation argument; attainment under (b) is (a) applied with `B.flip`, `f*`, `K*`, closed by `K** = K` and Fenchel–Moreau |
+| `iInf_mem_add_iInf_mem_neg_polarCone_eq_pairing`, `exists_iInf_mem_eq_of_cofinite`, `exists_iInf_mem_neg_polarCone_eq_of_cofinite`, `exists_iInf_mem_eq_coe_of_cofinite`, `exists_iInf_mem_neg_polarCone_eq_coe_of_cofinite` | **Cor 31.4.3** | done (`Optimization/ConeDuality.lean`), with both infima finite and attained. `h` finite everywhere gives `dom f = E`, co-finiteness gives `dom f* = F` (Cor 13.3.1), and Cor 10.1.1 turns each into continuity, so `IsExactSum.of_continuousAt` supplies both of Rockafellar's conditions. **Closedness of `K` is used only for the primal attainment** — the identity, the finiteness of both infima and the dual attainment need only a nonempty convex cone |
 | `quadFn`, `conj_quadFn`, `conj_quadFn_sub`, `moreau_add`, `infConv_quadFn_ne_top` and companions, `mem_subgradient_iff_infConv_eq` | **Thm 31.5 (Moreau)**, the identity and the Kuhn–Tucker characterisation | done |
 | `moreauObj`, `prox`, `argmin_moreauObj_nonempty`, `mem_argmin_moreauObj_iff`, `eq_of_sub_mem_subgradient`, `existsUnique_sub_mem_subgradient`, `prox_eq_iff`, `argmin_moreauObj_eq_singleton`, `infConv_quadFn_eq_moreauObj_prox`, `prox_add_prox_conj` | **Thm 31.5**, attainment and uniqueness | done (`Optimization/Prox.lean`), in finite dimensions |
 | `quadFn_zero_sub`, `subgradient_quadFn`, `isExactSum_quadFn`, `closedProperConvexFn_infConv_quadFn`, `conj_infConv_quadFn`, `subgradient_infConv_quadFn`, `prox_conj_eq`, `hasGradientAt_infConv_quadFn`, `hasGradientAt_infConv_conj_quadFn`, `gradient_infConv_quadFn`, `gradient_infConv_conj_quadFn` | **Thm 31.5**, the gradient formulas | done (`Optimization/MoreauGradient.lean`). Theorem 26.3 was **not** needed: `∂(f □ w) z` is shown to be a singleton directly — Corollary 23.5.1, then Theorem 16.4 in its unconditional direction, then Theorem 23.8 — and Theorem 25.1's converse turns the singleton into a gradient |

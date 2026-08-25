@@ -416,6 +416,19 @@ theorem biSup_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
   rw [iSup_add_coe]
   exact iSup_congr fun a => iSup_add_coe _ r
 
+/-- **A real summand cancels from the right.** No hypothesis is needed: `r` is finite, so
+`u + r - r = u` holds for every `u : EReal` (`EReal.add_sub_cancel_right`). -/
+theorem add_coe_right_cancel {u v : EReal} {r : ℝ} (h : u + (r : EReal) = v + (r : EReal)) :
+    u = v := by
+  rw [← _root_.EReal.add_sub_cancel_right (a := u) (b := r),
+    ← _root_.EReal.add_sub_cancel_right (a := v) (b := r), h]
+
+/-- The set-indexed form of `Tdaf.EReal.iInf_add_coe`. -/
+theorem biInf_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
+    (⨅ a ∈ s, u a) + (r : EReal) = ⨅ a ∈ s, (u a + (r : EReal)) := by
+  rw [iInf_add_coe]
+  exact iInf_congr fun a => iInf_add_coe _ r
+
 /-- An arbitrary constant may be moved in and out of a supremum over a set on which the values are
 never `⊥`. The hypothesis is what rules out `⊥ + ⊤ = ⊥` disagreeing with `⨆ (⊥ + ⊤)`. -/
 theorem biSup_add_of_ne_bot {α : Type*} {s : Set α} {u : α → EReal} (hu : ∀ a ∈ s, u a ≠ ⊥)
@@ -457,6 +470,24 @@ theorem coe_add_sub (p q : ℝ) (u : EReal) :
   rw [_root_.EReal.coe_add]
   change ((p : EReal) + (q : EReal)) + -u = ((p : EReal) + -u) + (q : EReal)
   rw [add_assoc, add_assoc, add_comm ((q : ℝ) : EReal) (-u)]
+
+/-- **A real summand slides out of the subtrahend.** `p - (u + q) = (p - q) - u` for real `p`, `q`
+and arbitrary `u : EReal`.
+
+The companion of `Tdaf.EReal.coe_add_sub` on the other side of the difference. Both `p` and `q` are
+finite, so no `∞ - ∞` collision arises and no hypothesis on `u` is needed: at `u = ⊤` both sides
+are `⊥` and at `u = ⊥` both sides are `⊤`. -/
+theorem coe_sub_add_coe (p q : ℝ) (u : EReal) :
+    ((p : ℝ) : EReal) - (u + ((q : ℝ) : EReal)) = ((p - q : ℝ) : EReal) - u := by
+  induction u with
+  | bot =>
+    rw [_root_.EReal.bot_add, _root_.EReal.sub_bot (_root_.EReal.coe_ne_bot p),
+      _root_.EReal.sub_bot (_root_.EReal.coe_ne_bot _)]
+  | coe r =>
+    rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub,
+      _root_.EReal.coe_eq_coe_iff]
+    ring
+  | top => rw [_root_.EReal.top_add_coe, _root_.EReal.sub_top, _root_.EReal.sub_top]
 
 /-- **The difference quotient of a sum splits.** For `c > 0`, reals `p`, `q` and `u`, `v` never
 `⊥`, `c * (u - p) + c * (v - q) = c * ((u + v) - (p + q))`.

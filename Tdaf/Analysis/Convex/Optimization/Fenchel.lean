@@ -30,6 +30,11 @@ maximising `g* - f*`, where `g*` is the *concave* conjugate.
 * `sub_comp_eq_concaveConj_sub_conj_iff` — **Theorem 31.3** with a linear transformation: the
   Kuhn–Tucker conditions `A' z ∈ ∂f x` and `-z ∈ ∂(-g)(A x)`, with
   `iInf_sub_comp_eq_iff_exists_kuhnTucker` for **Corollary 31.3.1**.
+* `iInf_mem_eq_neg_iInf_mem_neg_polarCone` — **Theorem 31.4**, the conic duality equation, with
+  `exists_mem_neg_polarCone_conj_eq_iInf` and `exists_mem_eq_iInf_of_isExactSum_conj` for the
+  attainment clauses under conditions (a) and (b), and
+  `iInf_mem_add_iInf_mem_neg_polarCone_eq_zero` for the "sum to zero" form that
+  Corollary 31.4.3 (`Optimization/ConeDuality.lean`) runs on.
 
 ## Design notes
 
@@ -640,7 +645,7 @@ private theorem indicatorFn_neg_set (S : Set F) (w : F) :
 
 /-- A constrained infimum is an unconstrained infimum of the function plus an indicator, provided
 the function never takes `⊥`. -/
-private theorem iInf_mem_eq_iInf_add_indicatorFn {α : Type*} (φ : α → EReal) (S : Set α)
+theorem iInf_mem_eq_iInf_add_indicatorFn {α : Type*} (φ : α → EReal) (S : Set α)
     (hb : ∀ z, φ z ≠ ⊥) : (⨅ z ∈ S, φ z) = ⨅ z, (φ + indicatorFn S) z := by
   refine iInf_congr fun z => ?_
   by_cases hz : z ∈ S
@@ -739,6 +744,59 @@ theorem conj_le_conj_of_mem_subgradient_of_pairing_eq_zero (hp : Proper f) (hxK 
   rw [← _root_.EReal.neg_le_neg_iff, hxeq]
   exact neg_conj_le_of_mem_neg_polarCone hxK hwK
 
+/-! ### Theorem 31.4: attainment of the two infima -/
+
+/-- **The dual value of Theorem 31.4, read at the origin.** `(f + δ(·|K))* 0` *is* the dual
+infimum `inf {f*(y) | y ∈ K*}`.
+
+This is Theorem 27.1(a) (`conj_zero_eq_neg_iInf`) composed with the duality equation, and it is
+what turns the exactness of the sum `f + δ(·|K)` into attainment of the dual infimum. -/
+theorem conj_add_indicatorFn_zero_eq_iInf_mem_neg_polarCone
+    (hex : IsExactSum B f (indicatorFn K)) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) :
+    conj B (f + indicatorFn K) 0 = ⨅ w ∈ -(polarCone B K), conj B f w := by
+  rw [conj_zero_eq_neg_iInf, ← iInf_mem_eq_iInf_add_indicatorFn f K hex.proper_left.ne_bot,
+    iInf_mem_eq_neg_iInf_mem_neg_polarCone hex hK hne, neg_neg]
+
+/-- **Rockafellar, Theorem 31.4**, the attainment clause under condition (a): as soon as `f` and
+`δ(·|K)` add exactly, the *dual* infimum `inf {f*(y) | y ∈ K*}` is attained.
+
+Rockafellar gets attainment from Theorem 31.1 under (a). Here it is read straight off
+`IsExactSum`: the splitting `0 = y₁ + y₂` that exactness provides at the origin already *is* a
+minimising `y₁ ∈ K*`, because the second conjugate factor is the indicator of `K°`
+(Theorem 14.1), so `y₂ ∈ K°` and `y₁ = -y₂`. The degenerate branch — `y₂ ∉ K°` — forces the dual
+infimum to be `⊤`, which the origin attains. -/
+theorem exists_mem_neg_polarCone_conj_eq_iInf (hex : IsExactSum B f (indicatorFn K))
+    (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) :
+    ∃ y ∈ -(polarCone B K), conj B f y = ⨅ w ∈ -(polarCone B K), conj B f w := by
+  obtain ⟨y₁, y₂, hsum, hle⟩ := hex.exact_le 0
+  rw [conj_indicatorFn_eq_indicatorFn_polarCone hK hne,
+    conj_add_indicatorFn_zero_eq_iInf_mem_neg_polarCone hex hK hne] at hle
+  by_cases hy₂ : y₂ ∈ polarCone B K
+  · have hy₁ : y₁ ∈ -(polarCone B K) := by
+      rw [Set.mem_neg, neg_eq_of_add_eq_zero_right hsum]
+      exact hy₂
+    rw [indicatorFn_of_mem hy₂, add_zero] at hle
+    exact ⟨y₁, hy₁, le_antisymm hle (iInf₂_le y₁ hy₁)⟩
+  · rw [indicatorFn_of_notMem hy₂,
+      _root_.EReal.add_top_of_ne_bot (hex.conj_left_ne_bot y₁)] at hle
+    have h0 : (0 : F) ∈ -(polarCone B K) := zero_mem_neg_polarCone B K
+    have htop : (⨅ w ∈ -(polarCone B K), conj B f w) = ⊤ := top_le_iff.1 hle
+    have hge : (⨅ w ∈ -(polarCone B K), conj B f w) ≤ conj B f 0 := iInf₂_le (0 : F) h0
+    rw [htop, top_le_iff] at hge
+    exact ⟨0, h0, by rw [hge, htop]⟩
+
+/-- **Rockafellar, Theorem 31.4** with the two infima *added* rather than negated. When the dual
+infimum is finite the duality equation says exactly that the two values sum to zero; Corollary
+31.4.3 is this statement carried through a translation and a tilt. -/
+theorem iInf_mem_add_iInf_mem_neg_polarCone_eq_zero (hex : IsExactSum B f (indicatorFn K))
+    (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
+    (hbot : (⨅ w ∈ -(polarCone B K), conj B f w) ≠ ⊥)
+    (htop : (⨅ w ∈ -(polarCone B K), conj B f w) ≠ ⊤) :
+    (⨅ z ∈ K, f z) + (⨅ w ∈ -(polarCone B K), conj B f w) = 0 := by
+  obtain ⟨m, hm⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hbot (lt_top_iff_ne_top.2 htop)
+  rw [iInf_mem_eq_neg_iInf_mem_neg_polarCone hex hK hne, hm, ← _root_.EReal.coe_neg,
+    ← _root_.EReal.coe_add, neg_add_cancel, _root_.EReal.coe_zero]
+
 /-! ### Corollary 31.4.2: minimising over a subspace -/
 
 /-- The polar cone of a **subspace** is closed under negation, so Rockafellar's `K*` and `K°`
@@ -791,5 +849,38 @@ theorem add_conj_eq_zero_iff_mem_subgradient_of_mem_submodule {M : Submodule ℝ
   exact ⟨And.left, fun h => ⟨h, hxy⟩⟩
 
 end Cone
+
+/-! ### Theorem 31.4: attainment of the primal infimum
+
+Attainment of the *primal* infimum is Rockafellar's condition (b), which is condition (a) read on
+the dual pair. It is the previous section's statement applied to `f*` and `K*`, with `K** = K`
+(Theorem 14.1, `neg_polarCone_neg_polarCone`) and `f** = f` (Fenchel–Moreau) closing the circle;
+the bipolar is what makes this section layer C rather than layer A. -/
+
+section ConeClosed
+
+open Pointwise
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal} {K : Set E}
+
+/-- **Rockafellar, Theorem 31.4**, the attainment clause under condition (b): when the *conjugate*
+side adds exactly — `f*` and `δ(·|K*)` — the *primal* infimum `inf {f(x) | x ∈ K}` is attained.
+
+`biconj B f = f` is Fenchel–Moreau for `f` closed proper convex (`biconj_eq_self`); it is taken as
+a hypothesis rather than derived so that the statement stays free of a compatibility assumption on
+the `F` side. -/
+theorem exists_mem_eq_iInf_of_isExactSum_conj (hbi : biconj B f = f)
+    (hex : IsExactSum B.flip (conj B f) (indicatorFn (-(polarCone B K))))
+    (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
+    (hcl : IsClosed K) :
+    ∃ x ∈ K, f x = ⨅ z ∈ K, f z := by
+  have hbi' : conj B.flip (conj B f) = f := hbi
+  have h := exists_mem_neg_polarCone_conj_eq_iInf (B := B.flip) (K := -(polarCone B K)) hex
+    (fun a ha => smul_neg_polarCone B K a ha) (neg_polarCone_nonempty B K)
+  rwa [neg_polarCone_neg_polarCone hconv hK hne hcl, hbi'] at h
+
+end ConeClosed
 
 end Tdaf.ConvexAnalysis

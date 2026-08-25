@@ -41,6 +41,9 @@ every duality result in Parts III, V, VI, VII and VIII of the book reduces to Fe
   and both are in the space's *own* topology.
 * `gc_conj_conj`, `conjClosure` — conjugacy as an antitone Galois connection and the
   closure operator it induces, mirroring `gc_ofEpi_epi` and `epiClosure`.
+* `conj_comp_sub`, `conj_comp_add`, `conj_add_pairing`, `conj_sub_pairing`, `conj_add_const`,
+  `conj_comp_linearEquiv` — the four rows of **Theorem 12.3**, and `conj_comp_affine` for the
+  book's combined formula. `conj_comp_add_sub_pairing` is the instance §31 runs on.
 
 ## Design notes
 
@@ -79,7 +82,7 @@ Fenchel–Moreau — unconditional, improper functions included.
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §12 (Theorem 12.1,
-  Theorem 12.2, Corollary 12.1.1, Corollary 12.1.2, Corollary 12.2.1).
+  Theorem 12.2, Theorem 12.3, Corollary 12.1.1, Corollary 12.1.2, Corollary 12.2.1).
 -/
 
 open Set OrderDual
@@ -563,6 +566,160 @@ noncomputable def conjEquiv :
     (conjEquiv B f : F → EReal) = conj B f := rfl
 
 end Involution
+
+/-! ### Theorem 12.3: translation, tilting, constants and an invertible substitution
+
+Rockafellar's Theorem 12.3 is the table of *elementary* conjugacy operations: those under which
+`h*` changes by a change of variable rather than by a change of function. There are four
+independent rows —
+
+| primal | dual |
+|---|---|
+| `h (x - a)` | `h* y + ⟨a, y⟩` |
+| `h x + ⟨x, b⟩` | `h* (y - b)` |
+| `h x + α` | `h* y - α` |
+| `h (A x)`, `A` invertible | `h* (A'⁻¹ y)` |
+
+— and `conj_comp_affine` is the book's single formula, which composes all four. The two *scaling*
+rows of the same table are Theorem 16.1, `conj_smul` and `conj_smulRight` in `Duality/Ops.lean`.
+
+Everything here is layer A: no topology, no properness, no convexity, and each identity holds for
+an arbitrary `h : E → EReal`, improper ones included. The reason is that `⟨a, y⟩`, `⟨x, b⟩` and `α`
+are *real*, so sliding them across the difference `⟨x, y⟩ - h x` never produces `∞ - ∞`; that is
+what `Tdaf.EReal.coe_add_sub` and `Tdaf.EReal.coe_sub_add_coe` say, and they are the only
+arithmetic the proofs use, on top of a reindexing of the supremum.
+
+**The substitution row carries its transpose as data.** Rockafellar writes `A*⁻¹`, which presumes
+that `A` has an adjoint and that the adjoint is invertible. Over a general pairing neither is
+automatic (`Duality/Pairing.lean`), so `conj_comp_linearEquiv` takes the inverse pair `A`, `A'`
+and the adjointness datum `IsAdjointPair B B' A A'` as hypotheses. With `B` and `B'` separating,
+`A'` is determined by `A` and its bijectivity is automatic, so nothing is lost. -/
+
+section Theorem123
+
+variable {E F G H : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [AddCommGroup G] [Module ℝ G] [AddCommGroup H] [Module ℝ H]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
+
+/-- **Rockafellar, Theorem 12.3**, the translation row: translating the argument of `h` by `a` adds
+the linear function `⟨a, ·⟩` to the conjugate. -/
+theorem conj_comp_sub (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (a : E) (y : F) :
+    conj B (fun x => h (x - a)) y = conj B h y + ((B a y : ℝ) : EReal) := by
+  have hre := (Equiv.addRight a).iSup_comp
+    (g := fun x : E => ((B x y : ℝ) : EReal) - h (x - a))
+  simp only [Equiv.coe_addRight, add_sub_cancel_right] at hre
+  simp only [conj_apply]
+  rw [← hre, Tdaf.EReal.iSup_add_coe]
+  exact iSup_congr fun u => by
+    rw [map_add, LinearMap.add_apply, Tdaf.EReal.coe_add_sub]
+
+/-- **Rockafellar, Theorem 12.3**, the translation row with the translation written on the left:
+`h (a + ·)` is `h (· - (-a))`, so its conjugate is `h* - ⟨a, ·⟩`. This is the form §31 uses. -/
+theorem conj_comp_add (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (a : E) (y : F) :
+    conj B (fun x => h (a + x)) y = conj B h y - ((B a y : ℝ) : EReal) := by
+  have hfun : (fun x : E => h (a + x)) = fun x : E => h (x - -a) := by
+    funext x; rw [sub_neg_eq_add, add_comm]
+  rw [hfun, conj_comp_sub, map_neg, LinearMap.neg_apply, _root_.EReal.coe_neg,
+    ← sub_eq_add_neg]
+
+/-- **Rockafellar, Theorem 12.3**, the tilting row: adding the linear function `⟨·, b⟩` to `h`
+translates the conjugate by `b`. -/
+theorem conj_add_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (b : F) (y : F) :
+    conj B (fun x => h x + ((B x b : ℝ) : EReal)) y = conj B h (y - b) := by
+  simp only [conj_apply]
+  exact iSup_congr fun x => by rw [Tdaf.EReal.coe_sub_add_coe, map_sub]
+
+/-- **Rockafellar, Theorem 12.3**, the tilting row with the linear term *subtracted*, which is the
+form §31 uses: `h - ⟨·, b⟩` has conjugate `h* (· + b)`. -/
+theorem conj_sub_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (b : F) (y : F) :
+    conj B (fun x => h x - ((B x b : ℝ) : EReal)) y = conj B h (y + b) := by
+  have hfun : (fun x : E => h x - ((B x b : ℝ) : EReal))
+      = fun x : E => h x + ((B x (-b) : ℝ) : EReal) := by
+    funext x
+    rw [map_neg, _root_.EReal.coe_neg, ← sub_eq_add_neg]
+  rw [hfun, conj_add_pairing, sub_neg_eq_add]
+
+/-- **Rockafellar, Theorem 12.3**, the constant row: adding a constant to `h` subtracts it from the
+conjugate. -/
+theorem conj_add_const (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (α : ℝ) (y : F) :
+    conj B (fun x => h x + (α : EReal)) y = conj B h y - (α : EReal) := by
+  simp only [conj_apply]
+  rw [sub_eq_add_neg, ← _root_.EReal.coe_neg, Tdaf.EReal.iSup_add_coe]
+  exact iSup_congr fun x => by
+    rw [Tdaf.EReal.coe_sub_add_coe, ← Tdaf.EReal.coe_add_sub, ← sub_eq_add_neg]
+
+/-- **Rockafellar, Theorem 12.3**, the substitution row: precomposing `h` with a linear
+*isomorphism* `A` precomposes the conjugate with the inverse of the transpose.
+
+This is the one row that needs two pairings, and the transpose is data: see the section
+docstring. Contrast `conj_mapLin` (Theorem 16.3), which drops the invertibility of `A` at the cost
+of stating the dual side as an image rather than as a substitution. -/
+theorem conj_comp_linearEquiv (A : E ≃ₗ[ℝ] G) (A' : H ≃ₗ[ℝ] F)
+    (hA : IsAdjointPair B B' (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F)) (h : G → EReal) (y : F) :
+    conj B (fun x => h (A x)) y = conj B' h (A'.symm y) := by
+  have hre := A.toEquiv.iSup_comp
+    (g := fun u : G => ((B' u (A'.symm y) : ℝ) : EReal) - h u)
+  simp only [LinearEquiv.coe_toEquiv] at hre
+  have hAx : ∀ (x : E) (z : H), B' (A x) z = B x (A' z) := hA
+  simp only [conj_apply]
+  rw [← hre]
+  exact iSup_congr fun x => by
+    rw [hAx x (A'.symm y), LinearEquiv.apply_symm_apply]
+
+/-- **Rockafellar, Theorem 12.3.** For `f x = h (A (x - a)) + ⟨x, a*⟩ + α` with `A` an invertible
+linear transformation, `f* y = h* (A*⁻¹ (y - a*)) + ⟨a, y⟩ + α*` where `α* = -α - ⟨a, a*⟩`.
+
+The proof is the four rows above applied in the order in which they build `f`. -/
+theorem conj_comp_affine (A : E ≃ₗ[ℝ] G) (A' : H ≃ₗ[ℝ] F)
+    (hA : IsAdjointPair B B' (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F)) (h : G → EReal) (a : E) (b : F)
+    (α : ℝ) (y : F) :
+    conj B (fun x => h (A (x - a)) + ((B x b : ℝ) : EReal) + (α : EReal)) y
+      = conj B' h (A'.symm (y - b)) + ((B a y : ℝ) : EReal) + ((-α - B a b : ℝ) : EReal) := by
+  have e1 : conj B (fun x : E => h (A (x - a)) + ((B x b : ℝ) : EReal) + (α : EReal)) y
+      = conj B (fun x : E => h (A (x - a)) + ((B x b : ℝ) : EReal)) y - (α : EReal) :=
+    conj_add_const B (fun x : E => h (A (x - a)) + ((B x b : ℝ) : EReal)) α y
+  have e2 : conj B (fun x : E => h (A (x - a)) + ((B x b : ℝ) : EReal)) y
+      = conj B (fun x : E => h (A (x - a))) (y - b) :=
+    conj_add_pairing B (fun x : E => h (A (x - a))) b y
+  have e3 : conj B (fun x : E => h (A (x - a))) (y - b)
+      = conj B (fun x : E => h (A x)) (y - b) + ((B a (y - b) : ℝ) : EReal) :=
+    conj_comp_sub B (fun x : E => h (A x)) a (y - b)
+  have e4 : conj B (fun x : E => h (A x)) (y - b) = conj B' h (A'.symm (y - b)) :=
+    conj_comp_linearEquiv A A' hA h (y - b)
+  have harith : ((B a y - B a b : ℝ) : EReal) + -(α : EReal)
+      = ((B a y : ℝ) : EReal) + ((-α - B a b : ℝ) : EReal) := by
+    rw [← _root_.EReal.coe_neg, ← _root_.EReal.coe_add, ← _root_.EReal.coe_add,
+      _root_.EReal.coe_eq_coe_iff]
+    ring
+  have hassoc : ∀ U : EReal, U + ((B a (y - b) : ℝ) : EReal) - (α : EReal)
+      = U + ((B a y : ℝ) : EReal) + ((-α - B a b : ℝ) : EReal) := fun U => by
+    rw [map_sub (B a) y b]
+    change U + ((B a y - B a b : ℝ) : EReal) + -(α : EReal)
+      = U + ((B a y : ℝ) : EReal) + ((-α - B a b : ℝ) : EReal)
+    rw [add_assoc, add_assoc, harith]
+  rw [e1, e2, e3, e4, hassoc]
+
+/-- **Rockafellar, Theorem 12.3** in the instance §31 runs on — the display preceding
+Corollary 31.4.3. For `f = h (z + ·) - ⟨·, z*⟩`,
+`f* = h* (z* + ·) - ⟨z, ·⟩ - ⟨z, z*⟩`: the translation row and the tilting row, composed.
+
+Note the constant `⟨z, z*⟩`, which is what makes the two infima of Corollary 31.4.3 add to
+`⟨z, z*⟩` rather than to zero. -/
+theorem conj_comp_add_sub_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (z : E) (z' : F)
+    (y : F) :
+    conj B (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) y
+      = conj B h (z' + y) - ((B z y : ℝ) : EReal) - ((B z z' : ℝ) : EReal) := by
+  have hsplit : ∀ (u : EReal) (p q : ℝ),
+      u - ((p + q : ℝ) : EReal) = u - (p : EReal) - (q : EReal) := fun u p q => by
+    have hneg : -(((p + q : ℝ)) : EReal) = -((p : ℝ) : EReal) + -((q : ℝ) : EReal) := by
+      rw [← _root_.EReal.coe_neg, neg_add, _root_.EReal.coe_add, _root_.EReal.coe_neg,
+        _root_.EReal.coe_neg]
+    change u + -(((p + q : ℝ)) : EReal) = u + -((p : ℝ) : EReal) + -((q : ℝ) : EReal)
+    rw [hneg, ← add_assoc]
+  rw [conj_sub_pairing B (fun x => h (z + x)) z' y, conj_comp_add B h z (y + z'),
+    add_comm y z', map_add, add_comm ((B z) z' : ℝ) ((B z) y), hsplit]
+
+end Theorem123
 
 
 section TopDual
