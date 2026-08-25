@@ -73,6 +73,7 @@ import Tdaf.Analysis.Convex.Recession.Cone
 import Tdaf.Analysis.Convex.Recession.ConeHull
 import Tdaf.Analysis.Convex.Recession.Conjugate
 import Tdaf.Analysis.Convex.Recession.Function
+import Tdaf.Analysis.Convex.Recession.PiSum
 import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Representation
 import Tdaf.Analysis.Convex.Saddle.Closure
