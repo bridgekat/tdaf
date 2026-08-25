@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Tdaf.Analysis.Convex.Line
 import Tdaf.Analysis.Convex.Saddle.Continuity
 import Tdaf.Analysis.Convex.Subgradient.Convergence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
@@ -130,66 +131,10 @@ open scoped Pointwise RealInnerProductSpace
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Convexity along a line -/
+/-! ### Convexity along a line
 
-section Line
-
-variable {E : Type*} [AddCommGroup E] [Module ℝ E] {S : Set E} {f : E → ℝ} {x d : E}
-
-/-- A convex function stays convex along a line: `t ↦ f (x + t • d)` is convex on the set of
-steps that keep `x + t • d` inside `S`.
-
-The proof is the identity `x + (a t₁ + b t₂) • d = a • (x + t₁ • d) + b • (x + t₂ • d)`, valid
-because `a + b = 1`. -/
-theorem convexOn_comp_line (hf : ConvexOn ℝ S f) (x d : E) :
-    ConvexOn ℝ {t : ℝ | x + t • d ∈ S} fun t => f (x + t • d) := by
-  have key : ∀ a b t₁ t₂ : ℝ, a + b = 1 →
-      x + (a • t₁ + b • t₂) • d = a • (x + t₁ • d) + b • (x + t₂ • d) := by
-    intro a b t₁ t₂ hab
-    rw [smul_add, smul_add, smul_smul, smul_smul, add_add_add_comm, ← add_smul, hab, one_smul,
-      smul_eq_mul, smul_eq_mul, ← add_smul]
-  constructor
-  · intro t₁ h₁ t₂ h₂ a b ha hb hab
-    change x + (a • t₁ + b • t₂) • d ∈ S
-    rw [key a b t₁ t₂ hab]
-    exact hf.1 h₁ h₂ ha hb hab
-  · intro t₁ h₁ t₂ h₂ a b ha hb hab
-    change f (x + (a • t₁ + b • t₂) • d) ≤ a • f (x + t₁ • d) + b • f (x + t₂ • d)
-    rw [key a b t₁ t₂ hab]
-    exact hf.2 h₁ h₂ ha hb hab
-
-/-- A concave function stays concave along a line. This is `convexOn_comp_line` for `-f`. -/
-theorem concaveOn_comp_line (hf : ConcaveOn ℝ S f) (x d : E) :
-    ConcaveOn ℝ {t : ℝ | x + t • d ∈ S} fun t => f (x + t • d) :=
-  neg_convexOn_iff.1 (convexOn_comp_line hf.neg x d)
-
-end Line
-
-section LineTopology
-
-variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
-  [ContinuousAdd E] [ContinuousSMul ℝ E] {S : Set E} {f : E → ℝ} {x d : E}
-
-/-- The steps `t` with `x + t • d ∈ S` form an open set when `S` is open. -/
-theorem isOpen_line_steps (hS : IsOpen S) (x d : E) : IsOpen {t : ℝ | x + t • d ∈ S} :=
-  hS.preimage (continuous_const.add (continuous_id.smul continuous_const))
-
-/-- A convex function is continuous along a line through an interior point of the set on which it
-is convex: this is the one-dimensional case of `ConvexOn.continuousOn`. -/
-theorem continuousAt_comp_line_of_convexOn (hS : IsOpen S) (hf : ConvexOn ℝ S f) (hx : x ∈ S)
-    (d : E) : ContinuousAt (fun t : ℝ => f (x + t • d)) 0 := by
-  have hI : IsOpen {t : ℝ | x + t • d ∈ S} := isOpen_line_steps hS x d
-  have h0 : (0 : ℝ) ∈ {t : ℝ | x + t • d ∈ S} := by simpa using hx
-  exact ((convexOn_comp_line hf x d).continuousOn hI).continuousAt (hI.mem_nhds h0)
-
-/-- A concave function is continuous along a line through an interior point. -/
-theorem continuousAt_comp_line_of_concaveOn (hS : IsOpen S) (hf : ConcaveOn ℝ S f) (hx : x ∈ S)
-    (d : E) : ContinuousAt (fun t : ℝ => f (x + t • d)) 0 := by
-  have hI : IsOpen {t : ℝ | x + t • d ∈ S} := isOpen_line_steps hS x d
-  have h0 : (0 : ℝ) ∈ {t : ℝ | x + t • d ∈ S} := by simpa using hx
-  exact ((concaveOn_comp_line hf x d).continuousOn hI).continuousAt (hI.mem_nhds h0)
-
-end LineTopology
+The line-restriction API moved to `Tdaf.Analysis.Convex.Line`, which this file imports: it is
+elementary, has no saddle content, and §4 of the surface needs it without the saddle tower. -/
 
 /-! ### The one-sided directional derivative of a real-valued function -/
 

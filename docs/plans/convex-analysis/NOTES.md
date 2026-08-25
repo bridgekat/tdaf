@@ -4140,14 +4140,39 @@ Rockafellar's own route was written and then deleted.
 supremum norm — so the gradient of a function of a pair has to be represented by hand as
 `prodInnerL`. Same fact as the `k₁ + k₂` Lipschitz constant of Theorem 35.2.
 
-**Relocation candidates**, beyond `dirDerivReal`: `convexOn_comp_line` and the restriction-to-a-line
-group (general convexity); `dirDerivReal_eq_of_hasFDerivAt`, `le_add_of_hasFDerivAt_of_convexOn`
+**The restriction-to-a-line group has moved out**, to `Tdaf/Analysis/Convex/Line.lean`, which this
+file now imports: `convexOn_comp_line`, `concaveOn_comp_line`, `isOpen_line_steps` and the two
+`continuousAt_comp_line_of_*`, together with the converse `convexOn_iff_lines` /
+`concaveOn_iff_lines` that was missing. Nothing outside this file used any of them, and §4 of the
+surface needs the reduction to lines without the saddle tower above it.
+
+**Relocation candidates**, beyond `dirDerivReal`: `dirDerivReal_eq_of_hasFDerivAt`, `le_add_of_hasFDerivAt_of_convexOn`
 and the two `eq_of_forall_…_of_hasFDerivAt` (real forms of Theorems 25.1 and 25.2, belong in
 `Subgradient/Gradient.lean`); `forall_inner_le_dirDerivReal_iff` and its partner (Theorem 23.2 at
 an interior point); `prodInnerL` (Riesz representation on a product, no convexity);
 `neg_add_closedBall_zero`, `prod_add_prod_subset`, `norm_sub_le_of_mem_singleton_add_closedBall`
 (Mathlib-shaped gaps in pointwise-set arithmetic); `ConcaveConvexOn.negSwap` and
 `tendsto_eval_prod_of_tendsto` (`Saddle/Continuity.lean`).
+
+---
+
+### `Tdaf/Analysis/Convex/Line.lean`
+
+The restriction of a real-valued function to a line, `t ↦ f (x + t • d)` on `{t | x + t • d ∈ S}`.
+Five of the six declarations came from `Saddle/Differential.lean`, where they had no saddle content
+and no consumer outside that file; the sixth, `convexOn_iff_lines`, is new and is the one that makes
+the reduction useful — it turns a convexity question on a vector space into one about functions of a
+single real variable, which is how the second-derivative criterion reaches `ℝⁿ`.
+
+**The step set is left as a preimage**, not identified with an interval. It *is* an interval for
+convex `S`, but the forward lemmas do not need convexity, and the preimage form makes
+`isOpen_line_steps` one line.
+
+**The converse's direction is `y - x`.** One line carries the whole convexity inequality for the
+pair `(x, y)`, at steps `0` and `1`; no hypothesis on `d` is needed.
+
+**The `ConvexOn.2` application is a beta-redex** and `rw` cannot see into it — gotcha 361. The proof
+ascribes `hmain`'s type explicitly, which forces the reduction before any rewriting.
 
 ---
 
@@ -6830,6 +6855,66 @@ survived long enough to acquire two more instances.
      first time and lets `lake build` in the worktree reuse the primary checkout's Mathlib build.
      This is the setup step for every parallel sub-agent round, and it is worth doing before
      spawning rather than after one of them reports a two-hour Mathlib rebuild.
+
+359. **A fresh worktree has no `.lake/build`, and the backbone is a forty-minute cold build.** The
+     primary checkout's `.lake/build` is valid in the worktree *verbatim* whenever
+     `git diff <worktree-base> <primary-head> -- Tdaf/ lakefile.toml lean-toolchain` is empty:
+     `cp -r` it (312 MB) and `lake` re-verifies the traces in seconds. Do **not** junction it — five
+     worktrees writing into one build directory is asking for trouble. Contrast gotcha 358:
+     `.lake/packages` *should* be a junction, because nothing writes it.
+
+360. **`awk 'length > 100'` lies about Lean line lengths.** It counts bytes, so every line
+     containing `ℝ`, `—`, `∞` or `₂` looks three to fifteen characters over the limit and a clean
+     file appears to have dozens of violations. Count characters (`wc -m` per line, or Python), or
+     just run the build and trust `linter.style.longLine`.
+
+361. **Applying `ConvexOn.2` leaves a beta-redex that `rw` cannot see into.**
+     `(hf.2 h₀ h₁ ha hb hab)` has type `(fun t => f (x + t • d)) (a • 0 + b • 1) ≤ …` — the goal you
+     want is the beta-reduction of that, and `rw` reports "did not find an occurrence" for every
+     pattern inside. Ascribe the `have`'s type explicitly:
+     ```lean
+     have hmain : f (x + (a • (0:ℝ) + b • (1:ℝ)) • d) ≤ a • f (x + (0:ℝ) • d) + b • f (x + (1:ℝ) • d) :=
+       (h x d).2 h₀ h₁ ha hb hab
+     ```
+     and the elaborator reduces it on the way in. `simp only [] at hmain` is the other spelling.
+     This is gotcha 335's shape at a different head symbol, and it will recur for every structure
+     projection applied to a lambda — `ConcaveOn.2`, `Convex.2`, `IsGreatest.2`.
+
+362. **`ContDiffOn.deriv_of_isOpen` needs `(m := 1)` supplied.** Its hypothesis is `m + 1 ≤ n`, and
+     at `n = 2` unification will not pick `m`, so `le_refl 2` fails with a `?m + 1 ≤ 2` mismatch.
+     Relatedly, `ContDiffOn.differentiableOn`'s argument is `n ≠ 0`, not `1 ≤ n`.
+
+363. **`ConvexOn.monotoneOn_deriv` is namespaced.** Bare `monotoneOn_deriv` is an unknown
+     identifier; the lemma lives inside `namespace ConvexOn` in `Mathlib/Analysis/Convex/Deriv.lean`,
+     and dot-notation on a `ConvexOn` hypothesis is the way in.
+
+364. **Mathlib's `EReal` totalises `∞ − ∞` as `−∞`, which is not Rockafellar's convention.**
+     `EReal.add_bot : x + ⊥ = ⊥` holds unconditionally, so `⊤ + ⊥ = ⊥`. Rockafellar leaves the
+     combination undefined and then fixes it *per operator* — `−∞` for convex bifunctions and `+∞`
+     for concave ones (Theorem 38.1). Every backbone statement that could meet the collision carries
+     the book's `∀ x, f x ≠ ⊥` or a properness hypothesis, so the junk value is never consulted; a
+     surface statement that *drops* that hypothesis will silently prove something the book does not
+     state. Check the hypothesis list against the printed one before simplifying it.
+
+365. **An `if i ∈ s` inside a *statement* needs `[DecidableEq I]`, and `classical` cannot rescue
+     it.** `Finset.decidableMem` is derived from `DecidableEq`, so a lemma stated as
+     `∑ i ∈ u, (if i ∈ s then w i else 0) • C i` fails to elaborate without the instance — and
+     adding it then risks a mismatch against a caller's `Classical.propDecidable`. Keep the `if` out
+     of every statement: hypothesise `∀ i ∈ u, i ∉ s → w i = 0` and build the padded function inside
+     the proof with `obtain ⟨w', h₁, h₂⟩ : ∃ w' : I → ℝ, … := ⟨fun i => if i ∈ s then w i else 0, …⟩`.
+
+366. **Gotcha 277 has a `Prod` cousin, and `positivity` is the surprising casualty.** Destructing
+     membership in a `setOf` over pairs — `{q | 0 ≤ q.2 ∧ q.1 ∈ q.2 • C}`, or in `a • s` — leaves
+     goals like `(fun x ↦ (x, l).2 • x) (y, 1) = (x, l)` and `0 ≤ (c • q).2`. `rw` finds no pattern,
+     and `positivity` *fails* because it cannot see `0 ≤ c * q.2` through the unreduced projection.
+     One `change` to the beta-reduced form fixes both; re-stating each destructed hypothesis as a
+     `have` with the reduced type is what makes the rest of the proof go through.
+
+367. **`simp only` can finish a goal you were about to hand to `tauto`.** A `simp only [defn,
+     Set.mem_iUnion, exists_prop]` that you expect to merely unfold can close the goal outright, and
+     the following `tauto` then errors with "No goals to be solved" — which reads as a broken proof
+     rather than an over-complete one. Two membership lemmas of the same shape can differ here: the
+     sibling needed `and_assoc` added to the same `simp only` and *then* the `tauto` had to go too.
 
 The remaining findings from the three review worktrees are *scheduled work*, not gotchas, and are
 recorded in [`backbone/08-remediation.md`](backbone/08-remediation.md): the backbone → surface move
