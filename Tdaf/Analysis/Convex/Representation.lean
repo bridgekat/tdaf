@@ -47,6 +47,15 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
   set of generators of the extreme rays. **Corollary 18.5.1**, Minkowski's theorem for compact
   sets, is `convexHull_extremePoints` in `Face.lean`, proved earlier and used here as the base
   case of the induction.
+* `isFace_recessionCone` — the recession cone of a face is a face of the recession cone, given
+  that it is contained in it. `extremeDirections_subset_extremeDirections_recessionCone` is the
+  consequence Rockafellar records on p. 163: every extreme direction of a closed convex set is an
+  extreme direction of its recession cone. The half-line-face case,
+  `isExtremeDirection_recessionCone`, needs no topology at all.
+* `isFaceEquivInter` — the face correspondence of p. 166: for `N` a subspace of the lineality
+  space of `C` and `M` a complement of `N`, the faces of `C` correspond one-to-one with the faces
+  of `C ∩ M`, by `C' ↦ C' ∩ M` and `C₀ ↦ N + C₀`. The mechanism is
+  `IsFace.linealitySpace_subset`: a face is linear in every direction in which `C` is.
 * `IsFace.eq_convexHullPD` — **Theorem 18.3**: a nonempty face of `conv S` is the hull of the
   points of `S` it contains and the directions of `S` in which it recedes.
   `extremePoints_convexHullPD_subset` and `exists_mem_eq_smul_of_mem_extremeDirections` are the
@@ -166,7 +175,167 @@ theorem IsExtremeDirection.halfLine_subset (h : IsExtremeDirection C y) :
   obtain ⟨-, x, hx⟩ := h
   exact ⟨x, hx.subset⟩
 
+/-- **The recession cone of a half-line is the half-line in the same direction issuing from the
+origin.** A restatement of `recessionCone_halfLine`, which produces the ray as a set-builder. -/
+theorem recessionCone_halfLine_eq_halfLine_zero (x y : E) :
+    recessionCone (halfLine x y) = halfLine 0 y := by
+  rw [recessionCone_halfLine]
+  ext z
+  simp [halfLine]
+
+/-- **The recession cone of a face is a face of the recession cone.**
+
+The inclusion `0⁺C' ⊆ 0⁺C` is genuinely a hypothesis: the recession cone is not monotone in
+general, and for a nonempty subset of a closed convex set it is Theorem 8.3 that supplies it.
+Everything else here is algebraic — no topology, no convexity of `C`, no nonemptiness.
+
+Rockafellar uses the half-line case of this on p. 163: if `C'` is a half-line face of a closed
+convex `C` with endpoint `x`, then `C' ⊆ x + 0⁺C ⊆ C`, so `C'` is a half-line face of `x + 0⁺C`
+and `C' - x` is an extreme ray of `0⁺C`. Passing to recession cones on both sides performs his
+restriction and his translation in one step. -/
+theorem isFace_recessionCone (h : IsFace C C') (hrec : recessionCone C' ⊆ recessionCone C) :
+    IsFace (recessionCone C) (recessionCone C') := by
+  refine ⟨⟨hrec, ?_⟩, convex_recessionCone C'⟩
+  rintro u hu v hv z hz ⟨a, b, ha, hb, hab, hzab⟩ w hw t ht
+  have hwC : w ∈ C := h.subset hw
+  have hseg : w + t • z ∈ openSegment ℝ (w + t • u) (w + t • v) := by
+    refine ⟨a, b, ha, hb, hab, ?_⟩
+    have hexp : a • (w + t • u) + b • (w + t • v) = (a + b) • w + t • (a • u + b • v) := by
+      module
+    rw [hexp, hab, one_smul, hzab]
+  exact h.left_mem_of_mem_openSegment (add_smul_mem_of_mem_recessionCone hu hwC ht)
+    (add_smul_mem_of_mem_recessionCone hv hwC ht)
+    (add_smul_mem_of_mem_recessionCone hz hw ht) hseg
+
+/-- **An extreme direction in which `C` recedes is an extreme direction of `0⁺C`** (Rockafellar,
+§18, p. 163). The half-line face `x + ℝ₊ y` of `C` becomes the half-line face `ℝ₊ y` of `0⁺C`,
+which is an extreme ray of that cone.
+
+The hypothesis `y ∈ 0⁺C` is automatic for a closed convex `C`, by Theorem 8.3
+(`extremeDirections_subset_recessionCone`); assuming it directly keeps the statement free of
+topology. -/
+theorem isExtremeDirection_recessionCone (h : IsExtremeDirection C y)
+    (hy : y ∈ recessionCone C) : IsExtremeDirection (recessionCone C) y := by
+  obtain ⟨hy0, x, hface⟩ := h
+  have hrec : recessionCone (halfLine x y) ⊆ recessionCone C := by
+    rw [recessionCone_halfLine_eq_halfLine_zero]
+    rintro z ⟨a, ha, rfl⟩
+    simpa using smul_mem_recessionCone ha hy
+  have hfin := isFace_recessionCone hface hrec
+  rw [recessionCone_halfLine_eq_halfLine_zero] at hfin
+  exact ⟨hy0, 0, hfin⟩
+
 end Directions
+
+/-! ### Faces and the lineality space -/
+
+section Lineality
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C C' C₀ : Set E} {N M : Submodule ℝ E}
+
+/-- **A face is linear in every direction in which the ambient set is linear.** For `y` in the
+lineality space of `C` and `x` in a face `C'`, the segment from `x - y` to `x + y` lies in `C` and
+has `x` as its midpoint, so both endpoints lie in `C'`.
+
+This is what makes Rockafellar's reduction of the facial structure to lineality zero work
+(§18, p. 166): a face of `C` is a union of translates of the lineality space. -/
+theorem IsFace.linealitySpace_subset (h : IsFace C C') :
+    linealitySpace C ⊆ linealitySpace C' := by
+  have key : ∀ y ∈ linealitySpace C, ∀ x ∈ C', x + y ∈ C' := by
+    intro y hy x hx
+    have hyC := mem_linealitySpace.1 hy
+    have hseg : x ∈ openSegment ℝ (x + -y) (x + y) :=
+      ⟨1 / 2, 1 / 2, by norm_num, by norm_num, by norm_num, by module⟩
+    exact h.right_mem_of_mem_openSegment (add_mem_of_mem_recessionCone hyC.2 (h.subset hx))
+      (add_mem_of_mem_recessionCone hyC.1 (h.subset hx)) hx hseg
+  intro y hy
+  have hsmul : ∀ a : ℝ, a • y ∈ linealitySpace C := fun a =>
+    mem_linealitySubmodule.1 ((linealitySubmodule C).smul_mem a (mem_linealitySubmodule.2 hy))
+  refine mem_linealitySpace.2 ⟨fun x hx a _ => key _ (hsmul a) x hx, fun x hx a _ => ?_⟩
+  have hneg : a • -y = (-a) • y := by module
+  rw [hneg]
+  exact key _ (hsmul (-a)) x hx
+
+/-- **A face inherits Rockafellar's direct-sum decomposition.** If `N` is a subspace of the
+lineality space of `C` and `M` is a complement of `N`, then every face `C'` of `C` splits as
+`N + (C' ∩ M)`. This is `eq_add_inter_of_isCompl_of_le` applied to `C'`, which is legitimate
+because a face absorbs the lineality of `C`. -/
+theorem IsFace.eq_add_inter_of_isCompl_of_le (h : IsFace C C')
+    (hN : (N : Set E) ⊆ linealitySpace C) (hcompl : IsCompl N M) :
+    C' = (N : Set E) + (C' ∩ (M : Set E)) :=
+  _root_.Tdaf.ConvexAnalysis.eq_add_inter_of_isCompl_of_le
+    (hN.trans h.linealitySpace_subset) hcompl
+
+/-- **Adding a complemented subspace back is undone by cutting with the complement.** For
+`C₀ ⊆ M` and `M` a complement of `N`, `(N + C₀) ∩ M = C₀`. -/
+theorem inter_add_eq_self_of_isCompl (hcompl : IsCompl N M) (hC₀ : C₀ ⊆ (M : Set E)) :
+    ((N : Set E) + C₀) ∩ (M : Set E) = C₀ := by
+  refine Set.Subset.antisymm ?_ fun c hc => ⟨⟨0, N.zero_mem, c, hc, by simp⟩, hC₀ hc⟩
+  rintro w ⟨⟨p, hp, c, hc, hpc⟩, hwM⟩
+  have hpc' : p + c = w := hpc
+  have hpM : p ∈ M := by
+    have : p = w - c := by rw [← hpc']; abel
+    rw [this]
+    exact M.sub_mem hwM (hC₀ hc)
+  have hp0 : p = 0 := (Submodule.disjoint_def.1 hcompl.disjoint) p hp hpM
+  rw [← hpc', hp0, zero_add]
+  exact hc
+
+/-- **A face of the reduced set generates a face of the whole set.** If `N` is a subspace of the
+lineality space of `C`, `M` is a complement of `N`, and `C₀` is a face of `C ∩ M`, then `N + C₀`
+is a face of `C`.
+
+Together with `IsFace.inter_convex`, `IsFace.eq_add_inter_of_isCompl_of_le` and
+`inter_add_eq_self_of_isCompl` this is Rockafellar's remark (§18, p. 166) that the faces of `C`
+correspond one-to-one with the faces of `C ∩ L^⊥`, under `C' = C₀ + L` and `C₀ = C' ∩ L^⊥`. The
+inverse pair is packaged as `isFaceEquivInter`. -/
+theorem isFace_add_of_isFace_inter (hN : (N : Set E) ⊆ linealitySpace C) (hcompl : IsCompl N M)
+    (h : IsFace (C ∩ (M : Set E)) C₀) : IsFace C ((N : Set E) + C₀) := by
+  have hdec : C = (N : Set E) + (C ∩ (M : Set E)) := eq_add_inter_of_isCompl_of_le hN hcompl
+  have hsub : (N : Set E) + C₀ ⊆ C := by
+    rintro w ⟨p, hp, c, hc, hpc⟩
+    have hpc' : p + c = w := hpc
+    rw [← hpc', add_comm]
+    exact add_mem_of_mem_recessionCone (mem_linealitySpace.1 (hN hp)).1 (h.subset hc).1
+  refine ⟨⟨hsub, ?_⟩, N.convex.add h.convex⟩
+  rintro u hu v hv w hw ⟨a, b, ha, hb, hab, hseg⟩
+  obtain ⟨r, hr, z, hz, hrz⟩ := hw
+  have hrz' : r + z = w := hrz
+  rw [hdec] at hu hv
+  obtain ⟨p, hp, u₀, hu₀, hpu⟩ := hu
+  obtain ⟨q, hq, v₀, hv₀, hqv⟩ := hv
+  have hpu' : p + u₀ = u := hpu
+  have hqv' : q + v₀ = v := hqv
+  -- the `M`-components of the two decompositions of `w` agree
+  have hsplit : a • (p + u₀) + b • (q + v₀) = r + z := by rw [hpu', hqv', hseg, hrz']
+  have hzeq : z = a • (p + u₀) + b • (q + v₀) - r := by rw [hsplit]; abel
+  have hval : z - (a • u₀ + b • v₀) = a • p + b • q - r := by rw [hzeq]; module
+  have hzero : z - (a • u₀ + b • v₀) = 0 := by
+    refine (Submodule.disjoint_def.1 hcompl.disjoint) _ ?_ ?_
+    · rw [hval]
+      exact N.sub_mem (N.add_mem (N.smul_mem a hp) (N.smul_mem b hq)) hr
+    · exact M.sub_mem (h.subset hz).2
+        (M.add_mem (M.smul_mem a hu₀.2) (M.smul_mem b hv₀.2))
+  have hmid : a • u₀ + b • v₀ = z := (sub_eq_zero.1 hzero).symm
+  have hu₀C₀ := h.left_mem_of_mem_openSegment hu₀ hv₀ hz ⟨a, b, ha, hb, hab, hmid⟩
+  rw [← hpu']
+  exact Set.add_mem_add hp hu₀C₀
+
+/-- **Rockafellar's face correspondence** (§18, p. 166): for `N` a subspace of the lineality space
+of `C` and `M` a complement of `N`, the faces of `C` are in one-to-one correspondence with the
+faces of `C ∩ M`, by `C' ↦ C' ∩ M` and `C₀ ↦ N + C₀`.
+
+The book takes `N` the full lineality space `L` and `M = L^⊥` in `ℝⁿ`; every subspace of `L` and
+every complement of it works, and no closedness or finite-dimensionality is used. -/
+def isFaceEquivInter (hN : (N : Set E) ⊆ linealitySpace C) (hcompl : IsCompl N M) :
+    {C' : Set E // IsFace C C'} ≃ {C₀ : Set E // IsFace (C ∩ (M : Set E)) C₀} where
+  toFun C' := ⟨(C' : Set E) ∩ (M : Set E), C'.2.inter_convex M.convex⟩
+  invFun C₀ := ⟨(N : Set E) + (C₀ : Set E), isFace_add_of_isFace_inter hN hcompl C₀.2⟩
+  left_inv C' := Subtype.ext (C'.2.eq_add_inter_of_isCompl_of_le hN hcompl).symm
+  right_inv C₀ :=
+    Subtype.ext (inter_add_eq_self_of_isCompl hcompl fun _ hx => (C₀.2.subset hx).2)
+
+end Lineality
 
 /-! ### Extreme points of a subset -/
 
@@ -412,6 +581,17 @@ theorem extremeDirections_subset_recessionCone (hC : Convex ℝ C) (hCcl : IsClo
     extremeDirections C ⊆ recessionCone C := by
   rintro y ⟨-, x, hx⟩
   exact mem_recessionCone_of_exists_ray hC hCcl ⟨x, fun a ha => hx.subset ⟨a, ha, rfl⟩⟩
+
+/-- **Every extreme direction of a closed convex set is an extreme direction of its recession
+cone** (Rockafellar, §18, p. 163). This sharpens `extremeDirections_subset_recessionCone`, which
+says only that an extreme direction *is* a direction of recession.
+
+The converse fails: a parabolic region in the plane has no half-line faces at all, while its
+recession cone is a ray and so has one extreme direction. -/
+theorem extremeDirections_subset_extremeDirections_recessionCone (hC : Convex ℝ C)
+    (hCcl : IsClosed C) : extremeDirections C ⊆ extremeDirections (recessionCone C) :=
+  fun _ hy =>
+    isExtremeDirection_recessionCone hy (extremeDirections_subset_recessionCone hC hCcl hy)
 
 end DirectionsTopology
 

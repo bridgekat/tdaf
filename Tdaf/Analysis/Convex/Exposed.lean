@@ -37,6 +37,10 @@ set need not be closed.
   containing no lines is the closure of the hull of its exposed points and exposed directions.
 * `closure_coneHull_exposedDirections`, `closure_coneHull_of_forall_exposedDirection` —
   **Corollary 18.7.1** for a closed convex cone containing no lines.
+* `isExposed_recessionCone` — the recession cone of an exposed face is an exposed face of the
+  recession cone, given that it is contained in it; the exposed analogue of `isFace_recessionCone`.
+  `exposedDirections_subset_exposedDirections_recessionCone` is the consequence Rockafellar records
+  on p. 163, and `isExposedDirection_recessionCone` is its topology-free form.
 
 ## What is not here
 
@@ -126,7 +130,92 @@ theorem IsExposedDirection.halfLine_subset (h : IsExposedDirection C y) :
   obtain ⟨-, x, hx⟩ := h
   exact ⟨x, IsExposed.subset hx⟩
 
+/-- **The recession cone of an exposed face is an exposed face of the recession cone**, and the
+same functional exposes it.
+
+This is the exposed analogue of `isFace_recessionCone`, with the same hypothesis `0⁺C' ⊆ 0⁺C`
+supplying the monotonicity the recession cone does not have. The mechanism is that a functional
+maximised over `C` is non-positive on `0⁺C` and vanishes exactly on the directions in which the
+face itself recedes. -/
+theorem isExposed_recessionCone {C' : Set E} (h : IsExposed ℝ C C')
+    (hrec : recessionCone C' ⊆ recessionCone C) :
+    IsExposed ℝ (recessionCone C) (recessionCone C') := by
+  rcases C'.eq_empty_or_nonempty with rfl | hne
+  · rw [recessionCone_empty] at hrec ⊢
+    rw [univ_subset_iff.1 hrec]
+  · intro _
+    obtain ⟨l, hl⟩ := h hne
+    obtain ⟨x₀, hx₀⟩ := hne
+    have hx₀' : x₀ ∈ C ∧ ∀ w ∈ C, l w ≤ l x₀ := by
+      have h' := hx₀
+      rw [hl, mem_sep_iff] at h'
+      exact h'
+    -- a functional maximised over `C` is non-positive on every direction of recession
+    have hnonpos : ∀ v ∈ recessionCone C, l v ≤ 0 := by
+      intro v hv
+      have hle := hx₀'.2 _ (add_mem_of_mem_recessionCone hv hx₀'.1)
+      rw [map_add] at hle
+      linarith
+    refine ⟨l, subset_antisymm (fun u hu => ?_) (fun u hu => ?_)⟩
+    · have huC : u ∈ recessionCone C := hrec hu
+      have hu0 : l u = 0 := by
+        have hmem := add_mem_of_mem_recessionCone hu hx₀
+        rw [hl, mem_sep_iff] at hmem
+        have hle := hmem.2 x₀ hx₀'.1
+        rw [map_add] at hle
+        have := hnonpos u huC
+        linarith
+      refine mem_sep_iff.2 ⟨huC, fun v hv => ?_⟩
+      rw [hu0]
+      exact hnonpos v hv
+    · rw [mem_sep_iff] at hu
+      have hu0 : l u = 0 := by
+        have hle := hu.2 0 (zero_mem_recessionCone C)
+        rw [map_zero] at hle
+        have := hnonpos u hu.1
+        linarith
+      intro w hw t ht
+      rw [hl, mem_sep_iff] at hw
+      rw [hl]
+      refine mem_sep_iff.2 ⟨add_smul_mem_of_mem_recessionCone hu.1 hw.1 ht, fun q hq => ?_⟩
+      rw [map_add, map_smul, smul_eq_mul, hu0, mul_zero, add_zero]
+      exact hw.2 q hq
+
+/-- **An exposed direction in which `C` recedes is an exposed direction of `0⁺C`** (Rockafellar,
+§18, p. 163): the exposed analogue of `isExtremeDirection_recessionCone`, and proved the same
+way. -/
+theorem isExposedDirection_recessionCone (h : IsExposedDirection C y)
+    (hy : y ∈ recessionCone C) : IsExposedDirection (recessionCone C) y := by
+  obtain ⟨hy0, x, hexp⟩ := h
+  have hrec : recessionCone (halfLine x y) ⊆ recessionCone C := by
+    rw [recessionCone_halfLine_eq_halfLine_zero]
+    rintro z ⟨a, ha, rfl⟩
+    simpa using smul_mem_recessionCone ha hy
+  have hfin := isExposed_recessionCone hexp hrec
+  rw [recessionCone_halfLine_eq_halfLine_zero] at hfin
+  exact ⟨hy0, 0, hfin⟩
+
 end Directions
+
+/-! ### Exposed directions of the recession cone -/
+
+section DirectionsTopology
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+  [ContinuousSMul ℝ E] {C : Set E}
+
+/-- **Every exposed direction of a closed convex set is an exposed direction of its recession
+cone** (Rockafellar, §18, p. 163), the exposed half of
+`extremeDirections_subset_extremeDirections_recessionCone`. Closedness enters only through
+Theorem 8.3, to know that the direction of a half-line exposed face recedes in `C`. -/
+theorem exposedDirections_subset_exposedDirections_recessionCone (hC : Convex ℝ C)
+    (hCcl : IsClosed C) : exposedDirections C ⊆ exposedDirections (recessionCone C) :=
+  fun _ hy =>
+    isExposedDirection_recessionCone hy
+      ((exposedDirections_subset_extremeDirections C).trans
+        (extremeDirections_subset_recessionCone hC hCcl) hy)
+
+end DirectionsTopology
 
 /-! ### A multiplier for one linear equation -/
 
