@@ -22,6 +22,7 @@ elsewhere.
   for support functions.
 * `ConvexFn.add` — **Theorem 5.2**, together with `dom_add` and `ConvexFn.sum`.
 * `ConvexFn.smul` — multiplication by a nonnegative real (§5).
+* `convexFn_coe_linearMap` — a linear functional is convex, read into `EReal`.
 * `ConvexFn.comp` — **Theorem 5.1**, composition with a nondecreasing convex function.
 * `ConvexFn.restrict` — restricting to a convex set preserves convexity, and
   `ConvexFn.add_indicatorFn` says the same thing in the form "adding an indicator function to
@@ -130,6 +131,18 @@ theorem convexFn_const (c : EReal) : ConvexFn (fun _ : E => c) := by
   have h4 : a * r ≤ a * μ := mul_le_mul_of_nonneg_left h1 ha
   have h5 : b * r ≤ b * ν := mul_le_mul_of_nonneg_left h2 hb
   exact_mod_cast (by linarith : r ≤ a * μ + b * ν)
+
+/-- **A real-valued linear functional is convex** when read as an `EReal`-valued function. So is
+its negative, which is why the functions that are both convex and concave are exactly the affine
+ones (`PosHomogeneous.isLinearOn_iff`, `Homogeneous.lean`).
+
+The pairing-presented form is `convexFn_affineFn` (`Duality/Pairing.lean`); this is the one for an
+abstract `l : E →ₗ[ℝ] ℝ`, and it is `convexFn_add_coe` applied to the zero function. -/
+theorem convexFn_coe_linearMap (l : E →ₗ[ℝ] ℝ) :
+    ConvexFn (fun x : E => ((l x : ℝ) : EReal)) := by
+  have h := convexFn_add_coe (f := fun _ : E => (0 : EReal)) (convexFn_const 0)
+    (l := fun x => l x) (fun x y a b _ => by simp [map_add, map_smul, smul_eq_mul])
+  simpa using h
 
 /-! #### Theorem 5.5: pointwise suprema -/
 

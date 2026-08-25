@@ -34,6 +34,8 @@ is the interesting one: the infimum need not be attained, so `A f` is not read o
 * `dom_mapLin`, `dom_compLin` — the effective domain is transported the same way.
 * `convexFn_iInf_right` — the projection case Rockafellar highlights: partial minimisation
   `(y ↦ ⨅ z, h (y, z))` of a convex function of two variables is convex. This is the form §29 uses.
+* `ConvexFn.comp_affine` — precomposition with an affine map, and `ConvexFn.slice_left` /
+  `ConvexFn.slice_right`, the special case of fixing one variable of a function of two.
 
 ## Design notes
 
@@ -187,6 +189,17 @@ theorem convexFn_compLin (A : E →ₗ[ℝ] G) (hg : ConvexFn g) : ConvexFn (com
   rw [epi_compLin]
   exact hg.convex_epi.linear_preimage _
 
+/-- **Precomposition with an affine map preserves convexity.** The linear part is
+`convexFn_compLin`, the translation is `ConvexFn.comp_add_left`; this is the two together, in
+the form the applications want. -/
+theorem ConvexFn.comp_affine (hg : ConvexFn g) (A : E →ₗ[ℝ] G) (b : G) :
+    ConvexFn (fun x : E => g (A x + b)) := by
+  have heq : (fun x : E => g (A x + b)) = compLin (fun y => g (b + y)) A := by
+    funext x
+    simp [compLin, add_comm]
+  rw [heq]
+  exact convexFn_compLin A (hg.comp_add_left b)
+
 /-- The image of `f` is the function determined, in the sense of Theorem 5.3, by the image of
 `epi f` under `(x, μ) ↦ (A x, μ)`. This is Rockafellar's own route to Theorem 5.7, and it is an
 equality of *functions* — the corresponding equality of *sets*, `epi_mapLin`, needs a
@@ -315,6 +328,24 @@ section Projection
 
 variable {Y Z : Type*} [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
 variable {h : Y × Z → EReal}
+
+/-- **Fixing the first variable of a jointly convex function leaves a convex function of the
+second.** The slice map `z ↦ (c, z)` is affine, so this is `ConvexFn.comp_affine`. -/
+theorem ConvexFn.slice_left (hh : ConvexFn h) (c : Y) : ConvexFn (fun z : Z => h (c, z)) := by
+  have heq : (fun z : Z => h (c, z)) = fun z : Z => h (LinearMap.inr ℝ Y Z z + (c, 0)) := by
+    funext z
+    simp
+  rw [heq]
+  exact hh.comp_affine _ _
+
+/-- **Fixing the second variable of a jointly convex function leaves a convex function of the
+first.** The mirror of `ConvexFn.slice_left`. -/
+theorem ConvexFn.slice_right (hh : ConvexFn h) (c : Z) : ConvexFn (fun y : Y => h (y, c)) := by
+  have heq : (fun y : Y => h (y, c)) = fun y : Y => h (LinearMap.inl ℝ Y Z y + (0, c)) := by
+    funext y
+    simp
+  rw [heq]
+  exact hh.comp_affine _ _
 
 /-- The image under the projection `(y, z) ↦ y` is minimisation over `z`. This is the example
 Rockafellar singles out after Theorem 5.7, and the form in which §29 uses the operation. -/

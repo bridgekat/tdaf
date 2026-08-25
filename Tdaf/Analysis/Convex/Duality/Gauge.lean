@@ -6,6 +6,7 @@ Authors: TDAF contributors
 import Tdaf.Analysis.Convex.Duality.Polar
 import Tdaf.Analysis.Convex.Homogenize
 import Tdaf.Analysis.Convex.Recession.Cone
+import Tdaf.LinearAlgebra.Subspace
 import Mathlib.Analysis.Convex.EGauge
 import Mathlib.Analysis.Convex.Gauge
 
@@ -742,20 +743,9 @@ The dimension relations `dim C° = n - lin C` and `lin C° = n - dim C`. They ar
 of Theorem 14.6 read through `finrank`: the polar of a *subspace* is its annihilator, and the
 annihilator of a subspace of a finite-dimensional space has the complementary dimension. -/
 
-section VectorSpan
-
-variable {E : Type*} [AddCommGroup E] [Module ℝ E]
-
-/-- For a set containing the origin the affine hull and the linear hull agree — **Rockafellar,
-Theorem 1.1**, in the form Corollary 14.6.1 uses it. -/
-theorem vectorSpan_eq_span_of_zero_mem {C : Set E} (h0 : (0 : E) ∈ C) :
-    vectorSpan ℝ C = Submodule.span ℝ C := by
-  rw [vectorSpan_eq_span_vsub_set_right ℝ h0]
-  congr 1
-  ext x
-  simp
-
-end VectorSpan
+/-! `vectorSpan_eq_span_of_zero_mem` — the affine and linear hulls of a set through the origin
+agree — is `Tdaf.vectorSpan_eq_span_of_zero_mem` in `Tdaf/LinearAlgebra/Subspace.lean`. It has no
+convexity in it and three unrelated developments want it. -/
 
 section Corollary1461
 

@@ -123,7 +123,18 @@ each, with the surface declaration that hit it. These become remediation items.
 
 ## Process
 
-* Work in **your own worktree**, never in the primary checkout. You will be told its path.
+* Work in **your own worktree**, never in the primary checkout. You will be told its path. It has
+  a warm `.lake/build` already copied in and `.lake/packages` junctioned to the primary's Mathlib,
+  so `lake build` re-verifies traces in seconds rather than rebuilding for forty minutes. Do not
+  touch the primary checkout or any sibling worktree.
+* **Sibling sections are being written in parallel and their files do not exist for you.** If you
+  need a surface definition that belongs to another section, define it locally with its bridge
+  lemma and say so in your report; the merge will de-duplicate. You may import *earlier, already
+  merged* section modules — check what is on disk before importing.
+* `Tdaf/Surface/Common/Euclidean.lean` carries the ambient instances but not every Mathlib import a
+  surface section wants. Import what you need directly (§1 needed
+  `Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional`), and report it — imports that several
+  sections want belong in the shared header.
 * `lake build <your module>` must be clean: **no errors and no warnings**, including the line-length
   and style linters.
 * Use the Lean LSP over MCP where it helps (`lean_goal`, `lean_hover_info`, `lean_local_search`,
@@ -155,4 +166,6 @@ Keep it short and factual:
 2. Anything in the three "not here" categories, with the reason.
 3. `## Backbone gaps and friction` — the list described above.
 4. The `lake build` result and the `#print axioms` result.
-5. Anything that cost you more than twenty minutes, phrased as a gotcha for `gotchas.md`, named by the section it belongs under.
+5. Anything that cost you more than twenty minutes, phrased as a gotcha for `gotchas.md`, named by
+   the section of that file it belongs under (`EL`, `LINT`, `DEP`, `ER`, `SET`, `PAIR`, `LIB`,
+   `BLD`).

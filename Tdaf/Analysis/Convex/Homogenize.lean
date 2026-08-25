@@ -42,6 +42,8 @@ by `{1} ×ˢ epi f`, one dimension up.
   multiplication preserves convexity and is a monoid action.
 * `posHomogeneous_iff_smulRight_eq` — `f` is positively homogeneous iff `fa = f` for `a > 0`.
 * `hom_apply_pos`, `hom_apply_one`, `hom_apply_neg` — the defining equations.
+* `hom_ne_bot` — `hom f` avoids `-∞` as soon as `f` does, and `hom_apply_smul` —
+  `hom f (λ, λ x) = λ * f x` for `λ ≥ 0`.
 * `posHomogeneous_hom`, `convexFn_hom` — `hom f` is positively homogeneous, and convex as
   soon as `f` is.
 * `hom_isGreatest` — the **maximality property**: `hom f` is the greatest positively
@@ -392,6 +394,38 @@ theorem hom_of_epi_eq_empty (h : epi f = ∅) : hom f = ⊤ := by
   rcases le_or_gt 0 a with ha | ha
   · rw [hom_apply_nonneg ha, smulRight_of_epi_eq_empty h, Pi.top_apply, Pi.top_apply]
   · rw [hom_apply_neg ha, Pi.top_apply]
+
+/-- **The homogenisation of a function that avoids `-∞` avoids it too.** `hom f (λ, x)` is `+∞`
+for `λ < 0`, an indicator value for `λ = 0`, and `λ * f (λ⁻¹ x)` for `λ > 0`, and none of the three
+is `-∞`.
+
+Only the `ne_bot` half of `Proper f` is needed: if `dom f` is empty then `hom f ≡ +∞`. -/
+theorem hom_ne_bot (hf : ∀ x, f x ≠ ⊥) (q : ℝ × E) : hom f q ≠ ⊥ := by
+  obtain ⟨a, x⟩ := q
+  rcases lt_trichotomy a 0 with h | h | h
+  · rw [hom_apply_neg h]
+    exact top_ne_bot
+  · subst h
+    rw [hom_apply_zero]
+    rcases Set.eq_empty_or_nonempty (dom f) with hd | hd
+    · rw [smulRight_of_epi_eq_empty ((epi_eq_empty_iff f).2 hd), Pi.top_apply]
+      exact top_ne_bot
+    · rw [smulRight_zero hd]
+      exact indicatorFn_ne_bot _ _
+  · rw [hom_apply_pos h]
+    exact Tdaf.EReal.coe_mul_ne_bot h.le (hf _)
+
+/-- `hom f (λ, λ x) = λ * f x` for `λ ≥ 0`: the substitution `y = λ x` that turns the homogenisation
+into left scalar multiplication.
+
+At `λ = 0` both sides are `0`, by two conventions at once: `f0 = δ(· | 0)` and `0 · ∞ = 0`. -/
+theorem hom_apply_smul (hdom : (dom f).Nonempty) (ha : 0 ≤ a) (z : E) :
+    hom f (a, a • z) = (a : EReal) * f z := by
+  rcases ha.lt_or_eq with ha' | ha'
+  · rw [hom_apply_pos ha', inv_smul_smul₀ ha'.ne']
+  · subst ha'
+    rw [zero_smul, hom_apply_zero, smulRight_zero hdom]
+    simp
 
 /-- `hom f` never exceeds the level-1 lift, and agrees with it at `λ = 1`. -/
 theorem hom_le_levelOneLift (f : E → EReal) : hom f ≤ levelOneLift f := by

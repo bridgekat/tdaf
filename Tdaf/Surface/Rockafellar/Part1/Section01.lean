@@ -603,31 +603,15 @@ theorem bijective_linear_translate (A : Rn n ≃ₗ[ℝ] Rn m) (c : Rn n) (d : R
     refine ⟨A.symm (z - d) + c, ?_⟩
     simp
 
-/-- A linear isomorphism between two subspaces of `ℝⁿ` extends to a linear automorphism of
-`ℝⁿ`: the orthogonal complements have the same dimension, so they too are isomorphic. -/
-theorem exists_linearEquiv_extend {S S' : Submodule ℝ (Rn n)} (e : S ≃ₗ[ℝ] S') :
-    ∃ A : Rn n ≃ₗ[ℝ] Rn n, ∀ x : S, A (x : Rn n) = (e x : Rn n) := by
-  have hrank : Module.finrank ℝ S = Module.finrank ℝ S' := e.finrank_eq
-  have h1 := Submodule.finrank_add_finrank_orthogonal (K := S)
-  have h2 := Submodule.finrank_add_finrank_orthogonal (K := S')
-  have hperp : Module.finrank ℝ (Sᗮ : Submodule ℝ (Rn n))
-      = Module.finrank ℝ (S'ᗮ : Submodule ℝ (Rn n)) := by omega
-  have hS : IsCompl S (Sᗮ : Submodule ℝ (Rn n)) := Submodule.isCompl_orthogonal S
-  have hS' : IsCompl S' (S'ᗮ : Submodule ℝ (Rn n)) := Submodule.isCompl_orthogonal S'
-  refine ⟨(Submodule.prodEquivOfIsCompl S _ hS).symm.trans
-    ((e.prodCongr (LinearEquiv.ofFinrankEq _ _ hperp)).trans
-      (Submodule.prodEquivOfIsCompl S' _ hS')), fun x => ?_⟩
-  simp
-
 /-- Two linearly independent families with the same index set are carried onto each other by a
 linear automorphism of `ℝⁿ`. -/
 theorem exists_linearEquiv_apply_eq {ι : Type} {v v' : ι → Rn n}
     (hv : LinearIndependent ℝ v) (hv' : LinearIndependent ℝ v') :
     ∃ A : Rn n ≃ₗ[ℝ] Rn n, ∀ i, A (v i) = v' i := by
-  obtain ⟨A, hA⟩ := exists_linearEquiv_extend
+  obtain ⟨A, hA⟩ := Submodule.exists_linearEquiv_restrict_eq
     ((Module.Basis.span hv).equiv (Module.Basis.span hv') (Equiv.refl ι))
   refine ⟨A, fun i => ?_⟩
-  have h1 := hA (Module.Basis.span hv i)
+  have h1 := (hA (Module.Basis.span hv i)).symm
   rwa [Module.Basis.coe_span_apply, Module.Basis.equiv_apply, Equiv.refl_apply,
     Module.Basis.coe_span_apply] at h1
 
@@ -729,7 +713,7 @@ theorem corollary_1_6_1 {M₁ M₂ : Set (Rn n)} (h₁ : IsAffineSet M₁) (h₂
       omega
     obtain ⟨e⟩ : Nonempty ((vectorSpan ℝ M₁) ≃ₗ[ℝ] (vectorSpan ℝ M₂)) :=
       ⟨LinearEquiv.ofFinrankEq _ _ hrank⟩
-    obtain ⟨A, hA⟩ := exists_linearEquiv_extend e
+    obtain ⟨A, hA⟩ := Submodule.exists_linearEquiv_restrict_eq e
     have hM₁ : M₁ = ((vectorSpan ℝ M₁ : Submodule ℝ (Rn n)) : Set (Rn n)) + {a₁} :=
       eq_vectorSpan_add_singleton h₁ ha₁
     have hM₂ : M₂ = ((vectorSpan ℝ M₂ : Submodule ℝ (Rn n)) : Set (Rn n)) + {a₂} :=
@@ -739,12 +723,12 @@ theorem corollary_1_6_1 {M₁ M₂ : Set (Rn n)} (h₁ : IsAffineSet M₁) (h₂
       ext y
       constructor
       · rintro ⟨x, hx, rfl⟩
-        have hx' := hA ⟨x, hx⟩
+        have hx' := (hA ⟨x, hx⟩).symm
         simp only [hx']
         exact (e ⟨x, hx⟩).2
       · intro hy
         refine ⟨(e.symm ⟨y, hy⟩ : Rn n), (e.symm ⟨y, hy⟩).2, ?_⟩
-        have hy' := hA (e.symm ⟨y, hy⟩)
+        have hy' := (hA (e.symm ⟨y, hy⟩)).symm
         simpa using hy'
     refine ⟨fun x => A (x - a₁) + a₂, isAffineMap_linear_translate _ _ _,
       bijective_linear_translate _ _ _, ?_⟩

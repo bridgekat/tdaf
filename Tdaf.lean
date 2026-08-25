@@ -110,6 +110,7 @@ import Tdaf.Analysis.Convex.Subgradient.Reconstruction
 import Tdaf.Analysis.Convex.Subgradient.StrictlyConvex
 import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 import Tdaf.Analysis.Convex.Tangent
+import Tdaf.LinearAlgebra.Subspace
 import Tdaf.Order.EReal
 import Tdaf.Order.GaloisConnection
 import Tdaf.Surface.Common.Euclidean

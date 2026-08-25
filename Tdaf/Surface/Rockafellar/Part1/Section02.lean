@@ -410,27 +410,12 @@ theorem theorem_2_7_least (K : Set (Rn n)) :
   ⟨Submodule.subset_span, fun _ hL => Submodule.span_le.2 hL⟩
 
 /-- **Rockafellar, Theorem 2.7**, first half continued: for a convex cone `K` containing `0`, that
-smallest subspace is `K - K`. -/
+smallest subspace is `K - K`.
+
+Specialises `span_eq_sub_of_isCone` through the bridge `isCone_iff_smul_set_eq`. -/
 theorem theorem_2_7_sub {K : Set (Rn n)} (hK : IsCone K) (hconv : Convex ℝ K)
-    (h0 : (0 : Rn n) ∈ K) : (Submodule.span ℝ K : Set (Rn n)) = K - K := by
-  have hadd := ((theorem_2_6 K).1 ⟨hK, hconv⟩).1
-  refine Set.Subset.antisymm (fun z hz => ?_) ?_
-  · induction hz using Submodule.span_induction with
-    | mem w hw => exact ⟨w, hw, 0, h0, by simp⟩
-    | zero => exact ⟨0, h0, 0, h0, by simp⟩
-    | add u v _ _ hu hv =>
-        obtain ⟨x₁, hx₁, y₁, hy₁, rfl⟩ := hu
-        obtain ⟨x₂, hx₂, y₂, hy₂, rfl⟩ := hv
-        exact ⟨x₁ + x₂, hadd _ hx₁ _ hx₂, y₁ + y₂, hadd _ hy₁ _ hy₂, by module⟩
-    | smul c u _ hu =>
-        obtain ⟨x, hx, y, hy, rfl⟩ := hu
-        rcases lt_trichotomy c 0 with hc | hc | hc
-        · exact ⟨(-c) • y, hK _ (by linarith) y hy, (-c) • x, hK _ (by linarith) x hx, by module⟩
-        · subst hc
-          exact ⟨0, h0, 0, h0, by simp⟩
-        · exact ⟨c • x, hK c hc x hx, c • y, hK c hc y hy, by module⟩
-  · rintro _ ⟨x, hx, y, hy, rfl⟩
-    exact (Submodule.span ℝ K).sub_mem (Submodule.subset_span hx) (Submodule.subset_span hy)
+    (h0 : (0 : Rn n) ∈ K) : (Submodule.span ℝ K : Set (Rn n)) = K - K :=
+  span_eq_sub_of_isCone ((isCone_iff_smul_set_eq K).1 hK) hconv h0
 
 /-- **Rockafellar, Theorem 2.7**, first half continued: that smallest subspace is `aff K`. This is
 the last sentence of the book's proof — the affine hull of a set containing `0` is a subspace, by

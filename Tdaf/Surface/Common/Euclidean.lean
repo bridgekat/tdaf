@@ -6,6 +6,8 @@ Authors: TDAF contributors
 import Tdaf.Analysis.Convex.Duality.Conjugate
 import Tdaf.Analysis.Convex.Duality.InnerPairing
 import Tdaf.Analysis.Convex.Subgradient.Defs
+import Tdaf.LinearAlgebra.Subspace
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 
 /-!
 # The Euclidean instantiation shared by every `ℝⁿ` surface

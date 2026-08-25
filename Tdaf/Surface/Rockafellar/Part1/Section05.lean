@@ -106,18 +106,6 @@ noncomputable def coordFunctional (n : ℕ) (j : Fin n) : Rn n →ₗ[ℝ] ℝ w
 @[simp] theorem coordFunctional_apply {n : ℕ} (j : Fin n) (x : Rn n) :
     coordFunctional n j x = x j := rfl
 
-/-- A linear functional, read as an `EReal`-valued function, is convex — and so is its negative,
-so linear functions are exactly the functions that are both convex and concave (Theorem 4.8).
-
-The backbone has this only for functionals presented by a pairing (`convexFn_affineFn`,
-`Duality/Pairing.lean`); for an abstract `l : ℝⁿ →ₗ[ℝ] ℝ` it is `convexFn_add_coe` applied to
-the zero function. -/
-theorem convexFn_coe_linearMap {n : ℕ} (l : Rn n →ₗ[ℝ] ℝ) :
-    ConvexFn fun x => ((l x : ℝ) : EReal) := by
-  have h := convexFn_add_coe (f := fun _ : Rn n => (0 : EReal)) (convexFn_const 0)
-    (l := fun x => l x) (fun x y a b _ => by simp [map_add, map_smul, smul_eq_mul])
-  simpa using h
-
 /-! ### Theorem 5.1 -/
 
 /-- **Rockafellar, Theorem 5.1.** Let `f` be a convex function from `ℝⁿ` to `(-∞, +∞]`, and let
@@ -483,18 +471,6 @@ The *statements*, however, are four explicit formulas, and each of them is an in
 Theorem 5.7 — an image under a linear map — applied to a jointly convex function of the auxiliary
 variables. That is the route taken here, so nothing depends on the informal construction. -/
 
-/-- Fixing the first coordinate of a convex function on `ℝ × ℝⁿ` leaves a convex function of the
-second: the slice map `x ↦ (c, x)` is affine. -/
-theorem convexFn_slice {n : ℕ} {G : ℝ × Rn n → EReal} (hG : ConvexFn G) (c : ℝ) :
-    ConvexFn fun x => G (c, x) := by
-  have hL : ConvexFn fun p : ℝ × Rn n => G ((c, 0) + p) := hG.comp_add_left (c, 0)
-  have heq : (fun x : Rn n => G (c, x))
-      = compLin (fun p : ℝ × Rn n => G ((c, 0) + p)) (LinearMap.inr ℝ ℝ (Rn n)) := by
-    funext x
-    simp [compLin, Prod.mk_add_mk]
-  rw [heq]
-  exact convexFn_compLin _ hL
-
 /-- The linear map `(λ, x) ↦ (λ₁ + ⋯ + λₘ, x)`, along which the two "adding in `λ`" operations of
 Theorem 5.8 are images. -/
 noncomputable def homSumLin (n m : ℕ) : ((Fin m → ℝ) × Rn n) →ₗ[ℝ] ℝ × Rn n :=
@@ -512,21 +488,6 @@ noncomputable def coordHomLin (n m : ℕ) (i : Fin m) : ((Fin m → ℝ) × Rn n
 
 @[simp] theorem coordHomLin_apply {n m : ℕ} (i : Fin m) (q : (Fin m → ℝ) × Rn n) :
     coordHomLin n m i q = (q.1 i, q.2) := rfl
-
-/-- The homogenisation of a proper function never takes the value `-∞`: `hom f (λ, x)` is `+∞` for
-`λ < 0`, an indicator value for `λ = 0`, and `λ * f (λ⁻¹ x)` for `λ > 0`.
-
-Not in the backbone; `Homogenize.lean` has no properness lemmas at all. -/
-theorem hom_ne_bot {n : ℕ} {f : Rn n → EReal} (hp : Proper f) (q : ℝ × Rn n) : hom f q ≠ ⊥ := by
-  obtain ⟨a, x⟩ := q
-  rcases lt_trichotomy a 0 with h | h | h
-  · rw [hom_apply_neg h]
-    exact top_ne_bot
-  · subst h
-    rw [hom_apply_zero, smulRight_zero hp.dom_nonempty]
-    exact indicatorFn_ne_bot _ _
-  · rw [hom_apply_pos h]
-    exact Tdaf.EReal.coe_mul_ne_bot h.le (hp.ne_bot _)
 
 /-- The joint convexity behind clauses `g` and `h` of Theorem 5.8: `(λ, x) ↦ (fᵢ λᵢ) x` is convex
 on `ℝᵐ × ℝⁿ`, since it is the inverse image of `hom fᵢ` under `(λ, x) ↦ (λᵢ, x)`. -/
@@ -575,8 +536,8 @@ theorem theorem_5_8_g {n m : ℕ} {f : Fin m → Rn n → EReal} (hf : ∀ i, Co
       ∑ i, smulRight (f i) (l i) x := by
   have hPsi : ConvexFn fun q : (Fin m → ℝ) × Rn n => ∑ i, hom (f i) (q.1 i, q.2) :=
     ConvexFn.sum (s := (Finset.univ : Finset (Fin m)))
-      (fun i _ => convexFn_hom_coord hf i) (fun i _ q => hom_ne_bot (hp i) (q.1 i, q.2))
-  have hslice := convexFn_slice (convexFn_mapLin (homSumLin n m) hPsi) 1
+      (fun i _ => convexFn_hom_coord hf i) (fun i _ q => hom_ne_bot (hp i).ne_bot (q.1 i, q.2))
+  have hslice := (convexFn_mapLin (homSumLin n m) hPsi).slice_left 1
   have hkey : (fun x : Rn n =>
         mapLin (homSumLin n m) (fun q : (Fin m → ℝ) × Rn n => ∑ i, hom (f i) (q.1 i, q.2)) (1, x))
       = fun x => ⨅ l ∈ {l : Fin m → ℝ | (∀ i, 0 ≤ l i) ∧ ∑ i, l i = 1},
@@ -594,7 +555,7 @@ theorem theorem_5_8_g {n m : ℕ} {f : Fin m → Rn n → EReal} (hf : ∀ i, Co
         exact Finset.sum_congr rfl fun i _ => (hom_apply_nonneg (hpos i) (f i) y).symm
       · obtain ⟨j, hj⟩ := not_forall.1 hpos
         have hbot : ∀ i ∈ (Finset.univ : Finset (Fin m)), hom (f i) (l i, y) ≠ ⊥ :=
-          fun i _ => hom_ne_bot (hp i) (l i, y)
+          fun i _ => hom_ne_bot (hp i).ne_bot (l i, y)
         have htop : (∑ i, hom (f i) (l i, y)) = ⊤ := by
           by_contra hne
           exact absurd (hom_apply_neg (not_le.1 hj) (f j) y)
@@ -618,7 +579,7 @@ theorem theorem_5_8_h {n m : ℕ} {f : Fin m → Rn n → EReal} (hf : ∀ i, Co
       ⨆ i, smulRight (f i) (l i) x := by
   have hPsi : ConvexFn fun q : (Fin m → ℝ) × Rn n => ⨆ i, hom (f i) (q.1 i, q.2) :=
     convexFn_iSup fun i => convexFn_hom_coord hf i
-  have hslice := convexFn_slice (convexFn_mapLin (homSumLin n m) hPsi) 1
+  have hslice := (convexFn_mapLin (homSumLin n m) hPsi).slice_left 1
   have hkey : (fun x : Rn n =>
         mapLin (homSumLin n m) (fun q : (Fin m → ℝ) × Rn n => ⨆ i, hom (f i) (q.1 i, q.2)) (1, x))
       = fun x => ⨅ l ∈ {l : Fin m → ℝ | (∀ i, 0 ≤ l i) ∧ ∑ i, l i = 1},
@@ -660,19 +621,6 @@ noncomputable def coordPairLin (n m : ℕ) (i : Fin m) :
 @[simp] theorem coordPairLin_apply {n m : ℕ} (i : Fin m) (q : (Fin m → ℝ) × (Fin m → Rn n)) :
     coordPairLin n m i q = (q.1 i, q.2 i) := rfl
 
-/-- `hom f (λ, λ x) = λ * f x` for `λ ≥ 0`: the substitution `y = λ x` that turns "adding in `λ`
-and `x`" into left scalar multiplication.
-
-At `λ = 0` both sides are `0`, by Rockafellar's two conventions together: `f0 = δ(· | 0)` and
-`0 · ∞ = 0`. This is the one place in §5 where the two meet. -/
-theorem hom_apply_smul {n : ℕ} {f : Rn n → EReal} (hp : Proper f) {a : ℝ} (ha : 0 ≤ a)
-    (z : Rn n) : hom f (a, a • z) = (a : EReal) * f z := by
-  rcases ha.lt_or_eq with ha' | ha'
-  · rw [hom_apply_pos ha', inv_smul_smul₀ ha'.ne']
-  · subst ha'
-    rw [zero_smul, hom_apply_zero, smulRight_zero hp.dom_nonempty]
-    simp
-
 /-- **Rockafellar, Theorem 5.8**, fourth function. For proper convex `f₁, …, fₘ` on `ℝⁿ`,
 
 `k x = inf {max {λ₁ f₁ x₁, …, λₘ fₘ xₘ}}`,
@@ -695,7 +643,7 @@ theorem theorem_5_8_k {n m : ℕ} {f : Fin m → Rn n → EReal} (hf : ∀ i, Co
     convexFn_iSup fun i => by
       have h := convexFn_compLin (coordPairLin n m i) (convexFn_hom (hf i))
       exact h
-  have hslice := convexFn_slice (convexFn_mapLin (sumPairLin n m) hPsi) 1
+  have hslice := (convexFn_mapLin (sumPairLin n m) hPsi).slice_left 1
   have hkey : (fun x : Rn n => mapLin (sumPairLin n m)
         (fun q : (Fin m → ℝ) × (Fin m → Rn n) => ⨆ i, hom (f i) (q.1 i, q.2 i)) (1, x))
       = fun x => ⨅ lp ∈ {lp : (Fin m → ℝ) × (Fin m → Rn n) |
@@ -705,7 +653,7 @@ theorem theorem_5_8_k {n m : ℕ} {f : Fin m → Rn n → EReal} (hf : ∀ i, Co
     refine le_antisymm (le_iInf₂ fun lp hlp => ?_) (le_mapLin fun q hq => ?_)
     · refine (mapLin_le (x := (lp.1, fun i => lp.1 i • lp.2 i)) ?_).trans_eq ?_
       · rw [sumPairLin_apply, hlp.2.1, hlp.2.2]
-      · exact iSup_congr fun i => hom_apply_smul (hp i) (hlp.1 i) (lp.2 i)
+      · exact iSup_congr fun i => hom_apply_smul (hp i).dom_nonempty (hlp.1 i) (lp.2 i)
     · obtain ⟨l, y⟩ := q
       rw [sumPairLin_apply, Prod.mk.injEq] at hq
       obtain ⟨hq₁, hq₂⟩ := hq
@@ -720,7 +668,7 @@ theorem theorem_5_8_k {n m : ℕ} {f : Fin m → Rn n → EReal} (hf : ∀ i, Co
           · refine iSup_congr fun i => ?_
             calc (l i : EReal) * f i ((l i)⁻¹ • y i)
                 = hom (f i) (l i, l i • (l i)⁻¹ • y i) :=
-                  (hom_apply_smul (hp i) (hpos i) ((l i)⁻¹ • y i)).symm
+                  (hom_apply_smul (hp i).dom_nonempty (hpos i) ((l i)⁻¹ • y i)).symm
               _ = hom (f i) (l i, y i) := by rw [hsmul i]
           · change (∑ i, l i • (l i)⁻¹ • y i) = x
             simp_rw [hsmul]
