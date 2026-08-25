@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Duality.Conjugate
+import Tdaf.Analysis.Convex.Duality.Support
 import Tdaf.Analysis.Convex.Homogenize
 import Tdaf.Analysis.Convex.Operations.Hull
 import Tdaf.Analysis.Convex.Operations.Image
@@ -40,6 +41,8 @@ qualification.
   closure form.
 * `conj_infConv` — **Theorem 16.4**, unconditional half; `conj_add_eq_clFn_infConv` for the
   closure form.
+* `conj_sum_toInfConvFn` — the same in the book's `m`-ary form, `(f₁ □ ⋯ □ fₘ)* = ∑ fᵢ*`:
+  `conj B` is a monoid homomorphism out of `InfConvFn E`.
 * `conj_convFn`, `conj_convHullFn`, `conj_convFn₂` — **Theorem 16.5**, unconditional half;
   `conj_iSup_eq_clFn_convFn` for the closure form.
 
@@ -213,6 +216,31 @@ theorem conj_infConv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) :
     exact le_iSup₂_of_le p hp (le_iSup₂_of_le q hq le_rfl)
   · rw [← hadd p q]
     exact le_iSup₂_of_le (p + q) (Set.add_mem_add hp hq) le_rfl
+
+/-- The conjugate of `δ(· | 0)` is the zero function — the identity of `□` goes to the identity
+of `+`, which is what makes Theorem 16.4 a monoid homomorphism. -/
+@[simp] theorem conj_indicatorFn_zero (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
+    conj B (indicatorFn ({0} : Set E)) = 0 := by
+  rw [← supportFn_eq_conj_indicatorFn, supportFn_singleton]
+  funext y
+  simp
+
+/-- **Rockafellar, Theorem 16.4** in the book's own `m`-ary form:
+`(f₁ □ ⋯ □ fₘ)* = f₁* + ⋯ + fₘ*`, unconditionally.
+
+The `□`-product is the `AddCommMonoid` sum of `InfConvFn E` (`Operations/InfConv.lean`), so this
+says that `conj B` is a monoid homomorphism from `(E → EReal, □, δ(· | 0))` to
+`(F → EReal, +, 0)`, and the induction is `Finset.cons_induction` with `conj_infConv` as the step.
+No properness is needed anywhere — which matters, because properness is *not* preserved by `□`,
+so the naive induction that re-applies `infConv_apply` to a partial convolute cannot work. -/
+theorem conj_sum_toInfConvFn {ι : Type*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Finset ι)
+    (f : ι → E → EReal) :
+    conj B (ofInfConvFn (∑ i ∈ s, toInfConvFn (f i))) = ∑ i ∈ s, conj B (f i) := by
+  induction s using Finset.cons_induction with
+  | empty => simp
+  | cons i t hi ih =>
+    rw [Finset.sum_cons, Finset.sum_cons, ofInfConvFn_add, ofInfConvFn_toInfConvFn,
+      conj_infConv, ih]
 
 end InfConv
 
