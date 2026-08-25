@@ -3,7 +3,7 @@
 Covers Rockafellar §27–§32.
 
 This is where the library pays off for applications. The organising decision is
-[D8](00-overview.md#d8): a convex program *is* a perturbation bifunction, and everything (objective,
+[D8](../00-overview.md#d8-bifunctions-are-curried-functions-the-organizing-operation-is-partial-conjugation): a convex program *is* a perturbation bifunction, and everything (objective,
 Lagrangian, dual program, Kuhn–Tucker vectors) is obtained from it by **partial conjugation**.
 
 ---

@@ -1036,7 +1036,7 @@ in §13.
 ### `Tdaf/Analysis/Convex/Subgradient/Defs.lean`
 
 `subgradient`, `subgradientRel`, `normalCone`, `normalPointedCone`, `dirDeriv`, and §23.1–§23.7.
-The full name table is in [`05-differential.md` §5.1](05-differential.md); the four names the rest
+The full name table is in [`05-differential.md` §5.1](backbone/05-differential.md); the four names the rest
 of the project reaches for are `mem_subgradient` (`Iff.rfl`), `mem_subgradient_iff_conj_eq`,
 `mem_subgradient_iff_add_conj_le` (Theorem 23.5, unconditional — `y ∈ ∂f x ↔ f x + f* y ≤ ⟨x, y⟩`)
 and `subgradient_indicatorFn` (carries `x ∈ C`).
@@ -6663,6 +6663,154 @@ survived long enough to acquire two more instances.
      reindexing has to be done by hand with `le_antisymm` and two `iSup₂_le` / `le_iSup₂_of_le`
      steps. `ConvexProcess.iSup_mem_neg` in `Bifunction/Process.lean` is a private four-line proof
      and a Mathlib relocation candidate.
+
+338. **Measure *proof* lines, not declaration lines, before deciding a block is duplicated.** The
+     first pass at sizing the concave side of the library counted whole declarations — signature,
+     docstring and proof — and reported "246 declarations, 36 of them over 20 lines, max 78". On
+     proofs alone the same set is 240 declarations of which **151 have a proof of at most three
+     lines** and **only five exceed twenty**; the concave side is 1,120 of the library's 24,242
+     proof lines, or 4.6%. Docstrings and multi-line signatures dominate the difference. Any
+     "how much would this refactor save" estimate that has not separated the three is wrong by a
+     factor of several, and in this case it was the difference between a large prize and a
+     130–170-line one.
+
+339. **`-((c : EReal) + a) = -(c : EReal) + -a` holds unconditionally when `c` is a coerced real.**
+     `EReal.neg_add` needs `¬(a = ⊥ ∧ b = ⊤)` and `¬(a = ⊤ ∧ b = ⊥)`, and the reflex is to carry
+     those as hypotheses. But a coerced real is neither `⊥` nor `⊤`, so `EReal.coe_ne_bot` and
+     `EReal.coe_ne_top` discharge both — and every additive expression in the sign dictionary has
+     the shape `⟨x, y⟩ ± something`, where the pairing term is by construction a real coercion. Of
+     the 26 uses of `EReal.neg_add` in the library, 17 discharge both hypotheses this way. The side
+     condition reaches the *statement* of at most 8 of 240 concave declarations (3%), and only where
+     both summands are `EReal`-valued functions — they sit in `Concave.lean`,
+     `Duality/ConcaveOps.lean`, `Optimization/Fenchel.lean` (six), `Bifunction/Algebra.lean` (five)
+     and `Polyhedral/Homogeneous.lean` (two). `conj`, `concaveConj`, the biconjugate, `adjointBifun`,
+     `bracket`, `KuhnTucker` and `subgradient` all transport with **no** side condition.
+
+340. **State a sign dictionary as an equation between objects, not between values.** The library
+     states its convex/concave bridges pointwise (`(-g)ᶜᵒⁿʲ y = …` at a point), which forces every
+     downstream mirror to open with `funext`/`intro` plumbing before it can rewrite. Stating the
+     same fact as an equation of functions lets the mirror be a `rw` chain. Measured over eight
+     declarations, the object-level form took **92 proof lines to 27** at a cost of six lines of
+     infrastructure.
+
+341. **`ConcaveFn g ↔ ConvexFn (-g)` is `Convex.linear_preimage` applied twice, not a hand proof.**
+     The hypograph of `g` is the image of the epigraph of `-g` under `(x, t) ↦ (x, -t)`, which is
+     linear; both directions are one application each. A nineteen-line proof of this shape is a
+     signal that the epigraph/hypograph reflection was expanded by hand instead of being cited.
+
+342. **A concave-named declaration that mentions a convex head symbol is usually a *bridge*, not a
+     mirror.** Of 240 concave-named declarations, 145 are bridges — a convex and a concave object
+     both appear because their *interaction* is the content (every `*_adjointBifun_*`, since the
+     adjoint of a convex bifunction is concave; every Fenchel-duality row; every
+     `bracket`/`concaveBracket` pair). There is nothing to forward them *to*. A further ~20 are the
+     `ConcaveConvexOn`/`ConcaveConvexFn` saddle cluster, which mirrors nothing at all: it is
+     self-dual under `ConcaveConvexOn.negSwap` (`Saddle/Differential.lean:422`) and there is
+     deliberately no `ConvexConcaveOn`. That cluster contains the library's largest concave-named
+     proof, `continuousOn_prod_of_concaveConvexOn` (`Saddle/Continuity.lean:784`, 70 proof lines,
+     Theorem 35.3) — a two-variable *generalisation*, not a mirror. Genuine mirror pairs: about 70.
+     Grepping for `concave` and calling the result duplication over-counts by 3.4×.
+
+343. **A simp set that contains both members of an inverse pair diverges; one orientation
+     terminates.** The library has three such pairs — `concaveConj_eq_neg_conj_neg` /
+     `conj_eq_neg_concaveConj_neg` (`ConcaveConj.lean:125,132`), `hypo_neg` / `epi_neg`
+     (`Concave.lean:99,107`), `clConcave_apply` / `neg_clConcave` (`ConcaveConj.lean:254,257`). A set
+     containing both members of any one of them loops. A set containing only the concave → convex
+     direction terminates, because nothing in it reintroduces a concave head symbol. "The simp set
+     loops" was recorded in this plan as a fact about `EReal`; it was an orientation bug.
+
+344. **Grep for the convex twin before writing a concave proof.** Three concave proofs in the
+     library re-derive their convex counterpart instead of citing it:
+     `ConcavePolyhedralBifun.concaveNormal` (`Optimization/Normal.lean:1016`) does not call
+     `PolyhedralBifun.normal` at `:997`; `concaveNormal_of_concaveKuhnTucker_nonempty` (`:948`)
+     does not call `normal_of_kuhnTucker_nonempty` at `:339`; and `continuousAt_comp_line_of_concaveOn`
+     (`Saddle/Differential.lean:186`) is character-for-character its convex twin at `:179`. Each was
+     written in a session where the convex version was not on screen.
+
+345. **A worktree can typecheck against a sibling checkout's build without building Mathlib.** Set
+     `LEAN_PATH` to the sibling's `.lake/packages/*/.lake/build/lib` and `.lake/build/lib`
+     directories and run `lake env lean file.lean`; the oleans are read-only so there is no risk to
+     the sibling. This makes a review worktree usable in minutes instead of an hour of `lake build`,
+     and both the sign and the duality reviewer arrived at it independently. It does *not* let you
+     `lake build` in the worktree — only typecheck single files against the sibling's artifacts, so
+     the file must not depend on anything the sibling has not built.
+
+346. **Bundle an involution at the point of definition or the API never arrives.** `reflect`
+     (`Bifunction/Process.lean`) and `saddleSwap` (`Saddle/Kernel.lean`) are both bare `def`s, so
+     `Function.Involutive`, `Equiv`, `AddEquiv` and `OrderIso` never apply to them. The visible cost:
+     `saddleSwap_injective` (`Saddle/Closure.lean:138`) is hand-proved where `Function.LeftInverse.injective` would do it, and
+     `saddleSwap` is antitone (`Saddle/Existence.lean:119`) so it wants to be an `OrderIso _ _ᵒᵈ`
+     and instead is nothing. Bundling after the fact means touching every use site; bundling at
+     definition costs one line.
+
+347. **An involution must not leak into the statements it transports.** Eight public theorems in
+     `Bifunction/Process.lean` (`:1766, 1780, 1811, 1825, 1855, 1886, 1901, 1934`) carry `.reflect`
+     in their *hypotheses*. The docstring of the first claims that `eval_reflect` “translates it into
+     a statement about `A₁` and `A₂` themselves” — it does not; the hypothesis three lines below
+     still reads `A₁.reflect.eval u`, and a caller has to reason about the reflection to discharge
+     it. The transport stopped one lemma short of being invisible. The `ProtoSwap` prototype
+     shows the goal is reachable: transporting the whole `SimpleExt` block through `saddleSwap`
+     produced hypotheses **identical** to the re-proved versions.
+
+348. **`inferInstance` already discharges `IsCompatiblePairing B.flip.flip`.** Seven workarounds in
+     the library exist for a problem that was never there — `B.flip.flip` is definitionally `B` and
+     instance search sees through it. The one real constraint is unrelated: the `flip` instances need
+     a `TopologicalSpace` in scope, so a file that has not imported one gets a failure that looks like
+     the `flip.flip` problem and is not.
+
+349. **The double negation of a real-valued companion is not `rfl`.** For
+     `swapReal K := fun q => -K (q.2, q.1)`, `swapReal (swapReal K) = K` needs `neg_neg` and a
+     `funext`; it does not close by `rfl`, because the negation is on `ℝ` values rather than on the
+     pair. Easy to assume when the pair-swap half *is* `rfl`.
+
+350. **The `gc_*` and `ClosureOperator` objects in this library are inert — check before hand-proving
+     a bipolar lemma.** `conjClosure`, `polarConeClosure`, `polarSetClosure`, `epiClosure`,
+     `clFnClosure` and `lscHullClosure` are each referenced only by their own `_apply` and
+     `isClosed_iff` lemmas; not one downstream theorem is proved from them. Meanwhile
+     `subset_polarCone_polarCone` (`Duality/Polar.lean:200`), `polarCone_polarCone_polarCone`
+     (`:254`) and `conj_biconj` (`Duality/Conjugate.lean:537`) are hand-proved and are exactly
+     `GaloisConnection.le_u_l`, `l_u_l_eq_l` and `u_l_u_eq_u`. Recording a Galois connection is not
+     the same as using it.
+
+351. **`map_rel_iff'` needs a `show` to get past the constructor blob.** When building an `OrderIso`
+     by `⟨⟨toFun, invFun, _, _⟩, _⟩`, the `map_rel_iff'` goal is stated against the anonymous
+     constructor rather than against the function, and tactics that pattern-match on the relation
+     fail. Open with `show f a ≤ f b ↔ _` and the proof proceeds normally.
+
+352. **Mathlib has no "a Galois connection restricts to an order isomorphism between the closed
+     elements".** `ClosureOperator.gi` is one-sided only. The missing lemma is twelve lines, compiles,
+     and is the common generalisation of `conjEquiv`, `gaugeEquiv`, `polarFnEquiv`, `polarGaugeEquiv`,
+     `supportEquiv` and Rockafellar's Theorem 14.1 — six hand-built `Equiv`s totalling about 70 lines
+     in this library. It is an upstream candidate; see `backbone/08-remediation.md` §3.
+
+353. **`partialConj₂` is dead and `bracket` is the operation D8 describes.** `Saddle/Defs.lean:206`
+     defines `partialConj₂`, which D8 calls "the organizing operation" of the bifunction development,
+     and it has **zero** consumers outside its own file (six occurrences, all in `Saddle/Defs.lean`).
+     The operation actually used is `bracket`, which appears in thirteen modules, and
+     `bracket_eq_conj` (`Saddle/Defs.lean:299`) is `rfl` — the bracket *is* slicewise conjugation. A design decision that names a primitive is worth re-checking against
+     `lean_references` once the development it describes has been written.
+
+354. **A fact recorded as a `theorem` where an `instance` was wanted makes every consumer hand-roll
+     it.** `isCompatiblePairing_neg` sits at `Saddle/Minimax.lean:739` as a theorem; its consumers
+     re-derive the same instance inline at `Saddle/Existence.lean:379-381` and
+     `Saddle/Minimax.lean:855-856, 873-874`. Likewise `IsContinuousPairing ((innerₗ E).flip)` is
+     declared in `Subgradient/StrictlyConvex.lean:312` — a file no `Setup.lean` importing only
+     `Duality/*` will ever see — and `negFst (prodPairing Bu Bx)` has no pairing-class instances at
+     all, only a pointwise identity. Each of these is invisible until a *different* file needs it,
+     which is why they surfaced in the surface-instantiation audit rather than in the build.
+
+355. **Instance search here is order-sensitive, and `maxSynthPendingDepth` is why.** Three sites work
+     around a failure with `rw [flip_innerₗ]; infer_instance` where plain `infer_instance` should
+     succeed. `lakefile.toml` sets `maxSynthPendingDepth = 3`; the pairing classes chain deeply enough
+     that a search which would succeed at the default depth fails here, and the failure looks like a
+     missing instance rather than an exhausted budget. Raise the depth before concluding an instance
+     is absent.
+
+The remaining findings from the three review worktrees are *scheduled work*, not gotchas, and are
+recorded in [`backbone/08-remediation.md`](backbone/08-remediation.md): the backbone → surface move
+list, the bundled adjoint, the `m`-ary `infConv`/`IsExactSum` gap, the `PointedCone` bipolar theorem,
+the eponym aliases, and the D10 hygiene sweep. The two plan-level corrections found by the split
+audit — the `clFn` obligation was already discharged, and Theorem 27.1(e) *is* statable on `ℝⁿ` — are
+in [`00-overview.md` §9](00-overview.md#9-corrections-to-rockafellar-and-to-this-plan).
 
 ## 3. Build and verification
 

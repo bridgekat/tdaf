@@ -13,7 +13,7 @@ qualifications used in §21, §23, §27, §28, §31; §21 feeds §27/§28.
 
 Mathlib has Carathéodory for points (`Analysis/Convex/Caratheodory.lean`, `convexHull_eq_union`).
 Rockafellar's Theorem 17.1 is the **points-and-directions** version, handled by
-[D7](00-overview.md#d7): a "set of points and directions" is a set `S ⊆ ℝ × E` with first coordinate
+[D7](../00-overview.md#d7-points-and-directions-are-handled-by-homogenisation-not-by-an-ad-hoc-definition): a "set of points and directions" is a set `S ⊆ ℝ × E` with first coordinate
 in `{0,1}`, and `conv S` is the level-1 slice of `cone S`.
 
 | Lean name | book | status |

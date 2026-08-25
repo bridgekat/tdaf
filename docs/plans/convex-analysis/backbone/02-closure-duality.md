@@ -1,8 +1,8 @@
 # Sub-plan 2 — Closure, separation, conjugacy, support functions, polars
 
 Covers Rockafellar §7, §11, §12, §13, §14, §15.
-Layers B and C of [D9](00-overview.md#d9-generality-boundaries). **No finite-dimensionality anywhere
-in this sub-plan** — this is the reordering argued in [D4](00-overview.md#d4).
+Layers B and C of [D9](../00-overview.md#d9-generality-boundaries). **No finite-dimensionality anywhere
+in this sub-plan** — this is the reordering argued in [D4](../00-overview.md#d4-reorder-the-development-conjugacy-comes-before-relative-interiors).
 
 This is the keystone of the library: Fenchel–Moreau (`f** = cl f`) is what every later duality
 statement reduces to.
@@ -129,7 +129,7 @@ Theorem 11.3 (proper separation ⟺ disjoint relative interiors) is finite-dimen
 layer D; it is *not* on the path to conjugacy. Only Theorem 11.5 (equivalently, Mathlib's
 `geometric_hahn_banach_closed_point`) is.
 
-## 2.3 `Tdaf/Analysis/Convex/Duality/Pairing.lean` — [D3](00-overview.md#d3)
+## 2.3 `Tdaf/Analysis/Convex/Duality/Pairing.lean` — [D3](../00-overview.md#d3-duality-is-developed-for-a-dual-pair-not-for-ℝⁿ-and-not-for-the-dual-space)
 
 ```lean
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]

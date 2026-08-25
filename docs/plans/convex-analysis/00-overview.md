@@ -1,20 +1,43 @@
-# Plan: Convex Analysis (Rockafellar) — root plan
+# Plan: Convex Analysis — root plan
 
-Source book: R. T. Rockafellar, *Convex Analysis*, Princeton, 1970. 8 parts, 39 sections,
-235 theorems + 217 corollaries + 9 lemmas (≈461 numbered results).
+This project is named for the **topic**, not for a book. It has one **backbone** — general,
+textbook-independent convex analysis — and one **surface** per textbook. Rockafellar's *Convex
+Analysis* (Princeton, 1970) is the first surface and was the source of the order of work; it is
+not part of the backbone's interface (see [D10](#d10-the-backbone-is-not-tied-to-rockafellar)).
 
-This is the root of a tree of plans. Sub-plans:
+**Rockafellar, counted exactly**: 8 parts, 39 sections, **241 theorems + 221 corollaries +
+9 lemmas = 471 numbered results**, plus 51 clause-level rows in the multi-clause theorems
+(Thm 27.1 has 9 clauses, Thm 30.4 has 10). Earlier drafts of this plan said "≈461" here and "448"
+in the surface plan; both were undercounts, for two reasons. **23 labels are printed in mixed case**
+(`Theorem 5.4`, `Corollary 2.5.1`, …), which a case-sensitive scan drops; and **10 carry a
+parenthetical eponym before the period** (`THEOREM 31.1 (Fenchel's Duality Theorem).`,
+`Corollary 22.3.1 (Farkas' Lemma).`, …) or, in one case, no period at all, which a
+`LABEL n.m.`-shaped scan drops. Those ten are precisely the results a reader looks for by name. See
+[the inventory](surface/rockafellar-1970/inventory.md), which also carries the per-Part totals:
+49, 84, 77, 70, 49, 63, 58, 21.
+
+This is the root of a tree of plans. Backbone sub-plans:
 
 | file | backbone area | book sections |
 |---|---|---|
-| [`01-foundations.md`](01-foundations.md) | extended-real convex functions, functional operations | §3–§5 |
-| [`02-closure-duality.md`](02-closure-duality.md) | closure, separation, conjugacy, support functions, polars | §7, §11–§15 |
-| [`03-relint-recession.md`](03-relint-recession.md) | relative interiors, recession, closedness criteria, dual operations | §6, §8–§10, §16 |
-| [`04-representation.md`](04-representation.md) | Carathéodory, faces, polyhedral convexity, Helly | §17–§22 |
-| [`05-differential.md`](05-differential.md) | subgradients, monotonicity, differentiability, Legendre | §23–§26 |
-| [`06-optimization.md`](06-optimization.md) | minimisation, convex programs, adjoints, Fenchel duality | §27–§32 |
-| [`07-saddle-algebra.md`](07-saddle-algebra.md) | saddle-functions, minimax, bifunction algebra, convex processes | §33–§39 |
-| [`08-surface.md`](08-surface.md) | the Rockafellar surface library | §1–§39 |
+| [`01-foundations.md`](backbone/01-foundations.md) | extended-real convex functions, functional operations | §3–§5 |
+| [`02-closure-duality.md`](backbone/02-closure-duality.md) | closure, separation, conjugacy, support functions, polars | §7, §11–§15 |
+| [`03-relint-recession.md`](backbone/03-relint-recession.md) | relative interiors, recession, closedness criteria, dual operations | §6, §8–§10, §16 |
+| [`04-representation.md`](backbone/04-representation.md) | Carathéodory, faces, polyhedral convexity, Helly | §17–§22 |
+| [`05-differential.md`](backbone/05-differential.md) | subgradients, monotonicity, differentiability, Legendre | §23–§26 |
+| [`06-optimization.md`](backbone/06-optimization.md) | minimisation, convex programs, adjoints, Fenchel duality | §27–§32 |
+| [`07-saddle-algebra.md`](backbone/07-saddle-algebra.md) | saddle-functions, minimax, bifunction algebra, convex processes | §33–§39 |
+| [`backbone/08-remediation.md`](backbone/08-remediation.md) | the work this plan's review round created | — |
+
+Surfaces:
+
+| file | textbook | status |
+|---|---|---|
+| [`surface/rockafellar-1970/`](surface/rockafellar-1970/00-overview.md) | R. T. Rockafellar, *Convex Analysis*, Princeton, 1970 | planned, not started |
+
+A second textbook on the same topic becomes a **second surface directory**, not a second project:
+the backbone is shared. Bauschke–Combettes and Boyd–Vandenberghe are the two candidates the
+backbone was audited against; see [§10](#10-future-surfaces).
 
 ---
 
@@ -146,19 +169,56 @@ theorem convexOn_iff_convexFn (s : Set E) (f : E → ℝ) :
 
 and must be proved early; it is what lets the surface layer reuse Mathlib's real-valued results.
 
-### D2. Concave functions get their own definitions, tied to convex ones by negation
+### D2. Concave notions are named, but *defined and proved* through negation
 
 Rockafellar mirrors every convention (`epi g` is the hypograph, `cl g` is the usc hull,
 `g*(y) = inf_x {⟨x,y⟩ − g(x)}`), and warns that `g* ≠ −(−g)*` — in fact `g*(y) = −(−g)*(−y)`.
-Parts VI–VIII mix the two constantly, so the backbone defines `ConcaveFn`, `hypo`, `clConcave`,
-`concaveConj` outright and proves the sign-transfer lemmas, rather than forcing every statement
-through `-g`. `ConcaveFn g ↔ ConvexFn (-g)` is the defining lemma, not the definition's shape.
+Parts VI–VIII mix the two constantly, so the backbone keeps the names `ConcaveFn`, `hypo`,
+`clConcave`, `concaveConj`, `concaveSubgradient`, `ConcaveNormal`.
 
-**Caveat established by review.** `EReal` negation does *not* distribute over addition:
-`-(⊥ + ⊤) = ⊤` while `(-⊥) + (-⊤) = ⊥`. Mathlib's `EReal.neg_add` carries two hypotheses. So every
-sign-transfer lemma needs `≠ ⊥` / `≠ ⊤` side conditions, and they bite exactly at the improper
-functions that §34 and Part VII are about. Put a single `EReal.neg_add`-shaped helper in
-`Order/EReal.lean` so the conditions are uniform rather than rediscovered per file.
+**But every concave notion is introduced together with an equation to the convex one at a
+negation, stated at the level of the whole object** — a function equation, a `Set` equation, or an
+`Iff` between `Prop`s, never only pointwise. Concave theorems are then proved by rewriting with
+that equation and citing the convex theorem. A pointwise dictionary (`neg_concaveConj B g y`)
+forces every downstream mirror to redo `funext`/`intro` plumbing before it can cite anything;
+an object-level one (`concaveConj B g = …`) lets it `rw` and finish. `clConcave` and
+`ConcavePolyhedralBifun` are the two definitions that already got this right.
+
+**The negation obstruction, corrected.** An earlier draft of this decision claimed that because
+`EReal` negation does not distribute over addition (`-(⊥ + ⊤) = ⊤` while `(-⊥) + (-⊤) = ⊥`),
+*every* sign-transfer lemma needs `≠ ⊥` / `≠ ⊤` side conditions. **That is false, and it is the
+reason this decision chose duplication over forwarding.** `-((c : EReal) + a) = -(c : EReal) + -a`
+holds **unconditionally** for every real `c` and every `a`, because a coerced real is neither `⊥`
+nor `⊤`. Every pairing term `⟨x,y⟩` is such a coercion, so `conj`, `concaveConj`, `bracket`,
+`adjointBifun`, `subgradient` and `KuhnTucker` all transport **with no side condition at all**.
+Measured: of the library's 26 `EReal.neg_add` invocations, 17 discharge both hypotheses with
+`coe_ne_bot`/`coe_ne_top`.
+
+Side conditions arise only where *both* summands are `EReal`-valued functions — `f + g` pointwise,
+the Fenchel duality gap, and bifunction algebra. That is ~20 proof sites and at most 8 statements
+out of 240. `Order/EReal.lean` carries `neg_coe_add`, `neg_add_coe`, `neg_coe_sub` for the
+unconditional case and `neg_add_of_ne_top`, `neg_add_of_ne_bot`, `neg_combo` for the conditional
+one.
+
+**Why the earlier attempt to generate the concave API by `simp` failed: the simp set was
+bidirectional.** Three pairs of mutually inverse rules exist —
+`concaveConj_eq_neg_conj_neg`/`conj_eq_neg_concaveConj_neg`, `hypo_neg`/`epi_neg`,
+`clConcave_apply`/`neg_clConcave`. A set containing both members of any pair diverges; a set
+containing only the concave→convex direction terminates, because nothing reintroduces a concave
+head symbol. Orientation, not looping, was the problem.
+
+**No `to_concave` attribute.** Mathlib's `to_additive` works because multiplicative→additive is a
+head-symbol substitution at fixed argument positions, with no argument ever transformed. The
+concave transform reflects the value, the function, the *dual argument*, and sometimes the *output
+set* — differently per operation. A bespoke version would cost 800–1500 lines of metaprogram plus
+a hand-maintained table to save ~180 lines of proof, and would make half the concave API
+ungreppable, which is a bad trade in a library meant to be read beside a printed book.
+
+**A count of declarations containing "concave" is not a duplication metric.** Of the 240 in the
+library, ~145 are *bridge* theorems in which a convex and a concave object both appear because
+their interaction is the content (the adjoint of a convex bifunction *is* concave — that mixture
+is §30's subject), and ~20 are the `ConcaveConvexOn` saddle cluster, which is self-dual under
+`negSwap` and deliberately has no `ConvexConcaveOn` partner. Genuine mirror pairs: about 70.
 
 ### D3. Duality is developed for a **dual pair**, not for `ℝⁿ` and not for the dual space
 
@@ -354,7 +414,7 @@ The advertised payoff — Corollary 8.5.2 as an instance of Corollary 7.5.1 appl
 **not** close; see §9 below and the layer audit in `Recession/Function.lean`. Of what
 `Homogenize.lean` builds, only `smulRight` has a consumer so far; `levelOneLift`, `hom`, `homCone`,
 `homEpiCone` and `smulRightHom` await D7's points-and-directions form of Theorem 17.1 and the cone
-half of Theorem 19.1 ([sub-plan 4](04-representation.md)). If §17–§19 turn out not to need them,
+half of Theorem 19.1 ([sub-plan 4](backbone/04-representation.md)). If §17–§19 turn out not to need them,
 delete them rather than keep them on the strength of D6.
 
 ### D7. "Points and directions" are handled by homogenisation, not by an ad hoc definition
@@ -459,10 +519,76 @@ on top of this library without the seams showing. Concretely:
   in `ℝⁿ`, with the book's numbering and bundling, is a *surface* result whose proof is a
   specialization of backbone lemmas. That is what the surface layer is for.
 
-This is a design goal, not yet a finished refactor: parts of the existing docstrings and a few
-names still read as §-by-§ commentary, and a pass over them is scheduled after the first surface
-library exists — the surface is what will show which backbone interfaces are actually load-bearing.
+* **Mirror statements are intrinsic.** When a theorem is obtained by transporting another along
+  an involution, the involution must not appear in the transported statement. Push it out of the
+  hypotheses with the intertwining lemmas before publishing. A mirror theorem whose *hypothesis*
+  mentions the involution is an unfinished transport — see D11, and
+  [`backbone/08-remediation.md`](backbone/08-remediation.md) §2 for the seven current offenders.
+
+This is a design goal, not yet a finished refactor. The 2026-08 review round measured the debt:
+**73 of 112 module docstrings open with "Rockafellar's §N"** rather than with the mathematics,
+**142 `section` names are book numbers** (`section Thm382`, `section Corollary1461`) — which is
+what a file outline shows a reader — and 6 module *titles* carry book numbering. No *declaration*
+is named that way, which is the part that matters most and the part that was actually enforced.
+The remediation is scheduled in [`backbone/08-remediation.md`](backbone/08-remediation.md).
 New work should not add to the debt.
+
+### D11. Symmetries are transported, not re-proved
+
+Where a family of results comes in mirror pairs under an involution — the pairing transpose
+`B ↦ B.flip`, the saddle swap `K ↦ -K∘swap`, the process reflection `A ↦ -A(-·)`, the sign flip
+convex ↔ concave, partial inversion — the mirror half is **stated as a transport and proved by
+rewriting**, never re-proved. The obligations, in order:
+
+1. **Bundle the involution.** `Equiv` if it is a bijection, `AddEquiv`/`AddAut` if additive,
+   `Homeomorph` if continuous, `OrderIso …ᵒᵈ` if antitone. Never a bare `def` plus a hand-proved
+   `σ∘σ = id` lemma: the bundled form carries `.injective`, `.eq_iff`, `.toPerm` for free, and
+   records antitonicity where it holds. `ConvexProcess.reflect` and `saddleSwap` both currently
+   violate this, which is why `saddleSwap_injective` is hand-proved.
+2. **One intertwining lemma per primitive operation of the file, and no more.**
+   `Bifunction/Process.lean`'s `eval_reflect`, `reflect_add`, `reflect_comp`,
+   `adjointProcess_reflect`, `isClosed_graph_reflect` are the model.
+3. **Every mirror is a `rw` chain of five lines or fewer.** If it is longer, the dictionary is
+   missing an entry — add the entry, do not lengthen the proof.
+4. **The mirror statement mentions the involution nowhere** (D10's last bullet).
+5. Where the symmetry genuinely *fails*, say so in a docstring and say why.
+   `Bifunction/Process.lean` does this correctly for Theorem 39.3: reflection flips both variables
+   and 39.3 needs only the dual one.
+
+**There is deliberately no Lean class for "an involution intertwining a family of operations".**
+The three instances differ in arity (`saddleSwap` is not an endomorphism), in codomain, and in the
+shape of the intertwining law — `reflect_add` is a homomorphism law, `partialCl₁_saddleSwap` a
+conjugation law, `prodPairing_sub_partialInvertEquiv` an invariance law. A class would need one
+field per operation, which is to say the lemmas themselves. This is a discipline enforced in
+review, not in the type system.
+
+**The measured state**, from the review round: the pairing transpose is *already* exploited (not
+one theorem is stated twice for `B` and `B.flip`); `partialInvertEquiv` is done right; `reflect`
+is the best instance in the library but leaks into seven statements; and `saddleSwap` is used 106
+times in `Saddle/Kernel.lean` and then **abandoned for that file's `upperSimpleExt` block, which
+re-proves 184 lines**. Minimum/maximum is *not* a symmetry — §32 maximises a convex function and
+is not §27's dual — and neither is `Left`/`Right` in `Bifunction/Algebra.lean`, whose names
+mislead: those are two different projections of one change of variables.
+
+### D12. Order-theoretic duality is Mathlib's, and it is load-bearing
+
+Every antitone correspondence in `Duality/` is recorded as a `GaloisConnection` into the order
+dual and as the induced `ClosureOperator` — `gc_conj_conj`, `gc_polarCone_polarCone`,
+`gc_polarSet_polarSet`, `gc_ofEpi_epi`, `gc_convFn`. **Those objects must be used, not merely
+recorded.** The unit `le_u_l`, counit `l_u_le`, triangle identities `l_u_l_eq_l` / `u_l_u_eq_u`
+and monotonicity `monotone_l` / `monotone_u` *are* the proofs of the corresponding backbone
+lemmas; hand-proving them again is a review defect. As of the review round every one of these
+objects is **inert**: each is referenced only by its own `_apply` and `isClosed_…_iff`, and
+`subset_polarCone_polarCone`, `polarCone_polarCone_polarCone` and `conj_biconj` duplicate
+`GaloisConnection.le_u_l` and `l_u_l_eq_l` by hand.
+
+Each correspondence's "involution on a characterised class" bijection is the **restriction of its
+Galois connection to the closed elements**, and is an `OrderIso` to the order dual, not a bare
+`Equiv`. Mathlib does not have that restriction — `ClosureOperator.gi` is only the one-sided
+`GaloisInsertion` — so the backbone supplies it as `GaloisConnection.closedsOrderIso`, a 12-line
+lemma that is an upstreaming candidate and the common generalisation of `conjEquiv`, `gaugeEquiv`,
+`polarFnEquiv`, `polarGaugeEquiv`, `supportEquiv` and Theorem 14.1 — six bijections currently
+written out longhand with `toFun`/`invFun`/`left_inv`/`right_inv`.
 
 ---
 
@@ -590,12 +716,36 @@ Tdaf/
 
 ## 4. Backbone / surface split
 
-**Backbone** gets: every definition and theorem whose statement survives generalisation, in the
-weakest layer of D9 that supports it.
+### 4.1 The test
+
+A declaration belongs in the **backbone** iff it passes **all four** of these. Generality alone is
+necessary but *not* sufficient — relying on it alone is exactly how Rockafellar's vocabulary
+entered the backbone wearing general clothes, which is the debt D10 admits to.
+
+1. **Generality.** Its statement survives at the weakest [D9](#d9-generality-boundaries) layer that
+   supports it.
+2. **Second-reader test.** A *different* textbook or a research paper in the area would plausibly
+   cite it. If its only consumer is Rockafellar's numbering, it is surface. Concretely: would
+   Bauschke–Combettes or Boyd–Vandenberghe reach for this?
+3. **Name test.** It has a mathematical name that a fresh agent would guess *without having read
+   the book*. If the only honest name is "the thing Theorem 30.4 needs", it is surface, or it is a
+   private helper. This test is checkable: pick the name a newcomer would type and grep for it.
+   The review round scored the existing library at **53% on first guess** (8/15), with the misses
+   clustering on eponyms — `fenchel_moreau`, `krein_milman`, `minkowski_weyl`, `caratheodory`.
+4. **No-bundling test.** It states **one** fact. Where the book bundles clauses that have different
+   natural homes, the backbone splits them and the *bundle* is the surface statement. Theorem 27.1
+   (9 clauses) and Theorem 30.4 (10 clauses) are the extreme cases; their clauses have genuinely
+   different hypotheses and three different D9 layers between them.
+
+A useful corollary of tests 2 and 3: **a backbone declaration with no downstream consumer is
+suspect.** It has not been shown to be load-bearing, and the surface has not yet voted for it.
+`Duality/GaugeLike.lean` is 1676 lines none of whose nine public names is used outside the file.
+
+### 4.2 What the surface gets
 
 **Surface** gets:
 
-- The `ℝⁿ`-specific *statements* of all 448 results, in Rockafellar's numbering and notation.
+- The `ℝⁿ`-specific *statements* of all **471** results, in Rockafellar's numbering and notation.
 - Everything that is genuinely about coordinates: Tucker representations (§1), the Hessian criterion
   (Theorem 4.5), the nonnegative orthant, componentwise ordering, the geometric-mean and
   log-sum-exp examples (§4, §5, §8), the Tchebycheff norm (§5).
@@ -608,11 +758,44 @@ weakest layer of D9 that supports it.
 - §22's elementary-vector development, which Rockafellar himself flags as self-contained linear
   algebra used nowhere else.
 
-The surface is expected to be thin for §2–§16 and §23–§27, and thicker for §1, §22, §28.
+**Placement is not scheduling.** An earlier draft had §7 of this plan excluding §22's elementary
+vectors and Tucker complementarity as "out of scope", while the surface plan said §22 "lives here
+in full, including Tucker's complementarity theorem". Both were right about different questions:
+§22 **belongs** to the surface (`Part4/Section22.lean`), and is **deferred** by the project's scope
+limit on substantial non-convex-analysis work. The exclusion table in [§7](#7-status) records what
+is deferred; this section records where it would go if it were scheduled. Nothing is deferred
+*because* it is hard to place.
+
+### 4.3 How thin is the surface, per section
+
+The inventory classifies all 471 results as **G** (survives generalisation) or **C** (genuinely
+needs coordinates / finite dimension / Heine–Borel / Lebesgue measure / polyhedrality). Totals:
+**219 G, 250 C, 2 X** (stated without proof), **0 E** — see the warning below.
+
+A high C-count does **not** predict surface work. Layer D exists precisely for finite-dimensional
+statements, so a C result still specialises thinly *provided the backbone proved it at layer D*.
+What the C-count actually predicts is which backbone statements can never be pushed below layer D.
+The sections where the surface is genuinely thick are those with a *structural* obstruction:
+
+| surface thickness | sections | why |
+|---|---|---|
+| **thin** (pure specialisation) | §2, §3, §5, §8, §13–§16, §23, §30, §31, §33, §38, §39 | mostly G; §38 and §39 are **entirely** G (12/0 and 9/0) |
+| **medium** | §4, §6, §7, §9–§12, §18, §21, §24–§27, §32, §34–§37 | C but proved at layer D in the backbone |
+| **thick** (real new work) | §1, §17, §19, §20, §22, §28 | Tucker representations; mixed point/direction hulls; polyhedral combinatorics; elementary vectors; the `(m+3)`-tuple program |
+
+**Warning about examples.** **Not one numbered result in the entire book is a worked example**
+(E = 0 in both halves of the inventory). Every conjugate pair, every computation, every
+`eˣ`/`ℓᵖ`/log-sum-exp table is *unnumbered running text*. So the assignment of "the worked examples
+and conjugate tables of §12, §15, §26, §30, §31" to the surface cannot be organised by label — they
+must be harvested by line range. The inventory records the richest deposits, by line range, for
+fifteen sections.
 
 ## 5. Order of work, and size
 
-Estimated in "sections' worth of statements" (448 total).
+Estimated in "sections' worth of statements". These are the estimates the backbone was actually
+built to, kept as the record of how it was sequenced; they total about 450 against the book's 471
+numbered results, and the backbone as built has 3,161 theorems, because most book results split
+into several general lemmas.
 
 | stage | modules | results | notes |
 |---|---|---|---|
@@ -1207,7 +1390,7 @@ rather than about the book's exposition. Design decision D0 explains the recurri
   and uses both halves — `geometric_hahn_banach_closed_point` for the topology, `exists_pairing_eq`
   for the surjectivity.
 * **`concaveConj` belongs under `Duality/`, not in `Concave.lean`.** §6.4 of
-  [sub-plan 6](06-optimization.md) assigned it to `Concave.lean`, but the concave conjugate needs a
+  [sub-plan 6](backbone/06-optimization.md) assigned it to `Concave.lean`, but the concave conjugate needs a
   pairing, and `Concave.lean` is a layer-A file importing only `Epigraph.lean`. Putting it there
   would drag separation and Hahn–Banach into every future use of `hypo` or `ConcaveFn`. It is
   `Duality/ConcaveConj.lean`, which imports `Concave.lean` and `Duality/Conjugate.lean`.
@@ -1222,17 +1405,17 @@ rather than about the book's exposition. Design decision D0 explains the recurri
   the effective domains miss each other. D5 predicted the unsatisfiability of the *equality* form;
   the structure form turns it into a usable lemma instead.
 * **`Duality/Exact.lean` imports `Operations/Image.lean` as well.** §3.6 of
-  [sub-plan 3](03-relint-recession.md) listed only `Duality/Conjugate` and `Operations/InfConv`, but
+  [sub-plan 3](backbone/03-relint-recession.md) listed only `Duality/Conjugate` and `Operations/InfConv`, but
   `IsExactImage` is stated with `mapLin`/`compLin`.
 * **`∂δ(· ∣ C) x = N_C(x)` is false off `C`**: with the pointed-cone definition `0 ∈ N_C(x)` always,
   while `∂δ(· ∣ C) x = ∅` for `x ∉ C ≠ ∅`. The identity carries `x ∈ C`, as Rockafellar's usage does.
 * **§16's conditional rows are stateable without a constraint qualification after all.** §3.7 of
-  [sub-plan 3](03-relint-recession.md) planned two forms per row — unconditional, and exact under
+  [sub-plan 3](backbone/03-relint-recession.md) planned two forms per row — unconditional, and exact under
   `IsExactSum`/`IsExactImage`. Rockafellar's own form is a third: closed convex inputs and a `clFn`
   on the dual side, which is *more general* than the exact form and costs three lines each
   (`conj_add_eq_clFn_infConv`, `conj_iSup_eq_clFn_convFn`, `conj_compLin_eq_clFn_mapLin`). Every
   row of the table now has three forms.
-* **§23's calculus is layer A.** §5.2 of [sub-plan 5](05-differential.md) placed the subgradient
+* **§23's calculus is layer A.** §5.2 of [sub-plan 5](backbone/05-differential.md) placed the subgradient
   calculus after the §23 duality, expecting to need topology. It does not: Theorem 23.5
   (`mem_subgradient_iff_add_conj_le`, unconditional) reduces both Theorems 23.8 and 23.9 to
   arithmetic on one inequality, and neither proof mentions an epigraph, a directional derivative or
@@ -1253,7 +1436,7 @@ rather than about the book's exposition. Design decision D0 explains the recurri
   `exists_conj_compLin_eq` takes it as a hypothesis. `IsExactSum` has no such problem — every `y`
   admits the splitting `y + 0` — so its field is unchanged.
 * **Lemma 16.2 and Corollary 16.2.1 never needed to be stated.** §6 of this plan and §3.7 of
-  [sub-plan 3](03-relint-recession.md) treated them as the missing `ri`-to-recession bridge that
+  [sub-plan 3](backbone/03-relint-recession.md) treated them as the missing `ri`-to-recession bridge that
   `IsExactSum.of_relint` would consume. In the event the bridge is **Theorem 13.3** — `(f*)0⁺` is
   the support function of `dom f` — composed with §6's `eq_of_isMaxOn_of_mem_relint`. Two
   cancelling recession directions of `epi f*` and `epi g*` force the linear function `⟨·, z⟩` to
@@ -1284,3 +1467,50 @@ rather than about the book's exposition. Design decision D0 explains the recurri
   point where the dual objective attains `inf F 0`, and `sup F* 0 ≤ inf F 0` always; so the dual
   optimal value is `inf F 0` and Theorem 30.3 gives normality. The book's subgradient route would
   have cost finite-dimensionality that the statement does not need.
+
+## 10. Future surfaces
+
+The README asks a plan review to consider integrating another textbook on the same topic. The
+backbone was audited against two, and the result changes what the remediation work should
+prioritise.
+
+### Bauschke & Combettes, *Convex Analysis and Monotone Operator Theory*
+
+**This is the target the backbone is best positioned for, and it vindicates two design
+decisions.** `IsCompatiblePairing (innerₗ E)` holds in any real Hilbert space with no
+finite-dimensionality, and Moreau's theorem was deliberately proved at that generality. `prox`,
+`IsMonotoneRel`, `IsMaximalMonotoneRel`, `IsCyclicallyMonotone`, `cyclicPotential` and the
+Rockafellar-1966 cyclic-monotonicity characterisation are all B&C Chapters 20–22 *already at the
+right generality*. Most of all, **D5 is exactly B&C's shape**: their Attouch–Brézis and
+`0 ∈ core(dom f − dom g)` qualifications each become one more `IsExactSum.of_*` constructor, with
+the conclusion already named.
+
+Hard: B&C is about **operators**, not functions — resolvents, Yosida approximations, averaged and
+firmly nonexpansive maps, Minty's surjectivity theorem as a standalone (Minty is currently buried
+*inside* `Optimization/Prox.lean` rather than named). And B&C's `Γ₀(H)` *excludes* improper
+functions where Rockafellar admits them, so two surfaces will want opposite conventions over one
+`EReal` backbone.
+
+### Boyd & Vandenberghe, *Convex Optimization*
+
+Easy: shares the `ℝⁿ` instantiation; the perspective function is already in the backbone twice
+(`smulRight`, `hom`); and `exists_isKuhnTuckerVector_of_slater` is stated in B&V's own two-family
+(convex + affine) shape rather than Rockafellar's.
+
+Hard: B&V lives on **matrices** — `Aᵀ`, PSD cones, SDP, Schur complements — and the backbone has no
+`Matrix` surface at all. Its *generalized inequalities* `x ⪯_K y` have no counterpart: `PointedCone`
+exists but the order it induces does not. Quasiconvexity and log-concavity have no home.
+
+### What to change now
+
+Two items are on both books' critical path and are therefore the highest-value remediation:
+
+1. **Bundle the adjoint** (`backbone/08-remediation.md` §4). B&V expects to write `Aᵀ`; Rockafellar
+   writes `A*`; the backbone makes every statement thread `(A')` plus an `IsAdjointPair` hypothesis.
+2. **Name the resolvent and Minty surjectivity** as standalone declarations in
+   `Subgradient/Monotone.lean`, and document `IsExactSum` as the extension point for constraint
+   qualifications.
+
+And one structural one: **the `ℝⁿ` / Hilbert instantiation should not live in a Rockafellar-specific
+`Setup.lean`.** Put it in a shared module so that every surface uses the same instances and the
+instance gaps get fixed once.

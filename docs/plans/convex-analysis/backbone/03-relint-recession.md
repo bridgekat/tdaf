@@ -1,7 +1,7 @@
 # Sub-plan 3 — Relative interiors, recession, closedness criteria, dual operations
 
 Covers Rockafellar §6, §8, §9, §10, §16.
-Layer D of [D9](00-overview.md#d9-generality-boundaries) except where noted:
+Layer D of [D9](../00-overview.md#d9-generality-boundaries) except where noted:
 `[NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]`.
 
 This is the largest block of genuinely finite-dimensional work (~60 results) and the main schedule
@@ -99,7 +99,7 @@ consume it.
 | `recessionFn_eq_iSup_diff` | `f0⁺ y = ⨆ x ∈ dom f, f (x+y) - f x` | **Thm 8.5** |
 | `recessionFn_eq_limit` | `f0⁺ y = lim_{a→∞} (f (x+a•y) - f x)/a` for closed `f`, any `x ∈ dom f` | **Thm 8.5** |
 | `recessionFn_isLeast` | least `h` with `f z ≤ f x + h (z-x)` | Cor 8.5.1 |
-| `recessionFn_eq_hom_at_zero` | `f0⁺ = clFn (hom f) (0, ·)` | **Cor 8.5.2** ⇐ [D6](00-overview.md#d6) |
+| `recessionFn_eq_hom_at_zero` | `f0⁺ = clFn (hom f) (0, ·)` | **Cor 8.5.2** ⇐ [D6](../00-overview.md#d6-homogenisation-is-a-first-class-operation) |
 | `monotone_along_iff_recessionFn_nonpos` | **Thm 8.6**, Cor 8.6.1–2 |
 | `recessionCone_level_eq` | all level sets share `0⁺` and lineality | **Thm 8.7**, Cor 8.7.1 |
 | `affine_along_iff` | **Thm 8.8**; lineality space, rank of `f` | §8 |
@@ -346,7 +346,7 @@ fact"), Tychonoff on a box in `ℕ → ℝ`, and Theorem 10.8.
 usable, and it is in §20. Rockafellar also notes that every relatively open convex set is locally
 simplicial; that is not proved here either.
 
-## 3.6 `Tdaf/Analysis/Convex/Duality/Exact.lean` — [D5](00-overview.md#d5)
+## 3.6 `Tdaf/Analysis/Convex/Duality/Exact.lean` — [D5](../00-overview.md#d5-constraint-qualifications-are-an-interface-not-a-hypothesis-pattern)
 
 **Formalized.** Two adjustments were needed: the file also imports `Operations/Image.lean` (that is
 where `mapLin`/`compLin` live), and the interface gained two lemmas that turn D5's remark about

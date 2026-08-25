@@ -3,7 +3,7 @@
 Covers Rockafellar §33–§39 (Parts VII and VIII).
 
 These are the most original and least formalised parts of the book, and the ones where
-[D8](00-overview.md#d8) — everything is partial conjugation — does the most work. Rockafellar
+[D8](../00-overview.md#d8-bifunctions-are-curried-functions-the-organizing-operation-is-partial-conjugation) — everything is partial conjugation — does the most work. Rockafellar
 develops the saddle-function closure calculus by hand over §33–§34; the backbone should get it from
 a single `partialConj` / `partialClosure` API applied twice, once in each variable.
 
