@@ -87,11 +87,6 @@ carries an `IsAdjointPair` hypothesis even though every backbone statement it sp
   for a sum and for a convex hull. That is §14's remediation item (bundled `PointedCone`
   bipolarity, remediation §4.3), and it is gated there rather than worked around here. The
   unconditional inclusions are `corollary_16_3_2_preimage` and `corollary_16_5_2_inter`.
-* **The `m`-ary exact form of Theorem 16.4 and Corollary 16.4.1** — *omitted with a reason*.
-  `IsExactSum` is a binary interface; the book states the attainment for `f₁ + ⋯ + fₘ`. The
-  `m`-ary interface is remediation §4.4 and is not surface work. The `m`-ary *identity* is here
-  (`theorem_16_4_infConv_finset`, `corollary_16_4_1_add_finset`), because `conj` is a monoid
-  homomorphism out of `InfConvFn` and no properness is involved.
 * **The worked examples of pp. 145–152** (book, lines 6042–6183) — *omitted with a reason*. Four
   computations, each an application of a theorem already stated here plus material from elsewhere:
   the distance function `d(·, C) = |·| □ δ(· | C)` (Theorem 16.4 plus §13's `supportFn_unitBall`);
@@ -516,6 +511,90 @@ theorem corollary_16_4_2_add {K L : Set (Rn n)} (hKne : K.Nonempty) (hLne : L.No
     by_contra h₁
     rw [indicatorFn_of_notMem h₁, indicatorFn_of_mem h₂] at hy
     exact absurd hy (by simp)
+
+/-- **Rockafellar, Theorem 16.4**, the exact half in the book's own `m`-ary form: if the sets
+`ri (dom fᵢ)`, `i = 1, …, m`, have a point in common, the closure operation can be omitted from
+the second formula and `(f₁ + ⋯ + fₘ)* = f₁* □ ⋯ □ fₘ*`.
+
+Specialises `IsExactFinsetSum.of_relint` and `IsExactFinsetSum.conj_finsetSum`. The `□`-product is
+the `AddCommMonoid` sum of `InfConvFn`, exactly as in `theorem_16_4_infConv_finset`; the family is
+indexed by a `Finset` rather than by `Fin m`, so `m = 0` is the (vacuous) empty family and the
+book's `m ≥ 1` is `hs`. -/
+theorem theorem_16_4_exact_finset {ι : Type*} {s : Finset ι} {f : ι → Rn n → EReal}
+    (hs : s.Nonempty) (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i))
+    {x₀ : Rn n} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (dom (f i))) :
+    conj (pairing n) (∑ i ∈ s, f i)
+      = ofInfConvFn (∑ i ∈ s, toInfConvFn (conj (pairing n) (f i))) :=
+  (IsExactFinsetSum.of_relint (B := pairing n) hs hf hpf hx₀).conj_finsetSum
+
+/-- **Rockafellar, Theorem 16.4**, the attainment for `m` summands: under the same qualification,
+for each `x*` the infimum `inf {f₁*(x₁*) + ⋯ + fₘ*(xₘ*) | x₁* + ⋯ + xₘ* = x*}` is attained.
+
+Specialises `IsExactFinsetSum.exists_conj_finsetSum_eq`. -/
+theorem theorem_16_4_attained_finset {ι : Type*} {s : Finset ι} {f : ι → Rn n → EReal}
+    (hs : s.Nonempty) (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i))
+    {x₀ : Rn n} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (dom (f i))) (y : Rn n) :
+    ∃ y' : ι → Rn n, ∑ i ∈ s, y' i = y ∧
+      ∑ i ∈ s, conj (pairing n) (f i) (y' i) = conj (pairing n) (∑ i ∈ s, f i) y :=
+  (IsExactFinsetSum.of_relint (B := pairing n) hs hf hpf hx₀).exists_conj_finsetSum_eq y
+
+/-- Adding indicator functions over a `Finset` intersects the sets: the `m`-ary form of
+`indicatorFn_add`. The empty intersection is `ℝⁿ`, whose indicator is the zero function, so no
+non-emptiness is needed. -/
+private theorem sum_indicatorFn_finset {ι : Type*} (s : Finset ι) (C : ι → Set (Rn n)) :
+    ∑ i ∈ s, indicatorFn (C i) = indicatorFn (⋂ i ∈ s, C i) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    rw [Finset.sum_empty]
+    funext x
+    simp
+  | cons i t hi ih =>
+    rw [Finset.sum_cons, ih, indicatorFn_add]
+    congr 1
+    ext x
+    simp [Finset.mem_cons]
+
+/-- **Rockafellar, Corollary 16.4.1**, the exact half in the book's `m`-ary form: if the sets
+`ri Cᵢ` have a point in common, the closure operation can be omitted and
+`δ*(· | C₁ ∩ ⋯ ∩ Cₘ) = δ*(· | C₁) □ ⋯ □ δ*(· | Cₘ)`.
+
+Rockafellar's proof verbatim: take `fᵢ = δ(· | Cᵢ)` in Theorem 16.4. Non-emptiness of the `Cᵢ` is
+*not* a hypothesis here although it is in the book — a common point of the relative interiors
+already supplies it. -/
+theorem corollary_16_4_1_exact_finset {ι : Type*} {s : Finset ι} {C : ι → Set (Rn n)}
+    (hs : s.Nonempty) (hC : ∀ i ∈ s, Convex ℝ (C i)) {x₀ : Rn n} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (C i)) :
+    supportFn (pairing n) (⋂ i ∈ s, C i)
+      = ofInfConvFn (∑ i ∈ s, toInfConvFn (supportFn (pairing n) (C i))) := by
+  have hconj : ∀ i, supportFn (pairing n) (C i) = conj (pairing n) (indicatorFn (C i)) :=
+    fun i => supportFn_eq_conj_indicatorFn (pairing n) (C i)
+  rw [supportFn_eq_conj_indicatorFn, ← sum_indicatorFn_finset,
+    theorem_16_4_exact_finset (f := fun i => indicatorFn (C i)) hs
+      (fun i hi => convexFn_indicatorFn.2 (hC i hi))
+      (fun i hi => ⟨⟨x₀, by rw [dom_indicatorFn]; exact intrinsicInterior_subset (hx₀ i hi)⟩,
+        indicatorFn_ne_bot (C i)⟩)
+      (fun i hi => by rw [dom_indicatorFn]; exact hx₀ i hi)]
+  simp only [hconj]
+
+/-- **Rockafellar, Corollary 16.4.1**, the attainment for `m` sets: under the same qualification,
+for each `x*` the infimum `inf {δ*(x₁* | C₁) + ⋯ + δ*(xₘ* | Cₘ) | x₁* + ⋯ + xₘ* = x*}` is
+attained. -/
+theorem corollary_16_4_1_attained_finset {ι : Type*} {s : Finset ι} {C : ι → Set (Rn n)}
+    (hs : s.Nonempty) (hC : ∀ i ∈ s, Convex ℝ (C i)) {x₀ : Rn n} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (C i))
+    (y : Rn n) :
+    ∃ y' : ι → Rn n, ∑ i ∈ s, y' i = y ∧
+      ∑ i ∈ s, supportFn (pairing n) (C i) (y' i)
+        = supportFn (pairing n) (⋂ i ∈ s, C i) y := by
+  have hconj : ∀ i, supportFn (pairing n) (C i) = conj (pairing n) (indicatorFn (C i)) :=
+    fun i => supportFn_eq_conj_indicatorFn (pairing n) (C i)
+  obtain ⟨y', hy', hval⟩ :=
+    theorem_16_4_attained_finset (f := fun i => indicatorFn (C i)) hs
+      (fun i hi => convexFn_indicatorFn.2 (hC i hi))
+      (fun i hi => ⟨⟨x₀, by rw [dom_indicatorFn]; exact intrinsicInterior_subset (hx₀ i hi)⟩,
+        indicatorFn_ne_bot (C i)⟩)
+      (fun i hi => by rw [dom_indicatorFn]; exact hx₀ i hi) y
+  refine ⟨y', hy', ?_⟩
+  rw [supportFn_eq_conj_indicatorFn, ← sum_indicatorFn_finset, ← hval]
+  simp only [hconj]
 
 /-! ### Theorem 16.5: pointwise suprema and convex hulls -/
 

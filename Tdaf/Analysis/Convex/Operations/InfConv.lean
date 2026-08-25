@@ -31,6 +31,8 @@ and it is dual to pointwise addition of convex functions under the conjugacy of 
 * `infConv_indicatorFn_singleton` — `f □ δ(· | a)` translates the graph of `f` by `a`.
 * `convexFn_sum_toInfConvFn` — Theorem 5.4 for `m` functions, as a `Finset.sum` in
   `InfConvFn E`.
+* `sum_toInfConvFn_apply_le`, `sum_toInfConvFn_le_sum`, `dom_sum_toInfConvFn` — the `m`-ary forms
+  of `infConv_apply_le`, `infConv_le_add` and `dom_infConv`.
 
 ## Design notes
 
@@ -404,5 +406,62 @@ theorem convexFn_sum_toInfConvFn {ι : Type*} {s : Finset ι} {f : ι → E → 
     exact convexFn_infConv (hf i (by simp)) (ih fun j hj => hf j (by simp [hj]))
 
 end MonoidConvex
+
+section MonoidSum
+
+variable {ι E : Type*} [AddCommGroup E] {s : Finset ι} {g : ι → E → EReal}
+
+/-- **The `m`-ary basic upper bound**, phrased entirely inside the epigraphs so that no `∞ - ∞`
+can arise: a point of `epi (gᵢ)` over `yᵢ` for each `i` bounds `g₁ □ ⋯ □ gₘ` at `∑ yᵢ`.
+
+This is `infConv_apply_le` over a `Finset`, and like it, it needs no hypothesis at all. -/
+theorem sum_toInfConvFn_apply_le {y : ι → E} {c : ι → ℝ}
+    (h : ∀ i ∈ s, g i (y i) ≤ (c i : EReal)) :
+    ofInfConvFn (∑ i ∈ s, toInfConvFn (g i)) (∑ i ∈ s, y i) ≤ ((∑ i ∈ s, c i : ℝ) : EReal) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    rw [Finset.sum_empty, Finset.sum_empty, Finset.sum_empty, ofInfConvFn_zero,
+      indicatorFn_of_mem (s := ({0} : Set E)) (Set.mem_singleton_iff.2 rfl)]
+    exact_mod_cast le_rfl
+  | cons i t hi ih =>
+    rw [Finset.sum_cons, Finset.sum_cons, Finset.sum_cons, ofInfConvFn_add,
+      ofInfConvFn_toInfConvFn]
+    exact infConv_apply_le (h i (by simp)) (ih fun j hj => h j (by simp [hj]))
+
+/-- **The `m`-ary infimum bound**: `(g₁ □ ⋯ □ gₘ) (y₁ + ⋯ + yₘ) ≤ g₁ y₁ + ⋯ + gₘ yₘ`.
+
+This is `infConv_le_add` over a `Finset`, and the point of the statement is *where* the `≠ ⊥`
+hypothesis sits: on each `gᵢ` separately, never on a partial convolute. Infimal convolution does
+not preserve `≠ ⊥` — `g₁ x = -x` and `g₂ x = x` are everywhere finite with `g₁ □ g₂ ≡ -∞` — so an
+induction that re-applied `infConv_le_add` to `g₁ □ ⋯ □ gₘ₋₁` would be proving a different
+statement. The epigraph-level `sum_toInfConvFn_apply_le` has no such hypothesis and carries the
+induction instead. -/
+theorem sum_toInfConvFn_le_sum (hg : ∀ i ∈ s, ∀ x, g i x ≠ ⊥) (y : ι → E) :
+    ofInfConvFn (∑ i ∈ s, toInfConvFn (g i)) (∑ i ∈ s, y i) ≤ ∑ i ∈ s, g i (y i) := by
+  rcases eq_or_ne (∑ i ∈ s, g i (y i)) ⊤ with htop | htop
+  · rw [htop]; exact le_top
+  have hfin : ∀ i ∈ s, g i (y i) ≠ ⊤ :=
+    Tdaf.EReal.forall_ne_top_of_sum_ne_top s _ (fun i hi => hg i hi (y i)) htop
+  have hci : ∀ i ∈ s, g i (y i) = (((g i (y i)).toReal : ℝ) : EReal) := fun i hi =>
+    (_root_.EReal.coe_toReal (hfin i hi) (hg i hi (y i))).symm
+  have hsum : ∑ i ∈ s, g i (y i) = ((∑ i ∈ s, (g i (y i)).toReal : ℝ) : EReal) := by
+    rw [Tdaf.EReal.coe_sum]
+    exact Finset.sum_congr rfl hci
+  rw [hsum]
+  exact sum_toInfConvFn_apply_le fun i hi => (hci i hi).le
+
+/-- The effective domain of `g₁ □ ⋯ □ gₘ` is `dom g₁ + ⋯ + dom gₘ`, with no hypothesis
+(`dom_infConv` over a `Finset`). Note that the empty convolute is `δ(· | 0)`, whose effective
+domain is `{0}`, which is the empty sum of sets. -/
+theorem dom_sum_toInfConvFn (s : Finset ι) (g : ι → E → EReal) :
+    dom (ofInfConvFn (∑ i ∈ s, toInfConvFn (g i))) = ∑ i ∈ s, dom (g i) := by
+  induction s using Finset.cons_induction with
+  | empty => rw [Finset.sum_empty, Finset.sum_empty, ofInfConvFn_zero, dom_indicatorFn,
+      Set.singleton_zero]
+  | cons i t hi ih =>
+    rw [Finset.sum_cons, Finset.sum_cons, ofInfConvFn_add, ofInfConvFn_toInfConvFn, dom_infConv,
+      ih]
+
+end MonoidSum
 
 end Tdaf.ConvexAnalysis

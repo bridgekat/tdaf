@@ -23,6 +23,9 @@ domains; here the polyhedral side contributes only a point of its effective doma
   case, which carries the argument.
 * `relint_inter_relint_nonempty_of_subset_affineSpan` — the relative-interior step the proof of
   Theorem 20.1 turns on.
+* `IsExactFinsetSum.of_polyhedral` — **Theorem 20.1** for `m` summands, with
+  `IsExactFinsetSum.of_polyhedral_pair` the all-polyhedral case and `polyhedralFn_finsetSum`
+  (**Theorem 19.4**) the step that makes the polyhedral block a single polyhedral summand.
 
 ## Design notes
 
@@ -283,5 +286,112 @@ theorem IsExactSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.
     (by rw [hg.relint_dom_clFn hpg]; exact hxg)
 
 end Sum
+
+/-! ### Theorem 20.1 for `m` summands -/
+
+section FinsetSum
+
+variable {ι : Type*} {E F : Type*}
+  [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s t u : Finset ι} {f : ι → E → EReal}
+
+omit [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F] in
+/-- **Rockafellar, Theorem 19.4** for `m` summands: a finite non-empty sum of proper polyhedral
+convex functions is polyhedral. -/
+theorem polyhedralFn_finsetSum (hs : s.Nonempty) (hpoly : ∀ i ∈ s, PolyhedralFn (f i))
+    (hbot : ∀ i ∈ s, ∀ x, f i x ≠ ⊥) : PolyhedralFn (∑ i ∈ s, f i) := by
+  induction s using Finset.cons_induction with
+  | empty => exact absurd hs (by simp)
+  | cons i t hi ih =>
+    have hmt : ∀ j ∈ t, j ∈ Finset.cons i t hi := fun j hj => Finset.mem_cons_of_mem hj
+    rcases Finset.eq_empty_or_nonempty t with rfl | htne
+    · rw [Finset.cons_empty, Finset.sum_singleton]
+      exact hpoly i (by simp)
+    rw [Finset.sum_cons]
+    exact PolyhedralFn.add (hpoly i (by simp))
+      (ih htne (fun j hj => hpoly j (hmt j hj)) (fun j hj => hbot j (hmt j hj)))
+      (hbot i (by simp))
+      (fun x => by
+        rw [Finset.sum_apply]
+        exact Tdaf.EReal.sum_ne_bot fun j hj => hbot j (hmt j hj) x)
+
+private theorem isExactFinsetSum_of_polyhedral_pair_aux [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] (f : ι → E → EReal) (x₀ : E) :
+    ∀ t : Finset ι, t.Nonempty → (∀ i ∈ t, PolyhedralFn (f i)) → (∀ i ∈ t, Proper (f i)) →
+      (∀ i ∈ t, x₀ ∈ dom (f i)) → IsExactFinsetSum B t f := by
+  intro t
+  induction t using Finset.cons_induction with
+  | empty => intro hne; exact absurd hne (by simp)
+  | cons i t hi ih =>
+    intro _ hpoly hpf hx₀
+    have hmt : ∀ j ∈ t, j ∈ Finset.cons i t hi := fun j hj => Finset.mem_cons_of_mem hj
+    rcases Finset.eq_empty_or_nonempty t with rfl | htne
+    · rw [Finset.cons_empty]
+      exact IsExactFinsetSum.singleton (hpf i (by simp))
+    refine IsExactFinsetSum.cons hi ?_
+      (ih htne (fun j hj => hpoly j (hmt j hj)) (fun j hj => hpf j (hmt j hj))
+        (fun j hj => hx₀ j (hmt j hj)))
+    obtain ⟨-, hprop, hdom⟩ :=
+      properConvexFn_finsetSum (fun j hj => (hpoly j (hmt j hj)).convexFn)
+        (fun j hj => hpf j (hmt j hj)) (fun j hj => hx₀ j (hmt j hj))
+    refine IsExactSum.of_polyhedral_pair (hpoly i (by simp)) (hpf i (by simp))
+      (polyhedralFn_finsetSum htne (fun j hj => hpoly j (hmt j hj))
+        (fun j hj x => (hpf j (hmt j hj)).ne_bot x)) hprop (hx₀ i (by simp)) ?_
+    rw [hdom]
+    exact Set.mem_iInter₂.2 fun j hj => hx₀ j (hmt j hj)
+
+/-- **The all-polyhedral case of Theorem 20.1 for `m` summands** (Rockafellar, §20, p. 179):
+finitely many proper polyhedral convex functions add exactly as soon as their effective domains
+have a point in common. No relative interior appears anywhere. -/
+theorem IsExactFinsetSum.of_polyhedral_pair [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hs : s.Nonempty) (hpoly : ∀ i ∈ s, PolyhedralFn (f i)) (hpf : ∀ i ∈ s, Proper (f i))
+    {x₀ : E} (hx₀ : ∀ i ∈ s, x₀ ∈ dom (f i)) : IsExactFinsetSum B s f :=
+  isExactFinsetSum_of_polyhedral_pair_aux f x₀ s hs hpoly hpf hx₀
+
+/-- **Rockafellar, Theorem 20.1** in the book's own `m`-ary form: let `f₁, …, fₘ` be proper convex
+with `f₁, …, f_k` polyhedral, and suppose
+
+`dom f₁ ∩ ⋯ ∩ dom f_k ∩ ri (dom f_{k+1}) ∩ ⋯ ∩ ri (dom fₘ) ≠ ∅`.
+
+Then `f₁, …, fₘ` add exactly.
+
+`t` is the book's `{1, …, k}` and `u` its complement `{k+1, …, m}`; the splitting is spelled
+membership-wise rather than as `s = t ∪ u` so that no `DecidableEq` instance enters the statement.
+The proof is Rockafellar's own: `∑_{i ∈ t} fᵢ` is polyhedral (**Theorem 19.4**,
+`polyhedralFn_finsetSum`) and adds exactly to `∑_{i ∈ u} fᵢ` by the *binary* Theorem 20.1, while
+each of the two blocks adds exactly on its own — the polyhedral one by the all-polyhedral case, the
+other by Theorem 16.4. `IsExactFinsetSum.of_split` is what glues the three together. -/
+theorem IsExactFinsetSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    (hs : s.Nonempty) (hdisj : Disjoint t u) (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
+    (hpoly : ∀ i ∈ t, PolyhedralFn (f i)) (hconv : ∀ i ∈ u, ConvexFn (f i))
+    (hpf : ∀ i ∈ s, Proper (f i)) {x₀ : E} (hxt : ∀ i ∈ t, x₀ ∈ dom (f i))
+    (hxu : ∀ i ∈ u, x₀ ∈ ri (dom (f i))) : IsExactFinsetSum B s f := by
+  have hts : ∀ i ∈ t, i ∈ s := fun i hi => (hmem i).2 (Or.inl hi)
+  have hus : ∀ i ∈ u, i ∈ s := fun i hi => (hmem i).2 (Or.inr hi)
+  rcases Finset.eq_empty_or_nonempty t with rfl | htne
+  · have hsu : s = u := Finset.ext fun i => by simpa using hmem i
+    subst hsu
+    exact IsExactFinsetSum.of_relint hs hconv hpf hxu
+  rcases Finset.eq_empty_or_nonempty u with rfl | hune
+  · have hst : s = t := Finset.ext fun i => by simpa using hmem i
+    subst hst
+    exact IsExactFinsetSum.of_polyhedral_pair hs hpoly hpf hxt
+  obtain ⟨-, hpropt, hdomt⟩ :=
+    properConvexFn_finsetSum (fun i hi => (hpoly i hi).convexFn) (fun i hi => hpf i (hts i hi)) hxt
+  obtain ⟨hconvu, hpropu, -⟩ :=
+    properConvexFn_finsetSum hconv (fun i hi => hpf i (hus i hi))
+      (fun i hi => intrinsicInterior_subset (hxu i hi))
+  refine IsExactFinsetSum.of_split hdisj hmem
+    (IsExactFinsetSum.of_polyhedral_pair htne hpoly (fun i hi => hpf i (hts i hi)) hxt)
+    (IsExactFinsetSum.of_relint hune hconv (fun i hi => hpf i (hus i hi)) hxu) ?_
+  refine IsExactSum.of_polyhedral
+    (polyhedralFn_finsetSum htne hpoly (fun i hi x => (hpf i (hts i hi)).ne_bot x)) hpropt
+    hconvu hpropu ?_
+    (mem_relint_dom_finsetSum hconv (fun i hi => hpf i (hus i hi)) hxu)
+  rw [hdomt]
+  exact Set.mem_iInter₂.2 hxt
+
+end FinsetSum
 
 end Tdaf.ConvexAnalysis
