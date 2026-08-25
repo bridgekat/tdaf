@@ -175,7 +175,13 @@ theorem epi_indicatorFn (s : Set E) : epi (indicatorFn s) = s ×ˢ Set.Ici (0 : 
 @[simp] theorem convexFn_indicatorFn {s : Set E} : ConvexFn (indicatorFn s) ↔ Convex ℝ s
 theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     restrict s f = f + indicatorFn s
+@[simp] theorem indicatorFn_vadd (a : E) (s : Set E) (x : E) :
+    indicatorFn (a +ᵥ s) x = indicatorFn s (x - a)
 ```
+
+`indicatorFn_vadd` is what turns Rockafellar's normal form for a partial affine function,
+`δ(· | L + a) + ⟨·, a*⟩ + α`, into an instance of the *translation* row of Theorem 12.3; the file
+needs `open … Pointwise` for the `+ᵥ` on sets.
 
 ### `Tdaf/Analysis/Convex/Concave.lean`
 
@@ -1950,6 +1956,10 @@ easy half is Theorem 24.7 applied to a closed ball: `{x | ‖∇f x‖ ≤ b}` *
 
 §31: **Theorem 31.1** (both of Rockafellar's conditions), **Theorem 31.2**, and **Theorem 31.3**
 with **Corollary 31.3.1**, for a general linear map `A`.
+
+**`smul_coe_submodule` has moved out**, to `Duality/Polar.lean` beside `smul_coe_pointedCone`: it
+says that a subspace is a cone in Rockafellar's sense, which is §14's business, and §12's
+partial-affine formula needs it there.
 
 **Theorem 31.2 does not need the `EReal` splitting lemma the plan said it did.**
 `06-optimization.md` recorded the blocker as "an `EReal` lemma splitting `⨅ (a,b) (u a + v b)` into
@@ -3734,6 +3744,13 @@ theorem posHomogeneousDeg_iff_exists_isGauge …                       -- Cor 15
 theorem conj_monotoneComp_powHalfLine …                              -- Cor 15.3.1, the conjugate
 theorem polarGauge_degGauge … ; theorem pairing_le_rpow_mul_rpow …    -- Cor 15.3.2, Hölder
 theorem polarSet_setOf_le_inv …                                      -- Cor 15.3.2, the polar set
+structure IsGaugeLike (f : E → EReal) : Prop      -- `f 0 = inf f`; the level sets are dilates
+theorem IsGaugeLike.exists_isGauge_setOf_le_eq …              -- every level set is a level set of one gauge
+theorem IsGaugeLike.exists_eq_monotoneComp …      -- Thm 15.3, the converse half
+theorem isGaugeLike_monotoneComp …                -- Thm 15.3, the forward half, repackaged
+theorem closedProperConvexFn_and_isGaugeLike_iff … -- Thm 15.3, the biconditional
+theorem MonotoneHalfLineFn.exists_lt_monotoneConj … -- `g` finite at some ζ > 0 ⇒ `g⁺` non-constant
+theorem isGaugeLike_conj_monotoneComp …            -- Thm 15.3, "`f*` is gauge-like too"
 ```
 
 **Theorem 12.4 is stated as a genuine involution, not a bijection onto a smaller class.** The
@@ -3775,16 +3792,54 @@ bilinear `B`; topology on `E` enters only through `ClosedFn k`, and only in the 
 `ClosedFn k` itself is used only through `x ∈ k(x) • {k ≤ 1}`. Compatibility, continuity and local
 convexity appear only in `closedFn_monotoneComp`, where Fenchel–Moreau is invoked.
 
-**Not here**: the *converse* half of Theorem 15.3 — gauge-like closed proper convex `f` implies
-`f = g ∘ k` — and with it an `IsGaugeLike` predicate. The forward half is complete
-(`setOf_monotoneComp_le_eq_smul` shows every `g ∘ k` is gauge-like). The blocker is not the
-level-set bookkeeping but *convexity* of the reconstructed `g`: defining `g(ζ) = inf{α | ζ ≤ λ_α}`
-gives monotonicity and closedness for free and says nothing about convexity, which has to come from
-transporting `f` along a ray, `g(ζ) = f(ζ • x₁)` for some `x₁` with `k(x₁) = 1`. That needs the
-book's own case split on whether `{f ≤ α₀}` is a cone, and a proof that `α ↦ λ_α` is a bijection
-onto its range in the non-cone case.
+**The converse half of Theorem 15.3 is now here too**, with the `IsGaugeLike` predicate, and the
+recorded blocker — convexity of the reconstructed `g` — was not the obstacle. **One** lemma carries
+the whole proof: *every* sublevel set of `f` above `inf f` is a sublevel set of a single gauge
+(`IsGaugeLike.exists_isGauge_setOf_le_eq`, with `k = γ(· | {f ≤ f 0 + 1})`, since a gauge-like `f` makes any two
+of its sublevel sets positive multiples of each other and `setOf_gaugeFn_le_pos` turns dilates of
+one of them into sublevel sets of its gauge). From it, `k u ≤ k v ⇒ f u ≤ f v`
+(`le_of_forall_setOf_le_eq`) and `k u = ⊤ ⇒ f u = ⊤` (`eq_top_of_forall_setOf_le_eq`), so `f x`
+depends on `x` only through `k x`, and no `α ↦ λ_α` bijection is needed. `g` is then read off along
+a ray, `f(· • x₁)` restricted to `[0, ∞)`, whose convexity and closedness are `f`'s transported by
+`convexFn_compLin` / `closedFn_compLin` and `restrict`; `MonotoneOn` comes from the displayed
+implication, not from convexity.
 
-**Relocation candidates**: `eq_top_or_exists_coe_of_nonneg` → `Tdaf/Order/EReal.lean`;
+**The case split is on the gauge, not on the level sets, and it is coarser than the book's.**
+Rockafellar splits on whether all the level sets are the *same* multiple of `C`. What actually
+matters is whether `k` attains the value `1`
+(`IsGauge.exists_eq_one_or_forall_eq_zero_or_eq_top`): a positively homogeneous `[0, ∞]`-valued
+function either takes some value in `(0, ∞)` — and then `x₁ = (k x)⁻¹ • x` is a ray — or takes only
+`0` and `⊤`. Rockafellar's degenerate branch is *not* the same case: `f = α₀ + δ(· | λC)` with `C`
+not a cone has all its level sets equal and still admits a ray, and the ray argument covers it. The
+genuinely degenerate case is only `k ∈ {0, ⊤}`, where `f` is `f 0` on a cone and `⊤` off it and the
+half-line factor is the step function `f 0 + δ(· | [0, 1])`.
+
+**Conjugacy exchanges the two side conditions on `g`.** Rockafellar's "`g⁺` satisfies the same
+conditions as `g`" is two lemmas, and they cross: `g` *non-constant* gives `g⁺` *finite at a
+positive level* (`exists_monotoneConj_ne_top`, through the affine minorant), and `g` *finite at a
+positive level* gives `g⁺` *non-constant* (`exists_lt_monotoneConj`, because the term of the
+defining supremum at that level is affine in `s` with positive slope). With both,
+`isGaugeLike_conj_monotoneComp` — Theorem 15.3's second assertion, `f*` gauge-like — is
+`conj_monotoneComp` followed by `isGaugeLike_monotoneComp`.
+
+**The converse needs no pairing, no local convexity and no conjugation.** It is layer B — a
+topological vector space and nothing more — whereas the forward half needs Fenchel–Moreau for
+closedness. In `closedProperConvexFn_and_isGaugeLike_iff` the pairing appears only for that
+direction.
+
+**Non-constancy and finiteness at a positive level are produced, not assumed.** They are the two
+conditions Rockafellar imposes on `g`, and the reconstruction has to deliver them: with `c` the
+level of `k` matching `{f ≤ f 0 + 1}`, the ray function is finite at `c` and `⊤` at `c + 1`. In the
+degenerate branch the step function supplies both by construction.
+
+**`Operations/Closed.lean` is imported for one lemma.** `compLin` and `closedFn_compLin` are not
+in the import closure of `Duality/Gauge.lean`, and the ray `ζ ↦ f (ζ • x₁)` is
+`compLin f (LinearMap.toSpanSingleton ℝ E x₁)`, so the file now imports `Operations/Closed.lean` as
+well. Nothing imports `GaugeLike.lean`, so the cost is one module's rebuild.
+
+**Relocation candidates**: `le_of_forall_setOf_le_eq` and `eq_top_of_forall_setOf_le_eq` are about
+a function whose sublevel sets are another function's, and would fit a general "level-set
+comparison" module if one ever appears; `eq_top_or_exists_coe_of_nonneg` → `Tdaf/Order/EReal.lean`;
 `pairing_le_mul_of_gauge`, `pairing_nonpos_of_gauge_eq_zero` and `setOf_polarGauge_le_one` →
 `Duality/Gauge.lean` (all three are about a gauge and its polar, not about the composite);
 `PosHomogeneousDeg` and its basic lemmas → `Homogeneous.lean`; `ClosedFn.restrict` →
@@ -3893,10 +3948,14 @@ Theorem 14.6 needs only the bipolar theorem, via `0⁺C = (C°)°`. Rockafellar'
 `f x = +∞`, which nearby positive `μ` do not — so `polarFn` is defined in the epigraph form, with
 `polarFn_apply_eq` proving the infima agree.
 
-**Not here**: Theorem 15.3 and Corollaries 15.3.1–15.3.2, the one genuinely unbuilt piece of §15 —
-they need the nondecreasing lsc convex functions on `[0, +∞]` and their *monotone conjugate*, a
-one-dimensional theory the project does not have. Also Corollary 14.6.1 (dimension and lineality
-arithmetic on top of `polarCone_linealitySpace`).
+**Not here**: Theorem 15.3 and Corollaries 15.3.1–15.3.2, which need the nondecreasing lsc convex
+functions on `[0, +∞]` and their *monotone conjugate*. They are **done**, in
+`Duality/GaugeLike.lean` — this paragraph used to call them "the one genuinely unbuilt piece of
+§15", and used to list Corollary 14.6.1 as absent as well, which contradicted the second paragraph
+of this very record; both claims were stale and are corrected here. `polarSubmodule` and
+`coe_polarSubmodule` have **moved down to `Duality/Polar.lean`**, beside `polarCone_coe_submodule`,
+because §12's partial-affine formula needs them there; `finrank_add_finrank_polarSubmodule` and
+Corollary 14.6.1 stay here.
 
 **Lemmas that belong in other files and will name-clash if added there**: `convex_polarSet`,
 `polarSet_closure` (→ `Duality/Polar.lean`); `nonneg_of_mem_closure_epi`, `lscHull_nonneg`,
@@ -4438,6 +4497,43 @@ brings the conclusion back.
 a finite differentiable `K`. It is this file's theorem plus "`∂K (u, v)` is the single point
 `(∇₁K, ∇₂K)`", which is Theorem 25.1's converse on each slice — a `Saddle/Differential.lean`
 statement that does not exist yet.
+
+### `Tdaf/Analysis/Convex/Duality/Polar.lean`
+
+§14 up to Theorem 14.5 — `polarCone`, `polarSet`, `polarPointedCone`, polarity as an antitone
+Galois connection with its two closure operators, the bipolar theorems and the §14 examples — and
+**the conjugate of a partial affine function**, which is §12 (the display preceding Theorem 12.3).
+
+```lean
+def polarCone (B) (K : Set E) : Set F := {y | ∀ x ∈ K, B x y ≤ 0}
+def polarSet  (B) (C : Set E) : Set F := {y | ∀ x ∈ C, B x y ≤ 1}
+noncomputable def polarSubmodule (B) (M : Submodule ℝ E) : Submodule ℝ F   -- from `Gauge.lean`
+theorem smul_coe_submodule …                                              -- from `Fenchel.lean`
+noncomputable def partialAffineFn (B) (L : Submodule ℝ E) (a : E) (b : F) (α : ℝ) : E → EReal :=
+  fun x => indicatorFn (a +ᵥ (L : Set E)) x + ⟨x, b⟩ + α
+theorem conj_partialAffineFn …
+  -- conj B (partialAffineFn B L a b α) = partialAffineFn B.flip (polarSubmodule B L) b a
+  --                                        (-α - ⟨a, b⟩)
+```
+
+**The partial-affine formula cannot live in `Duality/Conjugate.lean`.** Its dual datum is a
+*polar*, so the statement cannot even be written before `polarCone` exists — which is Rockafellar's
+own remark that the subspace example it generalises "will be broadened at the beginning of §14". It
+is Theorem 12.3 (`conj_comp_affine`) at `h = δ(· | L)`, `A = I`, fed by
+`conj_indicatorFn_eq_indicatorFn_polarCone`; the only new ingredient is `indicatorFn_vadd`.
+
+**Stated as a self-duality, not as a formula.** Writing both sides through `partialAffineFn` makes
+`conj_partialAffineFn` say that the *same* construction, read through the polar pairing and with
+`a` and `a*` exchanged, is the conjugate — which is Rockafellar's point that partial affine
+functions, like subspaces, come in dual pairs. Nothing here characterises the partial affine
+functions intrinsically (proper convex, `dom f` affine, `f` affine on it); that needs Cor 7.4.2 and
+is not done.
+
+**Two declarations moved in.** `polarSubmodule` and `coe_polarSubmodule` came down from
+`Duality/Gauge.lean`, where only Corollary 14.6.1 used them, and `smul_coe_submodule` came up from
+`Optimization/Fenchel.lean`, where it had been written from scratch. Both belong beside
+`polarCone_coe_submodule` and `smul_coe_pointedCone`, and §12's partial-affine formula needs them
+here.
 
 ## 2. Lean/Mathlib gotchas
 
@@ -6276,6 +6372,60 @@ separate one-line commit, not a drive-by.
      keyword argument explicitly, or strip the carriage returns with `sed` over the touched files
      before committing. Run `git diff --stat <base>` before every commit: if the numbers are far
      larger than the edit you made, this is why.
+
+750. **A `Set` equality does not rewrite a goal or hypothesis written as the underlying
+     inequality.** With `hset : {x | f x ≤ ↑α} = {x | k x ≤ ↑c}`, `rw [hset] at hv` fails on
+     `hv : f v ≤ ↑α` — "did not find an occurrence of the pattern" — because membership in a
+     set-builder and the predicate are only *definitionally* equal, and `rw` is syntactic. Name the
+     membership first (`have hmem : v ∈ {x | f x ≤ ↑α} := hv`), `rwa [hset] at hmem`, and let the
+     consumer's `exact` take the defeq step back. Both conversions are free; only the rewrite is
+     not. This is the whole friction in a "the level sets of `f` are the level sets of `k`" proof.
+
+751. **`compLin` and `closedFn_compLin` are not in `Duality/Gauge.lean`'s import closure.**
+     `Operations/Image.lean` reaches the rest of the library only through `Operations/Closed.lean`,
+     which just two modules import, so a `Duality/` file that wants to compose a convex function
+     with a linear map must `import Tdaf.Analysis.Convex.Operations.Closed` itself. The symptom is a
+     bare "Unknown identifier `compLin`" followed by a gotcha-11 landslide.
+
+752. **`LinearMap.toSpanSingleton ℝ E x` is the ray as a linear map, and every step through it is
+     `rfl`.** `compLin f (LinearMap.toSpanSingleton ℝ E x) t` is *definitionally* `f (t • x)`, so
+     `restrict_of_mem` proves `restrict (Ici 0) (compLin f A) t = f (t • x)` with no rewriting at
+     all, and `Continuous ⇑(LinearMap.toSpanSingleton ℝ E x)` is closed by
+     `exact (continuous_id.smul continuous_const : Continuous fun t : ℝ => t • x)`. "Restrict `f` to
+     a ray" is then two lines, with `convexFn_compLin` / `closedFn_compLin` and `ConvexFn.restrict`
+     / `ClosedFn.restrict` supplying convexity and closedness. This is what makes the reconstruction
+     in Theorem 15.3 cheap.
+
+753. **Pointwise `Set` scaling is a `MulAction`, so `smul_smul` applies verbatim.**
+     `a • b • s = (a * b) • s` for `s : Set E` needs no set-specific lemma — `Set.mulActionSet` is
+     the scoped `Pointwise` instance — and that one rewrite is the whole proof that any two sublevel
+     sets of a gauge-like function are positive multiples of *each other*.
+
+754. **`to_additive`-generated names are invisible to a grep of Mathlib's source.**
+     `Set.mem_vadd_set_iff_neg_vadd_mem` occurs nowhere in Mathlib's `.lean` files; only its
+     multiplicative parent `Set.mem_smul_set_iff_inv_smul_mem` does, with `@[to_additive]` above it.
+     Grep for the multiplicative name and translate, or the conclusion "Mathlib does not have it"
+     will be wrong. (It says `x ∈ a +ᵥ s ↔ -a +ᵥ x ∈ s`, so reaching `x - a ∈ s` costs a
+     `vadd_eq_add` and a `neg_add_eq_sub`.)
+
+755. **`conj_comp_affine` at the identity needs both pairings named.**
+     `conj_comp_affine (B := B) (B' := B) (LinearEquiv.refl ℝ E) (LinearEquiv.refl ℝ F)
+     (fun _ _ => rfl) h a b α y` is Theorem 12.3 with `A = I`: the adjointness datum is
+     `fun _ _ => rfl`, but neither it nor the two `LinearEquiv.refl`s determine `B'`. Land the
+     result in a typed `have` — writing `A'.symm (y - b)` simply as `y - b`, which is defeq — and
+     `rw` with that, per gotcha 309.
+
+756. **`smul_coe_submodule` already existed**, in `Optimization/Fenchel.lean`, three modules
+     downstream of where it belongs; gotcha 289's rule (grep for the identifier alone before writing
+     anything, including three-line utilities) caught it before it became a name clash at
+     `Tdaf.lean`. It now lives in `Duality/Polar.lean` beside `smul_coe_pointedCone`.
+
+757. **`lake build` can fail with `failed to read file '….olean.private'` under full
+     parallelism, and it is transient.** A full build reported two such failures — one on a
+     toolchain `.olean.private`, one on a Mathlib one — in modules that had nothing to do with the
+     edit; re-running the identical `lake build` completed all 2940 jobs cleanly. Do not go looking
+     for a cause in your own proof, and do not conclude the build tree is stale (gotchas 269, 290):
+     re-run first. Gotcha 263 is the same failure seen from `lake env lean`.
 
 ## 3. Build and verification
 

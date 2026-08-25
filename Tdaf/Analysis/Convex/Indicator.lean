@@ -18,13 +18,14 @@ which every statement about convex *sets* becomes an instance of a statement abo
 * `indicatorFn_ne_bot` — indicator functions never take the value `⊥`.
 * `dom_indicatorFn` — the effective domain of `δ(· | s)` is `s`.
 * `epi_indicatorFn` — the epigraph of `δ(· | s)` is the "half-cylinder" `s ×ˢ Ici 0`.
+* `indicatorFn_vadd` — translating the set translates the indicator.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §4.
 -/
 
-open Set
+open Set Pointwise
 
 namespace Tdaf.ConvexAnalysis
 
@@ -78,6 +79,18 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
     refine ⟨?_⟩
     rw [epi_indicatorFn]
     exact h.prod (convex_Ici 0)
+
+omit [Module ℝ E] in
+/-- **Translating the set translates the indicator**: `δ(x | a + s) = δ(x - a | s)`. This is what
+turns Rockafellar's normal form for a partial affine function, `δ(· | L + a) + ⟨·, a*⟩ + α`, into an
+instance of the translation row of Theorem 12.3. -/
+@[simp] theorem indicatorFn_vadd (a : E) (s : Set E) (x : E) :
+    indicatorFn (a +ᵥ s) x = indicatorFn s (x - a) := by
+  have hmem : x ∈ a +ᵥ s ↔ x - a ∈ s := by
+    rw [Set.mem_vadd_set_iff_neg_vadd_mem, vadd_eq_add, neg_add_eq_sub]
+  by_cases hx : x - a ∈ s
+  · rw [indicatorFn_of_mem (hmem.2 hx), indicatorFn_of_mem hx]
+  · rw [indicatorFn_of_notMem fun h => hx (hmem.1 h), indicatorFn_of_notMem hx]
 
 omit [AddCommGroup E] [Module ℝ E] in
 /-- Adding an indicator function restricts the effective domain (Rockafellar §5). -/
