@@ -195,6 +195,12 @@ transporting the pairing instance across `LinearMap.flip`), and `polarCone_polar
 * The closed half of **Theorem 39.7** — `Af` closed, its infimum attained, and
   `(Af)* = cl (A*⁻¹ f*)`. It needs a topology, so it lives in `Bifunction/ProcessDuality.lean`
   with the rest of the layer-B material; the open half is here.
+* The infimum-oriented mirrors of **Theorem 39.3**'s *fourth* and *last* assertions —
+  `⟨Au, x*⟩ = cl_{x*} ⟨u, A* x*⟩` for closed `A`, and the two inner products agreeing at a
+  relative interior point. The supremum-oriented forms are in `Bifunction/ProcessDuality.lean`,
+  and the mirrors belong there with them: `coBracket_eq_neg_bracket` transports them, but the
+  statements are about `partialCl₂` and `ri`, which is layer-B and layer-D material. The first
+  three assertions are mirrored here.
 
 ## References
 

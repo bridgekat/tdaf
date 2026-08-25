@@ -4419,7 +4419,8 @@ involved.
 
 **Not here**: Theorem 39.4, the fourth and last assertions of Theorem 39.3, and the closed half of
 Theorem 39.7 — all of them need §33's closure operations and hence a topology, and all of them are
-in `Bifunction/ProcessDuality.lean`.
+in `Bifunction/ProcessDuality.lean`. The infimum-oriented mirrors of those two assertions of
+Theorem 39.3 are not done anywhere; they belong there too.
 
 ### `Tdaf/Analysis/Convex/Bifunction/ProcessDuality.lean`
 
