@@ -84,7 +84,7 @@ would make `f*` equal `⊥`.
 
 **Corollaries 37.5.1 and 37.5.2** (the graph of `∂K` is homeomorphic to `Rᵐ × Rⁿ`, and the
 partial reflection of `∂K` is maximal monotone). Both are (c) composed with §31's results about
-`∂f`, so they wait on (c).
+`∂f`; they are in `Saddle/Monotone.lean`.
 
 **Corollaries 37.6.1 and 37.6.2**, which need the `C*` half of Corollary 37.2.1 — see the "What
 is not here" note in `Saddle/Conjugate.lean`.

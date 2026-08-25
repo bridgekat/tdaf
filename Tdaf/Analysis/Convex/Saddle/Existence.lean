@@ -41,7 +41,10 @@ therefore its `D*` companion read at the swapped data, and no new duality is nee
 * `exists_saddlePoint_of_isBounded` — **Corollary 37.6.2**, the classical minimax theorem.
 * `isBifunSubgradientPair_iff_mem_subgradient_graphFn` — **Theorem 37.5**, (c) ⇔ (d): `∂K` is the
   partial inversion of `∂f`, `f` the graph function of `F`.
-* `isClosed_setOf_mem_saddleSubgradient` — **Corollary 37.5.1**, closedness clause.
+* `setOf_mem_saddleSubgradient_eq_preimage` — the same identity read as an equality of sets: the
+  graph of `∂K` is the graph of `∂f` pulled back along `(u, y, v, x) ↦ ((u, x), (-v, y))`.
+* `isClosed_setOf_mem_saddleSubgradient` — **Corollary 37.5.1**, closedness clause. Its
+  homeomorphism clause and Corollary 37.5.2 are in `Saddle/Monotone.lean`.
 
 ## Design notes
 
@@ -77,19 +80,9 @@ both sets are bounded, is stated with real inequalities exactly as the book disp
 
 ## What is not here
 
-**Corollary 37.5.1's homeomorphism clause, and Corollary 37.5.2.** That the graph of `∂K` is
-homeomorphic to `Rᵐ × Rⁿ` under `(u, v, u*, v*) ↦ (u - u*, v + v*)` is Corollary 31.5.1, and that
-`(u, v) ↦ (-∂₁K, ∂₂K)` is maximal monotone is Corollary 31.5.2. Both corollaries are now proved,
-in `Optimization/Prox.lean` — but only for `innerₗ E`, i.e. for a space carrying an
-`InnerProductSpace ℝ` instance. Theorem 37.5 pairs `U × X` with `V × Y` through `prodPairing`, and
-in Mathlib a product of inner-product spaces carries the *supremum* norm, not the Euclidean one, so
-`U × X` is not an `InnerProductSpace` and the two corollaries cannot be instantiated here as they
-stand. What is needed is `Optimization/Prox.lean` restated over a symmetric, positive-definite,
-jointly continuous self-pairing `B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ` in place of `innerₗ E`;
-`prodPairing (innerₗ U) (innerₗ X)` is such a pairing on `U × X`, and everything in that file — the
-quadratic `w z = ½ B z z`, its subdifferential `{x - z}`, its recession function, and the
-monotonicity inequality — is written in terms of `B` alone. The closedness clause of 37.5.1 *is*
-here, since it is Theorem 24.4.
+**Corollary 37.5.1's homeomorphism clause, and Corollary 37.5.2** are in `Saddle/Monotone.lean`,
+which is where `Optimization/Prox.lean` gets instantiated at `prodPairing (innerₗ U) (innerₗ X)`.
+Only the closedness clause is here, since only it is Theorem 24.4.
 
 ## References
 
@@ -757,14 +750,31 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X} {K : U × Y → EReal}
 
+/-- **The graph of `∂K` is the graph of `∂f` partially inverted**, where `f` is the graph function
+of `F`: Theorem 37.5's (a) ⇔ (c) read as an equality of sets. The map that does the inversion,
+`(u, y, v, x) ↦ ((u, x), (-v, y))`, is a linear homeomorphism, which is what makes both clauses of
+Corollary 37.5.1 and Corollary 37.5.2 transfer from `∂f`. -/
+theorem setOf_mem_saddleSubgradient_eq_preimage (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
+    {r : (U × Y) × (V × X) | r.2 ∈ saddleSubgradient Bu Bx.flip K r.1}
+      = (fun r : (U × Y) × (V × X) => ((r.1.1, r.2.2), (-r.2.1, r.1.2)))
+        ⁻¹' subgradientRel (prodPairing Bu Bx) (graphFn F) := by
+  ext r
+  rw [Set.mem_preimage, Set.mem_ofPred_eq,
+    mem_saddleSubgradient_iff_isBifunSubgradientPair Bu Bx hF hcl hK,
+    isBifunSubgradientPair_iff_mem_subgradient_graphFn]
+  exact Iff.rfl
+
 /-- **Rockafellar, Corollary 37.5.1**, closedness clause: the graph of `∂K` is closed.
 
 Proof idea: Theorem 37.5 identifies that graph with the preimage of the graph of `∂f` — `f` the
 graph function of `F` — under the linear homeomorphism `(u, y, v, x) ↦ ((u, x), (-v, y))`, and
 Theorem 24.4 says the graph of `∂f` is closed.
 
-The homeomorphism clause of the corollary is Corollary 31.5.1 (`Optimization/Prox.lean`), which
-cannot be instantiated at `prodPairing`: see this module's *What is not here*. -/
+The homeomorphism clause of the corollary is `saddleSubgradientHomeomorph`
+(`Saddle/Monotone.lean`), which runs the same identification through Corollary 31.5.1. -/
 theorem isClosed_setOf_mem_saddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hcu : Continuous fun r : U × V => Bu r.1 r.2)
@@ -781,15 +791,7 @@ theorem isClosed_setOf_mem_saddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
     have h3 : Continuous fun r : (U × X) × (V × Y) => Bu r.1.1 r.2.1 + Bx r.1.2 r.2.2 :=
       h1.add h2
     simpa only [prodPairing_apply] using h3
-  have hset : {r : (U × Y) × (V × X) | r.2 ∈ saddleSubgradient Bu Bx.flip K r.1}
-      = (fun r : (U × Y) × (V × X) => ((r.1.1, r.2.2), (-r.2.1, r.1.2)))
-        ⁻¹' subgradientRel (prodPairing Bu Bx) (graphFn F) := by
-    ext r
-    rw [Set.mem_preimage, Set.mem_ofPred_eq,
-      mem_saddleSubgradient_iff_isBifunSubgradientPair Bu Bx hF hcl hK,
-      isBifunSubgradientPair_iff_mem_subgradient_graphFn]
-    exact Iff.rfl
-  rw [hset]
+  rw [setOf_mem_saddleSubgradient_eq_preimage Bu Bx hF hcl hK]
   exact IsClosed.preimage hcont
     (isClosed_subgradientRel hpairing hpr (ClosedFn.lowerSemicontinuous hcl))
 

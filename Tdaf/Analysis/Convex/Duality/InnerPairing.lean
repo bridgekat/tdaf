@@ -284,6 +284,14 @@ instance isContinuousPairing_flip_of_isContinuousInnerPairing
   rw [flip_eq_self]
   infer_instance
 
+/-- The flip of a compatible inner pairing is compatible, for the same reason. Every §37 statement
+that conjugates on both sides asks for `IsCompatiblePairing B` and `IsCompatiblePairing B.flip`
+together; for a symmetric pairing the second is the first. -/
+instance isCompatiblePairing_flip_of_isInnerPairing (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsInnerPairing B]
+    [IsCompatiblePairing B] : IsCompatiblePairing B.flip := by
+  rw [flip_eq_self]
+  infer_instance
+
 end Continuous
 
 /-! ### The inner product of an inner-product space -/

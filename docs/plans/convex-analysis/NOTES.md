@@ -1975,16 +1975,17 @@ the surface layer.
 `rw [← innerₗ_apply_apply, …, map_sub, LinearMap.sub_apply]` rather than by hunting for the
 `real_inner_*` lemma with the right shape.
 
-**`w` is `fun z => ((‖z‖ ^ 2 / 2 : ℝ) : EReal)`, and `E` is explicit in `quadFn E`.** Most of the
-elementary lemmas about it use only `[NormedAddCommGroup E]`, so they need
-`omit [InnerProductSpace ℝ E] in` — and the `omit` line must come *before* the doc-comment, not
-between it and the `theorem`.
+**`w` is `fun z => ((B z z / 2 : ℝ) : EReal)`, and `B` is explicit in `quadFn B`.** The file was
+originally written on `innerₗ E` and generalized to an arbitrary `IsInnerPairing B` for §37's sake;
+`quadFn_innerL` recovers `½‖z‖²`. Most of the elementary lemmas need only `[AddCommGroup E]
+[Module ℝ E]`, so they carry `omit [IsInnerPairing B] in` — and the `omit` line must come *before*
+the doc-comment, not between it and the `theorem`.
 
 **Both self-conjugacy proofs are `le_antisymm` with a `linarith`/`nlinarith` defect.** For
-`conj_quadFn` the defect is `½‖x - y‖²`; for `conj_quadFn_sub` it is `½‖(x - z) - y‖²`. Feed
-`norm_sub_sq_real` and `sq_nonneg` of the right vector; and note that `‖z - x‖ = ‖x - z‖` is not
-enough — `nlinarith` needs the *squared* form `‖z - x‖ ^ 2 = ‖x - z‖ ^ 2`, after which plain
-`linarith` closes it.
+`conj_quadFn` the defect is `½ B (x - y) (x - y)`; for `conj_quadFn_sub` it is
+`½ B ((x - z) - y) ((x - z) - y)`. Feed `self_pairing_sub` and `self_pairing_nonneg` of the right
+vector; and note that `B (z - x) (z - x) = B (x - z) (x - z)` has to be supplied explicitly
+(`self_pairing_sub_rev`), since `linarith` will not find it.
 
 **One `rw [quadFn_apply]` covers both sides when the arguments coincide.** `rw` rewrites every
 occurrence of the instance it matched first, so listing `quadFn_apply` twice fails with
@@ -2003,26 +2004,35 @@ companions then follow from `moreau_add` itself.
 `iSup_add_coe`): a real constant moves in and out of an infimum with no hypothesis, including over
 an empty index type.
 
-**Not done here**: only the gradient formulas `x = ∇(f* □ w) z` and `x* = ∇(f □ w) z`, which need
-Theorem 26.3. The existence and uniqueness of the splitting `z = x + x*`, `prox`, Cor 31.5.1 and
-Cor 31.5.2 are in `Optimization/Prox.lean`; existence is Theorem 27.2, so that file is
-finite-dimensional and this one is not.
+**`CompleteSpace E` is not a hypothesis; `IsCompatiblePairing B` is.** Completeness was there only
+to give Riesz representation for `proper_conj`, and `IsCompatiblePairing` *is* Riesz representation
+stated as a hypothesis. Making it explicit removed `CompleteSpace` from every statement in the file
+and is what lets the theorem run on `U × X`.
+
+**Not done here**: only the gradient formulas `x = ∇(f* □ w) z` and `x* = ∇(f □ w) z`, which are in
+`Optimization/MoreauGradient.lean` (and which needed Theorem 25.1's converse, not Theorem 26.3).
+The existence and uniqueness of the splitting `z = x + x*`, `prox`, Cor 31.5.1 and Cor 31.5.2 are
+in `Optimization/Prox.lean`; existence is Theorem 27.2, so that file is finite-dimensional and this
+one is not.
 
 ### `Tdaf/Analysis/Convex/Optimization/Prox.lean`
 
 §31's Theorem 31.5, attainment and uniqueness, and **Corollaries 31.5.1 and 31.5.2**. Over a
-**finite-dimensional** real inner-product space, because attainment is Theorem 27.2.
+**finite-dimensional** real normed space paired with itself by an `IsContinuousInnerPairing`,
+because attainment is Theorem 27.2.
 
 ```lean
-noncomputable def moreauObj (f : E → EReal) (z : E) : E → EReal    -- `x ↦ f x + w (z - x)`
-noncomputable def prox (f : E → EReal) (z : E) : E                 -- Rockafellar's `prox (z | f)`
+noncomputable def moreauObj (B) (f : E → EReal) (z : E) : E → EReal  -- `x ↦ f x + w (z - x)`
+noncomputable def prox (B) (f : E → EReal) (z : E) : E               -- Rockafellar's `prox (z | f)`
 theorem subgradient_quadFn_sub …                        -- `∂(w (z - ·)) x = {x - z}`
 theorem recessionFn_quadFn_sub …                        -- `(w (z - ·))0⁺ y = ⊤` for `y ≠ 0`
 theorem argmin_moreauObj_nonempty …                     -- Thm 31.5, attainment
 theorem mem_argmin_moreauObj_iff …                      -- Thm 31.5, minimiser ⟺ `z - x ∈ ∂f x`
 theorem eq_of_sub_mem_subgradient …                     -- Thm 31.5, uniqueness
 theorem prox_add_prox_conj …                            -- Thm 31.5, `z = prox(z|f) + prox(z|f*)`
-theorem lipschitzWith_prox …                            -- `prox` is nonexpansive
+theorem pairingNorm_prox_sub_le …                       -- `prox` is nonexpansive for `‖·‖_B`
+theorem continuous_prox …                               -- … hence continuous in the ambient norm
+theorem lipschitzWith_prox …                            -- at `innerₗ E` the constant is `1`
 noncomputable def subgradientRelHomeomorph …            -- Cor 31.5.1
 theorem isMaximalMonotoneRel_subgradientRel …           -- Cor 31.5.2
 ```
@@ -2036,8 +2046,15 @@ and no level-set boundedness are needed.
 
 **Uniqueness and nonexpansiveness are the same two lines.** Both are the monotonicity inequality of
 Theorem 24.8 (`isMonotoneRel_subgradientRel`) at the two pairs `(xᵢ, zᵢ - xᵢ)`: with `z₁ = z₂` it
-gives `|x₁ - x₂|² ≤ 0`, and in general `|x₁ - x₂|² ≤ ⟨x₁ - x₂, z₁ - z₂⟩`. Rockafellar's strict
+gives `B (x₁ - x₂) (x₁ - x₂) ≤ 0`, and in general `B (x₁ - x₂) (x₁ - x₂) ≤ B (x₁ - x₂) (z₁ - z₂)`,
+after which Cauchy–Schwarz for `B` (`pairing_le_pairingNorm_mul`) finishes. Rockafellar's strict
 convexity of `w` is never used, and neither is Theorem 26.3.
+
+**The ambient norm appears exactly once.** `pairingNorm_prox_sub_le` is nonexpansiveness in the
+norm `B` induces, and that is the statement the proof produces. `continuous_prox` converts it with
+the equivalence constants of `exists_pairingNorm_le_and_le_pairingNorm`, so the Lipschitz constant
+in the ambient norm is `C / c`, not `1`; only for `innerₗ E`, where the two norms agree, is it `1`
+(`lipschitzWith_prox`).
 
 **Corollary 31.5.1 needs no closedness of the graph.** Theorem 24.4 is not imported: the inverse
 `z ↦ (prox f z, z - prox f z)` is continuous because `prox` is nonexpansive, and that is the whole
@@ -2050,8 +2067,9 @@ fails a zero-warning build. `Classical.epsilon (· ∈ argmin (moreauObj f z))` 
 
 **Relocation candidates.** `isExactSum_quadFn_sub` duplicates the `have hex` inside `moreau_add`
 and belongs in `Optimization/Moreau.lean`, with `moreau_add` rewritten to use it;
-`closedProperConvexFn_conj` belongs in `Duality/Conjugate.lean` beside `closedFn_conj`, once the
-`IsContinuousPairing B.flip` bookkeeping is settled.
+`closedProperConvexFn_conj` belongs in `Duality/Conjugate.lean` beside `closedFn_conj` — the
+`IsContinuousPairing B.flip` bookkeeping that blocked it is now settled by
+`isContinuousPairing_flip_of_isContinuousInnerPairing`.
 
 ### `Tdaf/Analysis/Convex/Optimization/Minimum.lean`
 
@@ -4024,15 +4042,16 @@ both iterated extrema can be infinite (`C = {0}`, `D = ℝ`, `K (u, v) = v` give
 `sup_C inf_D K = -∞`), so the equality is stated in `EReal`. Corollary 37.6.2, where both are
 bounded, keeps the book's real inequalities.
 
-**Not here**: Corollary 37.5.1's homeomorphism clause and Corollary 37.5.2 (maximal monotonicity of
-`∂K`). Corollaries 31.5.1 and 31.5.2 now exist (`Optimization/Prox.lean`), but only over
-`innerₗ E`. Theorem 37.5 pairs `U × X` with `V × Y` through `prodPairing`, and Mathlib gives a
-product of inner-product spaces the *supremum* norm, so `U × X` is not an `InnerProductSpace` and
-neither corollary can be instantiated here. The fix is to restate `Optimization/Prox.lean` over a
-symmetric, positive-definite, jointly continuous self-pairing `B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ` with
-`w z = ½ B z z`; `prodPairing (innerₗ U) (innerₗ X)` is one, and nothing in that file uses the norm
-for anything but `B`. `Subgradient/Monotone.lean` has maximal *cyclic* monotonicity, which is a
-different statement.
+**`setOf_mem_saddleSubgradient_eq_preimage` is the reusable form of Theorem 37.5's (c).** The
+closedness clause of Corollary 37.5.1 only needs the graph of `∂K` to be a preimage of the graph of
+`∂f`; so do the homeomorphism clause and Corollary 37.5.2. Factoring the set equality out of the
+closedness proof is what let `Saddle/Monotone.lean` be short.
+
+**Not here**: Corollary 37.5.1's homeomorphism clause and Corollary 37.5.2, which are in
+`Saddle/Monotone.lean` — they are Corollaries 31.5.1 and 31.5.2 at
+`prodPairing (innerₗ U) (innerₗ X)`, which became possible once `Optimization/Prox.lean` was
+generalized off `innerₗ E`. `Subgradient/Monotone.lean` has maximal *cyclic* monotonicity, which is
+a different statement.
 
 ### `Tdaf/Analysis/Convex/Duality/ConcaveOps.lean`
 
@@ -4152,6 +4171,80 @@ theorem exists_unique_convexProcess_bracket_indicatorBifun_eq …               
 bifunction of `A` and at its adjoint, so everything separating them is a partial closure.
 `Bifunction/Process.lean` proves what needs only Theorem 33.2's first equation; this module adds
 what needs the second — closedness of `A` — and what needs relative interiors.
+
+### `Tdaf/Analysis/Convex/Duality/InnerPairing.lean`
+
+A space paired with **itself** by a symmetric positive definite form. Written for §37, which needs
+§31's Moreau/prox machinery on `U × X`.
+
+```lean
+class IsInnerPairing (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) : Prop        -- symmetric, ≥ 0, and definite
+class IsContinuousInnerPairing (B) : Prop extends IsInnerPairing B  -- `x ↦ B x x` continuous
+noncomputable def pairingNorm (B) (x : E) : ℝ                   -- `√(B x x)`
+theorem pairing_sq_le_mul …                                    -- Cauchy–Schwarz
+theorem pairingNorm_add_le …                                   -- the triangle inequality
+instance isInnerPairing_prodPairing …                          -- what §37 runs on
+theorem exists_pairingNorm_le_and_le_pairingNorm …             -- ‖·‖_B ≃ ‖·‖ in finite dimensions
+```
+
+**Why not `WithLp 2 (U × X)`.** The obvious fix for "`U × X` is not an `InnerProductSpace`" is to
+put the Euclidean structure on the product with `WithLp`. It does not work: `WithLp` *replaces* the
+topology instance, so every `ClosedFn`, `Continuous` and `IsClosed` statement about `U × X` — which
+is what §37 is made of — has to be transported across a type synonym. Generalizing the pairing
+touches only `Optimization/{Moreau,Prox}.lean` and leaves the topology alone.
+
+**Polarization makes `IsContinuousInnerPairing` subsume `IsContinuousPairing`.** From
+`B x y = ½ (B (x + y) (x + y) - B x x - B y y)`, continuity of the diagonal gives continuity in
+each variable; `isContinuousPairing_of_isContinuousInnerPairing` is that instance (priority 100),
+and `isContinuousPairing_flip_of_isContinuousInnerPairing` supplies the flip that instance search
+cannot see through `LinearMap.flip` (gotcha 275). So no proof in §31 carries both classes.
+
+**In finite dimensions `IsContinuousInnerPairing` is free, and needs no `IsContinuousPairing`.**
+`continuous_self_pairing` goes through `LinearMap.toContinuousLinearMap` into `E →L[ℝ] ℝ` and
+`isBoundedBilinearMap_apply`; the first attempt, through the bare `E →ₗ[ℝ] ℝ`, cannot even be
+stated, since that type has no `TopologicalSpace` instance.
+
+**`exists_pairingNorm_le_and_le_pairingNorm` is a compactness argument on the sphere**, and it is
+the only place the ambient norm and `B` are compared. Both constants come from
+`IsCompact.exists_isMinOn`/`exists_isMaxOn` applied to the continuous `pairingNorm B` on
+`Metric.sphere 0 1`; positivity of the lower one is definiteness.
+
+### `Tdaf/Analysis/Convex/Saddle/Monotone.lean`
+
+**Corollary 37.5.1's homeomorphism clause and Corollary 37.5.2.**
+
+```lean
+def partialInvertEquiv …                        -- `((u, y), (v, x)) ↦ ((u, x), (v, y))`
+def partialInvertNegHomeomorph …                -- the same with (c)'s sign: `v ↦ -v`
+theorem prodPairing_sub_partialInvertEquiv …     -- it preserves the monotonicity form
+theorem IsMaximalMonotoneRel.preimage_partialInvertEquiv …
+def saddleMonotoneRel (Bu) (Bx) (K) : SetRel (U × Y) (V × X)   -- Rockafellar's `ρ`
+noncomputable def saddleSubgradientHomeomorph …   -- **Cor 37.5.1**, `((u,y),(v,x)) ↦ (u - v, x + y)`
+theorem isMaximalMonotoneRel_saddleMonotoneRel …  -- **Cor 37.5.2**
+```
+
+**Partial inversion needs no symmetry of the pairing.** Monotonicity on `(U × Y) × (V × X)` is
+measured by `prodPairing Bu Bx.flip` and on `(U × X) × (V × Y)` by `prodPairing Bu Bx`; exchanging
+the `X`/`Y` slots turns `Bx.flip (y₁ - y₂) (x₁ - x₂)` into `Bx (x₁ - x₂) (y₁ - y₂)`, the same number.
+So both transfer lemmas are stated for arbitrary pairings and the inner product enters only where
+Corollaries 31.5.1 and 31.5.2 do.
+
+**Two maps, because `ρ` absorbs the sign and the graph of `∂K` does not.** `partialInvertEquiv`
+carries no sign; `partialInvertNegHomeomorph` carries condition (c)'s. Corollary 37.5.2 uses the
+first, 37.5.1 the second.
+
+**`Homeomorph.sets` is the right tool** for `s ≃ₜ t` out of `s = ⇑h ⁻¹' t`; it is the abbreviation
+over `Homeomorph.subtype`, and it takes the set equality in exactly the shape
+`setOf_mem_saddleSubgradient_eq_preimage` produces.
+
+**Maximality transfers because `e ⁻¹' (e.symm ⁻¹' τ) = τ`.** Given a monotone `τ` above
+`e ⁻¹' σ`, the relation to feed into `σ`'s maximality is `e.symm ⁻¹' τ`, and that identity is what
+brings the conclusion back.
+
+**Not here**: Corollary 37.5.2's "in particular" clause, `(u, v) ↦ (-∇₁K, ∇₂K)` maximal monotone for
+a finite differentiable `K`. It is this file's theorem plus "`∂K (u, v)` is the single point
+`(∇₁K, ∇₂K)`", which is Theorem 25.1's converse on each slice — a `Saddle/Differential.lean`
+statement that does not exist yet.
 
 ## 2. Lean/Mathlib gotchas
 
@@ -5826,6 +5919,42 @@ unfolding, because `Function.comp_apply` is `rfl`.
 Reaching for `Tendsto.isBoundedUnder_le` gives only an eventual bound and then forces a reindexing
 `ws i = vs (i + N)` to feed `IsCompact.tendsto_subseq`, which wants `∀ n, xs n ∈ K`. The range
 version removes the reindexing entirely.
+
+297. **`rw` traverses outside-in, so `map_zero` collapses `B 0 0` in one step.** In
+`rw [quadFn_apply, map_zero, LinearMap.zero_apply]` the first match of `map_zero` is the *outer*
+application `(B 0) 0`, whose result is already `(0 : ℝ)`; the following `LinearMap.zero_apply` then
+fails with "did not find an occurrence". Drop it.
+
+298. **`↑(⟨c, hc⟩ : ℝ≥0)` will not rewrite, and the error names the wrong type.**
+`LipschitzWith.of_dist_le_mul (K := ⟨C / c, hK⟩)` elaborates the anonymous constructor at
+`{r // 0 ≤ r}` rather than at `NNReal`, so `NNReal.coe_mk` misses it and even a `have : ↑⟨C/c,hK⟩ =
+C/c := rfl` cannot be `rw`-ed in — the reported failure is an "Application type mismatch … has type
+`{ r // 0 ≤ r }` but is expected to have type `NNReal`" hidden inside a *rewrite* error. Use
+`(K := (C / c).toNNReal)` with `Real.coe_toNNReal _ hK`.
+
+299. **The `unusedSectionVars` linter cascades, and over-`omit`ting turns a warning into an error
+one declaration later.** Each `omit` you add changes what the *next* declaration needs, so the
+warnings have to be driven to a fixed point — six rounds for `Optimization/Prox.lean`. And an
+`omit` guessed from a warning that does not list its variables (the linter sometimes prints only
+the declaration name) can remove an instance the proof does use; the next build then reports
+"failed to synthesize" at a line the warning never mentioned.
+
+300. **`positivity` cannot see through a plain `def`.** `pairingNorm B x = √(B x x)` is a `def`, so
+`positivity` fails on `0 ≤ pairingNorm B x + pairingNorm B y` even though `Real.sqrt_nonneg` would
+close it. Feed the API lemma instead: `add_nonneg (pairingNorm_nonneg B x) (pairingNorm_nonneg B y)`,
+or `linarith [pairingNorm_nonneg B q]`.
+
+301. **`simp only [map_smul, LinearMap.smul_apply]` fires on the wrong occurrence for `B (a•x) (a•x)`.**
+An `rw` chain rewrites the first match and then cannot find the second in the shape it expects.
+`simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]` followed by `ring` handles both at once.
+
+302. **A generalization pass is cheapest as a Python script with `assert count == 1`.** Rewriting
+`Optimization/{Moreau,Prox}.lean` from `innerₗ E` to a general `B` meant ≈ 500 changed lines; doing it
+with targeted `(old, new)` pairs that each assert a unique match caught three places where the
+"obvious" blanket substitution would have been wrong. Two Windows-specific cautions: open the file
+with `io.open(..., newline='\n')` for writing (Python's text mode rewrites every line ending, which
+turns a small patch into a whole-file diff), and write the script to a file rather than piping it
+through a bash heredoc — apostrophes inside the payload break the heredoc.
 
 ## 3. Build and verification
 

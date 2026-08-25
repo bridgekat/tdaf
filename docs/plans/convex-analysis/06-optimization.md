@@ -466,8 +466,8 @@ theorem fenchel_duality (hex : IsExactSum B f (-g)) :
 
 `concaveConj` (`g*(y) = ⨅ x, ⟨x,y⟩ - g x`) lives in `Duality/ConcaveConj.lean` rather than in
 `Concave.lean`: it needs a pairing, and `Concave.lean` is a layer-A file that should not acquire
-separation and Hahn-Banach as dependencies. `prox` for Theorem 31.5 still has to be built, and
-needs an inner-product space and a real existence-and-uniqueness proof.
+separation and Hahn-Banach as dependencies. `prox` is built in `Optimization/Prox.lean`, over an
+arbitrary symmetric positive definite self-pairing rather than an inner product.
 
 Rockafellar's hypotheses — (a) `ri (dom f) ∩ ri (dom g) ≠ ∅`, and (b) `f, g` closed with
 `ri (dom g*) ∩ ri (dom f*) ≠ ∅` — are the primal-side and dual-side instances of `IsExactSum`, with
@@ -498,15 +498,26 @@ supplies.
 | `quadFn`, `conj_quadFn`, `conj_quadFn_sub`, `moreau_add`, `infConv_quadFn_ne_top` and companions, `mem_subgradient_iff_infConv_eq` | **Thm 31.5 (Moreau)**, the identity and the Kuhn–Tucker characterisation | done |
 | `moreauObj`, `prox`, `argmin_moreauObj_nonempty`, `mem_argmin_moreauObj_iff`, `eq_of_sub_mem_subgradient`, `existsUnique_sub_mem_subgradient`, `prox_eq_iff`, `argmin_moreauObj_eq_singleton`, `infConv_quadFn_eq_moreauObj_prox`, `prox_add_prox_conj` | **Thm 31.5**, attainment and uniqueness | done (`Optimization/Prox.lean`), in finite dimensions |
 | `quadFn_zero_sub`, `subgradient_quadFn`, `isExactSum_quadFn`, `closedProperConvexFn_infConv_quadFn`, `conj_infConv_quadFn`, `subgradient_infConv_quadFn`, `prox_conj_eq`, `hasGradientAt_infConv_quadFn`, `hasGradientAt_infConv_conj_quadFn`, `gradient_infConv_quadFn`, `gradient_infConv_conj_quadFn` | **Thm 31.5**, the gradient formulas | done (`Optimization/MoreauGradient.lean`). Theorem 26.3 was **not** needed: `∂(f □ w) z` is shown to be a singleton directly — Corollary 23.5.1, then Theorem 16.4 in its unconditional direction, then Theorem 23.8 — and Theorem 25.1's converse turns the singleton into a gradient |
-| `dist_prox_prox_le`, `lipschitzWith_prox`, `subgradientRelHomeomorph` | **Cor 31.5.1** | done (`Optimization/Prox.lean`) |
+| `pairingNorm_prox_sub_le`, `continuous_prox`, `dist_prox_prox_le`, `lipschitzWith_prox`, `subgradientRelHomeomorph` | **Cor 31.5.1** | done (`Optimization/Prox.lean`) |
+| `IsInnerPairing`, `IsContinuousInnerPairing`, `pairingNorm`, `pairing_sq_le_mul`, `isInnerPairing_prodPairing`, `exists_pairingNorm_le_and_le_pairingNorm` | the pairing `quadFn`/`prox` run on | done (`Duality/InnerPairing.lean`) |
 | `isMaximalMonotoneRel_subgradientRel` | **Cor 31.5.2** | done (`Optimization/Prox.lean`) |
 
-Moreau's theorem (31.5) needs an inner-product structure and is the source of the proximal operator.
-Its *identity* is proved in an arbitrary real Hilbert space (`Optimization/Moreau.lean`); the
-attainment and uniqueness clauses, and the two corollaries, are in `Optimization/Prox.lean` and are
+Moreau's theorem (31.5) is the source of the proximal operator. It does **not** need an inner
+product: what it needs is the space paired with *itself* by a symmetric positive definite form
+whose quadratic form is continuous — `IsContinuousInnerPairing`, in `Duality/InnerPairing.lean`.
+Its *identity* is proved with no finite-dimensionality (`Optimization/Moreau.lean`); the attainment
+and uniqueness clauses, and the two corollaries, are in `Optimization/Prox.lean` and are
 finite-dimensional, because attainment is Theorem 27.2 and `Optimization/Minimum.lean` proves that
 only in `ℝⁿ`. Corollary 31.5.2 gives maximal monotonicity of `∂f` without going through the much
 harder §24, exactly as Rockafellar says.
+
+**The generality is not decoration.** §37's Corollaries 37.5.1 and 37.5.2 are these two corollaries
+read on `U × X`, and Mathlib gives a product of inner-product spaces the *supremum* norm, so `U × X`
+carries no `InnerProductSpace` instance and `innerₗ (U × X)` does not exist. `prodPairing (innerₗ U)
+(innerₗ X)` does, and is an inner pairing on it. Nonexpansiveness of `prox` is then stated in the
+norm `B` induces (`pairingNorm_prox_sub_le`); `dist_prox_prox_le` is that statement at `innerₗ E`,
+where the two norms agree, and `continuous_prox` covers the general case through the equivalence
+constants of `exists_pairingNorm_le_and_le_pairingNorm`.
 
 ### What actually happened
 
@@ -557,8 +568,8 @@ orthant of a coordinate space; the componentwise complementarity `ξⱼ ξⱼ* =
 
 **Moreau's Theorem 31.5 needed no finite-dimensionality.** `w(z - ·)` is finite and continuous
 everywhere, so `IsExactSum.of_continuousAt` — not `of_relint` — supplies the constraint
-qualification, and the theorem holds in an arbitrary real Hilbert space paired with itself by
-`innerₗ E`. The proof is again Theorem 27.1(a) on `f + w(z - ·)` with the conjugate split at the
+qualification, and the theorem holds in any space paired with itself by an inner pairing `B`. The
+proof is again Theorem 27.1(a) on `f + w(z - ·)` with the conjugate split at the
 origin; `conj_quadFn_sub` computes `(w(z - ·))*(y) = ⟨z, y⟩ + w y`, and the reindexing `y ↦ -y`
 turns that into `w(z - y) - w z`, which is what makes the dual infimum appear. Pulling the real
 constant `-w z` out of the infimum needed a new `Tdaf.EReal.iInf_add_coe`, the dual of the existing
