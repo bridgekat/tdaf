@@ -7,6 +7,7 @@ import Tdaf.Analysis.Convex.HellyRefined
 import Tdaf.Analysis.Convex.Optimization.Perturbation
 import Tdaf.Analysis.Convex.Polyhedral.Closedness
 import Tdaf.Analysis.Convex.Polyhedral.Conjugate
+import Tdaf.Analysis.Convex.Polyhedral.Faces
 import Tdaf.Analysis.Convex.Polyhedral.NormalForm
 import Tdaf.Analysis.Convex.Polyhedral.Recession
 import Tdaf.Analysis.Convex.Polyhedral.Simplicial
@@ -48,7 +49,9 @@ book's union over weights.
 | label | declaration |
 |---|---|
 | Theorem 19.1 | `theorem_19_1`, `theorem_19_1_pairing`, `theorem_19_1_convexHullPD`,
-  `theorem_19_1_isClosed`, `theorem_19_1_finite_faces`, `theorem_19_1_face` |
+  `theorem_19_1_isClosed`, `theorem_19_1_finite_faces`, `theorem_19_1_of_finite_faces`,
+  `theorem_19_1_finitelyGenerated_of_finite_faces`, `theorem_19_1_iff_finite_faces`,
+  `theorem_19_1_face` |
 | Corollary 19.1.1 | `corollary_19_1_1_extremePoints`, `corollary_19_1_1_extremeDirections` |
 | Corollary 19.1.2 | `corollary_19_1_2`, `corollary_19_1_2_closed`, `corollary_19_1_2_attained` |
 | Theorem 19.2 | `theorem_19_2` |
@@ -73,14 +76,6 @@ book's union over weights.
 
 **Omitted with a reason.**
 
-* **Theorem 19.1, the implications out of clause (b).** The equivalence of "polyhedral" and
-  "finitely generated" is complete (`theorem_19_1`), and both implications *into* clause (b) —
-  closedness and finiteness of the face set — are here. The implications *out of* (b) are not:
-  the book's argument runs through Theorem 18.5 (a closed convex set containing no lines is the
-  hull of its extreme points and extreme directions), a lineality-space reduction, and
-  Theorem 18.8, and the backbone has no result deriving finite generation from finiteness of the
-  face set. Recorded as a backbone gap. Note also that the book's own proof of (b) ⇒ (a) opens
-  "It suffices to treat the case where `C` is `n`-dimensional in `Rⁿ`" and never says why.
 * **Theorem 19.5's `λ < 0` and `λ = 0` case analysis.** `Polyhedral.smul` covers every real `λ`
   in one statement, so the book's three-way split is not reproduced. Rockafellar's `0C = {0}`
   convention differs from Lean's `(0 : ℝ) • C`, which is `∅` for `C = ∅`; both are polyhedral.
@@ -95,10 +90,17 @@ book's union over weights.
 
 **Deferred by scope.** None.
 
-**Stated and refuted.** None. §19's statements and proofs are correct, apart from the gap in the
-printed argument noted above and the fact that Theorem 19.6 is printed with no `Proof.` paragraph
-at all — the book derives it in the running text at 6949–6971, and that is the argument the
-backbone formalises.
+**Stated and refuted.** None. §19's statements are correct. Two of its printed *proofs* are not
+complete as written, and neither defect touches a statement:
+
+* **Theorem 19.1's proof of (b) ⇒ (a)** opens "It suffices to treat the case where `C` is
+  `n`-dimensional in `Rⁿ`" and never says why. The reduction is repairable — a lower-dimensional
+  `C` is polyhedral in `Rⁿ` exactly when it is polyhedral inside `aff C`, which is itself
+  polyhedral — but it is not needed at all: `theorem_19_1_of_finite_faces` goes (b) ⇒ (c) ⇒ (a),
+  using the book's own route through Theorem 18.5 for (b) ⇒ (c) and `theorem_19_1` for (c) ⇒ (a),
+  and Theorem 18.8 never enters. See `polyhedral_of_finite_setOf_isFace`.
+* **Theorem 19.6 is printed with no `Proof.` paragraph at all** — the book derives it in the
+  running text at 6949–6971, and that is the argument the backbone formalises.
 -/
 
 namespace Rockafellar
@@ -191,57 +193,62 @@ theorem theorem_19_1_isClosed {C : Set (Rn n)} (hC : Polyhedral C) : IsClosed C 
 finitely many faces.
 
 The book proves this from Theorem 6.5 and Theorem 18.2, by intersecting the relatively open sets
-`int Hᵢ` or `Mᵢ` that contain `ri C'`. Here it is read off the generators instead: by Theorem 18.3
-(`IsFace.eq_convexHullPD`) a face of `conv P + cone D` is the hull of the points of `P` it contains
-and the directions of `D` in which it recedes, so the face map factors through
-`P.powerset ×ˢ D.powerset`. -/
+`int Hᵢ` or `Mᵢ` that contain `ri C'`. The backbone reads it off the generators instead: by
+Theorem 18.3 (`IsFace.eq_convexHullPD`) a face of `conv P + cone D` is the hull of the points of
+`P` it contains and the directions of `D` in which it recedes, so the face map factors through
+`P.powerset ×ˢ D.powerset`. Specialises `Polyhedral.finite_setOf_isFace`. -/
 theorem theorem_19_1_finite_faces {C : Set (Rn n)} (hC : Polyhedral C) :
-    {C' : Set (Rn n) | IsFace C C'}.Finite := by
-  classical
-  obtain ⟨P, D, hPD⟩ := hC.finitelyGenerated
-  have hPD' : C = convexHullPD (P : Set (Rn n)) (D : Set (Rn n)) := hPD
-  refine Set.Finite.subset (Set.Finite.image
-    (fun q : Finset (Rn n) × Finset (Rn n) =>
-      convexHullPD (q.1 : Set (Rn n)) (q.2 : Set (Rn n)))
-    (P.powerset ×ˢ D.powerset).finite_toSet) ?_
-  rintro C' hC'
-  rw [Set.mem_ofPred_eq, hPD'] at hC'
-  have hp : ((P.filter (· ∈ C') : Finset (Rn n)) : Set (Rn n)) = (P : Set (Rn n)) ∩ C' := by
-    ext z; simp
-  have hd : ((D.filter (· ∈ recessionCone C') : Finset (Rn n)) : Set (Rn n))
-      = {y ∈ (D : Set (Rn n)) | y ∈ recessionCone C'} := by
-    ext z; simp
-  refine ⟨(P.filter (· ∈ C'), D.filter (· ∈ recessionCone C')), ?_, ?_⟩
-  · exact Finset.mem_coe.2 (Finset.mem_product.2
-      ⟨Finset.mem_powerset.2 (Finset.filter_subset _ _),
-        Finset.mem_powerset.2 (Finset.filter_subset _ _)⟩)
-  · change convexHullPD ((P.filter (· ∈ C') : Finset (Rn n)) : Set (Rn n))
-      ((D.filter (· ∈ recessionCone C') : Finset (Rn n)) : Set (Rn n)) = C'
-    rw [hp, hd]
-    exact hC'.eq_convexHullPD.symm
+    {C' : Set (Rn n) | IsFace C C'}.Finite :=
+  hC.finite_setOf_isFace
+
+/-- **Rockafellar, Theorem 19.1**, clause (b) implies clause (c): a closed convex set with only
+finitely many faces is finitely generated.
+
+This is the book's argument, in the backbone as
+`finitelyGenerated_of_finite_setOf_isFace_of_containsNoLine` and
+`polyhedral_of_finite_setOf_isFace`. When `C` contains no lines, Theorem 18.5 writes it as the
+hull of its extreme points and extreme directions, and a finite face set makes the extreme points
+finite (they are the singleton faces) and the extreme rays finitely many (they are the half-line
+faces). In general `C = L + (C ∩ M)` for `L` the lineality space and `M` any complement, the
+faces of `C ∩ M` correspond to the faces of `C` (`isFaceEquivInter`, the book's remark on
+p. 166), and `C ∩ M` contains no lines. -/
+theorem theorem_19_1_finitelyGenerated_of_finite_faces {C : Set (Rn n)} (hC : Convex ℝ C)
+    (hCcl : IsClosed C) (hfin : {C' : Set (Rn n) | IsFace C C'}.Finite) :
+    FinitelyGenerated C :=
+  finitelyGenerated_of_finite_setOf_isFace hC hCcl hfin
+
+/-- **Rockafellar, Theorem 19.1**, clause (b) implies clause (a): a closed convex set with only
+finitely many faces is polyhedral.
+
+**The book's own proof of this implication has a hole**, and this is not it. He writes "It
+suffices to treat the case where `C` is `n`-dimensional in `Rⁿ`" and gives no justification, then
+runs the tangent half-spaces of Theorem 18.8 over that case. The reduction is repairable — a
+lower-dimensional `C` is polyhedral exactly when it is polyhedral relative to `aff C`, which is
+itself a polyhedral set — but it is also avoidable, and avoiding it is what
+`polyhedral_of_finite_setOf_isFace` does: clause (b) gives clause (c)
+(`theorem_19_1_finitelyGenerated_of_finite_faces`) and clause (c) gives clause (a)
+(`theorem_19_1`). Theorem 18.8 is not used, and no dimension is counted. -/
+theorem theorem_19_1_of_finite_faces {C : Set (Rn n)} (hC : Convex ℝ C) (hCcl : IsClosed C)
+    (hfin : {C' : Set (Rn n) | IsFace C C'}.Finite) : Polyhedral C :=
+  polyhedral_of_finite_setOf_isFace hC hCcl hfin
+
+/-- **Rockafellar, Theorem 19.1**, the equivalence of clauses (a) and (b): a convex set is
+polyhedral if and only if it is closed and has only finitely many faces.
+
+Together with `theorem_19_1` — the equivalence of (a) and (c) — this completes the three-way
+statement. Specialises `polyhedral_iff_isClosed_finite_setOf_isFace`. -/
+theorem theorem_19_1_iff_finite_faces {C : Set (Rn n)} (hC : Convex ℝ C) :
+    Polyhedral C ↔ IsClosed C ∧ {C' : Set (Rn n) | IsFace C C'}.Finite :=
+  polyhedral_iff_isClosed_finite_setOf_isFace hC
 
 /-- **Rockafellar, §19**, the remark after Theorem 19.1: "the proof of Theorem 19.1 shows,
 incidentally, that every face of a polyhedral convex set is itself polyhedral."
 
 Same route as `theorem_19_1_finite_faces`: Theorem 18.3 exhibits the face as the hull of a subset
-of the generators. -/
+of the generators. Specialises `Polyhedral.of_isFace`. -/
 theorem theorem_19_1_face {C C' : Set (Rn n)} (hC : Polyhedral C) (hface : IsFace C C') :
-    Polyhedral C' := by
-  classical
-  obtain ⟨P, D, hPD⟩ := hC.finitelyGenerated
-  have hPD' : C = convexHullPD (P : Set (Rn n)) (D : Set (Rn n)) := hPD
-  rw [hPD'] at hface
-  have hp : ((P.filter (· ∈ C') : Finset (Rn n)) : Set (Rn n)) = (P : Set (Rn n)) ∩ C' := by
-    ext z; simp
-  have hd : ((D.filter (· ∈ recessionCone C') : Finset (Rn n)) : Set (Rn n))
-      = {y ∈ (D : Set (Rn n)) | y ∈ recessionCone C'} := by
-    ext z; simp
-  refine FinitelyGenerated.polyhedral
-    ⟨P.filter (· ∈ C'), D.filter (· ∈ recessionCone C'), ?_⟩
-  change C' = convexHullPD ((P.filter (· ∈ C') : Finset (Rn n)) : Set (Rn n))
-    ((D.filter (· ∈ recessionCone C') : Finset (Rn n)) : Set (Rn n))
-  rw [hp, hd]
-  exact hface.eq_convexHullPD
+    Polyhedral C' :=
+  hC.of_isFace hface
 
 /-! ### Corollary 19.1.1 -/
 
