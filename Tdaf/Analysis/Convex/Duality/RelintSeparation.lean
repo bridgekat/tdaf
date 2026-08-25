@@ -68,11 +68,12 @@ is needed; the statements below follow suit. A caller in finite dimensions disch
 
 ## What is not here
 
-The many-set form — `ri C₁ ∩ ⋯ ∩ ri Cₘ ≠ ∅` against a family `y₁, …, yₘ` summing to zero — is
-Rockafellar's Corollary 16.2.2. It is the diagonal subspace of `ι → E` applied to
-`submodule_inter_relint_nonempty_iff_supportFn`, and what it additionally needs is a compatible
-pairing on `ι → E`, the relative interior of a product set, and the support function of a product
-set as a sum. None of the three is here.
+**The many-set form is in `Duality/FiniteProduct.lean`.** `ri C₁ ∩ ⋯ ∩ ri Cₘ ≠ ∅` against a family
+`y₁, …, yₘ` summing to zero is the diagonal subspace of `ι → E` applied to
+`submodule_inter_relint_nonempty_iff_supportFn`, and the transport needs a pairing on a finite
+product, the relative interior of a product set and the support function of a product set. Those
+are the subject of their own module, and `iInter_relint_nonempty_iff_supportFn` there is the
+result.
 
 ## References
 
