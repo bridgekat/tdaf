@@ -144,13 +144,6 @@ noncomputable def rankFn (f : Rn n → EReal) : ℤ := dim (dom f) - (linealityF
 Rockafellar states Theorems 13.3 and 13.4 for a *proper convex* `f`; the backbone asks in addition
 that `f*` be proper, which in `ℝⁿ` is automatic — Theorem 12.2, through Theorem 7.4. -/
 
-/-- In `ℝⁿ` the conjugate of a proper convex function is proper: `f*` is `(cl f)*`, and `cl f` is
-closed proper convex by Theorem 7.4. -/
-theorem proper_conj_of_proper (f : Rn n → EReal) (hf : ConvexFn f) (hp : Proper f) :
-    Proper (conj (pairing n) f) := by
-  rw [← conj_clFn]
-  exact proper_conj ⟨convexFn_clFn hf, closedFn_clFn f, hf.proper_clFn hp⟩
-
 /-! ### The unnumbered running text of pp. 112–114 -/
 
 /-- **Rockafellar, §13, p. 112**: minimisation of linear functions over `C` is covered too, since
@@ -343,7 +336,7 @@ Specialises `recessionFn_conj`; the extra properness hypothesis the backbone car
 here by `proper_conj_of_proper`. -/
 theorem theorem_13_3 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
     supportFn (pairing n) (dom f) = recessionFn (conj (pairing n) f) :=
-  (recessionFn_conj hp (proper_conj_of_proper f hf hp)).symm
+  (recessionFn_conj hp (proper_conj_of_proper hf hp)).symm
 
 /-- **Rockafellar, Theorem 13.3**, second assertion. If `f` is closed, the support function of
 `dom f*` is the recession function `f0⁺` of `f`.
@@ -562,7 +555,7 @@ subspace is its orthogonal complement, which is the book's phrasing, and `vector
 the subspace parallel to `aff (dom f)`. -/
 theorem theorem_13_4 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
     linealitySpaceFn (conj (pairing n) f) = ((vectorSpan ℝ (dom f))ᗮ : Set (Rn n)) := by
-  rw [linealitySpaceFn_conj_eq_annihilator hp (proper_conj_of_proper f hf hp)]
+  rw [linealitySpaceFn_conj_eq_annihilator hp (proper_conj_of_proper hf hp)]
   ext y
   simp only [Set.mem_ofPred_eq, SetLike.mem_coe, Submodule.mem_orthogonal]
   exact forall₂_congr fun v _ => by rw [pairing_apply, real_inner_comm]
@@ -586,7 +579,7 @@ theorem theorem_13_4_lineality {f : Rn n → EReal} (hf : ConvexFn f) (hp : Prop
     (linealityFn (conj (pairing n) f) : ℤ) = (n : ℤ) - dim (dom f) := by
   have hsub : linealitySubmoduleFn (conj (pairing n) f) = (vectorSpan ℝ (dom f))ᗮ :=
     SetLike.ext' (by
-      rw [coe_linealitySubmoduleFn (proper_conj_of_proper f hf hp), theorem_13_4 hf hp])
+      rw [coe_linealitySubmoduleFn (proper_conj_of_proper hf hp), theorem_13_4 hf hp])
   have hcount := Submodule.finrank_add_finrank_orthogonal (K := vectorSpan ℝ (dom f))
   rw [finrank_euclideanSpace_fin] at hcount
   rw [linealityFn, hsub, dim_of_nonempty hp.dom_nonempty]

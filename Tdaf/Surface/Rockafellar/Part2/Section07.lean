@@ -122,27 +122,11 @@ theorem closed_improper_eq_const (hc : ClosedFn f) (himp : ¬ Proper f) :
     f = (fun _ => (⊥ : EReal)) ∨ f = fun _ => (⊤ : EReal) :=
   eq_const_of_closedFn_of_not_proper hc himp
 
-/-! ### Three facts the backbone does not carry
+/-! ### Dimension bookkeeping
 
-`not_proper_clFn` is the converse of `ConvexFn.proper_clFn`; `dim_eq_of_affineSpan_eq` and
-`dim_eq_of_closure_eq` are the dimension bookkeeping Corollary 7.4.1 and Theorem 7.6 need, and are
-Rockafellar's Corollary 6.3.1. All three are recorded as backbone gaps; none is a §7 statement. -/
-
-/-- The closure of an improper function is improper. Neither convexity nor finite dimension is
-used: `clFn f ≤ f` transfers the value `−∞`, and `dom (cl f) ⊆ cl (dom f)` transfers emptiness of
-the effective domain. -/
-theorem not_proper_clFn (himp : ¬ Proper f) : ¬ Proper (clFn f) := by
-  intro hpr
-  refine himp ⟨?_, fun z hz => hpr.ne_bot z (le_bot_iff.1 (by rw [← hz]; exact clFn_le f z))⟩
-  obtain ⟨y, hy⟩ := hpr.dom_nonempty
-  have hb : ∀ x, lscHull f x ≠ ⊥ := fun x hx =>
-    hpr.ne_bot x (le_bot_iff.1 (by rw [← hx]; exact clFn_le_lscHull f x))
-  rw [clFn_of_forall_ne_bot hb] at hy
-  have hyd : y ∈ closure (dom f) := dom_lscHull_subset_closure_dom f hy
-  rcases Set.eq_empty_or_nonempty (dom f) with h | h
-  · rw [h, closure_empty] at hyd
-    exact absurd hyd (Set.notMem_empty y)
-  · exact h
+`dim_eq_of_affineSpan_eq` and `dim_eq_of_closure_eq` are Rockafellar's Corollary 6.3.1 in the form
+Corollary 7.4.1 and Theorem 7.6 need. Neither is a §7 statement; both are two lines over the
+backbone's `vectorSpan_eq_of_affineSpan_eq`, and `dim` itself is §1's. -/
 
 /-- Non-empty sets with the same affine hull have the same dimension. -/
 theorem dim_eq_of_affineSpan_eq {S T : Set (Rn n)} (hS : S.Nonempty) (hT : T.Nonempty)

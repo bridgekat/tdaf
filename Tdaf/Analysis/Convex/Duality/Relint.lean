@@ -38,6 +38,8 @@ what discharge them.
   `(f + g)* = (cl f + cl g)*`. The book's own form `cl (f + g) = cl f + cl g` is `clFn_add` in
   `Recession/Closedness.lean`; it is *not* what §20 can use, see the design notes.
 * `IsExactSum.of_clFn` — exactness transfers from the closures.
+* `proper_conj_of_proper` — **Theorem 12.2** in the form §13 uses it: in finite dimensions
+  `f` proper convex already gives `f*` proper, with no closedness hypothesis.
 
 ## Design notes
 
@@ -323,6 +325,18 @@ formula of **Theorem 9.3** uses, and naming it is what lets §16's relative-inte
 and §20's polyhedral one run through one and the same lemma. -/
 def TendstoClFnAlongSegment (f : E → EReal) (x₀ : E) : Prop :=
   ∀ y, Tendsto (fun a : ℝ => f ((1 - a) • x₀ + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y))
+
+omit [FiniteDimensional ℝ F] in
+/-- **In finite dimensions the conjugate of a proper convex function is proper.**
+
+Rockafellar states Theorems 13.3 and 13.4 for a proper convex `f`, where `proper_conj` asks for
+`ClosedProperConvexFn f`. The gap closes here rather than in `Duality/Conjugate.lean` because it
+runs through **Theorem 7.4** (`ConvexFn.proper_clFn`, `RelativeInterior.lean`), which is where
+finite-dimensionality enters: `f* = (cl f)*`, and `cl f` is closed proper convex. -/
+theorem proper_conj_of_proper [IsCompatiblePairing B] (hf : ConvexFn f) (hp : Proper f) :
+    Proper (conj B f) := by
+  rw [← conj_clFn]
+  exact proper_conj ⟨convexFn_clFn hf, closedFn_clFn f, hf.proper_clFn hp⟩
 
 /-- **Rockafellar, Theorem 7.5**: a proper convex function is recovered along segments issuing from
 any relative interior point of its effective domain. -/

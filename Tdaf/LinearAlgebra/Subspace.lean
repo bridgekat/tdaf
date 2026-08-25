@@ -20,6 +20,8 @@ needs it in `§1` before any convexity has been introduced.
 ## Main results
 
 * `vectorSpan_eq_span_of_zero_mem` — `vectorSpan ℝ C = Submodule.span ℝ C` when `0 ∈ C`.
+* `vectorSpan_eq_of_affineSpan_eq` — equal affine hulls give equal directions, hence equal
+  dimensions.
 
 ## Not here
 
@@ -45,5 +47,15 @@ theorem vectorSpan_eq_span_of_zero_mem {C : Set E} (h0 : (0 : E) ∈ C) :
   congr 1
   ext x
   simp
+
+/-- **Sets with the same affine hull have the same direction.** The affine hull determines the
+`vectorSpan` — it *is* its direction — so this is one `congrArg`, and it is the step behind every
+"these two sets have the same dimension" argument: `finrank` of both sides then agrees.
+
+Rockafellar's Corollary 6.3.1 (`cl C` and `ri C` have the same dimension as `C`) is this lemma
+applied to the affine-hull equalities that Theorem 6.3 supplies. -/
+theorem vectorSpan_eq_of_affineSpan_eq {S T : Set E}
+    (h : affineSpan K S = affineSpan K T) : vectorSpan K S = vectorSpan K T := by
+  rw [← direction_affineSpan K S, ← direction_affineSpan K T, h]
 
 end Tdaf

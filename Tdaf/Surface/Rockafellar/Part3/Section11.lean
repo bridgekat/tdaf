@@ -182,13 +182,6 @@ theorem separableStrongly_iff_exists {C₁ C₂ : Set (Rn n)} (h₁ : C₁.Nonem
       exact hsep.ne_zero h₁ h₂ hz
     exact ⟨b, -c, separatesStronglyRn_iff.2 ⟨hb0, by rw [hb]; exact hsep.symm⟩⟩
 
-/-- Strong separation passes to subsets: shrinking the sets only shrinks the two extrema. The
-backbone has `Separates.mono` but not this one. -/
-theorem separatesStrongly_mono {f : Rn n →L[ℝ] ℝ} {c : ℝ} {s t s' t' : Set (Rn n)}
-    (h : SeparatesStrongly f c s t) (hs : s' ⊆ s) (ht : t' ⊆ t) : SeparatesStrongly f c s' t' :=
-  ⟨lt_of_le_of_lt (iSup₂_le fun _ hx => coe_apply_le_iSup₂ (hs hx)) h.iSup_lt,
-    lt_of_lt_of_le h.lt_iInf (le_iInf₂ fun _ hx => iInf₂_le_coe_apply (ht hx))⟩
-
 /-! ### Theorem 11.1 -/
 
 /-- **Rockafellar, Theorem 11.1**, conditions (a) and (b). Let `C₁` and `C₂` be non-empty sets in
@@ -410,7 +403,7 @@ theorem corollary_11_4_2 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂
         h₂.closure isClosed_closure hdisj
     · exact separatesStrongly_of_disjoint_isClosed_isCompact h₁.closure isClosed_closure
         h₂.closure (Metric.isCompact_of_isClosed_isBounded isClosed_closure hb.closure) hdisj
-  exact ⟨f, c, separatesStrongly_mono hsep subset_closure subset_closure⟩
+  exact ⟨f, c, hsep.mono subset_closure subset_closure⟩
 
 /-! ### Theorem 11.5 and its corollaries -/
 

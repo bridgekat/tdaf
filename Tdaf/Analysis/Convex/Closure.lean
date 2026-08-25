@@ -356,6 +356,24 @@ theorem dom_lscHull_subset_closure_dom (f : E → EReal) : dom (lscHull f) ⊆ c
   rwa [← dom_eq_fst_image_epi] at h2
 
 omit [AddCommGroup E] [IsTopologicalAddGroup E] in
+/-- **The closure of an improper function is improper.** Neither convexity nor finite dimension is
+used: `clFn f ≤ f` transfers the value `−∞` upwards, and `dom (lscHull f) ⊆ cl (dom f)` transfers
+emptiness of the effective domain. The converse — properness is preserved — needs both, and is
+`ConvexFn.proper_clFn` in `RelativeInterior.lean`. -/
+theorem not_proper_clFn (himp : ¬ Proper f) : ¬ Proper (clFn f) := by
+  intro hpr
+  refine himp ⟨?_, fun z hz => hpr.ne_bot z (le_bot_iff.1 (by rw [← hz]; exact clFn_le f z))⟩
+  obtain ⟨y, hy⟩ := hpr.dom_nonempty
+  have hb : ∀ x, lscHull f x ≠ ⊥ := fun x hx =>
+    hpr.ne_bot x (le_bot_iff.1 (by rw [← hx]; exact clFn_le_lscHull f x))
+  rw [clFn_of_forall_ne_bot hb] at hy
+  have hyd : y ∈ closure (dom f) := dom_lscHull_subset_closure_dom f hy
+  rcases Set.eq_empty_or_nonempty (dom f) with h | h
+  · rw [h, closure_empty] at hyd
+    exact absurd hyd (Set.notMem_empty y)
+  · exact h
+
+omit [AddCommGroup E] [IsTopologicalAddGroup E] in
 /-- A point of `closure (epi f)` at height `μ` is a limit of points where `f` is below any `ν > μ`.
 This is the pointwise content of Rockafellar's description of `cl f` as the infimum of the `μ` with
 `x ∈ cl {z | f z ≤ μ}`. -/

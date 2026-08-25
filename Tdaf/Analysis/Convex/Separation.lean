@@ -215,6 +215,13 @@ theorem iInf₂_le_coe_apply {x : E} (hx : x ∈ t) :
     (⨅ y ∈ t, (f y : EReal)) ≤ ((f x : ℝ) : EReal) :=
   iInf₂_le (f := fun y (_ : y ∈ t) => ((f y : ℝ) : EReal)) x hx
 
+/-- Strong separation passes to subsets, exactly as ordinary separation does: shrinking the sets
+only shrinks the two extrema. -/
+theorem SeparatesStrongly.mono {s' t' : Set E} (h : SeparatesStrongly f c s t) (hs : s' ⊆ s)
+    (ht : t' ⊆ t) : SeparatesStrongly f c s' t' :=
+  ⟨lt_of_le_of_lt (iSup₂_le fun _ hx => coe_apply_le_iSup₂ (hs hx)) h.iSup_lt,
+    lt_of_lt_of_le h.lt_iInf (le_iInf₂ fun _ hx => iInf₂_le_coe_apply (ht hx))⟩
+
 /-- **Rockafellar, Theorem 11.1**, condition (a) at a fixed level: `f` separates `s` and `t` at
 level `c` exactly when `c` lies between the supremum of `f` over `s` and its infimum over `t`. -/
 theorem separates_iff_iSup_le_iInf :
