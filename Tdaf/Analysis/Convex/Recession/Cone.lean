@@ -103,7 +103,7 @@ same substitution `Tdaf/Analysis/Convex/Closure.lean` makes for Theorem 7.5.
 
 *Rockafellar's `rank`*. The direct-sum decomposition `C = L + (C ∩ L')` is here, at layer A and for
 an arbitrary complement `L'` of the lineality space `L`, which subsumes the orthogonal complement
-`L^⊥` of the book (take `L' = Lᗮ`, using `Submodule.isCompl_orthogonal_of_hasOrthogonalProjection`);
+`L^⊥` of the book (take `L' = Lᗮ`, using `Submodule.isCompl_orthogonal _`);
 no inner product is needed and none is imported. `rank C = dim C - lineality C`, however, needs
 `dim C = Module.finrank ℝ (vectorSpan ℝ C)` together with the affine-hull calculus of §6 to be
 worth anything, so only `lineality` is defined here.
