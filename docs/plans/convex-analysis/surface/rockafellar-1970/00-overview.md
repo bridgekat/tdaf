@@ -21,7 +21,6 @@ Chapter modules containing section modules, mirroring the book's own division in
 
 ```
 Tdaf/Surface/Rockafellar/
-  Setup.lean             -- ambient ℝⁿ, the inner-product pairing, instance discharge
   Notation.lean          -- δ(·|C), δ*(·|C), γ(·|C), f0⁺, fλ, □, #, K°, C°, ⟨f,g⟩
   Part1.lean             -- aggregator: imports Part1/Section01 … Section05
   Part1/Section01.lean … Section05.lean      -- Basic Concepts
@@ -63,12 +62,13 @@ backbone precisely so that they can be unambiguous here.
 ## 2. The ambient setting
 
 ```lean
-namespace Rockafellar
+namespace Tdaf.Surface
 open Tdaf.ConvexAnalysis
-variable {n : ℕ}
 abbrev Rn (n : ℕ) := EuclideanSpace ℝ (Fin n)
-noncomputable def pairing (n : ℕ) : Rn n →ₗ[ℝ] Rn n →ₗ[ℝ] ℝ := innerₗ (Rn n)
+noncomputable abbrev pairing (n : ℕ) : Rn n →ₗ[ℝ] Rn n →ₗ[ℝ] ℝ := innerₗ (Rn n)
 ```
+
+This is `Tdaf/Surface/Common/Euclidean.lean`, written and building.
 
 Everything is then `conj (pairing n)`, `subgradient (pairing n)`, and so on. Because `Rn n` is a
 finite-dimensional real inner-product space, all four [D9](../../00-overview.md#d9-generality-boundaries)
@@ -80,9 +80,10 @@ honours this by taking `F = E` and `B = ⟨·,·⟩`, so the `*` decoration beco
 rather than a type distinction. That is faithful, and it is also why the backbone must keep the two
 spaces distinct: so that the general theory cannot silently depend on self-duality.
 
-**`Setup.lean` should not be Rockafellar-specific.** Boyd–Vandenberghe wants the same `ℝⁿ`
-instantiation and Bauschke–Combettes the same Hilbert one. Put the instances in a shared module
-under `Tdaf/Surface/Common/` and let each surface import it; then the gaps below get fixed once.
+**The ambient setting is not Rockafellar-specific**, and is not in this directory.
+Boyd–Vandenberghe wants the same `ℝⁿ` instantiation and Bauschke–Combettes the same Hilbert one, so
+it lives in `Tdaf/Surface/Common/Euclidean.lean` and each surface imports it. The gaps below were
+therefore fixed once.
 
 ### 2.1 Instantiation checklist
 
@@ -91,26 +92,33 @@ Ambient typeclasses on `Rn n` — all from Mathlib, all expected automatic:
 `CompleteSpace`, `T2Space`, `ProperSpace`, `LocallyConvexSpace ℝ`, `IsTopologicalAddGroup`,
 `ContinuousSMul ℝ`, `SeparableSpace`.
 
-Pairing classes — status as of the review:
+Pairing classes — **all discharged**, and asserted as a regression test in
+`Tdaf/Surface/Common/Euclidean.lean`:
 
-| hypothesis | available? |
+| hypothesis | how |
 |---|---|
-| `IsInnerPairing (innerₗ E)`, `IsContinuousInnerPairing`, `IsContinuousPairing` | instances |
-| `IsCompatiblePairing (innerₗ E)` and its flip | instances |
-| `IsCompatiblePairing B.flip.flip`, `IsContinuousPairing B.flip.flip` | instances (and the seven hand-rolled workarounds are dead code) |
-| `IsInnerPairing`/`IsContinuousPairing`/`IsCompatiblePairing (prodPairing Bu Bx)` | instances |
-| `IsContinuousPairing ((innerₗ E).flip)` | instance, **but declared in `Subgradient/StrictlyConvex.lean:312`** — a `Setup.lean` importing only `Duality/*` will not see it |
-| `IsCompatiblePairing (-B)` and `(-B).flip` | **theorem, not instance**, in the wrong file (`Saddle/Minimax.lean:739`) |
-| `IsContinuousPairing ((prodPairing Bu Bx).flip)` | not an instance; for the symmetric `ℝⁿ` case it is derivable and missing |
-| pairing classes for `negFst (prodPairing Bu Bx)` | **absent — the likely blocker.** Only the pointwise identity exists |
-| `SeparatingDual ℝ (Rn n)` | required by `Duality/Level.lean:687,706,738,822`; **typecheck before writing `Setup.lean`** |
+| `IsInnerPairing`, `IsContinuousInnerPairing`, `IsContinuousPairing`, `IsCompatiblePairing` of `innerₗ E` | instances |
+| the same at `.flip` and `.flip.flip` | instances — a symmetric pairing is its own flip |
+| `IsContinuousPairing`/`IsCompatiblePairing (-B)` and `(-B).flip` | instances, `Duality/Pairing.lean` (remediation §1.3) |
+| the four classes for `prodPairing Bu Bx` and its flip | instances |
+| the four classes for `negFst (prodPairing Bu Bx)` and its flip | instances, `Duality/Pairing.lean` (remediation §4.2) |
+| `SeparatingDual ℝ (Rn n)` | instance — was never missing |
 
-The four gaps are items 1.2, 1.3 and 4.2 of the remediation plan and **must be closed before
-`Setup.lean` is written**.
+The review predicted four gaps here and all four are closed. Two of them were not gaps at all: the
+`(innerₗ E).flip` instances were already general in `Duality/InnerPairing.lean`, and
+`SeparatingDual` needed nothing. The two that were real — the negated pairings and `negFst` — are
+now instances, and `negFst` in particular needed the `LinearMap` equation
+`negFst (prodPairing Bu Bx) = prodPairing (-Bu) Bx`, not the pointwise identity that already
+existed: the classes are stated about the bilinear map, so a pointwise fact cannot reach them.
 
-Budget a block of `local instance` shims: three backbone sites already work around instance-search
-failure for `IsCompatiblePairing ((innerₗ E).flip)` with `rw [flip_innerₗ]; infer_instance` despite
-the instance existing, and the surface should expect to repeat that.
+**`pairing n` must be an `abbrev`.** As a plain `def` instance search does not unfold it, and not
+one of the classes above is found — `IsInnerPairing (pairing n)` already fails. This is the first
+thing a new `Setup.lean` gets wrong; see gotcha 356.
+
+No `local instance` shims are needed. The three backbone sites that work around instance-search
+failure with `rw [flip_innerₗ]; infer_instance` are `maxSynthPendingDepth` artefacts (gotcha 355)
+and do not recur here.
+
 
 ---
 

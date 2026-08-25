@@ -6805,6 +6805,32 @@ survived long enough to acquire two more instances.
      missing instance rather than an exhausted budget. Raise the depth before concluding an instance
      is absent.
 
+356. **A pairing alias must be an `abbrev`, not a `def`, or instance search stops dead.** The
+     surface's ambient setting is `pairing n := innerₗ (Rn n)`. Written as a `def`, *not one*
+     pairing class is found — `IsInnerPairing (pairing n)` already fails, because instance search
+     does not unfold a plain `def` and every instance in `Duality/InnerPairing.lean` is stated about
+     `innerₗ`. Written as an `abbrev` (`@[reducible] def`) all 31 classes the surface needs resolve
+     with no hypothesis and no `maxSynthPendingDepth` bump. The failure is invisible until the
+     *second* class in the chain, so it reads as a missing instance somewhere deep rather than as a
+     reducibility problem at the alias.
+
+357. **A pointwise identity is not enough to feed instance search; the pairing classes are about a
+     `LinearMap`.** `negFst_prodPairing_apply` had said `negFst (prodPairing Bu Bx) p q =
+     -Bu p.1 q.1 + Bx p.2 q.2` since §30 was written, and it is what every *rewrite* inside a `conj`
+     uses. But `IsCompatiblePairing` takes the bilinear map itself, so no amount of pointwise
+     agreement lets search get from `negFst (prodPairing Bu Bx)` to `prodPairing (-Bu) Bx`. The
+     one-line `LinearMap.ext` version, `negFst_prodPairing`, is what unlocks four instances and with
+     them every §29–§30 surface statement. When a class is stated about a bundled object, the
+     dictionary entry has to be about the bundled object too.
+
+358. **On Windows a worktree's `.lake/packages` must be a *junction*, not a POSIX symlink.**
+     `ln -sfn` reports `cannot overwrite directory` against the empty `packages` directory that is
+     already there, and `rm -rf` of it can race with whatever recreates it, so the loop appears to
+     fail for no reason. `New-Item -ItemType Junction -Path … -Target …` from PowerShell works
+     first time and lets `lake build` in the worktree reuse the primary checkout's Mathlib build.
+     This is the setup step for every parallel sub-agent round, and it is worth doing before
+     spawning rather than after one of them reports a two-hour Mathlib rebuild.
+
 The remaining findings from the three review worktrees are *scheduled work*, not gotchas, and are
 recorded in [`backbone/08-remediation.md`](backbone/08-remediation.md): the backbone → surface move
 list, the bundled adjoint, the `m`-ary `infConv`/`IsExactSum` gap, the `PointedCone` bipolar theorem,

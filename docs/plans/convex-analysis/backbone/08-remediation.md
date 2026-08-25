@@ -10,6 +10,49 @@ scaffolding the surface library will otherwise pay for per-statement.
 
 ---
 
+## Status
+
+| item | state |
+|---|---|
+| §1.1 delete seven `flip.flip` workarounds | **done** |
+| §1.2 the `(innerₗ E).flip` instances | **done, and the item was wrong** — see below |
+| §1.3 promote `isCompatiblePairing_neg` | **done** — now four instances in `Duality/Pairing.lean` |
+| §1.4 relocate `isMaximalMonotoneRel_subgradientRel` | **not done, and cannot be** — see below |
+| §1.5 `Eponyms.lean` | **done** — nine aliases |
+| §1.6 delete `partialConj₂` | **not done, deliberately** — D8 amended instead |
+| §4.2 `negFst` pairing instances | **done** — this was the `Setup.lean` blocker, and it is closed |
+| everything else | open |
+
+Three items were **wrong as written**, and the corrections matter more than the items did.
+
+**§1.2 was already general.** The claim was that a surface `Setup.lean` importing only `Duality/*`
+could not see `IsContinuousPairing ((innerₗ E).flip)`, which is declared in
+`Subgradient/StrictlyConvex.lean`. But `Duality/InnerPairing.lean` already carries
+`isContinuousPairing_flip_of_isContinuousInnerPairing` and
+`isCompatiblePairing_flip_of_isInnerPairing`, which cover it for *any* symmetric pairing — verified
+by typechecking against that import alone. The two declarations in `StrictlyConvex.lean` were
+duplicates of the general instances, not the only copies. Deleted.
+
+**§1.4 is an import cycle.** `isMaximalMonotoneRel_subgradientRel` belongs by subject in
+`Subgradient/Monotone.lean`, beside `IsMaximalMonotoneRel`. It cannot go there: its proof *is*
+Moreau's theorem, and `Optimization/Prox.lean` imports `Subgradient/Monotone.lean`. The alias
+`subgradient_maximalMonotone` plus a pointer in that file's "what is not here" is the whole
+available remedy, and it is enough — the complaint was discoverability, not location.
+
+**§1.6 would have removed the only precise statement of D8.** `partialConj₂` has no consumer outside
+its own file, which is what the audit found and is true. But it is the *uncurried* reading of
+`bracket`, and `partialConj₂_graphFn` — which is `rfl` — is what makes D8's claim that the bracket,
+the Lagrangian, `cl₁`/`cl₂` and the adjoint are one operation into something checkable rather than
+rhetoric. Deleting it would leave the claim and remove its proof. D8 is amended instead, to say the
+operation is realised on bifunctions as `bracket`, which is what the development is written against.
+
+**The instantiation checklist is closed.** All four gaps the review predicted for the surface's
+ambient setting are gone, and `Tdaf/Surface/Common/Euclidean.lean` asserts all 31 classes as a
+regression test. One of the four (`SeparatingDual ℝ (Rn n)`) was never missing.
+
+---
+
+
 ## 1. Twenty-minute items
 
 | # | item | where | note |
