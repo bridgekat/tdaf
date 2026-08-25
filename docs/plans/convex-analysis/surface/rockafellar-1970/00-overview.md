@@ -265,4 +265,30 @@ are independent and the point of the first round was to test the *backbone*, not
 book. What the round found is in
 [`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) §8 — seventeen backbone gaps,
 two scheduled items demoted, and five places where the book is wrong. Two of the seventeen are
-already closed (`Analysis/Convex/Line.lean`, and Jensen moved to `Epigraph.lean`).
+already closed (`Analysis/Convex/Line.lean`, and Jensen moved to `Epigraph.lean`). Ten are
+closed now: the two above plus the eight of the Batch A sweep, one of which — extending a linear
+isomorphism between subspaces — turned out never to have been a gap at all.
+
+**Part II — all five sections written**, 216 declarations for 82 of the Part's 84 numbered results.
+
+| § | module | declarations | labels |
+|---|---|---|---|
+| 6 | `Part2/Section06.lean` | 52 | 18 |
+| 7 | `Part2/Section07.lean` | 25 | 17 |
+| 8 | `Part2/Section08.lean` | 59 | 18 |
+| 9 | `Part2/Section09.lean` | 53 | 16 of 18 |
+| 10 | `Part2/Section10.lean` | 27 | 13 |
+
+The two absent labels are **Corollary 9.2.1** and **Corollary 9.8.3**, each waiting on a named
+backbone lemma; both are recorded in `Section09`'s `## What is not here`.
+
+Two findings of the Part II round are worth promoting out of the remediation list:
+
+* **The §10/§20 dependency does not exist.** `Analysis/Convex/Simplicial.lean` proves upper
+  semicontinuity relative to a simplex at *every* point of it, not only at a vertex, so
+  Rockafellar's triangulation step — the "intuitively obvious" barycentric fact he never proves,
+  and which Theorem 20.5 supplies by assertion — is never invoked. Theorem 10.2 is unconditional
+  here, and §20's author inherits no obligation from §10.
+* **Rockafellar's `λ ≥ 0⁺` convention is modelled, not case-split.** §9 introduces `ExtCoeff`
+  (`ofReal t | zeroPlus`) with actions on sets and on functions, so Theorems 9.6–9.8 are literally
+  unions and infima over the book's index set. §19 inherits it.

@@ -197,6 +197,27 @@ resolves to the theorem *being defined* — `rw [hasSaddleValue_iff]` inside
 `theorem PolyhedralFn.mapLin … : PolyhedralFn (mapLin A f)` reports "application type mismatch …
 expected `PolyhedralFn f`". Write `_root_.foo`, or rename to `polyhedralFn_mapLin`.
 
+**EL15. `rw` at a hypothesis rewrites the scalar in *both* the set action and the vector action,
+and the follow-up `simp` lemma fires on only one.** `rw [hb1, one_smul] at hmem` on
+`hmem : z₁ + b • (v + z₂) ∈ recessionCone C + b • D` replaces `b` by `1` in both places, and then
+`one_smul` fires on `(1 : ℝ) • (D : Set E)` but leaves `(1 : ℝ) • (v + z₂ : E)` alone — the two are
+different instantiations of the same lemma (EL4). The hypothesis silently becomes a statement about
+`recessionCone C + D` while the goal still says `b • D`, and the mismatch surfaces later as a type
+error naming neither. The fix is not `simp only [one_smul]`, which over-normalises the goal: prove
+the *value* equation on its own — `have hval : z₁ + b • (v + z₂) = x := by rw [hb1, one_smul, …]` —
+and `rwa [hval] at hmem`, so the membership term is never rewritten.
+
+**EL16. `clFn` must never be unfolded.** `simp only [clFn, h]` with `h : lscHull f = lscHull g`
+rewrites the `else` branch of `clFn`'s `if` but not the `∃ x, lscHull f x = ⊥` condition, leaving a
+goal whose two branches disagree. Go through the defining equations `clFn_of_exists_eq_bot` /
+`clFn_of_forall_ne_bot` under a `by_cases`.
+
+**EL17. `ContinuousOn.congr` cannot infer its source function from a `?_`.**
+`continuousOn_const.congr h` fails with *"don't know how to synthesize implicit argument `f`"*,
+because `f` is determined only by the `EqOn` proof, which is still a hole. Bind the constant to a
+typed `have` first — `have : ContinuousOn (fun _ : Rn n => (⊥ : EReal)) C := continuousOn_const` —
+and use dot notation on that. Same family as EL9.
+
 ---
 
 ## LINT — Linters and the zero-warning bar
@@ -283,6 +304,12 @@ proof must mention a bundled map twice and `set` cannot be used, abstract it int
 auxiliary that takes the map and its defining equation, discharged at the call site by
 `fun _ => rfl`.
 
+**LINT10. `unusedVariables` fires on a binder that occurs only inside the *type* of the next
+hypothesis.** Unfolding `mem_recessionCone`'s `∀ x ∈ C, ∀ a : ℝ, 0 ≤ a → …` as
+`fun _ hy x hx l hl => …` warns *"Variable name `l` is not explicitly referenced"* even though
+`hl : 0 ≤ l` mentions it. Make the binder anonymous. This hits every eta-expansion of a
+`∀ a, 0 ≤ a → …` predicate.
+
 ---
 
 ## DEP — Deprecated and renamed Mathlib
@@ -357,6 +384,20 @@ names is `ContinuousLinearMap.precomp`. `asymptoticCone` exists and is `0⁺(cl 
 the inner product separates points. `Ioc_mem_nhdsWithin_Ioi` is not a name and has no renaming; when
 a filter argument on `𝓝[>] a` needs a two-sided bound it is cheaper to drop the filter and run the
 estimate by `by_contra` with an explicit `t = min (1/2) (d / (2*c))`.
+
+**DEP6. Four more renames, two of which are not drop-in.**
+
+| deprecated | current | note |
+|---|---|---|
+| `Set.restrict` | `Set.domRestrict` | and `continuousOn_iff_continuous_restrict` → `…_domRestrict` |
+| `Set.mem_setOf_eq` | `Set.mem_ofPred_eq` | |
+| `Submodule.isCompl_orthogonal_of_hasOrthogonalProjection` | `Submodule.isCompl_orthogonal` | takes the submodule **explicitly** |
+| — | `closure_empty_iff` | takes its set **explicitly** |
+
+The last two are the trap: `eq_add_inter_of_isCompl Submodule.isCompl_orthogonal` is an application
+type mismatch and `closure_empty_iff.1` reports *"Invalid projection … has function type"*. Write
+`Submodule.isCompl_orthogonal _` and `(closure_empty_iff T).1`. Both old names still appear in
+backbone docstrings.
 
 ---
 
@@ -601,6 +642,10 @@ shapes: `Continuous.add` builds `Continuous (f + g)`, which does not unify with
 typed `have`; and do not `rw [Function.comp_def]` to line up a composed sequence, use
 `(hlim.comp hφ.tendsto_atTop).congr fun n => …`, since `Function.comp_apply` is `rfl`.
 
+**SET8. `indicatorFn_of_mem rfl` fails for a singleton.** `rfl : x ∈ s` unifies `s := Eq x`,
+whereas `Set.singleton x` is `{y | y = x}` — the other orientation. The error names
+`indicatorFn (Eq ?m) ?m`, which looks like an elaboration bug and is not. Use `Set.mem_singleton _`.
+
 ---
 
 ## PAIR — The pairing classes
@@ -840,6 +885,23 @@ then fails three lines later. `#check @PolyhedralFn` before guessing.
   "every point of `C` carries the same value as some point of `C ∩ N`",
   `eq_add_inter_of_isCompl` is strictly cheaper — no image lemma, no `recessionCone_image`, and no
   dependency on the module that owns the projection.
+
+**LIB10. `restrict` is ambiguous in a surface file.** `open Set` together with
+`open Tdaf.ConvexAnalysis` makes `restrict s f` resolve both ways, and the failure arrives as a
+*deprecation warning* (`Set.restrict` → `Set.domRestrict`) followed by
+`failed to synthesize AddCommGroup ↑(closure C)`, which reads like an instance bug. Write
+`Tdaf.ConvexAnalysis.restrict` in full. Backbone modules already do, which is why it does not bite
+there.
+
+**LIB11. Two `RelativeInterior.lean` names that read backwards.**
+`closure_sdiff_intrinsicInterior C` is `closure C \ ri C = intrinsicFrontier ℝ C` — the opposite
+direction from what the name suggests. And `intrinsicInterior_prod_eq` takes **both** sets
+explicitly, so a term-mode `:= intrinsicInterior_prod_eq` fails with a metavariable-laden type
+mismatch rather than "explicit argument missing".
+
+**LIB12. EL1's list is not a blanket rule.** Dot notation *does* work on `Convex` in a surface file
+(`hC.closure`) and on the surface's own `IsAffineSet` (`h.toAffineSubspace`). EL1 names the
+predicates where it fails; it is not a reason to avoid dot notation everywhere.
 
 ---
 

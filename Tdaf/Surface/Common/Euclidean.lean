@@ -3,11 +3,17 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Tdaf.Analysis.Convex.Continuity
+import Tdaf.Analysis.Convex.Convergence
 import Tdaf.Analysis.Convex.Duality.Conjugate
 import Tdaf.Analysis.Convex.Duality.InnerPairing
+import Tdaf.Analysis.Convex.Operations.Basic
+import Tdaf.Analysis.Convex.Simplicial
 import Tdaf.Analysis.Convex.Subgradient.Defs
 import Tdaf.LinearAlgebra.Subspace
+import Mathlib.Analysis.Convex.Join
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Tactic.TFAE
 
 /-!
 # The Euclidean instantiation shared by every `ℝⁿ` surface
@@ -47,6 +53,15 @@ here, in a twelve-line file, rather than in whichever surface statement happened
 these were genuine gaps found by the plan review and closed in `Duality/Pairing.lean`: the negated
 pairings `-B`, `(-B).flip`, and the sign-flipped product pairing `negFst (prodPairing Bu Bx)` that
 §30's adjoint is conjugated against.
+
+**The import list is the surface's shared header, not a minimal one.** A section that needs a
+Mathlib or backbone module the four original imports did not reach used to import it itself, and
+five of the ten sections written so far did. The ones that recurred are here: `Continuity`,
+`Convergence`, `Simplicial` and `Operations.Basic` from the backbone; `Mathlib.Tactic.TFAE`, which
+any section transcribing a book "the following are equivalent" needs; `Mathlib.Analysis.Convex.Join`
+for `Convex.convexHull_union`; and `Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional`, which
+every section that counts dimensions wants. Adding one here costs a rebuild of the surface and
+saves a section from discovering an "unknown constant" that is really a missing import.
 
 **`pairingProd` is not `Rn (m + n)`.** Rockafellar moves freely between `ℝᵐ × ℝⁿ` and `ℝᵐ⁺ⁿ`; those
 are different types here, and the transport between them is separate work (remediation §4.8). What

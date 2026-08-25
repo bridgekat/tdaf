@@ -342,3 +342,66 @@ backbone made a surface proof longer than the brief's "a few lines".
   `0 < n`.
 * **Theorem 2.4 needs `C.Nonempty`** — for `C = ∅` the set of simplex dimensions is empty and has
   no maximum.
+
+---
+
+## 9. Gaps reported by the Part II surface round
+
+The §6–§10 round, run the same way. Nothing here blocked a section: §6, §7, §8 and §10 are
+complete, and §9 is 16 of 18 — Corollary 9.2.1 and Corollary 9.8.3 are the two entries below marked
+**blocking**, and they are the only two labels in Parts I–II with no declaration.
+
+| # | item | reported by | status |
+|---|---|---|---|
+| 9.1 | **Corollary 6.3.3 has no backbone declaration.** `Face.lean` has only the face-specific shadow (`IsFace.affineSpan_ne`, `IsFace.finrank_vectorSpan_lt`). §6 wrote `inter_relint_nonempty_of_affineSpan_eq` (12 lines) plus a 20-line corollary. Both belong in `RelativeInterior.lean`, with `Face.lean` routing through them | §6 | open |
+| 9.2 | **Theorem 6.9 is two-set only** — `Convex.relint_convexHull_union`. The book states it for `m` sets | §6 | open |
+| 9.3 | **No affine-map form of Theorems 6.6/6.7.** `Convex.relint_image` / `relint_preimage` take a `LinearMap`, so the book's "the same holds for affine transformations" is not statable | §6 | open |
+| 9.4 | **`Convex.relint_cone_prodMk_one` is stated about `K ∪ {0}`**, but Rockafellar's cone in Corollary 6.8.1 excludes the origin; §6 re-derived `ri K = ri (K ∪ {0})` in 20 lines | §6 | open — friction |
+| 9.5 | **Corollary 6.5.1 takes an `AffineSubspace ℝ E`, the book an affine set**; each clause needs an `IsAffineSet.toAffineSubspace` wrapper | §6 | open — friction |
+| 9.6 | **No backbone `dim`.** `Rockafellar.dim` lives in surface §1, so a dimension clause has to be unrolled to `vectorSpan` / `direction_affineSpan` by hand. §6 did it twice, §7 wrote `dim_eq_of_affineSpan_eq` and `dim_eq_of_closure_eq` independently. A `finrank (vectorSpan …)` congruence for equal affine spans collapses all four | §6, §7 | open — the round's most duplicated item |
+| 9.7 | **No `¬ Proper f → ¬ Proper (clFn f)`.** The converse of `ConvexFn.proper_clFn`; 11 lines in §7 as `not_proper_clFn`. Belongs in `Closure.lean` | §7 | open |
+| 9.8 | **Corollary 7.3.2 has no backbone counterpart** — 17 lines from `ConvexFn.exists_mem_relint_dom_lt` plus `restrict` | §7 | open |
+| 9.9 | **No slice-dimension count.** Theorem 7.6's "same dimension as `dom f`" needs `affineSpan ℝ {x ∈ ri (dom f) \| f x < α} = affineSpan ℝ (dom f)`; the book gets it from Theorem 6.8's dimension count, which the backbone lacks. §7's `affineSpan_relint_dom_lt` is 27 lines, the longest proof in that file. Belongs beside `Convex.mem_relint_prod_iff` | §7 | open |
+| 9.10 | **`ConvexFn.le_of_mem_closure` carries `∀ z, f z ≠ ⊥`, which the book does not.** §7 avoided it by re-deriving Corollary 7.3.3 from 7.3.2 in 5 lines, as the book does — so the extra hypothesis is avoidable in finite dimensions and should come off | §7 | open |
+| 9.11 | **Corollary 8.3.1's second assertion** (`y ∈ 0⁺(cl C) ↔ ∀ λ > 0, x + λy ∈ C` for `x ∈ ri C`) has no backbone lemma; 10 lines in §8. Belongs beside `Convex.recessionCone_relint` | §8 | open |
+| 9.12 | **Corollary 8.6.1's second assertion** (a closed `f` bounded above on one line is constant in that direction) has no backbone lemma; ~15 lines in §8. Belongs in `Recession/Function.lean` | §8 | open |
+| 9.13 | **`f0⁺ = δ(·\|0)` for proper `f` with bounded `dom f`** (book line 2807) — ~15 lines in §8. Belongs in `Recession/Function.lean` | §8 | open |
+| 9.14 | **`recessionConeFn f ⊆ recessionCone (dom f)`** is not in the backbone. It is what makes the book's "not to be confused with" warning precise | §8 | open |
+| 9.15 | **`closure_coe_hull_prodMk_one_eq_union` is missing**, mirroring `closure_coe_hull_eq_union`: the book's `cl K = K ∪ {0} × 0⁺C` cost §8 twelve lines of set juggling against `closedConeOver`'s slab form | §8 | open — friction |
+| 9.16 | **The recession/closedness cluster takes `ConvexFn` + `IsClosed (epi f)` (+ `hbot`) unbundled** where the book says "closed proper convex" and `ClosedProperConvexFn` exists — `recessionCone_setOf_le`, `linealitySpace_setOf_le`, `isBounded_setOf_le`, `recessionFn_apply_eq_iSup_inv_mul`, `tendsto_coe_inv_mul_sub_atTop`, `recessionFn_le_coe_iff_of_isClosed`. Every call site is 2–3 projections | §8 | open — friction, cheap |
+| 9.17 | **No `smul_mem_recessionConeFn`** to match `smul_mem_recessionCone`, so a bare real has to be routed through `Submodule.smul_mem` with a `{c : ℝ // 0 ≤ c}` scalar | §8 | open — friction |
+| 9.18 | **`m`-ary sums are binary throughout `Recession/`.** `recessionCone_prod` / `linealitySpace_prod` exist for binary products but not for `Set.pi`, and the book's own proof of Corollary 9.1.1 runs Theorem 9.1 on `C₁ ⊕ ⋯ ⊕ Cₘ ⊆ ℝᵐⁿ`. §9 states Corollaries 9.1.1, 9.1.3, Theorem 9.3 and Theorem 9.8 for two sets | §9 | open |
+| 9.19 | **Corollary 9.2.1 does not exist in the backbone** — `Recession/Closedness.lean` records the same | §9 | open — **blocking**, no §9 declaration |
+| 9.20 | **Corollary 9.8.3 needs `IsEpiLike (conv (epi f₁ ∪ epi f₂))` and `Proper (convFn₂ f₁ f₂)` under a common recession function**; both belong beside `convFn₂` in `Operations/Hull.lean` | §9 | open — **blocking**, no §9 declaration |
+| 9.21 | **Theorem 9.2's recession formula `(Ah)0⁺ = A(h0⁺)` is missing.** `closedProperConvexFn_mapLin` gives the epigraph identity, closedness, properness and attainment but not this; deriving it needs a second application of Theorem 9.1, to `recessionFn f` | §9 | open |
+| 9.22 | **Corollary 9.7.1's `{x \| γ(x\|C) = 0} = 0⁺C` is not in `Duality/Gauge.lean`** — eight lines from `setOf_gaugeFn_le_pos` and `recessionCone_eq_iInter_smul`, but it is a gauge fact | §9 | open — friction |
+| 9.23 | **There is no bare-set "convex cone" predicate**, so `corollary_9_1_3` is stated for `PointedCone`s where Rockafellar's cones need not contain the origin. `recessionCone_closure_coe_pointedCone` is only available bundled | §9 | open |
+| 9.24 | **`exists_forall_abs_le_of_isCompact_relint` lost the convex-hull weakening.** `bddAbove_range_of_subset_convexHull_closure` proves the book's hypothesis (a) with `U ⊆ conv (cl C')` in the `interior` form, but the `ri` forms only take `ri C ⊆ closure C'` — and Theorem 10.6 is about a relatively open `C`, so only the `ri` form is usable. §10 had to state the stronger `C ⊆ closure C'`. Push the spreading through the chart in `Convergence.lean`'s `Relint` section | §10 | open |
+| 9.25 | **Corollary 10.5.1's `liminf_{λ→∞} f(λy)/λ < ∞` has no `EReal` spelling.** `ConvexFn.exists_lipschitzWith_of_frequently_le` takes `∃ c, ∃ᶠ a in atTop, f (a • y) ≤ c * a`, faithful only up to Theorem 8.5's monotonicity | §10 | open — friction |
+| 9.26 | **`ConvexFn.exists_lipschitzWith_of_le_lipschitz` does not use convexity of the dominating `g`**, which Corollary 10.5.2 hypothesises. The surface keeps `ConvexFn g` as `_hg` so the statement is the book's | §10 | open — friction, may stay |
+
+### What the round closed or *un*-scheduled
+
+* **The §10/§20 dependency does not exist.** `Analysis/Convex/Simplicial.lean` proves upper
+  semicontinuity relative to a simplex at *every* point of it, not only at a vertex
+  (`ConvexFn.upperSemicontinuousWithinAt_convexHull_range`), so Rockafellar's triangulation step is
+  never invoked and Theorem 10.2 is unconditional. `Polyhedral/Simplicial.lean` independently
+  proves Theorem 20.5 as `Polyhedral.locallySimplicial`. **§20 inherits no obligation from §10**,
+  and the "locally simplicial" item comes off the Part IV gate list.
+* **The shared surface header is closed** (was §8.16 in part). `Surface/Common/Euclidean.lean` now
+  carries `Continuity`, `Convergence`, `Simplicial`, `Operations.Basic`, `Mathlib.Tactic.TFAE`,
+  `Mathlib.Analysis.Convex.Join` and `Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional` — the
+  seven imports five of the ten sections written so far had to add for themselves.
+* **`Recession/Cone.lean`'s "what is deliberately absent" was stale**: it said Theorem 8.2's `cl K`
+  formula is not proved. It is, as `closure_coe_hull_prodMk_one` in `Recession/ConeHull.lean`.
+  Fixed.
+* **Corollary 9.8.2 does not go through §9 at all.** `IsCompact.isCompact_convexHull`
+  (`Caratheodory.lean`, Corollary 17.2.1) is shorter and needs neither convexity nor non-emptiness.
+
+### Book findings from the round
+
+* **Theorem 8.5's `∞ − ∞`.** Mathlib gives `⊤ - ⊤ = ⊥` and `⊥ - ⊥ = ⊥`, not `⊤`. Rockafellar's
+  own properness hypothesis is exactly what keeps the junk value out; it was not weakened.
+* **The barycentric fact Theorem 10.2 rests on is called "intuitively obvious" (book line 3417) and
+  never proved**, and Theorem 20.5 supplies it by assertion. The backbone proves it outright — see
+  above — so neither assertion is inherited.
