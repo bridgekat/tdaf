@@ -90,6 +90,13 @@ space suffices, and `E` is never topologised at all — it enters only through `
 adjointness datum. The sum rule is the reverse: `ri (dom f)` needs only a normed `E`, while
 Corollary 9.1.1 runs in `F × ℝ` and so `F` must be finite-dimensional.
 
+**The recession-function reading of the qualification is elsewhere.** Rockafellar states each of
+these hypotheses a second time, as a condition on the recession function of the conjugate (Lemma
+16.2 and its corollaries). Nothing here needs that form — the two constructors below take the
+relative-interior condition straight to the conclusion — so it lives in
+`Tdaf.Analysis.Convex.Duality.RelintSeparation`, which imports this file for
+`proper_conj_of_proper`.
+
 **The `< ⊤` guard is what makes the image rule true without surjectivity.** Theorem 9.2 attains
 the infimum only where the image function is bounded above by a real; off the range of `A'` both
 sides of Theorem 16.3 are `+∞` and there is nothing to attain. That is precisely the shape of
