@@ -20,6 +20,7 @@ import Tdaf.Analysis.Convex.Duality.Level
 import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Duality.Pairing
 import Tdaf.Analysis.Convex.Duality.Polar
+import Tdaf.Analysis.Convex.Duality.PolarBounded
 import Tdaf.Analysis.Convex.Duality.Relint
 import Tdaf.Analysis.Convex.Duality.Support
 import Tdaf.Analysis.Convex.Duality.SupportRelint
