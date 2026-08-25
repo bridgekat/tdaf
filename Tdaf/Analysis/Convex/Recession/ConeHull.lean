@@ -699,6 +699,12 @@ theorem le_posHomGen (hg : PosHomogeneous g) (hgc : ConvexFn g) (h0 : g 0 ≤ 0)
         exact h0mem
       · exact (hg.epiCone hgc).smul_mem hc ih
 
+/-- **`posHomGen` is monotone.** A larger function generates a larger positively homogeneous
+convex minorant: apply the maximality property to `posHomGen f ≤ f ≤ g`. -/
+theorem posHomGen_mono (h : f ≤ g) : posHomGen f ≤ posHomGen g :=
+  le_posHomGen (posHomogeneous_posHomGen f) (convexFn_posHomGen f) (posHomGen_apply_zero_le f)
+    ((posHomGen_le f).trans h)
+
 /-- **`posHomGen f` is the greatest positively homogeneous convex minorant of `f` vanishing (or
 worse) at the origin** — the property that names it. -/
 theorem posHomGen_isGreatest (f : E → EReal) :

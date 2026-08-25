@@ -280,11 +280,6 @@ section PosHom
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f g h : E → EReal} {x : E} {r : ℝ}
 
-/-- `posHomGen` is monotone: the generated function of a larger function is larger. -/
-theorem posHomGen_mono (hgh : g ≤ h) : posHomGen g ≤ posHomGen h :=
-  le_posHomGen (posHomogeneous_posHomGen g) (convexFn_posHomGen g) (posHomGen_apply_zero_le g)
-    ((posHomGen_le g).trans hgh)
-
 /-- The generated positively homogeneous function is bounded by every rescaled value of `g`.
 
 This is `posHomGen g ≤ g` combined with positive homogeneity, and it is the half of Rockafellar's

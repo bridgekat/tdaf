@@ -72,8 +72,8 @@ instance reaches any statement.
   closed half-spaces `{x | ⟨x, bᵢ⟩ ≤ βᵢ}`", quantified over *vectors* as the book quantifies.
   `isPolyhedral_iff_polyhedral` is its bridge to the backbone's `Polyhedral`, which quantifies over
   linear functionals; the translation is `linFn` / `exists_linFn`, exactly as in §11. **This
-  definition belongs to §19**, which is being written in parallel and is not on disk here; the
-  merge is expected to delete this copy and keep §19's.
+  definition belongs to §19 by subject**, but §19 does not restate it — it uses the backbone's
+  `Polyhedral` directly — so this copy stays where its consumers are.
 * `Rockafellar.SeparableProperlyNotContaining C₁ C₂` — "there exists a hyperplane separating `C₁`
   and `C₂` properly and not containing `C₂`", the conclusion of Theorem 20.2. It is built from
   §11's `SeparatesProperlyRn`, so the side convention is §11's: `C₁` lies in `{x | ⟨x, b⟩ ≥ β}`.

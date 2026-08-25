@@ -44,16 +44,18 @@ reusable.
 | Corollary 16.1.2 | `corollary_16_1_2` |
 | Lemma 16.2 | `lemma_16_2` |
 | Corollary 16.2.1 | `corollary_16_2_1` |
-| Corollary 16.2.2 | *omitted*, see below |
+| Corollary 16.2.2 | `corollary_16_2_2` |
 | Theorem 16.3 | `theorem_16_3_image`, `theorem_16_3_closure`, `theorem_16_3_exact`,
   `theorem_16_3_attained` |
 | Corollary 16.3.1 | `corollary_16_3_1_image`, `corollary_16_3_1_closure`,
   `corollary_16_3_1_exact` |
 | Corollary 16.3.2 | `corollary_16_3_2_image`, `corollary_16_3_2_preimage` |
 | Theorem 16.4 | `theorem_16_4_infConv_finset`, `theorem_16_4_infConv`, `theorem_16_4_closure`,
-  `theorem_16_4_exact`, `theorem_16_4_attained` |
+  `theorem_16_4_exact`, `theorem_16_4_attained`, `theorem_16_4_exact_finset`,
+  `theorem_16_4_attained_finset` |
 | Corollary 16.4.1 | `corollary_16_4_1_add`, `corollary_16_4_1_add_finset`,
-  `corollary_16_4_1_closure`, `corollary_16_4_1_exact` |
+  `corollary_16_4_1_closure`, `corollary_16_4_1_exact`, `corollary_16_4_1_exact_finset`,
+  `corollary_16_4_1_attained_finset` |
 | Corollary 16.4.2 | `corollary_16_4_2_add` |
 | Theorem 16.5 | `theorem_16_5_convFn`, `theorem_16_5_closure` |
 | Corollary 16.5.1 | `corollary_16_5_1_hull`, `corollary_16_5_1_closure` |

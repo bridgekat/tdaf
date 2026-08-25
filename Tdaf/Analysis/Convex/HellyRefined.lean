@@ -44,8 +44,9 @@ two and running Theorems 20.1, 20.2 and 13.5 on the halves.
   sets and Theorem 21.4's language of functions.
 * `PosHomogeneous.add_le_add_of_ne_top` — subadditivity of a positively homogeneous convex function
   at the points where it is `< +∞`; Theorem 4.7 with the *other* hypothesis.
-* `dom_convFn`, `dom_posHomGen_convFn_subset`, `posHomGen_mono`, `conj_comp_neg`, `epi_comp_neg` —
-  the small dictionary the proof runs on.
+* `dom_convFn`, `dom_posHomGen_convFn_subset`, `conj_comp_neg`, `epi_comp_neg` — the small
+  dictionary the proof runs on. `posHomGen_mono` is used too and lives in `Recession/ConeHull.lean`,
+  beside the maximality property it is one line from.
 
 ## Design notes
 
@@ -190,12 +191,6 @@ end AffineConj
 section PosHomGenAux
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f g : E → EReal}
-
-/-- **`posHomGen` is monotone.** A larger function generates a larger positively homogeneous
-convex minorant. -/
-theorem posHomGen_mono (h : f ≤ g) : posHomGen f ≤ posHomGen g :=
-  le_posHomGen (posHomogeneous_posHomGen f) (convexFn_posHomGen f) (posHomGen_apply_zero_le f)
-    ((posHomGen_le f).trans h)
 
 /-- **A positively homogeneous convex function is subadditive wherever it is not `+∞`.**
 

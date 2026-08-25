@@ -297,6 +297,41 @@ and *produce* a functional (`l = 0`, via `IsExposed.refl`). The extreme/face ver
 because its extremality clause is vacuous over an empty face. Symptom: the proof works for every set
 you test and then a hole opens at the `⟨l, …⟩`.
 
+**EL28. Four coercion traps from the product round, all of which report somewhere else.**
+
+* **A `≃L` does not coerce to a `≃ₗ` by ascription.** `((e : E ≃L[ℝ] F) : E ≃ₗ[ℝ] F)` is a hard type
+  mismatch, and the *visible* symptom is a `(deterministic) timeout at whnf` **at the next
+  declaration**. Write `e.toLinearEquiv`. Check the coercion before raising heartbeats (EL13).
+* **`IsAdjointPair`'s two coercions of a `LinearEquiv` are not syntactically equal.** `hA u z` uses
+  the `LinearMap` coercion, while a `have h : A u = v` proved by `simp` uses `⇑A`, so `rw [h] at hA`
+  reports "did not find an occurrence". `simp only [LinearEquiv.coe_coe] at h` first.
+* **`indicatorFn_of_mem rfl` elaborates the set as a metavariable.** On a goal containing
+  `indicatorFn {0} 0` it reports *"did not find an occurrence of `indicatorFn (Eq ?m) ?m`"* — `rfl`
+  was taken as a proof of `?x ∈ ?s` with both open. Pin the set:
+  `indicatorFn_of_mem (s := ({0} : Set E)) (Set.mem_singleton_iff.2 rfl)`. SET8 records the singleton
+  half of this; the metavariable is the other half.
+* **`simpa using convex_univ` fails against `IsRealInterval univ`** — `simpa` elaborates the term
+  against the simplified goal without unfolding the `def`, even though `IsRealInterval` *is*
+  `Convex ℝ`. `rw` the argument and close with `exact`, which takes the defeq.
+
+**EL29. `le_iSup₂_of_le i j h` is the tool for a nested `⨆ a ∈ s, ⨆ b ∈ t`.** Chaining `le_iSup₂`
+with an explicit `(f := fun a (_ : a ∈ s) => …)` at each level is where these proofs go to die
+(EL8/EL9); `le_iSup₂_of_le` takes the two witnesses and the residual inequality and needs no
+ascription.
+
+**EL30. Two more explicit-argument traps whose errors name a type, not a missing argument.**
+`Fin.addCases_left`/`Fin.addCases_right` take **only** the index explicitly, so
+`Fin.addCases_left _ _ j` reports *"Function expected"*. And `ContinuousLinearMap.single` and
+`ContinuousLinearMap.sum_comp_single` take `R` and `φ` explicitly — Mathlib re-declares
+`variable (R φ)` just before them — so `ContinuousLinearMap.sum_comp_single g x` reports *"the
+argument `g` has type `StrongDual ℝ (ι → E)` but is expected to have type `Type ?u`"*. Write
+`ContinuousLinearMap.sum_comp_single ℝ (fun _ : ι => E) g x`. That pair is the whole proof that a
+finite product of compatible pairings is compatible, so it is the one blocker on the `ι → E` tower.
+
+**EL31. `obtain ⟨a, ha, rfl⟩` cannot substitute a variable occurring in the term that produced the
+hypothesis.** `∃ a, 0 ≤ a ∧ y = a • g (halfLine x y)` will not take `rfl`, because `y` occurs on the
+right. Name the equation and feed it forward instead of rewriting.
+
 ---
 
 ## LINT — Linters and the zero-warning bar
@@ -663,6 +698,21 @@ inside `namespace Tdaf.ConvexAnalysis`; write `_root_.EReal.bot_add`. Same famil
 discharging `¬ (↑(a - b) ≤ ⊥)` by `simp` leaves `¬ ↑a - ↑b = ⊥`, because `simp` pushes the coercion
 apart. Use `le_bot_iff.1` and `_root_.EReal.coe_ne_bot`.
 
+**ER13. The supremum of a separable sum over a product is an induction, not an ε argument.**
+For `⨆ x ∈ ∏ Cᵢ, ∑ i, gᵢ (xᵢ) = ∑ i, ⨆ z ∈ Cᵢ, gᵢ z`, induct on the index `Finset`; at `cons i t`
+use `Function.update` to prove `⨆ x ∈ ∏C, (f (xᵢ) + g x) = ⨆ z ∈ Cᵢ, ⨆ x ∈ ∏C, (f z + g x)` — both
+directions by `le_iSup₂_of_le` — then close with `Tdaf.EReal.biSup_add_biSup`, the same interchange
+`conj_infConv` runs on. **No `⊤` case split and no ε appear**; the only side condition is
+`∑ j ∈ t, ↑rⱼ ≠ ⊥`, which is `Tdaf.EReal.coe_sum` then `_root_.EReal.coe_ne_bot`. Two successive
+plans budgeted this as the expensive piece and both were wrong. Note `Tdaf.EReal.coe_sum` **exists**
+(`Order/EReal.lean`) — it is *Mathlib* that lacks it.
+
+**ER14. `bot_add` is not a root name, and neither is much else.** Covered by ER12; the product round
+added `continuous_finset_sum` → `continuous_finsetSum` to DEP's table, and found that
+`Set.mem_fintype_sum` is `to_additive`-generated and so invisible to a grep of Mathlib (only
+`Set.mem_fintype_prod` occurs) — it is what makes `piSum '' univ.pi C = ∑ i, C i` a six-line proof.
+DEP3, again.
+
 ---
 
 ## SET — Sets, products, cones
@@ -773,6 +823,19 @@ whereas `Set.singleton x` is `{y | y = x}` — the other orientation. The error 
 way: `x j` displays as `x.ofLp j`. Coordinate continuity is
 `PiLp.continuous_apply (p := 2) (fun _ : Fin n => ℝ) j` — `β` is explicit and `p` is not inferable
 from the goal, so both must be supplied or the application silently eats `j` as `β`.
+
+**SET11. Spell a `Finset` split membership-wise, not as `s = t ∪ u`.** `Finset.union` and
+`Finset.sdiff` both put `[DecidableEq ι]` in the *statement*, which ER6 warns will not match a
+caller's `Classical.propDecidable`. Take `(hdisj : Disjoint t u)` and
+`(hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)`, which are decidability-free, and recover `Finset.sum_union`
+inside the proof with `classical; have : s = t ∪ u := Finset.ext …; subst`. Same trick for a
+combined witness: `⟨fun i => if i ∈ t then a i else b i, …⟩`.
+
+**SET12. `Finite ↥{x | P x}` and `Finite {x // P x}` are the same type and not the same
+instance-search key.** `Set.Finite.to_subtype` produces the `↥`-form; `Finite.of_equiv _ e` needs the
+`Subtype`-form its domain is written in, and reports *"failed to synthesize `Finite { C' // … }`"* at
+the `of_equiv` line with a `have` of the "same" fact one line above. Instance search is syntactic
+where `exact` is not; bounce through three `have`s, taking the defeq at each `exact`.
 
 ---
 
@@ -1087,6 +1150,35 @@ operator's basic API … is there, not here"). Following the item would have put
 consequence of `le_posHomGen` one layer *above* the five lemmas its proof cites, and only the
 `Recession/ConeHull.lean` home is common to both consumers. Grep for `def <name>` before believing
 any "it belongs in X"; the whole cost is one second. Same family as LIB16.
+
+**LIB18. A `Finset`-indexed exactness interface is unsatisfiable at `s = ∅`.** An `exact_le` field
+demanding a splitting `y = ∑_{i ∈ s} yᵢ` for every `y` forces `F` trivial when the sum is `0`.
+Symptom: the induction's base case looks free, and then the *equality* base case needs
+`conj B 0 = δ(· | 0)`, which needs `SeparatingDual`. Base every `m`-ary constructor at a singleton
+and carry `s.Nonempty`; the `≤` half is fine at `∅`.
+
+**LIB19. Prefer a total choice function with junk values over `choose!` on a long set-builder.**
+`choose!` over `∀ C' ∈ {long set expression}, ∃ y, …` forces the expression to be written three
+times and cannot be shortened with `set`, whose fvar is opaque to `.1`. Hypothesise the
+*disjunction* instead — `∀ C', ∃ y, (the good case) ∨ (the degenerate case)` — take the total
+function, and discard the junk by intersecting its image with the set you actually wanted.
+
+**LIB20. `omit` lists must be re-derived per declaration.** `PolyhedralFn.add` needs
+`[FiniteDimensional ℝ E]` even though `PolyhedralFn` does not: the *definition* drops the instance by
+auto-inclusion, the *lemmas about it* do not. Symptom: an `omit` copied from a neighbour produces
+*"failed to synthesize"* pointing at the `exact`, not at the `omit`. Relatedly, `[Fintype ι]` trips
+two different linters with two different fixes — `linter.unusedSectionVars` when the *proof* does not
+use it (fix: `omit`), and `linter.unusedFintypeInType` when the *type* does not mention it although
+the proof does (fix: `[Finite ι]` plus `obtain ⟨hι⟩ := nonempty_fintype ι`; `omit` is impossible).
+A theorem about `ri (univ.pi C)` is the second case, because the statement's topology is `Pi.topologicalSpace`
+and the proof's is the normed one.
+
+**LIB21. Do not hand-roll `Fin.append`.** `PiLp.sumPiLpEquivProdLpPiLp` composed with
+`LinearIsometryEquiv.piLpCongrLeft 2 ℝ ℝ finSumFinEquiv` *is* `ℝᵐ × ℝⁿ ≃ₗᵢ ℝᵐ⁺ⁿ`, and
+`simp [defn, Equiv.piCongrLeft']` computes every coordinate and the inverse. But
+`LinearIsometryEquiv.inner_map_map` does **not** apply to `WithLp 2 (E × F)` — the module instance
+found is `WithLp.instModule` and the one demanded is `InnerProductSpace.toNormedSpace.toModule`;
+derive inner-product identities from the coordinate lemmas plus `Fin.sum_univ_add` instead.
 
 ---
 
