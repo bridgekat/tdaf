@@ -348,8 +348,8 @@ backbone made a surface proof longer than the brief's "a few lines".
 ## 9. Gaps reported by the Part II surface round
 
 The §6–§10 round, run the same way. Nothing here blocked a section: §6, §7, §8 and §10 are
-complete, and §9 is now 18 of 18 — Corollary 9.2.1 (9.19) and Corollary 9.8.3 (9.20) were the two
-entries with no declaration, and both are closed.
+complete, and §9 is 16 of 18 — Corollary 9.2.1 and Corollary 9.8.3 are the two entries below marked
+**blocking**, and they are the only two labels in Parts I–II with no declaration.
 
 | # | item | reported by | status |
 |---|---|---|---|
@@ -371,8 +371,8 @@ entries with no declaration, and both are closed.
 | 9.16 | **The recession/closedness cluster takes `ConvexFn` + `IsClosed (epi f)` (+ `hbot`) unbundled** where the book says "closed proper convex" and `ClosedProperConvexFn` exists — `recessionCone_setOf_le`, `linealitySpace_setOf_le`, `isBounded_setOf_le`, `recessionFn_apply_eq_iSup_inv_mul`, `tendsto_coe_inv_mul_sub_atTop`, `recessionFn_le_coe_iff_of_isClosed`. Every call site is 2–3 projections | §8 | open — friction, cheap |
 | 9.17 | **No `smul_mem_recessionConeFn`** to match `smul_mem_recessionCone`, so a bare real has to be routed through `Submodule.smul_mem` with a `{c : ℝ // 0 ≤ c}` scalar | §8 | open — friction |
 | 9.18 | **`m`-ary sums are binary throughout `Recession/`.** `recessionCone_prod` / `linealitySpace_prod` exist for binary products but not for `Set.pi`, and the book's own proof of Corollary 9.1.1 runs Theorem 9.1 on `C₁ ⊕ ⋯ ⊕ Cₘ ⊆ ℝᵐⁿ`. §9 states Corollaries 9.1.1, 9.1.3, Theorem 9.3 and Theorem 9.8 for two sets | §9 | open |
-| 9.19 | **Corollary 9.2.1 does not exist in the backbone** — `Recession/Closedness.lean` records the same | §9 | **closed** — `closedProperConvexFn_infConv_of_recessionFn_symm` / `exists_add_eq_of_infConv_le_of_recessionFn_symm` (`Recession/Closedness.lean`), surface `corollary_9_2_1`. At `m = 2`, where 9.2.1's hypothesis is genuinely weaker than 9.2.2's: it asks the set of directions of joint recession to be *symmetric*, not `{0}`. Corollary 9.2.2 is now a specialisation of it. The `m`-ary form is still open and is now folded into 9.18 |
-| 9.20 | **Corollary 9.8.3 needs `IsEpiLike (conv (epi f₁ ∪ epi f₂))` and `Proper (convFn₂ f₁ f₂)` under a common recession function**; both belong beside `convFn₂` in `Operations/Hull.lean` | §9 | **closed** — `IsEpiLike.mem_convexHull_of_le`, `isEpiLike_convexHull_epi_union`, `epi_convFn₂` (`Operations/Hull.lean`); `closedProperConvexFn_convFn₂`, `exists_combo_of_convFn₂_le` (`Recession/ConeHull.lean`); surface `corollary_9_8_3`. Properness came from the recession cone, not from `Operations/Hull.lean` — it is not an algebraic fact |
+| 9.19 | **Corollary 9.2.1 does not exist in the backbone** — `Recession/Closedness.lean` records the same | §9 | open — **blocking**, no §9 declaration |
+| 9.20 | **Corollary 9.8.3 needs `IsEpiLike (conv (epi f₁ ∪ epi f₂))` and `Proper (convFn₂ f₁ f₂)` under a common recession function**; both belong beside `convFn₂` in `Operations/Hull.lean` | §9 | open — **blocking**, no §9 declaration |
 | 9.21 | **Theorem 9.2's recession formula `(Ah)0⁺ = A(h0⁺)` is missing.** `closedProperConvexFn_mapLin` gives the epigraph identity, closedness, properness and attainment but not this; deriving it needs a second application of Theorem 9.1, to `recessionFn f` | §9 | open |
 | 9.22 | **Corollary 9.7.1's `{x \| γ(x\|C) = 0} = 0⁺C` is not in `Duality/Gauge.lean`** — eight lines from `setOf_gaugeFn_le_pos` and `recessionCone_eq_iInter_smul`, but it is a gauge fact | §9 | open — friction |
 | 9.23 | **There is no bare-set "convex cone" predicate**, so `corollary_9_1_3` is stated for `PointedCone`s where Rockafellar's cones need not contain the origin. `recessionCone_closure_coe_pointedCone` is only available bundled | §9 | open |

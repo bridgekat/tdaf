@@ -416,7 +416,10 @@ Thm 8.1 (layer A), Thm 8.2/8.3 and Cors 8.3.2–8.3.4 (**layer B**), `isClosed_r
 (**layer B**), Thm 8.4/Cor 8.4.1 (layer D); bridges to Mathlib's `asymptoticCone`. Also
 `eq_add_inter_of_isCompl_of_le`, `recessionCone_preimage_affine`, `recessionCone_coe_submodule`,
 and the product lemmas `prod_recessionCone_subset` / `recessionCone_prod` / `linealitySpace_prod`
-(the last two need both factors nonempty). `zero_mem_linealitySpace`, and
+together with their `Set.pi` forms `pi_recessionCone_subset` / `recessionCone_pi` /
+`linealitySpace_pi` (all but the two inclusions need the product nonempty; `Function.update` is
+what turns one point of the product into a witness in every coordinate but one).
+`zero_mem_linealitySpace`, and
 `recessionCone_coe_pointedCone` / `recessionCone_closure_coe_pointedCone` — a pointed convex cone,
 and the closure of one, is its own recession cone, which is what makes Corollary 9.1.3 an instance
 of Corollary 9.1.1. `recessionCone_neg : 0⁺(-C) = -0⁺C` is what lets Corollary 20.3.1 read
@@ -960,8 +963,8 @@ closure_add_eq, recessionCone_add}`, via `image_coprod_id_prod` and
 `exists_add_eq_of_infConv_le_of_recessionFn_symm`, through
 `forall_mem_linealitySpace_epi_of_recessionFn_symm`; **Cor 9.2.2** is its specialisation, through
 `recessionFn_symm_of_recessionFn_add_pos`. **Thm 9.2** as `closedProperConvexFn_mapLin`
-(epigraph identity *and* `ClosedProperConvexFn`) with `exists_mapLin_eq` as the attainment reading, and
-`mk_zero_mem_linealitySpace_epi_iff` transporting the hypothesis to the epigraph.
+(epigraph identity *and* `ClosedProperConvexFn`) with `exists_mapLin_eq` as the attainment
+reading, and `mk_zero_mem_linealitySpace_epi_iff` transporting the hypothesis to the epigraph.
 
 **Cor 9.1.2** as `Convex.{isClosed_add_of_neg_notMem_recessionCone,
 recessionCone_add_of_neg_notMem_recessionCone, isClosed_add_of_isBounded}`, through the bridge
@@ -3557,11 +3560,11 @@ of "slice of the closure = closure of the slice" is used, and the reverse comes 
 formalised as `epi (f □ g) = epi f + epi g`, from which the book's "the infimum is attained" falls
 out (`exists_add_eq_of_infConv_le`).
 
-**Not here**: Corollary 9.2.1 and the `m`-fold forms of 9.8/9.8.1 (contentless induction, no
-consumer); Corollary 9.7.1 (it is Theorem 9.7 applied to `δ(·|C) + 1`, but it is a statement about
-gauges, so it belongs to §15 — three lines from `lscHull_posHomGen_eq`); Corollary 9.8.2
-(superseded by `Caratheodory.lean`); Corollary 9.8.3 (needs `convHullFn` for a finite *family*,
-which is §5 work).
+**Not here**: the `m`-fold forms of 9.1.1, 9.1.3, 9.2.1, 9.3, 9.8, 9.8.1 and 9.8.3 — *not*
+contentless inductions, since the book runs Theorem 9.1 or 9.2 on an `m`-fold product, and no
+consumer asks for them; Corollary 9.7.1 (it is Theorem 9.7 applied to `δ(·|C) + 1`, but it is a
+statement about gauges, so it belongs to §15 — three lines from `lscHull_posHomGen_eq`);
+Corollary 9.8.2 (superseded by `Caratheodory.lean`).
 
 ### `Tdaf/Analysis/Convex/Duality/SupportRelint.lean`
 

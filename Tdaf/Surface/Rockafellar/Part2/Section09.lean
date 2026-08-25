@@ -65,11 +65,11 @@ This is the definition §19 (Theorems 19.5.1, 19.6, 19.7) is expected to inherit
   (respectively `f₁, …, fₘ`); the backbone proves each for two sets or two functions and no
   backbone result asks for more, so every `m`-ary statement here is its `m = 2` instance. The
   `m`-ary version of Corollary 9.1.1 is not a contentless induction — the book's own proof runs
-  Theorem 9.1 on the product `C₁ ⊕ ⋯ ⊕ Cₘ ⊆ ℝᵐⁿ`, and the backbone has `recessionCone_prod` and
-  `linealitySpace_prod` only for a *binary* product, not for `Set.pi`. That is the gap; it belongs
-  in `Recession/Cone.lean`. Corollary 9.2.1 goes the same way — the book proves it by running
-  Theorem 9.2 on the separable sum `h(x₁, …, xₘ) = f₁(x₁) + ⋯ + fₘ(xₘ)` over `ℝᵐⁿ` — and it needs,
-  in addition, an `m`-ary infimal convolution and the recession function of a separable sum.
+  Theorem 9.1 on the product `C₁ ⊕ ⋯ ⊕ Cₘ ⊆ ℝᵐⁿ`. `Recession/Cone.lean` now has the coordinatewise
+  half of that, `recessionCone_pi` and `linealitySpace_pi`; what is still missing is the sum map
+  `(xᵢ) ↦ ∑ xᵢ` run against a `Set.pi`. Corollary 9.2.1 goes the same way — the book proves it by
+  running Theorem 9.2 on the separable sum `h(x₁, …, xₘ) = f₁(x₁) + ⋯ + fₘ(xₘ)` over `ℝᵐⁿ` — and it
+  needs, in addition, an `m`-ary infimal convolution and the recession function of a separable sum.
 * **Theorem 9.2's recession formula `(Ah)0⁺ = A(h0⁺)`** — *omitted, backbone gap*.
   `closedProperConvexFn_mapLin` delivers the epigraph identity, closedness, properness and
   attainment, but not the recession identity; getting it means re-running Theorem 9.1's
@@ -364,7 +364,8 @@ theorem corollary_9_2_2 {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
 
 /-- **Rockafellar, Corollary 9.2.2**, last formula: `(f₁ □ f₂)0⁺ = f₁0⁺ □ f₂0⁺`.
 
-This is the `m = 2` case of the recession formula of Corollary 9.2.1. -/
+The same formula under the weaker hypothesis of Corollary 9.2.1 is
+`corollary_9_2_1_recession`. -/
 theorem corollary_9_2_2_recession {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g)
     (h : ∀ z : Rn n, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :

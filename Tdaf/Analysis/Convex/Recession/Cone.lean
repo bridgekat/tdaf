@@ -40,6 +40,8 @@ from a point of `C` stays inside `C`. The *lineality space* is the largest subsp
 * `mem_recessionCone_of_exists_ray` — **Theorem 8.3**: one half-line in the direction `y`
   inside a closed convex `C` forces all of them.
 * `recessionCone_iInter`, `recessionCone_preimage` — **Corollaries 8.3.3 and 8.3.4**.
+* `recessionCone_prod`, `linealitySpace_prod` and their `Set.pi` forms `recessionCone_pi`,
+  `linealitySpace_pi` — a product recedes coordinatewise, provided the product is nonempty.
 * `recessionCone_eq_asymptoticCone` — the bridge to Mathlib's `asymptoticCone`.
 * `isBounded_iff_recessionCone_eq_zero` — **Theorem 8.4**, with
   `isBounded_inter_of_direction_eq` for **Corollary 8.4.1**.
@@ -544,6 +546,46 @@ theorem linealitySpace_prod (hC : C.Nonempty) (hD : D.Nonempty) :
   tauto
 
 end Prod
+
+section Pi
+
+variable {ι : Type*} {E : ι → Type*} [∀ i, AddCommGroup (E i)] [∀ i, Module ℝ (E i)]
+  {s : Set ι} {C : ∀ i, Set (E i)}
+
+/-- A family of recession directions is a recession direction of the product set. Unconditional,
+and the `Set.pi` form of `prod_recessionCone_subset`. -/
+theorem pi_recessionCone_subset (s : Set ι) (C : ∀ i, Set (E i)) :
+    s.pi (fun i => recessionCone (C i)) ⊆ recessionCone (s.pi C) := by
+  intro y hy x hx a ha i hi
+  exact hy i hi (x i) (hx i hi) a ha
+
+/-- **The recession cone of a product set is the product of the recession cones.**
+
+The `Set.pi` form of `recessionCone_prod`, and the hypothesis is there for the same reason:
+testing one coordinate needs a witness in all the others, which `Function.update` supplies from a
+single point of the product. -/
+theorem recessionCone_pi (hC : (s.pi C).Nonempty) :
+    recessionCone (s.pi C) = s.pi (fun i => recessionCone (C i)) := by
+  classical
+  refine Set.Subset.antisymm (fun y hy => ?_) (pi_recessionCone_subset s C)
+  intro i hi x hx a ha
+  obtain ⟨w, hw⟩ := hC
+  have hupd : Function.update w i x ∈ s.pi C := by
+    intro j hj
+    rcases eq_or_ne j i with rfl | hji
+    · rwa [Function.update_self]
+    · rw [Function.update_of_ne hji]
+      exact hw j hj
+  have hmem := hy (Function.update w i x) hupd a ha i hi
+  rwa [Pi.add_apply, Pi.smul_apply, Function.update_self] at hmem
+
+/-- **The lineality space of a product set is the product of the lineality spaces.** -/
+theorem linealitySpace_pi (hC : (s.pi C).Nonempty) :
+    linealitySpace (s.pi C) = s.pi (fun i => linealitySpace (C i)) := by
+  ext y
+  simp only [mem_linealitySpace, recessionCone_pi hC, Set.mem_pi, Pi.neg_apply, forall_and]
+
+end Pi
 
 section PreimageDefs
 

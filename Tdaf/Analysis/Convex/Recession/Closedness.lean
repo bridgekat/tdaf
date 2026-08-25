@@ -741,8 +741,8 @@ theorem recessionFn_symm_of_recessionFn_add_pos (hpf : Proper f) (hpg : Proper g
     rw [neg_zero, recessionFn_apply_zero hpf, recessionFn_apply_zero hpg, add_zero]
   · exact absurd hz (not_le.2 (h z hne))
 
-/-- **Rockafellar, Corollary 9.2.2** (which is Corollary 9.2.1 for `m = 2`). If `f` and `g` are
-closed proper convex functions with `(f0⁺) z + (g0⁺) (-z) > 0` for every `z ≠ 0`, then `f □ g` is a
+/-- **Rockafellar, Corollary 9.2.2.** If `f` and `g` are closed proper convex functions with
+`(f0⁺) z + (g0⁺) (-z) > 0` for every `z ≠ 0`, then `f □ g` is a
 closed proper convex function, the infimum defining it is attained, and
 `(f □ g)0⁺ = f0⁺ □ g0⁺`.
 
@@ -750,8 +750,10 @@ The three conclusions come from one application of Corollary 9.1.2 to `epi f` an
 epigraph identity `epi (f □ g) = epi f + epi g` *is* the attainment statement, since a sum of
 epigraphs is an epigraph exactly when every infimum defining `f □ g` is achieved.
 
-The hypothesis is stronger than it needs to be: `closedProperConvexFn_infConv_of_recessionFn_symm`
-asks only that the set of directions of joint recession be *symmetric*, not that it be `{0}`. -/
+The hypothesis is stronger than it needs to be. Rockafellar derives this corollary by "taking
+`m = 2`" in Corollary 9.2.1, but Corollary 9.2.1 at `m = 2` asks only that the set of directions of
+joint recession be *symmetric*, not that it be `{0}` — that is
+`closedProperConvexFn_infConv_of_recessionFn_symm`, of which this is a specialisation. -/
 theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
     epi (infConv f g) = epi f + epi g ∧ ClosedProperConvexFn (infConv f g) ∧

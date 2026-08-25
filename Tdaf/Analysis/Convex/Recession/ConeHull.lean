@@ -79,8 +79,9 @@ All three are `Convex.closure_image_eq` (**Theorem 9.1**) or `Corollary 9.1.3` a
 or two functions, as are Corollaries 9.2.1 and 9.2.2 in
 `Tdaf/Analysis/Convex/Recession/Closedness.lean`. The step from two to `m` is not a bare induction
 — the book's own proofs run Theorem 9.1 on an `m`-fold product — and no consumer in the plan asks
-for more than two. What it would need is `recessionCone_prod` and `linealitySpace_prod` for
-`Set.pi`, and, for Corollary 9.2.1, an `m`-ary infimal convolution.
+for more than two. The coordinatewise half of the product step is available
+(`recessionCone_pi`, `linealitySpace_pi` in `Recession/Cone.lean`); what is still missing is the
+sum map run against a `Set.pi`, and, for Corollary 9.2.1, an `m`-ary infimal convolution.
 
 **Corollary 9.7.1, the gauge of a closed convex set containing `0`.** It is Theorem 9.7 applied to
 `δ(· | C) + 1`, but it is a statement *about gauges*, and gauges belong with §15; see the design
