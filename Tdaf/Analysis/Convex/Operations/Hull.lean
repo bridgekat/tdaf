@@ -39,6 +39,9 @@ hull is what replaces it.
   `(conv {f i}) x = inf {∑ λ i * f i (x i) | ∑ λ i • x i = x}`.
 * `convFn₂_apply` — Theorem 5.6 for two functions, in the shape one actually uses:
   `(conv {f, g}) x = inf {a * f u + b * g v | a • u + b • v = x}`.
+* `IsEpiLike.mem_convexHull_of_le`, `isEpiLike_convexHull_epi_union`, `epi_convFn₂` — when the
+  infimum in Theorem 5.6 is *attained*: `epi (conv {f, g})` is `conv (epi f ∪ epi g)` exactly when
+  that hull is an epigraph, and the only way it can fail to be one is by failing to be closed.
 
 ## Design notes
 
@@ -421,6 +424,49 @@ theorem convHullFn_inf (f g : E → EReal) : convHullFn (f ⊓ g) = convFn₂ f 
       ((convHullFn_le _).trans inf_le_right))
     (le_convHullFn (convexFn_convFn₂ f g) (convFn₂_le_inf f g))
 
+/-! #### When a convex hull of epigraphs is again an epigraph
+
+`convFn₂ f g` is `ofEpi (conv (epi f ∪ epi g))`, so `epi (convFn₂ f g)` is that convex hull only
+when the hull is epi-like — which is exactly the statement that the infimum in Theorem 5.6 is
+attained, and which can fail. Of the two halves of `isEpiLike_iff_forall`, the upward-closure half
+holds unconditionally; only attainment is at issue. -/
+
+/-- The convex hull of an epi-like set is upward closed in the vertical coordinate.
+
+The reason is that `conv F` inherits every translation `p ↦ p + (0, t)`, `t ≥ 0`, that `F` itself
+admits: the preimage of `conv F` under such a translation is convex and contains `F`. -/
+theorem IsEpiLike.mem_convexHull_of_le {F : Set (E × ℝ)} (hF : IsEpiLike F) {x : E} {μ ν : ℝ}
+    (hmem : (x, μ) ∈ convexHull ℝ F) (hμν : μ ≤ ν) : (x, ν) ∈ convexHull ℝ F := by
+  have hconv : Convex ℝ ((fun p : E × ℝ => p + ((0 : E), ν - μ)) ⁻¹' convexHull ℝ F) := by
+    intro u hu v hv a b ha hb hab
+    have hsplit : a • ((0 : E), ν - μ) + b • ((0 : E), ν - μ) = ((0 : E), ν - μ) := by
+      rw [← add_smul, hab, one_smul]
+    have heq : a • (u + ((0 : E), ν - μ)) + b • (v + ((0 : E), ν - μ))
+        = a • u + b • v + ((0 : E), ν - μ) := by
+      rw [smul_add, smul_add, add_add_add_comm, hsplit]
+    change a • u + b • v + ((0 : E), ν - μ) ∈ convexHull ℝ F
+    rw [← heq]
+    exact convex_convexHull ℝ F hu hv ha hb hab
+  have hsub : convexHull ℝ F ⊆ (fun p : E × ℝ => p + ((0 : E), ν - μ)) ⁻¹' convexHull ℝ F := by
+    refine convexHull_min (fun p hp => ?_) hconv
+    change p + ((0 : E), ν - μ) ∈ convexHull ℝ F
+    refine subset_convexHull ℝ F ?_
+    have hpair : p + ((0 : E), ν - μ) = (p.1, p.2 + (ν - μ)) := Prod.ext (by simp) (by simp)
+    rw [hpair]
+    exact hF.mem_of_le (x := p.1) (μ := p.2) hp (by linarith)
+  have hres := hsub hmem
+  change ((x, μ) : E × ℝ) + ((0 : E), ν - μ) ∈ convexHull ℝ F at hres
+  have hval : μ + (ν - μ) = ν := by ring
+  have hxy : ((x, μ) : E × ℝ) + ((0 : E), ν - μ) = (x, ν) := by
+    rw [Prod.mk_add_mk, add_zero, hval]
+  rwa [hxy] at hres
+
+/-- The epigraph of the convex hull of two functions is the convex hull of the union of their
+epigraphs — under the hypothesis that the latter is an epigraph at all. Compare `epi_convFn`. -/
+theorem epi_convFn₂ (hF : IsEpiLike (convexHull ℝ (epi f ∪ epi g))) :
+    epi (convFn₂ f g) = convexHull ℝ (epi f ∪ epi g) :=
+  epi_ofEpi hF
+
 end Binary
 
 end Module
@@ -582,5 +628,25 @@ theorem convFn_apply {f : ι → E → EReal} (hf : ∀ i, ConvexFn (f i)) (hf' 
     exact (sInf_le hmemS).trans hval
 
 end Formula
+
+/-! ### Closedness supplies the missing half -/
+
+section Topology
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] {f g : E → EReal}
+
+/-- A **closed** convex hull of two epigraphs is an epigraph.
+
+The two halves of `isEpiLike_iff_forall` come from different places:
+`IsEpiLike.mem_convexHull_of_le` gives upward closure unconditionally, and closedness gives the
+attainment of the vertical infima. So the only way `conv (epi f ∪ epi g)` can fail to be an
+epigraph is by failing to be closed — which is what makes the closedness criteria of §9 into
+attainment statements for the infimum in Theorem 5.6. -/
+theorem isEpiLike_convexHull_epi_union (hc : IsClosed (convexHull ℝ (epi f ∪ epi g))) :
+    IsEpiLike (convexHull ℝ (epi f ∪ epi g)) :=
+  IsEpiLike.of_isClosed (fun _ _ _ hmem hle =>
+    ((isEpiLike_epi f).union (isEpiLike_epi g)).mem_convexHull_of_le hmem hle) hc
+
+end Topology
 
 end Tdaf.ConvexAnalysis

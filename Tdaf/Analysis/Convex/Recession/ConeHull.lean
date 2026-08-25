@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Tdaf.Analysis.Convex.Operations.Hull
 import Tdaf.Analysis.Convex.Recession.Closedness
 
 /-!
@@ -68,14 +69,18 @@ All three are `Convex.closure_image_eq` (**Theorem 9.1**) or `Corollary 9.1.3` a
   `0⁺(cl (conv (C ∪ D))) = 0⁺C + 0⁺D`.
 * `isClosed_convexHull_union_of_recessionCone_eq` — **Corollary 9.8.1**: equal recession cones
   make `conv (C ∪ D)` closed.
+* `closedProperConvexFn_convFn₂`, `exists_combo_of_convFn₂_le` — **Corollary 9.8.3**: the same for
+  two closed proper convex *functions* with a common recession function, together with the
+  attainment of the infimum in Theorem 5.6 that the epigraph identity encodes.
 
 ## What is not here
 
-**The `m`-fold forms.** Theorem 9.8 and Corollaries 9.2.1, 9.2.2 and 9.8.1 are stated for two sets
-or two functions. The step from two to `m` is a bare induction with no mathematical content, and
-no consumer in the plan asks for more than two; Corollary 9.2.2 (in
-`Tdaf/Analysis/Convex/Recession/Closedness.lean`) is exactly Corollary 9.2.1 for `m = 2`, which is
-how Rockafellar himself states it.
+**The `m`-fold forms.** Theorem 9.8 and Corollaries 9.1.3, 9.8.1 and 9.8.3 are stated for two sets
+or two functions, as are Corollaries 9.2.1 and 9.2.2 in
+`Tdaf/Analysis/Convex/Recession/Closedness.lean`. The step from two to `m` is not a bare induction
+— the book's own proofs run Theorem 9.1 on an `m`-fold product — and no consumer in the plan asks
+for more than two. What it would need is `recessionCone_prod` and `linealitySpace_prod` for
+`Set.pi`, and, for Corollary 9.2.1, an `m`-ary infimal convolution.
 
 **Corollary 9.7.1, the gauge of a closed convex set containing `0`.** It is Theorem 9.7 applied to
 `δ(· | C) + 1`, but it is a statement *about gauges*, and gauges belong with §15; see the design
@@ -85,9 +90,11 @@ note in `Tdaf/Analysis/Convex/Duality/Polar.lean`. Everything it needs from §9 
 `Bornology.IsBounded.closure_convexHull` in `Tdaf/Analysis/Convex/Caratheodory.lean`, which is
 Rockafellar's own remark that Theorem 17.2 is stronger.
 
-**Corollary 9.8.3, the convex hull of finitely many functions.** It needs the convex hull of a
-*finite family* of functions, which the project has only for a single function (`convHullFn`); the
-family version is §5 work, not §9 work.
+**The upward-closure half of Corollary 9.8.3.** That `conv (epi f ∪ epi g)` is upward closed in
+the vertical coordinate, and hence an epigraph as soon as it is closed, is algebraic, has nothing
+to do with recession, and lives beside `convFn₂` in
+`Tdaf/Analysis/Convex/Operations/Hull.lean` (`IsEpiLike.mem_convexHull_of_le`,
+`isEpiLike_convexHull_epi_union`). Only the closedness is §9 work.
 
 ## Design notes
 
@@ -1184,8 +1191,86 @@ theorem isClosed_convexHull_union_of_recessionCone_eq
 
 end UnionOfSets
 
+/-! ### The convex hull of two functions -/
 
+section UnionOfFns
 
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {f g : E → EReal}
+
+/-- **Rockafellar, Corollary 9.8.3** for two functions. Two closed proper convex functions with the
+*same* recession function `k` have a convex hull `conv {f, g}` that is again closed proper convex,
+again with recession function `k`; and its epigraph is the convex hull of the two epigraphs.
+
+The epigraph identity is the content. `conv (epi f ∪ epi g)` is closed by
+`isClosed_convexHull_union_of_recessionCone_eq`, hence an epigraph
+(`isEpiLike_convexHull_epi_union`), hence the epigraph of `conv {f, g}` — and that identity is at
+the same time the statement that the infimum in Theorem 5.6 is attained, which is
+`exists_combo_of_convFn₂_le`. Properness is read off the same recession cone: a vertical line in
+the hull would put `(0, -1)` in `epi k`, and `k 0 = 0`. -/
+theorem closedProperConvexFn_convFn₂ (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (heq : recessionFn f = recessionFn g) :
+    epi (convFn₂ f g) = convexHull ℝ (epi f ∪ epi g) ∧ ClosedProperConvexFn (convFn₂ f g) ∧
+      recessionFn (convFn₂ f g) = recessionFn f := by
+  have hfne : (epi f).Nonempty := (epi_nonempty_iff f).2 hf.proper.dom_nonempty
+  have hgne : (epi g).Nonempty := (epi_nonempty_iff g).2 hg.proper.dom_nonempty
+  have hrec : recessionCone (epi f) = recessionCone (epi g) := by
+    rw [← epi_recessionFn, ← epi_recessionFn, heq]
+  obtain ⟨hclosed, hrecC⟩ := isClosed_convexHull_union_of_recessionCone_eq
+    hf.convex.convex_epi hf.isClosed_epi hfne hg.convex.convex_epi hg.isClosed_epi hgne hrec
+  have hepi : epi (convFn₂ f g) = convexHull ℝ (epi f ∪ epi g) :=
+    epi_convFn₂ (isEpiLike_convexHull_epi_union hclosed)
+  refine ⟨hepi, ?_, epi_injective (by rw [epi_recessionFn, epi_recessionFn, hepi, hrecC])⟩
+  have hdomne : (dom (convFn₂ f g)).Nonempty := by
+    obtain ⟨x, hx⟩ := hf.proper.dom_nonempty
+    exact ⟨x, lt_of_le_of_lt (convFn₂_le_left f g x) hx⟩
+  have hnebot : ∀ x : E, convFn₂ f g x ≠ ⊥ := by
+    intro x hbot
+    have hline : ∀ μ : ℝ, ((x, μ) : E × ℝ) ∈ convexHull ℝ (epi f ∪ epi g) := fun μ => by
+      rw [← hepi]
+      exact mk_mem_epi.2 (le_of_eq_of_le hbot bot_le)
+    have hray : (((0 : E), (-1 : ℝ)) : E × ℝ) ∈ recessionCone (convexHull ℝ (epi f ∪ epi g)) := by
+      refine mem_recessionCone_of_exists_ray (convex_convexHull ℝ _) hclosed
+        ⟨((x, (0 : ℝ)) : E × ℝ), fun a ha => ?_⟩
+      have hshift : ((x, (0 : ℝ)) : E × ℝ) + a • (((0 : E), (-1 : ℝ)) : E × ℝ)
+          = ((x, -a) : E × ℝ) := by simp [Prod.smul_mk, Prod.mk_add_mk]
+      rw [hshift]
+      exact hline (-a)
+    rw [hrecC, ← epi_recessionFn] at hray
+    have hle : recessionFn f 0 ≤ ((-1 : ℝ) : EReal) := mk_mem_epi.1 hray
+    rw [recessionFn_apply_zero hf.proper] at hle
+    exact absurd hle (by norm_num)
+  exact ClosedProperConvexFn.of_isClosed_epi (convexFn_convFn₂ f g)
+    (by rw [hepi]; exact hclosed) ⟨hdomne, hnebot⟩
+
+/-- **Rockafellar, Corollary 9.8.3**, last sentence: under the same hypothesis the infimum in
+Theorem 5.6 is attained. Every real bound on `conv {f, g}` at `x` is realised by an actual convex
+combination `a • u + b • v = x`.
+
+This is the epigraph identity of `closedProperConvexFn_convFn₂` read through Rockafellar's
+Theorem 3.3 (Mathlib's `Convex.convexHull_union`), exactly as in `convFn₂_apply` — the difference
+being that there the infimum is only approached, and here it is attained. -/
+theorem exists_combo_of_convFn₂_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (heq : recessionFn f = recessionFn g) {x : E} {μ : ℝ} (hμ : convFn₂ f g x ≤ (μ : EReal)) :
+    ∃ (a b : ℝ) (u v : E), 0 ≤ a ∧ 0 ≤ b ∧ a + b = 1 ∧ a • u + b • v = x ∧
+      (a : EReal) * f u + (b : EReal) * g v ≤ (μ : EReal) := by
+  have hfne : (epi f).Nonempty := (epi_nonempty_iff f).2 hf.proper.dom_nonempty
+  have hgne : (epi g).Nonempty := (epi_nonempty_iff g).2 hg.proper.dom_nonempty
+  obtain ⟨hepi, -, -⟩ := closedProperConvexFn_convFn₂ hf hg heq
+  have hmem : ((x, μ) : E × ℝ) ∈ convexHull ℝ (epi f ∪ epi g) := hepi ▸ mk_mem_epi.2 hμ
+  rw [hf.convex.convex_epi.convexHull_union hg.convex.convex_epi hfne hgne] at hmem
+  obtain ⟨p, hp, q, hq, a, b, ha, hb, hab, hcombo⟩ := mem_convexJoin.1 hmem
+  have hx : a • p.1 + b • q.1 = x := congrArg Prod.fst hcombo
+  have hν : a * p.2 + b * q.2 = μ := congrArg Prod.snd hcombo
+  refine ⟨a, b, p.1, q.1, ha, hb, hab, hx, ?_⟩
+  have h₁ : (a : EReal) * f p.1 ≤ (a : EReal) * ((p.2 : ℝ) : EReal) :=
+    mul_le_mul_of_nonneg_left (mem_epi.1 hp) (by exact_mod_cast ha)
+  have h₂ : (b : EReal) * g q.1 ≤ (b : EReal) * ((q.2 : ℝ) : EReal) :=
+    mul_le_mul_of_nonneg_left (mem_epi.1 hq) (by exact_mod_cast hb)
+  refine (add_le_add h₁ h₂).trans (le_of_eq ?_)
+  rw [Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← EReal.coe_add, hν]
+
+end UnionOfFns
 
 
 end Tdaf.ConvexAnalysis

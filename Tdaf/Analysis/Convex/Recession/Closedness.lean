@@ -588,33 +588,86 @@ theorem forall_eq_zero_of_recessionFn_add_pos (hpf : Proper f) (hpg : Proper g)
     rw [← _root_.EReal.coe_add, add_neg_cancel, _root_.EReal.coe_zero] at hsum
     exact absurd hsum (not_le.2 (h z hz))
 
-/-- **Rockafellar, Corollary 9.2.2** (which is Corollary 9.2.1 for `m = 2`). If `f` and `g` are
-closed proper convex functions with `(f0⁺) z + (g0⁺) (-z) > 0` for every `z ≠ 0`, then `f □ g` is a
-closed proper convex function, the infimum defining it is attained, and
-`(f □ g)0⁺ = f0⁺ □ g0⁺`.
+omit [FiniteDimensional ℝ E] in
+/-- Call `z` a direction of **joint recession** for `f` and `g` when
+`(f0⁺) z + (g0⁺) (-z) ≤ 0`; it is the direction in which `f □ g` fails to increase. If the set of
+such directions is symmetric, then a direction of recession of `epi f` whose opposite recedes from
+`epi g` lies in the lineality space of `epi f`, and its opposite in that of `epi g` — which is the
+hypothesis of `Convex.isClosed_add`.
 
-The three conclusions come from one application of Corollary 9.1.2 to `epi f` and `epi g`: the
-epigraph identity `epi (f □ g) = epi f + epi g` *is* the attainment statement, since a sum of
-epigraphs is an epigraph exactly when every infimum defining `f □ g` is achieved.
+The vertical coordinates are what make this more than a restatement: the hypothesis speaks only
+about directions in `E`, and it is properness — through `le_recessionFn_of_neg_le` — that pins the
+two vertical coordinates against each other. -/
+theorem forall_mem_linealitySpace_epi_of_recessionFn_symm (hpf : Proper f) (hpg : Proper g)
+    (h : ∀ z : E, recessionFn f z + recessionFn g (-z) ≤ 0 →
+      recessionFn f (-z) + recessionFn g z ≤ 0) :
+    ∀ q ∈ recessionCone (epi f), ∀ r ∈ recessionCone (epi g), q + r = 0 →
+      q ∈ linealitySpace (epi f) ∧ r ∈ linealitySpace (epi g) := by
+  rintro ⟨z, ν⟩ hq ⟨w, ρ⟩ hr hqr
+  have hqr' : ((z, ν) : E × ℝ) + ((w, ρ) : E × ℝ) = 0 := hqr
+  have hzw : z + w = (0 : E) := congrArg Prod.fst hqr'
+  have hνρ : ν + ρ = (0 : ℝ) := congrArg Prod.snd hqr'
+  have hw : w = -z := eq_neg_of_add_eq_zero_right hzw
+  have hρ : ρ = -ν := by linarith
+  subst hw
+  subst hρ
+  have h₁ : recessionFn f z ≤ (ν : EReal) := recessionFn_le_coe_iff.2 hq
+  have h₂ : recessionFn g (-z) ≤ ((-ν : ℝ) : EReal) := recessionFn_le_coe_iff.2 hr
+  have hsum : recessionFn f z + recessionFn g (-z) ≤ 0 := by
+    have hadd := add_le_add h₁ h₂
+    rwa [← _root_.EReal.coe_add, add_neg_cancel, _root_.EReal.coe_zero] at hadd
+  have hsym := h z hsum
+  have hA : ((-ν : ℝ) : EReal) ≤ recessionFn f (-z) :=
+    le_recessionFn_of_neg_le hpf (by simp only [neg_neg]; exact h₁)
+  have hB : (ν : EReal) ≤ recessionFn g z := le_recessionFn_of_neg_le hpg h₂
+  have hfz : recessionFn f (-z) ≤ ((-ν : ℝ) : EReal) := by
+    refine Tdaf.EReal.le_coe_of_add_le_coe_add hA hB ?_
+    rwa [neg_add_cancel, _root_.EReal.coe_zero]
+  have hgz : recessionFn g z ≤ (ν : EReal) := by
+    refine Tdaf.EReal.le_coe_of_add_le_coe_add hB hA ?_
+    rw [add_neg_cancel, _root_.EReal.coe_zero, add_comm]
+    exact hsym
+  refine ⟨mem_linealitySpace.2 ⟨hq, recessionFn_le_coe_iff.1 hfz⟩,
+    mem_linealitySpace.2 ⟨hr, ?_⟩⟩
+  have hneg : -((-z, -ν) : E × ℝ) = ((z, ν) : E × ℝ) := by simp
+  rw [hneg]
+  exact recessionFn_le_coe_iff.1 hgz
 
-Stated for two functions; the `m`-function version, Corollary 9.2.1, is the evident induction, and
-no backbone result asks for it. -/
-theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
-    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
+/-- **Rockafellar, Corollary 9.2.1** for two functions. If `f` and `g` are closed proper convex
+and the set of directions of joint recession — those `z` with `(f0⁺) z + (g0⁺) (-z) ≤ 0` — is
+symmetric, then `f □ g` is a closed proper convex function, the infimum defining it is attained,
+and `(f □ g)0⁺ = f0⁺ □ g0⁺`.
+
+This is strictly weaker in hypothesis than `closedProperConvexFn_infConv`, which asks the set of
+directions of joint recession to be `{0}`. Symmetry allows a whole subspace of directions along
+which `f` and `g` are affine with opposite slopes; `f = g = 0` is already such a pair, and the
+conclusions hold for it.
+
+Properness is where the symmetry does its work. A vertical line in `epi f + epi g` produces
+directions with `(f0⁺) z + (g0⁺) (-z) ≤ -1`; symmetry then forces the reversed sum to be `≤ 0`
+too, and `(f0⁺) (-z) + (g0⁺) z ≥ 1` by `le_recessionFn_of_neg_le`. -/
+theorem closedProperConvexFn_infConv_of_recessionFn_symm (hf : ClosedProperConvexFn f)
+    (hg : ClosedProperConvexFn g)
+    (h : ∀ z : E, recessionFn f z + recessionFn g (-z) ≤ 0 →
+      recessionFn f (-z) + recessionFn g z ≤ 0) :
     epi (infConv f g) = epi f + epi g ∧ ClosedProperConvexFn (infConv f g) ∧
       recessionFn (infConv f g) = infConv (recessionFn f) (recessionFn g) := by
   have hfne : (epi f).Nonempty := (epi_nonempty_iff f).2 hf.proper.dom_nonempty
   have hgne : (epi g).Nonempty := (epi_nonempty_iff g).2 hg.proper.dom_nonempty
-  have hkey := forall_eq_zero_of_recessionFn_add_pos hf.proper hg.proper h
+  have hfcl : closure (epi f) = epi f := hf.isClosed_epi.closure_eq
+  have hgcl : closure (epi g) = epi g := hg.isClosed_epi.closure_eq
+  have hkey := forall_mem_linealitySpace_epi_of_recessionFn_symm hf.proper hg.proper h
   have hclosed : IsClosed (epi f + epi g) :=
-    Convex.isClosed_add_of_neg_notMem_recessionCone hf.convex.convex_epi hf.isClosed_epi hfne
-      hg.convex.convex_epi hg.isClosed_epi hgne hkey
-  have hrecset : recessionCone (epi f + epi g) = recessionCone (epi f) + recessionCone (epi g) :=
-    Convex.recessionCone_add_of_neg_notMem_recessionCone hf.convex.convex_epi hf.isClosed_epi hfne
-      hg.convex.convex_epi hg.isClosed_epi hgne hkey
+    Convex.isClosed_add hf.convex.convex_epi hf.isClosed_epi hfne hg.convex.convex_epi
+      hg.isClosed_epi hgne hkey
+  have hrecset : recessionCone (epi f + epi g)
+      = recessionCone (epi f) + recessionCone (epi g) := by
+    have hres := Convex.recessionCone_add hf.convex.convex_epi hfne hg.convex.convex_epi hgne
+      (by rw [hfcl, hgcl]; exact hkey)
+    rwa [hfcl, hgcl] at hres
   have hepi : epi (infConv f g) = epi f + epi g :=
     epi_infConv (IsEpiLike.of_isClosed (fun _ _ _ hμ hμν => mem_epi_add_epi_of_le hμ hμν) hclosed)
-  -- properness: a vertical line in `epi f + epi g` cancels two directions of recession
+  -- properness: a vertical line in `epi f + epi g` violates the symmetry
   have hnebot : ∀ x : E, infConv f g x ≠ ⊥ := by
     intro x hbot
     have hline : ∀ μ : ℝ, ((x, μ) : E × ℝ) ∈ epi f + epi g := by
@@ -624,9 +677,9 @@ theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedP
     have hray : (((0 : E), (-1 : ℝ)) : E × ℝ) ∈ recessionCone (epi f + epi g) := by
       refine mem_recessionCone_of_exists_ray (hf.convex.convex_epi.add hg.convex.convex_epi)
         hclosed ⟨((x, (0 : ℝ)) : E × ℝ), fun a ha => ?_⟩
-      have heq : ((x, (0 : ℝ)) : E × ℝ) + a • (((0 : E), (-1 : ℝ)) : E × ℝ)
+      have hshift : ((x, (0 : ℝ)) : E × ℝ) + a • (((0 : E), (-1 : ℝ)) : E × ℝ)
           = ((x, -a) : E × ℝ) := by simp [Prod.smul_mk, Prod.mk_add_mk]
-      rw [heq]
+      rw [hshift]
       exact hline (-a)
     rw [hrecset] at hray
     obtain ⟨q, hq, r, hr, hqr⟩ := hray
@@ -639,20 +692,24 @@ theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedP
     have h₂ : recessionFn g (-q.1) ≤ ((r.2 : ℝ) : EReal) := by
       refine recessionFn_le_coe_iff.2 ?_
       rwa [hrq] at hr
-    rcases eq_or_ne q.1 0 with hq1 | hq1
-    · rw [hq1, recessionFn_apply_zero hf.proper] at h₁
-      rw [hq1, neg_zero, recessionFn_apply_zero hg.proper] at h₂
-      have e₁' : (0 : ℝ) ≤ q.2 := by exact_mod_cast h₁
-      have e₂' : (0 : ℝ) ≤ r.2 := by exact_mod_cast h₂
-      linarith
-    · have hsum : recessionFn f q.1 + recessionFn g (-q.1)
-          ≤ ((q.2 : ℝ) : EReal) + ((r.2 : ℝ) : EReal) := add_le_add h₁ h₂
-      rw [← _root_.EReal.coe_add, hν] at hsum
-      have hpos := h q.1 hq1
-      have hneg : (((-1 : ℝ)) : EReal) < 0 := by
-        rw [← _root_.EReal.coe_zero]
-        exact_mod_cast (by norm_num : (-1 : ℝ) < 0)
-      exact absurd (lt_of_lt_of_le hpos hsum) (not_lt.2 hneg.le)
+    have hsum : recessionFn f q.1 + recessionFn g (-q.1) ≤ 0 := by
+      have hadd := add_le_add h₁ h₂
+      rw [← _root_.EReal.coe_add, hν] at hadd
+      refine hadd.trans ?_
+      rw [← _root_.EReal.coe_zero, _root_.EReal.coe_le_coe_iff]
+      norm_num
+    have hsym := h q.1 hsum
+    have hA : ((-q.2 : ℝ) : EReal) ≤ recessionFn f (-q.1) :=
+      le_recessionFn_of_neg_le hf.proper (by simp only [neg_neg]; exact h₁)
+    have hB : ((-r.2 : ℝ) : EReal) ≤ recessionFn g q.1 :=
+      le_recessionFn_of_neg_le hg.proper (by simp only [neg_neg]; exact h₂)
+    have hcontra : (((-q.2 + -r.2 : ℝ)) : EReal) ≤ 0 := by
+      refine le_trans ?_ hsym
+      rw [_root_.EReal.coe_add]
+      exact add_le_add hA hB
+    have hval : -q.2 + -r.2 = (1 : ℝ) := by rw [← neg_add, hν]; norm_num
+    rw [hval, ← _root_.EReal.coe_zero, _root_.EReal.coe_le_coe_iff] at hcontra
+    linarith
   have hproper : Proper (infConv f g) := by
     refine ⟨?_, hnebot⟩
     rw [dom_infConv]
@@ -664,20 +721,54 @@ theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedP
     rw [epi_recessionFn, epi_recessionFn, ← hrecset, ← hepi]
     exact isEpiLike_recessionCone_epi _
   refine epi_injective ?_
-  have h₁ : epi (recessionFn (infConv f g)) = recessionCone (epi f) + recessionCone (epi g) := by
+  have hL : epi (recessionFn (infConv f g)) = recessionCone (epi f) + recessionCone (epi g) := by
     rw [epi_recessionFn, hepi, hrecset]
-  have h₂ : epi (infConv (recessionFn f) (recessionFn g))
+  have hR : epi (infConv (recessionFn f) (recessionFn g))
       = recessionCone (epi f) + recessionCone (epi g) := by
     rw [epi_infConv hepilike₂, epi_recessionFn, epi_recessionFn]
-  rw [h₁, h₂]
+  rw [hL, hR]
 
-/-- **Rockafellar, Corollary 9.2.2**, the attainment statement on its own. -/
-theorem exists_add_eq_of_infConv_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
-    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) {x : E} {μ : ℝ}
+omit [FiniteDimensional ℝ E] in
+/-- Rockafellar's hypothesis in **Corollary 9.2.2** implies the one in Corollary 9.2.1: if the only
+direction of joint recession is `0`, the set of them is trivially symmetric. -/
+theorem recessionFn_symm_of_recessionFn_add_pos (hpf : Proper f) (hpg : Proper g)
+    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
+    ∀ z : E, recessionFn f z + recessionFn g (-z) ≤ 0 →
+      recessionFn f (-z) + recessionFn g z ≤ 0 := by
+  intro z hz
+  rcases eq_or_ne z 0 with rfl | hne
+  · refine le_of_eq ?_
+    rw [neg_zero, recessionFn_apply_zero hpf, recessionFn_apply_zero hpg, add_zero]
+  · exact absurd hz (not_le.2 (h z hne))
+
+/-- **Rockafellar, Corollary 9.2.2** (which is Corollary 9.2.1 for `m = 2`). If `f` and `g` are
+closed proper convex functions with `(f0⁺) z + (g0⁺) (-z) > 0` for every `z ≠ 0`, then `f □ g` is a
+closed proper convex function, the infimum defining it is attained, and
+`(f □ g)0⁺ = f0⁺ □ g0⁺`.
+
+The three conclusions come from one application of Corollary 9.1.2 to `epi f` and `epi g`: the
+epigraph identity `epi (f □ g) = epi f + epi g` *is* the attainment statement, since a sum of
+epigraphs is an epigraph exactly when every infimum defining `f □ g` is achieved.
+
+The hypothesis is stronger than it needs to be: `closedProperConvexFn_infConv_of_recessionFn_symm`
+asks only that the set of directions of joint recession be *symmetric*, not that it be `{0}`. -/
+theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
+    epi (infConv f g) = epi f + epi g ∧ ClosedProperConvexFn (infConv f g) ∧
+      recessionFn (infConv f g) = infConv (recessionFn f) (recessionFn g) :=
+  closedProperConvexFn_infConv_of_recessionFn_symm hf hg
+    (recessionFn_symm_of_recessionFn_add_pos hf.proper hg.proper h)
+
+/-- **Rockafellar, Corollary 9.2.1**, the attainment statement on its own: the infimum defining
+`(f □ g) x` is attained whenever it is bounded above by a real. -/
+theorem exists_add_eq_of_infConv_le_of_recessionFn_symm (hf : ClosedProperConvexFn f)
+    (hg : ClosedProperConvexFn g)
+    (h : ∀ z : E, recessionFn f z + recessionFn g (-z) ≤ 0 →
+      recessionFn f (-z) + recessionFn g z ≤ 0) {x : E} {μ : ℝ}
     (hμ : infConv f g x ≤ (μ : EReal)) :
     ∃ (y : E) (ν ρ : ℝ), y + (x - y) = x ∧ ν + ρ = μ ∧ f y ≤ (ν : EReal) ∧
       g (x - y) ≤ (ρ : EReal) := by
-  obtain ⟨hepi, -, -⟩ := closedProperConvexFn_infConv hf hg h
+  obtain ⟨hepi, -, -⟩ := closedProperConvexFn_infConv_of_recessionFn_symm hf hg h
   have hmem : ((x, μ) : E × ℝ) ∈ epi f + epi g := hepi ▸ mk_mem_epi.2 hμ
   obtain ⟨q, hq, r, hr, hqr⟩ := hmem
   have hqr' : q + r = ((x, μ) : E × ℝ) := hqr
@@ -687,6 +778,15 @@ theorem exists_add_eq_of_infConv_le (hf : ClosedProperConvexFn f) (hg : ClosedPr
   have hr1 : x - q.1 = r.1 := by rw [← hx]; abel
   rw [hr1]
   exact hr
+
+/-- **Rockafellar, Corollary 9.2.2**, the attainment statement on its own. -/
+theorem exists_add_eq_of_infConv_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
+    (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) {x : E} {μ : ℝ}
+    (hμ : infConv f g x ≤ (μ : EReal)) :
+    ∃ (y : E) (ν ρ : ℝ), y + (x - y) = x ∧ ν + ρ = μ ∧ f y ≤ (ν : EReal) ∧
+      g (x - y) ≤ (ρ : EReal) :=
+  exists_add_eq_of_infConv_le_of_recessionFn_symm hf hg
+    (recessionFn_symm_of_recessionFn_add_pos hf.proper hg.proper h) hμ
 
 end InfConvFn
 
