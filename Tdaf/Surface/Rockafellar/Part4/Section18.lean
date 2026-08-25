@@ -80,11 +80,6 @@ statement below names `convexHullPD` directly.
   extreme directions where `C` has none. Each needs coordinate machinery for no downstream return;
   the mathematical content they guard is already recorded in the backbone docstrings (the closure
   in Theorem 18.7 cannot be dropped, and Theorem 18.6 is stated with a closure for this reason).
-* **"Every extreme direction of `C` is an extreme direction of `0⁺C`"** and its exposed analogue
-  (p. 163) — *omitted*, and recorded as a backbone gap. What the backbone has is
-  `extremeDirections_subset_recessionCone`, the weaker statement that an extreme direction is a
-  direction of recession; the sharpening to an extreme direction *of the recession cone* is the
-  book's `C' ⊆ x + 0⁺C ⊆ C` argument and has no backbone counterpart.
 * **"Any strictly decreasing sequence of faces must be finite in length"** (p. 164) — *omitted*.
   It is an immediate consequence of `corollary_18_1_3_dim`, stated in the book as a remark on the
   lattice `F(C)` and used nowhere.
@@ -99,6 +94,13 @@ statement below names `convexHullPD` directly.
 
 * **Theorem 18.3 does not need the face to be non-empty.** The backbone's proof does not use it,
   and the empty face satisfies the conclusion.
+* **"Every extreme direction of `C` is an extreme direction of `0⁺C`" (p. 163) does not need `C`
+  closed** — not in the backbone. The book's `C' ⊆ x + 0⁺C ⊆ C` argument is purely algebraic once
+  one knows that the direction of the half-line face recedes in `C`, and that is the *only* thing
+  closedness buys (it is Theorem 8.3). The backbone therefore states
+  `isFace_recessionCone`, `isExtremeDirection_recessionCone` and their exposed twins with no
+  topology at all, hypothesising `0⁺C' ⊆ 0⁺C` — respectively `y ∈ 0⁺C` — instead. The surface
+  statements here keep the book's closedness, since that is what discharges the hypothesis.
 * **Corollaries 18.5.2 and 18.7.1 do not need "more than just the origin".** For `K = {0}` there
   are no extreme (or exposed) directions at all, the hypothesis on `T` is vacuous, and both sides
   of the conclusion are `{0}`. This is recorded in the backbone docstrings.
@@ -495,6 +497,45 @@ theorem corollary_18_5_2 {K T : Set (Rn n)} (hK : Convex ℝ K) (hKcl : IsClosed
   have hsmul := forall_smul_mem_of_isCone hcone hKcl
   exact coneHull_of_forall_extremeDirection hK hKcl hne hsmul hnl hTK fun y hy =>
     hgen y ((isExtremeRay_iff_isExtremeDirection hne hsmul).2 hy)
+
+/-! ### Directions at infinity pass to the recession cone (p. 163)
+
+The book's argument: if `C'` is a half-line face of a closed convex set `C` with endpoint `x` and
+`D = x + 0⁺C`, then `C' ⊆ D ⊆ C` by Theorem 8.3, so `C'` is a half-line face of `D` and `C' - x`
+is an extreme ray of `0⁺C`. The converse fails — a parabolic set in `R²` has no half-line faces
+at all, while its recession cone is a ray and so has one extreme (indeed exposed) direction. -/
+
+/-- **Rockafellar, §18 (p. 163).** Every extreme direction of a closed convex set `C` is an
+extreme direction of `0⁺C`.
+
+This sharpens the statement that an extreme direction merely *is* a direction of recession, which
+is Theorem 8.3 applied to the half-line face. Specialises
+`extremeDirections_subset_extremeDirections_recessionCone`. -/
+theorem subset_extremeDirections_recessionCone (hC : Convex ℝ C) (hCcl : IsClosed C) :
+    extremeDirections C ⊆ extremeDirections (recessionCone C) :=
+  extremeDirections_subset_extremeDirections_recessionCone hC hCcl
+
+/-- **Rockafellar, §18 (p. 163).** Every exposed direction of a closed convex set `C` is an
+exposed direction of `0⁺C`. -/
+theorem subset_exposedDirections_recessionCone (hC : Convex ℝ C) (hCcl : IsClosed C) :
+    exposedDirections C ⊆ exposedDirections (recessionCone C) :=
+  exposedDirections_subset_exposedDirections_recessionCone hC hCcl
+
+/-- **Rockafellar, §18 (p. 163),** in the book's own wording: if `C'` is a half-line face of the
+closed convex set `C` with endpoint `x`, then `C' - x` is an extreme **ray** of the cone `0⁺C`. -/
+theorem isExtremeRay_recessionCone {y : Rn n} (hC : Convex ℝ C) (hCcl : IsClosed C)
+    (hy : IsExtremeDirection C y) : IsExtremeRay (recessionCone C) y :=
+  (isExtremeRay_iff_isExtremeDirection ⟨0, zero_mem_recessionCone C⟩
+    fun _ hx _ ha => smul_mem_recessionCone ha hx).2
+    (subset_extremeDirections_recessionCone hC hCcl hy)
+
+/-- **Rockafellar, §18 (p. 163).** The exposed half of `isExtremeRay_recessionCone`: an exposed
+half-line face of `C` with endpoint `x` translates to an exposed ray of `0⁺C`. -/
+theorem isExposedRay_recessionCone {y : Rn n} (hC : Convex ℝ C) (hCcl : IsClosed C)
+    (hy : IsExposedDirection C y) : IsExposedRay (recessionCone C) y :=
+  (isExposedRay_iff_isExposedDirection ⟨0, zero_mem_recessionCone C⟩
+    fun _ hx _ ha => smul_mem_recessionCone ha hx).2
+    (subset_exposedDirections_recessionCone hC hCcl hy)
 
 /-! ### Theorem 18.6: Straszewicz's theorem -/
 

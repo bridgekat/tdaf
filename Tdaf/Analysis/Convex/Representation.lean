@@ -47,6 +47,11 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
   set of generators of the extreme rays. **Corollary 18.5.1**, Minkowski's theorem for compact
   sets, is `convexHull_extremePoints` in `Face.lean`, proved earlier and used here as the base
   case of the induction.
+* `isFace_recessionCone` — the recession cone of a face is a face of the recession cone, given
+  that it is contained in it. `extremeDirections_subset_extremeDirections_recessionCone` is the
+  consequence Rockafellar records on p. 163: every extreme direction of a closed convex set is an
+  extreme direction of its recession cone. The half-line-face case,
+  `isExtremeDirection_recessionCone`, needs no topology at all.
 * `IsFace.eq_convexHullPD` — **Theorem 18.3**: a nonempty face of `conv S` is the hull of the
   points of `S` it contains and the directions of `S` in which it recedes.
   `extremePoints_convexHullPD_subset` and `exists_mem_eq_smul_of_mem_extremeDirections` are the
@@ -165,6 +170,56 @@ theorem IsExtremeDirection.halfLine_subset (h : IsExtremeDirection C y) :
     ∃ x, halfLine x y ⊆ C := by
   obtain ⟨-, x, hx⟩ := h
   exact ⟨x, hx.subset⟩
+
+/-- **The recession cone of a half-line is the half-line in the same direction issuing from the
+origin.** A restatement of `recessionCone_halfLine`, which produces the ray as a set-builder. -/
+theorem recessionCone_halfLine_eq_halfLine_zero (x y : E) :
+    recessionCone (halfLine x y) = halfLine 0 y := by
+  rw [recessionCone_halfLine]
+  ext z
+  simp [halfLine]
+
+/-- **The recession cone of a face is a face of the recession cone.**
+
+The inclusion `0⁺C' ⊆ 0⁺C` is genuinely a hypothesis: the recession cone is not monotone in
+general, and for a nonempty subset of a closed convex set it is Theorem 8.3 that supplies it.
+Everything else here is algebraic — no topology, no convexity of `C`, no nonemptiness.
+
+Rockafellar uses the half-line case of this on p. 163: if `C'` is a half-line face of a closed
+convex `C` with endpoint `x`, then `C' ⊆ x + 0⁺C ⊆ C`, so `C'` is a half-line face of `x + 0⁺C`
+and `C' - x` is an extreme ray of `0⁺C`. Passing to recession cones on both sides performs his
+restriction and his translation in one step. -/
+theorem isFace_recessionCone (h : IsFace C C') (hrec : recessionCone C' ⊆ recessionCone C) :
+    IsFace (recessionCone C) (recessionCone C') := by
+  refine ⟨⟨hrec, ?_⟩, convex_recessionCone C'⟩
+  rintro u hu v hv z hz ⟨a, b, ha, hb, hab, hzab⟩ w hw t ht
+  have hwC : w ∈ C := h.subset hw
+  have hseg : w + t • z ∈ openSegment ℝ (w + t • u) (w + t • v) := by
+    refine ⟨a, b, ha, hb, hab, ?_⟩
+    have hexp : a • (w + t • u) + b • (w + t • v) = (a + b) • w + t • (a • u + b • v) := by
+      module
+    rw [hexp, hab, one_smul, hzab]
+  exact h.left_mem_of_mem_openSegment (add_smul_mem_of_mem_recessionCone hu hwC ht)
+    (add_smul_mem_of_mem_recessionCone hv hwC ht)
+    (add_smul_mem_of_mem_recessionCone hz hw ht) hseg
+
+/-- **An extreme direction in which `C` recedes is an extreme direction of `0⁺C`** (Rockafellar,
+§18, p. 163). The half-line face `x + ℝ₊ y` of `C` becomes the half-line face `ℝ₊ y` of `0⁺C`,
+which is an extreme ray of that cone.
+
+The hypothesis `y ∈ 0⁺C` is automatic for a closed convex `C`, by Theorem 8.3
+(`extremeDirections_subset_recessionCone`); assuming it directly keeps the statement free of
+topology. -/
+theorem isExtremeDirection_recessionCone (h : IsExtremeDirection C y)
+    (hy : y ∈ recessionCone C) : IsExtremeDirection (recessionCone C) y := by
+  obtain ⟨hy0, x, hface⟩ := h
+  have hrec : recessionCone (halfLine x y) ⊆ recessionCone C := by
+    rw [recessionCone_halfLine_eq_halfLine_zero]
+    rintro z ⟨a, ha, rfl⟩
+    simpa using smul_mem_recessionCone ha hy
+  have hfin := isFace_recessionCone hface hrec
+  rw [recessionCone_halfLine_eq_halfLine_zero] at hfin
+  exact ⟨hy0, 0, hfin⟩
 
 end Directions
 
@@ -412,6 +467,17 @@ theorem extremeDirections_subset_recessionCone (hC : Convex ℝ C) (hCcl : IsClo
     extremeDirections C ⊆ recessionCone C := by
   rintro y ⟨-, x, hx⟩
   exact mem_recessionCone_of_exists_ray hC hCcl ⟨x, fun a ha => hx.subset ⟨a, ha, rfl⟩⟩
+
+/-- **Every extreme direction of a closed convex set is an extreme direction of its recession
+cone** (Rockafellar, §18, p. 163). This sharpens `extremeDirections_subset_recessionCone`, which
+says only that an extreme direction *is* a direction of recession.
+
+The converse fails: a parabolic region in the plane has no half-line faces at all, while its
+recession cone is a ray and so has one extreme direction. -/
+theorem extremeDirections_subset_extremeDirections_recessionCone (hC : Convex ℝ C)
+    (hCcl : IsClosed C) : extremeDirections C ⊆ extremeDirections (recessionCone C) :=
+  fun _ hy =>
+    isExtremeDirection_recessionCone hy (extremeDirections_subset_recessionCone hC hCcl hy)
 
 end DirectionsTopology
 

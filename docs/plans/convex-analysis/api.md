@@ -3773,6 +3773,8 @@ theorem IsFace.eq_convexHullPD …                              -- Thm 18.3
 theorem convexHullPD_extremePoints_extremeDirections …         -- Thm 18.5
 theorem extremePoints_subset_closure_exposedPoints …           -- Thm 18.6
 theorem closure_exposedPoints_eq_closure_extremePoints …       -- Thm 18.6, the equality form
+theorem isFace_recessionCone …                                 -- p. 163, the algebraic core
+theorem extremeDirections_subset_extremeDirections_recessionCone …  -- p. 163
 ```
 
 **Corrections.** Theorem 18.3 needs neither Theorem 6.4 nor the positive-coefficient description of
@@ -3785,6 +3787,13 @@ unbounded one-dimensional case needs `exists_eq_halfLine`), but the induction is
 book's: Minkowski discharges the bounded case in every dimension. Straszewicz is cleaner with a
 nearest-point projection than with Rockafellar's `ε` — project `x` onto `conv (cl (exp C))`, set
 `d = x - v`, `λ = (r²+1)/(2‖d‖²)`, `y = x - λ•d`; no Hahn–Banach, no Riesz, no unit normalisation.
+
+**The p. 163 remark "every extreme direction of `C` is an extreme direction of `0⁺C`" needs no
+closedness.** Rockafellar's `C' ⊆ x + 0⁺C ⊆ C` argument is purely algebraic once one knows that the
+direction of the half-line face recedes in `C`; closedness only discharges that, via Theorem 8.3.
+`isFace_recessionCone` states the general fact — the recession cone of a face is a face of the
+recession cone, given `0⁺C' ⊆ 0⁺C` — at layer A, and simultaneously performs the book's restriction
+to `x + 0⁺C` and his translation by `-x`.
 
 **Layer deviation.** Straszewicz's core needs a genuine inner product; the public statements are
 recovered for arbitrary finite-dimensional real normed `E` by transporting through Mathlib's
@@ -3929,6 +3938,8 @@ def exposedDirections (C : Set E) : Set E
 theorem exists_forall_sub_le_mul_sub …
 theorem closure_convexHullPD_exposedPoints_exposedDirections …     -- Thm 18.7
 theorem closure_coneHull_exposedDirections …                      -- Cor 18.7.1
+theorem isExposed_recessionCone …                                 -- p. 163, the algebraic core
+theorem exposedDirections_subset_exposedDirections_recessionCone … -- p. 163
 ```
 
 **Theorem 18.7 needs no dimension bookkeeping and no dimension reduction.** The book opens "we can
@@ -3944,6 +3955,11 @@ settle the bounded case in *every* dimension, and only the unbounded case uses `
 **Corollary 18.7.1's "containing more than just the origin" is unnecessary.** For `K = {0}`,
 `exposedDirections {0} = ∅` and `PointedCone.hull ℝ ∅ = {0}`. What that hypothesis really buys is
 `exposedPoints K = {0}`, and that follows from Theorem 18.7 itself.
+
+**The exposed half of the p. 163 remark is proved by the same functional.** `isExposed_recessionCone`
+shows `0⁺` of an exposed face is exposed in `0⁺C` by the *same* `l`: a functional maximised over `C`
+is non-positive on `0⁺C`, and vanishes exactly on the directions in which the face itself recedes.
+Like the extreme half it needs no closedness — only `0⁺C' ⊆ 0⁺C`.
 
 **Relocation candidate**: `exists_forall_sub_le_mul_sub` is a pure convexity/multiplier statement
 with no reference to faces or exposedness, and is the finite-dimension-free substitute for "extend
