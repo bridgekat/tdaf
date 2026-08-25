@@ -35,19 +35,34 @@ with "finitely generated", and this module adds "closed, with a finite set of fa
 **Extreme directions are counted as rays, not as vectors.** `extremeDirections C` is closed under
 multiplication by positive scalars, so it is never finite. What finiteness of the face set bounds
 is the number of half-line faces, and `exists_finite_generating_extremeDirections` turns that
-bound into a finite set of generators by choosing one direction vector per half-line face: two
-generators of one half-line face lie in its recession cone, which is a single ray.
+bound into a finite set of generators by choosing, for every face, a direction vector for it when
+it happens to be a half-line, and intersecting the resulting finite image with
+`extremeDirections C` to discard the faces that are not. Two generators of one half-line face lie
+in the recession cone of that face, which is a single ray, so the chosen vector generates every
+extreme direction whose half-line face it came from.
+
+**The two counting lemmas are algebraic; everything after them is finite-dimensional.** Neither
+`finite_extremePoints_of_finite_setOf_isFace` nor
+`exists_finite_generating_extremeDirections` needs a topology: an extreme point is a singleton
+face and an extreme direction is a half-line face, and both facts are definitional. The
+representation theorem they are used with is genuinely finite-dimensional, and so is everything
+about `Polyhedral`, so the rest of the file sits in the finite-dimensional layer by necessity
+rather than by default.
 
 **The lineality reduction is carried out on `Polyhedral`, not on `FinitelyGenerated`.** Once
 `C ∩ M` is known to be finitely generated, `C = N + (C ∩ M)` is a sum of two polyhedral sets —
 `polyhedral_coe_submodule` and `Polyhedral.add` — so no generating set for a subspace has to be
 produced, and no basis is chosen.
 
-**Only "finitely many faces implies finitely generated" is proved directly.** Polyhedrality then
-comes from `FinitelyGenerated.polyhedral`. A second argument, deducing a finite system of
-inequalities from the finite set of faces through the tangent half-spaces of a full-dimensional
-set, is available but would need a reduction to the full-dimensional case that this route does
-not.
+## What is not here
+
+**The tangent-half-space route to a system of inequalities.** A full-dimensional closed convex
+set is the intersection of its tangent closed half-spaces (`Tangent.lean`), each of which is
+determined by the exposed face it touches, so a finite face set bounds them too. That is a second
+proof that finitely many faces implies *polyhedrality*, and it is not here: it needs a reduction
+of a lower-dimensional set to a full-dimensional one inside its own affine hull, whereas finite
+generation is reached with no dimension count at all and `FinitelyGenerated.polyhedral` then
+supplies the inequalities.
 
 ## References
 
