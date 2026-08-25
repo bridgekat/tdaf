@@ -20,6 +20,7 @@ each behaves under taking adjoints.
 | operation | here | linear-algebra analogue |
 |---|---|---|
 | `F₁ □ F₂` | `infConvBifun` | `A₁ + A₂` |
+| `H₁ ⊡ H₂` | `infConvFstBifun` | the same, in the *first* variable |
 | `Fλ` | `smulRightBifun` | `λ A` |
 | `Ff` | `imageBifun` | `A x` |
 | `GF` | `compBifun` | `B ∘ A` |
@@ -31,6 +32,9 @@ each behaves under taking adjoints.
 * `infConvBifun F₁ F₂` — Rockafellar's `F₁ □ F₂`, infimal convolution in the second variable.
 * `supConvBifun G₁ G₂` — the concave mirror, supremal convolution in the second variable; this is
   the shape the adjoint of `F₁ □ F₂` takes.
+* `infConvFstBifun H₁ H₂` — infimal convolution in the *first* variable, pointwise in the second.
+  This is the operation Corollary 38.2.1 applies to the lower adjoints, `infConvBifun` convolving
+  in the wrong variable for that purpose.
 * `smulRightBifun F l` — Rockafellar's `Fλ`.
 * `imageBifun F f` — Rockafellar's `Ff`, and `concaveImageBifun` for the concave orientation.
 * `compBifun G F` — Rockafellar's product `GF`, and `concaveCompBifun` for the concave one.
@@ -66,6 +70,13 @@ each behaves under taking adjoints.
   `exists_compBifun_eq`, `lowerAdjointBifun_compBifun_eq_clBifun` — **Corollary 38.5.1**:
   for closed proper convex `F` and `G`, `GF` is closed, the infimum defining `((GF)u)(y)` is
   attained, and `(GF)⁎* = cl (G⁎* F⁎*)`.
+* `convexBifun_infConvFstBifun`, `graphFn_infConvFstBifun`, `lowerAdjointBifun_infConvFstBifun` —
+  the first-variable convolution and the one theorem Corollary 38.2.1 needs about it:
+  `(H₁ ⊡ H₂)⁎* = H₁⁎* □ H₂⁎*`.
+* `lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun`,
+  `infConvBifun_eq_lowerAdjointBifun_infConvFstBifun`, `closedBifun_infConvBifun`,
+  `lowerAdjointBifun_infConvBifun_eq_clBifun` — **Corollary 38.2.1**: `F₁ □ F₂` is closed for
+  closed proper convex `F₁`, `F₂`, and `(F₁ □ F₂)⁎* = cl (F₁⁎* ⊡ F₂⁎*)`.
 * `fenchelSup_le_fenchelInf` — weak duality for the inner product, with no hypothesis.
 * `hasFenchelPairing_conj`, `fenchelPairing_conj` — **Lemma 38.6**: `⟨f*, g*⟩ = -⟨f, g⟩`.
 * `hasFenchelPairing_adjointBifun`, `conj_imageBifun_eq_fenchelPairing` — **Corollary 38.7.1**:
@@ -73,6 +84,10 @@ each behaves under taking adjoints.
 * `fenchelSup_imageBifun_lowerAdjointBifun`,
   `fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun` — **Theorem 38.7**: adjoints move across
   the inner product.
+* `compBifun_slice`, `hasFenchelPairing_adjointBifun_slice`,
+  `bracket_compBifun_eq_fenchelPairing` — **Corollary 38.7.2**, first equality:
+  `⟨GFu, z⟩ = ⟨Fu, G* z⟩`, which is Corollary 38.7.1 at the slice `Fu`, a slice of a product
+  being the image of a slice.
 
 ## Design notes
 
@@ -132,26 +147,29 @@ orientation of Theorem 16.4 (`concaveConj_add_of_isExactSum`, `Duality/ConcaveOp
 closure step never arises. The price is that the hypothesis is an `IsExactSum` on the two brackets,
 one for each `y`, rather than his single relative-interior condition; see the blocked note there.
 
+**Corollary 38.2.1 convolves in the other variable, and stays convex.** It is Theorem 38.2
+applied to the adjoints, whose convolution is in the *first* variable of the bifunction. Rather
+than build the concave first-variable convolution the book's phrasing calls for, `infConvFstBifun`
+is the convex one and it is applied to the *lower* adjoints, exactly as Corollary 38.5.1 is
+Theorem 38.5 applied to theirs; the whole corollary then stays between convex bifunctions and
+needs no concave closure. The bridge is
+`lowerAdjointBifun_eq_conj_concaveBracket_invBifun`: with `φᵢ y = ⨅ v, (Hᵢ v y + ⟨u, v⟩)` the lower
+adjoint of `Hᵢ` at `u` *is* `φᵢ*`, `φ = φ₁ + φ₂` holds for a first-variable convolute with no
+hypothesis (`conj_infConv`, the unconditional row of Theorem 16.4, plus one `EReal.neg_add`), and
+`IsExactSum.conj_add` turns `(φ₁ + φ₂)*` into the second-variable convolution.
+
 **`HasFenchelPairing` is a `def` unfolding to an equation, so dot notation is unavailable.**
 `h.conj` for `h : HasFenchelPairing B f g` resolves against `Eq`; the lemma is therefore named
 `hasFenchelPairing_conj` rather than `HasFenchelPairing.conj`.
 
 ## What is not here
 
-* **Corollary 38.2.1**, `(F₁ □ F₂)* = cl (F₁* □ F₂*)` with `F₁ □ F₂` closed. It is Theorem 38.2
-  applied to the adjoints, which convolve in the *first* variable of the bifunction;
-  `infConvBifun` convolves in the second, so the mirror operation and its adjoint formula have to
-  be built first. Following Corollary 38.4.1 the right packaging is the convex one: a
-  first-variable convolution `infConvFstBifun H₁ H₂ v w = ⨅ {v₁ + v₂ = v}, H₁ v₁ w + H₂ v₂ w` of
-  the lower adjoints, closed with `clBifun`, so no concave closure is needed for it either. The
-  one theorem to prove is that the lower adjoint of a first-variable convolution is the
-  second-variable convolution of the lower adjoints. Writing `φᵢ w = ⨅ v, (Hᵢ v w + ⟨v, u⟩)`,
-  the lower adjoint of `Hᵢ` at `u` is `conj Bx' φᵢ` by definition; `φ = φ₁ + φ₂` for a
-  first-variable convolution by the unconditional half of Theorem 16.4 (`conj_infConv`) plus one
-  `EReal.neg_add` splitting, and `IsExactSum.conj_add` then turns `conj Bx' (φ₁ + φ₂)` into the
-  infimal convolution. Corollary 38.2.1 is that theorem applied to the lower adjoints of `F₁` and
-  `F₂`, exactly as Corollary 38.5.1 is Theorem 38.5 applied to theirs.
-* Corollary 38.7.2 and the co-finiteness discussion at the end of the section.
+* **Corollary 38.7.2**'s second equality `⟨GFu, z⟩ = ⟨u, F* G* z⟩`, which is Corollary 33.2.1 at a
+  relative interior point of `dom (GF)` and hence layer D; it is
+  `bracket_compBifun_eq_concaveBracket_concaveCompBifun` in `Bifunction/Cofinite.lean`. The first
+  equality needs no relative interior and is here.
+* The **co-finiteness discussion** that closes §38, which needs Corollary 13.3.1 and therefore
+  finite dimensions; it is `Bifunction/Cofinite.lean`.
 
 ## References
 
@@ -1615,5 +1633,355 @@ theorem lowerAdjointBifun_compBifun_eq_clBifun (hF : ClosedProperConvexFn (graph
   rw [hfun, hbi]
 
 end Cor3851Adjoint
+
+/-! ### Infimal convolution in the first variable -/
+
+section InfConvFstBifunDefs
+
+variable {V Y : Type*} [AddCommGroup V]
+
+/-- Infimal convolution of bifunctions in the **first** variable, pointwise in the second:
+`(H₁ ⊡ H₂) v y = ⨅ {v₁ + v₂ = v}, H₁ v₁ y + H₂ v₂ y`.
+
+`infConvBifun` convolves in the *second* variable and is the bifunction analogue of `A₁ + A₂`;
+this is its mirror, and it is the operation the lower adjoints have to be combined by:
+the lower adjoint of a first-variable convolute is the second-variable convolute of the lower
+adjoints (`lowerAdjointBifun_infConvFstBifun`). -/
+noncomputable def infConvFstBifun (H₁ H₂ : Bifun V Y) : Bifun V Y :=
+  fun v y => infConv (fun w => H₁ w y) (fun w => H₂ w y) v
+
+/-- The defining equation of `infConvFstBifun`, slice by slice in the *second* variable. -/
+theorem infConvFstBifun_slice (H₁ H₂ : Bifun V Y) (y : Y) :
+    (fun v => infConvFstBifun H₁ H₂ v y) = infConv (fun w => H₁ w y) (fun w => H₂ w y) := rfl
+
+/-- `⊡` is commutative, because infimal convolution is. -/
+theorem infConvFstBifun_comm (H₁ H₂ : Bifun V Y) :
+    infConvFstBifun H₁ H₂ = infConvFstBifun H₂ H₁ :=
+  funext fun v => funext fun _y => congrFun (infConv_comm _ _) v
+
+/-- `⊡` is associative, because infimal convolution is. -/
+theorem infConvFstBifun_assoc (H₁ H₂ H₃ : Bifun V Y) :
+    infConvFstBifun (infConvFstBifun H₁ H₂) H₃ = infConvFstBifun H₁ (infConvFstBifun H₂ H₃) :=
+  funext fun v => funext fun _y => congrFun (infConv_assoc _ _ _) v
+
+end InfConvFstBifunDefs
+
+section InfConvFstBifunConvex
+
+variable {V Y : Type*} [AddCommGroup V] [Module ℝ V] [AddCommGroup Y] [Module ℝ Y]
+variable {H₁ H₂ : Bifun V Y}
+
+/-- The linear map `((v, y), w) ↦ (v - w, y)`, the left half of the change of variables that turns
+a first-variable infimal convolution into a partial minimisation. -/
+def infConvFstLeft (V Y : Type*) [AddCommGroup V] [Module ℝ V] [AddCommGroup Y] [Module ℝ Y] :
+    (V × Y) × V →ₗ[ℝ] V × Y :=
+  LinearMap.prod (LinearMap.fst ℝ V Y ∘ₗ LinearMap.fst ℝ (V × Y) V - LinearMap.snd ℝ (V × Y) V)
+    (LinearMap.snd ℝ V Y ∘ₗ LinearMap.fst ℝ (V × Y) V)
+
+@[simp] theorem infConvFstLeft_apply (q : (V × Y) × V) :
+    infConvFstLeft V Y q = (q.1.1 - q.2, q.1.2) := rfl
+
+/-- The linear map `((v, y), w) ↦ (w, y)`, the right half of the same change of variables. -/
+def infConvFstRight (V Y : Type*) [AddCommGroup V] [Module ℝ V] [AddCommGroup Y] [Module ℝ Y] :
+    (V × Y) × V →ₗ[ℝ] V × Y :=
+  LinearMap.prod (LinearMap.snd ℝ (V × Y) V) (LinearMap.snd ℝ V Y ∘ₗ LinearMap.fst ℝ (V × Y) V)
+
+@[simp] theorem infConvFstRight_apply (q : (V × Y) × V) :
+    infConvFstRight V Y q = (q.2, q.1.2) := rfl
+
+/-- The graph function of `H₁ ⊡ H₂` is a *partial minimisation* of a convex function on
+`(V × Y) × V`: the infimum formula for `⊡`, read jointly in `(v, y)`. -/
+theorem graphFn_infConvFstBifun (hb₁ : ∀ v y, H₁ v y ≠ ⊥) (hb₂ : ∀ v y, H₂ v y ≠ ⊥) (p : V × Y) :
+    graphFn (infConvFstBifun H₁ H₂) p
+      = ⨅ w : V, (compLin (graphFn H₁) (infConvFstLeft V Y)
+          + compLin (graphFn H₂) (infConvFstRight V Y)) (p, w) := by
+  change infConv (fun w => H₁ w p.2) (fun w => H₂ w p.2) p.1 = _
+  rw [infConv_apply (fun w => hb₁ w p.2) (fun w => hb₂ w p.2)]
+  rfl
+
+/-- `H₁ ⊡ H₂` is a convex bifunction, by the same partial-minimisation argument that makes
+`H₁ □ H₂` one. -/
+theorem convexBifun_infConvFstBifun (hb₁ : ∀ v y, H₁ v y ≠ ⊥) (hb₂ : ∀ v y, H₂ v y ≠ ⊥)
+    (hH₁ : ConvexBifun H₁) (hH₂ : ConvexBifun H₂) : ConvexBifun (infConvFstBifun H₁ H₂) := by
+  have hh : ConvexFn (compLin (graphFn H₁) (infConvFstLeft V Y)
+      + compLin (graphFn H₂) (infConvFstRight V Y)) :=
+    ConvexFn.add (convexFn_compLin _ hH₁) (convexFn_compLin _ hH₂)
+      (fun q => hb₁ _ _) (fun q => hb₂ _ _)
+  have hgr : graphFn (infConvFstBifun H₁ H₂)
+      = fun p : V × Y => ⨅ w : V, (compLin (graphFn H₁) (infConvFstLeft V Y)
+          + compLin (graphFn H₂) (infConvFstRight V Y)) (p, w) :=
+    funext (graphFn_infConvFstBifun hb₁ hb₂)
+  rw [ConvexBifun, hgr]
+  exact convexFn_iInf_right hh
+
+end InfConvFstBifunConvex
+
+/-! ### The lower adjoint of a first-variable convolute -/
+
+section ERealAuxFst
+
+/-- Negating a sum whose right summand is a real constant. No side condition is needed: the finite
+term rules out both `∞ - ∞` collisions by itself. -/
+private theorem neg_add_coe' (a : EReal) (r : ℝ) :
+    -(a + (r : EReal)) = ((-r : ℝ) : EReal) - a := by
+  induction a with
+  | bot =>
+    rw [_root_.EReal.bot_add, _root_.EReal.neg_bot,
+      _root_.EReal.sub_bot (_root_.EReal.coe_ne_bot _)]
+  | coe c =>
+    rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_neg, ← _root_.EReal.coe_sub,
+      _root_.EReal.coe_eq_coe_iff]
+    ring
+  | top => rw [_root_.EReal.top_add_coe, _root_.EReal.neg_top, _root_.EReal.sub_top]
+
+/-- The same identity with the constant written as a difference, and the roles of the two reals
+separated. -/
+private theorem neg_add_coe_sub' (a : EReal) (r s : ℝ) :
+    -(a + ((r - s : ℝ) : EReal)) = (s : EReal) - (a + (r : EReal)) := by
+  induction a with
+  | bot =>
+    rw [_root_.EReal.bot_add, _root_.EReal.neg_bot, _root_.EReal.bot_add,
+      _root_.EReal.sub_bot (_root_.EReal.coe_ne_bot _)]
+  | coe c =>
+    rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_add, ← _root_.EReal.coe_neg,
+      ← _root_.EReal.coe_sub, _root_.EReal.coe_eq_coe_iff]
+    ring
+  | top =>
+    rw [_root_.EReal.top_add_coe, _root_.EReal.neg_top, _root_.EReal.top_add_coe,
+      _root_.EReal.sub_top]
+
+/-- Negation distributes over a sum of two negatives, provided neither original summand is `⊥`.
+This is not `EReal.neg_add`, whose second side condition fails when both summands are `⊤` — and
+that case is genuinely fine here, since `-(⊥ + ⊥) = ⊤ = ⊤ + ⊤`. -/
+private theorem neg_add_neg' {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠ ⊥) :
+    -(-a + -b) = a + b := by
+  rcases eq_or_ne a ⊤ with rfl | hat
+  · rw [_root_.EReal.neg_top, _root_.EReal.bot_add, _root_.EReal.neg_bot,
+      _root_.EReal.top_add_of_ne_bot hb]
+  · rcases eq_or_ne b ⊤ with rfl | hbt
+    · rw [_root_.EReal.neg_top, _root_.EReal.add_bot, _root_.EReal.neg_bot,
+        _root_.EReal.add_top_of_ne_bot ha]
+    · rw [_root_.EReal.neg_add (.inl (by rw [Ne, _root_.EReal.neg_eq_bot_iff]; exact hat))
+        (.inl (by rw [Ne, _root_.EReal.neg_eq_top_iff]; exact ha)), neg_neg]
+      change a + -(-b) = a + b
+      rw [neg_neg]
+
+end ERealAuxFst
+
+section LowerAdjointInfConvFst
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+variable [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+omit [AddCommGroup Y] [Module ℝ Y] in
+/-- The bracket that the lower adjoint conjugates: `⟨u, H⁎ y⟩ = ⨅ v, ((H v)(y) + ⟨u, v⟩)`. -/
+theorem concaveBracket_invBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) (y : Y) :
+    concaveBracket Bu (invBifun H) u y = ⨅ v : V, (H v y + ((Bu u v : ℝ) : EReal)) := by
+  rw [concaveBracket_apply]
+  refine iInf_congr fun v => ?_
+  change ((Bu u v : ℝ) : EReal) + -(-(H v y)) = _
+  rw [neg_neg, add_comm]
+
+omit [AddCommGroup Y] [Module ℝ Y] in
+/-- Minus the bracket is a conjugate in the *first* variable, taken at `-u`. -/
+theorem neg_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) (y : Y) :
+    -(concaveBracket Bu (invBifun H) u y) = conj Bu.flip (fun v => H v y) (-u) := by
+  rw [concaveBracket_invBifun_apply, Tdaf.EReal.neg_iInf, conj_apply]
+  refine iSup_congr fun v => ?_
+  have hr : (Bu.flip v (-u) : ℝ) = -(Bu u v) := by
+    rw [LinearMap.flip_apply, map_neg, LinearMap.neg_apply]
+  rw [hr]
+  exact neg_add_coe' (H v y) (Bu u v)
+
+/-- **The lower adjoint at a fixed `u` is an ordinary conjugate** — of the bracket
+`y ↦ ⟨u, H⁎ y⟩`. This is the identity the whole of Corollary 38.2.1 runs through. -/
+theorem lowerAdjointBifun_eq_conj_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) :
+    lowerAdjointBifun Bu.flip Bx.flip H u = conj Bx.flip (concaveBracket Bu (invBifun H) u) := by
+  funext x
+  rw [lowerAdjointBifun_apply, adjointBifun_apply, Tdaf.EReal.neg_iInf, conj_apply, iSup_prod,
+    iSup_comm]
+  refine iSup_congr fun y => ?_
+  rw [concaveBracket_invBifun_apply, coe_sub_iInf]
+  refine iSup_congr fun v => ?_
+  have hu : (Bu.flip v u : ℝ) = Bu u v := rfl
+  have hx : (Bx.flip y x : ℝ) = Bx x y := rfl
+  rw [hu, hx]
+  exact neg_add_coe_sub' (H v y) (Bu u v) (Bx x y)
+
+omit [AddCommGroup Y] [Module ℝ Y] in
+/-- The bracket of a first-variable convolute is the **sum** of the brackets: Theorem 16.4's
+unconditional row, `conj_infConv`, read in the first variable of a bifunction. -/
+theorem concaveBracket_invBifun_infConvFstBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H₁ H₂ : Bifun V Y)
+    (u : U) (h₁ : ∀ y, concaveBracket Bu (invBifun H₁) u y ≠ ⊥)
+    (h₂ : ∀ y, concaveBracket Bu (invBifun H₂) u y ≠ ⊥) :
+    concaveBracket Bu (invBifun (infConvFstBifun H₁ H₂)) u
+      = concaveBracket Bu (invBifun H₁) u + concaveBracket Bu (invBifun H₂) u := by
+  funext y
+  have hsum : -(concaveBracket Bu (invBifun (infConvFstBifun H₁ H₂)) u y)
+      = -(concaveBracket Bu (invBifun H₁) u y) + -(concaveBracket Bu (invBifun H₂) u y) := by
+    rw [neg_concaveBracket_invBifun, neg_concaveBracket_invBifun, neg_concaveBracket_invBifun,
+      infConvFstBifun_slice, conj_infConv]
+    rfl
+  rw [Pi.add_apply, ← neg_add_neg' (h₁ y) (h₂ y), ← hsum, neg_neg]
+
+/-- **The lower adjoint turns a first-variable convolution into a second-variable one**:
+`(H₁ ⊡ H₂)⁎* = H₁⁎* □ H₂⁎*`.
+
+This is the one new theorem Corollary 38.2.1 needs. Written `φᵢ y = ⨅ v, (Hᵢ v y + ⟨u, v⟩)`, the
+lower adjoint of `Hᵢ` at `u` *is* `φᵢ*` (`lowerAdjointBifun_eq_conj_concaveBracket_invBifun`);
+`φ = φ₁ + φ₂` for a first-variable convolute with no hypothesis at all, and Theorem 16.4
+(`IsExactSum.conj_add`) turns `(φ₁ + φ₂)*` into the infimal convolution. The hypothesis is
+Rockafellar's relative-interior condition in `IsExactSum` form, one instance per `u`. -/
+theorem lowerAdjointBifun_infConvFstBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
+    (H₁ H₂ : Bifun V Y) {u : U}
+    (hex : IsExactSum Bx.flip (concaveBracket Bu (invBifun H₁) u)
+      (concaveBracket Bu (invBifun H₂) u)) :
+    lowerAdjointBifun Bu.flip Bx.flip (infConvFstBifun H₁ H₂) u
+      = infConvBifun (lowerAdjointBifun Bu.flip Bx.flip H₁)
+          (lowerAdjointBifun Bu.flip Bx.flip H₂) u := by
+  rw [lowerAdjointBifun_eq_conj_concaveBracket_invBifun,
+    concaveBracket_invBifun_infConvFstBifun Bu H₁ H₂ u hex.proper_left.ne_bot
+      hex.proper_right.ne_bot, hex.conj_add, infConvBifun_apply,
+    lowerAdjointBifun_eq_conj_concaveBracket_invBifun,
+    lowerAdjointBifun_eq_conj_concaveBracket_invBifun]
+
+end LowerAdjointInfConvFst
+
+/-! ### Corollary 38.2.1 -/
+
+section Cor3821
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu]
+  {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsCompatiblePairing Bx]
+  {F₁ F₂ : Bifun U X}
+
+/-- **Rockafellar, Corollary 38.2.1**, the identity everything else follows from:
+`(F₁⁎* ⊡ F₂⁎*)⁎* = F₁ □ F₂` for closed proper convex `F₁` and `F₂`.
+
+This is `lowerAdjointBifun_infConvFstBifun` applied to the pair `(F₁⁎*, F₂⁎*)`, whose own lower
+adjoints are `F₁` and `F₂` again (`lowerAdjointBifun_lowerAdjointBifun_eq_clBifun` plus
+closedness) — exactly as Corollary 38.5.1 is Theorem 38.5 applied to a pair of lower adjoints.
+Rockafellar's condition that `ri (dom F₁*)` and `ri (dom F₂*)` have a point in common is the
+`IsExactSum` hypothesis, one instance per `u`. -/
+theorem lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun (hF₁ : ConvexBifun F₁)
+    (hF₁cl : ClosedBifun F₁) (hF₂ : ConvexBifun F₂) (hF₂cl : ClosedBifun F₂) {u : U}
+    (hex : IsExactSum Bx.flip
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+    lowerAdjointBifun Bu.flip Bx.flip
+        (infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) u
+      = infConvBifun F₁ F₂ u := by
+  rw [lowerAdjointBifun_infConvFstBifun Bu Bx _ _ hex,
+    lowerAdjointBifun_lowerAdjointBifun_eq_clBifun hF₁,
+    lowerAdjointBifun_lowerAdjointBifun_eq_clBifun hF₂, hF₁cl.clBifun_eq, hF₂cl.clBifun_eq]
+
+/-- `F₁ □ F₂` is the lower adjoint of `F₁⁎* ⊡ F₂⁎*`, as an identity of bifunctions. -/
+theorem infConvBifun_eq_lowerAdjointBifun_infConvFstBifun (hF₁ : ConvexBifun F₁)
+    (hF₁cl : ClosedBifun F₁) (hF₂ : ConvexBifun F₂) (hF₂cl : ClosedBifun F₂)
+    (hex : ∀ u : U, IsExactSum Bx.flip
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+    infConvBifun F₁ F₂ = lowerAdjointBifun Bu.flip Bx.flip
+      (infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) :=
+  funext fun u =>
+    (lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun hF₁ hF₁cl hF₂ hF₂cl (hex u)).symm
+
+/-- **Rockafellar, Corollary 38.2.1**, first assertion: `F₁ □ F₂` is closed. It is a lower
+adjoint, and a lower adjoint is closed with no hypothesis at all. -/
+theorem closedBifun_infConvBifun (hF₁ : ConvexBifun F₁) (hF₁cl : ClosedBifun F₁)
+    (hF₂ : ConvexBifun F₂) (hF₂cl : ClosedBifun F₂)
+    (hex : ∀ u : U, IsExactSum Bx.flip
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+    ClosedBifun (infConvBifun F₁ F₂) := by
+  have := isContinuousPairing_prodPairing_flip Bu.flip Bx.flip
+  rw [infConvBifun_eq_lowerAdjointBifun_infConvFstBifun hF₁ hF₁cl hF₂ hF₂cl hex]
+  exact closedBifun_lowerAdjointBifun
+
+end Cor3821
+
+section Cor3821Adjoint
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V] [LocallyConvexSpace ℝ V]
+  [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip]
+  {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
+  {F₁ F₂ : Bifun U X}
+
+/-- **Rockafellar, Corollary 38.2.1**, last assertion: `(F₁ □ F₂)* = cl (F₁* □ F₂*)`, in the `F⁎*`
+packaging `(F₁ □ F₂)⁎* = cl (F₁⁎* ⊡ F₂⁎*)`.
+
+`F₁ □ F₂` is the lower adjoint of `F₁⁎* ⊡ F₂⁎*`, so `(F₁ □ F₂)⁎*` is that bifunction's double
+lower adjoint, which is its closure. The right-hand convolution is in the *first* variable, which
+is what Rockafellar's `F₁* □ F₂*` becomes once the two negations are moved outside. -/
+theorem lowerAdjointBifun_infConvBifun_eq_clBifun (hF₁ : ClosedProperConvexFn (graphFn F₁))
+    (hF₂ : ClosedProperConvexFn (graphFn F₂))
+    (hex : ∀ u : U, IsExactSum Bx.flip
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+    lowerAdjointBifun Bu Bx (infConvBifun F₁ F₂)
+      = clBifun (infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) := by
+  obtain ⟨p₁, hp₁⟩ := hF₁.proper.dom_nonempty
+  obtain ⟨p₂, hp₂⟩ := hF₂.proper.dom_nonempty
+  have hconv : ConvexBifun
+      (infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) :=
+    convexBifun_infConvFstBifun (lowerAdjointBifun_ne_bot (F := F₁) hp₁.ne Bu Bx)
+      (lowerAdjointBifun_ne_bot (F := F₂) hp₂.ne Bu Bx)
+      (convexBifun_lowerAdjointBifun Bu Bx F₁) (convexBifun_lowerAdjointBifun Bu Bx F₂)
+  have hbi := lowerAdjointBifun_lowerAdjointBifun_eq_clBifun (Bu := Bu.flip) (Bx := Bx.flip)
+    (F := infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) hconv
+  simp only [LinearMap.flip_flip] at hbi
+  rw [infConvBifun_eq_lowerAdjointBifun_infConvFstBifun hF₁.convex hF₁.closed hF₂.convex
+    hF₂.closed hex, hbi]
+
+end Cor3821Adjoint
+
+/-! ### Corollary 38.7.2: the inner products of a product of bifunctions -/
+
+section Cor3872
+
+variable {U X W Y Z : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup W] [Module ℝ W]
+  [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z] {F : Bifun U X} {G : Bifun X Y}
+
+omit [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] in
+/-- **A slice of a product is the image of a slice**: `(GF)u = G(Fu)`. Both sides are
+`⨅ x, (Fu)(x) + (Gx)(y)`, so this is `rfl`; it is what makes every statement about `⟨GFu, ·⟩` a
+statement about an image, and hence a case of Theorem 38.4 and Corollary 38.7.1. -/
+theorem compBifun_slice (G : Bifun X Y) (F : Bifun U X) (u : U) :
+    compBifun G F u = imageBifun G (F u) := rfl
+
+/-- **Rockafellar, Corollary 38.7.2**, the existence clause: `⟨Fu, G* z⟩` exists.
+
+Rockafellar derives the hypothesis, `ri (dom (Fu))` meets `ri (dom G)`, from his condition on
+`ri (dom F⁎) ∩ ri (dom G)` by a calculus of relative interiors that he leaves to the reader; here
+it is the `IsExactSum` the proof actually consumes, one instance per `(u, z)`. -/
+theorem hasFenchelPairing_adjointBifun_slice (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
+    (hbG : ∀ x y, G x y ≠ ⊥) {u : U} (hFu : Proper (F u)) {z : Z}
+    (hex : IsExactSum Bx (F u) (fun x => -(bracket By G x z))) :
+    HasFenchelPairing Bx (F u) (adjointBifun Bx By G z) :=
+  hasFenchelPairing_adjointBifun hbG hFu hex
+
+/-- **Rockafellar, Corollary 38.7.2**, first equality: `⟨GFu, z⟩ = ⟨Fu, G* z⟩`.
+
+This is Corollary 38.7.1 (`conj_imageBifun_eq_fenchelPairing`) read at the slice `Fu`, since
+`(GF)u = G(Fu)`. The remaining equality `⟨GFu, z⟩ = ⟨u, F* G* z⟩` is Corollary 33.2.1 together
+with Theorem 38.5 and needs a relative interior; it is
+`bracket_compBifun_eq_concaveBracket_concaveCompBifun` in `Bifunction/Cofinite.lean`. -/
+theorem bracket_compBifun_eq_fenchelPairing (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
+    (hbG : ∀ x y, G x y ≠ ⊥) {u : U} (hFu : Proper (F u)) {z : Z}
+    (hex : IsExactSum Bx (F u) (fun x => -(bracket By G x z))) :
+    bracket By (compBifun G F) u z = fenchelPairing Bx (F u) (adjointBifun Bx By G z) :=
+  conj_imageBifun_eq_fenchelPairing hbG hFu hex
+
+end Cor3872
 
 end Tdaf.ConvexAnalysis
