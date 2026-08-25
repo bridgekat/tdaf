@@ -4434,10 +4434,16 @@ over `Homeomorph.subtype`, and it takes the set equality in exactly the shape
 `e ⁻¹' σ`, the relation to feed into `σ`'s maximality is `e.symm ⁻¹' τ`, and that identity is what
 brings the conclusion back.
 
-**Not here**: Corollary 37.5.2's "in particular" clause, `(u, v) ↦ (-∇₁K, ∇₂K)` maximal monotone for
-a finite differentiable `K`. It is this file's theorem plus "`∂K (u, v)` is the single point
-`(∇₁K, ∇₂K)`", which is Theorem 25.1's converse on each slice — a `Saddle/Differential.lean`
-statement that does not exist yet.
+**Corollary 37.5.2's differentiable clause needed a bridge between two `∂K`s, not a new theorem.**
+`Saddle/Differential.lean` works with a real-valued `K` on an open rectangle and defines
+`subgradientSaddle C D K = subgradientFst ×ˢ subgradientSnd`; §37 works with an `EReal`-valued `K`
+and `saddleSubgradient Bu Bx K = concaveSubgradient ×ˢ subgradient`. At `C = D = univ` the two are
+literally the same set — `concaveSubgradient_eq_subgradientFst` and `subgradient_eq_subgradientSnd`
+are one `ext` plus `EReal.coe_le_coe_iff` each. Theorem 35.8 then hands over `{(∇₁K, ∇₂K)}`, and the
+representing bifunction comes from `exists_bifunSaddleClass_lowerSimpleExt` at `C = D = univ`, where
+`lowerSimpleExt univ univ K` *is* `K` and slice continuity is free from differentiability.
+
+**Not here**: nothing of §37.
 
 ## 2. Lean/Mathlib gotchas
 

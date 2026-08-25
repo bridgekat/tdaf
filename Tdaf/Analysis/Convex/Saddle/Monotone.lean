@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Optimization.Prox
+import Tdaf.Analysis.Convex.Saddle.Differential
 import Tdaf.Analysis.Convex.Saddle.Existence
 
 /-!
@@ -37,6 +38,8 @@ Corollary 31.5.2 for the second, both in `Optimization/Prox.lean`.
 * `saddleSubgradientHomeomorph`, `saddleSubgradientHomeomorph_apply` — **Corollary 37.5.1**,
   homeomorphism clause: `((u, y), (v, x)) ↦ (u - v, x + y)`.
 * `isMaximalMonotoneRel_saddleMonotoneRel` — **Corollary 37.5.2**.
+* `isMaximalMonotoneRel_setOf_hasSaddleGradientAt` — **Corollary 37.5.2**, second sentence:
+  for a finite differentiable `K` the mapping is `(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))`.
 
 ## Design notes
 
@@ -58,13 +61,12 @@ they can be used here: `U × X` carries the supremum norm and is not an `InnerPr
 `prodPairing (innerₗ U) (innerₗ X)` is an `IsContinuousInnerPairing` on it
 (`Duality/InnerPairing.lean`).
 
-## What is not here
-
-**Corollary 37.5.2's "in particular" clause**, that `(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))` is
-maximal monotone for a finite differentiable `K`. It is `isMaximalMonotoneRel_saddleMonotoneRel`
-together with the statement that `∂K (u, v)` is the single point `(∇₁K, ∇₂K)`, which is Theorem
-25.1's converse applied to each of the two slices — a `Saddle/Differential.lean` statement about
-saddle-functions that this development does not have.
+**§35 and §37 keep separate subdifferentials, and the bridge is one `ext`.**
+`Saddle/Differential.lean` works with a real-valued `K` on an open rectangle and
+`subgradientSaddle C D K`; §37 works with an `EReal`-valued `K` on the whole space and
+`saddleSubgradient Bu Bx K`. On `C = D = univ` the two agree
+(`saddleSubgradient_eq_subgradientSaddle`), which is all the differentiable clause of Corollary
+37.5.2 needs — the unification of the two notions is still a deferred clean-up.
 
 ## References
 
@@ -292,5 +294,107 @@ theorem isMaximalMonotoneRel_saddleMonotoneRel (hF : ConvexBifun F) (hcl : Close
   rwa [saddleMonotoneRel_eq_preimage (innerₗ U) (innerₗ X) hF hcl hK]
 
 end Inner
+
+/-! ### Corollary 37.5.2 for a finite differentiable saddle-function -/
+
+section Differentiable
+
+variable {U X : Type*}
+
+/-- A finite saddle-function is its own lower simple extension over the whole space. This is the
+bridge between §35's real-valued `K` and §37's `EReal`-valued one. -/
+theorem lowerSimpleExt_univ (K : U × X → ℝ) :
+    lowerSimpleExt (Set.univ : Set U) (Set.univ : Set X) K = fun p => ((K p : ℝ) : EReal) :=
+  funext fun _ => lowerSimpleExt_of_mem (Set.mem_univ _) (Set.mem_univ _)
+
+variable [NormedAddCommGroup U] [InnerProductSpace ℝ U] [FiniteDimensional ℝ U]
+  [NormedAddCommGroup X] [InnerProductSpace ℝ X] [FiniteDimensional ℝ X] {K : U × X → ℝ}
+
+omit [FiniteDimensional ℝ U] [NormedAddCommGroup X] [InnerProductSpace ℝ X]
+  [FiniteDimensional ℝ X] in
+/-- §33's concave subdifferential of the `EReal` reading of a finite saddle-function is §35's
+`∂₁K`. -/
+theorem concaveSubgradient_eq_subgradientFst (K : U × X → ℝ) (p : U × X) :
+    concaveSubgradient (innerₗ U) (fun u => ((K (u, p.2) : ℝ) : EReal)) p.1
+      = subgradientFst Set.univ K p := by
+  ext y
+  simp only [mem_concaveSubgradient, mem_subgradientFst, Set.mem_univ, forall_const,
+    innerₗ_apply_apply, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff]
+
+omit [NormedAddCommGroup U] [InnerProductSpace ℝ U] [FiniteDimensional ℝ U]
+  [FiniteDimensional ℝ X] in
+/-- §23's subdifferential of the `EReal` reading of a finite saddle-function is §35's `∂₂K`. -/
+theorem subgradient_eq_subgradientSnd (K : U × X → ℝ) (p : U × X) :
+    subgradient (innerₗ X) (fun x => ((K (p.1, x) : ℝ) : EReal)) p.2
+      = subgradientSnd Set.univ K p := by
+  ext y
+  simp only [mem_subgradient, mem_subgradientSnd, Set.mem_univ, forall_const,
+    innerₗ_apply_apply, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff]
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
+/-- Over the whole space §37's `∂K` and §35's `∂K` are the same set. The two definitions differ
+only in where their junk values live. -/
+theorem saddleSubgradient_eq_subgradientSaddle (K : U × X → ℝ) (p : U × X) :
+    saddleSubgradient (innerₗ U) (innerₗ X) (fun q => ((K q : ℝ) : EReal)) p
+      = subgradientSaddle Set.univ Set.univ K p := by
+  have h : saddleSubgradient (innerₗ U) (innerₗ X) (fun q => ((K q : ℝ) : EReal)) p
+      = concaveSubgradient (innerₗ U) (fun u => ((K (u, p.2) : ℝ) : EReal)) p.1
+        ×ˢ subgradient (innerₗ X) (fun x => ((K (p.1, x) : ℝ) : EReal)) p.2 := rfl
+  rw [h, concaveSubgradient_eq_subgradientFst, subgradient_eq_subgradientSnd]
+  rfl
+
+omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
+/-- **Theorem 35.8** read for §37's subdifferential: where a finite concave-convex `K` has a
+gradient, `∂K` is the single point `(∇₁K, ∇₂K)`. -/
+theorem saddleSubgradient_eq_singleton_of_hasSaddleGradientAt
+    (hK : ConcaveConvexOn (Set.univ : Set U) (Set.univ : Set X) K) {q p : U × X}
+    (hd : HasSaddleGradientAt K q p) :
+    saddleSubgradient (innerₗ U) (innerₗ X) (fun z => ((K z : ℝ) : EReal)) p = {q} := by
+  rw [saddleSubgradient_eq_subgradientSaddle]
+  exact subgradientSaddle_eq_singleton_of_hasSaddleGradientAt isOpen_univ isOpen_univ hK
+    (Set.mem_univ _) (Set.mem_univ _) hd
+
+/-- **Rockafellar's `ρ` for a differentiable `K`** is the graph of
+`(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))`. -/
+theorem saddleMonotoneRel_eq_setOf_hasSaddleGradientAt
+    (hK : ConcaveConvexOn (Set.univ : Set U) (Set.univ : Set X) K)
+    (hdiff : ∀ p : U × X, DifferentiableAt ℝ K p) :
+    saddleMonotoneRel (innerₗ U) (innerₗ X) (fun z => ((K z : ℝ) : EReal))
+      = {r : (U × X) × (U × X) | HasSaddleGradientAt K (-r.2.1, r.2.2) r.1} := by
+  ext r
+  obtain ⟨q, hq⟩ := (differentiableAt_iff_exists_hasSaddleGradientAt K r.1).1 (hdiff r.1)
+  rw [Set.mem_ofPred_eq, mem_saddleMonotoneRel, flip_eq_self,
+    saddleSubgradient_eq_singleton_of_hasSaddleGradientAt hK hq, Set.mem_singleton_iff]
+  refine ⟨fun h => h ▸ hq, fun h => ?_⟩
+  have hsing := saddleSubgradient_eq_singleton_of_hasSaddleGradientAt hK h
+  rw [saddleSubgradient_eq_singleton_of_hasSaddleGradientAt hK hq] at hsing
+  exact (Set.singleton_eq_singleton_iff.1 hsing).symm
+
+/-- **Rockafellar, Corollary 37.5.2**, second sentence: if `K` is everywhere finite and
+differentiable, `(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))` is a maximal monotone mapping.
+
+Differentiability collapses `∂K` to a single point (Theorem 35.8), so `ρ` is the graph of that
+mapping and `isMaximalMonotoneRel_saddleMonotoneRel` applies. The representing bifunction comes
+from Corollary 34.2.4 at `C = D = univ`, where continuity of the slices is free. -/
+theorem isMaximalMonotoneRel_setOf_hasSaddleGradientAt
+    (hK : ConcaveConvexOn (Set.univ : Set U) (Set.univ : Set X) K)
+    (hdiff : ∀ p : U × X, DifferentiableAt ℝ K p) :
+    IsMaximalMonotoneRel (prodPairing (innerₗ U) (innerₗ X))
+      {r : (U × X) × (U × X) | HasSaddleGradientAt K (-r.2.1, r.2.2) r.1} := by
+  have hcont : Continuous K := continuous_iff_continuousAt.2 fun p => (hdiff p).continuousAt
+  obtain ⟨F, hFconv, hFcl, hFmem⟩ := exists_bifunSaddleClass_lowerSimpleExt (innerₗ U) (innerₗ X)
+    (convex_univ) isClosed_univ isClosed_univ Set.univ_nonempty Set.univ_nonempty
+    (fun u _ => hK.convex_snd u (Set.mem_univ _)) (fun x _ => hK.concave_fst x (Set.mem_univ _))
+    (fun u _ => (hcont.comp (continuous_const.prodMk continuous_id)).continuousOn)
+    (fun x _ => (hcont.comp (continuous_id.prodMk continuous_const)).continuousOn)
+  have hproper := properSaddleFn_lowerSimpleExt (C := (Set.univ : Set U))
+    (D := (Set.univ : Set X)) (K := K) Set.univ_nonempty Set.univ_nonempty
+  rw [lowerSimpleExt_univ] at hFmem hproper
+  have hpr : Proper (graphFn F) :=
+    proper_graphFn_of_properSaddleFn (innerₗ U) (innerₗ X) hFmem hproper
+  rw [← saddleMonotoneRel_eq_setOf_hasSaddleGradientAt hK hdiff]
+  exact isMaximalMonotoneRel_saddleMonotoneRel hFconv hFcl hpr hFmem
+
+end Differentiable
 
 end Tdaf.ConvexAnalysis

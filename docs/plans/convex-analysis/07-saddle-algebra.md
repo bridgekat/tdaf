@@ -411,9 +411,7 @@ def HasSaddleValue (K : U × X → EReal) : Prop :=
   (⨆ u, ⨅ x, K (u, x)) = (⨅ x, ⨆ u, K (u, x))
 ```
 
-**Status: all of §36 and all of §37 are done**, except Corollary 37.5.2's "in particular" clause
-for a finite differentiable `K`, which needs a `Saddle/Differential.lean` statement that `∂K` is
-the single point `(∇₁K, ∇₂K)`.
+**Status: all of §36 and all of §37 are done.**
 §37 is spread over `Saddle/Minimax.lean` (the vocabulary and Theorem 37.1),
 `Saddle/Conjugate.lean` (Cors 37.1.2–37.1.3, the `D*` halves of Thm 37.2, Cor 37.2.1, Thm 37.3
 and Cor 37.3.1), `Saddle/Subgradient.lean` (Thms 37.4–37.6 and Cor 37.5.3),
@@ -456,7 +454,8 @@ below are the ones actually used; each plan entry above split into several state
 | `isClosed_setOf_mem_saddleSubgradient` | **Cor 37.5.1**, closedness clause | done (`Saddle/Existence.lean`) |
 | `partialInvertEquiv`, `partialInvertNegHomeomorph`, `prodPairing_sub_partialInvertEquiv`, `isMonotoneRel_preimage_partialInvertEquiv`, `IsMaximalMonotoneRel.preimage_partialInvertEquiv` | partial inversion, and the transfer of (maximal) monotonicity across it | done (`Saddle/Monotone.lean`) — **needs no symmetry**: `Bx.flip y x = Bx x y` is the whole computation |
 | `saddleSubgradientHomeomorph`, `saddleSubgradientHomeomorph_apply` | **Cor 37.5.1**, homeomorphism clause | done (`Saddle/Monotone.lean`) — Cor 31.5.1 at `prodPairing (innerₗ U) (innerₗ X)` |
-| `saddleMonotoneRel`, `saddleMonotoneRel_eq_preimage`, `isMaximalMonotoneRel_saddleMonotoneRel` | **Cor 37.5.2** | done (`Saddle/Monotone.lean`) — except the "in particular" clause for a differentiable `K` |
+| `saddleMonotoneRel`, `saddleMonotoneRel_eq_preimage`, `isMaximalMonotoneRel_saddleMonotoneRel` | **Cor 37.5.2** | done (`Saddle/Monotone.lean`) |
+| `saddleSubgradient_eq_subgradientSaddle`, `saddleMonotoneRel_eq_setOf_hasSaddleGradientAt`, `isMaximalMonotoneRel_setOf_hasSaddleGradientAt` | **Cor 37.5.2**, the differentiable clause | done (`Saddle/Monotone.lean`) — Theorem 35.8 collapses `∂K` to `{(∇₁K, ∇₂K)}`, and §35's `subgradientSaddle` agrees with §37's `saddleSubgradient` on the whole space |
 | `mem_saddleSubgradient_upperConjSaddle_zero_iff`, `convex_setOf_isSaddlePoint`, `exists_isSaddlePoint_iff_zero_mem_domSaddleSubgradient` | **Cor 37.5.3** | done (`Saddle/Subgradient.lean`) |
 | `exists_isSaddlePoint_of_zero_mem_kernelSet_upperConjSaddle`, `exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle`, `exists_isSaddlePoint_of_no_common_direction_of_recession` | **Thm 37.6** | done (`Saddle/Subgradient.lean`, `Saddle/Existence.lean`) |
 | `exists_isSaddlePoint_of_isBounded_domSaddle`, `exists_maximin_eq_coe_of_isBounded_domSaddle` | **Cor 37.6.1** | done (`Saddle/Existence.lean`) |
