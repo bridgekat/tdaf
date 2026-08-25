@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Duality.Conjugate
+import Tdaf.Analysis.Convex.Duality.Polar
 import Tdaf.Analysis.Convex.RelativeInterior
 import Tdaf.Analysis.Convex.Subgradient.Defs
 import Mathlib.Analysis.InnerProductSpace.PiL2
@@ -22,6 +23,9 @@ three operations a convexity statement is made of — `conj`, `subgradient` and 
   `WithLp 2 (ℝᵐ × ℝⁿ) ≃ₗᵢ[ℝ] ℝᵐ⁺ⁿ`.
 * `euclideanProdEquiv m n` — the same map as a **continuous linear equivalence**
   `ℝᵐ × ℝⁿ ≃L[ℝ] ℝᵐ⁺ⁿ` out of the plain product.
+* `euclideanOne` — `ℝ ≃L[ℝ] ℝ¹`, the scalar read as a one-dimensional Euclidean space.
+* `euclideanTripleEquiv n` — `ℝ × ℝⁿ × ℝ ≃L[ℝ] ℝⁿ⁺²`, the concatenation with a scalar factor at
+  each end, which is what a text means by the vectors `(λ, x, μ) ∈ ℝⁿ⁺²`.
 
 ## Main results
 
@@ -39,6 +43,13 @@ three operations a convexity statement is made of — `conj`, `subgradient` and 
   interior commutes with the concatenation, in both directions.
 * `subgradient_comp_linearEquiv` — the general lemma the subgradient transport is a case of: the
   companion of `conj_comp_linearEquiv` for the subdifferential.
+* `polarCone_image_of_pairing_eq`, `coe_hull_image` — the same transport for the two operations a
+  statement about *cones* is made of: the polar, which consumes the adjointness datum, and the
+  pointed-cone hull, which needs only linearity.
+* `inner_euclideanOne`, `inner_euclideanTripleEquiv`,
+  `closure_image_euclideanTripleEquiv` — the triple concatenation carries the inner product of
+  `ℝⁿ⁺²` to `λ λ* + ⟨x, y⟩ + μ μ*`, and commutes with the closure. This is everything a consumer
+  needs: the individual coordinates of a triple never have to be inspected.
 
 ## Design notes
 
@@ -61,9 +72,9 @@ is why none of them has a proof longer than three lines.
 
 ## What is not here
 
-* **A transport for `ℝ` as a one-dimensional factor.** `ℝ` is not `EuclideanSpace ℝ (Fin 1)`, so
-  `ℝⁿ × ℝ ≃ ℝⁿ⁺¹` needs `ℝ ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin 1)` prepended. Nothing here obstructs it;
-  it has simply had no consumer.
+* **Coordinate formulas for `euclideanTripleEquiv`.** Only `inner_euclideanTripleEquiv` is
+  supplied, because only the inner product is used: which `Fin (n + 2)` index carries `λ` is an
+  artefact of how the composite was assembled, and no statement should depend on it.
 * **A general `WithLp` on sigma types.** `PiLp.sumPiLpEquivProdLpPiLp` and
   `LinearIsometryEquiv.piLpCongrLeft` are the two Mathlib facts this module is built from, and
   everything beyond them is coordinate bookkeeping for `Fin (m + n)`.
@@ -266,5 +277,99 @@ theorem closure_image_euclideanProdEquiv
   ((euclideanProdEquiv m n).toHomeomorph.image_closure C).symm
 
 end Transport
+
+/-! ### Transporting polarity and cone hulls
+
+Two more operations move along a linear isomorphism in the same way as `conj`, `subgradient` and
+`ri`, and both are needed wherever a *cone* in a product is read in `ℝᵏ`: the polar of a set,
+which consumes the same adjointness datum, and the pointed-cone hull, which needs only
+linearity. -/
+
+section PolarTransport
+
+variable {E F G H : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+  [AddCommGroup G] [Module ℝ G] [AddCommGroup H] [Module ℝ H]
+
+/-- **Polarity transports along an adjoint pair of isomorphisms.** If `A` and `A'` carry `B'` back
+to `B`, the polar of `A '' S` for `B'` is the image under `A'` of the polar of `S` for `B`. -/
+theorem polarCone_image_of_pairing_eq {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
+    (A : E ≃ₗ[ℝ] G) (A' : F ≃ₗ[ℝ] H) (hA : ∀ p q, B' (A p) (A' q) = B p q) (S : Set E) :
+    polarCone B' (A '' S) = A' '' polarCone B S := by
+  ext w
+  constructor
+  · intro hw
+    refine ⟨A'.symm w, fun p hp => ?_, A'.apply_symm_apply w⟩
+    have hkey := hA p (A'.symm w)
+    rw [A'.apply_symm_apply] at hkey
+    rw [← hkey]
+    exact hw (A p) ⟨p, hp, rfl⟩
+  · rintro ⟨v, hv, rfl⟩ z ⟨p, hp, rfl⟩
+    rw [hA p v]
+    exact hv p hp
+
+/-- **The pointed-cone hull transports along a linear map**: `hull (A '' S) = A '' hull S`. This is
+`Submodule.map_span` over the semiring of non-negative reals, restated on the underlying sets. -/
+theorem coe_hull_image (A : E →ₗ[ℝ] G) (S : Set E) :
+    (PointedCone.hull ℝ (A '' S) : Set G) = A '' (PointedCone.hull ℝ S : Set E) := by
+  have h : PointedCone.hull ℝ (A '' S) = (PointedCone.hull ℝ S).map A :=
+    (Submodule.map_span (A : E →ₗ[{c : ℝ // 0 ≤ c}] G) S).symm
+  rw [h, PointedCone.coe_map]
+
+end PolarTransport
+
+/-! ### The one-dimensional factor, and `ℝ × ℝⁿ × ℝ` as `ℝⁿ⁺²`
+
+`ℝ` is not `EuclideanSpace ℝ (Fin 1)`, so a concatenation with a scalar factor at each end needs
+one more transport prepended and one appended. `euclideanTripleEquiv` is the composite, and
+`inner_euclideanTripleEquiv` is the only thing about it a consumer needs. -/
+
+section Triple
+
+/-- **`ℝ` as a one-dimensional Euclidean space**, `a ↦ (a)`. -/
+noncomputable def euclideanOne : ℝ ≃L[ℝ] EuclideanSpace ℝ (Fin 1) :=
+  (PiLp.equivOfUnique 2 ℝ fun _ : Fin 1 => ℝ).symm
+
+@[simp] theorem euclideanOne_apply (a : ℝ) (i : Fin 1) : euclideanOne a i = a := by
+  fin_cases i
+  rfl
+
+/-- The one-dimensional transport multiplies: it is an isometry of `ℝ` onto `ℝ¹`. -/
+theorem inner_euclideanOne (a b : ℝ) :
+    (inner ℝ (euclideanOne a) (euclideanOne b) : ℝ) = a * b := by
+  simp [PiLp.inner_apply, mul_comm]
+
+variable (n : ℕ)
+
+/-- **Concatenation of `ℝ × ℝⁿ × ℝ` into `ℝⁿ⁺²`**: `(λ, x, μ) ↦ (λ, x₁, …, xₙ, μ)`. It is a
+linear homeomorphism, and it carries the inner product of `ℝⁿ⁺²` to
+`λ λ* + ⟨x, y⟩ + μ μ*` (`inner_euclideanTripleEquiv`). -/
+noncomputable def euclideanTripleEquiv :
+    ((ℝ × EuclideanSpace ℝ (Fin n)) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 2)) :=
+  ((euclideanOne.prodCongr (ContinuousLinearEquiv.refl ℝ (EuclideanSpace ℝ (Fin n)))).prodCongr
+      euclideanOne).trans <|
+    ((euclideanProdEquiv 1 n).prodCongr
+        (ContinuousLinearEquiv.refl ℝ (EuclideanSpace ℝ (Fin 1)))).trans <|
+      (euclideanProdEquiv (1 + n) 1).trans
+        (LinearIsometryEquiv.piLpCongrLeft 2 ℝ ℝ
+          (finCongr (by omega : 1 + n + 1 = n + 2))).toContinuousLinearEquiv
+
+variable {n}
+
+/-- **The triple concatenation adds the three inner products.** -/
+theorem inner_euclideanTripleEquiv (p q : (ℝ × EuclideanSpace ℝ (Fin n)) × ℝ) :
+    (inner ℝ (euclideanTripleEquiv n p) (euclideanTripleEquiv n q) : ℝ)
+      = p.1.1 * q.1.1 + inner ℝ p.1.2 q.1.2 + p.2 * q.2 := by
+  simp only [euclideanTripleEquiv, ContinuousLinearEquiv.trans_apply,
+    ContinuousLinearEquiv.prodCongr_apply, ContinuousLinearEquiv.coe_refl',
+    LinearIsometryEquiv.coe_toContinuousLinearEquiv, id_eq]
+  rw [LinearIsometryEquiv.inner_map_map, inner_euclideanProdEquiv, inner_euclideanProdEquiv,
+    inner_euclideanOne, inner_euclideanOne]
+
+/-- The closure transports along the triple concatenation, because it is a homeomorphism. -/
+theorem closure_image_euclideanTripleEquiv (S : Set ((ℝ × EuclideanSpace ℝ (Fin n)) × ℝ)) :
+    closure (euclideanTripleEquiv n '' S) = euclideanTripleEquiv n '' closure S :=
+  ((euclideanTripleEquiv n).toHomeomorph.image_closure S).symm
+
+end Triple
 
 end Tdaf.ConvexAnalysis
