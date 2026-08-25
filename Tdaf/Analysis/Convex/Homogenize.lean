@@ -338,6 +338,19 @@ theorem epi_levelOneLift (f : E → EReal) :
   ext q
   by_cases h : q.1.1 = 1 <;> simp [mem_epi, h, Set.mem_prod]
 
+omit [AddCommGroup E] [Module ℝ E] in
+/-- Membership of the epigraph of the level-1 lift, unfolded: `((λ, x), μ)` lies in it exactly when
+`λ = 1` and `μ ≥ f x`. -/
+theorem mem_epi_levelOneLift {q : (ℝ × E) × ℝ} :
+    q ∈ epi (levelOneLift f) ↔ q.1.1 = 1 ∧ f q.1.2 ≤ ((q.2 : ℝ) : EReal) := by
+  by_cases h : q.1.1 = 1 <;> simp [mem_epi, h]
+
+omit [AddCommGroup E] [Module ℝ E] in
+/-- The vectors that generate the cone of `homCone`: `((1, x), μ)` with `μ ≥ f x`. -/
+theorem mk_one_mem_epi_levelOneLift {x : E} {μ : ℝ} :
+    (((1, x), μ) : (ℝ × E) × ℝ) ∈ epi (levelOneLift f) ↔ f x ≤ ((μ : ℝ) : EReal) := by
+  simp
+
 /-- The level-1 lift of a convex function is convex: its epigraph is a linear preimage of the
 convex set `{1} ×ˢ epi f`. -/
 theorem convexFn_levelOneLift (hf : ConvexFn f) : ConvexFn (levelOneLift f) := by

@@ -15,6 +15,7 @@ import Tdaf.Analysis.Convex.Duality.Continuity
 import Tdaf.Analysis.Convex.Duality.Exact
 import Tdaf.Analysis.Convex.Duality.Gauge
 import Tdaf.Analysis.Convex.Duality.GaugeLike
+import Tdaf.Analysis.Convex.Duality.HomConePolar
 import Tdaf.Analysis.Convex.Duality.InnerPairing
 import Tdaf.Analysis.Convex.Duality.Level
 import Tdaf.Analysis.Convex.Duality.Ops
