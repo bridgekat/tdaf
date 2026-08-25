@@ -5,6 +5,7 @@ Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Continuity
 import Tdaf.Analysis.Convex.Polyhedral.Defs
+import Tdaf.Analysis.Convex.Polyhedral.Ops
 import Tdaf.Analysis.Convex.Representation
 import Tdaf.Analysis.Convex.Subgradient.Defs
 
@@ -26,6 +27,10 @@ live on the boundary — on faces, and ultimately on extreme points.
   supremum over `C` is already the supremum over the relative boundary of `C`.
 * `ConvexFn.add_le_of_mem_recessionCone` — a convex function bounded above on `C` does not increase
   along a direction of recession of `C`. This is the analytic core of Theorem 32.3.
+* `BddAboveOnRays` — the hypothesis of Theorem 32.3 and Corollary 32.3.3: `f` is bounded above on
+  every half-line of `C`. `ConvexFn.add_le_of_bddAboveOnRays` and
+  `ConvexFn.add_eq_of_mem_linealitySpace` are the two consequences the section runs on, and
+  `BddAboveOnRays.subset_dom` recovers Rockafellar's standing `C ⊆ dom f` from it.
 * `ConvexFn.iSup_extremePoints_of_containsNoLine`,
   `exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine` — **Theorem 32.3**: for a closed
   convex `C` containing no lines and a convex `f` bounded above on `C`, the supremum over `C` is
@@ -34,8 +39,13 @@ live on the boundary — on faces, and ultimately on extreme points.
   boundedness hypothesis: the supremum over `C` is the supremum over the sums of an extreme point
   and a non-negative combination of extreme directions.
 * `ConvexFn.eq_of_forall_le` — a convex function bounded above on the whole space is constant.
-* `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` — Theorem 32.3 for a finitely generated
-  (polyhedral) set: there the supremum is a maximum, attained at an extreme point.
+* `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated_of_bddAboveOnRays`,
+  `exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` — Theorem 32.3 for a finitely generated
+  (polyhedral) set: there the supremum is a maximum, attained at an extreme point. The second is
+  **Corollary 32.3.4**, the uniformly bounded case.
+* `exists_isMaxOn_of_polyhedral_of_bddAboveOnRays` — **Corollary 32.3.3**: on a nonempty
+  polyhedral `C ⊆ dom f` with no half-line on which `f` is unbounded above, the supremum is
+  attained. No "contains no lines" hypothesis: the lineality space of `C` is quotiented out.
 * `ConvexFn.iSup_extremePoints`, `exists_mem_extremePoints_eq_of_isMaxOn` — **Corollary 32.3.2**
   for compact `C`: the supremum is already the supremum over the extreme points.
 * `exists_mem_extremePoints_isMaxOn_of_isCompact` — the "supremum is attained" clause of
@@ -68,6 +78,13 @@ convex hull. Boundedness cannot be dropped — `f x = x` on `C = [0, ∞)` has s
 and `0` over the single extreme point — but the representation form
 `ConvexFn.iSup_extremePoints_add_coneHull`, which keeps the directions, needs no hypothesis.
 
+**Corollary 32.3.3 quotients out the lineality space by intersecting, not by passing to `E ⧸ L`.**
+Rockafellar takes `D = C ∩ L^⊥` in an inner-product space; `eq_add_inter_of_isCompl` gives
+`C = L + (C ∩ N)` for *any* complement `N` of `L`, which is all the argument needs and keeps the
+statement free of an inner product. `f` is constant along `L` because both `y` and `−y` are
+directions of recession of `C` and `f` is bounded above on the half-lines in each, so the two
+inequalities of `ConvexFn.add_le_of_bddAboveOnRays` close on each other.
+
 **The relative-boundary corollary is stated with `¬ IsAffineHalf C`, not with `ContainsNoLine C`.**
 Rockafellar's Theorem 18.4 excludes the affine sets and the closed halves of affine sets, and both
 exclusions are needed in §32 too: for `C = [0, ∞)` the relative boundary is `{0}`, and
@@ -77,12 +94,13 @@ in dimension at least two (`ConvexFn.iSup_sdiff_relint_of_containsNoLine`, via
 
 ## What is not here
 
-**Corollary 32.3.3**: a convex function on a nonempty polyhedral convex set `C ⊆ dom f` with no
-half-line in `C` along which `f` is unbounded above attains its supremum. Corollaries 32.3.1 and
-32.3.4 are here — as `exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine` and
-`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` — but 32.3.3 drops the "contains no lines"
-hypothesis in favour of a condition on the half-lines of `C`, and the lineality space of `C` would
-have to be quotiented out first, exactly as in Theorem 27.3's polyhedral refinement.
+**Theorem 32.3 in the book's exact form**, `sup_C f = sup_E f` with `E` the set of extreme points
+of `C ∩ L^⊥` and `L` the lineality space of `C`. Its two specialisations are what is here:
+`ConvexFn.iSup_extremePoints_of_containsNoLine` for `L = 0`, where `C ∩ L^⊥` is `C`, and
+`exists_isMaxOn_of_polyhedral_of_bddAboveOnRays` (Corollary 32.3.3), whose maximiser is an extreme
+point of `C ∩ N` for a complement `N` of `L` chosen inside the proof. Stating the book's form would
+mean fixing that complement in the statement — Rockafellar fixes `L^⊥`, which needs an inner
+product this development does not want to assume.
 
 **The unqualified "supremum is attained" clause of Corollary 32.3.2.** It is false for a merely
 compact convex `C ⊆ dom f`: take `C` the closed unit disc in `ℝ²`, `f = 0` on the open disc and
@@ -95,7 +113,7 @@ that compactness needs.
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §32 (Theorems 32.1,
-  32.2, 32.3, 32.4, Corollaries 32.1.1, 32.2.1, 32.3.2 and 32.4.1).
+  32.2, 32.3, 32.4, Corollaries 32.1.1, 32.2.1, 32.3.1, 32.3.2, 32.3.3, 32.3.4 and 32.4.1).
 -/
 
 open scoped Pointwise
@@ -287,6 +305,57 @@ theorem ConvexFn.add_le_of_mem_recessionCone (hf : ConvexFn f) {β : ℝ}
     f (u + v) ≤ f u :=
   hf.add_le_of_forall_add_smul_le fun t ht => hbdd _ (hv u hu t ht)
 
+/-- **`f` is bounded above on every half-line of `C`.** This is the hypothesis of Rockafellar's
+Theorem 32.3 and of its Corollary 32.3.3, spelled as a condition on the *rays* of `C` rather than
+on `C` itself: for every `u` and `v` with `u + t • v ∈ C` for all `t ≥ 0`, some real `β` bounds
+`f` on that half-line.
+
+Taking `v = 0` makes the condition say that every point of `C` carries a value below some real,
+that is, `C ⊆ dom f` (`BddAboveOnRays.subset_dom`); so this single predicate carries both of
+Rockafellar's standing hypotheses in Theorem 32.3, `C ⊆ dom f` and "no half-line in `C` on which
+`f` is unbounded above". A uniform bound is the special case `bddAboveOnRays_of_forall_le`. -/
+def BddAboveOnRays (f : E → EReal) (C : Set E) : Prop :=
+  ∀ u v : E, (∀ t : ℝ, 0 ≤ t → u + t • v ∈ C) →
+    ∃ β : ℝ, ∀ t : ℝ, 0 ≤ t → f (u + t • v) ≤ (β : EReal)
+
+/-- A uniform upper bound on `C` bounds `f` on every half-line of `C`. -/
+theorem bddAboveOnRays_of_forall_le {β : ℝ} (hbdd : ∀ x ∈ C, f x ≤ (β : EReal)) :
+    BddAboveOnRays f C := fun _ _ hray => ⟨β, fun t ht => hbdd _ (hray t ht)⟩
+
+/-- A subset of `C` has no more half-lines than `C` has. -/
+theorem BddAboveOnRays.mono {C' : Set E} (hray : BddAboveOnRays f C) (hsub : C' ⊆ C) :
+    BddAboveOnRays f C' := fun u v hr => hray u v fun t ht => hsub (hr t ht)
+
+/-- The degenerate half-lines — the points — of `C` already force `C ⊆ dom f`. -/
+theorem BddAboveOnRays.subset_dom (hray : BddAboveOnRays f C) : C ⊆ dom f := by
+  intro u hu
+  obtain ⟨β, hβ⟩ := hray u 0 fun t _ => by simpa using hu
+  have hle := hβ 0 le_rfl
+  simp only [smul_zero, add_zero] at hle
+  exact lt_of_le_of_lt hle (by simp)
+
+/-- **A convex function bounded above on the half-lines of `C` does not increase along a direction
+of recession of `C`.** This is `ConvexFn.add_le_of_mem_recessionCone` with the uniform bound
+weakened to a bound on the one half-line that the proof actually uses. -/
+theorem ConvexFn.add_le_of_bddAboveOnRays (hf : ConvexFn f) (hray : BddAboveOnRays f C) {u v : E}
+    (hu : u ∈ C) (hv : v ∈ recessionCone C) : f (u + v) ≤ f u := by
+  obtain ⟨β, hβ⟩ := hray u v fun t ht => hv u hu t ht
+  exact hf.add_le_of_forall_add_smul_le hβ
+
+/-- **A convex function bounded above on the half-lines of `C` is constant along the lineality
+space of `C`.** Rockafellar reads this off Corollary 8.6.2; here the two opposite directions of
+recession give the two inequalities through `ConvexFn.add_le_of_bddAboveOnRays`.
+
+It is the step that lets Theorem 32.3 replace `C` by `C ∩ L'` for a complement `L'` of the
+lineality space `L`. -/
+theorem ConvexFn.add_eq_of_mem_linealitySpace (hf : ConvexFn f) (hray : BddAboveOnRays f C)
+    {u v : E} (hu : u ∈ C) (hv : v ∈ linealitySpace C) : f (u + v) = f u := by
+  obtain ⟨hv1, hv2⟩ := mem_linealitySpace.1 hv
+  refine le_antisymm (hf.add_le_of_bddAboveOnRays hray hu hv1) ?_
+  have huv : u + v ∈ C := add_mem_of_mem_recessionCone hv1 hu
+  have hback := hf.add_le_of_bddAboveOnRays hray huv hv2
+  rwa [show u + v + -v = u by abel] at hback
+
 /-- **A convex function bounded above on the whole space is constant.** Applying
 `ConvexFn.add_le_of_forall_add_smul_le` at `x` in the direction `y - x` and at `y` in the direction
 `x - y` gives the two inequalities at once.
@@ -313,18 +382,19 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {f : E → EReal} {C : Set E}
 
 /-- **Every point of `C` is dominated by a point of the convex hull of the extreme points**, for a
-convex function bounded above on a closed convex `C` containing no lines.
+convex function bounded above on the half-lines of a closed convex `C` containing no lines.
 
 Theorem 18.5 splits `x` as `u + v` with `u ∈ conv (ext C)` and `v` a non-negative combination of
-extreme directions, hence a direction of recession of `C`; `ConvexFn.add_le_of_mem_recessionCone`
-then gives `f x ≤ f u`. -/
+extreme directions, hence a direction of recession of `C`; `ConvexFn.add_le_of_bddAboveOnRays`
+then gives `f x ≤ f u`. Only the half-line `u + t • v` is used, which is why the hypothesis is
+`BddAboveOnRays` and not a uniform bound. -/
 theorem ConvexFn.exists_mem_convexHull_extremePoints_le (hf : ConvexFn f) (hC : Convex ℝ C)
-    (hCcl : IsClosed C) (hnl : ContainsNoLine C) {β : ℝ} (hbdd : ∀ x ∈ C, f x ≤ (β : EReal))
+    (hCcl : IsClosed C) (hnl : ContainsNoLine C) (hray : BddAboveOnRays f C)
     {x : E} (hx : x ∈ C) : ∃ u ∈ convexHull ℝ (C.extremePoints ℝ), f x ≤ f u := by
   have hrep := convexHullPD_extremePoints_extremeDirections hC hCcl hnl
   have hx' : x ∈ convexHullPD (C.extremePoints ℝ) (extremeDirections C) := by rw [hrep]; exact hx
   obtain ⟨u, hu, v, hv, rfl⟩ := mem_convexHullPD.1 hx'
-  refine ⟨u, hu, hf.add_le_of_mem_recessionCone hbdd ?_ ?_⟩
+  refine ⟨u, hu, hf.add_le_of_bddAboveOnRays hray ?_ ?_⟩
   · rw [← hrep]
     exact convexHull_subset_convexHullPD _ _ hu
   · rw [← hrep]
@@ -340,7 +410,8 @@ theorem ConvexFn.iSup_extremePoints_of_containsNoLine (hf : ConvexFn f) (hC : Co
     (⨆ x ∈ C, f x) = ⨆ x ∈ C.extremePoints ℝ, f x := by
   refine le_antisymm (iSup₂_le fun x hx => ?_)
     (iSup₂_le fun x hx => le_iSup₂ (f := fun z (_ : z ∈ C) => f z) x (extremePoints_subset hx))
-  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hC hCcl hnl hbdd hx
+  obtain ⟨u, hu, hle⟩ :=
+    hf.exists_mem_convexHull_extremePoints_le hC hCcl hnl (bddAboveOnRays_of_forall_le hbdd) hx
   refine hle.trans ?_
   rw [← hf.iSup_convexHull (C.extremePoints ℝ)]
   exact le_iSup₂ (f := fun z (_ : z ∈ convexHull ℝ (C.extremePoints ℝ)) => f z) u hu
@@ -362,7 +433,8 @@ theorem exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine (hf : ConvexFn 
     exact ⟨z, hz, by rw [le_bot_iff.1 hzle, hbot]⟩
   obtain ⟨r, hr⟩ := EReal.exists_coe_of_ne_bot_of_lt_top hbot (lt_top_iff_ne_top.2 hxt)
   have hbdd : ∀ z ∈ C, f z ≤ (r : EReal) := fun z hz => hr ▸ hmax z hz
-  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hC hCcl hnl hbdd hx
+  obtain ⟨u, hu, hle⟩ :=
+    hf.exists_mem_convexHull_extremePoints_le hC hCcl hnl (bddAboveOnRays_of_forall_le hbdd) hx
   have hsub : convexHull ℝ (C.extremePoints ℝ) ⊆ C := convexHull_min extremePoints_subset hC
   have hux : f u = f x := le_antisymm (hmax u (hsub hu)) hle
   obtain ⟨z, hz, hzu⟩ :=
@@ -398,18 +470,19 @@ section Polyhedral
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {C : Set E}
 
-/-- **Rockafellar, Corollary 32.3.4**: a convex function bounded above on a nonempty polyhedral
-convex set containing no lines attains its supremum at one of its finitely many extreme points.
+/-- **Theorem 32.3 for a finitely generated set**: a convex function bounded above on every
+half-line of a nonempty finitely generated convex set containing no lines attains its supremum at
+one of its finitely many extreme points.
 
 The ingredient beyond Theorem 32.3 is Corollary 18.3.1 (`extremePoints_convexHullPD_subset`): a
 finitely generated set has only finitely many extreme points, so the supremum over them is a
 maximum, and the sublevel set at that maximum swallows their convex hull.
 
-This is **Rockafellar's Corollary 32.3.4**, with "polyhedral" in its finitely generated form
-(Theorem 19.1); `hbdd` carries both his boundedness hypothesis and his standing `C ⊆ dom f`. -/
-theorem exists_mem_extremePoints_isMaxOn_of_finitelyGenerated (hf : ConvexFn f)
-    (hC : FinitelyGenerated C) (hnl : ContainsNoLine C) (hne : C.Nonempty) {β : ℝ}
-    (hbdd : ∀ x ∈ C, f x ≤ (β : EReal)) : ∃ z ∈ C.extremePoints ℝ, ∀ w ∈ C, f w ≤ f z := by
+`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated` is the uniformly bounded case, which is
+Rockafellar's Corollary 32.3.4. -/
+theorem exists_mem_extremePoints_isMaxOn_of_finitelyGenerated_of_bddAboveOnRays (hf : ConvexFn f)
+    (hC : FinitelyGenerated C) (hnl : ContainsNoLine C) (hne : C.Nonempty)
+    (hray : BddAboveOnRays f C) : ∃ z ∈ C.extremePoints ℝ, ∀ w ∈ C, f w ≤ f z := by
   have hcl : IsClosed C := hC.isClosed
   obtain ⟨P, D, hCeq⟩ := hC
   have hCPD : C = convexHullPD (P : Set E) (D : Set E) := hCeq
@@ -420,8 +493,74 @@ theorem exists_mem_extremePoints_isMaxOn_of_finitelyGenerated (hf : ConvexFn f)
   obtain ⟨z, hz, hzmax⟩ := Set.exists_max_image (C.extremePoints ℝ) f hfin
     (extremePoints_nonempty_of_containsNoLine hconv hcl hnl hne)
   refine ⟨z, hz, fun w hw => ?_⟩
-  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hconv hcl hnl hbdd hw
+  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hconv hcl hnl hray hw
   exact hle.trans (convexHull_min (fun y hy => hzmax y hy) (hf.convex_le (f z)) hu)
+
+/-- **Rockafellar, Corollary 32.3.4**: a convex function bounded above on a nonempty polyhedral
+convex set containing no lines attains its supremum at one of its finitely many extreme points.
+
+"Polyhedral" is in its finitely generated form (Theorem 19.1); `hbdd` carries both Rockafellar's
+boundedness hypothesis and his standing `C ⊆ dom f`. -/
+theorem exists_mem_extremePoints_isMaxOn_of_finitelyGenerated (hf : ConvexFn f)
+    (hC : FinitelyGenerated C) (hnl : ContainsNoLine C) (hne : C.Nonempty) {β : ℝ}
+    (hbdd : ∀ x ∈ C, f x ≤ (β : EReal)) : ∃ z ∈ C.extremePoints ℝ, ∀ w ∈ C, f w ≤ f z :=
+  exists_mem_extremePoints_isMaxOn_of_finitelyGenerated_of_bddAboveOnRays hf hC hnl hne
+    (bddAboveOnRays_of_forall_le hbdd)
+
+/-- **Rockafellar, Corollary 32.3.3**: a convex function bounded above on every half-line of a
+nonempty polyhedral convex set `C ⊆ dom f` attains its supremum relative to `C`.
+
+Unlike Corollary 32.3.4 this asks nothing about lines in `C`, and correspondingly claims nothing
+about extreme points of `C` — a set containing a line has none. The lineality space `L` of `C` is
+quotiented out instead: for any complement `N` of `L`, Rockafellar's decomposition
+`C = L + (C ∩ N)` (`eq_add_inter_of_isCompl`) reduces the supremum over `C` to the supremum over
+`D = C ∩ N`, because `f` is constant along `L` (`ConvexFn.add_eq_of_mem_linealitySpace`). That `D`
+is polyhedral (a submodule is polyhedral in finite dimensions), nonempty, and contains no lines —
+a line direction of `D` lies in `L ⊓ N = ⊥` — so
+`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated_of_bddAboveOnRays` applies to it, and the
+maximiser it returns is a maximiser over all of `C`.
+
+The maximiser is an extreme point of `D`, not of `C`, and it depends on the choice of `N`; that is
+why the conclusion is bare attainment. Rockafellar's standing `C ⊆ dom f` is carried by `hray`
+(`BddAboveOnRays.subset_dom`). -/
+theorem exists_isMaxOn_of_polyhedral_of_bddAboveOnRays (hf : ConvexFn f) (hC : Polyhedral C)
+    (hne : C.Nonempty) (hray : BddAboveOnRays f C) : ∃ z ∈ C, ∀ w ∈ C, f w ≤ f z := by
+  obtain ⟨N, hN⟩ := Submodule.exists_isCompl (linealitySubmodule C)
+  have hCconv : Convex ℝ C := hC.convex
+  have hCcl : IsClosed C := hC.isClosed
+  have hdec : C = (linealitySubmodule C : Set E) + (C ∩ (N : Set E)) := eq_add_inter_of_isCompl hN
+  have hsplit : ∀ w ∈ C, ∃ q ∈ C ∩ (N : Set E), f w = f q := by
+    intro w hw
+    obtain ⟨p, hp, q, hq, rfl⟩ := (hdec ▸ hw : w ∈ (linealitySubmodule C : Set E) + (C ∩ N))
+    refine ⟨q, hq, ?_⟩
+    change f (p + q) = f q
+    rw [show p + q = q + p by abel]
+    exact hf.add_eq_of_mem_linealitySpace hray hq.1 (by simpa using hp)
+  obtain ⟨x₀, hx₀⟩ := hne
+  obtain ⟨q₀, hq₀, -⟩ := hsplit x₀ hx₀
+  have hDpoly : Polyhedral (C ∩ (N : Set E)) := hC.inter (polyhedral_coe_submodule N)
+  have hDnl : ContainsNoLine (C ∩ (N : Set E)) := by
+    intro a y hy0
+    by_contra hcon
+    push Not at hcon
+    have hyC : y ∈ recessionCone C :=
+      mem_recessionCone_of_exists_ray hCconv hCcl ⟨a, fun t _ => (hcon t).1⟩
+    have hyC' : -y ∈ recessionCone C := by
+      refine mem_recessionCone_of_exists_ray hCconv hCcl ⟨a, fun t _ => ?_⟩
+      rw [show a + t • (-y) = a + (-t) • y by module]
+      exact (hcon (-t)).1
+    have hyL : y ∈ linealitySubmodule C :=
+      mem_linealitySubmodule.2 (mem_linealitySpace.2 ⟨hyC, hyC'⟩)
+    have hyN : y ∈ N := by
+      have hdiff := N.sub_mem (hcon 1).2 (hcon 0).2
+      rwa [show a + (1 : ℝ) • y - (a + (0 : ℝ) • y) = y by module] at hdiff
+    exact hy0 (by simpa using hN.disjoint.le_bot ⟨hyL, hyN⟩)
+  obtain ⟨z, hz, hzmax⟩ := exists_mem_extremePoints_isMaxOn_of_finitelyGenerated_of_bddAboveOnRays
+    hf hDpoly.finitelyGenerated hDnl ⟨q₀, hq₀⟩ (hray.mono Set.inter_subset_left)
+  refine ⟨z, (extremePoints_subset hz : z ∈ C ∩ (N : Set E)).1, fun w hw => ?_⟩
+  obtain ⟨q, hq, hwq⟩ := hsplit w hw
+  rw [hwq]
+  exact hzmax q hq
 
 end Polyhedral
 

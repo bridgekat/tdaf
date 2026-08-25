@@ -60,6 +60,9 @@ and those with `(f0⁺) (-y) = -(f0⁺) y` its *lineality space*.
   three equivalent conditions and the identification of the lineality space of `f` with the
   projection of the lineality space of `epi f`; `recessionFn_eq_of_affine_along` is the last
   assertion, for closed `f`.
+* `mem_constancySpace_of_mem_linealitySpaceFn` — Theorem 8.8 plus Corollary 8.6.1: an affine
+  direction of recession along which `f` is bounded below from one point of `dom f` is a
+  direction of constancy. This is the analytic step of Corollary 27.3.1.
 * `recessionFn_le_coe_iff`, `le_recessionFn_iff`, `recessionFn_le_coe_iff_forall`,
   `recessionFn_le_coe_iff_of_convexFn` — the `≤`-characterisations. §13 (Theorem 13.3
   identifies `f0⁺` with the support function of `dom f*`) enters through these.
@@ -834,6 +837,44 @@ theorem coe_linealitySubmoduleFn (hp : Proper f) :
 
 /-- Rockafellar's *lineality of `f`*: the dimension of its lineality space. -/
 noncomputable def linealityFn (f : E → EReal) : ℕ := Module.finrank ℝ (linealitySubmoduleFn f)
+
+/-- **An affine direction of recession along which `f` is bounded below is a direction of
+constancy.** If `y` is a direction of recession of a proper `f` in which `f` is affine
+(`y ∈ linealitySpaceFn f`, Theorem 8.8) and `f` is bounded below on the half-line
+`x + a • y`, `a ≥ 0`, issuing from some `x ∈ dom f`, then `y ∈ constancySpace f`.
+
+Theorem 8.8 turns the two hypotheses on `y` into `f (x + a • y) = f x + a * ν` with
+`ν = (f0⁺) y ≤ 0`; a lower bound along the forward half-line then forces `ν = 0`, which is
+Corollary 8.6.1's criterion for constancy. This is the analytic step of Rockafellar's
+Corollary 27.3.1. -/
+theorem mem_constancySpace_of_mem_linealitySpaceFn (hp : Proper f)
+    (hy : y ∈ recessionConeFn f) (hlin : y ∈ linealitySpaceFn f) {x : E} (hx : x ∈ dom f)
+    {β : ℝ} (hbdd : ∀ a : ℝ, 0 ≤ a → (β : EReal) ≤ f (x + a • y)) : y ∈ constancySpace f := by
+  have hle : recessionFn f y ≤ 0 := hy
+  obtain ⟨ν, hν⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (recessionFn_ne_bot hp y)
+    (hle.trans_lt (by simp))
+  have hνle : ν ≤ 0 := by exact_mod_cast hν ▸ hle
+  have hneg : recessionFn f (-y) = ((-ν : ℝ) : EReal) := by
+    rw [mem_linealitySpaceFn.1 hlin, hν, ← _root_.EReal.coe_neg]
+  have haff := (forall_eq_add_iff_recessionFn hp).2 ⟨hν, hneg⟩
+  obtain ⟨μ, hμ⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hp.ne_bot x) hx
+  have hkey : ∀ a : ℝ, 0 ≤ a → β ≤ μ + a * ν := by
+    intro a ha
+    have hval := hbdd a ha
+    rw [haff x a, hμ, ← _root_.EReal.coe_add] at hval
+    exact_mod_cast hval
+  have hν0 : ν = 0 := by
+    rcases lt_or_eq_of_le hνle with hlt | heq
+    · exfalso
+      have hb0 : β ≤ μ := by simpa using hkey 0 le_rfl
+      have hpos : 0 < -ν := by linarith
+      have hcancel : (μ - β + 1) / (-ν) * (-ν) = μ - β + 1 := div_mul_cancel₀ _ hpos.ne'
+      have hstep := hkey ((μ - β + 1) / (-ν)) (by positivity)
+      nlinarith
+    · exact heq
+  refine mem_constancySpace.2 ⟨?_, ?_⟩
+  · rw [hν, hν0]; simp
+  · rw [hneg, hν0]; simp
 
 end Defs
 
