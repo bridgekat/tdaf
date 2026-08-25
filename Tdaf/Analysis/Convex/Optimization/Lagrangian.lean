@@ -46,15 +46,16 @@ vectors is a rewrite of `Perturbation.lean`'s definition.
 
 ## What is not here
 
-**Theorem 28.2 (Slater) and the ordinary-convex-program bifunction `ineqBifun`.** The plan reserves
-a place in the backbone for "Slater implies a Kuhn–Tucker vector exists" — it is not about
-coordinates, and applications need it — but it also needs §21's theorems of the alternative wired
-to `ineqBifun`, and `Helly.lean` has those only for finite systems of *inequalities*, not for the
-mixed inequality/equality systems §28 allows. `kuhnTucker_nonempty_of_stronglyConsistent`
-(`Perturbation.lean`) is the qualification-free half that is available now.
+**Theorem 28.2 (Slater) is in `Optimization/Program.lean`** —
+`exists_isKuhnTuckerVector_of_slater`, with Corollaries 28.2.1 and 28.2.2 and the affine-equality
+variant `exists_multipliers_of_slater_eq`. It needed no `ineqBifun`, and it was never blocked on
+§21: Theorem 21.2 as formalized keeps the affine constraints in a second index type, which is
+already the mixed inequality/equality form §28 asks for. `kuhnTucker_nonempty_of_stronglyConsistent`
+(`Perturbation.lean`) is the qualification-free half. The ordinary-convex-program bifunction
+`ineqBifun` still has no definition, but nothing in the backbone waits on it.
 
-**Theorem 29.3 (saddle-points) and Theorem 28.3.** They need `IsSaddlePoint` and the §36
-correspondence between Lagrangians and concave-convex minimax problems.
+**Theorem 29.3 (saddle-points) is in `Saddle/Minimax.lean`** (`isSaddlePoint_lagrangian_iff`), and
+Theorem 28.3 is surface material, as `Optimization/Program.lean` records.
 
 ## References
 

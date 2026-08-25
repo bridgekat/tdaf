@@ -4362,8 +4362,27 @@ names the module the result is in: §18's unbounded case in `Face.lean` (it is i
 `Subgradient/Calculus.lean` (`Subgradient/Existence.lean`), §33's corollaries in `Saddle/Defs.lean`
 (`Saddle/Correspondence.lean`, `Saddle/Kernel.lean`), the `C*` halves of §37 in
 `Saddle/Conjugate.lean` (`Saddle/Existence.lean`), and the rest of §37 in `Saddle/Minimax.lean`.
-Worth a sweep after every merge: a "what is not here" note is written once and then silently rots,
-and it is the first thing a fresh agent reads.
+A second sweep, after the §15 / §30 / §38–§39 merges, found four more — three of them naming a
+*reason* that was wrong, rather than merely a location:
+
+* `Optimization/Adjoint.lean` said Theorems 30.3–30.5 need §16's exactness results. They are in
+  `Optimization/Normal.lean`, and rest on `clFn_zero_eq_iSup_iInf`, Fenchel–Moreau at the origin.
+* `Optimization/Perturbation.lean` said Theorem 29.4 needs §36's saddle-point correspondence. It is
+  in `Optimization/Adjoint.lean`, beside the closure operation it is stated in terms of, and it
+  never needed §36.
+* `Optimization/Lagrangian.lean` said Theorem 28.2 needs §21's theorems of the alternative wired to
+  an `ineqBifun` that `Helly.lean` cannot supply for mixed inequality/equality systems. It is
+  `exists_isKuhnTuckerVector_of_slater` in `Optimization/Program.lean`: Theorem 21.2 as formalized
+  keeps the affine constraints in a second index type, which already *is* the mixed form. The same
+  paragraph called Theorem 29.3 missing when it is `isSaddlePoint_lagrangian_iff`.
+* `06-optimization.md` carried a `Cor 30.2.1 | not done` row eighty lines above the row listing the
+  five declarations that prove it.
+
+Worth a sweep after every merge, and note what the two sweeps have in common: an entry rots fastest
+when it explains *why* something is blocked, because the explanation is the part a later agent
+believes and does not re-derive. Three of these four had outlived the obstruction they described and
+were pointing work away from results that already existed. A "what is not here" note is written
+once, is never re-read by its author, and is the first thing a fresh agent reads.
 
 ### `Tdaf/Analysis/Convex/Duality/ConcaveOps.lean`
 

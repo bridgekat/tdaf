@@ -357,7 +357,6 @@ noncomputable def adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X �
 | `adjointBifun_zero_eq_concaveConj` — the dual objective is the **concave** conjugate of `−inf F` | **Thm 30.2** | done |
 | `adjointBifun_zero_le`, `iSup_adjointBifun_zero_le` : `sup F* 0 ≤ inf F 0` | **Cor 30.2.2**, weak duality | done |
 | `mem_kuhnTucker_iff_adjointBifun_zero_eq` | **Thm 30.5**, the half holding without normality | done |
-| — | Cor 30.2.1 | not done |
 | `Normal`, **Thms 30.3, 30.4, 30.5** | §6.4a | done |
 
 **Sign warning.** Theorem 30.2 is about the **concave** conjugate: the book (line 12487) says `F*0`

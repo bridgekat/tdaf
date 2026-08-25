@@ -86,8 +86,9 @@ finite basis, hence genuinely finite-dimensional in `V`.
 
 ## What is not here
 
-**Theorem 29.4.** It needs §36's saddle-point correspondence on top of the Lagrangian
-(`Optimization/Lagrangian.lean`); Theorem 29.3 came out of §36 and is in `Saddle/Minimax.lean`.
+**Theorem 29.4 is in `Optimization/Adjoint.lean`**, beside `clBifun`, the closure operation it is
+stated in terms of — all three of its assertions, and Corollary 29.4.1 with it. It never needed
+§36. Theorem 29.3 did, and is in `Saddle/Minimax.lean`.
 
 ## References
 

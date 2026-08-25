@@ -88,11 +88,11 @@ through `concaveConj`.
 
 ## What is not here
 
-**Theorems 30.3, 30.4 and 30.5.** Normality (Theorems 30.3 and 30.4) is a statement about
-`cl (inf F)` at the origin, so it needs §7's closure operations transported to `infBifun` — which
-is *not* `clBifun`, the joint closure defined here — and the "sufficient conditions" of
-Theorem 30.4 are §16's exactness results again. Theorem 30.5's converse half needs normality
-too; the direction that holds without it is `mem_kuhnTucker_iff_adjointBifun_zero_eq`.
+**Theorems 30.3, 30.4 and 30.5 are in `Optimization/Normal.lean`.** Normality is a statement
+about `cl (inf F)` at the origin, so it is about `infBifun` — *not* `clBifun`, the joint closure
+defined here — and the whole of that file rests on `clFn_zero_eq_iSup_iInf`, Fenchel–Moreau read
+at the origin. Theorem 30.5's converse half needs normality; the direction that holds without it
+is `mem_kuhnTucker_iff_adjointBifun_zero_eq`, which is here.
 
 ## References
 
