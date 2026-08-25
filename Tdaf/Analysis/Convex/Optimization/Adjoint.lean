@@ -119,13 +119,6 @@ theorem adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ
     adjointBifun Bu Bx F y v = ⨅ p : U × X, (F p.1 p.2 + ((Bu p.1 v - Bx p.2 y : ℝ) : EReal)) :=
   rfl
 
-/-- Negating a difference in which the subtrahend is the only infinite term. -/
-private theorem neg_coe_sub {c : ℝ} {w : EReal} :
-    -(((-c : ℝ) : EReal) - w) = w + (c : EReal) := by
-  rw [sub_eq_add_neg, _root_.EReal.neg_add (.inl (_root_.EReal.coe_ne_bot _))
-      (.inl (_root_.EReal.coe_ne_top _)), sub_eq_add_neg, neg_neg, _root_.EReal.coe_neg, neg_neg,
-    add_comm]
-
 /-- **Rockafellar, Theorem 30.1**, the computation the whole section rests on: the adjoint is the
 conjugate of the graph function, negated and evaluated at a reflected point. -/
 theorem adjointBifun_eq_neg_conj_graphFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
@@ -136,8 +129,10 @@ theorem adjointBifun_eq_neg_conj_graphFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
   have hpair : (prodPairing Bu Bx p (-v, y) : ℝ) = -(Bu p.1 v - Bx p.2 y) := by
     rw [prodPairing_apply, map_neg]
     ring
-  rw [hpair]
-  exact (neg_coe_sub).symm
+  rw [hpair, Tdaf.EReal.neg_coe_sub]
+  change graphFn F p + ((Bu p.1 v - Bx p.2 y : ℝ) : EReal)
+      = graphFn F p + -(-((Bu p.1 v - Bx p.2 y : ℝ) : EReal))
+  rw [neg_neg]
 
 end Defs
 

@@ -98,14 +98,6 @@ section SwapNeg
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- Negating a difference whose minuend is a real number. -/
-private theorem neg_coe_sub (r : ℝ) (z : EReal) :
-    -(((r : ℝ) : EReal) - z) = z - ((r : ℝ) : EReal) := by
-  induction z using EReal.rec with
-  | bot => simp
-  | coe s => norm_cast; ring
-  | top => simp
-
 /-- Reflecting both the real minuend and the `EReal` subtrahend. -/
 private theorem coe_neg_sub_neg (r : ℝ) (z : EReal) :
     ((-r : ℝ) : EReal) - -z = z - ((r : ℝ) : EReal) := by
@@ -144,7 +136,7 @@ theorem bracket_neg_flip_flipBifun_inverseBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ
     bracket (-Bu.flip) (flipBifun (inverseBifun G)) y u = -(concaveBracket Bu G u y) := by
   rw [bracket_apply, concaveBracket_apply, Tdaf.EReal.neg_iInf]
   refine iSup_congr fun v => ?_
-  rw [flipBifun_apply, inverseBifun_apply, neg_coe_sub]
+  rw [flipBifun_apply, inverseBifun_apply, Tdaf.EReal.neg_coe_sub]
   have hr : ((-Bu.flip) v u : ℝ) = -(Bu u v) := by
     simp only [LinearMap.neg_apply, LinearMap.flip_apply]
   rw [hr, coe_neg_sub_neg]
@@ -157,7 +149,7 @@ theorem concaveBracket_neg_flip_flipBifun_inverseBifun (Bx : X →ₗ[ℝ] Y →
     concaveBracket (-Bx.flip) (flipBifun (inverseBifun H)) y u = -(bracket Bx H u y) := by
   rw [concaveBracket_apply, bracket_apply, Tdaf.EReal.neg_iSup]
   refine iInf_congr fun x => ?_
-  rw [flipBifun_apply, inverseBifun_apply, neg_coe_sub]
+  rw [flipBifun_apply, inverseBifun_apply, Tdaf.EReal.neg_coe_sub]
   have hr : ((-Bx.flip) y x : ℝ) = -(Bx x y) := by
     simp only [LinearMap.neg_apply, LinearMap.flip_apply]
   rw [hr, coe_neg_sub_neg]
@@ -267,7 +259,7 @@ theorem upperConjSaddle_saddleSwap (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : 
   have hr : ((-Bx.flip) y q.1 + (-Bu.flip) q.2 u : ℝ) = -(Bu u q.2 + Bx q.1 y) := by
     simp only [LinearMap.neg_apply, LinearMap.flip_apply]
     ring
-  rw [hr, saddleSwap_apply, coe_neg_sub_neg, neg_coe_sub]
+  rw [hr, saddleSwap_apply, coe_neg_sub_neg, Tdaf.EReal.neg_coe_sub]
 
 /-- **The lower conjugate of `saddleSwap K` is the swap of the upper conjugate of `K`.** -/
 theorem lowerConjSaddle_saddleSwap (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
@@ -282,7 +274,7 @@ theorem lowerConjSaddle_saddleSwap (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : 
   have hr : ((-Bx.flip) y q.1 + (-Bu.flip) q.2 u : ℝ) = -(Bu u q.2 + Bx q.1 y) := by
     simp only [LinearMap.neg_apply, LinearMap.flip_apply]
     ring
-  rw [hr, saddleSwap_apply, coe_neg_sub_neg, neg_coe_sub]
+  rw [hr, saddleSwap_apply, coe_neg_sub_neg, Tdaf.EReal.neg_coe_sub]
 
 end SwapConj
 

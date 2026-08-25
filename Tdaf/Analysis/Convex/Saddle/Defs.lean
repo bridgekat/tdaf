@@ -103,16 +103,12 @@ namespace Tdaf.ConvexAnalysis
 
 section ERealAux
 
-/-- Negating a difference whose minuend is real. -/
+/-- `Tdaf.EReal.neg_coe_sub` with the difference read as a sum, which is the orientation the
+brackets of this file are stated in. -/
 private theorem neg_coe_sub' {c : ℝ} {w : EReal} :
     -((c : EReal) - w) = ((-c : ℝ) : EReal) + w := by
-  induction w with
-  | bot => rw [_root_.EReal.coe_sub_bot, _root_.EReal.neg_top, _root_.EReal.add_bot]
-  | coe r =>
-    rw [← _root_.EReal.coe_sub, ← _root_.EReal.coe_neg, ← _root_.EReal.coe_add,
-      _root_.EReal.coe_eq_coe_iff]
-    ring
-  | top => rw [_root_.EReal.sub_top, _root_.EReal.neg_bot, _root_.EReal.coe_add_top]
+  rw [Tdaf.EReal.neg_coe_sub, add_comm]
+  rfl
 
 /-- A difference with a real minuend, read as a sum. -/
 private theorem coe_sub_eq_neg_add {c : ℝ} {w : EReal} :
