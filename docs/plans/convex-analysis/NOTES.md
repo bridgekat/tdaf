@@ -159,7 +159,23 @@ theorem epi_restrict_coe (s : Set E) (g : E → ℝ) :
     epi (restrict s fun x => (g x : EReal)) = {p : E × ℝ | p.1 ∈ s ∧ g p.1 ≤ p.2}
 theorem convexOn_iff_convexFn (s : Set E) (g : E → ℝ) :
     ConvexOn ℝ s g ↔ ConvexFn (restrict s fun x => (g x : EReal))
+
+-- Jensen. Moved here from `Subgradient/Gradient.lean`: the proof is one `Convex.sum_mem` on
+-- `epi f`, and a surface module that wants only Theorem 4.3 should not import the subgradient
+-- tower to get it. Aliased as `jensen` in `Eponyms.lean`.
+theorem ConvexFn.sum_le {ι : Type*} (hf : ConvexFn f) (t : Finset ι) (u : ι → E) (m wt : ι → ℝ)
+    (hm : ∀ j ∈ t, f (u j) ≤ ((m j : ℝ) : EReal)) (hw : ∀ j ∈ t, 0 ≤ wt j)
+    (hw1 : ∑ j ∈ t, wt j = 1) :
+    f (∑ j ∈ t, wt j • u j) ≤ ((∑ j ∈ t, wt j * m j : ℝ) : EReal)
 ```
+
+The bound is by *reals* `m j`, not by `f (u j)`. The `EReal`-valued form
+`f (∑ wt j • u j) ≤ ∑ wt j • f (u j)` needs the `0 · ∞ = 0` convention where `wt j = 0` and
+`f (u j) = ⊤`; §4 of the surface currently does that filtering by hand, and a backbone
+`ConvexFn.sum_le'` is [scheduled](backbone/08-remediation.md).
+
+The import cost of the move is `Mathlib.Analysis.Convex.Combination` — see gotcha 368 for the
+misleading error when it is absent.
 
 ### `Tdaf/Analysis/Convex/Indicator.lean`
 
@@ -6915,6 +6931,89 @@ survived long enough to acquire two more instances.
      the following `tauto` then errors with "No goals to be solved" — which reads as a broken proof
      rather than an over-complete one. Two membership lemmas of the same shape can differ here: the
      sibling needed `and_assoc` added to the same `simp only` and *then* the `tauto` had to go too.
+
+368. **`Convex.sum_mem` is not in `Mathlib.Analysis.Convex.Function`.** It lives in
+     `Mathlib.Analysis.Convex.Combination`, and the failure mode is unrecognisable: `Convex` is a
+     plain `def` to a Π-type, so when `Convex.sum_mem` is not in the environment, dot notation
+     unfolds it and reports **`The environment does not contain Function.sum_mem`**. Any
+     `Foo.bar` on a `Convex` hypothesis that errors at `Function.bar` is a missing import, not a
+     missing lemma.
+
+369. **`convexFn_compLin (LinearMap.proj i) hg` does not unify** against an expected
+     `ConvexFn fun p => g (p i)`: the elaborator tries the unification before it can solve
+     `LinearMap.proj`'s implicit `φ` and `R`. Build the term first and let `exact` close the
+     defeq:
+     ```lean
+     have h := convexFn_compLin (E := ι → E) (LinearMap.proj (R := ℝ) (φ := fun _ => E) i) hg
+     exact h
+     ```
+     The same applies to maps built with `LinearMap.prod`.
+
+370. **`refine le_trans (iInf₂_le _ ⟨…, ?_⟩) (le_of_eq ?_)` emits its goals in the opposite
+     order to the `?_`s** — the `le_of_eq` hole comes first. Name the holes, or read the order off
+     the first error rather than assuming it.
+
+371. **Projections of a *literal* pair block `rw`.** After `le_mapLin fun q hq => …` the goal
+     carries `(l, y).1 i` and `rw [h]` reports "did not find `y i`". `obtain ⟨l, y⟩ := q`
+     immediately, then `obtain ⟨h₁, rfl⟩ := hq` to substitute the second component; where that is
+     impossible, route the step through `calc`, whose endpoints are matched up to defeq. This is
+     gotcha 366 at a different head.
+
+372. **`indicatorFn_of_mem (rfl : x ∈ ({0} : Set E))` elaborates the set to `Eq 0`,** so the
+     following `rw` cannot find `indicatorFn {0}`. Use `simp` for that step.
+
+373. **`cond_true` and `cond_false` are deprecated** in favour of `Bool.cond_true` and
+     `Bool.cond_false` — and the replacements take *implicit* rather than explicit arguments, so
+     the call sites do not port verbatim.
+
+374. **`((max a b : ℝ) : EReal) = max ↑a ↑b` is `exact_mod_cast rfl`,** which is shorter than
+     hunting for an `EReal.coe_max` that is not there.
+
+375. **`WithLp` is a structure in this toolchain.** Goals display `x.ofLp j` rather than `x j`, but
+     `x j` still elaborates for `x : EuclideanSpace ℝ (Fin n)`, and
+     `⟨fun x => x j, fun _ _ => rfl, fun _ _ => rfl⟩` is a valid `Rn n →ₗ[ℝ] ℝ`.
+
+376. **`Basis` is `Module.Basis`.** `Basis.span`, `Basis.coe_span_apply` and `Basis.equiv_apply`
+     are unknown identifiers; write `Module.Basis.span` and so on. `Module.finBasis` is *not*
+     renamed, so the two spellings sit side by side in the same proof.
+
+377. **Dot notation on `AffineIndependent` resolves to `Function.…`.** `AffineIndependent` is a
+     `def` unfolding to a Π-type, so `hb.finrank_vectorSpan` reports "the environment does not
+     contain `Function.finrank_vectorSpan`". Use the full name. This is gotcha 368 at a second
+     head symbol, and the rule generalises: **any dot-notation error naming `Function.foo` means
+     the hypothesis's type is a `def` that unfolds to a Π-type** — either the lemma is missing
+     from the environment (an import) or the name is wrong.
+
+378. **`by simp` inside structure-instance notation is greedy.** In `{ add_mem' := by simp,
+     zero_mem' := … }` the tactic block swallows the following `, field := …` and the parser
+     reports "unexpected identifier; expected `}`". Put each field on its own line with `?_` and
+     discharge in bullets. Note the goal order for `Submodule.mk` is **`add_mem'`, `zero_mem'`,
+     `smul_mem'`** — parent-structure order, not source order.
+
+379. **`abel` fails where `module` succeeds.** On a goal mixing `ℝ`-scalar multiplication with
+     additive structure — `x₁ + (x₂ + (-1 • y₁ + -1 • y₂)) = …` — `abel` leaves the goal open
+     rather than erroring, which reads as a failure of the *proof* rather than of the tactic
+     choice.
+
+380. **`rw [hM]` with `hM : M = ↑(vectorSpan ℝ M) + {a}` gives "motive is not type correct"** as
+     soon as any local term's *type* mentions `M` — an `e : vectorSpan ℝ M₁ ≃ₗ[ℝ] vectorSpan ℝ M₂`
+     is enough. Introduce such equivalences opaquely via `obtain ⟨e⟩ : Nonempty (…)`, and state
+     membership criteria as `have`s *before* the offending term appears.
+
+381. **`Submodule.isCompl_orthogonal_of_hasOrthogonalProjection` is deprecated** in favour of
+     `Submodule.isCompl_orthogonal`, which takes `K` **explicitly** — so the deprecation's own
+     suggested replacement does not typecheck as written.
+
+382. **`convex_halfSpace_le` has a capital `S`** (likewise `_ge`, `_lt`, `_gt`);
+     `convex_halfspace_le` does not exist.
+
+383. **`finrank_euclideanSpace_fin` is already in the default simp set**, so passing it to `simp`
+     trips `linter.unusedSimpArgs` and fails a zero-warning build.
+
+384. **Python's `io.open(p, 'w')` on Windows writes CRLF.** Repository `.lean` files are LF, and a
+     scripted edit that does not pass `newline='
+'` rewrites the whole file's line endings —
+     which shows up as a diff touching every line.
 
 The remaining findings from the three review worktrees are *scheduled work*, not gotchas, and are
 recorded in [`backbone/08-remediation.md`](backbone/08-remediation.md): the backbone → surface move

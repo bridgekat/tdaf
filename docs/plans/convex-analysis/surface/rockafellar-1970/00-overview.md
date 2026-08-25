@@ -240,5 +240,29 @@ they are also the natural first target if a general non-`ℝⁿ` second surface 
 
 ## 7. Status
 
-Not started. The backbone is complete; this surface is the next phase, gated on the hard items in
-[`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) §7.
+The hard gate is closed: remediation §1.2, §1.3 and §4.2 are done, and
+`Tdaf/Surface/Common/Euclidean.lean` is the ambient setting, asserting all 31 instances of §2.1 as
+a regression test. There is no `Setup.lean`/`Notation.lean` pair — `Euclidean.lean` is that file,
+and it lives under `Surface/Common/` because a second surface over `ℝⁿ` would want the same one.
+
+**Part I — all five sections written**, 147 declarations for the Part's 49 numbered results.
+
+| § | module | declarations | labels |
+|---|---|---|---|
+| 1 | `Part1/Section01.lean` | 50 | 8 |
+| 2 | `Part1/Section02.lean` | 23 | 13 |
+| 3 | `Part1/Section03.lean` | 36 | 9 |
+| 4 | `Part1/Section04.lean` | 12 | 11 |
+| 5 | `Part1/Section05.lean` | 26 | 8 |
+
+The declaration count runs to three times the label count because the book states existence and
+uniqueness in one sentence (§1), splits a theorem across unlettered clauses (§3, §5, §2's
+Theorem 2.7), and defines as much as it proves — every surface definition carries its bridge
+lemma.
+
+The order of §6 was not followed for Part I: §1–§5 were written together, because the five files
+are independent and the point of the first round was to test the *backbone*, not to sequence the
+book. What the round found is in
+[`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) §8 — seventeen backbone gaps,
+two scheduled items demoted, and five places where the book is wrong. Two of the seventeen are
+already closed (`Analysis/Convex/Line.lean`, and Jensen moved to `Epigraph.lean`).

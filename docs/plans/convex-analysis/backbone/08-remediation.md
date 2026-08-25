@@ -23,6 +23,8 @@ scaffolding the surface library will otherwise pay for per-statement.
 | §2.1 `saddleSwap` transport | **done** — 58 duplicated proof lines → 17; see the correction below |
 | §3 `closedsOrderIso` | **done** — plus three instantiations; D12 amended |
 | §4.2 `negFst` pairing instances | **done** — this was the `Setup.lean` blocker, and it is closed |
+| §4.9 the reduction to lines | **done** — `Analysis/Convex/Line.lean`, with the converse too (§8.2) |
+| §8.1 Jensen out of the subgradient tower | **done** — moved to `Epigraph.lean` |
 | everything else | open |
 
 Three items were **wrong as written**, and the corrections matter more than the items did.
@@ -220,7 +222,7 @@ Ordered by how many surface statements each one taxes.
 | 4.6 | **Theorem 27.1(e)** restated under `[IsCompatiblePairing B] [IsCompatiblePairing B.flip]` | currently excluded as "needs a reflexive pairing"; `ℝⁿ` *is* reflexive, so the surface demands it and cannot get it |
 | 4.7 | **`IsNorm k → ∃ p : Seminorm ℝ E, ∀ x, k x = p x`** at layer D | §15; the bridge is declined at `Duality/Gauge.lean:127` on layer-C grounds that do not apply on `ℝⁿ` |
 | 4.8 | **`Rn m × Rn n ≃ₗᵢ Rn (m+n)`** with transport for `conj`, `subgradient`, `ri` | Rockafellar moves freely between `ℝᵐ × ℝⁿ` and `ℝᵐ⁺ⁿ` in §29, §30, §37 |
-| 4.9 | **`convexOn_iff_convexOn_lines`** | Thms 4.4/4.5. The *concave* half already exists, buried at `Saddle/Differential.lean:162` — move both somewhere findable |
+| 4.9 | ~~**`convexOn_iff_convexOn_lines`**~~ **done** | Thms 4.4/4.5. The *concave* half existed, buried at `Saddle/Differential.lean:162`. Both now live in `Analysis/Convex/Line.lean`, together with the converse `convexOn_iff_lines` — which is the half that makes the reduction useful and which neither the review nor the plan had noticed was missing |
 | 4.10 | Bundle layer D's typeclass triple | `[NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]` is spelled out in ~74 files; bundling makes a later relaxation one edit |
 
 **Two obligations the old surface plan listed are struck**, not scheduled:
@@ -281,3 +283,62 @@ used outside the file. Either name a downstream consumer or move more of it.
 
 Items 5 and 6 are the ones with a hard ordering constraint against the surface. Everything else can
 be done in any order, or dropped, without blocking.
+
+**§8 is the empirical version of this list** and supersedes it where the two disagree: it records
+what the Part I surface agents actually hit, and it demoted §4.4 (the `m`-ary `infConv`) off §5's
+critical path while promoting three `Homogenize.lean` gaps nobody had predicted. Schedule §8 items
+the same way as §6 — with the surface section that wants them, not ahead of it.
+
+---
+
+## 8. Gaps reported by the Part I surface round
+
+These are not from the review worktrees; they are what the four §1–§5 surface agents actually hit
+while writing statements against the backbone. Each was worked around locally (a `private` lemma or
+a `Rockafellar.*` helper in the surface file), so nothing here blocks; each is a place where the
+backbone made a surface proof longer than the brief's "a few lines".
+
+| # | item | reported by | status |
+|---|---|---|---|
+| 8.1 | **Jensen was in `Subgradient/Gradient.lean`.** Its proof is one `Convex.sum_mem` on `epi f`; a surface module wanting only Theorem 4.3 had to import the whole subgradient tower | §4 | **done** — moved to `Epigraph.lean` |
+| 8.2 | **The reduction to lines** — `convexOn_iff_lines` and the step-set lemmas | §4 | **done** — `Analysis/Convex/Line.lean`, with the converse that §4.9 did not ask for |
+| 8.3 | **`ConvexFn.sum_le'`, the `EReal`-valued Jensen.** The book's `∑ λᵢ f(xᵢ)` needs `0 · ∞ = 0` where `λᵢ = 0` and `f xᵢ = ⊤`; §4 filters to `{i | λᵢ ≠ 0}` by hand, 25 lines, its longest proof | §4 | open |
+| 8.4 | **The second-derivative-along-a-line group.** Rockafellar's "a straightforward calculation" `g''(λ) = ⟨z, Q_x z⟩` is seven `private` lemmas in §4 (`hasDerivAt_line`, `hasFDerivAt_of_contDiffOn`, `hasFDerivAt_fderiv_of_contDiffOn`, `hasDerivAt_comp_line`, `deriv_comp_line_eventuallyEq`, `hasDerivAt_deriv_comp_line`) | §4 | open |
+| 8.5 | **`convexFn_restrict_iff_le`.** `convexFn_iff_le` is the `C = ℝⁿ` case only; lifting to the book's "function from `C`" via `restrict` cost §4 eighteen lines of `⊤`-absorption | §4 | open |
+| 8.6 | **The finite-family `∑ᵢ wᵢ • C = (∑ᵢ wᵢ) • C`** for convex nonempty `C`, which Theorem 3.3 needs — four private helpers, ~70 lines, the only long proof in §3 | §3 | open |
+| 8.7 | **The set-level inverse sum `#` does not exist.** `Operations/InfConv.lean` is entirely function-level and its set-level shadow is ordinary `+`. `invSum` is a genuine surface definition | §3 | open — surface definition, may stay one |
+| 8.8 | **`Homogenize.lean` has no properness lemmas.** `hom f q ≠ ⊥` for proper `f` written as `Rockafellar.hom_ne_bot`; needed by Theorem 5.8(g) | §5 | open |
+| 8.9 | **`hom f (a, a • z) = a * f z` for `a ≥ 0`** — `Rockafellar.hom_apply_smul`; belongs beside `hom_apply_nonneg` | §5 | open |
+| 8.10 | **No slice lemma** `ConvexFn G → ConvexFn (fun x => G (c, x))` for `G : ℝ × E → EReal`; used by three clauses of Theorem 5.8. Belongs beside `ConvexFn.comp_add_left` | §5 | open |
+| 8.11 | **Convexity of an abstract linear functional as an `E → EReal`** exists only for pairing-presented functionals (`convexFn_affineFn`) | §5 | open |
+| 8.12 | **`InfConvFn`'s `Finset.sum` is not connected to the `m`-ary infimum formula.** The bridge wanted is `ofInfConvFn (∑ toInfConvFn fᵢ) = mapLin sumLin (∑ᵢ fᵢ ∘ projᵢ)`. Note the obvious induction **cannot** work: properness is not preserved by `□`, so `infConv_apply` cannot be re-applied to a partial convolute | §5 | open — refines §4.4 |
+| 8.13 | **No bridge from `Duality/Gauge.lean`'s gauge to `posHomGen (δ(·|C) + 1)`.** `Gauge.lean` takes the *computed* formula `inf {λ ≥ 0 \| x ∈ λC}` as the definition, so §5's identification of the gauge as a positively homogeneous generation is not statable | §5 | open |
+| 8.14 | **`span ℝ K = K - K` for a convex cone containing `0`.** Theorem 2.7's `K - K = aff K` half; `Recession/Cone.lean:321` covers only the lineality half, and only for recession cones. §2 proved it in 18 lines by `Submodule.span_induction` | §2 | open |
+| 8.15 | **`vectorSpan_eq_span_of_zero_mem` is buried in `Duality/Gauge.lean`**, which `Surface/Common/Euclidean.lean` does not reach. It is the backbone's Theorem 1.1 and belongs in a low-level module | §1 | open |
+| 8.16 | **`Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional` is not reachable from `Surface/Common/Euclidean.lean`** — `AffineIndependent.vectorSpan_eq_top_of_card_eq_finrank_add_one` is an unknown constant. §1 imports it explicitly; §§17–19 will want it too | §1 | open — belongs in the shared surface header, not the backbone |
+| 8.17 | **Nothing extends a linear isomorphism between two subspaces to an automorphism of the ambient space.** Written as `exists_linearEquiv_extend` / `exists_linearEquiv_apply_eq`, ~25 lines from `Submodule.prodEquivOfIsCompl`, `LinearEquiv.ofFinrankEq` and `Submodule.isCompl_orthogonal`. Theorem 1.6 and Corollary 1.6.1 both rest on it, and it is the most expensive thing in either §1 or §2 | §1 | open |
+
+### Two things the round *un*-scheduled
+
+* **§4.4's `m`-ary `infConv` is not on §5's critical path after all.** Theorem 5.4's literal m-ary
+  form `inf {f₁x₁ + ⋯ + fₘxₘ | ∑ xᵢ = x}` *is* the image `mapLin sumLin (∑ᵢ fᵢ ∘ projᵢ)`, so
+  Theorem 5.7 closes it in five lines — and the same route handles all four clauses of Theorem 5.8.
+  §5 therefore has **no dependency on §3's partial addition**, contrary to the plan.
+* **`Operations/*` is entirely function-level, so part1.md is wrong that §3 specialises it.** §3 is
+  set algebra; all nine of its results specialise *Mathlib*.
+
+### Book findings from the round
+
+* **Theorem 3.8's second equation `K₁ # K₂ = K₁ ∩ K₂` does not need convexity** — closure under
+  positive scaling plus `0 ∈ K` suffices.
+* **The book's coefficient `(α₁⁻¹ + α₂⁻¹)⁻¹` for the inverse sum of vectors is wrong under Lean's
+  `0⁻¹ = 0`** (it gives `α₂` at `α₁ = 0`); the book's own parenthetical caveat is load-bearing.
+  `invSum_singleton_smul` uses `α₁α₂/(α₁+α₂)`, which is correct throughout.
+* **Theorem 4.8's basis clause is false for `L = {0}` with an empty basis** — a positively
+  homogeneous proper convex `f` may have `f 0 = +∞`. The backbone already carries the nonemptiness
+  hypothesis; the surface states it.
+* **Theorem 1.3's second sentence is false in `ℝ⁰`.** There `∅` has dimension `-1 = n - 1`, so it
+  *is* a hyperplane, but no non-zero `b` exists to represent it. `theorem_1_3_exists` carries
+  `0 < n`.
+* **Theorem 2.4 needs `C.Nonempty`** — for `C = ∅` the set of simplex dimensions is empty and has
+  no maximum.

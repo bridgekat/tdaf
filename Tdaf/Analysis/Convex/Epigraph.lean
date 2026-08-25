@@ -3,6 +3,7 @@ Copyright (c) 2026 TDAF contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: TDAF contributors
 -/
+import Mathlib.Analysis.Convex.Combination
 import Mathlib.Analysis.Convex.Function
 import Tdaf.Order.EReal
 
@@ -30,6 +31,8 @@ following Rockafellar, *Convex Analysis*, §4.
   convexity outright: adding a real-valued affine coordinate, and translating the argument.
 * `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — Theorem 4.6.
 * `convexOn_iff_convexFn` — the bridge to Mathlib's `ConvexOn`.
+* `ConvexFn.sum_le` — Jensen's inequality for a finite convex combination, which is one
+  `Convex.sum_mem` on the epigraph and so needs nothing beyond this file.
 
 ## Design notes
 
@@ -352,5 +355,37 @@ theorem convexOn_iff_convexFn (s : Set E) (g : E → ℝ) :
   exact ⟨fun h => h.convex_epigraph, fun h => convexOn_of_convex_epigraph h⟩
 
 end Module
+
+/-! ### Jensen's inequality for finite convex combinations -/
+
+section Jensen
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal}
+
+/-- **Jensen's inequality** for a convex `EReal`-valued function, in the form the epigraph supplies
+it: a convex combination of points at which `f` is bounded above by reals `m j` is bounded above by
+the same combination of the `m j`.
+
+The proof is `Convex.sum_mem` applied to `epi f`, which is why it belongs here and not further up:
+it needs nothing but the epigraph, and §4 of a surface library wants Jensen without importing the
+differential theory. Aliased as `jensen` in `Eponyms.lean`.
+
+The bound is by *reals* `m j`, not by `f (u j)` directly. The `EReal`-valued form
+`f (∑ wt j • u j) ≤ ∑ wt j • f (u j)` needs the `0 · ∞ = 0` convention at the indices where
+`wt j = 0` and `f (u j) = ⊤`, which is a separate argument and not one every consumer wants. -/
+theorem ConvexFn.sum_le {ι : Type*} (hf : ConvexFn f) (t : Finset ι) (u : ι → E) (m wt : ι → ℝ)
+    (hm : ∀ j ∈ t, f (u j) ≤ ((m j : ℝ) : EReal)) (hw : ∀ j ∈ t, 0 ≤ wt j)
+    (hw1 : ∑ j ∈ t, wt j = 1) :
+    f (∑ j ∈ t, wt j • u j) ≤ ((∑ j ∈ t, wt j * m j : ℝ) : EReal) := by
+  have hmem := hf.convex_epi.sum_mem hw hw1 (fun j hj => mk_mem_epi.2 (hm j hj))
+  have hsum : (∑ j ∈ t, wt j • ((u j, m j) : E × ℝ))
+      = ((∑ j ∈ t, wt j • u j, ∑ j ∈ t, wt j * m j) : E × ℝ) := by
+    refine Prod.ext ?_ ?_
+    · simp [Prod.fst_sum]
+    · simp [Prod.snd_sum, smul_eq_mul]
+  rw [hsum] at hmem
+  exact mk_mem_epi.1 hmem
+
+end Jensen
 
 end Tdaf.ConvexAnalysis

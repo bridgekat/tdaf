@@ -1358,6 +1358,16 @@ rather than about the book's exposition. Design decision D0 explains the recurri
   identities are `rfl`, and the content-bearing epigraph identities are conditional.
 * **Corollary 4.7.1 and Theorem 4.8's basis clause are false as literally written**, for the trivial
   reason that the book's `λ₁,…,λₘ` assumes `m ≥ 1`; the formalisation adds `Nonempty`.
+* **Theorem 1.3's second sentence is false in `ℝ⁰`.** There `∅` has dimension `-1 = n - 1` and so
+  *is* a hyperplane, but no non-zero `b` exists to represent it as `{x | ⟨x,b⟩ = β}`. The surface
+  carries `0 < n`.
+* **Theorem 2.4 needs `C.Nonempty`.** For `C = ∅` the set of dimensions of simplices contained in
+  `C` is empty, and the theorem asserts a maximum of it.
+* **Theorem 3.8's second equation `K₁ # K₂ = K₁ ∩ K₂` does not need convexity** — closure under
+  positive scaling and `0 ∈ K` suffice. The first equation does need it.
+* **The book's coefficient `(α₁⁻¹ + α₂⁻¹)⁻¹` for the inverse sum of two vectors is wrong under
+  Lean's `0⁻¹ = 0`** — at `α₁ = 0` it evaluates to `α₂` instead of `0`. The book's own parenthetical
+  caveat about the degenerate case is load-bearing; `α₁α₂/(α₁+α₂)` is correct throughout.
 * **Theorem 5.2 needs `∀ x, f x ≠ ⊥`, not properness**, and it is not droppable.
 * **Theorem 5.1 needs `φ ⊤ = ⊤` explicitly**, and is stated more generally than the book (`φ` may
   take `⊥`).
@@ -1533,6 +1543,9 @@ Two items are on both books' critical path and are therefore the highest-value r
    `Subgradient/Monotone.lean`, and document `IsExactSum` as the extension point for constraint
    qualifications.
 
-And one structural one: **the `ℝⁿ` / Hilbert instantiation should not live in a Rockafellar-specific
-`Setup.lean`.** Put it in a shared module so that every surface uses the same instances and the
-instance gaps get fixed once.
+And one structural one — **done**: **the `ℝⁿ` / Hilbert instantiation should not live in a
+Rockafellar-specific `Setup.lean`.** It is `Tdaf/Surface/Common/Euclidean.lean`, which asserts all
+31 ambient instances as a regression test, so every surface uses the same ones and an instance gap
+gets fixed once. Part I found that this file should also carry the *Mathlib* imports every surface
+over `ℝⁿ` needs — `Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional` was the first
+(remediation §8.16).

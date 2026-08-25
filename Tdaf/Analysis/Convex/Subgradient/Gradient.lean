@@ -35,7 +35,6 @@ two-sided derivatives along a basis already suffice.
   sufficiency and the resulting equivalence, in finite dimensions.
 * `differentiableAtFn_of_forall_basis_dirDeriv_eq` — **Theorem 25.2**, last sentence: the `n`
   two-sided partial derivatives suffice.
-* `ConvexFn.sum_le` — Jensen's inequality for a finite convex combination.
 * `proper_of_eventuallyEq_coe`, `mem_interior_dom_of_eventuallyEq_coe` — **Corollary 25.1.1**.
 * `mem_exposedPoints_epi_conj_iff` — the exposed points of `epi f*` are the points `(y, f* y)`
   such that `y` is the *only* subgradient of `f` at some point. **Corollary 25.1.2** in its
@@ -88,10 +87,10 @@ gets it from Theorems 23.2, 7.2 and 4.8; the route taken here is quantitative an
 `z - x = ∑ ξ j • b j` in a basis and putting `S = ∑ |ξ j|`, the point `z` is a convex combination
 of the `n` points `x + (S * sign (ξ j)) • b j`, each of which lies along a *basis* direction at the
 common distance `S` from `x`; the one-sided estimate `f (x + t • b j) ≤ f x + t c j + |t| η`
-therefore applies to all of them at once, and Jensen's inequality (`ConvexFn.sum_le`) reassembles
-them into `f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖`. No compactness, no continuity of `f`, and the
-hypothesis consumed is only the `2n` one-sided derivatives along `± b j` — which is exactly
-Rockafellar's strengthening.
+therefore applies to all of them at once, and Jensen's inequality (`ConvexFn.sum_le`, in
+`Epigraph.lean`) reassembles them into `f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖`. No compactness, no
+continuity of `f`, and the hypothesis consumed is only the `2n` one-sided derivatives along
+`± b j` — which is exactly Rockafellar's strengthening.
 
 **The proof of Theorem 25.1 never mentions `dirDeriv`.** Rockafellar routes it through
 Theorem 23.2, but with a Fréchet derivative in hand the one-sided limit of the difference quotient
@@ -172,33 +171,6 @@ theorem clFn_dirDeriv_eq_of_subgradient_eq_singleton [TopologicalSpace E] [Conti
   rfl
 
 end Linear
-
-/-! ### Jensen's inequality for finite convex combinations -/
-
-section Jensen
-
-variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal}
-
-/-- **Jensen's inequality** for a convex `EReal`-valued function, in the form the epigraph supplies
-it: a convex combination of points at which `f` is bounded above by reals `m j` is bounded above by
-the same combination of the `m j`.
-
-The proof is `Convex.sum_mem` applied to `epi f`; stating it separately keeps the product-space
-bookkeeping out of the arguments that consume it. -/
-theorem ConvexFn.sum_le {ι : Type*} (hf : ConvexFn f) (t : Finset ι) (u : ι → E) (m wt : ι → ℝ)
-    (hm : ∀ j ∈ t, f (u j) ≤ ((m j : ℝ) : EReal)) (hw : ∀ j ∈ t, 0 ≤ wt j)
-    (hw1 : ∑ j ∈ t, wt j = 1) :
-    f (∑ j ∈ t, wt j • u j) ≤ ((∑ j ∈ t, wt j * m j : ℝ) : EReal) := by
-  have hmem := hf.convex_epi.sum_mem hw hw1 (fun j hj => mk_mem_epi.2 (hm j hj))
-  have hsum : (∑ j ∈ t, wt j • ((u j, m j) : E × ℝ))
-      = ((∑ j ∈ t, wt j • u j, ∑ j ∈ t, wt j * m j) : E × ℝ) := by
-    refine Prod.ext ?_ ?_
-    · simp [Prod.fst_sum]
-    · simp [Prod.snd_sum, smul_eq_mul]
-  rw [hsum] at hmem
-  exact mk_mem_epi.1 hmem
-
-end Jensen
 
 /-! ### Rays and difference quotients -/
 
