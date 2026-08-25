@@ -50,11 +50,13 @@ quotient type is needed.
   `convexHullPD_isLeast` is the book's actual *definition*: the least convex set containing the
   points and receding in all the directions. `convexHullPD_empty_points` is the convention
   `conv S = ∅` when `S` has directions only.
-* `vertRay n` (private) is the vertical ray `{(0, μ) | μ ≥ 0}` of `ℝⁿ⁺¹` used in the proof of
-  Corollary 17.2.1.
+* **Affine independence of a mixed set**, the **generalized `m`-dimensional simplex** and the
+  **dimension `dim S`** of a mixed set are the backbone's `AffineIndepPD`, `IsSimplexPD` and
+  `finrankPD` (`HullDirections.lean`); `theorem_17_1_simplex` is the second sentence of Theorem
+  17.1 stated with them.
 
-`ray`, `coneOf` and `vertRay` are **local to this file**; §§18–19, written in parallel, may define
-the same notions, and the merge should keep one copy.
+`ray` and `coneOf` are **local to this file**; §§18–19, written in parallel, may define the same
+notions, and the merge should keep one copy.
 
 ## What is not here
 
@@ -91,13 +93,6 @@ in its docstring.
 
 ## Backbone gaps
 
-* `IsCompact.isCompact_convexHull` is labelled **Corollary 17.2.1** in `Caratheodory.lean`; it is
-  really Theorem 17.2's second sentence. The actual Corollary 17.2.1 — `conv f` is a closed proper
-  convex function — had no backbone counterpart, and `corollary_17_2_1` proves it here, against
-  `Operations/Epi.lean`'s `IsEpiLike`. It belongs in the backbone.
-* `exists_of_mem_convexHull_add_coneHull` (Theorem 17.1 for points and directions) drops the linear
-  independence of the generators that its own proof establishes, which is what the simplex clause
-  of Theorem 17.1 and §18's vertex theory need.
 * **Theorem 17.3 is false as the book states it** and the backbone already carries the extra
   hypothesis `0 ∉ S*`; `theorem_17_3` inherits it. The book's `x* ≠ 0` is, conversely, unnecessary.
 
@@ -289,122 +284,17 @@ theorem theorem_17_2_isCompact {S : Set (Rn n)} (hS : IsCompact S) :
     IsCompact (convexHull ℝ S) :=
   hS.isCompact_convexHull
 
-/-- The "vertical" ray `K = {(0, μ) | μ ≥ 0}` of `ℝⁿ⁺¹`, from Rockafellar's proof of Corollary
-17.2.1. -/
-private def vertRay (n : ℕ) : Set (Rn n × ℝ) := {p : Rn n × ℝ | p.1 = 0 ∧ 0 ≤ p.2}
-
-private theorem convex_vertRay (n : ℕ) : Convex ℝ (vertRay n) := by
-  rintro p ⟨hp1, hp2⟩ q ⟨hq1, hq2⟩ a b ha hb -
-  refine ⟨?_, ?_⟩
-  · change a • p.1 + b • q.1 = 0
-    rw [hp1, hq1, smul_zero, smul_zero, add_zero]
-  · change (0 : ℝ) ≤ a * p.2 + b * q.2
-    exact add_nonneg (mul_nonneg ha hp2) (mul_nonneg hb hq2)
-
-private theorem isClosed_vertRay (n : ℕ) : IsClosed (vertRay n) := by
-  have hset : vertRay n
-      = (Prod.fst ⁻¹' ({0} : Set (Rn n))) ∩ (Prod.snd ⁻¹' (Set.Ici (0 : ℝ))) := rfl
-  rw [hset]
-  exact (isClosed_singleton.preimage continuous_fst).inter
-    (isClosed_Ici.preimage continuous_snd)
-
-/-- The epigraph of a function that is real-valued and `⊤` off `S` is the graph plus the vertical
-ray. -/
-private theorem epi_restrict_eq {S : Set (Rn n)} (h : Rn n → ℝ) :
-    epi (restrict S fun x => ((h x : ℝ) : EReal))
-      = (fun x => ((x, h x) : Rn n × ℝ)) '' S + vertRay n := by
-  ext p
-  constructor
-  · intro hp
-    rw [mem_epi] at hp
-    by_cases hp1 : p.1 ∈ S
-    · rw [restrict_of_mem hp1, _root_.EReal.coe_le_coe_iff] at hp
-      exact ⟨(p.1, h p.1), ⟨p.1, hp1, rfl⟩, (0, p.2 - h p.1), ⟨rfl, by linarith⟩,
-        Prod.ext (by change p.1 + 0 = p.1; rw [add_zero])
-          (by change h p.1 + (p.2 - h p.1) = p.2; ring)⟩
-    · rw [restrict_of_notMem hp1] at hp
-      exact absurd hp (by simp)
-  · rintro ⟨u, ⟨x, hx, rfl⟩, v, ⟨hv1, hv2⟩, rfl⟩
-    rw [mem_epi]
-    have h1 : ((x, h x) + v).1 = x := by change x + v.1 = x; rw [hv1, add_zero]
-    rw [h1, restrict_of_mem hx]
-    change ((h x : ℝ) : EReal) ≤ ((h x + v.2 : ℝ) : EReal)
-    exact_mod_cast le_add_of_nonneg_right hv2
-
 /-- **Rockafellar, Corollary 17.2.1.** Let `S` be a non-empty closed bounded set in `ℝⁿ`, let `f`
 be a continuous real-valued function on `S`, and let `f x = +∞` for `x ∉ S`. Then `conv f` is a
 closed proper convex function.
 
-Rockafellar's proof, in full: the graph `F` of `f` over `S` is closed and bounded, so `conv F` is
-compact by Theorem 17.2; `epi f = F + K` for the vertical ray `K`, so `conv (epi f) = conv F + K`
-is closed, contains no vertical line and is upward closed, hence *is* an epigraph — the epigraph of
-`conv f`.
-
-**Backbone gap.** The backbone's `Caratheodory.lean` labels `IsCompact.isCompact_convexHull` as
-Corollary 17.2.1; that lemma is really Theorem 17.2's second sentence, and the corollary itself —
-`conv f` closed proper convex — has no backbone counterpart. The proof is therefore written here,
-against `Operations/Epi.lean`'s `IsEpiLike` machinery; it belongs in the backbone. -/
+Specialises `closedProperConvexFn_convHullFn_restrict`; in `ℝⁿ` "closed and bounded" is
+"compact". -/
 theorem corollary_17_2_1 {S : Set (Rn n)} (hSne : S.Nonempty) (hScl : IsClosed S)
     (hSb : Bornology.IsBounded S) {h : Rn n → ℝ} (hcont : ContinuousOn h S) :
-    ClosedProperConvexFn (convHullFn (restrict S fun x => ((h x : ℝ) : EReal))) := by
-  set f : Rn n → EReal := restrict S (fun x => ((h x : ℝ) : EReal)) with hfdef
-  set G : Set (Rn n × ℝ) := (fun x => ((x, h x) : Rn n × ℝ)) '' S with hG
-  have hGc : IsCompact G := by
-    refine (Metric.isCompact_of_isClosed_isBounded hScl hSb).image_of_continuousOn ?_
-    exact ContinuousOn.prodMk continuousOn_id hcont
-  have hCc : IsCompact (convexHull ℝ G) := hGc.isCompact_convexHull
-  have hFeq : convexHull ℝ (epi f) = convexHull ℝ G + vertRay n := by
-    rw [hfdef, epi_restrict_eq, convexHull_add, (convex_vertRay n).convexHull_eq]
-  have hFcl : IsClosed (convexHull ℝ (epi f)) := by
-    rw [hFeq]
-    exact (isClosed_vertRay n).add_left_of_isCompact hCc
-  have hmono : ∀ (x : Rn n) (μ ν : ℝ), (x, μ) ∈ convexHull ℝ (epi f) → μ ≤ ν →
-      (x, ν) ∈ convexHull ℝ (epi f) := by
-    intro x μ ν hp hμν
-    rw [hFeq] at hp ⊢
-    obtain ⟨c, hc, k, hk, hck⟩ := hp
-    refine ⟨c, hc, k + (0, ν - μ), ⟨?_, ?_⟩, ?_⟩
-    · change k.1 + 0 = 0
-      rw [add_zero]
-      exact hk.1
-    · change (0 : ℝ) ≤ k.2 + (ν - μ)
-      have := hk.2
-      linarith
-    · have hck' : c + k = (x, μ) := hck
-      change c + (k + (0, ν - μ)) = (x, ν)
-      rw [← add_assoc, hck']
-      exact Prod.ext (by change x + 0 = x; rw [add_zero])
-        (by change μ + (ν - μ) = ν; ring)
-  have hEpi : IsEpiLike (convexHull ℝ (epi f)) := by
-    refine isEpiLike_of_forall hmono fun x μ hμ => ?_
-    have hcontm : Continuous fun ν : ℝ => ((x, ν) : Rn n × ℝ) := by fun_prop
-    have hev : ∀ᶠ ν in nhdsWithin μ (Set.Ioi μ),
-        ((x, ν) : Rn n × ℝ) ∈ convexHull ℝ (epi f) :=
-      Filter.eventually_iff_exists_mem.2 ⟨Set.Ioi μ, self_mem_nhdsWithin, fun ν hν => hμ ν hν⟩
-    exact hFcl.mem_of_tendsto ((hcontm.tendsto μ).mono_left nhdsWithin_le_nhds) hev
-  obtain ⟨x₀, hx₀⟩ := hSne
-  have hCne : (convexHull ℝ G).Nonempty := ⟨(x₀, h x₀), subset_convexHull ℝ G ⟨x₀, hx₀, rfl⟩⟩
-  obtain ⟨q, -, hqmin⟩ := hCc.exists_isMinOn hCne continuous_snd.continuousOn
-  have hproper : Proper (convHullFn f) := by
-    refine ⟨⟨x₀, ?_⟩, fun x hbot => ?_⟩
-    · rw [mem_dom]
-      refine lt_of_le_of_lt (convHullFn_le f x₀) ?_
-      rw [hfdef, restrict_of_mem hx₀]
-      exact _root_.EReal.coe_lt_top _
-    · have hge : ((q.2 : ℝ) : EReal) ≤ convHullFn f x := by
-        refine le_ofEpi fun μ hμ => ?_
-        rw [hFeq] at hμ
-        obtain ⟨c, hc, k, hk, hck⟩ := hμ
-        have h2 : c.2 + k.2 = μ := congrArg Prod.snd hck
-        have hmin := isMinOn_iff.1 hqmin c hc
-        have hk2 := hk.2
-        exact_mod_cast (by linarith : q.2 ≤ μ)
-      rw [hbot] at hge
-      exact absurd (le_bot_iff.1 hge) (_root_.EReal.coe_ne_bot _)
-  refine ClosedProperConvexFn.of_isClosed_epi (convexFn_convHullFn f) ?_ hproper
-  have hepiF : epi (convHullFn f) = convexHull ℝ (epi f) := epi_ofEpi hEpi
-  rw [hepiF]
-  exact hFcl
+    ClosedProperConvexFn (convHullFn (restrict S fun x => ((h x : ℝ) : EReal))) :=
+  closedProperConvexFn_convHullFn_restrict hSne
+    (Metric.isCompact_of_isClosed_isBounded hScl hSb) hcont
 
 /-- **Rockafellar, Theorem 17.3.** Let `S*` be a non-empty closed bounded set of vectors
 `(x*, μ*)` in `ℝⁿ⁺¹`, and let `C = {x | ⟨x, x*⟩ ≤ μ* for all (x*, μ*) ∈ S*}`. Suppose `C` is

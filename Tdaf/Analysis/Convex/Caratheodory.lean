@@ -34,10 +34,12 @@ Theorem 17.2, that the convex hull of a compact set is compact (Mathlib has only
 * `exists_card_le_finrank_of_mem_coneHull` — the same with the count `≤ n`.
 * `exists_of_mem_convexHull_add_coneHull` — **Theorem 17.1** for points *and directions*: a point of
   `conv P + cone D` uses at most `n + 1` generators in total.
-* `IsCompact.isCompact_convexHull` — **Corollary 17.2.1**: the convex hull of a compact set is
-  compact.
+* `IsCompact.isCompact_convexHull` — **Theorem 17.2**, second sentence: the convex hull of a
+  compact set is compact.
 * `Bornology.IsBounded.closure_convexHull` — **Theorem 17.2**: `cl (conv S) = conv (cl S)` for
   bounded `S`.
+* `closedProperConvexFn_convHullFn_restrict` — **Corollary 17.2.1**: the convex hull of a function
+  with compact graph is a closed proper convex function.
 * `exists_subset_linearIndepOn_of_sum`, `exists_subset_affineIndependent_of_sum` — the **indexed**
   elimination step: a representation `∑ i ∈ t, w i • v i` is thinned to a sub-*index set* on which
   the generators are linearly (resp. affinely) independent. The affine form carries a real cost
@@ -229,9 +231,9 @@ theorem mem_convexHull_iff_exists_fin_finrank_succ {S : Set E} {x : E} :
       Finset.sum_coe_sort t fun y => w y • y]
     exact hwx
 
-/-- **Rockafellar, Corollary 17.2.1.** The convex hull of a compact set is compact: it is the image
-of `stdSimplex × Sⁿ⁺¹` under `(w, z) ↦ ∑ wᵢ zᵢ`. Mathlib has this only for *finite* sets
-(`Set.Finite.isCompact_convexHull`). -/
+/-- **Rockafellar, Theorem 17.2**, second sentence. The convex hull of a compact set is compact: it
+is the image of `stdSimplex × Sⁿ⁺¹` under `(w, z) ↦ ∑ wᵢ zᵢ`. Mathlib has this only for *finite*
+sets (`Set.Finite.isCompact_convexHull`). -/
 theorem IsCompact.isCompact_convexHull {S : Set E} (hS : IsCompact S) :
     IsCompact (convexHull ℝ S) := by
   classical
@@ -268,6 +270,139 @@ theorem Bornology.IsBounded.closure_convexHull {S : Set E} (hS : Bornology.IsBou
       (Convex.closure (convex_convexHull ℝ S))
 
 end Caratheodory
+
+/-! ### The convex hull of a function with compact graph -/
+
+section GraphHull
+
+open scoped Pointwise
+
+variable (E : Type*) [NormedAddCommGroup E]
+
+/-- The **upward vertical ray** `{0} × [0, ∞)` of `E × ℝ`: the set of directions in which every
+epigraph recedes. -/
+private def upRay : Set (E × ℝ) := {p : E × ℝ | p.1 = 0 ∧ 0 ≤ p.2}
+
+variable {E} {S : Set E} {g : E → ℝ}
+
+/-- The upward vertical ray is closed. -/
+private theorem isClosed_upRay : IsClosed (upRay E) := by
+  have hset : upRay E
+      = (Prod.fst ⁻¹' ({0} : Set E)) ∩ (Prod.snd ⁻¹' (Set.Ici (0 : ℝ))) := rfl
+  rw [hset]
+  exact (isClosed_singleton.preimage continuous_fst).inter
+    (isClosed_Ici.preimage continuous_snd)
+
+/-- The epigraph of a function that is real-valued on `S` and `+∞` off `S` is the graph of that
+function over `S`, translated upward along the vertical ray. -/
+private theorem epi_restrict_eq (S : Set E) (g : E → ℝ) :
+    epi (restrict S fun x => ((g x : ℝ) : EReal))
+      = (fun x => ((x, g x) : E × ℝ)) '' S + upRay E := by
+  ext p
+  constructor
+  · intro hp
+    rw [mem_epi] at hp
+    by_cases hp1 : p.1 ∈ S
+    · rw [restrict_of_mem hp1, _root_.EReal.coe_le_coe_iff] at hp
+      exact ⟨(p.1, g p.1), ⟨p.1, hp1, rfl⟩, (0, p.2 - g p.1), ⟨rfl, by linarith⟩,
+        Prod.ext (by change p.1 + 0 = p.1; rw [add_zero])
+          (by change g p.1 + (p.2 - g p.1) = p.2; ring)⟩
+    · rw [restrict_of_notMem hp1] at hp
+      exact absurd hp (by simp)
+  · rintro ⟨u, ⟨x, hx, rfl⟩, v, ⟨hv1, hv2⟩, rfl⟩
+    rw [mem_epi]
+    have h1 : ((x, g x) + v).1 = x := by change x + v.1 = x; rw [hv1, add_zero]
+    rw [h1, restrict_of_mem hx]
+    change ((g x : ℝ) : EReal) ≤ ((g x + v.2 : ℝ) : EReal)
+    exact_mod_cast le_add_of_nonneg_right hv2
+
+variable [NormedSpace ℝ E]
+
+/-- The upward vertical ray is convex. -/
+private theorem convex_upRay : Convex ℝ (upRay E) := by
+  rintro p ⟨hp1, hp2⟩ q ⟨hq1, hq2⟩ a b ha hb -
+  refine ⟨?_, ?_⟩
+  · change a • p.1 + b • q.1 = 0
+    rw [hp1, hq1, smul_zero, smul_zero, add_zero]
+  · change (0 : ℝ) ≤ a * p.2 + b * q.2
+    exact add_nonneg (mul_nonneg ha hp2) (mul_nonneg hb hq2)
+
+/-- Taking the convex hull of such an epigraph leaves the vertical ray alone: it acts only on the
+graph. -/
+private theorem convexHull_epi_restrict_eq (S : Set E) (g : E → ℝ) :
+    convexHull ℝ (epi (restrict S fun x => ((g x : ℝ) : EReal)))
+      = convexHull ℝ ((fun x => ((x, g x) : E × ℝ)) '' S) + upRay E := by
+  rw [epi_restrict_eq, convexHull_add, (convex_upRay (E := E)).convexHull_eq]
+
+variable [FiniteDimensional ℝ E]
+
+/-- **The convex hull of the epigraph of a function with compact graph is closed.** The graph is
+compact, so its convex hull is compact, and a compact set plus the closed vertical ray is closed. -/
+theorem isClosed_convexHull_epi_restrict (hS : IsCompact S) (hg : ContinuousOn g S) :
+    IsClosed (convexHull ℝ (epi (restrict S fun x => ((g x : ℝ) : EReal)))) := by
+  rw [convexHull_epi_restrict_eq]
+  exact isClosed_upRay.add_left_of_isCompact (IsCompact.isCompact_convexHull
+    (hS.image_of_continuousOn (ContinuousOn.prodMk continuousOn_id hg)))
+
+/-- **The convex hull of a function with compact graph is a closed proper convex function.** Let
+`S` be a non-empty compact set, let `g` be real-valued and continuous on `S`, and let `f` be `g` on
+`S` and `+∞` off `S`. Then `conv f` is closed, proper and convex.
+
+This is **Rockafellar, Corollary 17.2.1**, and the proof is his: the graph `G` of `g` over `S` is
+compact, so `conv G` is compact; `epi f = G + K` for the upward vertical ray `K`, so
+`conv (epi f) = conv G + K` is closed, and being upward closed on each vertical line it *is* an
+epigraph — the epigraph of `conv f`. Properness comes from the minimum of the height function on
+the compact set `conv G`. -/
+theorem closedProperConvexFn_convHullFn_restrict (hSne : S.Nonempty) (hS : IsCompact S)
+    (hg : ContinuousOn g S) :
+    ClosedProperConvexFn (convHullFn (restrict S fun x => ((g x : ℝ) : EReal))) := by
+  set f : E → EReal := restrict S (fun x => ((g x : ℝ) : EReal)) with hfdef
+  set G : Set (E × ℝ) := (fun x => ((x, g x) : E × ℝ)) '' S with hGdef
+  have hGc : IsCompact G := hS.image_of_continuousOn (ContinuousOn.prodMk continuousOn_id hg)
+  have hCc : IsCompact (convexHull ℝ G) := IsCompact.isCompact_convexHull hGc
+  have hFeq : convexHull ℝ (epi f) = convexHull ℝ G + upRay E := convexHull_epi_restrict_eq S g
+  have hFcl : IsClosed (convexHull ℝ (epi f)) := isClosed_convexHull_epi_restrict hS hg
+  have hEpi : IsEpiLike (convexHull ℝ (epi f)) := by
+    refine IsEpiLike.of_isClosed (fun x μ ν hp hμν => ?_) hFcl
+    rw [hFeq] at hp ⊢
+    obtain ⟨c, hc, k, hk, hck⟩ := hp
+    refine ⟨c, hc, k + (0, ν - μ), ⟨?_, ?_⟩, ?_⟩
+    · change k.1 + 0 = 0
+      rw [add_zero]
+      exact hk.1
+    · change (0 : ℝ) ≤ k.2 + (ν - μ)
+      have := hk.2
+      linarith
+    · have hck' : c + k = (x, μ) := hck
+      change c + (k + (0, ν - μ)) = (x, ν)
+      rw [← add_assoc, hck']
+      exact Prod.ext (by change x + 0 = x; rw [add_zero])
+        (by change μ + (ν - μ) = ν; ring)
+  obtain ⟨x₀, hx₀⟩ := hSne
+  have hCne : (convexHull ℝ G).Nonempty := ⟨(x₀, g x₀), subset_convexHull ℝ G ⟨x₀, hx₀, rfl⟩⟩
+  obtain ⟨q, -, hqmin⟩ := hCc.exists_isMinOn hCne continuous_snd.continuousOn
+  have hproper : Proper (convHullFn f) := by
+    refine ⟨⟨x₀, ?_⟩, fun x hbot => ?_⟩
+    · rw [mem_dom]
+      refine lt_of_le_of_lt (convHullFn_le f x₀) ?_
+      rw [hfdef, restrict_of_mem hx₀]
+      exact _root_.EReal.coe_lt_top _
+    · have hge : ((q.2 : ℝ) : EReal) ≤ convHullFn f x := by
+        refine le_ofEpi fun μ hμ => ?_
+        rw [hFeq] at hμ
+        obtain ⟨c, hc, k, hk, hck⟩ := hμ
+        have h2 : c.2 + k.2 = μ := congrArg Prod.snd hck
+        have hmin := isMinOn_iff.1 hqmin c hc
+        have hk2 := hk.2
+        exact_mod_cast (by linarith : q.2 ≤ μ)
+      rw [hbot] at hge
+      exact absurd (le_bot_iff.1 hge) (_root_.EReal.coe_ne_bot _)
+  refine ClosedProperConvexFn.of_isClosed_epi (convexFn_convHullFn f) ?_ hproper
+  have hepiF : epi (convHullFn f) = convexHull ℝ (epi f) := epi_ofEpi hEpi
+  rw [hepiF]
+  exact hFcl
+
+end GraphHull
 
 /-! ### Carathéodory for convex cones -/
 
