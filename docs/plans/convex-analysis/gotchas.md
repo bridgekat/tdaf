@@ -539,6 +539,13 @@ closed by a bare `rfl`, and `simp only [sub_eq_add_neg]` is the way to expose su
   namespace. Inside `namespace Tdaf.ConvexAnalysis` the bare names do not resolve and the
   half-qualified `EReal.neg_bot` can be captured by `Tdaf.EReal` — write `_root_.EReal.neg_bot`.
   `EReal.le_neg`, `EReal.neg_le` and `EReal.lt_neg_of_lt_neg` are `protected`.
+* **`w - ↑c = w + ↑(-c)` is closed by a bare `rfl` and by nothing else.** Both `EReal.coe_neg` and
+  the `Sub` instance are `rfl`, but `rw`'s trailing `rfl` runs at *reducible* transparency, so
+  `rw [Tdaf.EReal.neg_coe_sub]` reports *"unsolved goals ⊢ w - ↑c = w + ↑(-c)"* — which reads as
+  the rewrite having fired on the wrong side. Put `rfl` on the next line. Same family as EL3.
+* **`simp` cannot turn `w - -↑c` into `w + ↑c`.** There is no `sub_neg_eq_add` on `EReal` (not a
+  `SubtractionMonoid`, ER1), and `simp` leaves exactly that goal with no error.
+  `change w + -(-(c : EReal)) = _` then `rw [neg_neg]` is the route.
 
 **ER3. Orientation of the arithmetic lemmas.** Every one of these has cost time by being read the
 natural way round:
@@ -901,6 +908,12 @@ concave-named declarations, 145 are **bridges**, where a convex and a concave ob
 because their *interaction* is the content, and there is nothing to forward them to. Grepping for
 `concave` and calling the result duplication over-counts by 3.4×.
 
+The same caution applies to a duplicate-*name* sweep: **count orientations, not names.** Of five
+spellings of "negate a difference with a real minuend", three were the same statement and two had
+folded an `add_comm` or a `neg_neg` into the *statement*. Those two cannot be removed by qualifying
+the call site — the call sites depend on the orientation the statement produces — so "delete the
+copies" is a promise about three of them, and the other two shrink to one-line aliases at best.
+
 **LIB4. Symmetries: bundle the involution at the point of definition, and never let it leak into the
 statements it transports.** `reflect` and `saddleSwap` are bare `def`s, so `Function.Involutive`,
 `Equiv`, `AddEquiv` and `OrderIso` never apply to them — `saddleSwap_injective` is hand-proved where
@@ -1067,6 +1080,14 @@ Corollary 9.8.3 because "the project has the convex hull only for a single funct
 `convFn` and `convFn₂` had existed all along. **A note naming a reason is a claim; check it before
 believing it**, and when you close a gap, fix the note that pointed away from it.
 
+**LIB17. A remediation item that names a home is a claim too — check where the definition actually
+is before planning the move.** §11.19 says `posHomGen` is defined in `Duality/Level.lean`. It is
+defined in `Recession/ConeHull.lean`, and `Level.lean`'s own module docstring says so ("the
+operator's basic API … is there, not here"). Following the item would have put a three-line
+consequence of `le_posHomGen` one layer *above* the five lemmas its proof cites, and only the
+`Recession/ConeHull.lean` home is common to both consumers. Grep for `def <name>` before believing
+any "it belongs in X"; the whole cost is one second. Same family as LIB16.
+
 ---
 
 ## BLD — Toolchain, build, worktrees
@@ -1185,3 +1206,14 @@ locale, not UTF-8.** A script whose match strings contain `⋯`, `—` or subscr
 `assert count == 1` on a substring you can read verbatim in the file. Escape every non-ASCII
 character as `\uXXXX`, or write the script to the scratchpad with the `Write` tool and run it by
 path. Same family as BLD5's surrogate-pair bullet.
+
+**BLD15. `lake env lean <a project module>` typechecks that module against the oleans already on
+disk, and that is how to verify an edit without waiting for the tree to rebuild.** After changing
+`Tdaf/Order/EReal.lean` — which everything imports — `lake build Tdaf.Order.EReal` takes ten
+seconds, and `lake env lean Tdaf/Analysis/Convex/Bifunction/Algebra.lean` then checks that file in
+about a minute *even though every olean between the two is now stale*: **adding** declarations to a
+dependency does not invalidate a dependent's olean for this purpose. Linters run, so the
+zero-warning bar is checked too, and a clean run prints nothing at all. It is not a substitute for
+the final `lake build`: a declaration you **removed** or whose statement you **changed** is exactly
+what a stale olean will hide (BLD2), so the real rebuild still has to happen before the commit is
+believed. The complement of BLD3's `LEAN_PATH` trick, and it needs no sibling checkout.
