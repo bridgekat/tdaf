@@ -508,7 +508,7 @@ by simplices; coordinate cubes `{y | ∀ i, |bᵢ*(y - x)| ≤ c}` do the same j
 inspection and bounded by a one-line norm estimate. Convexity and nonemptiness of `C` are not used —
 only compactness — and the deviation is recorded in the file's docstring.
 
-## 4.5 `Helly.lean` — §21
+## 4.5 `Helly.lean` and `HellyRefined.lean` — §21
 
 Mathlib has `Convex.helly_theorem'` for **finite** families of convex sets in finite dimension.
 Rockafellar's Corollary 21.3.2 is the infinite-family version under a recession hypothesis, and
@@ -523,7 +523,9 @@ indicator-function case.
 | `alternative_infinite_system_univ`, `alternative_infinite_system` | **Thm 21.3** | done |
 | `exists_forall_le_zero_of_forall_subsystem` | **Cor 21.3.1** | done |
 | `helly_of_no_common_recession` | **Cor 21.3.2** | done |
-| `helly_of_polyhedral_tail` | Thm 21.4, 21.5 | still not done — one of the two prerequisites is now available, see below |
+| `alternative_infinite_system_univ_of_affine_tail` (`HellyRefined.lean`) | **Thm 21.4** | done |
+| `exists_forall_le_zero_of_forall_subsystem_of_affine_tail` (`HellyRefined.lean`) | **Cor 21.3.1** under Thm 21.4's hypothesis | done |
+| `helly_of_polyhedral_tail` (`HellyRefined.lean`) | **Thm 21.5** | done |
 | `helly_finite` | **Thm 21.6** ← Mathlib `Convex.helly_theorem'` | done |
 | `exists_mem_of_forall_subsystem`, `exists_mem_of_forall_subsystem_lt` | **Cor 21.6.1** | done |
 | `sparse_alternative_of_convex_system` | **Cor 21.6.2** | done |
@@ -555,7 +557,7 @@ summed termwise, using only `∑ λᵢ yᵢ = 0`. No infimal convolution appears
 `ε/λ`, which makes the summed inequality strict; `EReal` is not a cancellative ordered monoid, so
 `Finset.sum_lt_sum` is unavailable. Tolerance `ε/(2λ)` keeps every step non-strict.
 
-**The closedness obstruction is closed; 21.4 and 21.5 are blocked on less.** This plan recorded
+**The closedness obstruction was closed before 21.4 landed.** This plan recorded
 that the real obstruction was `IsExactSum.of_relint`/`of_polyhedral` asking for
 `ClosedProperConvexFn` where Rockafellar asks only for proper convex, and that closing it meant
 proving `cl (f + g) = cl (cl f + cl g)` and threading it through Theorem 16.4 — "a §16 project, not
@@ -571,7 +573,8 @@ consumes, because proving it needs Theorem 7.5 for `f + g` and hence a relative 
 both domains, whereas Theorem 20.1 has only a point of `dom f`. The conjugate form is what makes
 the polyhedral side work.
 
-**What is left of Theorems 21.4 and 21.5.** The first of the two §19 prerequisites is **done**:
+**Theorems 21.4 and 21.5 are done**, in `HellyRefined.lean`. The two §19/§20 prerequisites this plan
+named are both discharged:
 
 * **Corollary 19.1.2 for *functions*** is `polyhedralFn_posHomGen_of_epi_eq`
   (`Polyhedral/Homogeneous.lean`): if `epi f` is `conv P` plus the vertical ray `cone {(0,1)}` for a
@@ -587,10 +590,27 @@ the polyhedral side work.
   `epi (convFn g) = conv {pᵢ} + cone {(0,1)}` and `posHomGen (convFn g)` is polyhedral. `IsEpiLike`
   for a convex hull of a union is not automatic — `Operations/Hull.lean` carries it as a hypothesis
   — and here it is paid for by finite generation.
-* Still missing for `k₀`: the identification of `fᵢ*` with a point indicator `δ(· ∣ {aᵢ}) - βᵢ` for
-  affine `fᵢ`, which needs a separating pairing. And, for 21.4 itself, the identification
-  `kⱼ* = δ(· ∣ Cⱼ)` with the separation step `(-dom k₀) ∩ ri (dom k₁) ≠ ∅`
-  (Theorem 20.2, `Polyhedral/Separation.lean`).
+* The bridge to `k₀` is `conj_affineFn` / `epi_conj_affineFn`: `fᵢ* = δ(· ∣ aᵢ) + αᵢ`, so
+  `epi fᵢ*` is one translated vertical ray. The separating hypothesis it needs is
+  **`B.SeparatingRight`** — not `IsCompatiblePairing`, which gives surjectivity of `evalCLM` rather
+  than injectivity. In finite dimensions `separatingRight_flip_of_separatingDual` supplies it, but
+  it is carried explicitly, as `Saddle/Conjugate.lean` and `LinearInequalities.lean` already do.
+* `kⱼ* = δ(· ∣ Cⱼ)` is `conj_posHomGen_convFn_conj` — `conj_posHomGen` (Theorem 13.5, no
+  hypotheses) followed by `conj_convFn` (Theorem 16.5) and Fenchel–Moreau — and the separation step
+  is `nonempty_neg_dom_inter_relint_dom`, Theorem 20.2 applied to `-dom k₀` and `dom k₁`.
+
+**Rockafellar's reduction to `I₀ ≠ ∅ ≠ I₁` is unnecessary.** He adjoins identically-zero functions
+to both halves so that `k₀` and `k₁` are defined. In Lean neither half has to be nonempty:
+`posHomGen h 0 ≤ 0` whatever `h` is, so `0 ∈ dom kⱼ` always, and `convFn` over an empty family
+generates `δ(· ∣ 0)`, which is polyhedral and whose domain `{0}` is exactly what the separation
+step needs. The two halves are indexed by `{i // i ∈ I₀}` and `{i // i ∉ I₀}`.
+
+**The subadditivity step is Theorem 4.7 with the *other* hypothesis.**
+`PosHomogeneous.convexFn_iff_subadditive` asks `∀ x, f x ≠ -∞`, which an improper `k₁` violates.
+`PosHomogeneous.add_le_add_of_ne_top` asks `f x ≠ +∞` and `f y ≠ +∞` instead, and reads the
+inequality straight off `PosHomogeneous.epiCone`. Neither hypothesis can be dropped: on `ℝ²` the
+function with epigraph `{(s,t,μ) ∣ s > 0} ∪ {(0,0,μ) ∣ μ ≥ 0}` is positively homogeneous, convex
+and `0` at the origin, yet `g(0,0) = 0 > ⊥ = g(-1,0) + g(1,0)`.
 
 **Theorem 27.3's polyhedral refinement no longer waits for Theorem 21.5.** It was the one downstream
 consumer named for 21.5 in `06-optimization.md`; it is now proved by projecting along the constancy
@@ -598,9 +618,19 @@ space of the objective, and `Polyhedral.recessionCone_image` is what pays for po
 constraint set. Theorems 21.4 and 21.5 keep their own interest, but nothing in §27 is blocked on
 them.
 
-The epigraph-sum description of `conv {k₀, k₁}` is **not** needed in full: 21.4 uses it only as
+The epigraph-sum description of `conv {k₀, k₁}` was **not** needed at all: 21.4 uses it only as
 `k 0 ≤ k₀ (-z) + k₁ z`, which follows from `posHomGen_mono` (a subfamily has the larger `convFn`,
-hence `k ≤ kⱼ`) and the fact that `epi k` is a convex cone containing `epi k₀ ∪ epi k₁`.
+hence `k ≤ kⱼ`) and the fact that `epi k` is a convex cone containing `epi k₀ ∪ epi k₁`. So
+`apply_zero_eq_bot_of_le_of_le` takes an *arbitrary* positively homogeneous convex `k` below both
+`kⱼ`, and `conv {k₀, k₁}` is never formed.
+
+**Theorem 21.5 is pure re-indexing on top of 21.4.** Each polyhedral `Cᵢ`, `i ∈ I₀`, is cut out by
+finitely many inequalities *of the pairing* (`Polyhedral.exists_finset_pairing`, which represents
+Rockafellar's linear functionals through `LinearMap.toContinuousLinearMap` and `exists_pairing_eq`),
+the family is re-indexed by `{i ∉ I₀} ⊕ Σ (i ∈ I₀), (constraints of Cᵢ)`, and the
+`(n+1)`-intersection property survives because several constraints of the same `Cᵢ` project to one
+index of the original family (`Finset.card_image_le`). "Linear in a direction" becomes "constant in
+a direction" through `constancySpace_indicatorFn`.
 
 **Theorem 21.6 does not wait for any of that.** Rockafellar derives it from Corollary 21.3.2, but
 Mathlib proves it directly from Radon's theorem, so `helly_finite` is an alias and Corollaries
