@@ -25,6 +25,9 @@ Rockafellar's `ri` versions of Theorems 23.8 and 23.9 are these two theorems com
 * `subgradient_finsetSum_subset`, `IsExactFinsetSum.subgradient_finsetSum` — **Theorem 23.8** in
   the book's own `m`-ary form.
 * `image_subgradient_subset`, `IsExactImage.subgradient_compLin` — **Theorem 23.9**.
+* `subgradient_coe_mul`, `subgradient_zero_mul`, `subgradient_coe_affineMap`,
+  `subgradient_coe_mul_affineMap` — the scaling rules: `∂(cf) = c ∂f` for `c > 0` and for
+  *arbitrary* `c` when `f` is affine, together with the two singletons those two collapse to.
 * `normalCone_add_subset`, `IsExactSum.normalCone_inter` — **Corollary 23.8.1**, the indicator
   instance.
 * `subgradient_add_normalCone_dom_subset`, `normalCone_dom_eq_zero_of_subgradient_eq_singleton` —
@@ -46,6 +49,13 @@ lemma in its own right because the two-summand version does not iterate (there i
 image rule has
 no splitting to do, and spends its properness on a single point instead: it must know `g (A x) ≠ ⊥`
 to see that `(g A)* y` is finite, which is what unlocks the `< ⊤`-guarded `IsExactImage.exact_le`.
+
+**The scaling rules pay for their singletons with a separation hypothesis.** `∂(cf) = c ∂f` for
+`c > 0` needs nothing at all — it is a reversible inequality. The two statements that name a
+*single point*, `subgradient_zero_mul` and `subgradient_coe_affineMap`, need `B.flip` injective,
+because without it `{y | ∀ w, B w y = 0}` is a subspace rather than the origin. That hypothesis is
+free in every normed space (`separatingRight_flip_of_separatingDual`), and it is the same one
+`subgradient_eq_singleton_of_dirDeriv_eq` takes one file up.
 
 **Theorem 23.10 is in `Subgradient/Existence.lean`.** It asks for `∂f x ≠ ∅` at every point of
 `dom f` for polyhedral `f`, which is a *nonemptiness* statement rather than a calculus rule, so it
@@ -221,6 +231,149 @@ theorem IsExactImage.subgradient_compLin {hA : IsAdjointPair B B' A A'}
     _ = ((B' (A x) z : ℝ) : EReal) := by rw [hA x z]
 
 end Image
+
+/-! ### Scalar multiples -/
+
+section Smul
+
+variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
+
+/-- **`∂(cf) x = c ∂f x` for `c > 0`**, with no hypothesis on `f` whatever.
+
+Rockafellar uses this without comment at §28, line 11169, where `c` is the Lagrange multiplier of
+an inequality constraint. The whole content is `Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff`:
+multiplying the subgradient inequality through by `c > 0` is reversible even on `EReal`, and the
+pairing scales in its second argument by linearity.
+
+Positivity is essential in both directions. At `c = 0` the left side is `{y | ∀ w, B w y = 0}`,
+which is `{0}` for a separating pairing (`subgradient_zero_mul`) and has nothing to do with
+`∂f x`; for `c < 0` the scaled inequality reverses and `cf` is *concave* where `f` is convex.
+The negative case survives only when `f` is affine — `subgradient_coe_mul_affineMap`. -/
+theorem subgradient_coe_mul {c : ℝ} (hc : 0 < c) (f : E → EReal) (x : E) :
+    subgradient B (fun y => (c : EReal) * f y) x = c • subgradient B f x := by
+  ext v
+  constructor
+  · intro hv
+    refine ⟨c⁻¹ • v, fun z => ?_, ?_⟩
+    swap
+    · change c • (c⁻¹ • v) = v
+      rw [smul_smul, mul_inv_cancel₀ hc.ne', one_smul]
+    have h1 := hv z
+    have hp : B (z - x) (c⁻¹ • v) = c⁻¹ * B (z - x) v := by rw [map_smul, smul_eq_mul]
+    rw [hp]
+    refine (Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).1 ?_
+    rw [show c * (c⁻¹ * B (z - x) v) = B (z - x) v from by field_simp]
+    exact h1
+  · rintro ⟨w, hw, rfl⟩
+    intro z
+    have hp : B (z - x) (c • w) = c * B (z - x) w := by rw [map_smul, smul_eq_mul]
+    rw [hp]
+    exact (Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).2 (hw z)
+
+/-- **`∂(0 · f) x = {0}`**: the zero function has the origin as its only subgradient.
+
+This is what Rockafellar's parenthesis "(Omit terms with `λᵢ = 0`.)" in Theorem 28.3 (c) means, and
+it is why the omission is not cosmetic: `∂fᵢ x` may be *empty* at a boundary point of `dom fᵢ`, so
+the term `0 · ∂fᵢ x` that the parenthesis drops would be `∅` rather than `{0}` and would empty the
+whole sum.
+
+`Function.Injective B.flip` is exactly what turns `{y | ∀ w, B w y = 0}` into a single point; it is
+the hypothesis `subgradient_eq_singleton_of_dirDeriv_eq` (`Subgradient/Gradient.lean`) takes, and
+it is free in a normed space — `LinearMap.separatingRight_iff_flip_ker_eq_bot` applied to
+`separatingRight_flip_of_separatingDual` (`Duality/Level.lean`). -/
+theorem subgradient_zero_mul (hB : Function.Injective B.flip) (f : E → EReal) (x : E) :
+    subgradient B (fun y => ((0 : ℝ) : EReal) * f y) x = {(0 : F)} := by
+  have hz : (fun y => ((0 : ℝ) : EReal) * f y) = fun _ : E => (0 : EReal) := by
+    funext y; rw [_root_.EReal.coe_zero, zero_mul]
+  rw [hz]
+  ext v
+  rw [Set.mem_singleton_iff]
+  constructor
+  · intro hv
+    have hle : ∀ w : E, B w v ≤ 0 := by
+      intro w
+      have h := hv (x + w)
+      rw [add_sub_cancel_left, zero_add] at h
+      have h' : ((B w v : ℝ) : EReal) ≤ (0 : EReal) := h
+      exact_mod_cast h'
+    refine hB (LinearMap.ext fun w => ?_)
+    change B w v = B w 0
+    rw [map_zero]
+    refine le_antisymm (hle w) ?_
+    have hneg := hle (-w)
+    rw [map_neg B w, LinearMap.neg_apply] at hneg
+    linarith
+  · rintro rfl
+    intro z
+    rw [zero_add, map_zero]
+    exact le_of_eq (by norm_num)
+
+/-- **The subdifferential of an affine function is one point**, namely the vector `b` representing
+its linear part through the pairing.
+
+This is the affine case of Rockafellar's Theorem 23.2 — where a function is differentiable its
+subdifferential is the singleton of its gradient — and here no differentiation is needed: `b` is
+handed in, together with the Riesz identity `⟨w, b⟩ = a.linear w` that names it. A normed caller
+gets `b` from `InnerProductSpace.toDual` or from `exists_linFn`; nothing in the statement mentions
+a topology.
+
+Both hypotheses are used exactly once: the identity, to see that `b` *is* a subgradient, and the
+injectivity of `B.flip`, to see that nothing else is. -/
+theorem subgradient_coe_affineMap (hB : Function.Injective B.flip) (a : E →ᵃ[ℝ] ℝ) {b : F}
+    (hb : ∀ w : E, B w b = a.linear w) (x : E) :
+    subgradient B (fun y => ((a y : ℝ) : EReal)) x = {b} := by
+  have hdec : ∀ z : E, a z - a x = a.linear (z - x) := by
+    intro z
+    have h1 : ∀ y : E, a y = a.linear y + a 0 := fun y => congrFun (AffineMap.decomp a) y
+    rw [h1 z, h1 x, map_sub]
+    ring
+  ext v
+  rw [Set.mem_singleton_iff]
+  constructor
+  · intro hv
+    have hle : ∀ w : E, B w v ≤ a.linear w := by
+      intro w
+      have h := hv (w + x)
+      rw [add_sub_cancel_right, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at h
+      have hd := hdec (w + x)
+      rw [add_sub_cancel_right] at hd
+      linarith
+    refine hB (LinearMap.ext fun w => ?_)
+    change B w v = B w b
+    rw [hb w]
+    refine le_antisymm (hle w) ?_
+    have hneg := hle (-w)
+    rw [map_neg B w, LinearMap.neg_apply, map_neg a.linear w] at hneg
+    linarith
+  · rintro rfl
+    intro z
+    rw [← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff, hb (z - x)]
+    linarith [hdec z]
+
+/-- **`∂(ca) x = c ∂a x` for an *arbitrary* real `c`, when `a` is affine.**
+
+`subgradient_coe_mul` needs `0 < c` because scaling reverses the subgradient inequality. An affine
+function satisfies that inequality with *equality*, so nothing reverses, and the equality-constraint
+multipliers of §28 — which may be negative — are covered. Both sides are computed rather than
+compared: each is a singleton, by `subgradient_coe_affineMap` applied to `a` and to `c • a`. -/
+theorem subgradient_coe_mul_affineMap (hB : Function.Injective B.flip) (c : ℝ) (a : E →ᵃ[ℝ] ℝ)
+    {b : F} (hb : ∀ w : E, B w b = a.linear w) (x : E) :
+    subgradient B (fun y => (c : EReal) * ((a y : ℝ) : EReal)) x
+      = c • subgradient B (fun y => ((a y : ℝ) : EReal)) x := by
+  have hfun : (fun y => (c : EReal) * ((a y : ℝ) : EReal))
+      = fun y => (((c • a) y : ℝ) : EReal) := by
+    funext y
+    rw [Tdaf.EReal.coe_mul_coe]
+    rfl
+  have hb' : ∀ w : E, B w (c • b) = (c • a).linear w := by
+    intro w
+    rw [map_smul, smul_eq_mul, hb w]
+    rfl
+  rw [hfun, subgradient_coe_affineMap hB (c • a) hb' x, subgradient_coe_affineMap hB a hb x,
+    Set.smul_set_singleton]
+
+end Smul
 
 /-! ### Corollary 23.8.1: normal cones to an intersection -/
 

@@ -49,6 +49,10 @@ when the hull takes the value `⊥` anywhere.
   **Theorem 7.5** and **Corollary 7.5.1**, with `interior (epi f)` in place of `ri (epi f)`.
 * `lscHull_le_setOf` — the level sets of the hull, `{x | (cl f) x ≤ α} = ⋂_{μ > α} cl {f ≤ μ}`;
   this is the part of **Theorem 7.6** that does not need relative interiors.
+* `closedFn_coe_mul` — a non-negative real multiple of a closed function is closed. The convexity,
+  domain and properness halves of the same statement are in `Convex/Epigraph.lean`.
+* `closedProperConvexFn_coe_affineMap` — a *continuous* affine function, read into `EReal`, is
+  closed proper convex.
 
 ## Design notes
 
@@ -636,6 +640,44 @@ theorem eq_bot_of_lsc_of_eq_bot (hf : ConvexFn f) (hl : LowerSemicontinuous f)
 
 end Convex
 
+/-! ### Non-negative scalar multiples -/
+
+section ScalarMultiple
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] {f : E → EReal}
+
+omit [IsTopologicalAddGroup E] in
+/-- **`scaleSnd c` is continuous.** It scales only the real coordinate, so `E` contributes nothing
+beyond its own topology — no `ContinuousSMul ℝ E` is needed. -/
+theorem continuous_scaleSnd (c : ℝ) : Continuous (scaleSnd (E := E) c) := by
+  have h : (scaleSnd (E := E) c : E × ℝ → E × ℝ) = fun p => (p.1, c * p.2) := rfl
+  rw [h]
+  exact continuous_fst.prodMk (continuous_const.mul continuous_snd)
+
+/-- **A non-negative multiple of a closed function is closed**, provided the function never takes
+`⊥`.
+
+The `⊥`-freedom is not a technicality: closedness of `cf` is lower semicontinuity of `cf`
+(`closedFn_iff_lowerSemicontinuous`), and that equivalence is what needs it. Given it, `epi (cf)`
+is `epi f` pulled back along the continuous `scaleSnd c⁻¹` (`epi_coe_mul`); at `c = 0` the product
+is the constant `0`, which is continuous. -/
+theorem closedFn_coe_mul {c : ℝ} (hc : 0 ≤ c) (hf : ClosedFn f) (hb : ∀ x, f x ≠ ⊥) :
+    ClosedFn (fun x => (c : EReal) * f x) := by
+  have hb' : ∀ x, (c : EReal) * f x ≠ ⊥ := fun x => Tdaf.EReal.coe_mul_ne_bot hc (hb x)
+  rw [closedFn_iff_lowerSemicontinuous hb', lowerSemicontinuous_iff_isClosed_epi]
+  rcases eq_or_lt_of_le hc with h | h
+  · have hz : (fun x => (c : EReal) * f x) = fun _ : E => (0 : EReal) := by
+      funext x; rw [← h]; simp
+    rw [hz, ← lowerSemicontinuous_iff_isClosed_epi]
+    exact lowerSemicontinuous_const
+  · rw [epi_coe_mul h f]
+    refine IsClosed.preimage (continuous_scaleSnd _) ?_
+    rw [← lowerSemicontinuous_iff_isClosed_epi]
+    exact (closedFn_iff_lowerSemicontinuous hb).1 hf
+
+end ScalarMultiple
+
 /-! ### Closed proper convex functions -/
 
 section ClosedProperConvex
@@ -679,6 +721,30 @@ theorem closedProperConvexFn_iff_isClosed_epi (hp : Proper f) :
     ClosedProperConvexFn f ↔ ConvexFn f ∧ IsClosed (epi f) :=
   ⟨fun hf => ⟨hf.convex, hf.isClosed_epi⟩,
     fun ⟨hconv, hc⟩ => ClosedProperConvexFn.of_isClosed_epi hconv hc hp⟩
+
+/-- **A continuous affine function, read into `EReal`, is closed proper convex.**
+
+This is what every section with affine constraints asks for: an equality constraint `a x = 0`
+enters the theory as the pair of convex functions `a` and `-a`, and `ClosedProperConvexFn` is the
+hypothesis the sum and conjugacy rules take.
+
+Continuity is a hypothesis rather than a consequence, and that is not slack: on an
+infinite-dimensional space a *discontinuous* linear functional is convex, finite everywhere and
+proper, and is not closed — its lower semicontinuous hull is the constant `⊥`, which is the
+counterexample the module docstring is built around. In finite dimensions
+`AffineMap.continuous_of_finiteDimensional` discharges it. -/
+theorem closedProperConvexFn_coe_affineMap {g : E →ᵃ[ℝ] ℝ} (hg : Continuous g) :
+    ClosedProperConvexFn (fun x => ((g x : ℝ) : EReal)) := by
+  have hcont : Continuous fun x : E => ((g x : ℝ) : EReal) := _root_.EReal.continuous_coe_iff.2 hg
+  refine ⟨?_, ?_, ⟨⟨0, mem_dom.2 (_root_.EReal.coe_lt_top _)⟩,
+    fun _ => _root_.EReal.coe_ne_bot _⟩⟩
+  · refine convexFn_of_epi_combo fun x y p q hx hy s t hs ht hst => ?_
+    rw [_root_.EReal.coe_le_coe_iff] at hx hy ⊢
+    rw [Convex.combo_affine_apply hst]
+    simp only [smul_eq_mul]
+    nlinarith
+  · exact (closedFn_iff_lowerSemicontinuous fun _ => _root_.EReal.coe_ne_bot _).2
+      hcont.lowerSemicontinuous
 
 end ClosedProperConvex
 

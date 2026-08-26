@@ -20,6 +20,8 @@ following Rockafellar, *Convex Analysis*, §4.
 * `Proper f` — `f` is finite somewhere and never `⊥`.
 * `restrict s f` — `f` restricted to `s`, extended by `⊤`.
 * `ConvexFn f` — `f` is convex, meaning that `epi f` is a convex set.
+* `scaleSnd c` — the vertical scaling `(x, μ) ↦ (x, c μ)` of `E × ℝ`, which is how a scalar
+  multiple of `f` acts on epigraphs.
 
 ## Main results
 
@@ -30,6 +32,9 @@ following Rockafellar, *Convex Analysis*, §4.
 * `convexFn_add_coe`, `ConvexFn.comp_add_left` — the two elementary operations that preserve
   convexity outright: adding a real-valued affine coordinate, and translating the argument.
 * `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — Theorem 4.6.
+* `epi_coe_mul`, `convexFn_coe_mul`, `dom_coe_mul`, `proper_coe_mul` — a non-negative real
+  multiple `cf`: its epigraph, and the preservation of convexity, effective domain and
+  properness. `closedFn_coe_mul` is in `Convex/Closure.lean`, where the topology is.
 * `convexOn_iff_convexFn` — the bridge to Mathlib's `ConvexOn`.
 * `ConvexFn.sum_le` — Jensen's inequality for a finite convex combination, which is one
   `Convex.sum_mem` on the epigraph and so needs nothing beyond this file.
@@ -139,6 +144,36 @@ noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x 
 @[simp] theorem restrict_of_notMem {s : Set E} {f : E → EReal} {x : E} (hx : x ∉ s) :
     restrict s f x = ⊤ := iInf_neg hx
 
+/-! #### Non-negative scalar multiples
+
+Rockafellar writes `λf` for a non-negative real `λ` throughout §28 and §29 — a Lagrange multiplier
+times a constraint — and uses `dom (λf) = dom f` and properness of `λf` without comment. The
+coefficient `0` is not a degenerate case to be excluded: `EReal` obeys the convention `0 · ∞ = 0`,
+so `0 · f` is the constant `0`, which is proper and convex. Only the *effective domain* statement
+needs `0 < c`, because `dom (0 · f)` is all of `E`. -/
+
+/-- **A positive multiple of `f` has the same effective domain as `f`.** The hypothesis is
+`0 < c`, not `0 ≤ c`: at `c = 0` the product is the constant `0` and its domain is everything. -/
+theorem dom_coe_mul {c : ℝ} (hc : 0 < c) (f : E → EReal) :
+    dom (fun x => (c : EReal) * f x) = dom f := by
+  ext x
+  rw [mem_dom, mem_dom]
+  refine ⟨fun h => ?_, fun h => lt_of_le_of_ne le_top (Tdaf.EReal.coe_mul_ne_top hc h.ne)⟩
+  by_contra hcon
+  rw [top_le_iff.1 (not_lt.1 hcon), _root_.EReal.coe_mul_top_of_pos hc] at h
+  exact lt_irrefl _ h
+
+/-- **A non-negative multiple of a proper function is proper.** At `c = 0` the product is the
+constant `0`, which is finite everywhere; at `c > 0` the domain is unchanged (`dom_coe_mul`). -/
+theorem proper_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : E → EReal} (hp : Proper f) :
+    Proper (fun x => (c : EReal) * f x) := by
+  refine ⟨?_, fun x => Tdaf.EReal.coe_mul_ne_bot hc (hp.ne_bot x)⟩
+  obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
+  refine ⟨x₀, ?_⟩
+  rcases eq_or_lt_of_le hc with h | h
+  · rw [mem_dom, ← h]; simp
+  · exact mem_dom.2 (lt_of_le_of_ne le_top (Tdaf.EReal.coe_mul_ne_top h (mem_dom.1 hx₀).ne))
+
 end Basic
 
 /-! ### Convex functions -/
@@ -209,6 +244,46 @@ theorem ConvexFn.comp_add_left {f : E → EReal} (hf : ConvexFn f) (a : E) :
   have hkey : s • (a + x) + t • (a + y) = a + (s • x + t • y) := by
     rw [smul_add, smul_add, add_add_add_comm, ← add_smul, hst, one_smul]
   rwa [hkey] at hcombo
+
+/-! ### Non-negative scalar multiples -/
+
+/-- The linear map `(x, μ) ↦ (x, c μ)` of `E × ℝ`. It is the vertical scaling that carries `epi f`
+to `epi (cf)`; see `epi_coe_mul`. -/
+noncomputable def scaleSnd (c : ℝ) : (E × ℝ) →ₗ[ℝ] (E × ℝ) :=
+  LinearMap.prod (LinearMap.fst ℝ E ℝ) (c • LinearMap.snd ℝ E ℝ)
+
+theorem scaleSnd_apply (c : ℝ) (p : E × ℝ) : scaleSnd c p = (p.1, c * p.2) := rfl
+
+/-- **The epigraph of a positive multiple.** `epi (cf)` is `epi f` pulled back along the vertical
+scaling `(x, μ) ↦ (x, μ / c)`, which is what makes convexity (`convexFn_coe_mul`) and closedness
+(`closedFn_coe_mul`) one-line preimage arguments.
+
+The identity fails at `c = 0`, where the left side is `E × Ici 0` and the right side is everything;
+both preserved properties are proved by a separate constant-function case there. -/
+theorem epi_coe_mul {c : ℝ} (hc : 0 < c) (f : E → EReal) :
+    epi (fun x => (c : EReal) * f x) = scaleSnd c⁻¹ ⁻¹' epi f := by
+  ext p
+  rw [Set.mem_preimage, mem_epi, mem_epi, scaleSnd_apply]
+  change (c : EReal) * f p.1 ≤ (p.2 : EReal) ↔ f p.1 ≤ ((c⁻¹ * p.2 : ℝ) : EReal)
+  rw [show c⁻¹ * p.2 = p.2 / c from (div_eq_inv_mul p.2 c).symm]
+  exact Tdaf.EReal.coe_mul_le_coe_iff hc
+
+/-- **A non-negative multiple of a convex function is convex.** This is the `EReal`-valued form of
+"`λf` is convex for `λ ≥ 0`", which Rockafellar uses whenever a Lagrange multiplier meets a
+constraint function. -/
+theorem convexFn_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : E → EReal} (hf : ConvexFn f) :
+    ConvexFn (fun x => (c : EReal) * f x) := by
+  rcases eq_or_lt_of_le hc with h | h
+  · have hz : (fun x => (c : EReal) * f x) = fun _ : E => (0 : EReal) := by
+      funext x; rw [← h]; simp
+    rw [hz]
+    refine convexFn_of_epi_combo fun x y μ ν hx hy a b ha hb hab => ?_
+    have hμ : (0 : ℝ) ≤ μ := by exact_mod_cast hx
+    have hν : (0 : ℝ) ≤ ν := by exact_mod_cast hy
+    exact_mod_cast add_nonneg (mul_nonneg ha hμ) (mul_nonneg hb hν)
+  · refine ⟨?_⟩
+    rw [epi_coe_mul h f]
+    exact hf.convex_epi.linear_preimage _
 
 /-! ### Theorem 4.2 -/
 

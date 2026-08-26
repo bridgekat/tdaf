@@ -29,8 +29,9 @@ domains; here the polyhedral side contributes only a point of its effective doma
 * `IsExactImage.of_polyhedral` — the same weakening on the *image* side: a proper polyhedral `g`
   pulls back exactly as soon as the range of `A` meets `dom g`. This is what gives Theorems 16.3
   and 23.9 their polyhedral clauses.
-* `epi_mapLin_of_polyhedralFn`, `exists_mapLin_eq_of_polyhedralFn` — **Corollary 19.3.1**, the
-  attainment half, which is what the image constructor runs on.
+* `epi_mapLin_of_polyhedralFn`, `polyhedralFn_mapLin`, `exists_mapLin_eq_of_polyhedralFn` —
+  **Corollary 19.3.1** with both halves, the attainment one being what the image constructor runs
+  on.
 
 ## Design notes
 
@@ -56,14 +57,14 @@ Corollary 19.3.1 and makes the closure in Theorem 16.3 vacuous outright, so neit
 indicator nor `relint_inter_relint_nonempty_of_subset_affineSpan` appears. It is filed here because
 this is the module that owns the polyhedral constraint qualifications, not because it reuses them.
 
-**Corollary 19.3.1 is proved here a second time, in the form that has both halves.**
-`polyhedralFn_mapLin` states the polyhedrality half and lives in `Optimization/Perturbation.lean`
-(§29), which is *above* this module, so it cannot be cited from here; the attainment half was not
-in the backbone at all. `epi_mapLin_of_polyhedralFn` is the identity both halves come from, and
-`polyhedralFn_mapLin` should move down beside it: everything its proof uses (`Polyhedral.image`,
-`epi_mapLin`, `IsEpiLike.of_isClosed`) is already in this module's import closure, and its four
-consumers — `PolyhedralBifun.polyhedralFn_infBifun`, two in `Saddle/Correspondence.lean`, and §19's
-`corollary_19_3_1_image` — all sit above it.
+**Corollary 19.3.1 lives here, with both halves, and `epi_mapLin_of_polyhedralFn` is the identity
+they both come from.** `epi (Af)` is in general only the epigraph *closure* of the image of
+`epi f`; for polyhedral `f` the image is already an epigraph, and polyhedrality of `Af`
+(`polyhedralFn_mapLin`) and attainment of the infimum (`exists_mapLin_eq_of_polyhedralFn`) are two
+readings of that one sentence. `polyhedralFn_mapLin` used to sit in `Optimization/Perturbation.lean`
+(§29), where it duplicated the identity and was invisible from here; it was moved down, which cost
+`Optimization/Perturbation.lean` and `Saddle/Correspondence.lean` an import of this module and
+three modules of import closure each.
 
 **The general case is Rockafellar's own reduction, and it runs on an indicator.** With
 `M = aff (dom g)` and `δ = δ(· | M)`, the function `δ + f` is again polyhedral — `M` is polyhedral
@@ -442,6 +443,17 @@ theorem epi_mapLin_of_polyhedralFn (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
   · rw [LinearMap.prodMap_apply, h1]
     rfl
 
+/-- **Rockafellar, Corollary 19.3.1**, the polyhedrality clause: the image of a polyhedral convex
+function under a linear transformation is polyhedral.
+
+Read off `epi_mapLin_of_polyhedralFn`: `epi (Af)` *is* the image of `epi f`, and the image of a
+polyhedral set under a linear map is polyhedral (**Theorem 19.3**). -/
+theorem polyhedralFn_mapLin (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
+    PolyhedralFn (mapLin A f) := by
+  change Polyhedral (epi (mapLin A f))
+  rw [epi_mapLin_of_polyhedralFn hf A]
+  exact Polyhedral.image hf _
+
 /-- **Rockafellar, Corollary 19.3.1**, the attainment clause: wherever `(Af)(y)` is finite the
 infimum defining it is attained, so some `x` in the fibre over `y` realises the value.
 
@@ -489,12 +501,7 @@ theorem IsExactImage.of_polyhedral [IsCompatiblePairing B'] [IsCompatiblePairing
     {x₀ : E} (hx₀ : A x₀ ∈ dom g) :
     IsExactImage B B' A A' hA g := by
   have hconjpoly : PolyhedralFn (conj B' g) := PolyhedralFn.conj hg
-  -- `polyhedralFn_mapLin` is this fact, but it lives in `Optimization/Perturbation.lean` (§29),
-  -- which this module is below; see the design notes.
-  have hmappoly : PolyhedralFn (mapLin A' (conj B' g)) := by
-    change Polyhedral (epi (mapLin A' (conj B' g)))
-    rw [epi_mapLin_of_polyhedralFn hconjpoly A']
-    exact Polyhedral.image hconjpoly _
+  have hmappoly : PolyhedralFn (mapLin A' (conj B' g)) := polyhedralFn_mapLin hconjpoly A'
   have hne : (dom (compLin g A)).Nonempty := ⟨x₀, by rwa [mem_dom, compLin_apply]⟩
   have hbot : ∀ y, conj B (compLin g A) y ≠ ⊥ := fun y => conj_ne_bot hne y
   have hmapbot : ∀ y, mapLin A' (conj B' g) y ≠ ⊥ := fun y hy =>

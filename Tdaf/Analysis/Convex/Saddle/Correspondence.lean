@@ -44,17 +44,17 @@ linear transformation" is to linear algebra.
 * `polyhedralFn_neg_graphFn_adjointBifun`, `polyhedralFn_concaveBracket`, `dom_concaveBracket`,
   `closedBifun_of_polyhedralBifun` — the same facts for the adjoint side, which
   `Saddle/Kernel.lean` uses for **Corollary 33.2.2**.
-* `PolyhedralFn.add_linear`, `polyhedralFn_compLin`, `clConcave_eq_of_mem_domConcave` — three
-  general polyhedral lemmas proved here for want of a better home; see the design notes.
+* `PolyhedralFn.add_linear`, `clConcave_eq_of_mem_domConcave` — two general polyhedral lemmas
+  proved here for want of a better home; see the design notes.
 
 ## Design notes
 
-**Three polyhedral lemmas are proved here that do not belong here.** `PolyhedralFn.add_linear`
-(adding a linear functional preserves polyhedrality) belongs beside `PolyhedralFn.add` in
-`Polyhedral/Function.lean`; `polyhedralFn_compLin` and `clConcave_eq_of_mem_domConcave` belong
-beside `polyhedralFn_mapLin` and `PolyhedralFn.clFn_eq_of_mem_dom` in
-`Optimization/Perturbation.lean`. They are here because Corollary 33.1.3 is the first place that
-needs them.
+**Two polyhedral lemmas are still proved here that do not belong here.**
+`PolyhedralFn.add_linear` (adding a linear functional preserves polyhedrality) belongs beside
+`PolyhedralFn.add` in `Polyhedral/Function.lean`; `clConcave_eq_of_mem_domConcave` belongs beside
+`PolyhedralFn.clFn_eq_of_mem_dom` in `Optimization/Perturbation.lean`. They are here because
+Corollary 33.1.3 is the first place that needs them. A third, `polyhedralFn_compLin`, has been
+moved to `Optimization/Perturbation.lean`, where §31 can reach it.
 
 **Image-closedness is the right notion of "determined by the bracket".** `bracket Bx F u` is
 `conj Bx (F u)`, which sees only `cl (F u)`; two bifunctions with the same bracket therefore have
@@ -387,17 +387,6 @@ theorem PolyhedralFn.add_linear (hf : PolyhedralFn f) (φ : E →ₗ[ℝ] ℝ) :
   change Polyhedral (epi _)
   rw [hepi]
   exact Polyhedral.comap hf _
-
-/-- **Composing with a linear map preserves polyhedrality.** `epi (g A)` is `epi g` pulled back
-along `(x, μ) ↦ (A x, μ)`, and a preimage of a polyhedral set under a linear map is polyhedral.
-
-This belongs beside `polyhedralFn_mapLin` in `Optimization/Perturbation.lean`, next to the image
-half; it is here because the adjoint bifunction is the first place that needs it. -/
-theorem polyhedralFn_compLin {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
-    {g : G → EReal} (hg : PolyhedralFn g) (A : E →ₗ[ℝ] G) : PolyhedralFn (compLin g A) := by
-  change Polyhedral (epi (compLin g A))
-  rw [epi_compLin]
-  exact Polyhedral.comap hg _
 
 end PolyhedralLinear
 
