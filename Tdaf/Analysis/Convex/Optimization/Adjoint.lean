@@ -16,41 +16,38 @@ The **adjoint** of a convex bifunction `F : U → X → EReal` is the concave bi
 
 and the concave program `(P*)` dual to `(P)` is "maximise `F* 0` over `V`". Everything here follows
 from one computation: `F*` is the conjugate of the graph function of `F`, negated and read at the
-reflected point `(-v, y)`. So `F*` is closed concave with no hypothesis on `F`, `F** = cl F` by
-Fenchel–Moreau on `U × X`, and the dual objective `F* 0` is the *concave* conjugate of `-inf F`.
-The same graph-function view gives Theorem 29.4, computing `cl F` slice by slice at a relative
-interior point of `dom F`, and Corollary 29.4.1: replacing a strongly consistent program by its
-closure changes neither the optimal value, nor the optimal solutions, nor the Kuhn–Tucker vectors.
+reflected point `(-v, y)`. So `F*` is closed concave with no hypothesis on `F`, `F** = cl F`, and
+the dual objective is the *concave* conjugate of `-inf F`. The same view gives Theorem 29.4 and
+Corollary 29.4.1: `cl F` is computed slice by slice at a relative interior point of `dom F`, and
+closing a strongly consistent program changes neither its value, its solutions, nor its
+Kuhn–Tucker vectors.
 
 ## Main definitions
 
 * `adjointBifun Bu Bx F`, `concaveAdjointBifun Bu Bx G` — the adjoint of a convex bifunction, and
   of a concave one (the same formula with a supremum).
-* `ConcaveBifun`, `ClosedBifun`, `ImageClosedBifun` — the graph function is concave, the graph
-  function is closed, the slices `F u` are each closed.
-* `clBifun F` — `cl F`, the closure taken on the graph function, jointly in `(u, x)`.
+* `ConcaveBifun`, `ClosedBifun`, `ImageClosedBifun` — the graph function is concave, it is closed,
+  the slices `F u` are each closed. `clBifun F` is `cl F`, the closure of the graph function.
 
 ## Main results
 
 * `adjointBifun_eq_neg_conj_graphFn` — the computation above.
 * `concaveFn_graphFn_adjointBifun`, `closedConcaveFn_graphFn_adjointBifun`,
   `concaveAdjointBifun_adjointBifun_eq_clBifun`, `properConcave_graphFn_adjointBifun_iff` —
-  **Theorem 30.1**: `F*` is a closed concave bifunction, `F** = cl F`, and `F*` is proper exactly
-  when `F` is.
+  **Theorem 30.1**: `F*` is closed concave, `F** = cl F`, and `F*` is proper exactly when `F` is.
 * `adjointBifun_zero_eq_concaveConj` — **Theorem 30.2**; `adjointBifun_zero_le` —
   **Corollary 30.2.2**, weak duality.
 * `mem_kuhnTucker_iff_adjointBifun_zero_eq` — the Kuhn–Tucker vectors are the points where the dual
   objective attains the optimal value of `(P)`: the half of **Theorem 30.5** needing no normality.
-* `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq`, `domBifun_subset_domBifun_clBifun`,
-  `domBifun_clBifun_subset_closure` — **Theorem 29.4**, all three assertions.
+* `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq` and the two `domBifun` inclusions —
+  **Theorem 29.4**, all three assertions.
 
 ## Implementation notes
 
 The sign flip is carried in the argument rather than in a reflected pairing: `⟨u, -v⟩ + ⟨x, y⟩` is
 read as the pairing of `(u, x)` with `(-v, y)`, so `F*` is `conj` at a reflected point and `conj`'s
 own lemmas apply verbatim. The two real terms are grouped inside one coercion, so no `∞ - ∞` can
-arise. Theorem 30.2 uses the *concave* conjugate: `F* 0` is the conjugate of `-inf F` as a concave
-function, and `g* ≠ -(-g)*`.
+arise. Theorem 30.2 uses the *concave* conjugate, since `g* ≠ -(-g)*`.
 
 ## References
 
