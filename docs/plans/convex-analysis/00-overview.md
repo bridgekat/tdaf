@@ -531,8 +531,9 @@ on top of this library without the seams showing. Concretely:
 * **Mirror statements are intrinsic.** When a theorem is obtained by transporting another along
   an involution, the involution must not appear in the transported statement. Push it out of the
   hypotheses with the intertwining lemmas before publishing. A mirror theorem whose *hypothesis*
-  mentions the involution is an unfinished transport — see D11, and
-  [`backbone/08-remediation.md`](backbone/08-remediation.md) §2 for the seven current offenders.
+  mentions the involution is an unfinished transport — see D11. The usual cause is that the
+  transport reflected the *argument*; the dictionary entry that reflects the *conclusion* leaves
+  the hypothesis alone, and the homomorphism laws then cancel the involution.
 
 This is a design goal, not yet a finished refactor. The 2026-08 review round measured the debt:
 **73 of 112 module docstrings open with "Rockafellar's §N"** rather than with the mathematics,
@@ -552,8 +553,8 @@ rewriting**, never re-proved. The obligations, in order:
 1. **Bundle the involution.** `Equiv` if it is a bijection, `AddEquiv`/`AddAut` if additive,
    `Homeomorph` if continuous, `OrderIso …ᵒᵈ` if antitone. Never a bare `def` plus a hand-proved
    `σ∘σ = id` lemma: the bundled form carries `.injective`, `.eq_iff`, `.toPerm` for free, and
-   records antitonicity where it holds. `ConvexProcess.reflect` and `saddleSwap` both currently
-   violate this, which is why `saddleSwap_injective` is hand-proved.
+   records antitonicity where it holds. `ConvexProcess.reflectAut` and `saddleSwapOrderIso` are the
+   two instances; each is built *from* the bare `def`, so bundling costs nothing at the use sites.
 2. **One intertwining lemma per primitive operation of the file, and no more.**
    `Bifunction/Process.lean`'s `eval_reflect`, `reflect_add`, `reflect_comp`,
    `adjointProcess_reflect`, `isClosed_graph_reflect` are the model.

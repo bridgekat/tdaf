@@ -18,7 +18,8 @@ section goes on to equivalence classes — but each is idempotent, which is Theo
 * `lowerCl K`, `upperCl K` — `cl₂ cl₁ K` and `cl₁ cl₂ K`.
 * `LowerClosedFn`, `UpperClosedFn`, `FullyClosedFn` — the three closedness notions of §33–§34.
 * `saddleSwap K` — the involution `K ↦ -K` with the arguments exchanged, which swaps the roles of
-  `cl₁` and `cl₂`.
+  `cl₁` and `cl₂`, together with its bundling `saddleSwapOrderIso` as an order isomorphism onto
+  the order dual.
 
 ## Main results
 
@@ -135,9 +136,32 @@ theorem saddleSwap_apply (K : U × X → EReal) (q : X × U) :
 @[simp] theorem saddleSwap_saddleSwap (K : U × X → EReal) : saddleSwap (saddleSwap K) = K :=
   funext fun p => neg_neg (K p)
 
+/-- `saddleSwap` negates, so it reverses the pointwise order. -/
+theorem saddleSwap_le_saddleSwap {K L : U × X → EReal} (h : K ≤ L) :
+    saddleSwap L ≤ saddleSwap K :=
+  fun q => _root_.EReal.neg_le_neg_iff.2 (h (q.2, q.1))
+
+/-- The swap **bundled**: an order isomorphism onto the order dual, because it is a two-sided
+inverse of itself (`saddleSwap_saddleSwap`) and reverses the pointwise order
+(`saddleSwap_le_saddleSwap`).
+
+It is not an endomorphism — the two factors are exchanged — so `Function.Involutive` does not
+apply and the two-sided inverse has to be recorded as an `Equiv`. -/
+noncomputable def saddleSwapOrderIso : (U × X → EReal) ≃o (X × U → EReal)ᵒᵈ where
+  toFun K := OrderDual.toDual (saddleSwap K)
+  invFun K := saddleSwap (OrderDual.ofDual K)
+  left_inv := saddleSwap_saddleSwap
+  right_inv := saddleSwap_saddleSwap
+  map_rel_iff' {K L} := by
+    change saddleSwap L ≤ saddleSwap K ↔ K ≤ L
+    exact ⟨fun h => by simpa using saddleSwap_le_saddleSwap h, saddleSwap_le_saddleSwap⟩
+
+@[simp] theorem saddleSwapOrderIso_apply (K : U × X → EReal) :
+    saddleSwapOrderIso K = saddleSwap K := rfl
+
 theorem saddleSwap_injective :
-    Function.Injective (saddleSwap : (U × X → EReal) → X × U → EReal) := fun K L h => by
-  rw [← saddleSwap_saddleSwap K, h, saddleSwap_saddleSwap]
+    Function.Injective (saddleSwap : (U × X → EReal) → X × U → EReal) :=
+  (saddleSwapOrderIso (U := U) (X := X)).injective
 
 end Swap
 
