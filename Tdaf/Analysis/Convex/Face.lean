@@ -23,9 +23,11 @@ and live in `Representation.lean`; Theorems 18.7 and 18.8 are in `Exposed.lean` 
 Extreme points and exposed faces are Mathlib's `Set.extremePoints` and `IsExposed`;
 `isFace_singleton` and `IsExposed.isFace` connect them to `IsFace`.
 
-## Main results
+## Main definitions
 
 * `IsFace` — Rockafellar's face, as Mathlib's `IsExtreme ℝ C C'` plus convexity of `C'`.
+
+## Main results
 * `IsFace.subset_of_relint_inter_nonempty` — **Theorem 18.1**.
 * `IsFace.eq_inter_closure` — **Corollary 18.1.1**: `C' = C ∩ cl C'`; a face of a closed convex set
   is closed.

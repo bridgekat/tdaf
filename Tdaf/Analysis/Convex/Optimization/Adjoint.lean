@@ -46,7 +46,10 @@ consistent program changes neither its value, its solutions, nor its Kuhn–Tuck
 The sign flip is carried in the argument rather than in a reflected pairing: `⟨u, -v⟩ + ⟨x, y⟩` is
 read as the pairing of `(u, x)` with `(-v, y)`, so `F*` is `conj` at a reflected point and `conj`'s
 own lemmas apply verbatim. The two real terms are grouped inside one coercion, so no `∞ - ∞` can
-arise, and Theorem 30.2 uses the *concave* conjugate, since `g* ≠ -(-g)*`.
+arise, and Theorem 30.2 uses the *concave* conjugate, since `g* ≠ -(-g)*`. Theorem 30.1's
+closedness half asks for `IsContinuousPairing (prodPairing Bu Bx).flip` rather than the un-flipped
+class: `closedFn_conj` needs continuity on the side the conjugate lives on, and the un-flipped form
+would demand a topology on `U × X` that this development never supplies.
 
 ## References
 

@@ -16,7 +16,11 @@ Four of §22's nine numbered results are formalized over `Rn n = ℝⁿ`: Theore
 Corollary 22.3.1 (Farkas' Lemma). The other five — Lemmas 22.4 and 22.5, Corollary 22.4.1, and
 Theorems 22.6 and 22.7 (Tucker's complementarity theorem) — rest on the *elementary vectors* of a
 subspace, a development that is combinatorial matroid theory rather than convex analysis and is
-deliberately not formalized here; it is this project's one scope deferral.
+deliberately not formalized here; it is this project's one scope deferral. Theorems 22.6 and 22.7
+rest further on *Tucker representations* of a subspace, which the book describes only procedurally
+— solve the defining system for the last `N - n` coordinates in terms of the first `n`, for some
+permutation — so stating them at all needs a choice of `n` independent coordinate positions and the
+resulting change of basis. Corollary 31.4.2 is the one other result of the book resting on them.
 
 The book writes `⟨aᵢ, x⟩` with the coefficient vector first, while the backbone writes `B x (a i)`,
 because in general the solution vector and the coefficient vectors live in different spaces. On

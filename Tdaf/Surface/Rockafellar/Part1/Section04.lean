@@ -174,8 +174,7 @@ section Lines
 
 variable {n : ℕ}
 
-/-- **Backbone gap (remediation 4.9).** The set of steps `t` with `y + t • z ∈ C` is convex when
-`C` is. Needed for the converse half of the reduction to lines, which the backbone lacks. -/
+/-- The set of steps `t` with `y + t • z ∈ C` is convex when `C` is. -/
 private theorem convex_line_steps {C : Set (Rn n)} (hC : Convex ℝ C) (y z : Rn n) :
     Convex ℝ {t : ℝ | y + t • z ∈ C} := by
   intro t₁ h₁ t₂ h₂ a b ha hb hab
@@ -187,9 +186,8 @@ private theorem convex_line_steps {C : Set (Rn n)} (hC : Convex ℝ C) (y z : Rn
   rw [key]
   exact hC h₁ h₂ ha hb hab
 
-/-- **Backbone gap (remediation 4.9).** Convexity of `f` on `C` is equivalent to convexity of the
-restriction of `f` to each line, which is the first sentence of Rockafellar's proof of Theorem 4.5.
-The forward half is the backbone's `convexOn_comp_line`; the converse is the missing half. -/
+/-- Convexity of `f` on `C` is equivalent to convexity of its restriction to each line, which is
+the first sentence of Rockafellar's proof of Theorem 4.5. -/
 private theorem convexOn_iff_lines {C : Set (Rn n)} (hC : Convex ℝ C) (f : Rn n → ℝ) :
     ConvexOn ℝ C f ↔
       ∀ y ∈ C, ∀ z : Rn n, ConvexOn ℝ {t : ℝ | y + t • z ∈ C} fun t => f (y + t • z) := by

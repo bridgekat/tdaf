@@ -1098,7 +1098,7 @@ end Cor3023Dual
 
 /-! ### Theorem 30.5's dual assertion, and Corollary 30.5.2
 
-The book gives the dual assertion of Theorem 30.5 as "parallel" (12701) and does not carry it out.
+The book gives the dual assertion of Theorem 30.5 as "parallel" and does not carry it out.
 It comes last here because it needs both the concave Kuhn–Tucker vocabulary of Theorem 30.4(d) and
 the second-adjoint computation `concaveAdjointBifun_zero_apply` that Corollary 30.2.1 introduces. -/
 

@@ -45,6 +45,10 @@ Theorem 24.4 asks for *joint* continuity of the pairing, `Continuous fun p : E �
 continuity of `⟨·, y⟩` for each fixed `y` is not enough to pass to the limit in `⟨z - xᵢ, yᵢ⟩` when
 both arguments move. In `ℝⁿ` the hypothesis is automatic.
 
+Maximal monotonicity of `∂f` for a closed proper convex `f` is not here: it is
+`isMaximalMonotoneRel_subgradientRel` in `Optimization/Prox.lean`, because its proof is Moreau's
+theorem and that file is downstream of this one.
+
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24.
