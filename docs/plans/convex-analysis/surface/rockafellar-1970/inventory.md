@@ -433,8 +433,26 @@ Thm 27.2 (10453) C · Cor 27.2.1 (10457, **no proof**) C · `Corollary 27.2.2` (
 Thm 27.3 (10495) C · Cors 27.3.1–27.3.3 (10505, 10523, 10527) C · Thm 27.4 (10651) G.
 **1 G, 8 C** at result level; clause level as above.
 
-Thm 27.1's proof (10449) is a one-line pointer list to §§8, 13, 14, 23, 25. Clause (e) is the one
-the backbone excluded as needing a reflexive pairing — `ℝⁿ` is reflexive, so the surface needs it.
+Thm 27.1's proof (10449) is a one-line pointer list to §§8, 13, 14, 23, 25.
+
+**The clause marks above are wrong in four places**, measured from the backbone's own
+`variable`/`omit` lines rather than from the shape of the book's proof: **(b) splits** — the
+`argmin f = ∂f*(0)` sentence is layer A and general, the `ri (dom f*)` sentence is C; **(c) is C**,
+not G; **(f) is G**, not C — in fact better than G, since it sits in a section with no topology at
+all; **(h) is C**, not G. Real clause split **4 G / 5 C**. Clauses (c) and (h) need finite
+dimensionality of the *dual* side `F`, because both apply a §23 theorem to `conj B f`, which lives
+on `F` — which is why they carry `omit [FiniteDimensional ℝ E]` and are still not G.
+
+Two of the four were internal inconsistencies this file could have caught itself. It marks
+**Thm 23.3 C**, and (c) is (a)+(b) composed with Thm 23.3, so (c) cannot be G. It marks **Thm 8.7 G**
+and **Thm 14.2 G**, and (f) is exactly those two composed, so (f) cannot be C. The third traces to a
+mark elsewhere: (h) is Thm 23.6, marked **G** here, but `Subgradient/Approx.lean`'s
+`section Theorem236` carries `[FiniteDimensional ℝ E]` and does not omit it — so either the Thm 23.6
+mark is wrong or 23.6 is over-hypothesised in the backbone. Worth one measurement in a later round;
+as formalised today both are C.
+
+**The result-level `1 G, 8 C` is correct** and survived checking, unlike §25's. Thm 27.4 is the only
+G result: both halves are layer A, sufficiency needing nothing at all.
 
 ## §28 Ordinary Convex Programs and Lagrange Multipliers (10749–11596, pp. 273–290)
 

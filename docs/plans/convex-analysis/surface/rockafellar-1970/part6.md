@@ -16,9 +16,12 @@ the book (Thm 27.1 has 9, Thm 30.4 has 10).
 
 ## Gated on remediation
 
-* **§27 needs Thm 27.1(e)** (remediation §4.6). The backbone excluded it as "unstatable without a
-  reflexive pairing" because `∂f*(0)` lives in `E**` — but `ℝⁿ` *is* reflexive, so the surface
-  demands it and cannot get it. Restate under `[IsCompatiblePairing B] [IsCompatiblePairing B.flip]`.
+* ~~**§27 needs Thm 27.1(e)** (remediation §4.6).~~ **Never a gate, and the diagnosis was wrong.**
+  `∂f*(0)` does not live in `E**`: for `B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ`, `subgradient B.flip (conj B f) 0` is
+  a subset of `E`, and clause (b) — `argmin f = ∂f*(0)` — had been stated in `Minimum.lean` since
+  the file was written. The prescribed restatement was a no-op, since both classes were already on
+  the section. The clause needed `Function.Injective B`, which is free in a normed space. On the
+  surface it is two lines through `theorem_25_1`. **Part VI has no open gate.**
 * ~~**§29–§30 need the `negFst (prodPairing Bu Bx)` instances** (§4.2)~~ — **neither section needs
   them, and the premise was wrong.** The claim was that "§30's adjoint bifunctions conjugate against
   `negFst`". They do not: the backbone reads Rockafellar's sign flip on the **argument**, not on the
@@ -37,8 +40,9 @@ the book (Thm 27.1 has 9, Thm 30.4 has 10).
   closed by measurement: the surface writes `A*` as `LinearMap.adjoint A` and carries no adjoint
   hypothesis, because `isAdjointPair_adjoint` already exists for `innerₗ E`. D3 stands unmodified.
 
-**§27's Theorem 27.1(e) (remediation §4.6) is the only Part VI gate that was still open** when the
-round started.
+**Every gate listed for this Part is closed, and three of the four were never gates at all.**
+§4.2 and §4.8 were built but unused; §4.1 was closed by measurement; §4.6 was closed by trying the
+clause. Only the *last* of those cost any Lean work, and it cost five new declarations.
 
 ## Receives from the backbone
 

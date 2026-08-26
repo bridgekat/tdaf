@@ -2564,9 +2564,22 @@ composes the two. The book states only the second reading, in Theorem 30.4(g); b
 `recessionConeFn f = 0`, and the bridge in the sublevel direction is `recessionCone_setOf_le`
 (Thm 8.7) rather than `recessionCone_argmin`.
 
-**Not done**: Thm 27.1(e), which needs a reflexive pairing (`∂f*(0)` lives in `E**`), and the
-polyhedral refinement of Thm 27.3, Cor 27.3.1 and the polyhedral half of Cor 27.3.3, which
-genuinely do need Helly in the form of Thm 21.5.
+**Not done: nothing in §27.** This paragraph used to list four items, and all four were stale — two
+of them contradicted by *this record's own text two paragraphs earlier*, which already said that
+Theorem 27.3's polyhedral refinement does not need Helly and that Corollary 27.3.1 is
+`exists_forall_le_of_polyhedral_of_recessionConeFn_subset_linealitySpaceFn`. Both of those
+declarations are in `Minimum.lean` today. Theorem 27.1(e) is closed (`section UniqueMinimiser`;
+remediation §4.6). And the polyhedral half of Corollary 27.3.3 does not need Helly either: the
+surface proves it by the book's own reduction onto the polyhedral case of Theorem 27.3, which the
+backbone gets from a constancy-space projection — Theorem 21.5 is not in its import closure.
+
+**Theorem 27.1(e), and why it stayed shut for five rounds.** The old exclusion note said `∂f*(0)`
+"lives in `E**` and so needs a reflexive pairing". It does not: `conj B f : F → EReal`, so
+`subgradient B.flip (conj B f) 0` is a subset of **`E`**. The note had substituted the canonical
+self-pairing of `F` for the given `B`. What the clause needs is `Function.Injective B`, and in a
+normed space that is free — `SeparatingDual ℝ E` is automatic and
+`separatingRight_flip_of_separatingDual` converts it. Recorded as `gotchas.md` LIB17: when a record
+says a clause is *unstatable*, elaborate its type before believing it.
 
 **`argmax` sits beside `argmin` and is `argmin` at the negation.** `argmax g = {x | ∀ z, g z ≤ g x}`
 with `argmax_eq_argmin_neg`; it is what "optimal solution" means for a *concave* program, and
