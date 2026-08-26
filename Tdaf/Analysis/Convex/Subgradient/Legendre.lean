@@ -15,17 +15,16 @@ restriction of the Fenchel conjugate `f*` to `D`; in particular `D ⊆ dom f*`.
 
 ## Main results
 
-* `legendreDom` — the set `D`, the image of the gradient mapping.
+* `legendreDom` — the set `D`, the image of the gradient mapping, with
+  `legendreDom_subset_dom_conj` for `D ⊆ dom f*`.
 * `conj_eq_of_hasGradientAt` — `f*(∇f x) = ⟨x, ∇f x⟩ - f x`: both the formula for `g` and, at a
   stroke, its well-definedness.
-* `legendreDom_subset_dom_conj` — `D ⊆ dom f*`.
 
 ## Implementation notes
 
 There is deliberately no `legendreConj` definition: `y ↦ ⟨(∇f)⁻¹ y, y⟩ - f ((∇f)⁻¹ y)` would need
 a choice function and would then have to be proved equal to `conj B f` on `D` anyway, and
-`conj_eq_of_hasGradientAt` is that equality without the detour. Since `f x` is finite wherever
-`∇f x` exists, the real-valued statements carry an explicit `hr : f x = (r : EReal)`.
+`conj_eq_of_hasGradientAt` is that equality without the detour.
 
 ## References
 

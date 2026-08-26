@@ -9,24 +9,21 @@ import Tdaf.Analysis.Convex.Subgradient.Defs
 /-!
 # Subgradient calculus
 
-How `∂` interacts with sums and with linear maps.
-
-Both rules have the same shape: one inclusion is unconditional — a subgradient of each piece
-assembles into a subgradient of the whole — and the reverse inclusion, which is the useful one,
-needs exactly the constraint qualification that makes the corresponding conjugacy rule exact. Both
-are therefore stated against the `IsExactSum` and `IsExactImage` interfaces of §16; the book's `ri`
-versions of Theorems 23.8 and 23.9 are these composed with the `of_relint` constructors.
+How `∂` interacts with sums and with linear maps. Both rules have the same shape: one inclusion is
+unconditional — a subgradient of each piece assembles into a subgradient of the whole — and the
+reverse inclusion, the useful one, needs exactly the constraint qualification that makes the
+corresponding conjugacy rule exact. Both are therefore stated against the `IsExactSum` and
+`IsExactImage` interfaces of §16; the book's `ri` versions of Theorems 23.8 and 23.9 are these
+composed with the `of_relint` constructors.
 
 ## Main results
 
-* `subgradient_add_subset`, `IsExactSum.subgradient_add` — **Theorem 23.8** for two summands.
-* `subgradient_finsetSum_subset`, `IsExactFinsetSum.subgradient_finsetSum` — **Theorem 23.8** in
-  the book's own `m`-ary form.
-* `image_subgradient_subset`, `IsExactImage.subgradient_compLin` — **Theorem 23.9**.
-* `subgradient_coe_mul`, `subgradient_zero_mul`, `subgradient_coe_affineMap`,
-  `subgradient_coe_mul_affineMap` — the scaling rules: `∂(cf) = c ∂f` for `c > 0` and for
-  *arbitrary* `c` when `f` is affine, together with the singletons those two collapse to.
-* `normalCone_add_subset`, `IsExactSum.normalCone_inter` — **Corollary 23.8.1**.
+* `IsExactSum.subgradient_add`, `IsExactFinsetSum.subgradient_finsetSum` — **Theorem 23.8**, for
+  two summands and in the book's `m`-ary form.
+* `IsExactImage.subgradient_compLin` — **Theorem 23.9**.
+* `subgradient_coe_mul`, `subgradient_coe_affineMap` — `∂(cf) = c ∂f` for `c > 0`, and for
+  *arbitrary* `c` when `f` is affine.
+* `IsExactSum.normalCone_inter` — **Corollary 23.8.1**.
 * `subgradient_add_normalCone_dom_subset`, `normalCone_dom_eq_zero_of_subgradient_eq_singleton` —
   the normal cone to `dom f`, and what a *unique* subgradient does to it.
 
@@ -39,13 +36,10 @@ inequalities whose sum is tight must each be tight, and that is where the proper
 `IsExactSum` is spent. Its `m`-ary form is proved for the whole family in one pass, because the
 binary rule does not iterate: `EReal` has no subtraction to peel a summand off with.
 
-The statements naming a *single point* need `B.flip` injective, without which
-`{y | ∀ w, B w y = 0}` is a subspace rather than the origin; that is free in a normed space.
-
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23 (Theorem 23.8,
-  Corollary 23.8.1, Theorem 23.9).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23 (Theorems 23.8, 23.9
+  and Corollary 23.8.1).
 -/
 
 open Pointwise

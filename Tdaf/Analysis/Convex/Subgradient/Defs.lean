@@ -14,18 +14,15 @@ Over a dual pair `B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ`, a *subgradient* of `f` a
 affine function `z ↦ f x + ⟨z - x, y⟩` minorizes `f`; equivalently, one whose graph is a
 non-vertical supporting hyperplane to `epi f` at `(x, f x)`. The set of them is the
 *subdifferential* `∂f x`. The definition is deliberately algebraic — a system of weak linear
-inequalities, one for each `z` — and neither it nor Theorem 23.5 uses any topology.
-
-This file also introduces the normal cone `N_C(x)` and the one-sided directional derivative
-`f'(x; y)`, and proves Theorems 23.1, 23.2, 23.5 and the first half of Theorem 23.3.
+inequalities, one for each `z` — and neither it nor Theorem 23.5 uses any topology. This file also
+introduces the normal cone `N_C(x)` and the one-sided directional derivative `f'(x; y)`, and proves
+Theorems 23.1, 23.2, 23.5 and the first half of Theorem 23.3.
 
 ## Main definitions
 
-* `subgradient B f x` — the subdifferential `∂f x`, a subset of `F`.
-* `subgradientRel B f` — the *graph* of `∂f`, as a `SetRel E F`.
-* `domSubgradient B f` — the set `dom ∂f` of points at which `f` has a subgradient.
-* `normalCone B C x` — the normal cone `N_C(x)`, bundled as a `PointedCone ℝ F` by
-  `normalPointedCone`.
+* `subgradient B f x` — the subdifferential `∂f x`, a subset of `F`; `subgradientRel B f` is its
+  graph as a `SetRel E F`, and `domSubgradient B f` the set of points where it is non-empty.
+* `normalCone B C x` — the normal cone `N_C(x)`, bundled by `normalPointedCone`.
 * `dirDeriv f x y` — the directional derivative `f'(x; y)`, as the infimum of the difference
   quotient. Meaningful only where `f x` is finite; see the implementation notes.
 
@@ -33,30 +30,23 @@ This file also introduces the normal cone `N_C(x)` and the one-sided directional
 
 * `Proper.mem_subgradient_tfae` — **Theorem 23.5**: `y ∈ ∂f x`, attainment of the supremum of
   `⟨·, y⟩ - f` at `x`, and Fenchel's inequality holding with equality at `(x, y)` say the same
-  thing. The individual implications are the `mem_subgradient_iff_*` lemmas; all but the last are
-  unconditional, and neither convexity nor properness is used until the equality (d).
-* `mem_subgradient_clFn_iff`, `mem_subgradient_conj_iff` — the further conditions of
-  **Theorem 23.5** available where `(cl f) x = f x`.
+  thing. All the individual implications but the last are unconditional.
 * `subgradientRel_conj_eq_inv` — **Corollary 23.5.1**: for closed proper convex `f`, the graph of
-  `∂f*` is the flip of the graph of `∂f`.
-* `clFn_eq_of_mem_subgradient`, `subgradient_clFn` — **Corollary 23.5.2**.
+  `∂f*` is the flip of the graph of `∂f`. `subgradient_clFn` is **Corollary 23.5.2**.
 * `subgradient_indicatorFn` — `∂δ(· | C) x = N_C(x)` for `x ∈ C`; `subgradient_supportFn` is
   **Corollary 23.5.3** and `mem_subgradient_indicatorFn_pointedCone` is **Corollary 23.5.4**.
-* `monotoneOn_sub_div`, `dirDeriv_zero`, `posHomogeneous_dirDeriv`, `convexFn_dirDeriv`,
-  `neg_dirDeriv_neg_le` — **Theorem 23.1**.
+* `monotoneOn_sub_div`, `posHomogeneous_dirDeriv`, `convexFn_dirDeriv` — **Theorem 23.1**.
 * `mem_subgradient_iff_le_dirDeriv`, `conj_dirDeriv`, `clFn_dirDeriv` — **Theorem 23.2**: `∂f x`
   is where `⟨·, y⟩ ≤ f'(x; ·)`, and `cl f'(x; ·)` is the support function of `∂f x`.
 * `proper_of_mem_subgradient` — **Theorem 23.3**, first half.
-* `convex_subgradient`, `isClosed_subgradient` — `∂f x` is always convex, and closed as soon as
-  the pairing is continuous in its second variable.
 
 ## Implementation notes
 
-`∂f` is available both pointwise and as a relation. Everything §24 and §26 say about it —
-monotonicity, closedness of the graph, maximality — is about the graph, and with `subgradientRel`
-Corollary 23.5.1 reads literally as `∂(f*) = (∂f)⁻¹`. `∂f x` is not bundled as a convex set:
-convexity is unconditional but closedness needs a continuous pairing, and a bundled object would
-carry that hypothesis as data. `N_C(x)` *is* bundled, being a cone for every `C` and `x`.
+`∂f` is available both pointwise and as a relation. Everything §24 and §26 say about it is about
+the graph, and with `subgradientRel` Corollary 23.5.1 reads literally as `∂(f*) = (∂f)⁻¹`. `∂f x`
+is not bundled as a convex set: convexity is unconditional but closedness needs a continuous
+pairing, and a bundled object would carry that hypothesis as data. `N_C(x)` *is* bundled, being a
+cone for every `C` and `x`.
 
 The finiteness hypothesis on `dirDeriv` is not removable: `EReal` has `⊤ - ⊤ = ⊥`, so off `dom f`
 the difference quotient is `⊥` in every direction and `f'(x; 0) = 0` fails. Statements of

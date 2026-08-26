@@ -12,10 +12,7 @@ import Tdaf.Analysis.Convex.Subgradient.Differentiability
 
 **Corollary 24.2.1**: on an open interval where it is finite, a convex function is recovered from
 either of its one-sided derivatives by integration,
-
-```
-f y - f x = ∫ₓʸ f'₊(t) dt = ∫ₓʸ f'₋(t) dt.
-```
+`f y - f x = ∫ₓʸ f'₊(t) dt = ∫ₓʸ f'₋(t) dt`.
 
 ## Main results
 
@@ -30,17 +27,13 @@ f y - f x = ∫ₓʸ f'₊(t) dt = ∫ₓʸ f'₋(t) dt.
 
 The fundamental theorem of calculus applies unchanged: a convex function is continuous on the
 interior of its domain, has a right derivative at every interior point, and that derivative is
-nondecreasing, hence integrable on compacts. No a.e. differentiability is needed.
-
-`rightDeriv f t` is an infimum of difference quotients in `EReal`, where Mathlib's right derivative
-is a limit. The two agree at *interior* points of `dom f`; points outside `dom f` contribute `⊤` to
-the `EReal` infimum and are absent from the real one, which is why interiority rather than
-finiteness of `f t` is the hypothesis.
+nondecreasing, hence integrable on compacts. No a.e. differentiability is needed. `rightDeriv f t`
+is an infimum of difference quotients where Mathlib's right derivative is a limit; the two agree at
+*interior* points of `dom f`, which is why interiority rather than finiteness of `f t` is asked.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24
-  (Corollary 24.2.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Corollary 24.2.1).
 -/
 
 open Set MeasureTheory intervalIntegral

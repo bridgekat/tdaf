@@ -13,33 +13,25 @@ import Tdaf.Analysis.Convex.Subgradient.Gradient
 **Theorem 25.1**: a proper convex function on a finite-dimensional space is differentiable at `x`
 exactly when it has a single subgradient there, and that subgradient is then the gradient. The
 forward half is `subgradient_eq_singleton_of_hasFDerivAt`; the converse is proved here, and with it
-**Corollaries 25.1.2 and 25.1.3** move from their subgradient form to the differentiability form
-the book states.
+**Corollaries 25.1.2 and 25.1.3** move from their subgradient form to the differentiability form.
+
+The substance is an interior step the book passes over. `∂f x = {y₀}` leaves no room for a normal
+direction to `dom f`, and in finite dimensions a convex set is a neighbourhood of every point at
+which its normal cone is trivial. With `x` interior, `f'(x; ·)` is finite in every direction, hence
+continuous and closed, so Theorem 23.2 — which computes only `cl f'(x; ·)` — computes `f'(x; ·)`
+itself, and it is linear.
 
 ## Main results
 
-* `mem_interior_dom_of_subgradient_eq_singleton` — a lone subgradient puts `x` in the *interior*
-  of `dom f`.
-* `hasGradientAt_evalCLM_of_subgradient_eq_singleton` — **Theorem 25.1**, converse half, for an
-  arbitrary compatible pairing.
+* `mem_interior_dom_of_subgradient_eq_singleton` — the interior step.
 * `hasGradientAt_iff_subgradient_eq_singleton`,
   `differentiableAtFn_iff_exists_subgradient_eq_singleton` — **Theorem 25.1** in full.
 * `hasGradientAt_clFn_iff` — `∇(cl f) = ∇f`: a closure changes no gradient and creates none.
-* `mem_exposedPoints_epi_conj_iff_hasGradientAt` — **Corollary 25.1.2**: the exposed points of
-  `epi f*` are the pairs `(∇f x, f* (∇f x))`.
-* `mem_exposedPoints_supportSet_iff_hasGradientAt` — **Corollary 25.1.3**.
-
-## Implementation notes
-
-The substance is the interior step, which the book passes over. `∂f x = {y₀}` leaves no room for a
-normal direction to `dom f`, and in finite dimensions a convex set is a neighbourhood of every
-point at which its normal cone is trivial. With `x` interior, `f'(x; ·)` is finite in every
-direction, hence continuous and closed, so Theorem 23.2 — which computes only `cl f'(x; ·)` —
-computes `f'(x; ·)` itself, and it is linear.
-
-Corollaries 25.1.2 and 25.1.3 are stated here, as in the book, for a merely proper convex `f`, by
-reduction to `cl f`. Only the *gradients* transfer: `∂f = ∂(cl f)` fails at relative boundary
-points, so the subgradient forms in `Gradient.lean` keep their `ClosedFn` hypothesis.
+* `mem_exposedPoints_epi_conj_iff_hasGradientAt`,
+  `mem_exposedPoints_supportSet_iff_hasGradientAt` — **Corollaries 25.1.2 and 25.1.3**, stated as
+  in the book for a merely proper convex `f`, by reduction to `cl f`. Only the *gradients*
+  transfer: `∂f = ∂(cl f)` fails at relative boundary points, so the subgradient forms in
+  `Gradient.lean` keep their `ClosedFn` hypothesis.
 
 ## References
 

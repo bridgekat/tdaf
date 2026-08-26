@@ -20,10 +20,8 @@ about `dom f*` — into one that can be checked on the gradient mapping alone.
   boundedness of every sublevel set `{x | ‖g x‖ ≤ b}`.
 * `isBounded_setOf_norm_gradient_le_of_dom_conj_eq_univ` — the easy half: when `dom f* = E`, the
   set of points whose gradient lies in a ball is `∂f*` of that ball, hence compact (Theorem 24.7).
-* `gradientRange_subset_interior_dom_conj_of_isBounded`, `isClosed_gradientRange_of_isBounded` —
-  `∇f(E)` is contained in `int (dom f*)`, and is closed.
-* `dom_conj_eq_univ_of_isBounded` — the hard half: `∇f(E)` is a non-empty clopen subset of `E`.
-* `cofinite_iff_forall_tendsto_norm_gradient_atTop` — **Lemma 26.7**.
+* `dom_conj_eq_univ_of_isBounded`, `cofinite_iff_forall_tendsto_norm_gradient_atTop` — the hard
+  half and **Lemma 26.7**.
 
 ## Implementation notes
 
@@ -31,9 +29,6 @@ The hard half is proved by showing `D = ∇f(E)` clopen in the connected space `
 the book's case split at a boundary point of `dom f*`. Openness comes from the normal cone: a
 non-zero `n` normal to `dom f*` at `v = ∇f x` puts the whole half-line `x + t n`, `t ≥ 0`, inside
 `∂f*(v)`, so every point of it has gradient `v` and `{y | ‖∇f y‖ ≤ ‖v‖}` is unbounded.
-
-Finiteness of `f` is not decoration: it is what makes `∇f` defined everywhere, so that the
-sequential condition quantifies over all sequences rather than only those inside `int (dom f)`.
 
 ## References
 

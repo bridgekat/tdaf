@@ -19,8 +19,8 @@ pointwise convergence (Theorem 24.5): both subdifferentials are singletons, so a
 
 * `dist_le_of_subgradient_subset` — an inclusion `∂p u ⊆ ∂q v + ε B` between *singleton*
   subdifferentials is the bound `‖∇p u - ∇q v‖ ≤ ε`.
-* `tendsto_of_hasGradientAt` — **Theorem 25.7**: `∇fᵢ x → ∇f x`.
-* `tendstoUniformlyOn_fderiv_toReal` — **Theorem 25.7**, uniformly on every compact subset.
+* `tendsto_of_hasGradientAt`, `tendstoUniformlyOn_fderiv_toReal` — **Theorem 25.7**, pointwise and
+  uniformly on every compact subset.
 
 ## Implementation notes
 

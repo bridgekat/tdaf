@@ -16,13 +16,10 @@ single-valued, and that in that case `∂f` is the gradient on `C` and empty els
 multivalued object `∂f` carries precisely the information of the classical gradient mapping. That
 is what makes the Legendre transformation work.
 
-## Main definitions
+## Main results
 
 * `EssentiallySmooth f` — the three conditions above, with the gradient written as
   `fderiv ℝ (fun z => (f z).toReal)`.
-
-## Main results
-
 * `domSubgradient_eq_interior_dom_of_essentiallySmooth` — `dom ∂f = int (dom f)`.
 * `subsingleton_subgradient_iff_essentiallySmooth` — **Theorem 26.1**.
 
@@ -30,11 +27,8 @@ is what makes the Legendre transformation work.
 
 Condition (c) is stated at every point outside `C`, where the book states it at boundary points of
 `C`. Since `C` is open the two readings agree, and this one avoids re-deriving boundaryness at
-every use.
-
-Gradients are compared through their Riesz representatives: `∂f x` for the pairing `innerₗ E` is a
-set of vectors while `fderiv` lands in `StrongDual ℝ E`, and `InnerProductSpace.toDual` is an
-isometry, so subsequences are extracted in `E`.
+every use. Gradients are compared through their Riesz representatives, since `∂f x` for the pairing
+`innerₗ E` is a set of vectors while `fderiv` lands in `StrongDual ℝ E`.
 
 ## References
 

@@ -12,13 +12,11 @@ import Tdaf.Analysis.Convex.Subgradient.StrictlyConvex
 
 A closed proper convex function is *of Legendre type* when it is essentially smooth and strictly
 convex on the interior `C` of its effective domain — by Corollary 26.3.1, exactly when `∂f` is a
-one-to-one mapping.
-
-**Theorem 26.5** is the duality: `f` is of Legendre type exactly when `f*` is, and then `∇f` is a
-bijection of `C` onto `C* = int (dom f*)`, continuous in both directions, with `∇f* = (∇f)⁻¹`.
-**Corollary 26.4.1** identifies the domain `D` of the Legendre conjugate of an essentially smooth
-function as `dom ∂f*`, and so squeezes it between `ri (dom f*)` and `dom f*`. In general `D` is not
-convex, which is why the squeeze cannot be improved to an equality.
+one-to-one mapping. **Theorem 26.5** is the duality: `f` is of Legendre type exactly when `f*` is,
+and then `∇f` is a bijection of `C` onto `C* = int (dom f*)`, continuous in both directions, with
+`∇f* = (∇f)⁻¹`. **Corollary 26.4.1** identifies the domain `D` of the Legendre conjugate of an
+essentially smooth function as `dom ∂f*`, and so squeezes it between `ri (dom f*)` and `dom f*`. In
+general `D` is not convex, which is why the squeeze cannot be improved to an equality.
 
 ## Main definitions
 
@@ -33,7 +31,7 @@ convex, which is why the squeeze cannot be improved to an equality.
 * `gradientRange_eq_domSubgradient_conj`, `relint_dom_conj_subset_gradientRange`,
   `gradientRange_subset_dom_conj` — **Corollary 26.4.1**: `D = dom ∂f*`, therefore
   `ri (dom f*) ⊆ D ⊆ dom f*`.
-* `legendreType_conj_iff`, `hasGradientAt_conj_iff`, `bijOn_gradient_of_legendreType`,
+* `legendreType_conj_iff`, `bijOn_gradient_of_legendreType`,
   `continuousOn_gradient_interior_dom` — **Theorem 26.5**.
 * `bijOn_gradient_univ_iff`, `conj_finite_of_bijOn_gradient_univ` — **Theorem 26.6**: for a finite
   differentiable convex function, `∇f` is a bijection of `E` onto itself exactly when `f` is
@@ -43,8 +41,7 @@ convex, which is why the squeeze cannot be improved to an equality.
 
 `legendreDom f` lives in `StrongDual ℝ E`, but Corollary 26.4.1 compares it with `dom ∂f*`, whose
 elements are *vectors* for the self-pairing `innerₗ E`. `gradientRange` is `legendreDom` carried
-back across the Riesz isometry, so that the comparison is an equality of sets in `E`. Mathlib's
-`gradient` of the real trace `fun w => (f w).toReal` is `∇f`, and is used as such throughout.
+back across the Riesz isometry, so that the comparison is an equality of sets in `E`.
 
 ## References
 

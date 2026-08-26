@@ -10,105 +10,44 @@ import Tdaf.Analysis.Convex.Subgradient.Existence
 
 The subdifferential of a proper convex function is not merely *monotone* —
 `⟨x₁ - x₂, y₁ - y₂⟩ ≥ 0` whenever `yᵢ ∈ ∂f xᵢ` — but **cyclically monotone**: every finite cycle
-`(x₀, y₀), (x₁, y₁), …, (x_m, y_m)` in the graph satisfies
+`(x₀, y₀), …, (x_m, y_m)` in its graph satisfies
 
 ```
 ⟨x₁ - x₀, y₀⟩ + ⟨x₂ - x₁, y₁⟩ + ⋯ + ⟨x₀ - x_m, y_m⟩ ≤ 0.
 ```
 
-Cyclic monotonicity is the whole story. A multivalued mapping is contained in the subdifferential
-of a closed proper convex function exactly when it is cyclically monotone, and the function can be
-written down: it is the supremum of the telescoping sums above, read as affine functions of a free
-endpoint. Sharpening "contained in" to "equal to" needs a *rigidity* statement in the other
-direction — a closed proper convex function is determined by its subdifferential up to an additive
-constant — and the two together identify the maximal cyclically monotone mappings as precisely the
-subdifferentials.
-
-The rigidity statement is proved here by subdivision. Along a segment in `ri (dom f)` cut into `N`
-equal steps, each step contributes the same increment to `f` and to `g` up to an error controlled
-by one subgradient difference; telescoping the `N` steps leaves an error of order `1/N`, so the
-increments agree exactly. Two functions with the same increments on `ri (dom f)` differ by a
-constant there, and closedness propagates the identity to all of `E`.
+That is the whole story: a multivalued mapping is cyclically monotone exactly when it is contained
+in the subdifferential of a closed proper convex function, and that function can be written down as
+the supremum of the telescoping sums above, read as affine functions of a free endpoint. Since a
+closed proper convex function is determined by its subdifferential up to an additive constant, the
+maximal cyclically monotone mappings are precisely the subdifferentials — a different condition
+from maximal monotonicity, neither implying the other.
 
 ## Main definitions
 
-* `chainVal B s l x` — Rockafellar's telescoping sum along the chain that starts at `s`, runs
-  through the list `l`, and ends at `x`.
-* `IsMonotoneRel B ρ`, `IsMaximalMonotoneRel B ρ`, `IsCyclicallyMonotone B ρ`,
-  `IsMaximalCyclicallyMonotone B ρ`.
-* `cyclicPotential B ρ s` — the function Rockafellar constructs in Theorem 24.8.
+* `IsMonotoneRel`, `IsMaximalMonotoneRel`, `IsCyclicallyMonotone`, `IsMaximalCyclicallyMonotone`.
+* `cyclicPotential B ρ s` — the convex function reconstructed from a cyclically monotone `ρ`.
 
 ## Main results
 
-* `IsCyclicallyMonotone.isMonotoneRel` — cyclic monotonicity implies monotonicity (the case of a
-  two-element cycle), and `isMonotoneRel_subgradientRel` is the classical monotonicity of `∂f`.
-* `isCyclicallyMonotone_subgradientRel` — **Theorem 24.8**, necessity: `∂f` is cyclically monotone
-  for every proper `f`.
-* `exists_convexFn_subgradientRel_of_isCyclicallyMonotone`,
-  `isCyclicallyMonotone_iff_exists_convexFn` — **Theorem 24.8**, sufficiency and the full
-  equivalence.
-* `exists_eq_subgradientRel_of_isMaximalCyclicallyMonotone` — **Theorem 24.9**, the half that
-  follows from Theorem 24.8: a maximal cyclically monotone mapping *is* a subdifferential.
+* `isCyclicallyMonotone_iff_exists_convexFn` — **Theorem 24.8**.
 * `isClosed_subgradientRel` — **Theorem 24.4**: the graph of `∂f` is closed.
-* `abs_sub_increment_le` — the subdivision estimate: if `∂f ⊆ ∂g`, the increments of `f` and of `g`
-  along `N` equal steps of a common displacement `d` differ by at most `⟨d, y_N - y_0⟩`.
-* `increment_eq_of_subgradientRel_subset` — the increments of `f` and `g` between two points of
-  `ri (dom f)` coincide.
-* `eq_add_coe_of_subgradientRel_subset` — **rigidity**: `∂f ⊆ ∂g` forces `g = f + α` for a real
-  constant `α` (**Theorem 24.9**, uniqueness).
-* `isMaximalCyclicallyMonotone_subgradientRel` and
-  `isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn` — **Theorem 24.9** in full: `∂f` is
-  maximal cyclically monotone, and maximal cyclic monotonicity characterises subdifferentials.
-* `conj_add_coe`, `subgradient_add_coe`, `subgradientRel_add_coe` — the effect of an additive
-  constant on the conjugate and on the subdifferential.
+* `eq_add_coe_of_subgradientRel_subset` — rigidity: `∂f ⊆ ∂g` forces `g = f + α` for a real `α`,
+  proved by subdivision (`abs_sub_increment_le`).
+* `isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn` — **Theorem 24.9**.
 
-## Design notes
+## Implementation notes
 
-**Cycles are lists, not `Fin (m+1)`-indexed families.** Rockafellar writes a cycle as a finite
-sequence of pairs; `chainVal` is the same object defined by recursion on a `List (E × F)`, with the
-starting pair carried separately so that the recursion step is literally "walk one edge and
-recurse". Every proof in the section is then a list induction: the telescoping estimate
-`le_of_chain_mem_subgradientRel`, the append lemma `chainVal_append_singleton` that adds the last
-edge of the cycle, and the affineness lemma `exists_chainVal_eq` that makes `cyclicPotential` a
-supremum of affine functions. A `Fin`-indexed statement would need `Finset.sum_equiv` along
-`i ↦ i + 1` for the telescoping and would gain nothing.
-
-**`chainVal B s l x` has the free endpoint last.** That is what makes `cyclicPotential` a supremum
-of affine functions of `x` (`exists_chainVal_eq`: `chainVal B s l x = ⟨x, y⟩ - c` for a `(y, c)`
-depending only on `s` and `l`), and it makes the cycle condition read
-`chainVal B s l s.1 ≤ 0` — "come back to where you started".
-
-**Theorem 24.4 asks for joint continuity of the pairing.** `IsContinuousPairing B` gives continuity
-of `⟨·, y⟩` for each fixed `y`, which is not enough to pass to the limit in `⟨z - xᵢ, yᵢ⟩` when both
-arguments move. In `ℝⁿ` the hypothesis is automatic; here it is an explicit
-`Continuous fun p : E × F => B p.1 p.2`.
-
-## What is not here
-
-**Local boundedness of `∂f`** lives in `Tdaf.Analysis.Convex.Subgradient.Bounded`, which imports
-this file.
-
-**Maximal *monotonicity* of `∂f`** (Corollary 31.5.2) is `isMaximalMonotoneRel_subgradientRel` in
-`Tdaf.Analysis.Convex.Optimization.Prox`, aliased as `subgradient_maximalMonotone`. It cannot live
-here: its proof is Moreau's theorem, and `Optimization/Prox.lean` imports this file. What *is* here
-is the maximal **cyclic** monotonicity of Theorem 24.9, and line 9631 of Rockafellar warns
-explicitly that neither implies the other.
-
-**The one-dimensional theory is absent**: the description of the subdifferential of a closed proper
-convex function on `ℝ` as a complete nondecreasing curve, and the recovery of the function from that
-curve by integration. It needs one-sided derivatives `f'₊`, `f'₋` for `EReal`-valued functions on
-`ℝ` — including the conventions `f'₊ = +∞` past the right end of `dom f` and `f'₋ = -∞` before its
-left end, which are *not* the values `dirDeriv` takes there — together with a theory of the integral
-of a monotone `[-∞, +∞]`-valued function. Neither is in the project.
-
-**Convergence of subgradients** (`∂fᵢ → ∂f` for a pointwise-convergent sequence of finite convex
-functions, and the corresponding statement for one-sided directional derivatives) is also absent;
-see the discussion in `Tdaf.Analysis.Convex.Subgradient.Bounded`.
+A cycle is a `List (E × F)` with the starting pair carried separately, so that every proof is a
+list induction. `chainVal B s l x` keeps the free endpoint last, which makes `cyclicPotential` a
+supremum of affine functions of `x` and the cycle condition read `chainVal B s l s.1 ≤ 0`.
+Theorem 24.4 asks for *joint* continuity of the pairing, `Continuous fun p : E × F => B p.1 p.2`:
+continuity of `⟨·, y⟩` for each fixed `y` is not enough to pass to the limit in `⟨z - xᵢ, yᵢ⟩` when
+both arguments move. In `ℝⁿ` the hypothesis is automatic.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorems 24.4, 24.8
-  and 24.9).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24.
 * R. T. Rockafellar, *Characterization of the subdifferentials of convex functions*, Pacific J.
   Math. **17** (1966) 497–510.
 -/
@@ -123,9 +62,9 @@ section Chain
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
-/-- Rockafellar's telescoping sum along a finite chain in the graph of a multivalued mapping. The
-chain starts at the pair `s = (x₀, y₀)`, runs through `l = [(x₁, y₁), …, (x_m, y_m)]` and ends at
-the free point `x`:
+/-- The telescoping sum along a finite chain in the graph of a multivalued mapping. The chain
+starts at the pair `s = (x₀, y₀)`, runs through `l = [(x₁, y₁), …, (x_m, y_m)]` and ends at the
+free point `x`:
 
 ```
 chainVal B s l x = ⟨x₁ - x₀, y₀⟩ + ⟨x₂ - x₁, y₁⟩ + ⋯ + ⟨x - x_m, y_m⟩.
@@ -181,7 +120,7 @@ def IsMonotoneRel (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop
   ∀ p ∈ ρ, ∀ q ∈ ρ, 0 ≤ B (p.1 - q.1) (p.2 - q.2)
 
 /-- A multivalued mapping is **cyclically monotone** when every finite cycle in its graph has
-non-positive telescoping sum. Rockafellar's definition, with the cycle written as a starting pair
+non-positive telescoping sum. The book's definition, with the cycle written as a starting pair
 `s` followed by a list `l`; `chainVal B s l s.1` is the sum around the cycle. -/
 def IsCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
   ∀ s ∈ ρ, ∀ l : List (E × F), (∀ q ∈ l, q ∈ ρ) → chainVal B s l s.1 ≤ 0
@@ -255,7 +194,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
 
 /-- The telescoping estimate: walking a chain of subgradients from `s` to `x` cannot gain more than
-the increase of `f`. Rockafellar's chain of inequalities
+the increase of `f`. The chain of inequalities
 `⟨x_{i+1} - x_i, y_i⟩ ≤ f x_{i+1} - f x_i`, summed. -/
 theorem le_of_chain_mem_subgradientRel :
     ∀ (l : List (E × F)) (s : E × F), s ∈ subgradientRel B f →
@@ -300,17 +239,17 @@ theorem isMonotoneRel_subgradientRel (hp : Proper f) :
 
 end Necessity
 
-/-! ### Theorem 24.8, sufficiency: Rockafellar's potential -/
+/-! ### Theorem 24.8, sufficiency: the potential -/
 
 section Potential
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {ρ : SetRel E F} {s : E × F}
 
-/-- **Rockafellar's potential**, the function built in the proof of Theorem 24.8: the supremum of
-the telescoping sums of all finite chains in `ρ` that start at `s` and end at `x`. It is a supremum
-of affine functions of `x`, hence a closed convex function, and cyclic monotonicity of `ρ` is
-exactly what keeps it from being `+∞` at `s.1`. -/
+/-- The potential of a multivalued mapping `ρ`: the supremum of the telescoping sums of all finite
+chains in `ρ` that start at `s` and end at `x`. Being a supremum of affine functions of `x` it is a
+closed convex function, and cyclic monotonicity of `ρ` is exactly what keeps it from being `+∞` at
+`s.1`. -/
 noncomputable def cyclicPotential (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) (s : E × F)
     (x : E) : EReal :=
   ⨆ l ∈ {l : List (E × F) | ∀ q ∈ l, q ∈ ρ}, ((chainVal B s l x : ℝ) : EReal)
@@ -362,7 +301,7 @@ theorem proper_cyclicPotential (hρ : IsCyclicallyMonotone B ρ) (hs : s ∈ ρ)
   rw [cyclicPotential_eq_zero hρ hs, ← _root_.EReal.coe_zero]
   exact _root_.EReal.coe_lt_top 0
 
-/-- **Every pair of `ρ` is a subgradient of the potential.** Rockafellar's argument: a chain
+/-- **Every pair of `ρ` is a subgradient of the potential.** A chain
 ending at `x` followed by the edge `(x, y)` is again a chain, so the supremum defining
 `f z` dominates `chainVal … x + ⟨z - x, y⟩` for every chain, hence `f x + ⟨z - x, y⟩ ≤ f z`. -/
 theorem mem_subgradient_cyclicPotential {p : E × F} (hp : p ∈ ρ) :
@@ -440,11 +379,10 @@ section GraphClosed
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
   [Module ℝ F] [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
 
-/-- **Theorem 24.4**: the graph of `∂f` is a closed subset of `E × F`. Equivalently,
-`xᵢ* ∈ ∂f xᵢ`, `xᵢ → x` and `xᵢ* → x*` force `x* ∈ ∂f x`.
-
-Convexity of `f` is not used. Lower semicontinuity is, and so is joint continuity of the pairing:
-the subgradient inequality at `xᵢ` involves `⟨z - xᵢ, xᵢ*⟩`, where both arguments move. -/
+/-- **Theorem 24.4**: the graph of `∂f` is closed in `E × F`; equivalently `xᵢ* ∈ ∂f xᵢ`,
+`xᵢ → x` and `xᵢ* → x*` force `x* ∈ ∂f x`. Convexity of `f` is not used. Lower semicontinuity is,
+and so is joint continuity of the pairing: the subgradient inequality at `xᵢ` involves
+`⟨z - xᵢ, xᵢ*⟩`, where both arguments move. -/
 theorem isClosed_subgradientRel [IsTopologicalAddGroup E]
     (hB : Continuous fun p : E × F => B p.1 p.2) (hp : Proper f)
     (hlsc : LowerSemicontinuous f) : IsClosed (subgradientRel B f) := by
@@ -504,15 +442,11 @@ theorem sub_le_pairing_of_mem_subgradient {p q : E} {a b : ℝ} {v : F}
   rw [hexp] at h
   linarith
 
-/-- **The chain estimate that proves Theorem 24.9's uniqueness clause.** Along a chain of equally
-spaced points `x 0, x 1, …, x N` with common step `d`, where `v i` is a subgradient of `f` at
-`x i` and `∂f ⊆ ∂g`, the increments of `f` and of `g` across the chain differ by at most
-`⟨d, v N - v 0⟩`.
-
-The two increments are trapped between the *same* two telescoping sums — the subgradients of `f`
-serve `g` as well — so their difference is majorised by the total variation of the chain of
-subgradients, which telescopes to `⟨d, v N⟩ - ⟨d, v 0⟩`. Halving the step halves the bound while
-leaving the two ends of the chain alone, and that is what forces the two increments to agree. -/
+/-- The subdivision estimate. Along a chain of equally spaced points `x 0, …, x N` with common
+step `d`, with `v i ∈ ∂f (x i)` and `∂f ⊆ ∂g`, the increments of `f` and of `g` across the chain
+differ by at most `⟨d, v N - v 0⟩`: both are trapped between the *same* two telescoping sums, since
+the subgradients of `f` serve `g` as well. Halving the step halves the bound while leaving the ends
+of the chain alone, which is what forces the two increments to agree. -/
 theorem abs_sub_increment_le (hsub : subgradientRel B f ⊆ subgradientRel B g)
     {x : ℕ → E} {v : ℕ → F} {a b : ℕ → ℝ} {d : E} {N : ℕ}
     (hx : ∀ i < N, x (i + 1) = x i + d)
@@ -586,15 +520,12 @@ theorem exists_coe_of_subgradient_nonempty (hpg : Proper g) {x : E}
     exact absurd h Set.not_nonempty_empty
   exact EReal.exists_coe_of_ne_bot_of_lt_top (hpg.ne_bot x) hxdom
 
-/-- **Theorem 24.9**, the analytic core: if `∂f ⊆ ∂g` then `f` and `g` have the *same
-increments* between relative interior points of `dom f`.
-
-Rockafellar deduces this from the one-dimensional theory of §24.1–24.3, integrating the common
-one-sided derivative along the segment. The argument here is elementary and needs none of it.
-Subdivide `[x₁, x₂]` into `N` equal steps and pick a subgradient `v i ∈ ∂f (x i)` at each node,
-keeping the two ends fixed. Each step traps both increments in the interval
-`[⟨d, v i⟩, ⟨d, v (i+1)⟩]`, so the two increments differ by at most the telescoping total
-`⟨d, v N - v 0⟩ = N⁻¹ ⟨x₂ - x₁, v N - v 0⟩`, which tends to `0`. -/
+/-- **Theorem 24.9**, the analytic core: if `∂f ⊆ ∂g` then `f` and `g` have the same increments
+between relative interior points of `dom f`. The book integrates the common one-sided derivative
+along the segment, using the one-dimensional theory of §24.1–24.3; the argument here needs none of
+it. Subdivide `[x₁, x₂]` into `N` equal steps and pick `v i ∈ ∂f (x i)` at each node; each step
+traps both increments in `[⟨d, v i⟩, ⟨d, v (i+1)⟩]`, so the two differ by at most the telescoping
+total `N⁻¹ ⟨x₂ - x₁, v N - v 0⟩`, which tends to `0`. -/
 theorem increment_eq_of_subgradientRel_subset [IsCompatiblePairing B]
     (hf : ConvexFn f) (hpf : Proper f) (hpg : Proper g)
     (hsub : subgradientRel B f ⊆ subgradientRel B g)
@@ -687,13 +618,10 @@ theorem increment_eq_of_subgradientRel_subset [IsCompatiblePairing B]
   have hzero := abs_nonpos_iff.1 hle
   linarith
 
-/-- **Theorem 24.9**, the geometric half: if `∂f ⊆ ∂g` then `g ≤ f + α` for a real
-constant `α`, with equality on `cl (dom f)`.
-
-The increments already agree on `ri (dom f)` (`increment_eq_of_subgradientRel_subset`), which fixes
-`α`. Theorem 7.5 carries the identity from `ri (dom f)` out to `cl (dom f)`: `f` is the limit of its
-values along a segment running into the boundary point, lower semicontinuity of `g` gives one
-inequality there and convexity of `g` the other. Off `cl (dom f)` the right-hand side is `⊤`. -/
+/-- **Theorem 24.9**, the geometric half: if `∂f ⊆ ∂g` then `g ≤ f + α` for a real constant `α`,
+with equality on `cl (dom f)`. Agreement of the increments on `ri (dom f)` fixes `α`, and Theorem
+7.5 carries the identity out to `cl (dom f)` along a segment running into the boundary point. Off
+`cl (dom f)` the right-hand side is `⊤`. -/
 theorem exists_forall_le_add_coe_of_subgradientRel_subset [IsCompatiblePairing B]
     (hf : ConvexFn f) (hpf : Proper f) (hcf : ClosedFn f)
     (hg : ConvexFn g) (hpg : Proper g) (hlg : LowerSemicontinuous g)
@@ -821,14 +749,13 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
 
-/-- **Theorem 24.9**, uniqueness clause: a closed proper convex function is determined
-by its subdifferential up to an additive constant, and already by the *inclusion* `∂f ⊆ ∂g`.
+/-- **Theorem 24.9**, uniqueness clause: a closed proper convex function is determined by its
+subdifferential up to an additive constant, and already by the *inclusion* `∂f ⊆ ∂g`.
 
-The proof follows Rockafellar. `exists_forall_le_add_coe_of_subgradientRel_subset` gives `g ≤ f + α`
-with equality on `cl (dom f)`; Corollary 23.5.1 turns `∂f ⊆ ∂g` into `∂f* ⊆ ∂g*` and repeats the
-argument on the conjugate side, giving `g* ≤ f* + β` with equality on `cl (dom f*)`. Evaluating
-Theorem 23.5 (d) at a pair `(x, y)` of the graph of `∂f` — where both equalities apply — forces
-`β = -α`, so `g* ≤ (f + α)*`; conjugating that back and using Fenchel–Moreau gives `g ≥ f + α`. -/
+The geometric half gives `g ≤ f + α` with equality on `cl (dom f)`; Corollary 23.5.1 turns
+`∂f ⊆ ∂g` into `∂f* ⊆ ∂g*` and repeats it on the conjugate side, giving `g* ≤ f* + β`. Evaluating
+Theorem 23.5 (d) at a pair of the graph of `∂f`, where both equalities apply, forces `β = -α`, and
+conjugating `g* ≤ (f + α)*` back gives `g ≥ f + α`. -/
 theorem eq_add_coe_of_subgradientRel_subset [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     (hsub : subgradientRel B f ⊆ subgradientRel B g) :
@@ -887,12 +814,10 @@ theorem eq_add_coe_of_subgradientRel_subset [IsCompatiblePairing B] [IsCompatibl
   rw [hbih, hbcg] at hge
   exact ⟨α, fun x => le_antisymm (hle x) (Pi.le_def.1 hge x)⟩
 
-/-- **Theorem 24.9**, the half that Theorem 24.8 does *not* give: the subdifferential
-of a closed proper convex function is a *maximal* cyclically monotone mapping.
-
-If `∂f ⊆ σ` with `σ` cyclically monotone then Theorem 24.8 puts `σ ⊆ ∂g` for some closed proper
-convex `g`; the uniqueness clause makes `g = f + α`, and a constant does not change a
-subdifferential (`subgradientRel_add_coe`), so `σ ⊆ ∂f`. -/
+/-- **Theorem 24.9**: the subdifferential of a closed proper convex function is a *maximal*
+cyclically monotone mapping. If `∂f ⊆ σ` with `σ` cyclically monotone then Theorem 24.8 puts
+`σ ⊆ ∂g` for some closed proper convex `g`; uniqueness makes `g = f + α`, and a constant does not
+change a subdifferential. -/
 theorem isMaximalCyclicallyMonotone_subgradientRel [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip] (hf : ClosedProperConvexFn f) :
     IsMaximalCyclicallyMonotone B (subgradientRel B f) := by

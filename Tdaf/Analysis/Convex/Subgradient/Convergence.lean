@@ -12,10 +12,8 @@ import Tdaf.Analysis.Convex.Subgradient.Bounded
 
 Convex functions `f i`, finite on an open convex set `U` and converging pointwise there to `g`,
 converge uniformly on compact subsets, hence *continuously*: `f i (x i) → g x` along any `x i → x`
-in `U`. This file carries that strength over to the first-order data.
-
-Differentiation does **not** pass to the limit; only the one-sided `limsup` inequality survives.
-For `x i → x` in `U` and `y i → y`,
+in `U`. Differentiation does **not** pass to the limit; only the one-sided `limsup` inequality
+survives. For `x i → x` in `U` and `y i → y`,
 
 ```
 limsup_i (f i)'(x i; y i)  ≤  g'(x; y),        ∂(f i)(x i)  ⊆  ∂g(x) + ε B  eventually.
@@ -35,22 +33,15 @@ of `f'(x; y)` in `(x, y)` and of `∂f` in `x`.
   **Corollary 24.5.1**, the constant-family case.
 * `eventually_dirDeriv_lt_of_tendsto_dir`, `eventually_subgradient_subset_exposed_add_closedBall` —
   **Theorem 24.6**: the same two statements for an approach to a point of `dom f` that need not be
-  interior, along a fixed limiting direction `y`, with `∂f(x)_y`, the face of `∂f x` exposed by
-  `y`, in place of `∂f x`.
-* `subgradient_dirDeriv`, `subgradient_dirDeriv_eq_sep_normalCone`,
-  `isExposed_subgradient_dirDeriv` — the identification `∂(f'(x; ·))(y) = ∂f(x)_y`, as a
-  maximisation, as a normal-cone condition, and as `IsExposed`.
+  interior, along a fixed limiting direction `y`, with the face of `∂f x` exposed by `y` in place
+  of `∂f x`.
+* `subgradient_dirDeriv` — the identification `∂(f'(x; ·))(y) = ∂f(x)_y`.
 
 ## Implementation notes
 
-The convergence theory for families of convex functions is stated for real-valued
-`ConvexOn ℝ U (f i)`, while subgradients and directional derivatives are `EReal`-valued; the bridge
-is `ConvexFn.convexOn_toReal_dom`, crossed once for the `f i` on `U` and once for the sublinear
-functions `(f i)'(x i; ·)`. The main theorems are about sequences, because the uniformity they rest
-on is; the local corollaries are stated for the neighbourhood filter, which is countably generated.
-`ε B` needs a norm on the dual side, so the subgradient statements are for a real inner-product
-space paired with itself, while the directional-derivative statements need only a
-finite-dimensional normed space.
+The convergence theory is stated for real-valued `ConvexOn ℝ U (f i)` while subgradients are
+`EReal`-valued; the bridge is `ConvexFn.convexOn_toReal_dom`. `ε B` needs a norm on the dual side,
+so the subgradient statements are for a real inner-product space paired with itself.
 
 Two of the book's hypotheses are absent: the sequence need not lie in `U`, only converge to a point
 of it, and the approach to a boundary point needs neither closedness of `f` nor the book's simplex
@@ -696,7 +687,7 @@ theorem subgradient_dirDeriv [IsCompatiblePairing B] [IsCompatiblePairing B.flip
   rw [← subgradient_clFn (B := B) hgc hv₀, clFn_dirDeriv (B := B) hf ht hb, hsupp]
   simp only [LinearMap.flip_apply]
 
-/-- **Rockafellar's `∂f(x)_y` in his own words**: the subgradients at which `y` is *normal* to
+/-- **`∂f(x)_y` as a normal-cone condition**: the subgradients at which `y` is *normal* to
 `∂f x`. This is `subgradient_dirDeriv` read through the definition of the normal cone. -/
 theorem subgradient_dirDeriv_eq_sep_normalCone [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) (hgp : Proper (dirDeriv f x))
@@ -710,7 +701,7 @@ theorem subgradient_dirDeriv_eq_sep_normalCone [IsCompatiblePairing B] [IsCompat
 
 /-- **`∂(f'(x; ·))(y)` is an exposed face of `∂f x`**, in Mathlib's sense: it is cut out of `∂f x`
 by maximising the continuous linear functional `⟨y, ·⟩`. Composing with `IsExposed.isFace` makes it
-a face of `∂f x` in Rockafellar's §18 sense. -/
+a face of `∂f x` in the sense of §18. -/
 theorem isExposed_subgradient_dirDeriv [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) (hgp : Proper (dirDeriv f x))
     (hy : y ∈ ri (dom (dirDeriv f x))) :

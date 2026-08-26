@@ -19,18 +19,16 @@ derivatives there: there is a `K ≥ 0` with `f` Lipschitz on `S` with constant 
 ## Main results
 
 * `exists_lipschitz_forall_pairing_le_of_isCompact` — the three bounds, with one constant, over an
-  arbitrary pairing.
-* `exists_forall_norm_le_of_isCompact` — the same bound in the form `‖y‖ ≤ K`.
-* `image_subgradientRel_nonempty` — `∂f(S) ≠ ∅`.
+  arbitrary pairing; `exists_forall_norm_le_of_isCompact` is the same in the form `‖y‖ ≤ K`.
 * `isCompact_subgradient`, `isCompact_image_subgradientRel` — `∂f x` and `∂f(S)` are compact, hence
-  closed and bounded.
+  closed and bounded, and `∂f(S)` is non-empty.
 
 ## Implementation notes
 
 The bound on subgradients is stated as `⟨z, y⟩ ≤ K ‖z‖` for all `z`, which asks for no norm on the
 dual side; when `F = E` is an inner-product space, reading it at `z = y` gives `‖y‖ ≤ K`. The
-compactness statements are for a real inner-product space paired with itself, which is where `‖y‖`
-has a meaning. Closedness of `f` is used only for the topological half.
+compactness statements are for a real inner-product space paired with itself, and closedness of `f`
+is used only for them.
 
 ## References
 

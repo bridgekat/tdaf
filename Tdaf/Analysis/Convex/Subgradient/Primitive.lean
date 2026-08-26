@@ -27,31 +27,23 @@ off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f'₊`. No integral appear
 
 ## Main results
 
-* `monotoneCurve` — the region `Γ(φ)` above.
-* `isMonotoneRel_monotoneCurve`, `exists_mem_monotoneCurve_sub`,
-  `isMaximalMonotoneRel_monotoneCurve` — `Γ(φ)` is a maximal monotone mapping.
-* `subgradientRel_eq_monotoneCurve_rightDeriv` — the converse: every `∂f` on the line is such a
-  curve, that of its own right derivative.
-* `monotone_of_forall_ne_of_le_of_le`, `monotoneCurve_eq_of_forall_ne` — moving `φ` at a single
-  point, to anywhere between the two one-sided limits there, changes neither its monotonicity nor
-  `Γ(φ)`.
-* `exists_monotone_ne_bot_ne_top_monotoneCurve_eq` — every `∂f` is `Γ(φ)` for a `φ` that is finite
-  at a point, the form the book's definition of a complete non-decreasing curve takes.
+* `monotoneCurve` — the region `Γ(φ)` above; `isMaximalMonotoneRel_monotoneCurve` says it is a
+  maximal monotone mapping, and `subgradientRel_eq_monotoneCurve_rightDeriv` is the converse, that
+  every `∂f` on the line is the curve of its own right derivative.
+* `exists_monotone_ne_bot_ne_top_monotoneCurve_eq` — every `∂f` is `Γ(φ)` for a `φ` finite at a
+  point, since moving `φ` at one point changes neither its monotonicity nor `Γ(φ)`.
 * `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq` — the existence clause of
   **Theorem 24.2**, with the identification `f'₋ = φ⁻` and `f'₊ = φ⁺`.
-* `exists_closedProperConvexFn_forall_le_le` — **Theorem 24.2** in full: a closed proper convex `f`
-  with `f'₋ ≤ φ ≤ f'₊`, unique up to an additive constant.
+* `exists_closedProperConvexFn_forall_le_le` — **Theorem 24.2** in full.
 
 ## Implementation notes
 
 Maximality of `Γ(φ)` is proved from the antidiagonal statement rather than by case analysis on the
 places where `φ` is `±∞`: if `p` is comparable with every element of `Γ(φ)`, then a `q ∈ Γ(φ)` with
-the same coordinate sum must equal it.
-
-`Γ(φ)ₓ` can be empty — to the left of a point where `φ = -∞` — so the identity `Γ(φ) = ∂f` says
-nothing pointwise there. What settles the endpoints is that an empty extended-real interval has
-both of them `-∞` or both `+∞`, the two alternatives being separated by comparison with a fibre
-that is not empty.
+the same coordinate sum must equal it. `Γ(φ)ₓ` can be empty — to the left of a point where
+`φ = -∞` — so the identity `Γ(φ) = ∂f` says nothing pointwise there; what settles the endpoints is
+that an empty extended-real interval has both of them `-∞` or both `+∞`, the two alternatives being
+separated by comparison with a fibre that is not empty.
 
 ## References
 

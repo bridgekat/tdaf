@@ -20,15 +20,13 @@ dense subset of `int (dom f)`.
 
 ## Main results
 
-* `leftDeriv_eq_rightDeriv_of_continuousAt`, `continuousAt_rightDeriv_iff` — **Theorem 24.1** read
-  as a continuity criterion: `f'₊` is continuous at `x` exactly when `f'₋(x) = f'₊(x)`.
+* `continuousAt_rightDeriv_iff` — **Theorem 24.1** read as a continuity criterion: `f'₊` is
+  continuous at `x` exactly when `f'₋(x) = f'₊(x)`.
 * `countable_leftDeriv_ne_rightDeriv` — the jump set of `f'₊` is countable.
 * `differentiableAtFn_iff_leftDeriv_eq_rightDeriv` — on the line, differentiability at an interior
   point of `dom f` *is* the equality of the two one-sided derivatives.
 * `countable_not_differentiableAtFn`, `continuousAt_rightDeriv_of_differentiableAtFn`,
   `subset_closure_differentiableAtFn` — **Theorem 25.3**, its three assertions.
-* `dirDeriv_lineRestrict` — the directional derivative of `t ↦ f (x + t • y)` is that of `f` along
-  the line.
 * `continuousAt_dirDeriv_iff`, `subset_closure_twoSided_dirDeriv` — **Theorem 25.4**.
 
 ## Implementation notes
@@ -41,8 +39,7 @@ Three of the book's hypotheses are absent. Theorem 25.3's countability and densi
 closedness of `f`, because only the easy half of the continuity criterion is used; closedness
 enters only in the converse, through the one-sided limit formulas of §24. Theorem 25.4 needs no
 `y ≠ 0`, since at `y = 0` both sides of the equivalence hold, and its density clause is proved by
-restricting to a line and applying Theorem 25.3 there rather than through Lebesgue measure, so it
-needs no finite-dimensionality.
+restricting to a line rather than through Lebesgue measure, so it needs no finite-dimensionality.
 
 ## References
 

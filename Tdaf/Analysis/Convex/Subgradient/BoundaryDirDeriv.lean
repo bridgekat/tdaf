@@ -24,21 +24,16 @@ Both say the same thing at a single point `x`, namely that `∂f x = ∅`: (c) b
 
 * `closedProperConvexFn_lineRestrict` — the restriction of a closed proper convex function to a
   line is closed proper convex, based at *any* point of the line, not only a point of `dom f`.
-* `rightDeriv_lineRestrict_eq_dirDeriv` — `g'₊(t) = f'(x + t y; y)` for the restriction `g`, valid
-  also where `g t = ⊤` (both sides are `−∞` there).
-* `tendsto_dirDeriv_lineRestrict` — **Theorem 24.1** along the segment.
 * `subgradient_eq_empty_iff_tendsto_dirDeriv`, `subgradient_eq_empty_iff_tendsto_norm_fderiv` —
   conditions (c') and (c) at `x` each say that `∂f x = ∅`.
 * `essentiallySmooth_iff_tendsto_dirDeriv` — **Lemma 26.2**.
 
 ## Implementation notes
 
-`f` is assumed closed, where the book says "without loss of generality" and replaces `f` by `cl f`.
-Every consumer of the lemma already carries `ClosedFn f`, because Theorems 24.4 and 25.6 do.
-
-Condition (c') is stated as a `Tendsto` to `𝓝 ⊥`. The book's `↓` also records that
-`λ ↦ f'(x + λ(a − x); a − x)` is nondecreasing — that is `monotone_rightDeriv` for the restriction
-— but the content of (c') is the value of the limit, which is all the equivalence uses.
+`f` is assumed closed, where the book says "without loss of generality" and replaces `f` by `cl f`;
+every consumer already carries `ClosedFn f`. Condition (c') is stated as a `Tendsto` to `𝓝 ⊥`: the
+book's `↓` also records monotonicity of `λ ↦ f'(x + λ(a − x); a − x)`, but only the value of the
+limit is used.
 
 ## References
 

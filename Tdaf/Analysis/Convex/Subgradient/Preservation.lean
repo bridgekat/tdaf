@@ -13,33 +13,25 @@ import Tdaf.Analysis.Convex.Subgradient.StrictlyConvex
 # Preservation of essential smoothness
 
 **Corollaries 26.3.2 and 26.3.3**: essential smoothness survives infimal convolution and the image
-under a linear map, under the exactness hypotheses of §16.
-
-Both are one argument. Essential smoothness of `f` is essential *strict* convexity of `f*`
-(Theorem 26.3); the dual operation on the conjugate side is a sum, for `□`, or composition with the
-transpose, for the image; Theorems 23.8 and 23.9 push the domain of the subdifferential of that
-dual object into `dom ∂f*`; and strict convexity there survives adding a convex function or
-precomposing with an injective linear map. Theorem 26.3 read backwards returns essential
-smoothness.
+under a linear map, under the exactness hypotheses of §16. Both are one argument. Essential
+smoothness of `f` is essential *strict* convexity of `f*` (Theorem 26.3); the dual operation on the
+conjugate side is a sum, for `□`, or composition with the transpose, for the image; Theorems 23.8
+and 23.9 push the domain of the subdifferential of that dual object into `dom ∂f*`; and strict
+convexity there survives adding a convex function or precomposing with an injective linear map.
+Theorem 26.3 read backwards returns essential smoothness.
 
 ## Main results
 
-* `StrictConvexOnFn.add_convexFn` — a strictly convex summand makes the sum strictly convex, on a
-  set where both summands are finite.
-* `StrictConvexOnFn.compLin` — strict convexity pulls back along an injective linear map.
-* `IsExactSum.essentiallySmooth_infConv`, `essentiallySmooth_infConv_of_relint` —
-  **Corollary 26.3.2**.
-* `IsExactImage.essentiallySmooth_mapLin`, `essentiallySmooth_mapLin_of_relint` —
-  **Corollary 26.3.3**.
+* `StrictConvexOnFn.add_convexFn`, `StrictConvexOnFn.compLin` — a strictly convex summand makes a
+  sum strictly convex, and strict convexity pulls back along an injective linear map.
+* `IsExactSum.essentiallySmooth_infConv`, `IsExactImage.essentiallySmooth_mapLin` —
+  **Corollaries 26.3.2 and 26.3.3**, with `_of_relint` variants for the book's hypotheses
+  `ri (dom f₁*) ∩ ri (dom f₂*) ≠ ∅` and `∃ y*, A' y* ∈ ri (dom f*)`.
 
 ## Implementation notes
 
-The main theorems are stated against `IsExactSum` and `IsExactImage`; the book's hypotheses
-`ri (dom f₁*) ∩ ri (dom f₂*) ≠ ∅` and `∃ y*, A' y* ∈ ri (dom f*)` are sufficient for those and give
-the `_of_relint` corollaries. In Corollary 26.3.3 the interface is instantiated for the *transpose*
-`A'`, from the dual of the target to the dual of the source, because the identity used is
-`A f = (f* A')*`; the hypothesis `IsAdjointPair (innerₗ G) (innerₗ E) A' A` is the ordinary relation
-`⟪y, A x⟫ = ⟪A' y, x⟫`, and surjectivity of `A` enters only through injectivity of `A'`.
+Corollary 26.3.3 instantiates the exactness interface for the *transpose* `A'`, because the
+identity used is `A f = (f* A')*`; surjectivity of `A` enters only through injectivity of `A'`.
 
 ## References
 
