@@ -28,8 +28,10 @@ of the section's counterexamples.
 | Theorem 26.1 | `theorem_26_1`, `theorem_26_1_gradient`, `theorem_26_1_empty`,
   `theorem_26_1_domSubgradient` |
 | Lemma 26.2 | `EssentiallySmoothDir`, `lemma_26_2`, `lemma_26_2_at` |
-| §26 counterexample, p. 253 | `essStrictlyConvexFn`, `essStrictlyConvexFn_not_strictConvexOn_dom` |
-| §26 counterexample, p. 254 | `strictOnRelintFn`, `strictOnRelintFn_not_essentiallyStrictlyConvex` |
+| §26 counterexample, p. 253 | `essStrictlyConvexFn`, `essStrictlyConvexFn_axis`,
+  `essStrictlyConvexFn_not_strictConvexOn_dom` |
+| §26 counterexample, p. 254 | `strictOnRelintFn`, `nonnegAxis`, `convex_nonnegAxis`,
+  `zero_mem_subgradient_strictOnRelintFn`, `strictOnRelintFn_not_essentiallyStrictlyConvex` |
 | Theorem 26.3 | `theorem_26_3`, `theorem_26_3'` |
 | Corollary 26.3.1 | `corollary_26_3_1` |
 | Corollary 26.3.2 | `corollary_26_3_2` |
@@ -38,8 +40,9 @@ of the section's counterexamples.
 | Theorem 26.4 | `theorem_26_4_wellDefined`, `theorem_26_4_eq`, `theorem_26_4_subset_dom_conj` |
 | Corollary 26.4.1 | `corollary_26_4_1_dom`, `corollary_26_4_1_relint_subset`,
   `corollary_26_4_1_subset_dom`, `corollary_26_4_1_eq`, `corollary_26_4_1_strictConvexOn` |
-| §26 counterexample, p. 257 | `halfPlaneFn`, `legendreDomain_halfPlaneFn`,
-  `not_convex_legendreDomain_halfPlaneFn` |
+| §26 counterexample, p. 257 | `halfPlaneFn`, `parabola`, `mem_subgradient_halfPlaneFn_iff`,
+  `gradientRange_halfPlaneFn`, `legendreDomain_halfPlaneFn`,
+  `not_convex_legendreDomain_halfPlaneFn`, `not_essentiallySmooth_halfPlaneFn` |
 | §26 definition, p. 258 | `LegendreType` (backbone), `legendreType_iff` |
 | Theorem 26.5 | `theorem_26_5`, `theorem_26_5_legendreDomain`, `theorem_26_5_conj_apply`,
   `theorem_26_5_legendreDomain_conj`, `theorem_26_5_apply`, `theorem_26_5_bijOn`,
@@ -113,8 +116,15 @@ counterexample is proved:
   which the function is constant. The complementary claim, that it *is* strictly convex on
   `ri (dom f)`, is the same kind of computation and is likewise not proved. See `## Backbone gaps`.
 
-The third counterexample, the parabola of p. 257, is proved in full: it is the one that refutes the
-natural guess, and a reader cannot reconstruct it from the surrounding theory.
+The third counterexample, the parabola of p. 257, is proved in full — `D` is computed exactly
+(`gradientRange_halfPlaneFn`), shown not to be convex, and the example is shown to fail condition
+(c) at the origin (`not_essentiallySmooth_halfPlaneFn`), which is what keeps it from contradicting
+Corollary 26.4.1. It is the one that refutes the natural guess, and a reader cannot reconstruct it
+from the surrounding theory.
+
+**No `m`-ary form of Corollary 26.3.2.** The book states it for two functions and derives the
+`f₁ □ ⋯ □ f_m` case nowhere; the backbone's `IsExactSum` is binary too. The `m`-ary form is §16's
+open item (`Section09`'s `## What is not here`), not §26's.
 
 ## Backbone gaps
 
@@ -134,7 +144,22 @@ definition) and the theorems that consume it. What is wanted, in
   for `f` finite on `C` does not exist. That bridge is the gap, and it is what both halves of the
   two unproved claims above would run on.
 
-Nothing in this file's *numbered* results is blocked by either item.
+**The conjugate has no `innerₗ` / `topDualPairing` bridge.** `Subgradient/Legendre.lean` — the whole
+of Theorem 26.4 — is written on a general normed space and therefore against
+`conj (topDualPairing ℝ E).flip`, while `Subgradient/LegendreType.lean` and everything downstream is
+written against `conj (innerₗ E)`. Nothing connects them, so the surface pays
+
+```
+conj (innerₗ E) f v = conj (topDualPairing ℝ E).flip f (InnerProductSpace.toDual ℝ E v)
+```
+
+as a `private` lemma (`conj_pairing_eq`) before it can use `conj_eq_of_hasGradientAt`. It belongs in
+`Tdaf/Analysis/Convex/Subgradient/Rademacher.lean`, beside `mem_subgradient_innerL_iff`, which is
+*exactly* this bridge for `subgradient` and was written for the same reason. The supporting
+`toDual_apply_eq_pairing` is `real_inner_comm` and needs no home of its own.
+
+Nothing in this file's *numbered* results is blocked by any of these: the first two block only the
+unproved halves of the two counterexamples, and the third cost one `private` lemma.
 
 ## Where the book is defective
 
@@ -149,6 +174,14 @@ hypotheses are what make the *domain* `D` interesting, not what make the value w
 13.3.1 for the equivalence with the recession-function condition; the backbone's
 `bijOn_gradient_univ_iff` states the domain form, and `cofinite_iff_dom_conj_eq_univ` is the one
 rewrite that puts the book's own word back in. Both forms are stated here.
+
+**Theorem 26.5 says "closed convex function" where its own proof needs "closed *proper* convex".**
+The theorem's first assertion is deduced from Corollary 26.3.1, which is stated for a closed
+*proper* convex function, and its "`(C*, f*)` is the Legendre conjugate of `(C, f)`" clause runs
+through Corollary 26.4.1, likewise proper. `theorem_26_5` and its companions therefore carry
+`Proper f`. Nothing is lost: for an improper closed convex function both sides of the equivalence
+are false, since `f` is then `+∞` everywhere or `−∞` on `cl (dom f)` and in neither case is it
+differentiable on a non-empty interior.
 
 **Corollary 26.3.3's "`A` maps `ℝⁿ` onto `ℝᵐ`" is used only through injectivity of `A*`.** The
 book's proof says so ("`A*⁻¹` is single-valued (inasmuch as `A` maps `ℝⁿ` onto `ℝᵐ`)"), and the
@@ -334,6 +367,210 @@ the convexity inequality between two different points of `C` is strict; a proper
 
 Rockafellar's two warnings about the definition are the counterexamples below. -/
 
+/-! ### Coordinates on `ℝ²`
+
+The three counterexamples of the section all live on `ℝ²`, and these are the four facts about
+`Rn 2` they need. They are `private`: nothing outside this module should be reading coordinates. -/
+
+/-- Coordinates of the pairing on `ℝ²`. -/
+private theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
+  simp [PiLp.inner_apply, Fin.sum_univ_two]
+  ring
+
+private theorem sub_apply_two (u v : Rn 2) (i : Fin 2) : (u - v) i = u i - v i := rfl
+
+/-- Two vectors of `ℝ²` agreeing in both coordinates are equal. -/
+private theorem ext_two {u v : Rn 2} (h0 : u 0 = v 0) (h1 : u 1 = v 1) : u = v := by
+  ext i
+  fin_cases i
+  · exact h0
+  · exact h1
+
+/-- **A function vanishing along the non-negative `ξ₁`-axis is not strictly convex on any set
+containing two points of that axis.** Both counterexamples below are of this shape, and this is the
+only computation they share: `(3/2, 0)` is the midpoint of `(1, 0)` and `(2, 0)`, and the three
+values are all `0`, so the convexity inequality holds with equality. -/
+private theorem not_strictConvexOnFn_of_axis {g : Rn 2 → EReal} {C : Set (Rn 2)}
+    (h1 : (WithLp.toLp 2 ![(1 : ℝ), 0] : Rn 2) ∈ C)
+    (h2 : (WithLp.toLp 2 ![(2 : ℝ), 0] : Rn 2) ∈ C)
+    (hg : ∀ t : ℝ, 0 ≤ t → g (WithLp.toLp 2 ![t, 0]) = 0) : ¬ StrictConvexOnFn g C := by
+  intro h
+  have hne : (WithLp.toLp 2 ![(1 : ℝ), 0] : Rn 2) ≠ WithLp.toLp 2 ![(2 : ℝ), 0] := by
+    intro hc
+    have hco : (WithLp.toLp 2 ![(1 : ℝ), 0] : Rn 2) 0 = (WithLp.toLp 2 ![(2 : ℝ), 0] : Rn 2) 0 :=
+      congrArg (fun w : Rn 2 => w 0) hc
+    have hnum : (1 : ℝ) = 2 := hco
+    norm_num at hnum
+  have hlt := h h1 h2 hne (by norm_num : (0:ℝ) < 1/2) (by norm_num : (0:ℝ) < 1/2) (by norm_num)
+  have hmid : ((1/2 : ℝ) • (WithLp.toLp 2 ![(1 : ℝ), 0] : Rn 2)
+      + (1/2 : ℝ) • (WithLp.toLp 2 ![(2 : ℝ), 0] : Rn 2)) = WithLp.toLp 2 ![(3/2 : ℝ), 0] :=
+    ext_two (by change (1/2 : ℝ) * 1 + (1/2 : ℝ) * 2 = 3/2; norm_num)
+      (by change (1/2 : ℝ) * 0 + (1/2 : ℝ) * 0 = 0; norm_num)
+  rw [hmid, hg 1 zero_le_one, hg 2 (by norm_num), hg (3/2) (by norm_num)] at hlt
+  simp at hlt
+
+/-! ### The counterexample of p. 253
+
+Rockafellar's first warning: a closed proper convex function which is essentially strictly convex
+need **not** be strictly convex on the whole of `dom f`. -/
+
+/-- **Rockafellar, §26 (p. 253)**, the first counterexample:
+
+```
+f(ξ₁, ξ₂) = ξ₂²/2ξ₁ − 2ξ₂^(1/2)   if ξ₁ > 0, ξ₂ ≥ 0
+          = 0                      if ξ₁ = 0 = ξ₂
+          = +∞                     otherwise.
+```
+
+The two branches are written as one formula: at the origin the real expression reads
+`0/0 − 2√0`, which is `0` in Lean (`div_zero`, `Real.sqrt_zero`), matching the book's second clause
+exactly. The domain condition is carried as a `⨅` over a proposition (`iInf_pos` / `iInf_neg` are
+the defining equations), which keeps `Decidable` out of the statement.
+
+Rockafellar's claim about this `f` is that it is essentially strictly convex — indeed essentially
+smooth — while **not** being strictly convex on `dom f`, because it vanishes along the whole
+non-negative `ξ₁`-axis. The second half is `essStrictlyConvexFn_not_strictConvexOn_dom`; the first
+is not proved here, and the reason is in the module docstring. -/
+noncomputable def essStrictlyConvexFn (x : Rn 2) : EReal :=
+  ⨅ _ : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0),
+    ((x 1 ^ 2 / (2 * x 0) - 2 * Real.sqrt (x 1) : ℝ) : EReal)
+
+/-- The value of the p. 253 example on its effective domain. -/
+theorem essStrictlyConvexFn_of_mem {x : Rn 2}
+    (h : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0)) :
+    essStrictlyConvexFn x = ((x 1 ^ 2 / (2 * x 0) - 2 * Real.sqrt (x 1) : ℝ) : EReal) :=
+  iInf_pos h
+
+/-- **The p. 253 example vanishes along the whole non-negative `ξ₁`-axis**, which is the book's
+observation. -/
+theorem essStrictlyConvexFn_axis {t : ℝ} (ht : 0 ≤ t) :
+    essStrictlyConvexFn (WithLp.toLp 2 ![t, 0]) = 0 := by
+  have e0 : (WithLp.toLp 2 ![t, 0] : Rn 2) 0 = t := rfl
+  have e1 : (WithLp.toLp 2 ![t, 0] : Rn 2) 1 = 0 := rfl
+  have hc : (0 < (WithLp.toLp 2 ![t, 0] : Rn 2) 0 ∧ 0 ≤ (WithLp.toLp 2 ![t, 0] : Rn 2) 1)
+      ∨ ((WithLp.toLp 2 ![t, 0] : Rn 2) 0 = 0 ∧ (WithLp.toLp 2 ![t, 0] : Rn 2) 1 = 0) := by
+    rw [e0, e1]
+    rcases eq_or_lt_of_le ht with he | hlt
+    · exact Or.inr ⟨he.symm, rfl⟩
+    · exact Or.inl ⟨hlt, le_rfl⟩
+  rw [essStrictlyConvexFn_of_mem hc, e0, e1]
+  norm_num
+
+/-- The non-negative `ξ₁`-axis lies in the effective domain of the p. 253 example. -/
+theorem essStrictlyConvexFn_mem_dom {t : ℝ} (ht : 0 ≤ t) :
+    (WithLp.toLp 2 ![t, 0] : Rn 2) ∈ dom essStrictlyConvexFn := by
+  rw [mem_dom, essStrictlyConvexFn_axis ht]
+  exact lt_top_iff_ne_top.2 (by simp)
+
+/-- **Rockafellar, §26 (p. 253).** The example is not strictly convex on `dom f`: it is identically
+zero along the non-negative `ξ₁`-axis, which is a convex subset of `dom f`. This is what separates
+*essential* strict convexity from strict convexity on the effective domain. -/
+theorem essStrictlyConvexFn_not_strictConvexOn_dom :
+    ¬ StrictConvexOnFn essStrictlyConvexFn (dom essStrictlyConvexFn) :=
+  not_strictConvexOnFn_of_axis (essStrictlyConvexFn_mem_dom zero_le_one)
+    (essStrictlyConvexFn_mem_dom (by norm_num)) fun _ ht => essStrictlyConvexFn_axis ht
+
+/-! ### The counterexample of p. 254
+
+Rockafellar's second warning: a closed proper convex function may be strictly convex on
+`ri (dom f)` and still fail to be essentially strictly convex, because `dom ∂f` can be strictly
+larger than `ri (dom f)` and can contain a convex set on which `f` is constant. -/
+
+/-- **Rockafellar, §26 (p. 254)**, the second counterexample:
+
+```
+f(ξ₁, ξ₂) = ξ₂²/2ξ₁ + ξ₂²   if ξ₁ > 0, ξ₂ ≥ 0
+          = 0                if ξ₁ = 0 = ξ₂
+          = +∞               otherwise.
+```
+
+Encoded exactly as `essStrictlyConvexFn` is. Rockafellar's claim is that `ri (dom f)` is the open
+positive quadrant, on which `f` *is* strictly convex, while `dom ∂f` also contains the whole
+non-negative `ξ₁`-axis, on which `f` is constant — so `f` is **not** essentially strictly convex.
+The second half is `strictOnRelintFn_not_essentiallyStrictlyConvex`. -/
+noncomputable def strictOnRelintFn (x : Rn 2) : EReal :=
+  ⨅ _ : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0),
+    ((x 1 ^ 2 / (2 * x 0) + x 1 ^ 2 : ℝ) : EReal)
+
+/-- The value of the p. 254 example on its effective domain. -/
+theorem strictOnRelintFn_of_mem {x : Rn 2}
+    (h : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0)) :
+    strictOnRelintFn x = ((x 1 ^ 2 / (2 * x 0) + x 1 ^ 2 : ℝ) : EReal) :=
+  iInf_pos h
+
+/-- Off its effective domain the p. 254 example is `+∞`. -/
+theorem strictOnRelintFn_of_not_mem {x : Rn 2}
+    (h : ¬ ((0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0))) : strictOnRelintFn x = ⊤ :=
+  iInf_neg h
+
+/-- The p. 254 example is non-negative everywhere, which is what makes `0` a subgradient at every
+point where it vanishes. -/
+theorem strictOnRelintFn_nonneg (x : Rn 2) : 0 ≤ strictOnRelintFn x := by
+  by_cases h : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0)
+  · rw [strictOnRelintFn_of_mem h]
+    have hr : (0 : ℝ) ≤ x 1 ^ 2 / (2 * x 0) + x 1 ^ 2 := by
+      rcases h with ⟨h0, -⟩ | ⟨-, h1⟩
+      · have hq : (0 : ℝ) ≤ x 1 ^ 2 / (2 * x 0) := div_nonneg (sq_nonneg _) (by linarith)
+        nlinarith [sq_nonneg (x 1)]
+      · rw [h1]
+        norm_num
+    exact_mod_cast hr
+  · rw [strictOnRelintFn_of_not_mem h]
+    exact le_top
+
+/-- The non-negative `ξ₁`-axis of `ℝ²`. -/
+def nonnegAxis : Set (Rn 2) := {x : Rn 2 | 0 ≤ x 0 ∧ x 1 = 0}
+
+/-- The non-negative `ξ₁`-axis is convex — which is what makes it admissible in Rockafellar's
+definition of essential strict convexity. -/
+theorem convex_nonnegAxis : Convex ℝ nonnegAxis := by
+  intro x hx y hy a b ha hb hab
+  obtain ⟨hx0, hx1⟩ := hx
+  obtain ⟨hy0, hy1⟩ := hy
+  constructor
+  · change 0 ≤ a * x 0 + b * y 0
+    nlinarith
+  · change a * x 1 + b * y 1 = 0
+    rw [hx1, hy1]
+    ring
+
+/-- The p. 254 example vanishes on the non-negative `ξ₁`-axis. -/
+theorem strictOnRelintFn_eq_zero_of_mem {x : Rn 2} (hx : x ∈ nonnegAxis) :
+    strictOnRelintFn x = 0 := by
+  obtain ⟨h0, h1⟩ := hx
+  have hc : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0) := by
+    rcases eq_or_lt_of_le h0 with he | hlt
+    · exact Or.inr ⟨he.symm, h1⟩
+    · exact Or.inl ⟨hlt, le_of_eq h1.symm⟩
+  rw [strictOnRelintFn_of_mem hc, h1]
+  norm_num
+
+/-- **The whole non-negative `ξ₁`-axis lies in `dom ∂f`** for the p. 254 example: the function is
+non-negative and vanishes there, so `0` is a subgradient at each of its points. This is exactly
+Rockafellar's observation that `dom ∂f` is bigger than `ri (dom f)` here. -/
+theorem zero_mem_subgradient_strictOnRelintFn {x : Rn 2} (hx : x ∈ nonnegAxis) :
+    (0 : Rn 2) ∈ subgradient (pairing 2) strictOnRelintFn x := by
+  intro z
+  have h0 : ((pairing 2 (z - x)) (0 : Rn 2) : ℝ) = 0 := map_zero _
+  rw [strictOnRelintFn_eq_zero_of_mem hx, h0]
+  simpa using strictOnRelintFn_nonneg z
+
+/-- The p. 254 example vanishes at `(t, 0)` for `t ≥ 0`. -/
+theorem strictOnRelintFn_axis {t : ℝ} (ht : 0 ≤ t) :
+    strictOnRelintFn (WithLp.toLp 2 ![t, 0]) = 0 :=
+  strictOnRelintFn_eq_zero_of_mem ⟨ht, rfl⟩
+
+/-- **Rockafellar, §26 (p. 254).** The example is not essentially strictly convex: the non-negative
+`ξ₁`-axis is a convex subset of `dom ∂f` on which the function is constant. -/
+theorem strictOnRelintFn_not_essentiallyStrictlyConvex :
+    ¬ EssentiallyStrictlyConvex (B := pairing 2) strictOnRelintFn := by
+  intro h
+  have hsub : nonnegAxis ⊆ domSubgradient (pairing 2) strictOnRelintFn :=
+    fun _ hx => ⟨0, zero_mem_subgradient_strictOnRelintFn hx⟩
+  refine not_strictConvexOnFn_of_axis (C := nonnegAxis) ⟨zero_le_one, rfl⟩
+    ⟨by norm_num, rfl⟩ (fun _ ht => strictOnRelintFn_axis ht) ?_
+  exact h convex_nonnegAxis hsub
+
 /-! ### Theorem 26.3 -/
 
 /-- **Rockafellar, Theorem 26.3.** A closed proper convex function is essentially strictly convex
@@ -406,9 +643,8 @@ def legendreDomain (f : Rn n → EReal) : Set (Rn n) :=
 /-- The Riesz representative of `v` evaluated at `x` is the book's `⟨x, v⟩`. Every backbone result
 about `HasGradientAt` produces the left-hand side, and every surface statement wants the right. -/
 private theorem toDual_apply_eq_pairing (v x : Rn n) :
-    (InnerProductSpace.toDual ℝ (Rn n) v) x = pairing n x v := by
-  rw [InnerProductSpace.toDual_apply, pairing_apply]
-  exact real_inner_comm x v
+    (InnerProductSpace.toDual ℝ (Rn n) v) x = pairing n x v :=
+  real_inner_comm x v
 
 /-- **The bridge to the backbone's `gradientRange`**, valid as soon as condition (b) holds:
 `{v | ∃ x, ∇f x = v}` and "the image of `C` under `∇f`" are the same set, because every gradient is
@@ -512,6 +748,292 @@ theorem corollary_26_4_1_strictConvexOn (hf : ConvexFn f) (hp : Proper f) (hcl :
     StrictConvexOnFn (conj (pairing n) f) C := by
   rw [legendreDomain_eq_gradientRange hes.differentiableAtFn] at hCsub
   exact strictConvexOnFn_conj_of_subset_gradientRange hf hp hcl hes hC hCsub
+
+/-! ### The counterexample of p. 257: the parabola
+
+Rockafellar, p. 257: "If `f` is a differentiable convex function on a non-empty open convex set `C`
+such that condition (c) of the definition of essentially smooth is not satisfied, then the domain
+`D` of the Legendre conjugate might not be *almost convex*." The witness is `ξ₁²/4ξ₂` on the open
+upper half-plane, whose `D` is the parabola `ξ₂* = −(ξ₁*)²`.
+
+This is the counterexample that pins down Corollary 26.4.1: without condition (c) the squeeze
+`ri (dom f*) ⊆ D ⊆ dom f*` fails, and `D` need not even be convex. It is proved in full here. -/
+
+/-- The vector `(a, −a²)` of `ℝ²`. -/
+noncomputable def parabolaPoint (a : ℝ) : Rn 2 := WithLp.toLp 2 ![a, -a ^ 2]
+
+@[simp] theorem parabolaPoint_zero (a : ℝ) : parabolaPoint a 0 = a := rfl
+
+@[simp] theorem parabolaPoint_one (a : ℝ) : parabolaPoint a 1 = -a ^ 2 := rfl
+
+theorem parabolaPoint_zero_eq : parabolaPoint 0 = 0 :=
+  ext_two (by norm_num) (by norm_num)
+
+/-- **Rockafellar, §26 (p. 257).** The parabola `P = {(ξ₁*, ξ₂*) | ξ₂* = −(ξ₁*)²}`. -/
+def parabola : Set (Rn 2) := {w : Rn 2 | w 1 = -(w 0) ^ 2}
+
+theorem mem_parabola {w : Rn 2} : w ∈ parabola ↔ w 1 = -(w 0) ^ 2 := Iff.rfl
+
+/-- **Rockafellar, §26 (p. 257).** `f(ξ₁, ξ₂) = ξ₁²/4ξ₂` on the open upper half-plane, extended by
+`+∞`, so that `C = int (dom f)` is exactly the open upper half-plane. -/
+noncomputable def halfPlaneFn (x : Rn 2) : EReal :=
+  ⨅ _ : 0 < x 1, ((x 0 ^ 2 / (4 * x 1) : ℝ) : EReal)
+
+theorem halfPlaneFn_of_pos {x : Rn 2} (hx : 0 < x 1) :
+    halfPlaneFn x = ((x 0 ^ 2 / (4 * x 1) : ℝ) : EReal) := iInf_pos hx
+
+theorem halfPlaneFn_of_nonpos {x : Rn 2} (hx : ¬ 0 < x 1) : halfPlaneFn x = ⊤ := iInf_neg hx
+
+theorem halfPlaneFn_ne_bot (x : Rn 2) : halfPlaneFn x ≠ ⊥ := by
+  by_cases hx : 0 < x 1
+  · rw [halfPlaneFn_of_pos hx]; exact _root_.EReal.coe_ne_bot _
+  · rw [halfPlaneFn_of_nonpos hx]; exact top_ne_bot
+
+theorem dom_halfPlaneFn : dom halfPlaneFn = {x : Rn 2 | 0 < x 1} := by
+  ext x
+  rw [mem_dom]
+  by_cases hx : 0 < x 1
+  · simp [halfPlaneFn_of_pos hx, hx]
+  · simp [halfPlaneFn_of_nonpos hx, hx]
+
+/-- `C = int (dom f)` is the open upper half-plane, as the book takes it to be. -/
+theorem interior_dom_halfPlaneFn : interior (dom halfPlaneFn) = {x : Rn 2 | 0 < x 1} := by
+  rw [dom_halfPlaneFn]
+  exact IsOpen.interior_eq (isOpen_lt continuous_const (by fun_prop))
+
+/-- The p. 257 example is convex: "quadratic over linear" is jointly convex, and the identity
+that says so is `A − B = ab(ξ₁ η₂ − η₁ ξ₂)² / 4ξ₂η₂(aξ₂ + bη₂)`. -/
+theorem convexFn_halfPlaneFn : ConvexFn halfPlaneFn := by
+  refine (convexFn_iff_le halfPlaneFn_ne_bot).2 fun x y a b ha hb hab => ?_
+  by_cases hx : 0 < x 1
+  · by_cases hy : 0 < y 1
+    · have h0 : (a • x + b • y) 0 = a * x 0 + b * y 0 := rfl
+      have h1 : (a • x + b • y) 1 = a * x 1 + b * y 1 := rfl
+      have hz : 0 < (a • x + b • y) 1 := by rw [h1]; positivity
+      rw [halfPlaneFn_of_pos hx, halfPlaneFn_of_pos hy, halfPlaneFn_of_pos hz, h0, h1,
+        Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add,
+        _root_.EReal.coe_le_coe_iff]
+      have hx0 : x 1 ≠ 0 := ne_of_gt hx
+      have hy0 : y 1 ≠ 0 := ne_of_gt hy
+      have hs : 0 < a * x 1 + b * y 1 := by positivity
+      have hs0 : a * x 1 + b * y 1 ≠ 0 := ne_of_gt hs
+      have hid : a * (x 0 ^ 2 / (4 * x 1)) + b * (y 0 ^ 2 / (4 * y 1))
+            - (a * x 0 + b * y 0) ^ 2 / (4 * (a * x 1 + b * y 1))
+          = a * b * (x 0 * y 1 - y 0 * x 1) ^ 2
+              / (4 * (x 1 * y 1 * (a * x 1 + b * y 1))) := by
+        field_simp
+        ring
+      have hnn : 0 ≤ a * b * (x 0 * y 1 - y 0 * x 1) ^ 2
+          / (4 * (x 1 * y 1 * (a * x 1 + b * y 1))) := by positivity
+      linarith
+    · rw [halfPlaneFn_of_nonpos hy, _root_.EReal.coe_mul_top_of_pos hb,
+        _root_.EReal.add_top_of_ne_bot (Tdaf.EReal.coe_mul_ne_bot ha.le (halfPlaneFn_ne_bot x))]
+      exact le_top
+  · rw [halfPlaneFn_of_nonpos hx, _root_.EReal.coe_mul_top_of_pos ha,
+      _root_.EReal.top_add_of_ne_bot (Tdaf.EReal.coe_mul_ne_bot hb.le (halfPlaneFn_ne_bot y))]
+    exact le_top
+
+theorem proper_halfPlaneFn : Proper halfPlaneFn := by
+  refine ⟨⟨WithLp.toLp 2 ![0, 1], ?_⟩, halfPlaneFn_ne_bot⟩
+  rw [mem_dom, halfPlaneFn_of_pos (x := WithLp.toLp 2 ![0, 1]) (by norm_num)]
+  exact _root_.EReal.coe_lt_top _
+
+/-- **The subdifferential of `ξ₁²/4ξ₂` in coordinates.** Both directions come from the same
+completed square: `ξ₁²/4ξ₂ − u₀ξ₁ − u₁ξ₂ = (ξ₁ − 2u₀ξ₂)²/4ξ₂ − ξ₂(u₀² + u₁)`, whose infimum over
+the ray `ξ = (2su₀, s)` is `−s(u₀² + u₁)`. Testing at `s = ξ₂`, `s = ξ₂ + 1` and `s = ξ₂/2` forces
+both `u₀² + u₁ = 0` and the completed square to vanish, with no case analysis. -/
+theorem mem_subgradient_halfPlaneFn_iff {x u : Rn 2} (hx : 0 < x 1) :
+    u ∈ subgradient (pairing 2) halfPlaneFn x ↔ u 1 = -(u 0) ^ 2 ∧ x 0 = 2 * u 0 * x 1 := by
+  constructor
+  · intro h
+    have key : ∀ s : ℝ, 0 < s →
+        x 0 ^ 2 / (4 * x 1) - u 0 * x 0 - u 1 * x 1 ≤ -(s * (u 0 ^ 2 + u 1)) := by
+      intro s hs
+      have hzs : (0 : ℝ) < (WithLp.toLp 2 ![2 * s * u 0, s] : Rn 2) 1 := hs
+      have hle := h (WithLp.toLp 2 ![2 * s * u 0, s] : Rn 2)
+      rw [halfPlaneFn_of_pos hx, halfPlaneFn_of_pos hzs, pairing_two] at hle
+      rw [sub_apply_two, sub_apply_two, ← _root_.EReal.coe_add,
+        _root_.EReal.coe_le_coe_iff] at hle
+      have e0 : (WithLp.toLp 2 ![2 * s * u 0, s] : Rn 2) 0 = 2 * s * u 0 := rfl
+      have e1 : (WithLp.toLp 2 ![2 * s * u 0, s] : Rn 2) 1 = s := rfl
+      rw [e0, e1] at hle
+      have hrs : (2 * s * u 0) ^ 2 / (4 * s) = s * u 0 ^ 2 := by
+        field_simp
+        ring
+      rw [hrs] at hle
+      nlinarith [hle]
+    have hK : 0 ≤ (x 0 - 2 * u 0 * x 1) ^ 2 / (4 * x 1) := by positivity
+    have hid : x 0 ^ 2 / (4 * x 1) - u 0 * x 0 - u 1 * x 1
+        = (x 0 - 2 * u 0 * x 1) ^ 2 / (4 * x 1) - x 1 * (u 0 ^ 2 + u 1) := by
+      have hx0 : x 1 ≠ 0 := ne_of_gt hx
+      field_simp
+      ring
+    have h1 := key (x 1) hx
+    have h2 := key (x 1 + 1) (by linarith)
+    have h3 := key (x 1 / 2) (by linarith)
+    rw [hid] at h1 h2 h3
+    have hd : u 0 ^ 2 + u 1 = 0 := by nlinarith [hK, hx]
+    have hKz : (x 0 - 2 * u 0 * x 1) ^ 2 / (4 * x 1) = 0 := by nlinarith [hK, hd]
+    refine ⟨by linarith, ?_⟩
+    have hx0 : x 1 ≠ 0 := ne_of_gt hx
+    have hsq : (x 0 - 2 * u 0 * x 1) ^ 2 = 0 := by
+      field_simp at hKz
+      simpa using hKz
+    have hz := pow_eq_zero_iff (n := 2) (by norm_num) |>.1 hsq
+    linarith
+  · rintro ⟨hu1, hu0⟩ z
+    by_cases hz : 0 < z 1
+    · rw [halfPlaneFn_of_pos hx, halfPlaneFn_of_pos hz, pairing_two, sub_apply_two,
+        sub_apply_two, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff]
+      have hz4 : (0 : ℝ) < 4 * z 1 := by linarith
+      have hxval : x 0 ^ 2 / (4 * x 1) = u 0 ^ 2 * x 1 := by
+        have hx0 : x 1 ≠ 0 := ne_of_gt hx
+        rw [hu0]
+        field_simp
+        ring
+      rw [hxval, hu0, hu1, le_div_iff₀ hz4]
+      nlinarith [sq_nonneg (z 0 - 2 * u 0 * z 1)]
+    · rw [halfPlaneFn_of_nonpos hz]
+      exact le_top
+
+/-- On the open upper half-plane the subdifferential of the p. 257 example is the single vector
+`(ξ₁/2ξ₂, −ξ₁²/4ξ₂²)`, which lies on the parabola. -/
+theorem subgradient_halfPlaneFn {x : Rn 2} (hx : 0 < x 1) :
+    subgradient (pairing 2) halfPlaneFn x = {parabolaPoint (x 0 / (2 * x 1))} := by
+  have hx0 : x 1 ≠ 0 := ne_of_gt hx
+  ext u
+  rw [mem_subgradient_halfPlaneFn_iff hx, Set.mem_singleton_iff]
+  constructor
+  · rintro ⟨hu1, hu0⟩
+    have hu : u 0 = x 0 / (2 * x 1) := by field_simp; linarith
+    exact ext_two (by rw [parabolaPoint_zero, hu]) (by rw [parabolaPoint_one, hu1, hu])
+  · rintro rfl
+    refine ⟨by rw [parabolaPoint_zero, parabolaPoint_one], ?_⟩
+    rw [parabolaPoint_zero]
+    field_simp
+
+/-- The p. 257 example is differentiable throughout `C`, its gradient at `x` being the single
+subgradient there (Theorem 25.1 backwards). -/
+theorem hasGradientAt_halfPlaneFn {x : Rn 2} (hx : 0 < x 1) :
+    HasGradientAt halfPlaneFn
+      (InnerProductSpace.toDual ℝ (Rn 2) (parabolaPoint (x 0 / (2 * x 1)))) x :=
+  hasGradientAt_toDual_of_subgradient_eq_singleton convexFn_halfPlaneFn proper_halfPlaneFn
+    (subgradient_halfPlaneFn hx)
+
+theorem differentiableAtFn_halfPlaneFn ⦃z : Rn 2⦄ (hz : z ∈ interior (dom halfPlaneFn)) :
+    DifferentiableAtFn halfPlaneFn z := by
+  rw [interior_dom_halfPlaneFn] at hz
+  exact ⟨_, hasGradientAt_halfPlaneFn hz⟩
+
+/-- **Rockafellar, §26 (p. 257).** The image `D` of `C` under `∇f` is exactly the parabola: as
+`x` runs over the open upper half-plane, `ξ₁/2ξ₂` runs over all of `ℝ`, and the second coordinate
+of the gradient is forced to be minus its square. -/
+theorem gradientRange_halfPlaneFn : gradientRange halfPlaneFn = parabola := by
+  ext v
+  constructor
+  · rintro ⟨x, hx⟩
+    have hxi : x ∈ interior (dom halfPlaneFn) := hx.mem_interior_dom
+    rw [interior_dom_halfPlaneFn] at hxi
+    have hsing := subgradient_innerL_eq_singleton convexFn_halfPlaneFn hx
+    rw [LinearIsometryEquiv.symm_apply_apply] at hsing
+    have hv : v ∈ subgradient (pairing 2) halfPlaneFn x := by
+      rw [hsing]
+      exact Set.mem_singleton v
+    exact ((mem_subgradient_halfPlaneFn_iff hxi).1 hv).1
+  · intro hv
+    refine ⟨WithLp.toLp 2 ![v 0, 1 / 2], ?_⟩
+    have hx1 : (0 : ℝ) < (WithLp.toLp 2 ![v 0, 1 / 2] : Rn 2) 1 := by norm_num
+    have h := hasGradientAt_halfPlaneFn hx1
+    have e0 : (WithLp.toLp 2 ![v 0, 1 / 2] : Rn 2) 0 = v 0 := rfl
+    have e1 : (WithLp.toLp 2 ![v 0, 1 / 2] : Rn 2) 1 = 1 / 2 := rfl
+    have hpt : parabolaPoint ((WithLp.toLp 2 ![v 0, 1 / 2] : Rn 2) 0
+        / (2 * (WithLp.toLp 2 ![v 0, 1 / 2] : Rn 2) 1)) = v := by
+      refine ext_two ?_ ?_
+      · rw [parabolaPoint_zero, e0, e1]
+        norm_num
+      · rw [parabolaPoint_one, mem_parabola.1 hv, e0, e1]
+        norm_num
+    rwa [hpt] at h
+
+/-- **Rockafellar, §26 (p. 257).** `D` is the parabola, in the book's own `legendreDomain`. -/
+theorem legendreDomain_halfPlaneFn : legendreDomain halfPlaneFn = parabola := by
+  rw [legendreDomain_eq_gradientRange differentiableAtFn_halfPlaneFn]
+  exact gradientRange_halfPlaneFn
+
+/-- The parabola is not convex: `(0, 0)` and `(1, −1)` lie on it and their midpoint
+`(1/2, −1/2)` does not, since `−1/2 ≠ −1/4`. -/
+theorem not_convex_parabola : ¬ Convex ℝ parabola := by
+  intro h
+  have h0 : parabolaPoint 0 ∈ parabola := by
+    rw [mem_parabola, parabolaPoint_zero, parabolaPoint_one]
+  have h1 : parabolaPoint 1 ∈ parabola := by
+    rw [mem_parabola, parabolaPoint_zero, parabolaPoint_one]
+  have hm := h h0 h1 (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num)
+  rw [mem_parabola] at hm
+  have e0 : ((1/2 : ℝ) • parabolaPoint 0 + (1/2 : ℝ) • parabolaPoint 1) 0 = 1/2 := by
+    change (1/2 : ℝ) * parabolaPoint 0 0 + (1/2 : ℝ) * parabolaPoint 1 0 = 1/2
+    rw [parabolaPoint_zero, parabolaPoint_zero]
+    norm_num
+  have e1 : ((1/2 : ℝ) • parabolaPoint 0 + (1/2 : ℝ) • parabolaPoint 1) 1 = -(1/2) := by
+    change (1/2 : ℝ) * parabolaPoint 0 1 + (1/2 : ℝ) * parabolaPoint 1 1 = -(1/2)
+    rw [parabolaPoint_one, parabolaPoint_one]
+    norm_num
+  rw [e0, e1] at hm
+  norm_num at hm
+
+/-- **Rockafellar, §26 (p. 257), the point of the example.** For a differentiable convex function on
+a non-empty open convex set that fails condition (c), the domain `D` of the Legendre conjugate need
+not be convex — let alone "almost convex" in the sense of Corollary 26.4.1. -/
+theorem not_convex_legendreDomain_halfPlaneFn : ¬ Convex ℝ (legendreDomain halfPlaneFn) := by
+  rw [legendreDomain_halfPlaneFn]
+  exact not_convex_parabola
+
+/-- **Rockafellar, §26 (p. 257), last sentence**: "Condition (c) fails for `f` at the origin."
+Along the sequence `(0, 1/(i+1))`, which lies in `C` and converges to the origin, the gradient is
+identically `0`; so its norm does not tend to `+∞` and the p. 257 example is not essentially
+smooth. This is why Corollary 26.4.1 does not apply to it, and hence why
+`not_convex_legendreDomain_halfPlaneFn` is not a contradiction. -/
+theorem not_essentiallySmooth_halfPlaneFn : ¬ EssentiallySmooth halfPlaneFn := by
+  intro hes
+  set e : Rn 2 := WithLp.toLp 2 ![0, 1] with he
+  set zs : ℕ → Rn 2 := fun i => (1 / (i + 1 : ℝ)) • e with hzsdef
+  have hcoord : ∀ i : ℕ, zs i 1 = 1 / (i + 1 : ℝ) := by
+    intro i
+    change (1 / (i + 1 : ℝ)) * (1 : ℝ) = 1 / (i + 1 : ℝ)
+    ring
+  have hcoord0 : ∀ i : ℕ, zs i 0 = 0 := by
+    intro i
+    change (1 / (i + 1 : ℝ)) * (0 : ℝ) = 0
+    ring
+  have hpos : ∀ i : ℕ, (0 : ℝ) < zs i 1 := by
+    intro i
+    rw [hcoord i]
+    positivity
+  have hmem : ∀ i, zs i ∈ interior (dom halfPlaneFn) := by
+    intro i
+    rw [interior_dom_halfPlaneFn]
+    exact hpos i
+  have hout : (0 : Rn 2) ∉ interior (dom halfPlaneFn) := by
+    rw [interior_dom_halfPlaneFn]
+    intro hc
+    have hlt : (0 : ℝ) < (0 : Rn 2) 1 := hc
+    simp at hlt
+  have hlim : Tendsto zs atTop (𝓝 (0 : Rn 2)) := by
+    have hc : Tendsto (fun i : ℕ => (1 / (i + 1 : ℝ))) atTop (𝓝 0) :=
+      tendsto_one_div_add_atTop_nhds_zero_nat
+    have hcs := hc.smul_const e
+    rwa [zero_smul] at hcs
+  have htop := hes.tendsto_norm_fderiv hout zs hmem hlim
+  have hzero : ∀ i, ‖fderiv ℝ (fun w => (halfPlaneFn w).toReal) (zs i)‖ = 0 := by
+    intro i
+    have hg := hasGradientAt_halfPlaneFn (hpos i)
+    rw [hg.fderiv_toReal_eq]
+    have hpt : parabolaPoint (zs i 0 / (2 * zs i 1)) = 0 := by
+      rw [hcoord0 i, zero_div]
+      exact parabolaPoint_zero_eq
+    rw [hpt, map_zero, norm_zero]
+  rw [tendsto_congr hzero] at htop
+  exact not_tendsto_atTop_of_tendsto_nhds tendsto_const_nhds htop
 
 /-! ### Functions of Legendre type
 
