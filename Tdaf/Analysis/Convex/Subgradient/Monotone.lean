@@ -558,19 +558,6 @@ section AddConst
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
-omit [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F] in
-/-- `a - (u + α) = (a - u) + (-α)` for reals `a`, `α` and an arbitrary `EReal` `u`. Both infinite
-values of `u` collapse the two sides to the same thing, so there is no hypothesis. -/
-theorem coe_sub_add_coe (a α : ℝ) (u : EReal) :
-    (a : EReal) - (u + (α : EReal)) = ((a : EReal) - u) + ((-α : ℝ) : EReal) := by
-  induction u with
-  | bot => simp
-  | coe r =>
-    rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub,
-      ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff]
-    ring
-  | top => simp
-
 /-- **Raising a function by a real constant lowers its conjugate by that constant.** This is the
 one piece of conjugacy Theorem 24.9 needs beyond Fenchel–Moreau: `∂f ⊆ ∂g` pins `g` to `f + α` only
 after the same relation on the conjugate side has been turned back into an inequality on `E`. -/
@@ -578,7 +565,7 @@ theorem conj_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α
     conj B (fun x => f x + (α : EReal)) = fun y => conj B f y + ((-α : ℝ) : EReal) := by
   funext y
   rw [conj_apply, conj_apply, Tdaf.EReal.iSup_add_coe]
-  exact iSup_congr fun x => coe_sub_add_coe _ _ _
+  exact iSup_congr fun x => Tdaf.EReal.coe_sub_add_coe' _ _ _
 
 end AddConst
 

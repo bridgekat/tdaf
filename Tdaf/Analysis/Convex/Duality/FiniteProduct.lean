@@ -22,8 +22,6 @@ does not exist.
 
 ## Main results
 
-* `Convex.relint_univ_pi` — the relative interior of a product of convex sets is the product of
-  the relative interiors.
 * `supportFn_univ_pi` — the support function of a product set is the sum of the support functions
   of the factors: the supremum of a separable sum over a product splits.
 * `conj_piFn` — the conjugate of a separable sum of proper functions is the separable sum of the
@@ -35,10 +33,12 @@ does not exist.
 ## Design notes
 
 **The index is a `Fintype` and the product is non-dependent.** `piPairing` sums over `Finset.univ`,
-so finiteness has to be data there; `Convex.relint_univ_pi`, which mentions no sum, asks only for
-`[Finite ι]`. Non-dependence is forced by the one consumer: the diagonal subspace of `ι → E` needs
-all the factors to be the *same* space. Everything up to and including `Convex.relint_univ_pi`
-would hold verbatim for a dependent product `(i : ι) → E i`; nothing here needs it.
+so finiteness has to be data here; `Convex.relint_univ_pi`, which mentions no sum, asks only for
+`[Finite ι]` — and it is no longer in this file, having gone home to `RelativeInterior.lean`
+(remediation §11.21) along with `univ_pi_eq_iInter_proj_preimage`. Non-dependence is forced by the
+one consumer: the diagonal subspace of `ι → E` needs all the factors to be the *same* space. The
+`Set.pi` results would hold verbatim for a dependent product `(i : ι) → E i`; nothing here needs
+it.
 
 **The separable-sum route is not taken for Corollary 16.2.2.** A family `f₁, …, fₘ` could be
 packaged as the single function `x ↦ ∑ i, fᵢ (xᵢ)` on `ι → E`, whose conjugate is the corresponding
@@ -159,43 +159,6 @@ section Relint
 
 variable {ι E : Type*} [Finite ι] [NormedAddCommGroup E] [NormedSpace ℝ E]
   [FiniteDimensional ℝ E]
-
-omit [Finite ι] [FiniteDimensional ℝ E] in
-/-- A product set is the intersection of the preimages of its factors under the coordinate
-projections. -/
-theorem univ_pi_eq_iInter_proj_preimage (C : ι → Set E) :
-    univ.pi C = ⋂ i, (LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' C i := by
-  ext x
-  simp [Set.mem_pi]
-
-/-- **The relative interior of a product of convex sets is the product of the relative
-interiors.** This is the `Set.pi` form of `intrinsicInterior_prod_eq`; unlike that one it needs
-finite dimension, because it is `Convex.relint_iInter` applied to the coordinate preimages and
-that theorem rests on `ri C ≠ ∅` for nonempty convex `C`. -/
-theorem Convex.relint_univ_pi (C : ι → Set E) (hC : ∀ i, Convex ℝ (C i)) :
-    ri (univ.pi C) = univ.pi fun i => ri (C i) := by
-  obtain ⟨hι⟩ := nonempty_fintype ι
-  by_cases hne : ∀ i, (C i).Nonempty
-  · have hproj : ∀ i, ri ((LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' C i)
-        = (LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' ri (C i) := by
-      intro i
-      refine Convex.relint_preimage (hC i) _ ?_
-      obtain ⟨z, hz⟩ := Convex.relint_nonempty (hC i) (hne i)
-      exact ⟨fun _ => z, hz⟩
-    choose z hz using fun i => Convex.relint_nonempty (hC i) (hne i)
-    have hnonempty : (⋂ i, ri ((LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' C i)).Nonempty := by
-      refine ⟨z, mem_iInter.2 fun i => ?_⟩
-      rw [hproj i]
-      exact hz i
-    rw [univ_pi_eq_iInter_proj_preimage C, univ_pi_eq_iInter_proj_preimage fun i => ri (C i),
-      Convex.relint_iInter (fun i => Convex.linear_preimage (hC i) _) hnonempty]
-    exact iInter_congr hproj
-  · simp only [not_forall, Set.not_nonempty_iff_eq_empty] at hne
-    obtain ⟨i₀, hi₀⟩ := hne
-    have hleft : univ.pi C = ∅ := Set.univ_pi_eq_empty_iff.2 ⟨i₀, hi₀⟩
-    have hright : (univ.pi fun i => ri (C i)) = ∅ :=
-      Set.univ_pi_eq_empty_iff.2 ⟨i₀, by rw [hi₀]; exact intrinsicInterior_empty⟩
-    rw [hleft, hright, intrinsicInterior_empty]
 
 end Relint
 

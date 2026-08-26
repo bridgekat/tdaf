@@ -654,6 +654,23 @@ theorem coe_sub_add_coe (p q : ℝ) (u : EReal) :
     ring
   | top => rw [_root_.EReal.top_add_coe, _root_.EReal.sub_top, _root_.EReal.sub_top]
 
+/-- **The same difference, folded the other way**: `p - (u + q) = (p - u) + (-q)`.
+
+The unprimed form above collects both reals on the left of the difference; this one keeps `p - u`
+intact and moves `-q` outside. They are interderivable, but a `rw` matches one and not the other, so
+call sites depend on the orientation and both are kept. This one was `Tdaf.ConvexAnalysis`'s, in
+`Subgradient/Monotone.lean`, under the **same bare name** as its twin here (remediation §11.20) —
+two namespaces, one name, and no error, because the two are never in scope together. -/
+theorem coe_sub_add_coe' (p q : ℝ) (u : EReal) :
+    ((p : ℝ) : EReal) - (u + ((q : ℝ) : EReal)) = (((p : ℝ) : EReal) - u) + ((-q : ℝ) : EReal) := by
+  induction u with
+  | bot => simp
+  | coe r =>
+    rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_sub, ← _root_.EReal.coe_sub,
+      ← _root_.EReal.coe_add, _root_.EReal.coe_eq_coe_iff]
+    ring
+  | top => simp
+
 /-- **The difference quotient of a sum splits.** For `c > 0`, reals `p`, `q` and `u`, `v` never
 `⊥`, `c * (u - p) + c * (v - q) = c * ((u + v) - (p + q))`.
 

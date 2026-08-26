@@ -42,7 +42,8 @@ are what discharge them.
   `Recession/Closedness.lean`; it is *not* what §20 can use, see the design notes.
 * `IsExactSum.of_clFn` — exactness transfers from the closures.
 * `IsExactFinsetSum.of_relint` — **Theorem 16.4** for `m` summands, with `Theorem 6.5` over a
-  `Finset` (`Convex.relint_biInter_finset`) supplying the relative interior of the partial sums'
+  `Finset` (`Convex.relint_biInter_finset`, in `RelativeInterior.lean` since remediation §11.21)
+  supplying the relative interior of the partial sums'
   effective domain.
 * `proper_conj_of_proper` — **Theorem 12.2** in the form §13 uses it: in finite dimensions
   `f` proper convex already gives `f*` proper, with no closedness hypothesis.
@@ -535,22 +536,6 @@ variable {ι : Type*} {E F : Type*}
   [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E → EReal}
-
-omit [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F] in
-/-- **Rockafellar, Theorem 6.5** over a `Finset`: the relative interior of a finite intersection
-is the intersection of the relative interiors, as soon as the latter has a point in common.
-
-`Convex.relint_iInter` read over the subtype `↥s`, which is finite. It belongs beside that lemma
-in `RelativeInterior.lean`; it is here because the `m`-ary constraint qualifications are its only
-consumers so far. -/
-theorem Convex.relint_biInter_finset {C : ι → Set E} (hC : ∀ i ∈ s, Convex ℝ (C i)) {x₀ : E}
-    (hx₀ : ∀ i ∈ s, x₀ ∈ ri (C i)) : ri (⋂ i ∈ s, C i) = ⋂ i ∈ s, ri (C i) := by
-  have hbi : ∀ D : ι → Set E, (⋂ i ∈ s, D i) = ⋂ i : {j // j ∈ s}, D i := by
-    intro D
-    ext x
-    simp
-  rw [hbi C, hbi fun i => ri (C i)]
-  exact Convex.relint_iInter (fun i => hC i i.2) ⟨x₀, Set.mem_iInter.2 fun i => hx₀ i i.2⟩
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
 /-- The sum of a finite family of proper convex functions with a common domain point, packaged as

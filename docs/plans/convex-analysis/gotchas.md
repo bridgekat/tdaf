@@ -1699,12 +1699,26 @@ The build accepted both, because one was `private`; only the pre-commit grep cau
 duplicate-name sweep catches public collisions after the fact — this is the check that stops a
 `private` shadow being written in the first place.
 
-**BLD18. `autoImplicit` is still on in this repository.** `lakefile.toml` sets
-`relaxedAutoImplicit = false` and never `autoImplicit = false`, where Mathlib sets both. A
-single-letter identifier in a theorem statement is therefore silently auto-bound as an implicit, with
-its type inferred from the surrounding applications, and **the file builds with zero warnings**. The
-symptom is the absence of one. Declare every variable in a `variable` line, and grep new files for
-statement-level identifiers the enclosing section does not bind. Tracked as remediation §12.19.
+**BLD18. `autoImplicit` was on in this repository, and turning it off found exactly one thing.**
+`lakefile.toml` used to set `relaxedAutoImplicit = false` and never `autoImplicit = false`, where
+Mathlib sets both, so a single-letter identifier in a theorem statement was silently auto-bound as
+an implicit with its type inferred from the surrounding applications, and **the file built with zero
+warnings**. The symptom was the absence of one. **Now fixed** — the flag is set and the tree builds
+clean (remediation §12.19) — but two lessons from the flip are worth keeping.
+
+*A spot-check under-predicts a defect whose symptom is nothing.* Six modules built with
+`-DautoImplicit=false` came back clean, and that was read as evidence the flip was free. The full
+flip found an instance in a module none of the six was. A probe tells you about the modules you
+probed; for this failure mode the only honest test is the whole tree.
+
+*The shape to look for is a section boundary, not a typo.* In `RelativeInterior.lean`,
+`end Functions` closed the section declaring `variable {f : E → EReal}` four lines **before** two
+theorems that went on using `f`. Both statements were correct — `ConvexFn f` pins the type, so the
+auto-bound `f` and the section's `f` elaborate identically — which is precisely why nothing
+complained for as long as the file existed; turning the flag off produced fifteen
+`Unknown identifier f` errors at once. When an `end` sits above declarations that read as though
+they belong to the section, that is the tell. One instance in 164 modules: a small exposure, but not
+zero, and no amount of building would have surfaced it.
 
 **BLD19. Never trust an exit code through a pipe.** `lake build | tail -30` reports `tail`'s status,
 so a failed build exits 0 — and `tail` is worse than `head` here, because the failure line

@@ -787,6 +787,68 @@ theorem Convex.closure_preimage {D : Set F} (hD : Convex ℝ D) (A : E →ₗ[�
     image_fst_inter_prod_univ hMset, image_fst_inter_prod_univ hMset] at hsub
   exact hsub
 
+/-! ### Theorem 6.5 over an index: the `Finset` and `Set.pi` forms -/
+
+section Indexed
+
+variable {ι : Type*}
+
+omit [FiniteDimensional ℝ E] in
+/-- A product set is the intersection of the preimages of its factors under the coordinate
+projections. -/
+theorem univ_pi_eq_iInter_proj_preimage (C : ι → Set E) :
+    univ.pi C = ⋂ i, (LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' C i := by
+  ext x
+  simp [Set.mem_pi]
+
+/-- **Rockafellar, Theorem 6.5** over a `Finset`: the relative interior of a finite intersection
+is the intersection of the relative interiors, as soon as the latter has a point in common.
+
+`Convex.relint_iInter` read over the subtype `↥s`, which is finite. It is here rather than beside
+that lemma because it must follow it (remediation §11.21). -/
+theorem Convex.relint_biInter_finset {s : Finset ι} {C : ι → Set E} (hC : ∀ i ∈ s, Convex ℝ (C i))
+    {x₀ : E} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (C i)) : ri (⋂ i ∈ s, C i) = ⋂ i ∈ s, ri (C i) := by
+  have hbi : ∀ D : ι → Set E, (⋂ i ∈ s, D i) = ⋂ i : {j // j ∈ s}, D i := by
+    intro D
+    ext x
+    simp
+  rw [hbi C, hbi fun i => ri (C i)]
+  exact Convex.relint_iInter (fun i => hC i i.2) ⟨x₀, Set.mem_iInter.2 fun i => hx₀ i i.2⟩
+
+/-- **The relative interior of a product of convex sets is the product of the relative
+interiors.** This is the `Set.pi` form of `intrinsicInterior_prod_eq`; unlike that one it needs
+finite dimension, because it is `Convex.relint_iInter` applied to the coordinate preimages and
+that theorem rests on `ri C ≠ ∅` for nonempty convex `C`.
+
+It has to sit below `Convex.relint_preimage`, which is what puts both indexed forms here at the end
+of §6 rather than beside `Convex.relint_iInter` (remediation §11.21). -/
+theorem Convex.relint_univ_pi [Finite ι] (C : ι → Set E) (hC : ∀ i, Convex ℝ (C i)) :
+    ri (univ.pi C) = univ.pi fun i => ri (C i) := by
+  obtain ⟨hι⟩ := nonempty_fintype ι
+  by_cases hne : ∀ i, (C i).Nonempty
+  · have hproj : ∀ i, ri ((LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' C i)
+        = (LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' ri (C i) := by
+      intro i
+      refine Convex.relint_preimage (hC i) _ ?_
+      obtain ⟨z, hz⟩ := Convex.relint_nonempty (hC i) (hne i)
+      exact ⟨fun _ => z, hz⟩
+    choose z hz using fun i => Convex.relint_nonempty (hC i) (hne i)
+    have hnonempty : (⋂ i, ri ((LinearMap.proj i : (ι → E) →ₗ[ℝ] E) ⁻¹' C i)).Nonempty := by
+      refine ⟨z, mem_iInter.2 fun i => ?_⟩
+      rw [hproj i]
+      exact hz i
+    rw [univ_pi_eq_iInter_proj_preimage C, univ_pi_eq_iInter_proj_preimage fun i => ri (C i),
+      Convex.relint_iInter (fun i => Convex.linear_preimage (hC i) _) hnonempty]
+    exact iInter_congr hproj
+  · simp only [not_forall, Set.not_nonempty_iff_eq_empty] at hne
+    obtain ⟨i₀, hi₀⟩ := hne
+    have hleft : univ.pi C = ∅ := Set.univ_pi_eq_empty_iff.2 ⟨i₀, hi₀⟩
+    have hright : (univ.pi fun i => ri (C i)) = ∅ :=
+      Set.univ_pi_eq_empty_iff.2 ⟨i₀, by rw [hi₀]; exact intrinsicInterior_empty⟩
+    rw [hleft, hright, intrinsicInterior_empty]
+
+end Indexed
+
 /-! ### Theorem 6.8: slices of a convex set in a product -/
 
 /-- **Rockafellar, Theorem 6.8**: a point of a convex subset of a product is a relative interior
@@ -1310,6 +1372,10 @@ end Functions
 
 /-! ### Theorem 7.5: limits along a segment from a relative interior point -/
 
+section SegmentLimits
+
+variable {f : E → EReal}
+
 /-- **Rockafellar, Theorem 7.5**: the lower semicontinuous hull of `f` at `y` is the limit of `f`
 along the segment running from a *relative interior* point of `dom f` towards `y`.
 
@@ -1353,6 +1419,7 @@ theorem ConvexFn.tendsto_clFn_along_segment_relint (hf : ConvexFn f) (hp : Prope
   rw [hf.clFn_eq_lscHull hp]
   exact hf.tendsto_lscHull_along_segment_relint hx y
 
+end SegmentLimits
 
 /-! ### Theorem 7.6: the level sets of a convex function -/
 

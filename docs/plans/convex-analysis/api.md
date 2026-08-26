@@ -41,6 +41,8 @@ theorem coe_add_sub (p q : ℝ) (u : EReal) :
     ((p + q : ℝ) : EReal) - u = (((p : ℝ) : EReal) - u) + ((q : ℝ) : EReal)
 theorem coe_sub_add_coe (p q : ℝ) (u : EReal) :
     ((p : ℝ) : EReal) - (u + ((q : ℝ) : EReal)) = ((p - q : ℝ) : EReal) - u
+theorem coe_sub_add_coe' (p q : ℝ) (u : EReal) :
+    ((p : ℝ) : EReal) - (u + ((q : ℝ) : EReal)) = (((p : ℝ) : EReal) - u) + ((-q : ℝ) : EReal)
 theorem iSup_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
     (⨆ i, u i) + (r : EReal) = ⨆ i, (u i + (r : EReal))
 theorem biInf_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
@@ -358,6 +360,16 @@ All of §6 and the §7 results whose proofs need `ri`. Four additions worth know
   Neither Mathlib nor this repository had it. Forwards is a ball argument; backwards derives
   `z ∈ C` and `affineSpan ℝ C = ⊤` (so `intrinsicInterior_eq_interior` applies) and then quotes
   Theorem 6.4. Theorem 14.2's bounded-level-set corollary is the consumer.
+* **Thm 6.5 over an index** — `Convex.relint_biInter_finset` (the `Finset` form) and
+  `Convex.relint_univ_pi` (the `Set.pi` form), in a closing `Indexed` section with
+  `univ_pi_eq_iInter_proj_preimage`. Both came home from `Duality/` (remediation §11.21). They are
+  at the **end** of §6 rather than beside `Convex.relint_iInter`, where the item asked for them,
+  because `Convex.relint_univ_pi` cites `Convex.relint_preimage` — declared 180 lines below
+  `relint_iInter` in this same file (LIB39). The row worried about this file's 19 direct importers;
+  the edit does force a near-full rebuild, but **no call site changed**, the move being *down* the
+  DAG. `relint_biInter_finset` is `relint_iInter` read over the subtype `↥s`; `relint_univ_pi` is
+  the same lemma on the coordinate preimages, and unlike `intrinsicInterior_prod_eq` it needs finite
+  dimension, because `relint_iInter` rests on `ri C ≠ ∅` for non-empty convex `C`.
 * **Cor 7.4.1 for plain interiors** — `ConvexFn.interior_dom_clFn`
   (`int (dom (cl f)) = int (dom f)`), moved in from `Subgradient/Uniqueness.lean` (remediation
   §12.17), beside the Corollary 7.4.1 it is proved from. It used to spell its `int ⊆ ri` step out
@@ -1569,7 +1581,13 @@ turned out to need no `EReal`-valued Corollary 10.8.1. What is left of §24 is R
 Corollary 31.5.2 — `∂f` is maximal *monotone* — is a different, easier statement and does not wait
 on any of this.
 
-**Relocation candidates.** `coe_sub_add_coe` belongs in `Tdaf/Order/EReal.lean`; `conj_add_coe` in
+**`coe_sub_add_coe` has moved** to `Tdaf/Order/EReal.lean` as `coe_sub_add_coe'` (remediation
+§11.20). It was the same `EReal` fact as `Tdaf.EReal.coe_sub_add_coe` folded the other way —
+`(p - u) + (-q)` rather than `(p - q) - u` — under the **same bare name in a different namespace**,
+which produces no error at all as long as the two are never in scope together. Both are kept,
+because a `rw` matches one orientation and not the other.
+
+**Relocation candidates.** `conj_add_coe` in
 `Duality/Conjugate.lean`; `subgradient_add_coe`, `subgradientRel_add_coe` and
 `exists_coe_of_subgradient_nonempty` in `Subgradient/Defs.lean`. In the other direction, `cycleVal`
 and its API belong *here*, beside `chainVal`, rather than in `OneDim.lean` where they were written.
@@ -5510,10 +5528,6 @@ instance instIsCompatiblePairingPi   [IsCompatiblePairing B]
 instance isInnerPairing_piPairing    [IsInnerPairing B]
 instance isContinuousInnerPairing_piPairing [IsContinuousInnerPairing B]
 
-theorem univ_pi_eq_iInter_proj_preimage (C : ι → Set E) :
-    univ.pi C = ⋂ i, (LinearMap.proj i) ⁻¹' C i
-theorem Convex.relint_univ_pi (C : ι → Set E) (hC : ∀ i, Convex ℝ (C i)) :
-    ri (univ.pi C) = univ.pi fun i => ri (C i)
 theorem supportFn_univ_pi (B) (C : ι → Set E) (y : ι → F) :
     supportFn (piPairing B) (univ.pi C) y = ∑ i, supportFn B (C i) (y i)
 theorem conj_piFn (B) (f : ι → E → EReal) (hf : ∀ i, Proper (f i)) (y : ι → F) :
@@ -5535,8 +5549,11 @@ compatibility instance is the expensive declaration in the file, and it runs on
 `ContinuousLinearMap.single` and `ContinuousLinearMap.sum_comp_single`, both of which take `R` and
 `φ` explicitly (`gotchas.md` EL30).
 
-**`Convex.relint_univ_pi` needs convexity only**, not non-emptiness: the empty case is separated out
-and both sides are empty. It needs finite dimension, unlike `intrinsicInterior_prod_eq`, because it
+**`Convex.relint_univ_pi` has gone home to `RelativeInterior.lean`** (remediation §11.21), with
+`univ_pi_eq_iInter_proj_preimage`, which had no other consumer; `supportFn_univ_pi` and `conj_piFn`
+still cite it from here. It **needs convexity only**, not non-emptiness: the empty case is
+separated out and both sides are empty. It needs finite dimension, unlike
+`intrinsicInterior_prod_eq`, because it
 is `Convex.relint_iInter` on the coordinate preimages and that rests on `ri C ≠ ∅`. It belongs in
 `RelativeInterior.lean` beside `Convex.relint_iInter` and is parked here only because that file has
 19 direct importers (remediation §11.21).
