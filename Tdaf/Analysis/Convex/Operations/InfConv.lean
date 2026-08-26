@@ -9,9 +9,9 @@ import Tdaf.Analysis.Convex.Operations.Epi
 /-!
 # Infimal convolution
 
-Rockafellar's `f □ g`, the functional operation corresponding to addition of epigraphs
-(**Theorem 5.4**). It is the first application of the device of Theorem 5.3, and it is dual to
-pointwise addition of convex functions under the conjugacy of §16.
+The functional operation `f □ g` corresponding to addition of epigraphs: the function determined by
+`epi f + epi g`. It is convex whenever `f` and `g` are, and it is dual to pointwise addition of
+convex functions under conjugacy.
 
 `f □ g` is *defined* as `ofEpi (epi f + epi g)`, not by the classical formula
 `(f □ g) x = ⨅ y, f (x - y) + g y`, which is ill-formed as soon as one function reaches `⊤` where
@@ -22,13 +22,13 @@ example uses only one `⊤` value and one `⊥` value, a single such hypothesis 
 ## Main definitions
 
 * `infConv f g` — the infimal convolute `f □ g`.
-* `InfConvFn E` — the type synonym `E → EReal` carrying `□` as its addition, so that Rockafellar's
+* `InfConvFn E` — the type synonym `E → EReal` carrying `□` as its addition, so that
   `f₁ □ ⋯ □ fₘ` is a `Finset.sum`. A synonym is forced, since `E → EReal` already carries the
   pointwise `+` that `□` is dual to; additive notation is right, `□` being addition of epigraphs.
 
 ## Main results
 
-* `convexFn_infConv` — **Theorem 5.4**; `convexFn_sum_toInfConvFn` is the book's m-ary form.
+* `convexFn_infConv` — `□` preserves convexity; `convexFn_sum_toInfConvFn` is the m-ary form.
 * `infConv_apply`, `infConv_le_add` — the classical infimum formula and its inequality half;
   `sum_toInfConvFn_apply_le`, `sum_toInfConvFn_le_sum` are the m-ary versions.
 * `dom_infConv` — `dom (f □ g) = dom f + dom g`, with no hypothesis at all.
@@ -223,15 +223,15 @@ theorem infConv_le_right (hf : f 0 ≤ 0) (g : E → EReal) : infConv f g ≤ g 
 
 end Basic
 
-/-! ### Theorem 5.4 -/
+/-! ### Convexity of an infimal convolute -/
 
 section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f g : E → EReal}
 
-/-- **Rockafellar, Theorem 5.4.** The infimal convolute of two convex functions is convex. No
-properness is needed: the book's hypothesis only makes the infimum formula meaningful, and the
-epigraph definition does not use it. -/
+/-- The infimal convolute of two convex functions is convex. No properness is needed: the
+classical hypothesis only makes the infimum formula meaningful, and the epigraph definition
+does not use it. -/
 theorem convexFn_infConv (hf : ConvexFn f) (hg : ConvexFn g) : ConvexFn (infConv f g) :=
   convexFn_ofEpi (hf.convex_epi.add hg.convex_epi)
 
@@ -295,8 +295,8 @@ section MonoidConvex
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
-/-- **Rockafellar, Theorem 5.4** in the book's own m-ary form: `f₁ □ ⋯ □ fₘ` is convex whenever
-`f₁, …, fₘ` are. The empty case is `δ(· | 0)`, which is convex because `{0}` is. -/
+/-- Convexity in m-ary form: `f₁ □ ⋯ □ fₘ` is convex whenever `f₁, …, fₘ` are. The empty case is
+`δ(· | 0)`, which is convex because `{0}` is. -/
 theorem convexFn_sum_toInfConvFn {ι : Type*} {s : Finset ι} {f : ι → E → EReal}
     (hf : ∀ i ∈ s, ConvexFn (f i)) :
     ConvexFn (ofInfConvFn (∑ i ∈ s, toInfConvFn (f i))) := by

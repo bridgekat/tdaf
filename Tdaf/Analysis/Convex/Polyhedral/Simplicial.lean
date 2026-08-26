@@ -10,29 +10,29 @@ import Tdaf.Analysis.Convex.Caratheodory
 /-!
 # Polytopes, triangulation, and local simpliciality
 
-Every polyhedral convex set is locally simplicial: **Theorem 20.5**, the geometric half of §20,
-and the result that supplies instances of `LocallySimplicial` and with them Theorems 10.2 and
-10.3.
+Every polyhedral convex set is locally simplicial. This is the result that supplies instances of
+`LocallySimplicial`, and with them the continuity theorems that consume it.
 
-The route is Rockafellar's. Around a point `x` of a polyhedral set `C`, cut out a *bounded*
-polyhedral neighbourhood `V`; then `V ∩ C` is a bounded polyhedral convex set, hence a polytope
-(**Corollary 19.1.2**: the direction part of `conv P + cone D` has to vanish), hence — by
-Carathéodory — a finite union of simplices, all of them inside `C`.
+Around a point `x` of a polyhedral set `C`, cut out a *bounded* polyhedral neighbourhood `V`; then
+`V ∩ C` is a bounded polyhedral convex set, hence a polytope — the direction part of
+`conv P + cone D` has to vanish — hence, by Carathéodory's theorem, a finite union of simplices,
+all of them inside `C`.
 
 ## Main results
 
 * `exists_polyhedral_isBounded_mem_nhds` — every point has a bounded polyhedral neighbourhood: a
   coordinate cube for a basis. This is the only place a basis is used.
-* `Polyhedral.exists_finset_convexHull` — **Corollary 19.1.2**: a bounded polyhedral convex set is
-  the convex hull of a finite set.
+* `Polyhedral.exists_finset_convexHull` — a bounded polyhedral convex set is the convex hull of a
+  finite set.
 * `isSimplex_convexHull_coe` — the convex hull of an affinely independent `Finset` is a simplex.
-* `Polyhedral.locallySimplicial` — **Theorem 20.5**.
-* `exists_polyhedral_between` — **Theorem 20.4**: a compact set inside `int D` is inside `int P`
-  for some polyhedral `P ⊆ int D`.
+* `Polyhedral.locallySimplicial` — every polyhedral convex set is locally simplicial
+  (Theorem 20.5 in [^1]).
+* `exists_polyhedral_between` — a compact set inside `int D` is inside `int P` for some polyhedral
+  `P ⊆ int D`.
 
 ## Implementation notes
 
-Rockafellar takes `V` to be a simplex; here it is a cube, which is cheaper to build and all the
+The classical proof takes `V` to be a simplex; here it is a cube, cheaper to build and all the
 argument needs — `2 n` inequalities `± bᵢ* (y - x) ≤ 1` for a basis `b`, bounded because
 `‖y - x‖ ≤ ∑ ‖bᵢ‖` on it, and a neighbourhood because the strict version is open. The
 triangulation is Mathlib's `convexHull_eq_union` read as a *finite* union: for a finite generating
@@ -41,8 +41,7 @@ set the index set is `P.powerset`, and `Finset.equivFin` turns it into the `Fin 
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §20 (Theorems 20.4,
-  20.5), §19 (Corollary 19.1.2), §17 (Theorem 17.1).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §20.
 -/
 
 open Set Filter Topology
@@ -140,9 +139,9 @@ theorem exists_polyhedral_isBounded_mem_nhds (x : E) :
   obtain ⟨V, h₁, h₂, h₃, -⟩ := exists_polyhedral_mem_nhds_subset_ball x (ε := 1) one_pos
   exact ⟨V, h₁, h₂, h₃⟩
 
-/-- **Rockafellar, Corollary 19.1.2.** A bounded polyhedral convex set is a *polytope*: the convex
-hull of a finite set of points. Theorem 19.1 writes it as `conv P + cone D`, and boundedness kills
-every generator of the cone. -/
+/-- A bounded polyhedral convex set is a *polytope*: the convex hull of a finite set of points.
+Minkowski–Weyl writes it as `conv P + cone D`, and boundedness kills every generator of the
+cone. -/
 theorem Polyhedral.exists_finset_convexHull {C : Set E} (hC : Polyhedral C)
     (hbdd : Bornology.IsBounded C) : ∃ P : Finset E, C = convexHull ℝ (P : Set E) := by
   classical
@@ -224,10 +223,9 @@ theorem isSimplex_convexHull_coe {t : Finset E}
         exact ⟨t.equivFin ⟨y, hy⟩, by rw [Equiv.symm_apply_apply]⟩
     rw [hrange]
 
-/-- **Rockafellar, Theorem 20.5.** Every polyhedral convex set is locally simplicial — and in
-particular every polytope is.
+/-- Every polyhedral convex set is locally simplicial — and in particular every polytope is.
 
-This is what makes `Simplicial.lean`'s Theorems 10.2 and 10.3 usable: until now
+This is what makes the continuity results of `Simplicial.lean` usable: until now
 `LocallySimplicial` had no supply of instances beyond simplices themselves. -/
 theorem Polyhedral.locallySimplicial {C : Set E} (hC : Polyhedral C) : LocallySimplicial C := by
   classical
@@ -269,16 +267,16 @@ theorem Polyhedral.locallySimplicial {C : Set E} (hC : Polyhedral C) : LocallySi
         rwa [Equiv.symm_apply_apply]
     rw [hunion, ← hP, ← Set.inter_assoc, Set.inter_self]
 
-/-- **Rockafellar, Theorem 20.4.** A compact set inside the interior of a convex set can be
-separated from the boundary by a polyhedral convex set: there is a polyhedral `P` with
-`C ⊆ int P` and `P ⊆ int D`.
+/-- A compact set inside the interior of a convex set can be separated from the boundary by a
+polyhedral convex set: there is a polyhedral `P` with `C ⊆ int P` and `P ⊆ int D`.
 
-Rockafellar covers `C` by simplices; a cover by coordinate cubes does the same job and is what
-`exists_polyhedral_mem_nhds_subset_ball` already supplies. The polyhedral set is then the convex
-hull of the finitely many cubes' vertex sets, polyhedral by **Corollary 19.1.1**.
+The classical proof covers `C` by simplices; a cover by coordinate cubes does the same job and is
+what `exists_polyhedral_mem_nhds_subset_ball` already supplies. The polyhedral set is then the
+convex hull of the finitely many cubes' vertex sets, polyhedral because a convex hull of a
+finite set is.
 
-Convexity of `C` is *not* used, and neither is nonemptiness — Rockafellar assumes both, but the
-covering argument needs only that `C` is compact. -/
+Convexity of `C` is *not* used, and neither is nonemptiness — the classical statement assumes
+both, but the covering argument needs only that `C` is compact. -/
 theorem exists_polyhedral_between {C D : Set E} (hCcl : IsClosed C)
     (hCbdd : Bornology.IsBounded C) (hD : Convex ℝ D) (hCD : C ⊆ interior D) :
     ∃ P : Set E, Polyhedral P ∧ P ⊆ interior D ∧ C ⊆ interior P := by

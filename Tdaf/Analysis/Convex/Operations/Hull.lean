@@ -12,9 +12,8 @@ import Tdaf.Analysis.Convex.Operations.Epi
 # The convex hull of a family of functions
 
 The pointwise infimum of convex functions is generally not convex; the convex hull is what replaces
-it. The convex hull of a family `f : ι → E → EReal` is the function determined, in the sense of
-Theorem 5.3, by the convex hull of the union of the epigraphs, and it is the **greatest convex
-function below every `f i`** (Rockafellar §5, before Theorem 5.6).
+it. The convex hull of a family `f : ι → E → EReal` is the function determined by the convex hull of
+the union of the epigraphs, and it is the **greatest convex function below every `f i`**.
 
 ## Main definitions
 
@@ -26,24 +25,24 @@ function below every `f i`** (Rockafellar §5, before Theorem 5.6).
 
 ## Main results
 
-* `convFn_le`, `le_convFn`, `isGreatest_convFn` — **the universal property**, the characterisation
-  Rockafellar gives in words, from which everything else in the file follows.
-* `convexFn_convFn` — the convex hull is convex, an instance of Theorem 5.3.
+* `convFn_le`, `le_convFn`, `isGreatest_convFn` — **the universal property**: greatest convex
+  minorant, from which everything else in the file follows.
+* `convexFn_convFn` — the convex hull is convex.
 * `convFn_le_iInf` — the convex hull is below the pointwise infimum, generally *strictly*;
   `convFn₂_indicatorFn_lt_inf` is a witness.
 * `gci_val_convHullFn` — `conv` is right adjoint to the inclusion of the convex functions, as a
   `GaloisCoinsertion`. This is what makes the convex functions a complete lattice with
-  `⨅ = convFn` and `⨆ = sSup` (§5, after Theorem 5.6).
-* `convFn_apply` — **Theorem 5.6**, the explicit formula
-  `(conv {f i}) x = inf {∑ λ i * f i (x i) | ∑ λ i • x i = x}`; `convFn₂_apply` is the
-  two-function form later sections use.
-* `IsEpiLike.mem_convexHull_of_le`, `isEpiLike_convexHull_epi_union`, `epi_convFn₂` — when the
-  infimum in Theorem 5.6 is *attained*. `epi (conv {f, g})` is `conv (epi f ∪ epi g)` exactly when
-  that hull is an epigraph, and the only way it can fail to be one is by failing to be closed.
+  `⨅ = convFn` and `⨆ = sSup`.
+* `convFn_apply` — the explicit formula
+  `(conv {f i}) x = inf {∑ λ i * f i (x i) | ∑ λ i • x i = x}` (Theorem 5.6 in [^1]);
+  `convFn₂_apply` is the two-function form later sections use.
+* `IsEpiLike.mem_convexHull_of_le`, `isEpiLike_convexHull_epi_union`, `epi_convFn₂` — when that
+  infimum is *attained*. `epi (conv {f, g})` is `conv (epi f ∪ epi g)` exactly when that hull is
+  an epigraph, and the only way it can fail to be one is by failing to be closed.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §5.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §5.
 -/
 
 open Set
@@ -61,13 +60,13 @@ section Family
 
 variable {ι : Sort*} {f : ι → E → EReal} {g : E → EReal}
 
-/-- The **convex hull of a family of functions**: the function determined, in the sense of
-Theorem 5.3, by the convex hull of the union of the epigraphs. Equivalently
-(`isGreatest_convFn`), the greatest convex `h`, proper or not, with `h ≤ f i` for every `i`. -/
+/-- The **convex hull of a family of functions**: the function determined by the convex hull of the
+union of the epigraphs. Equivalently (`isGreatest_convFn`), the greatest convex `h`, proper or not,
+with `h ≤ f i` for every `i`. -/
 noncomputable def convFn (f : ι → E → EReal) : E → EReal :=
   ofEpi (convexHull ℝ (⋃ i, epi (f i)))
 
-/-- An instance of Theorem 5.3, since a convex hull is convex. -/
+/-- The convex hull of a family is a convex function, a convex hull of sets being convex. -/
 theorem convexFn_convFn (f : ι → E → EReal) : ConvexFn (convFn f) :=
   convexFn_ofEpi (convex_convexHull ℝ _)
 
@@ -91,7 +90,7 @@ theorem convFn_mono {f₁ f₂ : ι → E → EReal} (h : ∀ i, f₁ i ≤ f₂
 
 /-- The epigraph of the convex hull is the convex hull of the union of epigraphs, under the
 hypothesis that the latter is an epigraph at all. It need not be: even for two functions the
-infimum in Theorem 5.6 need not be attained. -/
+infimum in the formula for `convFn` need not be attained. -/
 theorem epi_convFn (h : IsEpiLike (convexHull ℝ (⋃ i, epi (f i)))) :
     epi (convFn f) = convexHull ℝ (⋃ i, epi (f i)) :=
   epi_ofEpi h
@@ -259,10 +258,10 @@ theorem convFn₂_indicatorFn_lt_inf :
     indicatorFn_of_notMem (by norm_num : (1 / 2 : ℝ) ∉ ({1} : Set ℝ))]
   simp
 
-/-! #### Theorem 5.6 for two functions -/
+/-! #### The explicit formula for two functions -/
 
-/-- Every convex combination `a • u + b • v = x` bounds the convex hull at `x`: the easy half of
-Theorem 5.6. Only `f, g ≠ ⊥` is needed, not full properness — with `⊥` allowed the right-hand side
+/-- Every convex combination `a • u + b • v = x` bounds the convex hull at `x`: the easy half of the
+formula. Only `f, g ≠ ⊥` is needed, not full properness — with `⊥` allowed the right-hand side
 can be `⊥` (since `⊥ + ⊤ = ⊥` in `EReal`) while the left-hand side is `⊤`. -/
 theorem convFn₂_le_combo (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) {a b : ℝ} (ha : 0 ≤ a)
     (hb : 0 ≤ b) (hab : a + b = 1) {u v x : E} (hx : a • u + b • v = x) :
@@ -303,8 +302,7 @@ theorem convFn₂_le_combo (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) {
   refine (ofEpi_apply_le hpt).trans (le_of_eq ?_)
   rw [hμ, hν, Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← EReal.coe_add]
 
-/-- **Rockafellar, Theorem 5.6, for two functions.** The convex hull of two proper convex functions
-is given by the explicit formula
+/-- The convex hull of two proper convex functions is given by the explicit formula
 
 `(conv {f, g}) x = inf {a f u + b g v | a u + b v = x, a, b ≥ 0, a + b = 1}`,
 
@@ -312,7 +310,7 @@ the infimum over *all* representations, and genuinely an infimum — it need not
 
 `convFn_apply` proves the same theorem for an arbitrary family and needs only the `≠ ⊥` half of
 properness. Here `dom f, dom g ≠ ∅` is used as well, to make the epigraphs non-empty and so turn
-the convex hull of their union into a convex join (Theorem 3.3). -/
+the convex hull of their union into a convex join. -/
 theorem convFn₂_apply (hf : ConvexFn f) (hg : ConvexFn g) (hf' : Proper f) (hg' : Proper g)
     (x : E) :
     convFn₂ f g x = sInf {z : EReal | ∃ (a b : ℝ) (u v : E), 0 ≤ a ∧ 0 ≤ b ∧ a + b = 1 ∧
@@ -349,7 +347,7 @@ theorem convHullFn_inf (f g : E → EReal) : convHullFn (f ⊓ g) = convFn₂ f 
 /-! #### When a convex hull of epigraphs is again an epigraph
 
 `epi (convFn₂ f g)` is `conv (epi f ∪ epi g)` only when that hull is epi-like, which is exactly the
-statement that the infimum in Theorem 5.6 is attained. Of the two halves of `isEpiLike_iff_forall`
+statement that the infimum in the formula is attained. Of the two halves of `isEpiLike_iff_forall`
 the upward-closure half holds unconditionally; only attainment is at issue. -/
 
 /-- The convex hull of an epi-like set is upward closed in the vertical coordinate: `conv F`
@@ -389,26 +387,26 @@ end Binary
 
 end Module
 
-/-! ### Theorem 5.6 in general -/
+/-! ### The explicit formula in general -/
 
 section Formula
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {ι : Type*}
 
-/-- **Rockafellar, Theorem 5.6.** The convex hull of a family of convex functions, none of which
-takes the value `⊥`, is given by the explicit formula
+/-- The convex hull of a family of convex functions, none of which takes the value `⊥`, is given by
+the explicit formula
 
 `(conv {f i}) x = inf {∑ λ i * f i (x i) | ∑ λ i • x i = x}`,
 
 the infimum being over all representations of `x` as a convex combination of points `x i`, with
 only finitely many non-zero coefficients.
 
-Rockafellar assumes the `f i` proper; only the `≠ ⊥` half is used, twice — it keeps
+The classical statement assumes the `f i` proper; only the `≠ ⊥` half is used, twice — it keeps
 `λ i * f i (x i)` from being `−∞` where `λ i = 0`, and it turns a finite bound on the sum into a
-finite bound on each term. `dom (f i) ≠ ∅` does no work, exactly as in Theorem 5.2.
+finite bound on each term. `dom (f i) ≠ ∅` does no work, exactly as for sums.
 
-Theorem 3.3 presents a point of the convex hull as a combination of points drawn from the
-`epi (f i)` *with repetitions*, whereas the infimum here ranges over one point per index. The
+The description of a convex hull by convex combinations presents a point of the hull as drawn from
+the `epi (f i)` *with repetitions*, whereas the infimum here ranges over one point per index. The
 proof of `≥` bridges the two by merging the points drawn from a single `epi (f i)` into their
 center of mass, which is the only use made of convexity of the `f i`. -/
 theorem convFn_apply {f : ι → E → EReal} (hf : ∀ i, ConvexFn (f i)) (hf' : ∀ i x, f i x ≠ ⊥)
@@ -553,7 +551,7 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] {f g :
 /-- A **closed** convex hull of two epigraphs is an epigraph: `IsEpiLike.mem_convexHull_of_le`
 gives upward closure unconditionally and closedness gives attainment of the vertical infima. So the
 only way `conv (epi f ∪ epi g)` can fail to be an epigraph is by failing to be closed, which turns
-the closedness criteria of §9 into attainment statements for the infimum in Theorem 5.6. -/
+the closedness criteria for convex hulls into attainment statements for that infimum. -/
 theorem isEpiLike_convexHull_epi_union (hc : IsClosed (convexHull ℝ (epi f ∪ epi g))) :
     IsEpiLike (convexHull ℝ (epi f ∪ epi g)) :=
   IsEpiLike.of_isClosed (fun _ _ _ hmem hle =>

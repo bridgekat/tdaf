@@ -12,25 +12,25 @@ import Tdaf.Analysis.Convex.Operations.InfConv
 # Polyhedral convex functions
 
 A convex function is **polyhedral** when its epigraph is a polyhedral convex set; equivalently, by
-Theorem 19.1, when it is the pointwise maximum of finitely many affine functions on a polyhedral
+Minkowski–Weyl, when it is the pointwise maximum of finitely many affine functions on a polyhedral
 effective domain. `PolyhedralFn f` is `Polyhedral (epi f)`, and everything here is read off the
 epigraph through the polyhedral calculus of `Polyhedral/Ops.lean`.
 
 `PolyhedralFn` does not by itself exclude `f x = ⊥` — the epigraph of `f ≡ ⊥` is all of `E × ℝ`,
 which is polyhedral — so `PolyhedralFn.closedFn` carries `f ≠ ⊥`, while lower semicontinuity holds
-regardless. Rockafellar's own convention makes polyhedral convex functions proper.
+regardless. The classical convention makes polyhedral convex functions proper.
 
 ## Main results
 
 * `PolyhedralFn.convexFn`, `PolyhedralFn.lowerSemicontinuous`, `PolyhedralFn.closedFn` — a
   polyhedral convex function is convex and closed.
-* `PolyhedralFn.polyhedral_dom`, `PolyhedralFn.polyhedral_sublevel` — **Theorem 19.1** on the
-  epigraph: the effective domain and every sublevel set are polyhedral.
+* `PolyhedralFn.polyhedral_dom`, `PolyhedralFn.polyhedral_sublevel` — the effective domain and
+  every sublevel set are polyhedral.
 * `polyhedralFn_indicatorFn` — the indicator of a polyhedral set is a polyhedral function, which
   is what makes the polyhedral constraint qualifications apply to constraint *sets*.
-* `PolyhedralFn.add` — **Theorem 19.4**: a sum of polyhedral convex functions is polyhedral.
-* `PolyhedralFn.infConv`, `epi_infConv_of_polyhedralFn` — **Corollary 19.3.4**: an infimal
-  convolute of polyhedral convex functions is polyhedral, and the infimum is attained.
+* `PolyhedralFn.add` — a sum of polyhedral convex functions is polyhedral.
+* `PolyhedralFn.infConv`, `epi_infConv_of_polyhedralFn` — an infimal convolute of polyhedral convex
+  functions is polyhedral, and the infimum defining it is attained.
 
 ## References
 
@@ -63,8 +63,8 @@ theorem PolyhedralFn.lowerSemicontinuous (hf : PolyhedralFn f) : LowerSemicontin
 theorem PolyhedralFn.closedFn (hf : PolyhedralFn f) (h : ∀ x, f x ≠ ⊥) : ClosedFn f :=
   (closedFn_iff_lowerSemicontinuous h).2 hf.lowerSemicontinuous
 
-/-- **Theorem 19.1 for functions**: the effective domain of a polyhedral convex function is a
-polyhedral convex set — it is the image of the epigraph under `Prod.fst`. -/
+/-- The effective domain of a polyhedral convex function is a polyhedral convex set — it is the
+image of the epigraph under `Prod.fst`. -/
 theorem PolyhedralFn.polyhedral_dom (hf : PolyhedralFn f) : Polyhedral (dom f) := by
   rw [dom_eq_fst_image_epi]
   exact Polyhedral.image hf (LinearMap.fst ℝ E ℝ)
@@ -134,7 +134,7 @@ def diagMap : ((E × ℝ) × (E × ℝ)) →ₗ[ℝ] E where
     change a • p.1.1 - a • p.2.1 = a • (p.1.1 - p.2.1)
     rw [smul_sub]
 
-/-- **Rockafellar, Theorem 19.4.** A sum of polyhedral convex functions is polyhedral.
+/-- A sum of polyhedral convex functions is polyhedral.
 
 The epigraph of the sum is the image, under `((x, α), (y, β)) ↦ (x, α + β)`, of the polyhedral set
 `(epi f ×ˢ epi g) ∩ ker (x, y) ↦ x - y`; the `⊥`-freeness hypotheses make the splitting
@@ -188,17 +188,17 @@ theorem PolyhedralFn.add {g : E → EReal} (hf : PolyhedralFn f) (hg : Polyhedra
   rw [PolyhedralFn, himg]
   exact Polyhedral.image hS _
 
-/-- **Rockafellar, Corollary 19.3.4**, the attainment half: for polyhedral `f` and `g` the sum of
-the epigraphs *is* the epigraph of the infimal convolute, so the infimum defining `(f □ g) x` is
-attained whenever it is finite. A sum of epigraphs is always upward closed, and here it is also
-closed, being polyhedral; those are the two halves of `IsEpiLike`. -/
+/-- **The attainment half**: for polyhedral `f` and `g` the sum of the epigraphs *is* the epigraph
+of the infimal convolute, so the infimum defining `(f □ g) x` is attained whenever it is finite.
+A sum of epigraphs is always upward closed, and here it is also closed, being polyhedral; those
+are the two halves of `IsEpiLike`. -/
 theorem epi_infConv_of_polyhedralFn (hf : PolyhedralFn f) {g : E → EReal} (hg : PolyhedralFn g) :
     epi (infConv f g) = epi f + epi g :=
   epi_infConv (IsEpiLike.of_isClosed (fun _ _ _ h hle => mem_epi_add_epi_of_le h hle)
     (Polyhedral.isClosed (Polyhedral.add hf hg)))
 
-/-- **Rockafellar, Corollary 19.3.4.** An infimal convolute of polyhedral convex functions is
-polyhedral: its epigraph is the sum of the two epigraphs. -/
+/-- An infimal convolute of polyhedral convex functions is polyhedral: its epigraph is the sum of
+the two epigraphs. -/
 theorem PolyhedralFn.infConv (hf : PolyhedralFn f) {g : E → EReal} (hg : PolyhedralFn g) :
     PolyhedralFn (_root_.Tdaf.ConvexAnalysis.infConv f g) := by
   have h : Polyhedral (epi (_root_.Tdaf.ConvexAnalysis.infConv f g)) := by

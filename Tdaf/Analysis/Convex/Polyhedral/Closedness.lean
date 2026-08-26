@@ -10,16 +10,17 @@ import Tdaf.Analysis.Convex.Polyhedral.Separation
 /-!
 # Closedness of a sum with a polyhedral set
 
-Corollary 9.1.1 keeps `C₁ + C₂` closed only when every cancelling pair of recession directions
-lies in *both* lineality spaces. If `C₁` is polyhedral, the requirement on the `C₁` side
-disappears: that is **Theorem 20.3**, and **Corollary 20.3.1** is its strong-separation form.
+The general criterion keeps `C₁ + C₂` closed only when every cancelling pair of recession
+directions lies in *both* lineality spaces. If `C₁` is polyhedral, the requirement on the `C₁` side
+disappears altogether.
 
 ## Main results
 
-* `isClosed_add_of_polyhedral`, `separatesStrongly_of_polyhedral_of_recession` — **Theorem 20.3**
-  and **Corollary 20.3.1**.
-* `nonempty_dom_supportFn_inter_relint` — the constraint qualification Theorem 20.3 turns on, read
-  off from Theorem 20.2 applied to the two barrier cones.
+* `isClosed_add_of_polyhedral` — a nonempty polyhedral set plus a nonempty closed convex set is
+  closed as soon as `C₂` is linear in every direction of recession the two share
+  (Theorem 20.3 in [^1]); `separatesStrongly_of_polyhedral_of_recession` is the separation form.
+* `nonempty_dom_supportFn_inter_relint` — the constraint qualification that carries it, read off
+  from polyhedral separation applied to the two barrier cones.
 
 ## Implementation notes
 
@@ -29,7 +30,7 @@ side is `δ(· | cl (C₁ + C₂))` and the domain of the right side is `C₁ + 
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, 1970, §20 (Theorem 20.3, Corollary 20.3.1).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §20.
 -/
 
 open Set
@@ -45,8 +46,8 @@ variable {E F : Type*}
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C₁ C₂ : Set E}
 
 /-- The barrier cone of a polyhedral convex set is polyhedral: its support function is the
-conjugate of a polyhedral indicator (**Theorem 19.2**), and the effective domain of a polyhedral
-function is polyhedral (**Theorem 19.1**). -/
+conjugate of a polyhedral indicator, hence polyhedral, and the effective domain of a polyhedral
+function is polyhedral. -/
 theorem polyhedral_dom_supportFn (h₁ : Polyhedral C₁) :
     Polyhedral (dom (supportFn B C₁)) := by
   have hfn : PolyhedralFn (supportFn B C₁) := by
@@ -60,10 +61,10 @@ theorem zero_mem_dom_supportFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (hne : C₁
   rw [mem_dom, supportFn_zero hne]
   exact _root_.EReal.zero_lt_top
 
-/-- **The constraint qualification of Theorem 20.3.** Under the recession hypothesis the barrier
-cone of `C₁` meets the *relative interior* of the barrier cone of `C₂`. This is where polyhedrality
-of `C₁` is spent: otherwise Theorem 20.2 separates the two barrier cones by a hyperplane, which
-Corollary 14.2.1 reads as a recession direction violating the hypothesis. -/
+/-- **The constraint qualification.** Under the recession hypothesis the barrier cone of `C₁` meets
+the *relative interior* of the barrier cone of `C₂`. This is where polyhedrality of `C₁` is spent:
+otherwise polyhedral separation separates the two barrier cones by a hyperplane, whose normal is a
+recession direction violating the hypothesis. -/
 theorem nonempty_dom_supportFn_inter_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (h₁ : Polyhedral C₁) (hne₁ : C₁.Nonempty)
     (h₂ : Convex ℝ C₂) (hcl₂ : IsClosed C₂) (hne₂ : C₂.Nonempty)
@@ -107,11 +108,11 @@ theorem nonempty_dom_supportFn_inter_relint [IsCompatiblePairing B] [IsCompatibl
     exact h3
   exact hv₃ (hrec v hv₁ hv₂)
 
-/-- **Rockafellar, Theorem 20.3.** Let `C₁` be a nonempty polyhedral convex set and `C₂` a nonempty
-closed convex set. If every direction of recession of `C₁` whose opposite recedes `C₂` is itself a
-direction of recession of `C₂` — that is, a direction in which `C₂` is linear — then `C₁ + C₂` is
-closed. Corollary 9.1.1 asks in addition that such a direction lie in the lineality space of `C₁`;
-polyhedrality of `C₁` removes that requirement. -/
+/-- Let `C₁` be a nonempty polyhedral convex set and `C₂` a nonempty closed convex set. If every
+direction of recession of `C₁` whose opposite recedes `C₂` is itself a direction of recession of
+`C₂` — that is, a direction in which `C₂` is linear — then `C₁ + C₂` is closed. The general
+criterion asks in addition that such a direction lie in the lineality space of `C₁`; polyhedrality
+of `C₁` removes that requirement. -/
 theorem isClosed_add_of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (h₁ : Polyhedral C₁) (hne₁ : C₁.Nonempty)
     (h₂ : Convex ℝ C₂) (hcl₂ : IsClosed C₂) (hne₂ : C₂.Nonempty)
@@ -135,10 +136,10 @@ theorem isClosed_add_of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing 
   rw [dom_indicatorFn, dom_infConv, dom_indicatorFn, dom_indicatorFn] at hdom
   exact closure_eq_iff_isClosed.1 hdom
 
-/-- **Rockafellar, Corollary 20.3.1.** Two disjoint sets, one polyhedral and the other closed, can
-be separated *strongly* as soon as their only common direction of recession is one in which the
-closed one is linear. Compare Corollary 11.4.2, which asks for no common direction of recession at
-all, and Corollary 19.3.3, where both sets are polyhedral and no recession hypothesis is needed. -/
+/-- Two disjoint sets, one polyhedral and the other closed, can be separated *strongly* as soon as
+their only common direction of recession is one in which the closed one is linear. The general
+criterion asks for no common direction of recession at all; when both sets are polyhedral
+(`separatesStrongly_of_polyhedral`) no recession hypothesis is needed. -/
 theorem separatesStrongly_of_polyhedral_of_recession [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip]
     (h₁ : Polyhedral C₁) (hne₁ : C₁.Nonempty)

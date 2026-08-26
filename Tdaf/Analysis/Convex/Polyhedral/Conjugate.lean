@@ -9,10 +9,10 @@ import Tdaf.Analysis.Convex.Duality.Conjugate
 /-!
 # Conjugates of polyhedral convex functions
 
-The conjugate of a polyhedral convex function is polyhedral — Rockafellar's **Theorem 19.2**.
+The conjugate of a polyhedral convex function is polyhedral.
 
-The proof uses the generator/inequality dictionary of Theorem 19.1 once in each direction. Write
-`epi f = conv P + cone D` with `P` and `D` finite. An affine function `x ↦ ⟨x, y⟩ - c` lies below
+The proof uses the Minkowski–Weyl dictionary once in each direction. Write `epi f = conv P + cone D`
+with `P` and `D` finite. An affine function `x ↦ ⟨x, y⟩ - c` lies below
 `f` exactly when the linear functional `p ↦ ⟨p.1, y⟩ - p.2` is bounded by `c` on `epi f`, and on a
 sum of a convex hull and a cone that is two *finite* families of conditions: `⟨p.1, y⟩ - c ≤ p.2`
 for the generating points `p ∈ P`, and `⟨d.1, y⟩ ≤ d.2` for the generating directions `d ∈ D`.
@@ -22,13 +22,14 @@ Both are linear in `(y, c)`, so they cut `epi (conj B f)` out of `F × ℝ` as a
 
 * `mem_epi_conj_iff` — the epigraph of `conj B f`, read off `epi f`, with no hypothesis on `f`. In
   particular none excluding `f x = ⊥`: in that case both sides are false.
-* `PolyhedralFn.conj` — **Theorem 19.2**. The case `P = ∅` is separate: then `f ≡ ⊤` and
-  `epi (conj B f)` is all of `F × ℝ`, whereas the generator argument needs a base point to slide
-  along a recession direction.
+* `PolyhedralFn.conj` — the conjugate of a polyhedral convex function is polyhedral
+  (Theorem 19.2 in [^1]). The case `P = ∅` is separate: then `f ≡ ⊤` and `epi (conj B f)` is all
+  of `F × ℝ`, whereas the generator argument needs a base point to slide along a recession
+  direction.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19 (Theorem 19.2).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19.
 -/
 
 open Set
@@ -96,7 +97,7 @@ theorem mem_epi_conj_iff {q : F × ℝ} :
 
 variable [FiniteDimensional ℝ E]
 
-/-- **Rockafellar, Theorem 19.2.** The conjugate of a polyhedral convex function is polyhedral.
+/-- The conjugate of a polyhedral convex function is polyhedral.
 
 `epi f = conv P + cone D` turns the condition "`x ↦ ⟨x, y⟩ - c` lies below `f`" into finitely
 many linear inequalities on `(y, c)`: one per generating point, one per generating direction. -/
