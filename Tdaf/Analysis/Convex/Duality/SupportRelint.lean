@@ -25,15 +25,15 @@ for equality in the reversible directions and nothing at all elsewhere.
 
 * `supportFn_neg_eq_neg_iff`, `neg_supportFn_neg_eq_iff` — the reversible directions of a support
   function are its directions of constancy.
-* `mem_relint_iff_lt_supportFn`, `mem_interior_iff_lt_supportFn` — **Theorem 13.1**, the `ri` and
-  `int` clauses.
-* `mem_affineSpan_iff_eq_supportFn` — its `aff` clause, which is **Corollary 1.4.1**: the affine
-  hull of a set is the intersection of the hyperplanes containing it. No convexity is needed.
-* `isBounded_iff_forall_bddAbove` — **Corollary 13.2.2** in its metric form: a set is bounded in
-  the norm exactly when its support function is finite everywhere.
+* `mem_relint_iff_lt_supportFn`, `mem_interior_iff_lt_supportFn` — the `ri` and `int` clauses
+  (Theorem 13.1 in [^1]).
+* `mem_affineSpan_iff_eq_supportFn` — the `aff` clause: the affine hull of a set is the
+  intersection of the hyperplanes containing it. No convexity is needed.
+* `isBounded_iff_forall_bddAbove` — a set is bounded in the norm exactly when its support function
+  is finite everywhere.
 
-The closure clause of Theorem 13.1 is `mem_closure_convexHull_iff_le_supportFn`, in
-`Duality/Support.lean`; it is the one clause of the four that holds in any locally convex space.
+The closure clause is `mem_closure_convexHull_iff_le_supportFn`, in `Duality/Support.lean`; it is
+the one clause of the four that holds in any locally convex space.
 
 ## Divergences from the reference
 
@@ -51,8 +51,7 @@ space, where `int ∅ = ∅`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §13 (Theorem 13.1) and
-  §1 (Corollary 1.4.1).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §13 and §1.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -102,7 +101,7 @@ theorem supportFn_neg_eq_neg_iff (hs : s.Nonempty) (y : F) :
       supportFn_eq_coe_of_forall_eq ⟨x₀, hx₀⟩ fun x hx => by rw [map_neg, hc x hx]
     rw [hy, hy', _root_.EReal.coe_neg]
 
-/-- `supportFn_neg_eq_neg_iff` in the orientation Theorem 13.1 uses:
+/-- `supportFn_neg_eq_neg_iff` in the orientation the clauses below use:
 `-δ*(-y | s) = δ*(y | s)`. -/
 theorem neg_supportFn_neg_eq_iff (hs : s.Nonempty) (y : F) :
     -supportFn B s (-y) = supportFn B s y ↔ ∃ c : ℝ, ∀ x ∈ s, B x y = c := by
@@ -111,7 +110,7 @@ theorem neg_supportFn_neg_eq_iff (hs : s.Nonempty) (y : F) :
 
 end Constancy
 
-/-! ### Theorem 13.1: the relative interior, the interior and the affine hull -/
+/-! ### The relative interior, the interior and the affine hull -/
 
 section FiniteDim
 
@@ -138,13 +137,13 @@ theorem exists_forall_eq_of_notMem_affineSpan (hne : C.Nonempty) {x : E}
     have h₂ : v < g p := hgA p (subset_affineSpan ℝ C hp)
     exact ne_of_lt (by linarith)
 
-/-- **Theorem 13.1**, the `ri` clause: a point lies in the relative interior of a convex set
-exactly when it satisfies every inequality the support function records, *strictly* in every
-direction in which the support function is not additively reversible.
+/-- **The `ri` clause**: a point lies in the relative interior of a convex set exactly when it
+satisfies every inequality the support function records, *strictly* in every direction in which the
+support function is not additively reversible.
 
-This is Corollary 11.6.2 read through the pairing: `⟨x, y⟩ ≤ δ*(y | C)` is an equality precisely
-when `⟨·, y⟩` attains its maximum over `C` at `x`, and that is compatible with `x ∈ ri C` only for
-a `⟨·, y⟩` constant on `C`. -/
+Read through the pairing: `⟨x, y⟩ ≤ δ*(y | C)` is an equality precisely when `⟨·, y⟩` attains its
+maximum over `C` at `x`, and that is compatible with `x ∈ ri C` only for a `⟨·, y⟩` constant
+on `C`. -/
 theorem mem_relint_iff_lt_supportFn (hC : Convex ℝ C) (x : E) :
     x ∈ ri C ↔ (∀ y : F, ((B x y : ℝ) : EReal) ≤ supportFn B C y) ∧
       ∀ y : F, -supportFn B C (-y) ≠ supportFn B C y →
@@ -193,10 +192,10 @@ theorem mem_relint_iff_lt_supportFn (hC : Convex ℝ C) (x : E) :
     have hx' : B x y = c := hclc hxcl
     exact hzne (by rw [hy z, hy x, hz', hx'])
 
-/-- **Theorem 13.1**, the `int` clause: a point lies in the interior of a nonempty convex set
-exactly when it satisfies *strictly* every inequality the support function records in a nonzero
-direction. The relative interior is the interior exactly when `0` is the only reversible direction,
-and asking for strictness in every nonzero direction asks for both at once. -/
+/-- **The `int` clause**: a point lies in the interior of a nonempty convex set exactly when it
+satisfies *strictly* every inequality the support function records in a nonzero direction. The
+relative interior is the interior exactly when `0` is the only reversible direction, and asking for
+strictness in every nonzero direction asks for both at once. -/
 theorem mem_interior_iff_lt_supportFn (hC : Convex ℝ C) (hne : C.Nonempty)
     (hB : B.SeparatingRight) (x : E) :
     x ∈ interior C ↔ ∀ y : F, y ≠ 0 → ((B x y : ℝ) : EReal) < supportFn B C y := by
@@ -251,9 +250,8 @@ theorem mem_interior_iff_lt_supportFn (hC : Convex ℝ C) (hne : C.Nonempty)
       subst hy
       exact hrev (by simp [supportFn_zero hne])
 
-/-- **Theorem 13.1**, the `aff` clause — equivalently **Corollary 1.4.1**: the affine hull of a
-nonempty set is the set of points satisfying with equality every inequality the support function
-records reversibly. Convexity is not needed. -/
+/-- **The `aff` clause**: the affine hull of a nonempty set is the set of points satisfying with
+equality every inequality the support function records reversibly. Convexity is not needed. -/
 theorem mem_affineSpan_iff_eq_supportFn (hne : C.Nonempty) (x : E) :
     x ∈ affineSpan ℝ C ↔ ∀ y : F, -supportFn B C (-y) = supportFn B C y →
       ((B x y : ℝ) : EReal) = supportFn B C y := by
@@ -274,10 +272,10 @@ theorem mem_affineSpan_iff_eq_supportFn (hne : C.Nonempty) (x : E) :
     rw [hsupp] at heq
     exact hxc (by exact_mod_cast heq)
 
-/-! ### Corollary 13.2.2: boundedness in the norm -/
+/-! ### Boundedness in the norm -/
 
-/-- **Corollary 13.2.2**, metric form: in finite dimensions a set is bounded in the norm exactly
-when every `⟨·, y⟩` is bounded above on it, i.e. exactly when its support function is finite
+/-- **Boundedness in the norm**: in finite dimensions a set is bounded in the norm exactly when
+every `⟨·, y⟩` is bounded above on it, i.e. exactly when its support function is finite
 everywhere.
 
 `exists_supportFn_finite_iff` states the same equivalence with "bounded" read in the *pairing*

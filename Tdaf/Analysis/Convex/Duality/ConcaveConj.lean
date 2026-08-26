@@ -12,9 +12,9 @@ import Tdaf.Analysis.Convex.Operations.Image
 
 The **concave conjugate** of `g : E → EReal` is `g*(y) = inf_x (⟨x, y⟩ - g x)`, the mirror of the
 convex conjugate with `inf`, `≥` and `-∞` in place of `sup`, `≤` and `+∞`. Convex and concave
-duality are used together throughout — the dual objective of §30 is the concave conjugate of
-`-inf F`, and Fenchel's duality theorem pairs a convex `f` against a concave `g` — so the concave
-conjugate needs a name of its own rather than being spelled through `-g` at every use.
+duality are used together throughout — the dual objective of a convex program is the concave
+conjugate of `-inf F`, and Fenchel's duality theorem pairs a convex `f` against a concave `g` — so
+the concave conjugate needs a name of its own rather than being spelled through `-g` at every use.
 
 **The sign trap.** `g* ≠ -(-g)*`. What is true is `g*(y) = -(-g)*(-y)`: there is a reflection on
 the *dual* side as well. `neg_concaveConj` is the dictionary, and every result below is derived
@@ -35,8 +35,8 @@ through it.
 * `coe_le_concaveConj_iff`, `le_concaveConj_iff` — `c ≤ g*(y)` says exactly that the affine
   function `x ↦ ⟨x, y⟩ - c` lies *above* `g`; and `concaveConj B` is adjoint to
   `concaveConj B.flip`. Every concave conjugate is concave (`concaveFn_concaveConj`).
-* `biconcaveConj_eq_clConcave` — **Fenchel–Moreau for concave functions** (Theorem 12.2): the
-  concave biconjugate is the concave closure. The double reflection cancels on the way
+* `biconcaveConj_eq_clConcave` — **Fenchel–Moreau for concave functions**: the concave
+  biconjugate is the concave closure. The double reflection cancels on the way
   (`biconcaveConj_eq_neg_biconj_neg`: `g** = -(-g)**`, with no sign on the argument).
 
 ## References
@@ -273,19 +273,19 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {g : E → EReal}
 
-/-- **Theorem 12.2 for concave functions.** The concave biconjugate of a concave function is its
-concave closure, spelled out as `-(cl (-g))`. -/
+/-- **Fenchel–Moreau for concave functions.** The concave biconjugate of a concave function is
+its concave closure, spelled out as `-(cl (-g))`. -/
 theorem biconcaveConj_eq_neg_clFn_neg (hg : ConcaveFn g) :
     biconcaveConj B g = fun x => -(clFn (fun x' => -(g x')) x) := by
   funext x
   rw [biconcaveConj_eq_neg_biconj_neg, biconj_eq_clFn hg.convexFn_neg]
 
-/-- **Theorem 12.2 for concave functions**, stated against `clConcave`: `g** = cl g`. -/
+/-- **Fenchel–Moreau for concave functions**, stated against `clConcave`: `g** = cl g`. -/
 theorem biconcaveConj_eq_clConcave (hg : ConcaveFn g) : biconcaveConj B g = clConcave g :=
   biconcaveConj_eq_neg_clFn_neg hg
 
-/-- **Corollary 12.2.1**, concave half: a closed concave function — one whose negative is a closed
-convex function — is its own concave biconjugate. -/
+/-- A closed concave function — one whose negative is a closed convex function — is its own
+concave biconjugate. -/
 theorem biconcaveConj_eq_self (hg : ConcaveFn g) (hc : ClosedFn fun x => -(g x)) :
     biconcaveConj B g = g := by
   rw [biconcaveConj_eq_neg_clFn_neg hg, hc]

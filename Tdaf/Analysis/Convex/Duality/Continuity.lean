@@ -12,11 +12,11 @@ import Tdaf.Analysis.Convex.Duality.Exact
 If one of two proper convex functions is continuous at a point where the other is finite, they add
 exactly: `(f + g)* = f* □ g*`, with the infimal convolution attained.
 
-Rockafellar does not state this. His Theorem 16.4 asks that `ri (dom f)` and `ri (dom g)` meet,
-which is the sharp condition in finite dimensions but is not available in general, `ri` being empty
-for most infinite-dimensional convex sets. Continuity is the condition that replaces it, and the
-one every application in a Banach space actually verifies — typically because one summand is finite
-and continuous everywhere.
+The classical qualification (Theorem 16.4 in [^1]) asks instead that `ri (dom f)` and `ri (dom g)`
+meet, which is sharp in finite dimensions but is not available in general, `ri` being empty for
+most infinite-dimensional convex sets. Continuity is the condition that replaces it, and the one
+every application in a Banach space actually verifies — typically because one summand is finite and
+continuous everywhere.
 
 ## Main results
 
@@ -37,8 +37,7 @@ negative rather than positive because the strict epigraph is unbounded upwards.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Theorem 16.4, the
-  finite-dimensional qualification this replaces).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16.
 -/
 
 open Set Filter
@@ -53,8 +52,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f g : E → EReal}
 
 omit [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] in
-/-- The strict epigraph of a convex function is convex. This is **Theorem 4.2**
-(`convexFn_iff_forall_lt`) read as a statement about a set. -/
+/-- The strict epigraph of a convex function is convex: the strict form of the epigraph
+inequality (`convexFn_iff_forall_lt`) read as a statement about a set. -/
 theorem ConvexFn.convex_strictEpi (hf : ConvexFn f) :
     Convex ℝ {p : E × ℝ | f p.1 < ((p.2 : ℝ) : EReal)} := by
   rintro ⟨x, μ⟩ hx ⟨x', μ'⟩ hx' s t hs ht hst

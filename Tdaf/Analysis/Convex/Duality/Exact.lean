@@ -15,9 +15,10 @@ Almost every "exact" duality statement has the shape
 > if `ri (dom f₁) ∩ … ∩ ri (dom fₘ) ≠ ∅` then the closure operation can be dropped and the
 > infimum defining the dual operation is attained
 
-(Theorems 16.3, 16.4, 16.5, 20.1, 23.8, 23.9, 31.1, 38.2, 38.4, 38.5 …). The relative interior
-condition is one sufficient condition among several; there are polyhedral variants, a continuity
-variant valid in any topological vector space, and Attouch–Brezis conditions in Banach spaces.
+(conjugates of sums, of inverse images and of suprema; subdifferential calculus; the duality
+theorems of convex programming). The relative interior condition is one sufficient condition among
+several; there are polyhedral variants, a continuity variant valid in any topological vector
+space, and Attouch–Brezis conditions in Banach spaces.
 
 This file names the **conclusion**. `IsExactSum` and `IsExactImage` are hypothesis-only interfaces,
 and the sufficient conditions for them are proved in the module that owns each hypothesis
@@ -27,8 +28,7 @@ and the sufficient conditions for them are proved in the module that owns each h
 
 * `IsExactSum B f g` — `f` and `g` **add exactly**: both are proper, and the infimal convolution
   defining `(f + g)*` is attained.
-* `IsExactFinsetSum B s f` — the same for a finite family, the form the book states Theorems 16.4,
-  20.1 and 23.8 in.
+* `IsExactFinsetSum B s f` — the same for a finite family, the form the `m`-ary statements need.
 * `IsExactImage B B' A A' hA g` — `g` **pulls back exactly** along `A`: `g` is proper, and the
   infimum defining `(g A)*` over the fibres of the transpose `A'` is attained.
 
@@ -36,11 +36,11 @@ and the sufficient conditions for them are proved in the module that owns each h
 
 * `conj_add_le_infConv`, `conj_compLin_le_mapLin`, `conj_finsetSum_le_sum_toInfConvFn` — the
   *unconditional* halves: `(f + g)* ≤ f* □ g*` and `(g A)* ≤ A' (g*)`, with no hypothesis at all.
-* `IsExactSum.conj_add`, `IsExactSum.exists_conj_add_eq` — **Theorem 16.4**, exact half:
-  `(f + g)* = f* □ g*` with the infimal convolution attained; `IsExactFinsetSum.conj_finsetSum` is
-  the book's `m`-ary form.
-* `IsExactImage.conj_compLin`, `IsExactImage.exists_conj_compLin_eq` — **Theorem 16.3**, exact
-  half: `(g A)* = A' (g*)` with the infimum over the fibre attained.
+* `IsExactSum.conj_add`, `IsExactSum.exists_conj_add_eq` — the exact half for a sum:
+  `(f + g)* = f* □ g*` with the infimal convolution attained (Theorem 16.4 in [^1]);
+  `IsExactFinsetSum.conj_finsetSum` is the `m`-ary form.
+* `IsExactImage.conj_compLin`, `IsExactImage.exists_conj_compLin_eq` — the exact half for an
+  inverse image: `(g A)* = A' (g*)`, the infimum over the fibre attained (Theorem 16.3 in [^1]).
 * `IsExactFinsetSum.singleton`, `.cons`, `.of_split` — the family interface built out of binary
   ones, which is how every `m`-ary constraint qualification is discharged.
 * `IsExactSum.proper_add`, `IsExactFinsetSum.proper_finsetSum`, `IsExactImage.proper_compLin` —
@@ -55,7 +55,7 @@ function is never `-∞`. What the interface carries is the *attainment*, `exact
 
 `IsExactImage.exact_le` asks for a point of the fibre `A' ⁻¹' {y}` only where `(g A)* y` is finite.
 Without that guard the interface is unsatisfiable whenever `A'` is not surjective: at a `y` outside
-the range of `A'` there is no `z` to produce, while both sides of Theorem 16.3 are legitimately
+the range of `A'` there is no `z` to produce, while both sides of the identity are legitimately
 `+∞` there.
 
 The family interface is not an iterated binary one: `□` does not preserve `≠ ⊥`, so the binary
@@ -65,8 +65,7 @@ the empty family is not exact, just as two functions with disjoint effective dom
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Theorems 16.3
-  and 16.4), §20 (Theorem 20.1), §23 (Theorems 23.8, 23.9), §31 (Theorem 31.1).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16, §20, §23, §31.
 -/
 
 open Pointwise
@@ -81,7 +80,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal} {y₁ y₂ : F} {c₁ c₂ : ℝ}
 
 /-- An affine minorant of `f` and one of `g` add to an affine minorant of `f + g`. Read through
-`conj_le_coe_iff` this is the whole unconditional content of Theorem 16.4. -/
+`conj_le_coe_iff` this is the whole unconditional content of the conjugate-of-a-sum identity. -/
 theorem conj_add_le_coe_add (h₁ : conj B f y₁ ≤ (c₁ : EReal)) (h₂ : conj B g y₂ ≤ (c₂ : EReal)) :
     conj B (f + g) (y₁ + y₂) ≤ ((c₁ + c₂ : ℝ) : EReal) := by
   rw [conj_le_coe_iff] at h₁ h₂ ⊢
@@ -101,9 +100,9 @@ theorem epi_conj_add_epi_conj_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g 
   rw [mk_mem_epi] at h₁ h₂
   simpa using conj_add_le_coe_add h₁ h₂
 
-/-- **Half of Theorem 16.4, unconditionally**: the conjugate of a sum is at most the infimal
-convolution of the conjugates, for *arbitrary* `f` and `g`. The reverse inequality is what
-`IsExactSum` asks for, and what every constraint qualification exists to supply. -/
+/-- **Unconditionally, the conjugate of a sum is at most the infimal convolution** of the
+conjugates, for *arbitrary* `f` and `g`. The reverse inequality is what `IsExactSum` asks for, and
+what every constraint qualification exists to supply. -/
 theorem conj_add_le_infConv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) :
     conj B (f + g) ≤ infConv (conj B f) (conj B g) := by
   rw [infConv_def]
@@ -138,8 +137,8 @@ variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
 
 /-- `f` and `g` **add exactly** with respect to the pairing `B`: both are proper, and the infimal
 convolution `f* □ g*` is attained at every point — equivalently (`IsExactSum.conj_add`), the
-conjugate of the sum *is* the infimal convolution of the conjugates. This is the conclusion of
-Theorem 16.4 and of its polyhedral refinement Theorem 20.1. -/
+conjugate of the sum *is* the infimal convolution of the conjugates. This is the conclusion the
+relative-interior and polyhedral qualifications both deliver. -/
 structure IsExactSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) : Prop where
   /-- The left summand is proper. -/
   proper_left : Proper f
@@ -191,8 +190,7 @@ theorem infConv_le_conj_add : infConv (conj B f) (conj B g) ≤ conj B (f + g) :
   subst hy
   simpa using infConv_le_add h.conj_left_ne_bot h.conj_right_ne_bot (y₁ + y₂) y₂
 
-/-- **Rockafellar's Theorem 16.4**, exact half: the conjugate of a sum is the infimal convolution
-of the conjugates. -/
+/-- **The exact half**: the conjugate of a sum is the infimal convolution of the conjugates. -/
 theorem conj_add : conj B (f + g) = infConv (conj B f) (conj B g) :=
   le_antisymm (conj_add_le_infConv B f g) h.infConv_le_conj_add
 
@@ -201,8 +199,8 @@ theorem conj_add_apply (y : F) :
   rw [h.conj_add]
   exact infConv_apply h.conj_left_ne_bot h.conj_right_ne_bot y
 
-/-- **The infimal convolution is attained**, which is the half of Theorem 16.4 that the constraint
-qualifications are for. -/
+/-- **The infimal convolution is attained**, which is the half the constraint qualifications are
+for. -/
 theorem exists_conj_add_eq (y : F) :
     ∃ y₁ y₂ : F, y₁ + y₂ = y ∧ conj B f y₁ + conj B g y₂ = conj B (f + g) y := by
   obtain ⟨y₁, y₂, hy, hle⟩ := h.exact_le y
@@ -269,7 +267,7 @@ theorem conj_finsetSum_le_sum_conj (hf : ∀ i ∈ s, (dom (f i)).Nonempty) (y :
   rw [hsum]
   exact conj_finsetSum_le_coe_sum fun i hi => (hci i hi).le
 
-/-- **Half of Theorem 16.4 in the book's `m`-ary form, unconditionally**:
+/-- **The `m`-ary form, unconditionally**:
 `(f₁ + ⋯ + fₘ)* ≤ f₁* □ ⋯ □ fₘ*`, the `□`-product being the `AddCommMonoid` sum of `InfConvFn F`.
 
 No properness may be assumed at the intermediate stages, since `□` does not preserve it; the
@@ -346,14 +344,14 @@ theorem sum_toInfConvFn_le_conj_finsetSum :
   rw [← hy]
   exact sum_toInfConvFn_le_sum (fun i hi x => conj_ne_bot (h.proper i hi).dom_nonempty x) y'
 
-/-- **Rockafellar's Theorem 16.4** in the book's `m`-ary form, exact half: the conjugate of a
-finite sum is the infimal convolution of the conjugates. -/
+/-- **The `m`-ary exact half**: the conjugate of a finite sum is the infimal convolution of the
+conjugates. -/
 theorem conj_finsetSum :
     conj B (∑ i ∈ s, f i) = ofInfConvFn (∑ i ∈ s, toInfConvFn (conj B (f i))) :=
   le_antisymm (conj_finsetSum_le_sum_toInfConvFn B s f) h.sum_toInfConvFn_le_conj_finsetSum
 
-/-- **The `m`-fold infimal convolution is attained**, which is the half of Theorem 16.4 that the
-constraint qualifications are for:
+/-- **The `m`-fold infimal convolution is attained**, which is the half the constraint
+qualifications are for:
 `(f₁ + ⋯ + fₘ)* y = inf {f₁* y₁ + ⋯ + fₘ* yₘ | y₁ + ⋯ + yₘ = y}`, with the infimum attained. -/
 theorem exists_conj_finsetSum_eq (y : F) :
     ∃ y' : ι → F, ∑ i ∈ s, y' i = y ∧
@@ -398,7 +396,7 @@ theorem IsExactFinsetSum.cons {i : ι} {t : Finset ι} (hi : i ∉ t)
 
 /-- **Gluing two exactly-adding subfamilies.** If `s` splits into disjoint `t` and `u`, both of
 which add exactly, and the two partial sums add exactly to each other, then `s` adds exactly. This
-is the form the proof of Theorem 20.1 uses, with `t` the polyhedral indices and `u` the rest; the
+is the form the polyhedral proof uses, with `t` the polyhedral indices and `u` the rest; the
 splitting is spelled pointwise so that no `DecidableEq` instance is needed. -/
 theorem IsExactFinsetSum.of_split {t u : Finset ι} (hdisj : Disjoint t u)
     (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
@@ -440,8 +438,8 @@ variable {E F G H : Type*}
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
-/-- **Half of Theorem 16.3, unconditionally**: the conjugate of the inverse image `g A` is at most
-the image under the transpose of the conjugate of `g`. Only the adjointness datum is used. -/
+/-- **Unconditionally, the conjugate of the inverse image `g A` is at most the image** under the
+transpose of the conjugate of `g`. Only the adjointness datum is used. -/
 theorem conj_compLin_le_mapLin (hA : IsAdjointPair B B' A A') (g : G → EReal) :
     conj B (compLin g A) ≤ mapLin A' (conj B' g) := by
   intro y
@@ -454,8 +452,8 @@ theorem conj_compLin_le_mapLin (hA : IsAdjointPair B B' A A') (g : G → EReal) 
 /-- `g` **pulls back exactly** along `A`: `g` is proper, and the infimum over the fibres of the
 transpose `A'` that defines `A' (g*)` is attained — equivalently, `(g A)* = A' (g*)`.
 
-The conclusion of Theorem 16.3. The transpose `A'` and the adjointness `hA` are *data*: between
-arbitrarily paired spaces a linear map need not have an adjoint at all. -/
+The transpose `A'` and the adjointness `hA` are *data*: between arbitrarily paired spaces a linear
+map need not have an adjoint at all. -/
 structure IsExactImage (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ)
     (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) (hA : IsAdjointPair B B' A A') (g : G → EReal) : Prop where
   /-- The function being pulled back is proper. -/
@@ -491,13 +489,13 @@ theorem mapLin_le_conj_compLin : mapLin A' (conj B' g) ≤ conj B (compLin g A) 
   obtain ⟨z, hz, hle⟩ := h.exact_le y hy
   exact (mapLin_le hz).trans hle
 
-/-- **Rockafellar's Theorem 16.3**, exact half: the conjugate of an inverse image is the image of
-the conjugate under the transpose. -/
+/-- **The exact half**: the conjugate of an inverse image is the image of the conjugate under the
+transpose. -/
 theorem conj_compLin : conj B (compLin g A) = mapLin A' (conj B' g) :=
   le_antisymm (conj_compLin_le_mapLin hA g) h.mapLin_le_conj_compLin
 
-/-- **The infimum over the fibre is attained**, which is the half of Theorem 16.3 that the
-constraint qualifications are for. -/
+/-- **The infimum over the fibre is attained**, which is the half the constraint qualifications
+are for. -/
 theorem exists_conj_compLin_eq {y : F} (hy : conj B (compLin g A) y < ⊤) :
     ∃ z : H, A' z = y ∧ conj B' g z = conj B (compLin g A) y := by
   obtain ⟨z, hz, hle⟩ := h.exact_le y hy

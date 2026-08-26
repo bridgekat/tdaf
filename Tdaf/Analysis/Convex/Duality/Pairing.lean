@@ -73,7 +73,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 variable (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
 
 /-- The affine function `x ↦ ⟨x, y⟩ - c` of the pairing `B`, as an `EReal`-valued function. These
-are the "upper half-spaces" of §12 read as functions: such a function lies below `f` exactly when
+are the affine minorants conjugacy quantifies over: such a function lies below `f` exactly when
 its epigraph contains `epi f`, and `f*(y)` is the least `c` for which that happens. -/
 noncomputable def affineFn (y : F) (c : ℝ) : E → EReal :=
   fun x => ((B x y : ℝ) : EReal) - (c : EReal)
@@ -97,7 +97,7 @@ theorem proper_affineFn (y : F) (c : ℝ) : Proper (affineFn B y c) :=
   ⟨⟨0, lt_top_iff_ne_top.2 (affineFn_ne_top y c 0)⟩, affineFn_ne_bot y c⟩
 
 /-- A multiple of one affine function plus another is again an affine function — the algebraic
-content of the "vertical half-space" step in the proof of Theorem 12.1. -/
+content of the "vertical half-space" step in the affine-minorant argument. -/
 theorem affineFn_smul_add (a : ℝ) (y y' : F) (c c' : ℝ) (x : E) :
     affineFn B (a • y + y') (a * c + c') x = ((a * (B x y - c) + (B x y' - c') : ℝ) : EReal) := by
   rw [affineFn_eq_coe, map_add, map_smul, smul_eq_mul]
@@ -237,7 +237,7 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
 /-- The pairing of `U × X` with `V × Y` determined by pairings of the factors. This is the pairing
-that a convex bifunction `U → X → EReal` is conjugated against (§29–§30). -/
+that a convex bifunction `U → X → EReal` is conjugated against. -/
 def prodPairing (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) :
     (U × X) →ₗ[ℝ] (V × Y) →ₗ[ℝ] ℝ :=
   LinearMap.mk₂ ℝ (fun p q => Bu p.1 q.1 + Bx p.2 q.2)
@@ -348,8 +348,8 @@ theorem continuous_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPa
   IsContinuousPairing.continuous_left B y
 
 /-- **The evaluation map of a continuous pairing**, `y ↦ ⟨·, y⟩`, into the continuous dual of `E`.
-It turns the half-space characterisations of §11, which quantify over `StrongDual ℝ E`, into
-statements about `F`, and its surjectivity is what `IsCompatiblePairing` asserts. -/
+It turns half-space characterisations that quantify over `StrongDual ℝ E` into statements about
+`F`, and its surjectivity is what `IsCompatiblePairing` asserts. -/
 def evalCLM (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] : F →ₗ[ℝ] StrongDual ℝ E where
   toFun y := ⟨B.flip y, continuous_pairing B y⟩
   map_add' y₁ y₂ := ContinuousLinearMap.ext fun x => map_add (B x) y₁ y₂
@@ -433,7 +433,7 @@ instance instIsContinuousPairingTopDualNorm {E : Type*} [NormedAddCommGroup E]
   ⟨fun x => (ContinuousLinearMap.apply ℝ ℝ x).continuous⟩
 
 /-- **Every continuous linear functional on the dual of a finite-dimensional normed space is
-evaluation at a point**: reflexivity, in the form the half-space arguments of §18 and §25 need.
+evaluation at a point**: reflexivity, in the form the half-space arguments downstream need.
 Equivalently, `topDualPairing ℝ E` — as opposed to its flip — is a compatible pairing when `E` is
 finite-dimensional. -/
 theorem exists_forall_apply_eq {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -501,7 +501,7 @@ instance instIsCompatiblePairingProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx 
     rw [evalCLM_apply, prodPairing_apply, ← hv, ← hy]
     simpa using (map_add g ((p.1, 0) : U × X) ((0, p.2) : U × X)).symm.trans (by rw [hsplit])
 
-/-- The pairing §30's adjoint is conjugated against is continuous whenever the factors are. -/
+/-- The pairing an adjoint is conjugated against is continuous whenever the factors are. -/
 instance instIsContinuousPairingNegFstProd (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsContinuousPairing Bu] [IsContinuousPairing Bx] :
     IsContinuousPairing (negFst (prodPairing Bu Bx)) := by
