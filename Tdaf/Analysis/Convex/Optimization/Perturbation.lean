@@ -55,8 +55,6 @@ is worth buying.
   **Corollary 29.1.5**: under strict consistency the optimal value is finite and continuous near
   the origin and the Kuhn–Tucker vectors form a non-empty compact convex set.
 * `infBifun_eq_top_of_notMem_domBifun`, `infBifun_eq_bot_of_mem_relint` — **Corollary 29.1.6**.
-* `polyhedralFn_compLin` — a polyhedral convex function composed with a linear map is polyhedral,
-  the comap half of `polyhedralFn_mapLin` (`Polyhedral/Duality.lean`).
 * `PolyhedralBifun` and, for a polyhedral convex program, `PolyhedralBifun.polyhedralFn_apply`,
   `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`,
   `polyhedral_kuhnTucker_of_polyhedralBifun`, `argmin_nonempty_of_polyhedralBifun` and
@@ -637,24 +635,10 @@ end Cor2913Gradient
 
 /-! ### Theorem 29.2: polyhedral convex programs -/
 
-section PolyhedralLinear
+section PolyhedralImage
 
 variable {E G : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G] {f : E → EReal}
-
-omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ G] in
-/-- **Composing with a linear map preserves polyhedrality.** `epi (g A)` is `epi g` pulled back
-along `(x, μ) ↦ (A x, μ)`, and a preimage of a polyhedral set under a linear map is polyhedral
-(`Polyhedral.comap`, which asks for nothing beyond a real vector space).
-
-This is the *comap* half of the pair whose *image* half is `polyhedralFn_mapLin` (Corollary 19.3.1,
-`Polyhedral/Duality.lean`). It is much the cheaper of the two: pulling back needs no closedness and
-no attainment, so no finite dimension is used on either side. -/
-theorem polyhedralFn_compLin {g : G → EReal} (hg : PolyhedralFn g) (A : E →ₗ[ℝ] G) :
-    PolyhedralFn (compLin g A) := by
-  change Polyhedral (epi (compLin g A))
-  rw [epi_compLin]
-  exact Polyhedral.comap hg _
 
 /-- A polyhedral convex function agrees with its closure throughout its effective domain.
 
@@ -669,7 +653,7 @@ theorem PolyhedralFn.clFn_eq_of_mem_dom (hf : PolyhedralFn f) {x : E} (hx : x �
     have hl : lscHull f x = ⊥ := le_bot_iff.1 (hbot ▸ lscHull_le f x)
     rw [clFn_of_exists_eq_bot ⟨x, hl⟩, hbot]
 
-end PolyhedralLinear
+end PolyhedralImage
 
 section PolyhedralBifun
 

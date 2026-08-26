@@ -29,9 +29,10 @@ domains; here the polyhedral side contributes only a point of its effective doma
 * `IsExactImage.of_polyhedral` — the same weakening on the *image* side: a proper polyhedral `g`
   pulls back exactly as soon as the range of `A` meets `dom g`. This is what gives Theorems 16.3
   and 23.9 their polyhedral clauses.
-* `epi_mapLin_of_polyhedralFn`, `polyhedralFn_mapLin`, `exists_mapLin_eq_of_polyhedralFn` —
-  **Corollary 19.3.1** with both halves, the attainment one being what the image constructor runs
-  on.
+* `epi_mapLin_of_polyhedralFn`, `polyhedralFn_mapLin`, `exists_mapLin_eq_of_polyhedralFn`,
+  `polyhedralFn_compLin` — **Corollary 19.3.1** in full: the image `Af` is polyhedral, the infimum
+  defining it is attained, and the composite `gA` is polyhedral. The attainment clause is what the
+  image constructor runs on.
 
 ## Design notes
 
@@ -64,7 +65,9 @@ they both come from.** `epi (Af)` is in general only the epigraph *closure* of t
 readings of that one sentence. `polyhedralFn_mapLin` used to sit in `Optimization/Perturbation.lean`
 (§29), where it duplicated the identity and was invisible from here; it was moved down, which cost
 `Optimization/Perturbation.lean` and `Saddle/Correspondence.lean` an import of this module and
-three modules of import closure each.
+three modules of import closure each. Its comap partner `polyhedralFn_compLin` came down with it,
+from `Saddle/Correspondence.lean` (§37) — §31 could not import a §37 module and restated it, and
+§19 could not either and reproved it, so the two-line proof existed three times.
 
 **The general case is Rockafellar's own reduction, and it runs on an indicator.** With
 `M = aff (dom g)` and `δ = δ(· | M)`, the function `δ + f` is again polyhedral — `M` is polyhedral
@@ -453,6 +456,20 @@ theorem polyhedralFn_mapLin (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
   change Polyhedral (epi (mapLin A f))
   rw [epi_mapLin_of_polyhedralFn hf A]
   exact Polyhedral.image hf _
+
+omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ G] in
+/-- **Rockafellar, Corollary 19.3.1**, the other half: a polyhedral convex function composed with
+a linear map is polyhedral. `epi (gA)` is `epi g` pulled back along `(x, μ) ↦ (A x, μ)`, and a
+preimage of a polyhedral set under a linear map is polyhedral (`Polyhedral.comap`).
+
+This is much the cheaper direction: pulling back needs neither closedness nor attainment, so no
+finite dimension is used on either side — which is why it carries an `omit` where its image-side
+partner `polyhedralFn_mapLin` cannot. -/
+theorem polyhedralFn_compLin {g : G → EReal} (hg : PolyhedralFn g) (A : E →ₗ[ℝ] G) :
+    PolyhedralFn (compLin g A) := by
+  change Polyhedral (epi (compLin g A))
+  rw [epi_compLin]
+  exact Polyhedral.comap hg _
 
 /-- **Rockafellar, Corollary 19.3.1**, the attainment clause: wherever `(Af)(y)` is finite the
 infimum defining it is attained, so some `x` in the fibre over `y` realises the value.
