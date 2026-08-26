@@ -59,6 +59,8 @@ to bifunctions; a formalisation that made the objective the primitive would lose
   `theorem_28_4`, `theorem_28_4_value` |
 | Corollary 28.4.1 | `dualFn`, `concaveFn_dualFn`, `corollary_28_4_1` |
 | §28 remark, line 11303 | `dualFn_eq_concaveConj`, `dualFn_eq_neg_conj_perturbFn` |
+| §28 decomposition principle, lines 11309–11385 | `dom_lagrangeFn`, `decomposition_C`,
+  `decomposition_argmin_lagrangeFn` |
 
 ## The section's definitions
 
@@ -128,24 +130,26 @@ the book's `(m, r)` indexing into the backbone's `(ι, κ)` indexing and applies
 
 ## What is not here
 
-**The decomposition principle (lines 11309–11596) is not carried, deliberately.** It is the
-longest unnumbered deposit in the section, and its mathematical core is one sentence: if every
-`fᵢ` is separable, `fᵢ(x) = fᵢ₁(x₁) + ⋯ + f_{is}(x_s)` with `x = (x₁, …, x_s)` and
-`n = n₁ + ⋯ + n_s`, then `h = h₁ + ⋯ + h_s` with `h_k = f_{0k} + λ₁f_{1k} + ⋯ + λ_m f_{mk}`, so
-minimising `h` over `C` — which is what Theorem 28.1 reduces `(P)` to — splits into `s`
-independent problems over the `C^k`. Everything after line 11395 is a worked numerical
-illustration (`q(x) = q₁(ξ₁) + ⋯ + q_n(ξ_n)` on the simplex) and a discussion of computing the
-dual objective `w` from conjugates by a subgradient method: exposition and algorithmics, with no
-statement in it that a later section cites.
+**Of the decomposition passage (lines 11309–11596) only the principle itself is carried.** Lines
+11309–11385 are `decomposition_C` and `decomposition_argmin_lagrangeFn`. Everything after line
+11395 is a worked numerical illustration (`q(x) = q₁(ξ₁) + ⋯ + q_n(ξ_n)` on the simplex) and a
+discussion of computing the dual objective `w` from conjugates by a subgradient method:
+exposition and algorithmics, with no statement in it that a later section cites.
 
-The core sentence *is* a statement worth having, but the cost is entirely in machinery this
-section does not otherwise need: an `s`-fold isometric decomposition `ℝ^{n₁} × ⋯ × ℝ^{n_s} ≃ ℝⁿ`
-with transport of `dom`, `argmin` and `ri` across it. The surface has only the binary
-`euclideanProdEquiv` (`Surface/Common/Euclidean.lean`), and remediation §4.8 lists even the binary
-transport as open. Carrying a binary special case of a genuinely `s`-fold principle would
-misrepresent the book. The honest form of the missing piece is a backbone lemma
-`argmin (fun x => ∑ k, h k (x k)) = ⋂ k, {x | x k ∈ argmin (h k)}` for `EReal`-valued proper `h k`
-on a finite product, and it is recorded under `## Backbone gaps`.
+**The note that stood here was wrong twice over, and both errors pointed away from a statement
+that was three lines from the backbone.** It read: *"the cost is entirely in machinery this
+section does not otherwise need: an `s`-fold isometric decomposition
+`ℝ^{n₁} × ⋯ × ℝ^{n_s} ≃ ℝⁿ` with transport of `dom`, `argmin` and `ri` across it. The surface has
+only the binary `euclideanProdEquiv` (`Surface/Common/Euclidean.lean`), and remediation §4.8
+lists even the binary transport as open."* `euclideanProdEquiv` is **backbone**, at
+`Analysis/Convex/EuclideanProd.lean`; `Surface/Common/Euclidean.lean` holds only the bridge
+`pairingProd_euclideanProdEquiv` and says as much in its own docstring. And remediation §4.8 is
+**done**: `conj_comp_euclideanProdEquiv`, `subgradient_comp_euclideanProdEquiv` and
+`relint_image_euclideanProdEquiv` have all been in place since it closed.
+
+More to the point, the isometry is the wrong object. The passage uses none and mentions `ri`
+nowhere; the identification of `ℝ^{n₁} × ⋯ × ℝ^{n_s}` with `ℝⁿ` is coordinate bookkeeping, and
+the content is `argmin_sepSum` and `dom_sepSum` on the *dependent product itself*.
 
 Also not carried: the remark at line 11045 that `L` is convex in `x` for each `u*`
 (`concaveFn_programLagrangian` carries the concavity in `u*`, which Corollary 28.4.1 needs; the
@@ -180,7 +184,11 @@ have been hoisted.
 * ~~`isCompact_setOf_le` is `private`~~ — **closed**: it is public in
   `Optimization/Minimum.lean`, and Corollary 28.1.1 now cites it instead of routing through
   `isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le`.
-* The `s`-fold product decomposition needed by the decomposition principle, described above.
+* ~~The `s`-fold product decomposition needed by the decomposition principle~~ — **closed**,
+  and the object the gap asked for was the wrong one: `dom_sepSum` and `argmin_sepSum` are
+  public in `Optimization/Minimum.lean` over a dependent finite product, and
+  `argmin_comp_of_surjective` beside them reads the minimum set in any other coordinates. No
+  isometry, and no `ri`, was involved.
 
 ## References
 
@@ -1871,6 +1879,84 @@ theorem corollary_28_4_1 (hkt : ∃ u : Rn m, P.IsKuhnTuckerVector u) {u : Rn m}
     have hnb : (⨅ z, P.lagrangeFn u z) ≠ ⊥ := by
       rw [heq]; exact hu₀.optimalValue_ne_bot
     exact ⟨hu, hnb, P.iInf_lagrangeFn_ne_top u, heq⟩
+
+end OrdinaryConvexProgram
+
+/-! ### The decomposition principle
+
+**Rockafellar, §28, lines 11309–11385.** Suppose the coordinates of `ℝⁿ` split as
+`x = (x₁, …, x_s)` with `x_k ∈ ℝ^{n_k}` and `n₁ + ⋯ + n_s = n`, and suppose every `fᵢ` is
+separable in that splitting, `fᵢ(x) = fᵢ₁(x₁) + ⋯ + f_{is}(x_s)`. Once a Kuhn–Tucker vector `u`
+has reduced `(P)` to minimising `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` over `C` (Theorem 28.1), `h` is
+separable too — `h(x) = h₁(x₁) + ⋯ + h_s(x_s)` with `h_k = f_{0k} + λ₁f_{1k} + ⋯ + λ_m f_{mk}` —
+and the book's assertion is that the problem splits into the `s` independent problems "minimise
+`h_k` over `C^k`", where `C^k = dom h_k`.
+
+The splitting is a hypothesis, as a linear equivalence `e` from the dependent product
+`ℝ^{n₁} × ⋯ × ℝ^{n_s}` to `ℝⁿ`. Linearity is what carries the book's `n₁ + ⋯ + n_s = n`: a
+bare bijection between these two types exists whatever the `n_k` are, and would leave the
+separability hypothesis doing all the work. Nothing else about `e` is used — no norm, no
+isometry, and no relative interior appears anywhere in the passage. Such an `e` is available from
+Mathlib whenever the dimensions add up (`LinearIsometryEquiv.piLpCurry`,
+`LinearIsometryEquiv.piLpCongrLeft`, `finSigmaFinEquiv`); the principle needs only that one
+exists, not which one.
+
+Separability of `h` is hypothesised in the form the book asserts it ("in view of the given
+expressions for `f₀, …, f_m`, however, we have …") rather than derived from separability of each
+`fᵢ`: deriving it means distributing `λᵢ · ∑ₖ fᵢₖ(xₖ)` over the sum, and `EReal` is not a
+semiring.
+
+The two statements are `Tdaf.ConvexAnalysis.dom_sepSum` and `argmin_sepSum` read through `e` by
+`argmin_comp_of_surjective`. -/
+
+namespace OrdinaryConvexProgram
+
+variable {s : ℕ} {nk : Fin s → ℕ}
+
+/-- The effective domain of the Lagrangian `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` is `C`.
+
+Off `C` it is `+∞` because `f₀` is and the multipliers of the inequality constraints are
+non-negative; on `C` it is a real number, because Rockafellar's convention (b) makes every `fᵢ`
+finite there. This is the sense in which "minimise `h` over `C`" is an unconstrained problem. -/
+theorem dom_lagrangeFn {u : Rn m} (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i) :
+    dom (P.lagrangeFn u) = P.C := by
+  ext x
+  refine ⟨fun hx => ?_, fun hx => mem_dom.2 ?_⟩
+  · by_contra hc
+    exact absurd (P.lagrangeFn_eq_top_of_notMem_C hu hc) (mem_dom.1 hx).ne
+  · obtain ⟨c₀, hc₀⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (P.proper_f₀.ne_bot x)
+      (P.mem_C_iff.1 hx)
+    choose c hc using fun i => P.exists_coe_f hx i
+    rw [P.lagrangeFn_eq_coe hc₀ hc]
+    exact _root_.EReal.coe_lt_top _
+
+/-- **Rockafellar, §28, line 11331**: in the coordinates `x = (x₁, …, x_s)` the set `C` is the
+product of the sets `C^k = dom h_k`.
+
+This is `dom_sepSum` read through `e`, on the strength of `dom_lagrangeFn`. Properness of the
+`h_k` is not needed — only that none of them takes the value `−∞`, which is automatic for the
+`h_k` the principle produces. -/
+theorem decomposition_C (e : (∀ k, Rn (nk k)) ≃ₗ[ℝ] Rn n) {u : Rn m}
+    (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i) {h : ∀ k, Rn (nk k) → EReal}
+    (hb : ∀ k (z : Rn (nk k)), h k z ≠ ⊥)
+    (hsep : ∀ x, P.lagrangeFn u (e x) = ∑ k, h k (x k)) :
+    ⇑e ⁻¹' P.C = univ.pi fun k => dom (h k) := by
+  rw [← P.dom_lagrangeFn hu, ← dom_sepSum hb]
+  exact congrArg dom (funext hsep)
+
+/-- **Rockafellar, §28, line 11381**, the decomposition principle itself: minimising `h` over `C`
+is the `s` independent problems "minimise `h_k` over `C^k`".
+
+With `theorem_28_1` this is the assertion about `(P)`: the optimal solutions of `(P)` are the
+points of `argmin h` that satisfy complementary slackness, and `argmin h` is now a product. Each
+factor is a problem in `ℝ^{n_k}`, while by Corollary 28.4.1 finding `u` is a problem in `ℝᵐ` —
+which is the reduction in dimensionality the passage is about. -/
+theorem decomposition_argmin_lagrangeFn (e : (∀ k, Rn (nk k)) ≃ₗ[ℝ] Rn n) {u : Rn m}
+    {h : ∀ k, Rn (nk k) → EReal} (hp : ∀ k, Proper (h k))
+    (hsep : ∀ x, P.lagrangeFn u (e x) = ∑ k, h k (x k)) :
+    ⇑e ⁻¹' argmin (P.lagrangeFn u) = univ.pi fun k => argmin (h k) := by
+  rw [← argmin_comp_of_surjective (g := P.lagrangeFn u) e.surjective, ← argmin_sepSum hp]
+  exact congrArg argmin (funext hsep)
 
 end OrdinaryConvexProgram
 

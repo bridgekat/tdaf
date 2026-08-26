@@ -78,6 +78,7 @@ convex set, and the optimality condition `0 ∈ ∂h x + N_C(x)`.
   `argmin_nonempty_and_isBounded_iff_exists_setOf_le` — Theorem 27.1(d) and (f) combined, in the
   form **Theorem 30.4** conditions (g) and (i) take: *some* level set is non-empty and bounded
   exactly when the minimum set is, and both say `0 ∈ int (dom f*)`.
+* `argmin_comp_of_surjective` — the minimum set read in another set of coordinates.
 * `argmin_sepSum`, `dom_sepSum` — a **separable** objective `x ↦ ∑ᵢ hᵢ(xᵢ)` on a dependent
   finite product is minimised coordinatewise, and its effective domain is the product of the
   effective domains. This is the content of §28's *decomposition principle*, stated on the
@@ -272,6 +273,18 @@ theorem convex_argmin (hf : ConvexFn f) : Convex ℝ (argmin f) := by
       exact ⟨fun hz => hz a, fun hz w => le_trans hz (ha w)⟩
     rw [hset]
     exact hf.convex_le _
+
+/-- **The minimum set transports along a surjection**: `x ↦ g (e x)` is minimised exactly at
+the `e`-preimages of the minimisers of `g`.
+
+Surjectivity is what makes the two quantifiers agree, and it is all the proof uses: injectivity
+of `e` plays no part, and neither does any structure on either type. This is what reads a
+minimisation problem in a different set of coordinates, and composed with `argmin_sepSum` it is
+the whole of §28's decomposition principle. -/
+theorem argmin_comp_of_surjective {α β : Type*} {g : β → EReal} {e : α → β}
+    (he : Function.Surjective e) : argmin (fun x => g (e x)) = e ⁻¹' argmin g := by
+  ext x
+  exact ⟨fun hx w => by obtain ⟨z, rfl⟩ := he w; exact hx z, fun hx z => hx (e z)⟩
 
 end Defs
 
