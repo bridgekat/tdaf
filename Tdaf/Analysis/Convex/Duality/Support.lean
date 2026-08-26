@@ -18,49 +18,49 @@ indicators (`supportFn_eq_conj_indicatorFn`), so every property of `δ*(· ∣ s
 The main theorem is the correspondence: the support functions of the nonempty convex sets are
 exactly the closed proper positively homogeneous convex functions, and the two classes are in
 bijection. Note that the support function lives on the *other* side of the pairing,
-`supportFn B s : F → EReal` for `s : Set E`, so a statement such as Theorem 13.2 — which asks both
-that `g : F → EReal` be closed and that the set it supports be closed in `E` — needs a topology and
-a compatible pairing on both sides.
+`supportFn B s : F → EReal` for `s : Set E`, so the correspondence — which asks both that
+`g : F → EReal` be closed and that the set it supports be closed in `E` — needs a topology and a
+compatible pairing on both sides.
 
 ## Main definitions
 
 * `supportFn B s` — the support function `δ*(· ∣ s)`.
 * `supportSet B f` — the set `{y ∣ ∀ x, ⟨x, y⟩ ≤ f x}`, of which `f` is the support function when
   `f` is closed, proper, positively homogeneous and convex. It inverts the correspondence.
-* `supportEquiv` — **Theorem 13.2** as a bijection between the nonempty closed convex subsets of
+* `supportEquiv` — the correspondence as a bijection between the nonempty closed convex subsets of
   `E` and the closed proper positively homogeneous convex functions on `F`.
 
 ## Main results
 
 * `supportFn_eq_conj_indicatorFn` — `δ*(· ∣ s) = (δ(· ∣ s))*`.
-* `mem_closure_convexHull_iff_le_supportFn` — **Theorem 13.1**: `x ∈ cl (conv s)` if and only if
-  `⟨x, y⟩ ≤ δ*(y ∣ s)` for every `y`.
-* `conj_supportFn`, `exists_supportFn_iff`, `supportEquiv` — **Theorem 13.2**: the indicator and
-  the support function of a closed convex set are conjugate, and the correspondence above.
-  `exists_supportFn_finite_iff` is **Corollary 13.2.2**, bounded ⟺ finite.
-* `clFn_eq_supportFn_of_posHomogeneous` — **Corollary 13.2.1**: the closure of a positively
-  homogeneous convex function is a support function. `supportSet_clFn` is the consequence that
-  closure does not change the set supported.
-* `conj_eq_indicatorFn_of_posHomogeneous` — the engine of both, and of §14: the conjugate of a
-  positively homogeneous function is an *indicator*. Reindexing the supremum defining `f*` along
-  `x ↦ a • x` shows `f*(y) = a f*(y)` for every `a > 0`, so `f*(y)` is `0`, `⊤` or `⊥`, and `⊥` is
-  excluded as soon as `f ≢ ⊤`. No topology is used, which is why §13 and §14 need no separation
-  theory beyond what §12 already used.
+* `mem_closure_convexHull_iff_le_supportFn` — `x ∈ cl (conv s)` if and only if `⟨x, y⟩ ≤ δ*(y ∣ s)`
+  for every `y` (Theorem 13.1 in [^1]).
+* `conj_supportFn`, `exists_supportFn_iff`, `supportEquiv` — the indicator and the support function
+  of a closed convex set are conjugate, and the correspondence above (Theorem 13.2 in [^1]).
+  `exists_supportFn_finite_iff` reads it as bounded ⟺ finite.
+* `clFn_eq_supportFn_of_posHomogeneous` — the closure of a positively homogeneous convex function
+  is a support function. `supportSet_clFn` is the consequence that closure does not change the set
+  supported.
+* `conj_eq_indicatorFn_of_posHomogeneous` — the engine of both: the conjugate of a positively
+  homogeneous function is an *indicator*. Reindexing the supremum defining `f*` along `x ↦ a • x`
+  shows `f*(y) = a f*(y)` for every `a > 0`, so `f*(y)` is `0`, `⊤` or `⊥`, and `⊥` is excluded as
+  soon as `f ≢ ⊤`. No topology is used, which is why none of this needs separation theory beyond
+  what biconjugation already used.
 * `supportFn_singleton`, `supportFn_union`, `supportFn_convexHull`, `supportFn_closure`,
   `supportFn_smul`, `supportFn_add` — the support functions of the basic constructions.
 
 ## Divergences from the reference
 
-**Corollary 13.2.2 needs closedness.** Rockafellar deduces that a *finite* positively homogeneous
-convex function is a support function from Corollary 7.4.2, "a finite convex function on `Rⁿ` is
+**The finite form needs closedness.** The classical deduction that a *finite* positively
+homogeneous convex function is a support function goes through "a finite convex function on `Rⁿ` is
 closed", which is false in infinite dimensions: a discontinuous linear functional is finite, convex
 and positively homogeneous, is not closed, and is the support function of nothing. So
 `exists_supportFn_finite_iff` carries `ClosedFn`, and reads "bounded" as "`⟨·, y⟩` is bounded above
-on the set, for each `y`" — the book's own proof of the corollary.
+on the set, for each `y`" — which is what the classical proof actually uses.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §13.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §13.
 -/
 
 open Set Pointwise
@@ -84,8 +84,8 @@ variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s t : Set E} {x : E} {y : F}
 theorem supportFn_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Set E) (y : F) :
     supportFn B s y = ⨆ x ∈ s, ((B x y : ℝ) : EReal) := rfl
 
-/-- **Support functions are conjugates of indicators.** This is why §13 is short: every property of
-`δ*(· | s)` below is a property of a conjugate, cited from `Conjugate.lean`. -/
+/-- **Support functions are conjugates of indicators.** This is why the file is short: every
+property of `δ*(· | s)` below is a property of a conjugate, cited from `Conjugate.lean`. -/
 theorem supportFn_eq_conj_indicatorFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Set E) :
     supportFn B s = conj B (indicatorFn s) := by
   funext y
@@ -101,8 +101,8 @@ theorem le_supportFn (hx : x ∈ s) (y : F) : ((B x y : ℝ) : EReal) ≤ suppor
 theorem supportFn_le_iff {c : EReal} :
     supportFn B s y ≤ c ↔ ∀ x ∈ s, ((B x y : ℝ) : EReal) ≤ c := iSup₂_le_iff
 
-/-- **The closed half-spaces containing `s`** (Rockafellar §13): `s ⊆ {x | ⟨x, y⟩ ≤ c}` if and only
-if `c ≥ δ*(y | s)`. -/
+/-- **The closed half-spaces containing `s`**: `s ⊆ {x | ⟨x, y⟩ ≤ c}` if and only if
+`c ≥ δ*(y | s)`. -/
 theorem supportFn_le_coe_iff {c : ℝ} :
     supportFn B s y ≤ (c : EReal) ↔ ∀ x ∈ s, B x y ≤ c := by
   rw [supportFn_le_iff]
@@ -189,8 +189,8 @@ theorem posHomogeneous_supportFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Set 
   refine iSup_congr fun _ => ?_
   rw [map_smul, smul_eq_mul, ← Tdaf.EReal.coe_mul_coe]
 
-/-- Support functions are **subadditive in the dual variable**: Theorem 4.7 applied to
-`posHomogeneous_supportFn`. -/
+/-- Support functions are **subadditive in the dual variable**: a positively homogeneous convex
+function is subadditive, applied to `posHomogeneous_supportFn`. -/
 theorem supportFn_add_le (hs : s.Nonempty) (y₁ y₂ : F) :
     supportFn B s (y₁ + y₂) ≤ supportFn B s y₁ + supportFn B s y₂ :=
   ((posHomogeneous_supportFn B s).convexFn_iff_subadditive (supportFn_ne_bot hs)).1
@@ -201,7 +201,7 @@ theorem convex_setOf_pairing_le (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (y : F) (M
   have h := (convexFn_affineFn (B := B) y 0).convex_le M
   simpa only [affineFn_apply, _root_.EReal.coe_zero, sub_zero] using h
 
-/-- **The support function does not see the convex hull** (Rockafellar §13). -/
+/-- **The support function does not see the convex hull.** -/
 theorem supportFn_convexHull (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Set E) :
     supportFn B (convexHull ℝ s) = supportFn B s := by
   funext y
@@ -220,8 +220,8 @@ theorem supportFn_smul (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) {a : ℝ} (ha : 0 <
   rw [map_smul, LinearMap.smul_apply, smul_eq_mul, ← Tdaf.EReal.coe_mul_coe]
 
 /-- **The support function of a sum of sets is the sum of the support functions.** Unconditional,
-unlike the corresponding statement for a sum of *functions* (Corollary 16.4.1), because the two
-suprema never interact through an `∞ - ∞`. -/
+unlike the corresponding statement for a sum of *functions*, because the two suprema never
+interact through an `∞ - ∞`. -/
 theorem supportFn_add (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s t : Set E) :
     supportFn B (s + t) = supportFn B s + supportFn B t := by
   funext y
@@ -303,8 +303,8 @@ theorem conj_smul_eq_self (hf : PosHomogeneous f) {a : ℝ} (ha : 0 < a) (y : F)
 
 /-- **The conjugate of a positively homogeneous function is an indicator function.** With
 `supportFn_eq_conj_indicatorFn` this is the duality between positive homogeneity and being an
-indicator that §14 opens with. The one hypothesis, `f ≢ +∞`, is genuinely needed: `(+∞)* = -∞` is
-no indicator. -/
+indicator that gauges and polarity rest on. The one hypothesis, `f ≢ +∞`, is genuinely needed:
+`(+∞)* = -∞` is no indicator. -/
 theorem conj_eq_indicatorFn_of_posHomogeneous (hf : PosHomogeneous f) (hne : ∃ x, f x ≠ ⊤) :
     conj B f = indicatorFn (supportSet B f) := by
   funext y
@@ -358,7 +358,7 @@ theorem isClosed_setOf_pairing_le (y : F) (M : EReal) :
     IsClosed {x : E | ((B x y : ℝ) : EReal) ≤ M} :=
   isClosed_Iic.preimage (_root_.EReal.continuous_coe_iff.2 (continuous_pairing B y))
 
-/-- **The support function does not see the closure** (Rockafellar §13). -/
+/-- **The support function does not see the closure.** -/
 theorem supportFn_closure (s : Set E) : supportFn B (closure s) = supportFn B s := by
   funext y
   refine le_antisymm (iSup₂_le fun x hx => ?_) (supportFn_mono subset_closure y)
@@ -372,7 +372,7 @@ theorem isClosed_supportSet (g : F → EReal) : IsClosed (supportSet B.flip g) :
 
 end ContinuousPairing
 
-/-! ### Theorem 13.1 -/
+/-! ### The closed convex hull -/
 
 section Theorem131
 
@@ -380,8 +380,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B]
 
-/-- **Theorem 13.1.** A point lies in the closed convex hull of `s` if and only if it satisfies
-every weak linear inequality that the support function of `s` records. -/
+/-- A point lies in the closed convex hull of `s` if and only if it satisfies every weak linear
+inequality that the support function of `s` records. -/
 theorem mem_closure_convexHull_iff_le_supportFn (s : Set E) (x : E) :
     x ∈ closure (convexHull ℝ s) ↔ ∀ y : F, ((B x y : ℝ) : EReal) ≤ supportFn B s y := by
   rw [← closure_convexHull_eq_iInter_halfspaces s]
@@ -402,8 +402,7 @@ theorem mem_closure_convexHull_iff_le_supportFn (s : Set E) (x : E) :
     rw [hy x]
     exact_mod_cast (h y).trans hsup
 
-/-- **Rockafellar, Corollary 13.1.1.** Closed convex hulls are ordered by their support
-functions. -/
+/-- Closed convex hulls are ordered by their support functions. -/
 theorem closure_convexHull_subset_iff_supportFn_le (s t : Set E) :
     closure (convexHull ℝ s) ⊆ closure (convexHull ℝ t) ↔ supportFn B s ≤ supportFn B t := by
   constructor
@@ -417,7 +416,7 @@ theorem closure_convexHull_subset_iff_supportFn_le (s t : Set E) :
 
 end Theorem131
 
-/-! ### Corollary 13.2.1
+/-! ### The closure of a positively homogeneous convex function
 
 Only the space `F` carries a topology here: this is `biconj_eq_clFn` for the *flipped* pairing. -/
 
@@ -427,8 +426,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B.flip] {g : F → EReal}
 
-/-- **Corollary 13.2.1.** The closure of a positively homogeneous convex function that is not
-identically `+∞` is the support function of the closed convex set
+/-- The closure of a positively homogeneous convex function that is not identically `+∞` is the
+support function of the closed convex set
 `supportSet B.flip g = {x | ∀ y, ⟨x, y⟩ ≤ g y}`.
 
 The improper case is included: if `g` takes `-∞` then both sides are the support function of `∅`. -/
@@ -469,7 +468,7 @@ theorem nonempty_supportSet (hg : PosHomogeneous g) (hcpc : ClosedProperConvexFn
 
 end Corollary1321
 
-/-! ### Theorem 13.2
+/-! ### Sets and their support functions, in bijection
 
 Both spaces carry topologies compatible with the pairing, exactly as for `conjEquiv`. -/
 
@@ -482,8 +481,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 
 omit [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F]
   [LocallyConvexSpace ℝ F] in
-/-- **Theorem 13.2**, first half: the indicator function and the support function of a closed
-convex set are conjugate to each other. -/
+/-- **The indicator and the support function are conjugate** to each other, for a closed convex
+set. -/
 theorem conj_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
     conj B.flip (supportFn B s) = indicatorFn s := by
   rw [supportFn_eq_conj_indicatorFn]
@@ -492,7 +491,7 @@ theorem conj_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs₂ : I
 
 omit [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F]
   [LocallyConvexSpace ℝ F] in
-/-- **Theorem 13.2** with the closedness hypothesis dropped: the conjugate of a support function
+/-- The same with the closedness hypothesis dropped: the conjugate of a support function
 is the indicator of the *closure* of the set. This is the form a closedness *conclusion* is read
 off from, `dom` of the left side being `cl s`. -/
 theorem conj_supportFn_of_convex [IsCompatiblePairing B] (hs₁ : Convex ℝ s) :
@@ -503,7 +502,7 @@ theorem conj_supportFn_of_convex [IsCompatiblePairing B] (hs₁ : Convex ℝ s) 
 
 omit [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F]
   [LocallyConvexSpace ℝ F] in
-/-- **Theorem 13.1 for a closed convex set**: `s` is recovered from its support function. -/
+/-- **A closed convex set is recovered from its support function.** -/
 theorem supportSet_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) :
     supportSet B.flip (supportFn B s) = s := by
   ext x
@@ -511,8 +510,8 @@ theorem supportSet_supportFn [IsCompatiblePairing B] (hs₁ : Convex ℝ s) (hs�
   rw [← mem_closure_convexHull_iff_le_supportFn, hs₁.convexHull_eq, hs₂.closure_eq]
 
 omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] in
-/-- **Theorem 13.2**, the characterisation: the support functions of the nonempty convex sets are
-exactly the closed proper positively homogeneous convex functions.
+/-- **The characterisation**: the support functions of the nonempty convex sets are exactly the
+closed proper positively homogeneous convex functions.
 
 Stated for the nonempty *closed convex* sets, which give the same functions since the support
 function sees neither the closure nor the convex hull, so that the correspondence is one-to-one. -/
@@ -530,8 +529,8 @@ theorem exists_supportFn_iff [IsContinuousPairing B] [IsCompatiblePairing B.flip
     exact ⟨supportSet B.flip g, nonempty_supportSet hph hcpc,
       convex_supportSet B.flip g, isClosed_supportSet g, hg.symm⟩
 
-/-- **Theorem 13.2** as a bijection between the nonempty closed convex sets and the closed proper
-positively homogeneous convex functions: the restriction of `conjEquiv` along the embeddings
+/-- **The correspondence as a bijection** between the nonempty closed convex sets and the closed
+proper positively homogeneous convex functions: the restriction of `conjEquiv` along the embeddings
 `s ↦ δ(· | s)` and "positively homogeneous". -/
 noncomputable def supportEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip] :
@@ -547,8 +546,8 @@ noncomputable def supportEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatib
     exact supportFn_supportSet g.2.2 g.2.1.convex g.2.1.closed ⟨y₀, hy₀.ne⟩
 
 omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] in
-/-- **Corollary 13.2.2.** The support functions of the nonempty sets on which every `⟨·, y⟩` is
-bounded above are exactly the *finite closed* positively homogeneous convex functions.
+/-- The support functions of the nonempty sets on which every `⟨·, y⟩` is bounded above are
+exactly the *finite closed* positively homogeneous convex functions.
 
 The book has no `ClosedFn` hypothesis; it is needed outside finite dimensions, where a
 discontinuous linear functional is finite, convex, positively homogeneous and not closed. -/

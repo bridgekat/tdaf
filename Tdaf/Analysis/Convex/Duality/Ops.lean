@@ -15,16 +15,16 @@ import Tdaf.Analysis.Convex.Operations.InfConv
 
 Every operation on convex functions has a dual operation, and conjugacy exchanges the two.
 
-| primal | dual | book |
+| primal | dual | form |
 |---|---|---|
-| `a • f` | `smulRight (conj B f) a` | **Thm 16.1** |
-| `smulRight f a` | `a • conj B f` | **Thm 16.1** |
-| `mapLin A f` | `compLin (conj B f) A'` | **Thm 16.3**, unconditional |
-| `compLin g A` | `mapLin A' (conj B' g)` | **Thm 16.3**, up to closure |
-| `infConv f g` | `conj B f + conj B g` | **Thm 16.4**, unconditional |
-| `f + g` | `infConv (conj B f) (conj B g)` | **Thm 16.4**, up to closure |
-| `convFn f` | `⨆ i, conj B (f i)` | **Thm 16.5**, unconditional |
-| `⨆ i, f i` | `convFn fun i => conj B (f i)` | **Thm 16.5**, up to closure |
+| `a • f` | `smulRight (conj B f) a` | unconditional |
+| `smulRight f a` | `a • conj B f` | unconditional |
+| `mapLin A f` | `compLin (conj B f) A'` | unconditional |
+| `compLin g A` | `mapLin A' (conj B' g)` | up to closure |
+| `infConv f g` | `conj B f + conj B g` | unconditional |
+| `f + g` | `infConv (conj B f) (conj B g)` | up to closure |
+| `convFn f` | `⨆ i, conj B (f i)` | unconditional |
+| `⨆ i, f i` | `convFn fun i => conj B (f i)` | up to closure |
 
 Each row appears in up to three forms. The **unconditional** half is an identity valid for
 arbitrary functions; the rows marked "up to closure" hold for closed convex functions with a `clFn`
@@ -35,13 +35,13 @@ file needs a constraint qualification.
 ## Main results
 
 * `conj_ofEpi` — the conjugate read off an epigraph-defining set.
-* `conj_smul`, `conj_smulRight` — **Theorem 16.1**.
-* `conj_mapLin` — **Theorem 16.3**, unconditional half; `conj_compLin_eq_clFn_mapLin` is the
+* `conj_smul`, `conj_smulRight` — scalar multiplication is dual to right scalar multiplication.
+* `conj_mapLin` — the image row, unconditional half; `conj_compLin_eq_clFn_mapLin` is the
   closure form.
-* `conj_infConv` — **Theorem 16.4**, unconditional half; `conj_add_eq_clFn_infConv` the closure
+* `conj_infConv` — the convolution row, unconditional half; `conj_add_eq_clFn_infConv` the closure
   form. `conj_sum_toInfConvFn` is the `m`-ary version, `(f₁ □ ⋯ □ fₘ)* = ∑ fᵢ*`, which says that
   `conj B` is a monoid homomorphism out of `InfConvFn E`.
-* `conj_convFn`, `conj_convHullFn`, `conj_convFn₂` — **Theorem 16.5**, unconditional half;
+* `conj_convFn`, `conj_convHullFn`, `conj_convFn₂` — the convex-hull row, unconditional half;
   `conj_iSup_eq_clFn_convFn` the closure form.
 
 ## Implementation notes
@@ -98,15 +98,15 @@ theorem conj_eq_biSup_epi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal
 
 end OfEpi
 
-/-! ### Theorem 16.1: scalar multiplication -/
+/-! ### Scalar multiplication -/
 
 section Smul
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {a : ℝ}
 
-/-- **Rockafellar, Theorem 16.1**: `(af)* = f*a` for `a > 0`. Ordinary scalar multiplication is
-dual to right scalar multiplication. -/
+/-- `(af)* = f*a` for `a > 0`: ordinary scalar multiplication is dual to right scalar
+multiplication. -/
 theorem conj_smul (ha : 0 < a) (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) :
     conj B (fun x => (a : EReal) * f x) = smulRight (conj B f) a := by
   have ha0 : a ≠ 0 := ha.ne'
@@ -120,7 +120,7 @@ theorem conj_smul (ha : 0 < a) (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → 
     ring
   rw [affineFn_eq_coe, affineFn_eq_coe, Tdaf.EReal.coe_le_coe_mul_iff ha, hcoe]
 
-/-- **Rockafellar, Theorem 16.1**: `(fa)* = a(f*)` for `a > 0`, the other half. -/
+/-- `(fa)* = a(f*)` for `a > 0`, the other half. -/
 theorem conj_smulRight (ha : 0 < a) (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) :
     conj B (smulRight f a) = fun y => (a : EReal) * conj B f y := by
   have ha0 : a ≠ 0 := ha.ne'
@@ -140,7 +140,7 @@ theorem conj_smulRight (ha : 0 < a) (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E
 
 end Smul
 
-/-! ### Theorem 16.3: linear images -/
+/-! ### Linear images -/
 
 section Image
 
@@ -150,7 +150,7 @@ variable {E F G H : Type*}
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F}
 
-/-- **Theorem 16.3**, unconditional half: `(Af)* = f*A'`. The conjugate of an image is the
+/-- **The image row**, unconditional half: `(Af)* = f*A'`. The conjugate of an image is the
 *inverse* image of the conjugate under the transpose, with no hypothesis on `f` and no closure.
 Contrast `IsExactImage.conj_compLin`, the other row, which needs a constraint qualification. -/
 theorem conj_mapLin (hA : IsAdjointPair B B' A A') (f : E → EReal) :
@@ -172,15 +172,15 @@ theorem conj_mapLin (hA : IsAdjointPair B B' A A') (f : E → EReal) :
 
 end Image
 
-/-! ### Theorem 16.4: infimal convolution -/
+/-! ### Infimal convolution -/
 
 section InfConv
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
 
-/-- **Theorem 16.4**, unconditional half: `(f □ g)* = f* + g*`, with no hypothesis on `f` and `g`.
-The reverse row, `(f + g)* = f* □ g*`, is `IsExactSum.conj_add` and needs a constraint
+/-- **The convolution row**, unconditional half: `(f □ g)* = f* + g*`, with no hypothesis on `f`
+and `g`. The reverse row, `(f + g)* = f* □ g*`, is `IsExactSum.conj_add` and needs a constraint
 qualification. -/
 theorem conj_infConv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) :
     conj B (infConv f g) = conj B f + conj B g := by
@@ -202,14 +202,14 @@ theorem conj_infConv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) :
     exact le_iSup₂_of_le (p + q) (Set.add_mem_add hp hq) le_rfl
 
 /-- The conjugate of `δ(· | 0)` is the zero function — the identity of `□` goes to the identity
-of `+`, which is what makes Theorem 16.4 a monoid homomorphism. -/
+of `+`, which is what makes conjugacy a monoid homomorphism here. -/
 @[simp] theorem conj_indicatorFn_zero (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
     conj B (indicatorFn ({0} : Set E)) = 0 := by
   rw [← supportFn_eq_conj_indicatorFn, supportFn_singleton]
   funext y
   simp
 
-/-- **Theorem 16.4** in the book's `m`-ary form: `(f₁ □ ⋯ □ fₘ)* = f₁* + ⋯ + fₘ*`,
+/-- **The convolution row** in its `m`-ary form: `(f₁ □ ⋯ □ fₘ)* = f₁* + ⋯ + fₘ*`,
 unconditionally. The `□`-product being the `AddCommMonoid` sum of `InfConvFn E`, this says that
 `conj B` is a monoid homomorphism from `(E → EReal, □, δ(· | 0))` to `(F → EReal, +, 0)`. No
 properness is needed, and none may be assumed: `□` does not preserve it. -/
@@ -224,15 +224,15 @@ theorem conj_sum_toInfConvFn {ι : Type*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) 
 
 end InfConv
 
-/-! ### Theorem 16.5: convex hulls of families -/
+/-! ### Convex hulls of families -/
 
 section Hull
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {ι : Sort*}
 
-/-- **Theorem 16.5**, unconditional half: `(conv {fᵢ})* = sup {fᵢ*}`, with no hypothesis on the
-family. The empty family is not an exception: both sides are then `⊥`. -/
+/-- **The convex-hull row**, unconditional half: `(conv {fᵢ})* = sup {fᵢ*}`, with no hypothesis on
+the family. The empty family is not an exception: both sides are then `⊥`. -/
 theorem conj_convFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : ι → E → EReal) :
     conj B (convFn f) = ⨆ i, conj B (f i) := by
   funext y
@@ -241,8 +241,8 @@ theorem conj_convFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : ι → E → ERea
   refine ⟨fun h i => conj_le_coe_iff.2 (h.trans (convFn_le f i)), fun h => ?_⟩
   exact le_convFn (convexFn_affineFn y c) fun i => conj_le_coe_iff.1 (h i)
 
-/-- **Corollary of Theorem 16.5**: a function and its convex hull have the same conjugate, since
-they have the same affine minorants. -/
+/-- A function and its convex hull have the same conjugate, since they have the same affine
+minorants. -/
 theorem conj_convHullFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (g : E → EReal) :
     conj B (convHullFn g) = conj B g := by
   funext y
@@ -273,8 +273,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
   {f g : E → EReal} {ι : Sort*}
 
-/-- **Rockafellar, Theorem 16.4**, closure form: `(f + g)* = cl(f* □ g*)` for closed convex `f` and
-`g`. `IsExactSum.conj_add` is the same statement with the closure dropped. -/
+/-- **The convolution row**, closure form: `(f + g)* = cl(f* □ g*)` for closed convex `f` and `g`.
+`IsExactSum.conj_add` is the same statement with the closure dropped. -/
 theorem conj_add_eq_clFn_infConv (hf : ConvexFn f) (hfc : ClosedFn f) (hg : ConvexFn g)
     (hgc : ClosedFn g) :
     conj B (f + g) = clFn (infConv (conj B f) (conj B g)) := by
@@ -284,7 +284,7 @@ theorem conj_add_eq_clFn_infConv (hf : ConvexFn f) (hfc : ClosedFn f) (hg : Conv
   rw [← hstep]
   exact biconj_eq_clFn (B := B.flip) (convexFn_infConv (convexFn_conj B f) (convexFn_conj B g))
 
-/-- **Rockafellar, Theorem 16.5**, closure form: `(sup fᵢ)* = cl conv {fᵢ*}` for a family of closed
+/-- **The convex-hull row**, closure form: `(sup fᵢ)* = cl conv {fᵢ*}` for a family of closed
 convex functions. -/
 theorem conj_iSup_eq_clFn_convFn {f : ι → E → EReal} (hf : ∀ i, ConvexFn (f i))
     (hfc : ∀ i, ClosedFn (f i)) :
@@ -307,7 +307,7 @@ variable {E F G H : Type*}
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
-/-- **Rockafellar, Theorem 16.3**, closure form: `(gA)* = cl(A'g*)` for closed convex `g`.
+/-- **The image row**, closure form: `(gA)* = cl(A'g*)` for closed convex `g`.
 `IsExactImage.conj_compLin` is the same statement with the closure dropped. -/
 theorem conj_compLin_eq_clFn_mapLin [IsCompatiblePairing B'] [IsCompatiblePairing B.flip]
     (hA : IsAdjointPair B B' A A') (hg : ConvexFn g) (hgc : ClosedFn g) :

@@ -15,12 +15,12 @@ is bounded above on `C`. For a nonempty closed convex set it is polar to the rec
 
 ## Main results
 
-* `polarCone_dom_supportFn` — **Corollary 14.2.1**: the polar of the barrier cone of a nonempty
-  closed convex set is its recession cone.
+* `polarCone_dom_supportFn` — the polar of the barrier cone of a nonempty closed convex set is
+  its recession cone (Corollary 14.2.1 in [^1]).
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §14.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §14.
 -/
 
 open Set
@@ -33,8 +33,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C : Set E}
 
-/-- **Rockafellar, Corollary 14.2.1.** The polar of the barrier cone of a nonempty closed convex
-set is its recession cone.
+/-- The polar of the barrier cone of a nonempty closed convex set is its recession cone.
 
 Nonemptiness matters: for `C = ∅` the barrier cone is all of `F` and its polar is the kernel of the
 pairing, while `0⁺∅` is everything. -/

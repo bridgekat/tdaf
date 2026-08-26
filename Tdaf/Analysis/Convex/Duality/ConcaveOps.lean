@@ -7,12 +7,12 @@ import Tdaf.Analysis.Convex.Duality.ConcaveConj
 import Tdaf.Analysis.Convex.Duality.Exact
 
 /-!
-# Supremal convolution, and Theorem 16.4 for concave functions
+# Supremal convolution and the conjugate of a concave sum
 
 Two convex functions are combined by infimal convolution `f₁ □ f₂`, and the conjugate of a sum is
-that convolution (Theorem 16.4). Two concave functions are combined by **supremal** convolution
+that convolution. Two concave functions are combined by **supremal** convolution
 `(g □ h)(x) = sup {g x₁ + h x₂ ∣ x₁ + x₂ = x}`, and the *concave* conjugate of a sum is that: the
-concave orientation of the same theorem, which the adjoint of `F₁ □ F₂` in §38 needs.
+concave orientation of the same duality, which the adjoint of `F₁ □ F₂` needs.
 
 ## Main definitions
 
@@ -22,24 +22,23 @@ concave orientation of the same theorem, which the adjoint of `F₁ □ F₂` in
 
 * `infConv_neg` — infimal convolution commutes with negating the argument.
 * `supConv_apply` — the supremum formula, when neither function reaches `+∞`.
-* `concaveConj_add_of_isExactSum` — **Theorem 16.4, concave orientation**: `(g₁ + g₂)* = g₁* □ g₂*`
-  for concave `gᵢ`, under the hypothesis `IsExactSum B (-g₁) (-g₂)`.
+* `concaveConj_add_of_isExactSum` — the concave conjugate of a sum is the supremal convolution of
+  the conjugates, under the hypothesis `IsExactSum B (-g₁) (-g₂)` (Theorem 16.4 in [^1]).
 
 ## Implementation notes
 
 `supConv` negates *values*, not arguments, so it inherits commutativity, associativity and the
 effective-domain formula from `infConv`. The reflection of the argument that does appear,
 `infConv_neg`, comes from the sign dictionary `neg_concaveConj`, which reflects on the dual side;
-the proof of the concave Theorem 16.4 crosses it once.
+the proof of the concave conjugate formula crosses it once.
 
 The two properness fields of `IsExactSum B (-g₁) (-g₂)` say exactly that neither `gᵢ` takes the
-value `+∞`, which is where Rockafellar's proof of Theorem 38.2 case-splits; the relative-interior
-condition supplies the third field (`IsExactSum.of_relint`). No case distinction survives into the
-statement.
+value `+∞`, which is where the classical proof case-splits; the relative-interior condition
+supplies the third field (`IsExactSum.of_relint`). No case distinction survives into the statement.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 and §38.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 and §38.
 -/
 
 open Pointwise
@@ -126,13 +125,13 @@ theorem supConv_apply {g h : E → EReal} (hg : ∀ x, g x ≠ ⊤) (hh : ∀ x,
 
 end SupConv
 
-/-! ### Theorem 16.4, concave orientation -/
+/-! ### The concave conjugate of a sum -/
 
 section ConcaveThm164
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
-/-- **Theorem 16.4 for concave functions**: the concave conjugate of a sum is the supremal
+/-- **The conjugate of a concave sum**: the concave conjugate of a sum is the supremal
 convolution of the concave conjugates, `(g₁ + g₂)* = g₁* □ g₂*`.
 
 The hypothesis is the convex `IsExactSum` interface applied to `-g₁` and `-g₂`. -/

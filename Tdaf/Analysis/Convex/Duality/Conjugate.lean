@@ -23,7 +23,7 @@ below it.
 * `conj B f`, `biconj B f` — the conjugate `f*` and biconjugate `f**`.
 * `conjClosure B` — conjugacy as a `ClosureOperator` on `(E → EReal)ᵒᵈ`, whose closed elements are
   exactly the closed convex functions.
-* `conjEquiv` — the involution of **Corollary 12.2.1** on closed proper convex functions.
+* `conjEquiv` — conjugacy as an involution on the closed proper convex functions.
 
 ## Main results
 
@@ -32,18 +32,18 @@ below it.
 * `le_add_conj` — **Fenchel's inequality** `⟨x, y⟩ ≤ f x + f* y`. In `EReal` this needs
   `Proper f`, and the hypothesis is not removable; see the implementation notes.
 * `convexFn_conj`, `closedFn_conj` — the conjugate of an arbitrary function is closed and convex.
-* `conj_clFn` — **Theorem 12.2**, first half: `(cl f)* = f*`.
-* `exists_affineFn_le_of_lt`, `eq_biSup_affineFn` — **Theorem 12.1**: a closed convex function is
-  the pointwise supremum of the affine functions below it.
-* `biconj_eq_clFn` — **Theorem 12.2**, Fenchel–Moreau: `f** = cl f` for convex `f`;
+* `conj_clFn` — `(cl f)* = f*`: closure does not change the conjugate.
+* `exists_affineFn_le_of_lt`, `eq_biSup_affineFn` — a closed convex function is the pointwise
+  supremum of the affine functions below it.
+* `biconj_eq_clFn` — the **Fenchel–Moreau theorem**: `f** = cl f` for convex `f`;
   `proper_conj_iff` is its properness half. `biconj_eq_clFn_topDual` and `biconj_eq_clFn_inner`
   discharge every hypothesis, for a locally convex space paired with its own continuous dual and
   for a real Hilbert space paired with itself, both in the space's *own* topology.
 * `gc_conj_conj`, `conjClosure`, `conjOrderIso` — the Galois connection, the closure operator it
   induces, and the order anti-isomorphism between the biconjugation-fixed functions.
 * `conj_comp_sub`, `conj_comp_add`, `conj_add_pairing`, `conj_sub_pairing`, `conj_add_const`,
-  `conj_comp_linearEquiv` — the four rows of **Theorem 12.3**, with `conj_comp_affine` for the
-  book's combined formula.
+  `conj_comp_linearEquiv` — the four elementary rows (translation, tilting, an added constant, an
+  invertible substitution), with `conj_comp_affine` composing them (Theorem 12.3 in [^1]).
 
 ## Implementation notes
 
@@ -55,7 +55,7 @@ its norm-topology dual is continuous on both sides but compatible only if it is 
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §12.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §12.
 -/
 
 open Set OrderDual
@@ -237,8 +237,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
   [IsContinuousPairing B] {f : E → EReal}
 
-/-- **Theorem 12.2**, first half: `(cl f)* = f*`. The affine functions below `f` and below `cl f`
-are the same, because an affine function of a continuous pairing is itself closed. -/
+/-- **Closure does not change the conjugate**: `(cl f)* = f*`. The affine functions below `f` and
+below `cl f` are the same, because an affine function of a continuous pairing is itself closed. -/
 theorem conj_clFn (f : E → EReal) : conj B (clFn f) = conj B f := by
   funext y
   refine Tdaf.EReal.eq_of_forall_le_coe_iff fun c => ?_
@@ -253,7 +253,7 @@ theorem biconj_le_clFn (f : E → EReal) : biconj B f ≤ clFn f :=
 
 end ConjClosure
 
-/-! ### Theorem 12.1 -/
+/-! ### Affine minorants of a closed convex function -/
 
 section Theorem121
 
@@ -261,8 +261,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
-/-- **Theorem 12.1**, in its working form: below any value strictly under a closed convex function
-there is an affine minorant of the pairing. -/
+/-- **The affine-minorant lemma**, in its working form: below any value strictly under a closed
+convex function there is an affine minorant of the pairing. -/
 theorem exists_affineFn_le_of_lt (hf : ConvexFn f) (hc : ClosedFn f) {x₀ : E} {α : ℝ}
     (h : (α : EReal) < f x₀) :
     ∃ (y : F) (c : ℝ), affineFn B y c ≤ f ∧ (α : EReal) < affineFn B y c x₀ := by
@@ -354,8 +354,8 @@ theorem exists_affineFn_le_of_lt (hf : ConvexFn f) (hc : ClosedFn f) {x₀ : E} 
       have := (div_le_iff₀ hdpos).1 hlamle
       nlinarith
 
-/-- **Theorem 12.1.** A closed convex function is the pointwise supremum of all the affine
-functions of the pairing that lie below it. -/
+/-- A closed convex function is the pointwise supremum of all the affine functions of the pairing
+that lie below it. -/
 theorem eq_biSup_affineFn (hf : ConvexFn f) (hc : ClosedFn f) :
     f = fun x => ⨆ p ∈ {p : F × ℝ | affineFn B p.1 p.2 ≤ f}, affineFn B p.1 p.2 x := by
   funext x
@@ -369,7 +369,7 @@ theorem eq_biSup_affineFn (hf : ConvexFn f) (hc : ClosedFn f) :
 
 end Theorem121
 
-/-! ### Theorem 12.2: Fenchel–Moreau -/
+/-! ### The Fenchel–Moreau theorem -/
 
 section FenchelMoreau
 
@@ -377,7 +377,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
-/-- **Theorem 12.2, the Fenchel–Moreau theorem.** For a convex function, `f** = cl f`.
+/-- **The Fenchel–Moreau theorem.** For a convex function, `f** = cl f`.
 
 The improper cases are why `clFn` branches on `lscHull f` rather than on `f`: if `f` takes `-∞`
 anywhere then `f* ≡ +∞` and `f** ≡ -∞`, which is `cl f` only under that branching. -/
@@ -407,7 +407,7 @@ theorem biconj_eq_clFn (hf : ConvexFn f) : biconj B f = clFn f := by
   rw [affineFn_apply, LinearMap.flip_apply]
   exact _root_.EReal.sub_le_sub le_rfl hcy
 
-/-- **Theorem 12.2**, properness half: the conjugate of a closed proper convex function is proper.
+/-- **The properness half**: the conjugate of a closed proper convex function is proper.
 With `proper_of_proper_conj`, "`f*` is proper if and only if `f` is". -/
 theorem proper_conj (hf : ClosedProperConvexFn f) : Proper (conj B f) := by
   obtain ⟨w, c, hw⟩ := exists_affine_le_of_closed_proper hf
@@ -471,7 +471,7 @@ noncomputable def conjOrderIso (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
 
 end Galois
 
-/-! ### Corollary 12.2.1: the involution on closed proper convex functions
+/-! ### The involution on closed proper convex functions
 
 Both spaces carry topologies compatible with the pairing, and everything is symmetric under
 `B ↦ B.flip`. -/
@@ -483,8 +483,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
   (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
 
-/-- **Corollary 12.2.1.** Conjugacy is a symmetric one-to-one correspondence between the closed
-proper convex functions on `E` and those on `F`. -/
+/-- Conjugacy is a symmetric one-to-one correspondence between the closed proper convex functions
+on `E` and those on `F`. -/
 noncomputable def conjEquiv :
     {f : E → EReal // ClosedProperConvexFn f} ≃ {g : F → EReal // ClosedProperConvexFn g} where
   toFun f := ⟨conj B f.1, convexFn_conj B f.1, closedFn_conj, proper_conj f.2⟩
@@ -497,7 +497,7 @@ noncomputable def conjEquiv :
 
 end Involution
 
-/-! ### Theorem 12.3: translation, tilting, constants and an invertible substitution
+/-! ### Translation, tilting, constants and an invertible substitution
 
 The elementary conjugacy operations, those under which `h*` changes by a change of variable rather
 than by a change of function. There are four independent rows —
@@ -509,8 +509,8 @@ than by a change of function. There are four independent rows —
 | `h x + α` | `h* y - α` |
 | `h (A x)`, `A` invertible | `h* (A'⁻¹ y)` |
 
-— and `conj_comp_affine` composes all four into the book's single formula. The two *scaling* rows
-of the same table are Theorem 16.1, `conj_smul` and `conj_smulRight` in `Duality/Ops.lean`. Each
+— and `conj_comp_affine` composes all four into a single formula. The two *scaling* rows of the
+same table are `conj_smul` and `conj_smulRight` in `Duality/Ops.lean`. Each
 identity holds for an arbitrary `h : E → EReal`, improper ones included, with no topology,
 properness or convexity: `⟨a, y⟩`, `⟨x, b⟩` and `α` are *real*, so sliding them across the
 difference `⟨x, y⟩ - h x` never produces `∞ - ∞`.
@@ -526,8 +526,8 @@ variable {E F G H : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Mod
   [AddCommGroup G] [Module ℝ G] [AddCommGroup H] [Module ℝ H]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
 
-/-- **Theorem 12.3**, the translation row: translating the argument of `h` by `a` adds the linear
-function `⟨a, ·⟩` to the conjugate. -/
+/-- **The translation row**: translating the argument of `h` by `a` adds the linear function
+`⟨a, ·⟩` to the conjugate. -/
 theorem conj_comp_sub (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (a : E) (y : F) :
     conj B (fun x => h (x - a)) y = conj B h y + ((B a y : ℝ) : EReal) := by
   have hre := (Equiv.addRight a).iSup_comp
@@ -538,7 +538,7 @@ theorem conj_comp_sub (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (a
   exact iSup_congr fun u => by
     rw [map_add, LinearMap.add_apply, Tdaf.EReal.coe_add_sub]
 
-/-- **Theorem 12.3**, the translation row with the translation on the left: `h (a + ·)` is
+/-- **The translation row** with the translation on the left: `h (a + ·)` is
 `h (· - (-a))`, so its conjugate is `h* - ⟨a, ·⟩`. -/
 theorem conj_comp_add (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (a : E) (y : F) :
     conj B (fun x => h (a + x)) y = conj B h y - ((B a y : ℝ) : EReal) := by
@@ -547,14 +547,14 @@ theorem conj_comp_add (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (a
   rw [hfun, conj_comp_sub, map_neg, LinearMap.neg_apply, _root_.EReal.coe_neg,
     ← sub_eq_add_neg]
 
-/-- **Theorem 12.3**, the tilting row: adding the linear function `⟨·, b⟩` to `h` translates the
+/-- **The tilting row**: adding the linear function `⟨·, b⟩` to `h` translates the
 conjugate by `b`. -/
 theorem conj_add_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (b : F) (y : F) :
     conj B (fun x => h x + ((B x b : ℝ) : EReal)) y = conj B h (y - b) := by
   simp only [conj_apply]
   exact iSup_congr fun x => by rw [Tdaf.EReal.coe_sub_add_coe, map_sub]
 
-/-- **Theorem 12.3**, the tilting row with the linear term *subtracted*: `h - ⟨·, b⟩` has conjugate
+/-- **The tilting row** with the linear term *subtracted*: `h - ⟨·, b⟩` has conjugate
 `h* (· + b)`. -/
 theorem conj_sub_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (b : F) (y : F) :
     conj B (fun x => h x - ((B x b : ℝ) : EReal)) y = conj B h (y + b) := by
@@ -564,8 +564,7 @@ theorem conj_sub_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal)
     rw [map_neg, _root_.EReal.coe_neg, ← sub_eq_add_neg]
   rw [hfun, conj_add_pairing, sub_neg_eq_add]
 
-/-- **Theorem 12.3**, the constant row: adding a constant to `h` subtracts it from the
-conjugate. -/
+/-- **The constant row**: adding a constant to `h` subtracts it from the conjugate. -/
 theorem conj_add_const (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (α : ℝ) (y : F) :
     conj B (fun x => h x + (α : EReal)) y = conj B h y - (α : EReal) := by
   simp only [conj_apply]
@@ -573,9 +572,9 @@ theorem conj_add_const (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (
   exact iSup_congr fun x => by
     rw [Tdaf.EReal.coe_sub_add_coe, ← Tdaf.EReal.coe_add_sub, ← sub_eq_add_neg]
 
-/-- **Theorem 12.3**, the substitution row: precomposing `h` with a linear *isomorphism* `A`
-precomposes the conjugate with the inverse of the transpose. Contrast `conj_mapLin`
-(Theorem 16.3), which drops invertibility at the cost of stating the dual side as an image. -/
+/-- **The substitution row**: precomposing `h` with a linear *isomorphism* `A` precomposes the
+conjugate with the inverse of the transpose. Contrast `conj_mapLin`, which drops invertibility at
+the cost of stating the dual side as an image. -/
 theorem conj_comp_linearEquiv (A : E ≃ₗ[ℝ] G) (A' : H ≃ₗ[ℝ] F)
     (hA : IsAdjointPair B B' (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F)) (h : G → EReal) (y : F) :
     conj B (fun x => h (A x)) y = conj B' h (A'.symm y) := by
@@ -588,8 +587,8 @@ theorem conj_comp_linearEquiv (A : E ≃ₗ[ℝ] G) (A' : H ≃ₗ[ℝ] F)
   exact iSup_congr fun x => by
     rw [hAx x (A'.symm y), LinearEquiv.apply_symm_apply]
 
-/-- **Theorem 12.3.** For `f x = h (A (x - a)) + ⟨x, a*⟩ + α` with `A` an invertible linear
-transformation, `f* y = h* (A*⁻¹ (y - a*)) + ⟨a, y⟩ + α*` where `α* = -α - ⟨a, a*⟩`. -/
+/-- **The four rows composed.** For `f x = h (A (x - a)) + ⟨x, a*⟩ + α` with `A` an invertible
+linear transformation, `f* y = h* (A*⁻¹ (y - a*)) + ⟨a, y⟩ + α*` where `α* = -α - ⟨a, a*⟩`. -/
 theorem conj_comp_affine (A : E ≃ₗ[ℝ] G) (A' : H ≃ₗ[ℝ] F)
     (hA : IsAdjointPair B B' (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F)) (h : G → EReal) (a : E) (b : F)
     (α : ℝ) (y : F) :
@@ -619,9 +618,9 @@ theorem conj_comp_affine (A : E ≃ₗ[ℝ] G) (A' : H ≃ₗ[ℝ] F)
     rw [add_assoc, add_assoc, harith]
   rw [e1, e2, e3, e4, hassoc]
 
-/-- **Theorem 12.3**, translation and tilting composed: for `f = h (z + ·) - ⟨·, z*⟩`,
-`f* = h* (z* + ·) - ⟨z, ·⟩ - ⟨z, z*⟩`. The constant `⟨z, z*⟩` is what makes the two infima of
-Corollary 31.4.3 add to `⟨z, z*⟩` rather than to zero. -/
+/-- **Translation and tilting composed**: for `f = h (z + ·) - ⟨·, z*⟩`,
+`f* = h* (z* + ·) - ⟨z, ·⟩ - ⟨z, z*⟩`. The constant `⟨z, z*⟩` is what makes the two infima it is
+used for add to `⟨z, z*⟩` rather than to zero. -/
 theorem conj_comp_add_sub_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (z : E) (z' : F)
     (y : F) :
     conj B (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) y

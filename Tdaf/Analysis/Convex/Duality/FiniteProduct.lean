@@ -26,10 +26,10 @@ does not exist.
   of the factors.
 * `conj_piFn` — the conjugate of a separable sum of proper functions is the separable sum of the
   conjugates, `(∑ i, fᵢ ∘ prᵢ)* = ∑ i, fᵢ* ∘ prᵢ`.
-* `iInter_relint_nonempty_iff_supportFn`, `iInter_relint_dom_nonempty_iff` — **Corollary 16.2.2**:
-  a finite family of convex sets (resp. of effective domains) has a common relative-interior point
-  exactly when there is no family `y` with `∑ i, yᵢ = 0`, `∑ i, δ*(yᵢ ∣ Cᵢ) ≤ 0` and
-  `∑ i, δ*(-yᵢ ∣ Cᵢ) > 0`. The diagonal `{x ∣ x₁ = ⋯ = xₘ}` is a subspace of `ι → E` whose
+* `iInter_relint_nonempty_iff_supportFn`, `iInter_relint_dom_nonempty_iff` — a finite family of
+  convex sets (resp. of effective domains) has a common relative-interior point exactly when there
+  is no family `y` with `∑ i, yᵢ = 0`, `∑ i, δ*(yᵢ ∣ Cᵢ) ≤ 0` and `∑ i, δ*(-yᵢ ∣ Cᵢ) > 0`
+  (Corollary 16.2.2 in [^1]). The diagonal `{x ∣ x₁ = ⋯ = xₘ}` is a subspace of `ι → E` whose
   annihilator under the product pairing is the family of `y` summing to zero, so this is the
   subspace criterion of `Duality/RelintSeparation.lean` read at a product set.
 
@@ -45,8 +45,7 @@ induction over the index `Finset` whose step decouples one coordinate with `Func
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Corollary 16.2.2),
-  §6 (Theorem 6.5) and §13.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16, §6 and §13.
 -/
 
 open Set

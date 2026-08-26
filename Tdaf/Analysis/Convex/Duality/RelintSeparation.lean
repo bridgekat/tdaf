@@ -27,16 +27,16 @@ set together with the annihilator of `L`.
   strictly smaller somewhere.
 * `submodule_inter_relint_nonempty_iff`, `submodule_inter_relint_nonempty_iff_supportFn` — the
   subspace case, pointwise and through the support function.
-* `submodule_inter_relint_dom_nonempty_iff` — **Lemma 16.2**, the effective-domain case, with the
-  support function of `dom f` rewritten as the recession function of `f*`.
-* `exists_apply_mem_relint_dom_iff` — **Corollary 16.2.1**, the same for the range of a linear map,
-  whose annihilator on the other side of the pairing is the kernel of the adjoint.
+* `submodule_inter_relint_dom_nonempty_iff` — the effective-domain case, with the support function
+  of `dom f` rewritten as the recession function of `f*` (Lemma 16.2 in [^1]).
+* `exists_apply_mem_relint_dom_iff` — the same for the range of a linear map, whose annihilator on
+  the other side of the pairing is the kernel of the adjoint (Corollary 16.2.1 in [^1]).
 
 ## Implementation notes
 
 The general statement is written with pointwise inequalities `⟨x₁, y⟩ ≤ ⟨x₂, y⟩`, which mention no
 `EReal`; the support function appears only once one of the two sets is a subspace, where two of the
-four extrema of Rockafellar's Theorem 11.1 become `0`.
+four extrema of the proper-separation criterion become `0`.
 
 Only `E` is topologised: proper separation happens there and needs finite dimension, while `F`
 enters through `IsCompatiblePairing` alone and is a bare module. `Proper (conj B f)` is a
@@ -45,8 +45,7 @@ discharges it with `proper_conj_of_proper`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Lemma 16.2,
-  Corollary 16.2.1), §11 (Theorems 11.1 and 11.3) and §13 (Theorem 13.3).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16, §11 and §13.
 -/
 
 open Set
@@ -94,8 +93,7 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
 
 /-- **Proper separation over a pairing.** Two nonempty convex sets have disjoint relative interiors
 exactly when the pairing with some `y` is nowhere larger on `C₁` than on `C₂` and is strictly
-smaller at one pair of points. This is **Theorem 11.3** with conditions (a) and (b) of
-**Theorem 11.1**. -/
+smaller at one pair of points. -/
 theorem exists_pairing_le_iff_disjoint_relint (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂)
     (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty) :
     (∃ y : F, (∀ x₁ ∈ C₁, ∀ x₂ ∈ C₂, B x₁ y ≤ B x₂ y) ∧
@@ -205,9 +203,9 @@ section Function
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
-/-- **Lemma 16.2.** A subspace `L` meets `ri (dom f)` exactly when there is no `y` annihilating `L`
-with `(f*) 0⁺ y ≤ 0 < (f*) 0⁺ (-y)`. The support function of `dom f` is the recession function of
-`f*` (**Theorem 13.3**), so this is the previous statement at `C = dom f`. -/
+/-- A subspace `L` meets `ri (dom f)` exactly when there is no `y` annihilating `L` with
+`(f*) 0⁺ y ≤ 0 < (f*) 0⁺ (-y)`. The support function of `dom f` is the recession function of `f*`
+(`recessionFn_conj`), so this is the previous statement at `C = dom f`. -/
 theorem submodule_inter_relint_dom_nonempty_iff (L : Submodule ℝ E) (hf : ConvexFn f)
     (hp : Proper f) (hc : Proper (conj B f)) :
     ((L : Set E) ∩ ri (dom f)).Nonempty ↔
@@ -242,9 +240,9 @@ theorem forall_mem_range_eq_zero_iff (hB : B.SeparatingRight) (hA : IsAdjointPai
     obtain ⟨x, rfl⟩ := LinearMap.mem_range.1 hz
     rw [hA x y, h, map_zero]
 
-/-- **Corollary 16.2.1.** For a linear transformation `A` with adjoint `A'` and a proper convex
-`g`, some `A x` lies in `ri (dom g)` exactly when no `y` in the kernel of `A'` has
-`(g*) 0⁺ y ≤ 0 < (g*) 0⁺ (-y)`: Lemma 16.2 for the subspace `L = range A`. -/
+/-- For a linear transformation `A` with adjoint `A'` and a proper convex `g`, some `A x` lies in
+`ri (dom g)` exactly when no `y` in the kernel of `A'` has `(g*) 0⁺ y ≤ 0 < (g*) 0⁺ (-y)`: the
+subspace criterion above for `L = range A`. -/
 theorem exists_apply_mem_relint_dom_iff (hB : B.SeparatingRight) (hA : IsAdjointPair B B' A A')
     (hg : ConvexFn g) (hp : Proper g) (hc : Proper (conj B' g)) :
     (∃ x, A x ∈ ri (dom g)) ↔
