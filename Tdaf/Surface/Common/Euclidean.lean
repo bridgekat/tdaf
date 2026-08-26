@@ -57,6 +57,9 @@ a gap gets closed once rather than once per surface.
   `separatingRight_flip_of_separatingDual`.
 * `linFn`, `exists_linFn` — the Fréchet–Riesz translation between the book's vector `b` and the
   backbone's continuous linear functional.
+* `linFn_eq_toDual`, `toDual_apply_eq_pairing` — that translation is `InnerProductSpace.toDual`,
+  the map `Subgradient/{Rademacher,Reconstruction}.lean` state their gradient results against. A
+  surface section that reads `∇f(x)` as a vector rewrites by these once per statement.
 
 ## Design notes
 
@@ -298,6 +301,24 @@ theorem exists_linFn (f : Rn n →L[ℝ] ℝ) : ∃ b : Rn n, linFn b = f :=
   ⟨(InnerProductSpace.toDual ℝ (Rn n)).symm f, by
     ext x
     exact InnerProductSpace.toDual_symm_apply (x := x)⟩
+
+/-- **`linFn` is the Fréchet–Riesz map.** `linFn b = ⟨·, b⟩` is what
+`InnerProductSpace.toDual ℝ (Rn n)` sends `b` to, so the surface's vector-to-functional
+translation and the one the backbone's `Subgradient/{Rademacher,Reconstruction}.lean` use are the
+same map. Every surface statement that reads a gradient as a *vector* pays one rewrite by this,
+which is why it sits here beside the `*_flip_pairing` rewrites rather than in one section. -/
+theorem linFn_eq_toDual (b : Rn n) : linFn b = InnerProductSpace.toDual ℝ (Rn n) b := by
+  ext y
+  simp [linFn]
+
+/-- The Riesz representative of `v` evaluated at `x` is the book's `⟨x, v⟩`. Every backbone result
+about `HasGradientAt` produces the left-hand side, and every surface statement wants the right.
+
+`InnerProductSpace.toDual_apply` is not a name — it is `toDual_apply_apply`, and it is `rfl` — so
+this is `real_inner_comm` and nothing more. -/
+theorem toDual_apply_eq_pairing (v x : Rn n) :
+    (InnerProductSpace.toDual ℝ (Rn n) v) x = pairing n x v :=
+  real_inner_comm x v
 
 end LinFn
 

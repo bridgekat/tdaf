@@ -34,6 +34,8 @@ assembled out of honest gradients and normal directions.
 * `containsNoLine_subgradient` — `∂f x` contains no line, when `dom f` has interior.
 * `recessionCone_subgradient_subset_normalCone` — a direction of recession of `∂f x` is normal to
   `dom f` at `x`.
+* `recessionCone_subgradient_eq_normalCone` — the equality of the two cones, the exercise of
+  p. 218. Nothing below uses it; see the design note.
 * `exists_mem_interior_dom_of_forall_normalCone` — the separation step: a direction making an
   obtuse angle with every non-zero normal to `dom f` at `x` reaches `int (dom f)`.
 * `exposedPoints_subset_gradientLimits` — the heart of the proof: every exposed point of `∂f x` is
@@ -50,7 +52,13 @@ normals `y*`. Each of those follows more cheaply from one *inclusion*,
 `Subgradient/Calculus.lean`), together with a "let `λ → ∞` in the subgradient inequality" argument
 that is the same three lines every time. `containsNoLine_subgradient` and
 `recessionCone_subgradient_subset_normalCone` are those arguments, and the equality of the two
-cones is never needed.
+cones is never needed *here*.
+
+Rockafellar nevertheless leaves that equality as an exercise in §23 and says its verification
+"will be given later as part of the proof of Theorem 25.6" — which, by the paragraph above, is not
+where it happens. `recessionCone_subgradient_eq_normalCone` discharges it directly instead: the
+missing inclusion is `∂f x + N_{dom f}(x) ⊆ ∂f x` read at a single normal direction, so the
+exercise costs four lines and no part of Theorem 25.6.
 
 **The separation step is `geometric_hahn_banach_open`, not Theorem 11.3.** Rockafellar deduces from
 "the half-line `{x + αy}` cannot be separated from `dom f`" that it meets `int (dom f)`, citing
@@ -207,6 +215,23 @@ theorem recessionCone_subgradient_subset_normalCone (hp : Proper f) {v : E}
     (div_nonneg (by linarith) hgt.le)
   rw [div_mul_cancel₀ _ hgt.ne'] at h1
   linarith
+
+omit [FiniteDimensional ℝ E] in
+/-- **The exercise of p. 218**: wherever `∂f x` is non-empty, its recession cone *is* the normal
+cone to `dom f` at `x`.
+
+Rockafellar leaves this as an exercise in §23 (line 8477 of the source text) and says the
+verification "will be given later as part of the proof of Theorem 25.6". **It is not.** The proof
+of Theorem 25.6 below uses only the inclusion `recessionCone_subgradient_subset_normalCone`,
+because each of the three places Rockafellar appeals to the identification follows more cheaply
+from `∂f x + N_{dom f}(x) ⊆ ∂f x` — see the design note above. So the exercise is discharged here,
+on its own and independently of Theorem 25.6, and the other inclusion is exactly that containment
+read at a single normal direction (`add_smul_mem_subgradient`). -/
+theorem recessionCone_subgradient_eq_normalCone (hp : Proper f) {v : E}
+    (hv : v ∈ subgradient (innerₗ E) f x) :
+    recessionCone (subgradient (innerₗ E) f x) = normalCone (innerₗ E) (dom f) x :=
+  Set.Subset.antisymm (recessionCone_subgradient_subset_normalCone hp hv)
+    fun _ hw _ hv' _ ha => add_smul_mem_subgradient hv' hw ha
 
 /-- **The separation step of Theorem 25.6.** If every non-zero vector normal to `dom f` at `x`
 makes a strictly obtuse angle with `y`, then the half-line from `x` in the direction `y` reaches

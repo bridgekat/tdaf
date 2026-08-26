@@ -128,38 +128,45 @@ open item (`Section09`'s `## What is not here`), not §26's.
 
 ## Backbone gaps
 
-**`StrictConvexOnFn` of a two-variable explicit formula has no supporting API.** The two
-counterexamples of pp. 253–254 both need "this concrete function on `ℝ²` is strictly convex on the
-open positive quadrant", and there is nothing in the backbone between `StrictConvexOnFn` (the
-definition) and the theorems that consume it. What is wanted, in
-`Tdaf/Analysis/Convex/Subgradient/StrictlyConvex.lean`:
+**The two `StrictConvexOnFn` API items are closed and the counterexamples are still open.**
+`strictConvexOnFn_iff_strictConvexOn` (in `Subgradient/StrictlyConvex.lean`) is the bridge
+`StrictConvexOnFn f C ↔ StrictConvexOn ℝ C (fun x => (f x).toReal)` for `f` finite on a convex `C`,
+and `ConvexFn.add_strictConvexOnFn` (in `Preservation.lean`, beside the
+`StrictConvexOnFn.add_convexFn` it mirrors) is the sum rule with the summands the other way round.
+Neither closes the positive halves of pp. 253–254, and the earlier note that "that bridge is the
+gap, and it is what both halves of the two unproved claims above would run on" was wrong on both
+counts:
 
-* `StrictConvexOnFn.add_strictConvexOnFn` — the sum of a convex and a strictly convex function is
-  strictly convex, which is `StrictConvexOnFn.add_convexFn` (in `Preservation.lean`) with the
-  arguments the other way round; and
-* a criterion turning a positive-definite second derivative, or strict convexity along every
-  segment, into `StrictConvexOnFn`. Mathlib has `StrictConvexOn` for real-valued functions and
-  `StrictConvexOn_of_deriv2_pos` for one variable; neither reaches an `EReal`-valued function of
-  two variables, and the bridge `StrictConvexOnFn f C ↔ StrictConvexOn ℝ C (fun x => (f x).toReal)`
-  for `f` finite on `C` does not exist. That bridge is the gap, and it is what both halves of the
-  two unproved claims above would run on.
+* `add_strictConvexOnFn` does not apply. `strictOnRelintFn` is `ξ₂²/2ξ₁` plus `ξ₂²`, and *neither*
+  summand is strictly convex on the open quadrant — the first is positively homogeneous, so it is
+  affine along every ray from the origin, and the second is constant in `ξ₁`. What makes the sum
+  strict is that the two summands' directions of affineness are disjoint, which is a case split on
+  whether `ξ₂` varies along the segment, not an application of a sum rule.
+* The bridge reduces each claim to `StrictConvexOn ℝ Q (concrete formula)`, and Mathlib stops
+  there: `strictConvexOn_of_deriv2_pos` is one-dimensional and there is no positive-definite-Hessian
+  criterion in several variables. So each claim still needs the two-variable inequality by hand,
+  on top of a computation of `ri (dom f)` for the function concerned.
 
-**The conjugate has no `innerₗ` / `topDualPairing` bridge.** `Subgradient/Legendre.lean` — the whole
-of Theorem 26.4 — is written on a general normed space and therefore against
-`conj (topDualPairing ℝ E).flip`, while `Subgradient/LegendreType.lean` and everything downstream is
-written against `conj (innerₗ E)`. Nothing connects them, so the surface pays
+What each unproved claim actually needs is therefore, in order: (i) `ri (dom f)` computed — the
+open quadrant in both cases; (ii) strict convexity there, by the case split above, through the new
+bridge; and for `essStrictlyConvexFn` also (iii) essential smoothness, i.e. the blow-up of
+`|∇f|` at the boundary of the quadrant, which is a separate calculation of the same size. None of
+this is convex analysis the backbone is missing; it is the arithmetic of two explicit formulas.
+
+**The conjugate's `innerₗ` / `topDualPairing` bridge is closed.**
+`conj_innerL_eq_conj_topDualPairing`, in `Subgradient/Rademacher.lean` beside
+`mem_subgradient_innerL_iff`, is
 
 ```
 conj (innerₗ E) f v = conj (topDualPairing ℝ E).flip f (InnerProductSpace.toDual ℝ E v)
 ```
 
-as a `private` lemma (`conj_pairing_eq`) before it can use `conj_eq_of_hasGradientAt`. It belongs in
-`Tdaf/Analysis/Convex/Subgradient/Rademacher.lean`, beside `mem_subgradient_innerL_iff`, which is
-*exactly* this bridge for `subgradient` and was written for the same reason. The supporting
-`toDual_apply_eq_pairing` is `real_inner_comm` and needs no home of its own.
+and `topDualPairing_flip_toDual` beside it is the pointwise identity both it and
+`mem_subgradient_innerL_iff` now run on. The surface's `toDual_apply_eq_pairing` is
+`real_inner_comm` and lives in `Surface/Common/Euclidean.lean` with `linFn_eq_toDual`.
 
-Nothing in this file's *numbered* results is blocked by any of these: the first two block only the
-unproved halves of the two counterexamples, and the third cost one `private` lemma.
+Nothing in this file's *numbered* results is blocked: the open items block only the unproved
+halves of the two counterexamples.
 
 ## Where the book is defective
 
@@ -640,12 +647,6 @@ gradient mapping. -/
 def legendreDomain (f : Rn n → EReal) : Set (Rn n) :=
   gradient (fun w => (f w).toReal) '' interior (dom f)
 
-/-- The Riesz representative of `v` evaluated at `x` is the book's `⟨x, v⟩`. Every backbone result
-about `HasGradientAt` produces the left-hand side, and every surface statement wants the right. -/
-private theorem toDual_apply_eq_pairing (v x : Rn n) :
-    (InnerProductSpace.toDual ℝ (Rn n) v) x = pairing n x v :=
-  real_inner_comm x v
-
 /-- **The bridge to the backbone's `gradientRange`**, valid as soon as condition (b) holds:
 `{v | ∃ x, ∇f x = v}` and "the image of `C` under `∇f`" are the same set, because every gradient is
 attained at an interior point of `dom f` (Corollary 25.1.1) and, on `C`, Mathlib's `gradient` of the
@@ -680,18 +681,6 @@ theorem theorem_26_4_wellDefined (hf : ConvexFn f) {v x₁ x₂ : Rn n}
   rw [hr₁, hr₂]
   simpa using h
 
-/-- The conjugate against `pairing n` and the conjugate against the canonical dual pairing are the
-same number, read through the Riesz isometry. The backbone's Theorem 26.4 is stated on a general
-normed space, where the only pairing available is `⟨x, y⟩ = y x`; this is the one line that carries
-it to the surface's self-paired `ℝⁿ`. -/
-private theorem conj_pairing_eq (g : Rn n → EReal) (v : Rn n) :
-    conj (pairing n) g v
-      = conj (topDualPairing ℝ (Rn n)).flip g (InnerProductSpace.toDual ℝ (Rn n) v) := by
-  simp only [conj_apply]
-  refine iSup_congr fun x => ?_
-  rw [show ((topDualPairing ℝ (Rn n)).flip x) (InnerProductSpace.toDual ℝ (Rn n) v)
-      = pairing n x v from toDual_apply_eq_pairing v x]
-
 /-- **Rockafellar, Theorem 26.4**, second and third clauses: `D ⊆ dom f*`, and `g` is the
 restriction of `f*` to `D` — at a point `x*` of `D` the defining formula returns `f*(x*)`. -/
 theorem theorem_26_4_eq (hf : ConvexFn f) {v x : Rn n}
@@ -699,7 +688,7 @@ theorem theorem_26_4_eq (hf : ConvexFn f) {v x : Rn n}
     conj (pairing n) f v = ((pairing n x v - (f x).toReal : ℝ) : EReal) := by
   obtain ⟨r, hr⟩ := h.exists_coe
   have hval := conj_eq_of_hasGradientAt hf h hr
-  rw [conj_pairing_eq, hval, toDual_apply_eq_pairing, hr]
+  rw [conj_innerL_eq_conj_topDualPairing, hval, toDual_apply_eq_pairing, hr]
   simp
 
 /-- **Rockafellar, Theorem 26.4**: `D` is a subset of `dom f*`. -/

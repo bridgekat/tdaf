@@ -51,9 +51,10 @@ other:
 The second is pure order theory and is what this module takes as `IsCompleteNonDecreasingCurve`,
 per design decision D12: it is `IsMaxChain (· ≤ ·)` from Mathlib's order library, with the product
 order on `ℝ × ℝ` supplying "coordinatewise", and no hand-rolled development. The first is the
-backbone's `monotoneCurve φ`, and `isCompleteNonDecreasingCurve_monotoneCurve` is the implication
-from the book's definition to the order-theoretic one. The reverse implication is a backbone gap;
-see below.
+backbone's `monotoneCurve φ`. `isCompleteNonDecreasingCurve_monotoneCurve` is the implication from
+the book's definition to the order-theoretic one, `exists_monotone_monotoneCurve_eq` the converse,
+and `isCompleteNonDecreasingCurve_iff_exists_monotone` the equivalence. The book asserts that
+equivalence without proof.
 
 ## Contents
 
@@ -67,6 +68,8 @@ see below.
 | Corollary 24.2.1 | `corollary_24_2_1_rightDeriv`, `corollary_24_2_1_leftDeriv` |
 | Theorem 24.3 | `theorem_24_3`, `theorem_24_3_unique`,
   `theorem_24_3_subgradientRel_eq_monotoneCurve`, `theorem_24_3_swap` |
+| §24 (9181 = 9195) | `isCompleteNonDecreasingCurve_monotoneCurve`,
+  `exists_monotone_monotoneCurve_eq`, `isCompleteNonDecreasingCurve_iff_exists_monotone` |
 | Theorem 24.4 | `theorem_24_4`, `theorem_24_4_seq` |
 | Theorem 24.5 | `theorem_24_5_lt`, `theorem_24_5_limsup`, `theorem_24_5_subgradient` |
 | Corollary 24.5.1 | `corollary_24_5_1_upperSemicontinuous`, `corollary_24_5_1_subgradient` |
@@ -125,28 +128,19 @@ see below.
 
 ## Backbone gaps
 
-**`Subgradient/Primitive.lean`: every subdifferential on the line is the curve of a non-decreasing
-function that is finite somewhere.** Wanted:
+None. The one this section reported —
+`exists_monotone_ne_bot_ne_top_monotoneCurve_eq`, "every subdifferential on the line is the curve
+of a non-decreasing function that is *finite somewhere*" — is now in
+`Subgradient/Primitive.lean` beside `subgradientRel_eq_monotoneCurve_rightDeriv`, on the strength
+of `monotone_of_forall_ne_of_le_of_le` and `monotoneCurve_eq_of_forall_ne`: moving `φ` at a single
+point, to anywhere between the two one-sided limits there, changes neither its monotonicity nor
+`Γ(φ)`. With
+that there is no case split on whether `dom f` has an interior point — the value of `f'₊` at *one*
+relative interior point of `dom f` is replaced by a subgradient there, which exists by
+Theorem 23.4 and is a real number.
 
-```
-theorem exists_monotone_ne_bot_ne_top_monotoneCurve_eq (hf : ClosedProperConvexFn f) :
-    ∃ φ : ℝ → EReal, Monotone φ ∧ (∃ a, φ a ≠ ⊥ ∧ φ a ≠ ⊤) ∧
-      subgradientRel (innerₗ ℝ) f = monotoneCurve φ
-```
-
-`subgradientRel_eq_monotoneCurve_rightDeriv` already gives `∂f = Γ(f'₊)` with `f'₊` non-decreasing,
-so the only missing clause is that `φ` may be chosen **finite at a point**. `f'₊` itself is finite
-on `int (dom f)` and so serves whenever `dom f` has an interior point; the one case it does not
-cover is `dom f` a single point `a`, where `f'₊` is `-∞` to the left of `a` and `+∞` from `a` on.
-There a suitable `φ` exists — take `-∞` on `Iio a`, `0` at `a` and `+∞` on `Ioi a`, whose curve is
-`{a} × ℝ = ∂f` — but exhibiting it means either a two-branch definition or the perturbation of
-`f'₊` at one point (`φ = f'₊` off `a`, `φ a = y₀` for any `y₀ ∈ ∂f a`), and checking that the
-perturbation leaves `Γ` unchanged. That check is the missing lemma, and it belongs next to
-`subgradientRel_eq_monotoneCurve_rightDeriv`, not here. **Consequence for this module**: the
-implication from the book's *definition* of a complete non-decreasing curve to the order-theoretic
-characterisation is stated (`isCompleteNonDecreasingCurve_monotoneCurve`); the converse is not.
-Theorem 24.3 itself is unaffected, because it is stated in the order-theoretic form the book gives
-at line 9195.
+**Consequence for this module**: `isCompleteNonDecreasingCurve_iff_exists_monotone` is the book's
+equivalence of line 9181 with line 9195, in full and in both directions.
 
 ## Where the book's statements had to change
 
@@ -396,6 +390,30 @@ theorem theorem_24_3 :
       ∃ f : ℝ → EReal, ClosedProperConvexFn f ∧ Γ = subgradientRel (innerₗ ℝ) f := by
   rw [isCompleteNonDecreasingCurve_iff_isMaximalMonotoneRel]
   exact isMaximalMonotoneRel_iff_exists_closedProperConvexFn
+
+/-- **Rockafellar, §24 (line 9195) implies line 9181**: every complete non-decreasing curve is the
+region between the two one-sided limits of a non-decreasing `φ` that is finite somewhere.
+
+Theorem 24.3 turns the maximal chain into a subdifferential, and
+`exists_monotone_ne_bot_ne_top_monotoneCurve_eq` reads that subdifferential as the curve of a
+`φ` finite at a point — the right derivative of the function, with its value at one relative
+interior point of the domain replaced by a subgradient there, which is what covers the case of a
+one-point domain. -/
+theorem exists_monotone_monotoneCurve_eq (h : IsCompleteNonDecreasingCurve Γ) :
+    ∃ φ : ℝ → EReal, Monotone φ ∧ (∃ a, φ a ≠ ⊥ ∧ φ a ≠ ⊤) ∧ Γ = monotoneCurve φ := by
+  obtain ⟨f, hf, rfl⟩ := theorem_24_3.1 h
+  exact exists_monotone_ne_bot_ne_top_monotoneCurve_eq hf
+
+/-- **Rockafellar, §24: lines 9181 and 9195 describe the same sets.** The book states the
+order-theoretic characterisation without proof, immediately after the defining formula; this is
+that equivalence, in full. -/
+theorem isCompleteNonDecreasingCurve_iff_exists_monotone :
+    IsCompleteNonDecreasingCurve Γ ↔
+      ∃ φ : ℝ → EReal, Monotone φ ∧ (∃ a, φ a ≠ ⊥ ∧ φ a ≠ ⊤) ∧ Γ = monotoneCurve φ := by
+  refine ⟨exists_monotone_monotoneCurve_eq, ?_⟩
+  rintro ⟨φ, hφ, ⟨a, hb, ht⟩, hΓ⟩
+  rw [hΓ]
+  exact isCompleteNonDecreasingCurve_monotoneCurve hφ hb ht
 
 /-- **Rockafellar, Theorem 24.3**, second clause: `f` is uniquely determined by `Γ` up to an
 additive constant.

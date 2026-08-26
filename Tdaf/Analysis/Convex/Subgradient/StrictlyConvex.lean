@@ -78,6 +78,31 @@ theorem StrictConvexOnFn.mono {C D : Set E} (h : StrictConvexOnFn f C) (hDC : D 
     StrictConvexOnFn f D := fun _ hx _ hy hne _ _ ha hb hab =>
   h (hDC hx) (hDC hy) hne ha hb hab
 
+/-- **The bridge to Mathlib's `StrictConvexOn`.** On a convex set where `f` is finite, strict
+convexity of the `EReal`-valued `f` and of its real trace are the same condition.
+
+This is the only way in for a *concrete* function. Mathlib's strict-convexity API — and every
+second-derivative criterion in it — is stated for real-valued functions, so without this there is
+nothing between the definition above and the theorems that consume it. The finiteness is genuinely
+needed in both directions: where `f x = ⊤` the `EReal` inequality is vacuous and the real one is
+not, and where `f x = ⊥` the real one is vacuous and the `EReal` one is not. -/
+theorem strictConvexOnFn_iff_strictConvexOn {C : Set E} (hC : Convex ℝ C)
+    (hbot : ∀ x ∈ C, f x ≠ ⊥) (htop : ∀ x ∈ C, f x ≠ ⊤) :
+    StrictConvexOnFn f C ↔ StrictConvexOn ℝ C (fun x => (f x).toReal) := by
+  have hcoe : ∀ x ∈ C, f x = (((f x).toReal : ℝ) : EReal) := fun x hx =>
+    (_root_.EReal.coe_toReal (htop x hx) (hbot x hx)).symm
+  constructor
+  · refine fun h => ⟨hC, fun x hx y hy hne a b ha hb hab => ?_⟩
+    have hlt := h hx hy hne ha hb hab
+    rw [hcoe x hx, hcoe y hy, hcoe _ (hC hx hy ha.le hb.le hab), Tdaf.EReal.coe_mul_coe,
+      Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add, _root_.EReal.coe_lt_coe_iff] at hlt
+    simpa using hlt
+  · intro h x hx y hy hne a b ha hb hab
+    have hlt := h.2 hx hy hne ha hb hab
+    rw [hcoe x hx, hcoe y hy, hcoe _ (hC hx hy ha.le hb.le hab), Tdaf.EReal.coe_mul_coe,
+      Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add, _root_.EReal.coe_lt_coe_iff]
+    simpa using hlt
+
 /-- **Rockafellar's essential strict convexity**: `f` is strictly convex on every convex subset of
 `dom ∂f`.
 

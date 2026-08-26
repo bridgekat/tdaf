@@ -31,6 +31,12 @@ endpoints of `Γ(φ)ₓ` off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f
   `isMaximalMonotoneRel_monotoneCurve` — `Γ(φ)` is a maximal monotone mapping.
 * `subgradientRel_eq_monotoneCurve_rightDeriv` — the converse: every `∂f` on the line is such a
   curve, that of its own right derivative.
+* `monotone_of_forall_ne_of_le_of_le`, `monotoneCurve_eq_of_forall_ne` — moving `φ` at a single
+  point, to anywhere between the two one-sided limits there, changes neither its monotonicity nor
+  `Γ(φ)`.
+* `exists_monotone_ne_bot_ne_top_monotoneCurve_eq` — every `∂f` is `Γ(φ)` for a `φ` that is
+  **finite at a point**, which is the form the book's *definition* of a complete non-decreasing
+  curve takes.
 * `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq` — the existence clause of
   **Theorem 24.2**, with the identification `f'₋ = φ⁻` and `f'₊ = φ⁺`.
 * `exists_closedProperConvexFn_forall_le_le` — **Theorem 24.2** in full: a closed proper convex `f`
@@ -60,6 +66,14 @@ which splits into four or five cases; the antidiagonal argument has none.
 left of `a`, bounded above because `φ ≥ φ a` to the right — and `u = sup T` has
 `(u, s - u) ∈ Γ(φ)`. Both halves are one contradiction each, obtained by nudging `u` to a point
 that must and must not lie in `T`.
+
+**The one-point domain needs no case of its own.** Reading `∂f` back as a curve
+(`exists_monotone_ne_bot_ne_top_monotoneCurve_eq`) wants a `φ` that is *finite somewhere*, and
+`f'₊` is not, exactly when `dom f` is a single point `a`: there `f'₊` is `-∞` to the left of `a`
+and `+∞` from `a` on. The temptation is to split and exhibit a two-branch `φ`. It is cheaper to
+move `f'₊` at one relative interior point of `dom f` to a subgradient there — real, and between
+the two one-sided limits precisely because it *is* a subgradient — and to observe that `Γ` cannot
+see the change (`monotoneCurve_eq_of_forall_ne`). That covers both cases with one argument.
 
 **`Γ(φ)ₓ` can be empty, and the endpoints are then still determined.** Where `φ = -∞` (to the left
 of `a`) the fibre is empty and the interval identity `Γ(φ) = ∂f` says nothing pointwise. What
@@ -252,6 +266,140 @@ theorem subgradientRel_eq_monotoneCurve_rightDeriv {f : ℝ → EReal} (hf : Clo
   ext p
   rw [show p = ((p.1, p.2) : ℝ × ℝ) from rfl, mem_subgradientRel_iff hf.proper,
     mem_monotoneCurve, iSup_rightDeriv_Iio hf, iInf_rightDeriv_Ioi hf]
+
+/-! ### Perturbing `φ` at a single point
+
+`Γ(φ)` reads `φ` only through its two one-sided limits, so the value of `φ` at one isolated point
+is invisible to it — provided the new value stays between those limits, so that monotonicity
+survives. This is what lets a `φ` that is `±∞` everywhere be replaced by one that is finite
+somewhere. -/
+
+section Perturb
+
+variable {φ ψ : ℝ → EReal} {a : ℝ}
+
+/-- **A nondecreasing `φ` stays nondecreasing when its value at one point is moved anywhere between
+the two one-sided limits there.** -/
+theorem monotone_of_forall_ne_of_le_of_le (hφ : Monotone φ) (heq : ∀ z, z ≠ a → ψ z = φ z)
+    (h₁ : (⨆ z ∈ Iio a, φ z) ≤ ψ a) (h₂ : ψ a ≤ ⨅ z ∈ Ioi a, φ z) : Monotone ψ := by
+  intro s t hst
+  by_cases hs : s = a
+  · subst hs
+    by_cases ht : t = s
+    · rw [ht]
+    · rw [heq t ht]
+      exact h₂.trans (iInf₂_le t (lt_of_le_of_ne hst (Ne.symm ht)))
+  · rw [heq s hs]
+    by_cases ht : t = a
+    · subst ht
+      exact (le_iSup₂ (f := fun z (_ : z ∈ Iio t) => φ z) s
+        (lt_of_le_of_ne hst hs)).trans h₁
+    · rw [heq t ht]
+      exact hφ hst
+
+/-- **Such a perturbation leaves the curve unchanged.** Neither `⨆_{z < x} φ z` nor
+`⨅_{z > x} φ z` can see the value at `a`: on the left, `ψ a` is squeezed between values of `φ` at
+points strictly between `a` and `x`, which are themselves in the range of the supremum, and on the
+right symmetrically. Every step is `hφ`, `h₁` or `h₂` applied at the midpoint of the interval
+concerned.
+
+This is the missing lemma of remediation §12.6: it is what turns
+`subgradientRel_eq_monotoneCurve_rightDeriv` into a statement about a `φ` that is *finite at a
+point*, which is the form the book's definition of a complete non-decreasing curve takes. -/
+theorem monotoneCurve_eq_of_forall_ne (hφ : Monotone φ) (heq : ∀ z, z ≠ a → ψ z = φ z)
+    (h₁ : (⨆ z ∈ Iio a, φ z) ≤ ψ a) (h₂ : ψ a ≤ ⨅ z ∈ Ioi a, φ z) :
+    monotoneCurve ψ = monotoneCurve φ := by
+  have hsup : ∀ x : ℝ, (⨆ z ∈ Iio x, ψ z) = ⨆ z ∈ Iio x, φ z := by
+    intro x
+    refine le_antisymm (iSup₂_le fun z hz => ?_) (iSup₂_le fun z hz => ?_)
+    · by_cases hza : z = a
+      · subst hza
+        have hz' : z < x := hz
+        have hm₁ : z < (z + x) / 2 := by linarith
+        have hm₂ : (z + x) / 2 ∈ Iio x := by simp only [mem_Iio]; linarith
+        exact h₂.trans ((iInf₂_le _ hm₁).trans
+          (le_iSup₂ (f := fun w (_ : w ∈ Iio x) => φ w) _ hm₂))
+      · rw [heq z hza]
+        exact le_iSup₂ (f := fun w (_ : w ∈ Iio x) => φ w) z hz
+    · by_cases hza : z = a
+      · subst hza
+        have hz' : z < x := hz
+        have hm₁ : z < (z + x) / 2 := by linarith
+        have hm₂ : (z + x) / 2 ∈ Iio x := by simp only [mem_Iio]; linarith
+        have hmne : (z + x) / 2 ≠ z := by intro h; rw [div_eq_iff] at h <;> linarith
+        have hstep : φ z ≤ ⨅ w ∈ Ioi z, φ w := le_iInf₂ fun w hw => hφ (le_of_lt hw)
+        refine hstep.trans ((iInf₂_le _ hm₁).trans ?_)
+        rw [← heq _ hmne]
+        exact le_iSup₂ (f := fun w (_ : w ∈ Iio x) => ψ w) _ hm₂
+      · rw [← heq z hza]
+        exact le_iSup₂ (f := fun w (_ : w ∈ Iio x) => ψ w) z hz
+  have hinf : ∀ x : ℝ, (⨅ z ∈ Ioi x, ψ z) = ⨅ z ∈ Ioi x, φ z := by
+    intro x
+    refine le_antisymm (le_iInf₂ fun z hz => ?_) (le_iInf₂ fun z hz => ?_)
+    · by_cases hza : z = a
+      · subst hza
+        have hz' : x < z := hz
+        have hm₁ : (x + z) / 2 < z := by linarith
+        have hm₂ : (x + z) / 2 ∈ Ioi x := by simp only [mem_Ioi]; linarith
+        have hmne : (x + z) / 2 ≠ z := by intro h; rw [div_eq_iff] at h <;> linarith
+        refine (iInf₂_le _ hm₂).trans ?_
+        rw [heq _ hmne]
+        exact hφ hm₁.le
+      · rw [← heq z hza]
+        exact iInf₂_le z hz
+    · by_cases hza : z = a
+      · subst hza
+        have hz' : x < z := hz
+        have hm₁ : (x + z) / 2 < z := by linarith
+        have hm₂ : (x + z) / 2 ∈ Ioi x := by simp only [mem_Ioi]; linarith
+        exact (iInf₂_le _ hm₂).trans
+          ((le_iSup₂ (f := fun w (_ : w ∈ Iio z) => φ w) _ hm₁).trans h₁)
+      · rw [heq z hza]
+        exact iInf₂_le z hz
+  ext p
+  rw [show p = ((p.1, p.2) : ℝ × ℝ) from rfl, mem_monotoneCurve, mem_monotoneCurve,
+    hsup p.1, hinf p.1]
+
+/-- **Every subdifferential on the line is the curve of a nondecreasing function that is finite
+somewhere.** This is the converse of the hypothesis of `isMaximalMonotoneRel_monotoneCurve`, and it
+is the implication from Rockafellar's order-theoretic *characterisation* of a complete
+non-decreasing curve back to his *definition* of one.
+
+`subgradientRel_eq_monotoneCurve_rightDeriv` already gives `∂f = Γ(f'₊)` with `f'₊` nondecreasing,
+so the only clause missing is finiteness at a point. `f'₊` itself is finite on `int (dom f)` and so
+serves whenever that is non-empty; the one case it does not cover is `dom f` a single point `a`,
+where `f'₊` is `-∞` to the left of `a` and `+∞` from `a` on. Rather than split, replace `f'₊` at
+*one* point of `ri (dom f)` by a subgradient there. One exists by Theorem 23.4, it is a real
+number, and it lies between the two one-sided limits precisely because `(a, y₀) ∈ ∂f = Γ(f'₊)`; so
+`monotoneCurve_eq_of_forall_ne` says the curve does not notice the change, and
+`monotone_of_forall_ne_of_le_of_le` says monotonicity survives it. -/
+theorem exists_monotone_ne_bot_ne_top_monotoneCurve_eq {f : ℝ → EReal}
+    (hf : ClosedProperConvexFn f) :
+    ∃ φ : ℝ → EReal, Monotone φ ∧ (∃ a, φ a ≠ ⊥ ∧ φ a ≠ ⊤) ∧
+      subgradientRel (innerₗ ℝ) f = monotoneCurve φ := by
+  obtain ⟨a, ha⟩ := Convex.relint_nonempty hf.convex.convex_dom hf.proper.dom_nonempty
+  obtain ⟨y₀, hy₀⟩ :=
+    subgradient_nonempty_of_mem_relint_dom (B := innerₗ ℝ) hf.convex hf.proper ha
+  have hmem : ((a, y₀) : ℝ × ℝ) ∈ monotoneCurve (rightDeriv f) := by
+    rw [← subgradientRel_eq_monotoneCurve_rightDeriv hf]
+    exact hy₀
+  rw [mem_monotoneCurve] at hmem
+  have hval : Function.update (rightDeriv f) a ((y₀ : ℝ) : EReal) a = ((y₀ : ℝ) : EReal) :=
+    Function.update_self _ _ _
+  have hoff : ∀ z, z ≠ a → Function.update (rightDeriv f) a ((y₀ : ℝ) : EReal) z = rightDeriv f z :=
+    fun z hz => Function.update_of_ne hz _ _
+  have h₁ : (⨆ z ∈ Iio a, rightDeriv f z)
+      ≤ Function.update (rightDeriv f) a ((y₀ : ℝ) : EReal) a := by rw [hval]; exact hmem.1
+  have h₂ : Function.update (rightDeriv f) a ((y₀ : ℝ) : EReal) a
+      ≤ ⨅ z ∈ Ioi a, rightDeriv f z := by rw [hval]; exact hmem.2
+  refine ⟨Function.update (rightDeriv f) a ((y₀ : ℝ) : EReal),
+    monotone_of_forall_ne_of_le_of_le (monotone_rightDeriv hf.convex hf.proper) hoff h₁ h₂,
+    ⟨a, by rw [hval]; exact _root_.EReal.coe_ne_bot _,
+      by rw [hval]; exact _root_.EReal.coe_ne_top _⟩, ?_⟩
+  rw [subgradientRel_eq_monotoneCurve_rightDeriv hf]
+  exact (monotoneCurve_eq_of_forall_ne (monotone_rightDeriv hf.convex hf.proper) hoff h₁ h₂).symm
+
+end Perturb
 
 end Curve
 

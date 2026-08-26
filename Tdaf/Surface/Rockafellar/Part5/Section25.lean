@@ -64,7 +64,10 @@ are not:
 
 Corollaries 25.1.2 and 25.1.3 are C only because the book states them with `∇f`; their subgradient
 forms (`mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff`) are general, with
-`IsCompatiblePairing B.flip` doing the work finite dimension would.
+`IsCompatiblePairing B.flip` doing the work finite dimension would. Their closedness-free
+restatements (`mem_exposedPoints_epi_conj_iff_of_proper`,
+`mem_exposedPoints_supportSet_iff_of_proper`) are the ones used below, and those *are*
+finite-dimensional, because dropping the closedness runs through Theorem 25.1's converse.
 
 ## Contents
 
@@ -73,7 +76,7 @@ forms (`mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff`) are
 | Theorem 25.1 | `theorem_25_1_forward`, `theorem_25_1_le`, `theorem_25_1_converse`,
   `theorem_25_1`, `theorem_25_1_differentiableAtFn` |
 | Corollary 25.1.1 | `corollary_25_1_1_proper`, `corollary_25_1_1_mem_interior` |
-| Corollary 25.1.2 | `corollary_25_1_2`, `corollary_25_1_2_clFn` |
+| Corollary 25.1.2 | `corollary_25_1_2` |
 | Corollary 25.1.3 | `corollary_25_1_3` |
 | Theorem 25.2 | `theorem_25_2_dirDeriv`, `theorem_25_2`, `theorem_25_2_partial` |
 | Theorem 25.3 | `theorem_25_3_differentiableAtFn_iff`, `theorem_25_3_countable`,
@@ -107,17 +110,19 @@ it. Nothing in §25 does — no statement here mixes the two readings.
   through Theorem 25.5's continuity clause applied to the extension of `g` by `+∞` off `C`.
 * **Corollaries 25.1.2 and 25.1.3 are stated for an `f` that need not be closed**, and the book's
   proof opens by replacing `f` with `cl f`, justified by the remark after Corollary 25.1.1 that
-  `∇(cl f) = ∇f`. That remark is asserted, not proved, and the backbone does not have it, so both
-  corollaries are stated here with `ClosedFn f` — see `## Backbone gaps`.
-  `corollary_25_1_2_clFn` shows how far the book's own reduction gets without the remark: under
-  the book's hypotheses exactly, with `∇(cl f)` in place of `∇f`. Corollary 25.1.3 has no such
-  companion, because `PosHomogeneous (clFn g)` is not in the library either.
+  `∇(cl f) = ∇f`. Rockafellar asserts that remark rather than proving it, and his one-line reason
+  — that `f` and `cl f` agree on `int (dom f)` — is only half of it: the other half is that `cl f`
+  has no *extra* interior points at which to be differentiable, i.e. `int (dom (cl f)) =
+  int (dom f)`. Both halves are now in `Subgradient/Uniqueness.lean`
+  (`ConvexFn.interior_dom_clFn`, `hasGradientAt_clFn_iff`), so both corollaries carry the book's
+  hypotheses verbatim.
 * **Theorem 25.6's proof does not, here, verify the exercise of line 8477.** The book leaves
   `rec (∂f(x)) = N_{dom f}(x)` as an exercise in §23 and says the verification "will be given later
   as part of the proof of Theorem 25.6". The backbone's proof never computes that recession cone —
   it uses only the inclusion `rec (∂f(x)) ⊆ N_{dom f}(x)` — so §23's exercise is *not* discharged
-  on the way. It is discharged here instead, as `recessionCone_subgradient_eq_normalCone`, in four
-  lines and independently of Theorem 25.6.
+  on the way. It is discharged separately, in four lines and independently of Theorem 25.6, by
+  `Subgradient/Reconstruction.lean`'s `recessionCone_subgradient_eq_normalCone`, which this section
+  restates in the book's `ℝⁿ`.
 * **Rockafellar's "`y ≠ 0`" in Theorem 25.4 is not needed**, and neither is the `Sₖ` decomposition
   it is stated with; see `## What is not here`.
 
@@ -142,21 +147,17 @@ it. Nothing in §25 does — no statement here mixes the two readings.
 
 ## Backbone gaps
 
-* **`∇(cl f) = ∇f` for a proper convex `f`.** Wanted:
-  `HasGradientAt (clFn f) f' x ↔ HasGradientAt f f' x`, or at least the `DifferentiableAtFn`
-  version. Rockafellar states it as an aside after Corollary 25.1.1 and uses it to drop closedness
-  from Corollaries 25.1.2 and 25.1.3. The forward direction is short — `clFn f` and `f` agree on
-  `int (dom f)` by `ConvexFn.clFn_eq_of_mem_relint_dom`, which is a neighbourhood of `x` — but the
-  converse needs `int (dom (clFn f)) = int (dom f)`, which is Theorem 7.4's companion for
-  *interiors* rather than relative interiors and is not in the library. It belongs in
-  `Tdaf/Analysis/Convex/Subgradient/Uniqueness.lean`, next to the other two consumers of
-  Theorem 25.1's converse.
+None. The two this section reported have been closed:
 
-**Friction, not a gap:** `linFn_eq_toDual` says the surface's vector-to-functional map and the one
-`Subgradient/{Rademacher,Reconstruction}.lean` use are the same map, and every §25 statement pays
-one rewrite by it. It belongs in `Tdaf/Surface/Common/Euclidean.lean` alongside the
-`*_flip_pairing` rewrites, for the same reason those are there: a second `ℝⁿ` surface, and §26,
-will want it too.
+* **`∇(cl f) = ∇f`** is `hasGradientAt_clFn_iff` in
+  `Tdaf/Analysis/Convex/Subgradient/Uniqueness.lean`, resting on `ConvexFn.interior_dom_clFn`
+  (`int (dom (cl f)) = int (dom f)`, Theorem 7.4's companion for interiors) proved beside it. With
+  it, `mem_exposedPoints_epi_conj_iff_of_proper` and `mem_exposedPoints_supportSet_iff_of_proper`
+  restate Corollaries 25.1.2 and 25.1.3 for an arbitrary compatible pairing with no closedness, and
+  `corollary_25_1_2` and `corollary_25_1_3` below are their specializations.
+* **`linFn_eq_toDual`** — friction rather than a gap — now lives in
+  `Tdaf/Surface/Common/Euclidean.lean` alongside the `*_flip_pairing` rewrites, with
+  `toDual_apply_eq_pairing` beside it.
 
 ## References
 
@@ -175,18 +176,12 @@ variable {n : ℕ}
 /-! ### `∇f(x)` as a vector
 
 The backbone's gradient is a continuous linear functional; Rockafellar's is a vector. `linFn` is
-the translation, and these four declarations are the whole of it. -/
+the translation — `linFn_eq_toDual` in `Surface/Common/Euclidean.lean` says it is the Fréchet–Riesz
+map the backbone uses — and these three declarations are the whole of it. -/
 
 section GradientVector
 
 variable {f : Rn n → EReal} {b x : Rn n}
-
-/-- **`linFn` is the Fréchet–Riesz map.** `linFn b = ⟨·, b⟩` is what
-`InnerProductSpace.toDual ℝ (Rn n)` sends `b` to, so the surface's vector-to-functional
-translation and the one the backbone's `Subgradient/Rademacher.lean` uses are the same map. -/
-theorem linFn_eq_toDual (b : Rn n) : linFn b = InnerProductSpace.toDual ℝ (Rn n) b := by
-  ext y
-  simp [linFn]
 
 /-- **Rockafellar's `∇f(x) = b`**, with `b` a vector of `ℝⁿ`: `f` agrees near `x` with a
 real-valued function whose Fréchet derivative at `x` is `⟨·, b⟩`. -/
@@ -327,31 +322,18 @@ theorem corollary_25_1_1_mem_interior (h : HasGradientVecAt f b x) : x ∈ inter
 `epi f*` in `ℝⁿ⁺¹` are the points `(x*, f*(x*))` such that `f` is differentiable at some `x` with
 `∇f(x) = x*`.
 
-The exposedness half (`mem_exposedPoints_epi_conj_iff`) is general; Theorem 25.1 is what renames
-its conclusion from "the only subgradient" to "the gradient", and that is the finite-dimensional
-step.
+The exposedness half (`mem_exposedPoints_epi_conj_iff_of_proper`) is general; Theorem 25.1 is what
+renames its conclusion from "the only subgradient" to "the gradient", and that is the
+finite-dimensional step.
 
-**The hypothesis `ClosedFn f` is not the book's.** Rockafellar reduces to the closed case by
-replacing `f` with `cl f`, on the strength of the unproved remark `∇(cl f) = ∇f`; see
-`## Backbone gaps` in the module docstring. -/
-theorem corollary_25_1_2 (hf : ConvexFn f) (hp : Proper f) (hc : ClosedFn f) {y : Rn n} {μ : ℝ} :
+**`f` need not be closed**, exactly as in the book: `(cl f)* = f*`, and `cl f` has the same points
+of single-valued subdifferential as `f`, which is where Rockafellar's remark `∇(cl f) = ∇f` after
+Corollary 25.1.1 does its work. Both facts are now in the backbone. -/
+theorem corollary_25_1_2 (hf : ConvexFn f) (hp : Proper f) {y : Rn n} {μ : ℝ} :
     (y, μ) ∈ (epi (conj (pairing n) f)).exposedPoints ℝ ↔
       conj (pairing n) f y = (μ : EReal) ∧ ∃ x : Rn n, HasGradientVecAt f y x := by
-  rw [mem_exposedPoints_epi_conj_iff (B := pairing n) hf hp hc]
+  rw [mem_exposedPoints_epi_conj_iff_of_proper (B := pairing n) hf hp]
   exact and_congr_right fun _ => exists_congr fun _ => (theorem_25_1 hf hp).symm
-
-/-- **Rockafellar, Corollary 25.1.2** under the book's own hypotheses — `f` merely proper convex —
-at the price of naming `cl f` where the book names `f`.
-
-This is exactly what the book's proof produces: `(cl f)* = f*`, so the exposed points of `epi f*`
-are read off `cl f`, which *is* closed. Rockafellar then renames `∇(cl f)` to `∇f` on the strength
-of the remark after Corollary 25.1.1, which is the unproved step; everything before it is here.
-The two statements are therefore equivalent modulo the one backbone gap this section records. -/
-theorem corollary_25_1_2_clFn (hf : ConvexFn f) (hp : Proper f) {y : Rn n} {μ : ℝ} :
-    (y, μ) ∈ (epi (conj (pairing n) f)).exposedPoints ℝ ↔
-      conj (pairing n) f y = (μ : EReal) ∧ ∃ x : Rn n, HasGradientVecAt (clFn f) y x := by
-  rw [← conj_clFn (B := pairing n) f]
-  exact corollary_25_1_2 (convexFn_clFn hf) (hf.proper_clFn hp) (closedFn_clFn f)
 
 /-- **Rockafellar, Corollary 25.1.3**: let `C` be a non-empty closed convex set and `g` any
 positively homogeneous proper convex function with `C = {z | ⟨y, z⟩ ≤ g(y) for all y}` — the
@@ -360,14 +342,13 @@ a `y` at which `g` is differentiable with `∇g(y) = z`.
 
 `supportSet (pairing n) g` is the book's `{z | ⟨y, z⟩ ≤ g(y) ∀ y}` verbatim, and its non-emptiness
 and closedness are consequences of the other hypotheses rather than extra assumptions, so they do
-not appear. As in Corollary 25.1.2 the hypothesis `ClosedFn g` is the book's implicit reduction to
-`cl g`. -/
+not appear. As in Corollary 25.1.2 no closedness of `g` is needed. -/
 theorem corollary_25_1_3 {g : Rn n → EReal} {C : Set (Rn n)} (hgh : PosHomogeneous g)
-    (hgc : ConvexFn g) (hgp : Proper g) (hgcl : ClosedFn g)
+    (hgc : ConvexFn g) (hgp : Proper g)
     (hC : C = supportSet (pairing n) g) {z : Rn n} :
     z ∈ C.exposedPoints ℝ ↔ ∃ y : Rn n, HasGradientVecAt g z y := by
   subst hC
-  have h := mem_exposedPoints_supportSet_iff (B := pairing n) hgh hgc hgp hgcl (z := z)
+  have h := mem_exposedPoints_supportSet_iff_of_proper (B := pairing n) hgh hgc hgp (z := z)
   simp only [supportSet_flip_pairing, subgradient_flip_pairing] at h
   rw [h]
   exact exists_congr fun _ => (theorem_25_1 hgc hgp).symm
@@ -581,16 +562,15 @@ theorem mem_gradientLimits_iff {v : Rn n} :
 normal cone to `dom f` at `x`.
 
 Rockafellar leaves this as an exercise in §23 and says the verification "will be given later as
-part of the proof of Theorem 25.6". **It is not**, here: the backbone's proof of Theorem 25.6 uses
-only the inclusion `⊆` (`recessionCone_subgradient_subset_normalCone`), because each of
-Rockafellar's three uses of the identification follows more cheaply from
-`∂f(x) + N_{dom f}(x) ⊆ ∂f(x)`. So the exercise is discharged here, on its own, and the other
-inclusion is exactly that containment read at a single normal direction. -/
+part of the proof of Theorem 25.6". **It is not**: the backbone's proof of Theorem 25.6 uses only
+the inclusion `⊆` (`recessionCone_subgradient_subset_normalCone`), because each of Rockafellar's
+three uses of the identification follows more cheaply from `∂f(x) + N_{dom f}(x) ⊆ ∂f(x)`. The
+equality is discharged on its own in `Subgradient/Reconstruction.lean`, independently of
+Theorem 25.6; this is that statement in the book's `ℝⁿ`. -/
 theorem recessionCone_subgradient_eq_normalCone (hp : Proper f) {v : Rn n}
     (hv : v ∈ subgradient (pairing n) f x) :
     recessionCone (subgradient (pairing n) f x) = normalCone (pairing n) (dom f) x :=
-  Set.Subset.antisymm (recessionCone_subgradient_subset_normalCone hp hv)
-    fun _ hw _ hv' _ ha => add_smul_mem_subgradient hv' hw ha
+  Tdaf.ConvexAnalysis.recessionCone_subgradient_eq_normalCone hp hv
 
 /-- **Rockafellar, Theorem 25.6**: let `f` be a closed proper convex function such that `dom f` has
 non-empty interior. Then for every `x`,
