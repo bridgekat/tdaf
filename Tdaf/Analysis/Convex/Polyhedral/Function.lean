@@ -11,37 +11,26 @@ import Tdaf.Analysis.Convex.Operations.InfConv
 /-!
 # Polyhedral convex functions
 
-Rockafellar's §19 for functions. A convex function is **polyhedral** when its epigraph is a
-polyhedral convex set; equivalently — by Theorem 19.1 — when it is the pointwise maximum of
-finitely many affine functions on a polyhedral effective domain.
+A convex function is **polyhedral** when its epigraph is a polyhedral convex set; equivalently, by
+Theorem 19.1, when it is the pointwise maximum of finitely many affine functions on a polyhedral
+effective domain. `PolyhedralFn f` is `Polyhedral (epi f)`, and everything here is read off the
+epigraph through the polyhedral calculus of `Polyhedral/Ops.lean`.
 
-Everything here is read off the epigraph through the polyhedral calculus of `Polyhedral/Ops.lean`:
-the effective domain is a linear image of the epigraph, a sublevel set is an affine preimage of it,
-and the indicator of a polyhedral set has a polyhedral "half-cylinder" epigraph.
-
-## Main definitions
-
-* `PolyhedralFn f` — `Polyhedral (epi f)`.
+`PolyhedralFn` does not by itself exclude `f x = ⊥` — the epigraph of `f ≡ ⊥` is all of `E × ℝ`,
+which is polyhedral — so `PolyhedralFn.closedFn` carries `f ≠ ⊥`, while lower semicontinuity holds
+regardless. Rockafellar's own convention makes polyhedral convex functions proper.
 
 ## Main results
 
 * `PolyhedralFn.convexFn`, `PolyhedralFn.lowerSemicontinuous`, `PolyhedralFn.closedFn` — a
   polyhedral convex function is convex and closed.
-* `PolyhedralFn.polyhedral_dom` — **Theorem 19.1** applied to the epigraph: `dom f` is polyhedral.
-* `PolyhedralFn.polyhedral_sublevel` — every sublevel set is polyhedral.
-* `polyhedralFn_indicatorFn` — the indicator of a polyhedral set is a polyhedral function; this is
-  what makes the polyhedral constraint qualifications apply to constraint *sets*.
+* `PolyhedralFn.polyhedral_dom`, `PolyhedralFn.polyhedral_sublevel` — **Theorem 19.1** on the
+  epigraph: the effective domain and every sublevel set are polyhedral.
+* `polyhedralFn_indicatorFn` — the indicator of a polyhedral set is a polyhedral function, which
+  is what makes the polyhedral constraint qualifications apply to constraint *sets*.
 * `PolyhedralFn.add` — **Theorem 19.4**: a sum of polyhedral convex functions is polyhedral.
-* `PolyhedralFn.infConv` and `epi_infConv_of_polyhedralFn` — **Corollary 19.3.4**: an infimal
-  convolute of polyhedral convex functions is polyhedral, and the infimum defining it is attained.
-
-## Design notes
-
-**`ClosedFn` needs `f ≠ ⊥`.** `PolyhedralFn` does not by itself exclude `f x = ⊥`: the epigraph of
-`f ≡ ⊥` is all of `E × ℝ`, which is polyhedral (the empty system). Lower semicontinuity holds
-regardless — it is exactly closedness of the epigraph — but `ClosedFn`, being `clFn f = f`, has a
-separate `⊥` branch, so `PolyhedralFn.closedFn` carries the hypothesis. Rockafellar's own
-convention makes polyhedral convex functions proper, and every downstream use supplies properness.
+* `PolyhedralFn.infConv`, `epi_infConv_of_polyhedralFn` — **Corollary 19.3.4**: an infimal
+  convolute of polyhedral convex functions is polyhedral, and the infimum is attained.
 
 ## References
 
@@ -148,7 +137,7 @@ def diagMap : ((E × ℝ) × (E × ℝ)) →ₗ[ℝ] E where
 /-- **Rockafellar, Theorem 19.4.** A sum of polyhedral convex functions is polyhedral.
 
 The epigraph of the sum is the image, under `((x, α), (y, β)) ↦ (x, α + β)`, of the polyhedral set
-`(epi f ×ˢ epi g) ∩ ker (x, y) ↦ x - y`. The `⊥`-freeness hypotheses are what make the splitting
+`(epi f ×ˢ epi g) ∩ ker (x, y) ↦ x - y`; the `⊥`-freeness hypotheses make the splitting
 `f x + g x ≤ μ ↔ ∃ α β, f x ≤ α ∧ g x ≤ β ∧ α + β = μ` correct in `EReal`. -/
 theorem PolyhedralFn.add {g : E → EReal} (hf : PolyhedralFn f) (hg : PolyhedralFn g)
     (hf' : ∀ x, f x ≠ ⊥) (hg' : ∀ x, g x ≠ ⊥) : PolyhedralFn (f + g) := by
@@ -201,11 +190,8 @@ theorem PolyhedralFn.add {g : E → EReal} (hf : PolyhedralFn f) (hg : Polyhedra
 
 /-- **Rockafellar, Corollary 19.3.4**, the attainment half: for polyhedral `f` and `g` the sum of
 the epigraphs *is* the epigraph of the infimal convolute, so the infimum defining `(f □ g) x` is
-attained whenever it is finite.
-
-The sum of two epigraphs is always upward closed in the vertical direction
-(`mem_epi_add_epi_of_le`) and here it is also closed, being polyhedral; those are exactly the two
-halves of `IsEpiLike`. -/
+attained whenever it is finite. A sum of epigraphs is always upward closed, and here it is also
+closed, being polyhedral; those are the two halves of `IsEpiLike`. -/
 theorem epi_infConv_of_polyhedralFn (hf : PolyhedralFn f) {g : E → EReal} (hg : PolyhedralFn g) :
     epi (infConv f g) = epi f + epi g :=
   epi_infConv (IsEpiLike.of_isClosed (fun _ _ _ h hle => mem_epi_add_epi_of_le h hle)

@@ -12,61 +12,35 @@ import Tdaf.Analysis.Convex.Recession.Function
 # Recession functions, conjugates and polar cones
 
 Two dual dictionaries between a function's recession data and its conjugate's effective domain.
-The first is at the level of functions: the recession function of a conjugate is the support
-function of the effective domain. The second is at the level of cones: the recession *cone* of a
-conjugate is the *polar* of the effective domain, which is the level `0` of the first.
+At the level of functions, the recession function of a conjugate is the support function of the
+effective domain (**Theorem 13.3**); at the level of cones, the recession *cone* of a conjugate is
+the *polar* of the effective domain (**Theorem 14.2**), which is Theorem 13.3 read at the level
+`0`.
 
-`Duality/Support.lean` deliberately leaves §13.3–§13.5 unstated — it cannot name `f 0⁺`, which
-lives in `Recession/Function.lean`. This file is the join of those two together with
-`Duality/Polar.lean`, and it is where the statements that need both belong.
+One direction of Theorem 13.3 is free: bounding the supremum that defines `f*` termwise gives
+`(f*) 0⁺ ≤ δ*(· | dom f)` with no hypothesis at all. The reverse needs a `z` at which `f*` is
+finite, so that Fenchel's inequality at `z + a • y` can be pushed to `a → ∞`; that is the
+hypothesis `Proper (conj B f)`, which for a closed proper convex `f` is Theorem 12.2.
 
 ## Main results
 
-* `recessionFn_conj_le_supportFn_dom` — the unconditional half.
-* `recessionFn_conj` — **Theorem 13.3**. Its dual form, `f 0⁺ = δ*(· | dom f*)`, is
-  `recessionFn_eq_supportFn_dom_conj` in `Duality/Level.lean`, where Corollary 13.3.1 needs it.
+* `recessionFn_conj` — **Theorem 13.3**: `(f*) 0⁺ = δ*(· | dom f)`. The dual form
+  `f 0⁺ = δ*(· | dom f*)` is `recessionFn_eq_supportFn_dom_conj` in `Duality/Level.lean`.
 * `constancySpace_conj` — the constancy space of `f*` is the annihilator of `dom f`. This is the
-  form Theorems 9.2 and 16.3 consume: it turns "`f*` is constant along `z`" into "`z` annihilates
+  form Theorems 9.2 and 16.3 consume: "`f*` is constant along `z`" becomes "`z` annihilates
   `dom f`", which a relative-interior hypothesis can discharge.
-* `recessionConeFn_conj`, `recessionConeFn_conj_hull`,
-  `recessionConeFn_eq_polarCone_dom_conj`, `polarCone_recessionConeFn` — **Theorem 14.2**, both
-  assertions, each in the direct form and in the book's cone-generated phrasing.
-* `zero_mem_interior_iff_polarCone_eq_zero`, `isBounded_setOf_le_iff_zero_mem_interior_dom_conj` —
-  **Corollary 14.2.2**, and the interior/polar dictionary it runs on.
-
-## Design notes
-
-**One direction is free, the other needs Theorem 12.2.** `(f*)0⁺ y ≤ ν` unfolds, through
-`recessionFn_le_coe_iff` and `mk_mem_recessionCone_epi_iff`, to `f*(z + a • y) ≤ f* z + a ν` for
-all `z` and `a ≥ 0`, and `δ*(y | dom f) ≤ ν` unfolds to `⟨x, y⟩ ≤ ν` for all `x ∈ dom f`. Bounding
-the supremum that defines `f*` termwise gives `(f*)0⁺ ≤ δ*(· | dom f)` with no hypothesis at all.
-
-The reverse needs a `z` at which `f*` is *finite*: only then can the resulting inequality
-`⟨x, z⟩ + a⟨x, y⟩ - f x ≤ f* z + a ν` be pushed to `a → ∞` to give `⟨x, y⟩ ≤ ν`. That is why the
-hypothesis is `Proper (conj B f)`, which `proper_conj` supplies for closed proper convex `f` — i.e.
-exactly Theorem 12.2.
-
-**The file is layer A up to Theorem 13.3.** Neither half of that theorem needs a topology:
-properness of `f*` is taken as a hypothesis rather than derived, so callers at layer C supply it
-from `proper_conj` and everyone else can still use the statement. Theorem 14.2's first assertion
-is layer A for the same reason; its second assertion needs Fenchel–Moreau and the bipolar theorem,
-and Corollary 14.2.2 needs finite dimension on both sides.
-
-**Theorem 14.2 is stated against `dom f`, not against the cone it generates.** That is the form the
-proof produces — `(f*)0⁺ y ≤ 0` says `⟨x, y⟩ ≤ 0` for every `x ∈ dom f` — and the form Theorem
-27.1(f) consumes; `polarCone_hull` (`Duality/Polar.lean`) recovers the book's phrasing, since a
-polar cone cannot tell a set from the cone it generates.
-
-**Corollary 14.2.2 factors through a dictionary that has nothing to do with conjugates.**
-`zero_mem_interior_iff_polarCone_eq_zero` says that a nonempty convex set has the origin in its
-interior exactly when its polar cone is trivial; Corollary 14.2.2 is that fact composed with
-Theorems 14.2, 8.7 and 8.4. Nonemptiness is genuinely needed — for `D = ∅` between two trivial
-spaces the polar is `{0}` while the interior is empty.
+* `recessionConeFn_conj`, `recessionConeFn_conj_hull`, `recessionConeFn_eq_polarCone_dom_conj`,
+  `polarCone_recessionConeFn` — **Theorem 14.2**, both assertions, each in the direct form and in
+  the book's cone-generated phrasing. The direct form is stated against `dom f` rather than the
+  cone it generates; a polar cone cannot tell the two apart (`polarCone_hull`).
+* `zero_mem_interior_iff_polarCone_eq_zero` — a nonempty convex set has the origin in its interior
+  exactly when its polar cone is trivial. Composed with Theorems 14.2, 8.7 and 8.4 this gives
+  **Corollary 14.2.2**, `isBounded_setOf_le_iff_zero_mem_interior_dom_conj`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §13 (Theorem 13.3,
-  Corollary 13.3.4) and §14 (Theorem 14.2, Corollary 14.2.2).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §13 (Theorem 13.3) and
+  §14 (Theorem 14.2, Corollary 14.2.2).
 -/
 
 open scoped Pointwise
@@ -149,10 +123,9 @@ theorem recessionFn_conj (hp : Proper f) (hc : Proper (conj B f)) :
     recessionFn (conj B f) = supportFn B (dom f) :=
   le_antisymm (recessionFn_conj_le_supportFn_dom B f) (supportFn_dom_le_recessionFn_conj hp hc)
 
-/-- **The constancy space of a conjugate is the annihilator of the effective domain.**
-
-This is what Theorem 9.2's hypothesis becomes when it is applied to `f*`: "`f*` is constant along
-`y`" says exactly that `y` pairs to zero with every point of `dom f`. -/
+/-- **The constancy space of a conjugate is the annihilator of the effective domain.** This is what
+Theorem 9.2's hypothesis becomes when applied to `f*`: "`f*` is constant along `y`" says exactly
+that `y` pairs to zero with every point of `dom f`. -/
 theorem constancySpace_conj (hp : Proper f) (hc : Proper (conj B f)) :
     constancySpace (conj B f) = {y : F | ∀ x ∈ dom f, B x y = 0} := by
   ext y
@@ -179,12 +152,9 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
 
 /-- **Rockafellar, Theorem 14.2**, first assertion: the recession cone of a conjugate is the polar
-of the effective domain.
-
-Stated against `dom f` rather than the cone it generates — that is the form the proof produces and
-the form consumers use; `recessionConeFn_conj_hull` is the book's phrasing, and the two agree
-because a polar cone sees only the cone a set generates. The proof is Theorem 13.3 read at the
-level `0`: `(f*)0⁺ y ≤ 0` says `⟨x, y⟩ ≤ 0` for every `x ∈ dom f`. -/
+of the effective domain. Stated against `dom f` rather than the cone it generates, which a polar
+cone cannot tell apart from it; `recessionConeFn_conj_hull` is the book's phrasing. The proof is
+Theorem 13.3 at the level `0`: `(f*)0⁺ y ≤ 0` says `⟨x, y⟩ ≤ 0` for every `x ∈ dom f`. -/
 theorem recessionConeFn_conj (hp : Proper f) (hc : Proper (conj B f)) :
     recessionConeFn (conj B f) = polarCone B (dom f) := by
   ext y
@@ -206,10 +176,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
 /-- **Rockafellar, Theorem 14.2**, second assertion, before polars are taken: the recession cone of
-a closed proper convex function is the polar of the effective domain of its conjugate.
-
-This is the first assertion applied to `f*`, using `f** = f`. It is the form Theorem 27.1(f)
-consumes. -/
+a closed proper convex function is the polar of the effective domain of its conjugate — the first
+assertion applied to `f*`, using `f** = f`. This is the form Theorem 27.1(f) consumes. -/
 theorem recessionConeFn_eq_polarCone_dom_conj (hf : ConvexFn f) (hcl : ClosedFn f) (hp : Proper f) :
     recessionConeFn f = polarCone B.flip (dom (conj B f)) := by
   have hbi : biconj B f = f := biconj_eq_self hf hcl
@@ -227,10 +195,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {f : E → EReal}
 
 /-- **Rockafellar, Theorem 14.2**, second assertion: the polar of the recession cone of a closed
-proper convex function is the closure of the convex cone generated by `dom f*`.
-
-Taking polars in `recessionConeFn_eq_polarCone_dom_conj` and applying the bipolar theorem to the
-cone generated by `dom f*`. -/
+proper convex function is the closure of the convex cone generated by `dom f*`. Take polars in
+`recessionConeFn_eq_polarCone_dom_conj` and apply the bipolar theorem. -/
 theorem polarCone_recessionConeFn (hf : ConvexFn f) (hcl : ClosedFn f) (hp : Proper f) :
     polarCone B (recessionConeFn f)
       = closure (PointedCone.hull ℝ (dom (conj B f)) : Set F) := by
@@ -242,7 +208,7 @@ theorem polarCone_recessionConeFn (hf : ConvexFn f) (hcl : ClosedFn f) (hp : Pro
 
 end RecessionPolarBipolar
 
-/-! ### Layer D: bounded level sets -/
+/-! ### Bounded level sets -/
 
 section BoundedLevel
 
@@ -251,15 +217,12 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
 
 omit [FiniteDimensional ℝ E] in
-/-- **The origin is interior to a convex set exactly when its polar cone is trivial.**
-
-Both directions run on Corollary 6.4.1. Forwards, absorbency at the origin makes every value of
-the pairing vanish, and the pairing separates points. Backwards, the bipolar theorem turns a
-trivial polar into "the cone generated by `D` is dense", Theorem 6.3 upgrades dense to everything,
-and that is absorbency again.
-
-Nonemptiness is not decorative: for `D = ∅` between two trivial spaces the polar is `{0}` while the
-interior is empty. -/
+/-- **The origin is interior to a convex set exactly when its polar cone is trivial.** Both
+directions run on Corollary 6.4.1: forwards, absorbency at the origin makes every value of the
+pairing vanish, and the pairing separates points; backwards, the bipolar theorem turns a trivial
+polar into "the cone generated by `D` is dense", which Theorem 6.3 upgrades to absorbency again.
+Nonemptiness is not decorative: for `D = ∅` between two trivial spaces the polar is `{0}` while
+the interior is empty. -/
 theorem zero_mem_interior_iff_polarCone_eq_zero {D : Set F} (hD : Convex ℝ D) (hne : D.Nonempty) :
     (0 : F) ∈ interior D ↔ polarCone B.flip D = {(0 : E)} := by
   have hconv : Convex ℝ ((PointedCone.hull ℝ D : PointedCone ℝ F) : Set F) :=
@@ -328,11 +291,9 @@ theorem zero_mem_interior_iff_polarCone_eq_zero {D : Set F} (hD : Convex ℝ D) 
       exact he
 
 /-- **Rockafellar, Corollary 14.2.2**: every level set of a closed proper convex function is
-bounded exactly when the origin is interior to the effective domain of the conjugate.
-
-Theorem 14.2 turns the recession cone of `f` into the polar of `dom f*`, Theorem 8.7 says every
-nonempty level set has that same recession cone, and Theorem 8.4 turns "trivial recession cone"
-into "bounded". -/
+bounded exactly when the origin is interior to the effective domain of the conjugate. Theorem 14.2
+turns the recession cone of `f` into the polar of `dom f*`, Theorem 8.7 gives every nonempty level
+set that same recession cone, and Theorem 8.4 turns "trivial recession cone" into "bounded". -/
 theorem isBounded_setOf_le_iff_zero_mem_interior_dom_conj {f : E → EReal}
     (hf : ConvexFn f) (hcl : ClosedFn f) (hp : Proper f) :
     (∀ α : ℝ, Bornology.IsBounded {z : E | f z ≤ (α : EReal)})

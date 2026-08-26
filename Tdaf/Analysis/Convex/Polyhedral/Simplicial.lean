@@ -10,9 +10,9 @@ import Tdaf.Analysis.Convex.Caratheodory
 /-!
 # Polytopes, triangulation, and local simpliciality
 
-The geometric half of Rockafellar's §20. **Theorem 20.5** — every polyhedral convex set is
-locally simplicial — is what finally supplies instances of `LocallySimplicial`, and with them
-Theorems 10.2 and 10.3, which have been waiting on it since `Simplicial.lean`.
+Every polyhedral convex set is locally simplicial: **Theorem 20.5**, the geometric half of §20,
+and the result that supplies instances of `LocallySimplicial` and with them Theorems 10.2 and
+10.3.
 
 The route is Rockafellar's. Around a point `x` of a polyhedral set `C`, cut out a *bounded*
 polyhedral neighbourhood `V`; then `V ∩ C` is a bounded polyhedral convex set, hence a polytope
@@ -30,22 +30,19 @@ Carathéodory — a finite union of simplices, all of them inside `C`.
 * `exists_polyhedral_between` — **Theorem 20.4**: a compact set inside `int D` is inside `int P`
   for some polyhedral `P ⊆ int D`.
 
-## Design notes
+## Implementation notes
 
-**Rockafellar takes `V` to be a simplex; here it is a cube.** Nothing in the argument needs `V` to
-be a simplex — only polyhedral, bounded, and a neighbourhood of `x` — and a cube is the cheaper
-object to build: `2 n` inequalities `± bᵢ* (y - x) ≤ 1` for a basis `b`, bounded because
-`‖y - x‖ ≤ ∑ ‖bᵢ‖` on it, and a neighbourhood because the strict version is open.
-
-**The triangulation is Mathlib's `convexHull_eq_union` read as a *finite* union.** Carathéodory in
-Mathlib is stated as a union over all affinely independent finite subsets of the generating set;
-when that set is itself finite the index set is `P.powerset`, and `LocallySimplicial` asks for a
-`Fin n`-indexed family, which `Finset.equivFin` supplies.
+Rockafellar takes `V` to be a simplex; here it is a cube, which is cheaper to build and all the
+argument needs — `2 n` inequalities `± bᵢ* (y - x) ≤ 1` for a basis `b`, bounded because
+`‖y - x‖ ≤ ∑ ‖bᵢ‖` on it, and a neighbourhood because the strict version is open. The
+triangulation is Mathlib's `convexHull_eq_union` read as a *finite* union: for a finite generating
+set the index set is `P.powerset`, and `Finset.equivFin` turns it into the `Fin n`-indexed family
+`LocallySimplicial` asks for.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §20 (Theorem 20.5),
-  §19 (Corollary 19.1.2), §17 (Theorem 17.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §20 (Theorems 20.4,
+  20.5), §19 (Corollary 19.1.2), §17 (Theorem 17.1).
 -/
 
 open Set Filter Topology

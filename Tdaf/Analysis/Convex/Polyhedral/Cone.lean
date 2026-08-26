@@ -8,43 +8,30 @@ import Tdaf.Analysis.Convex.Duality.Polar
 /-!
 # Polyhedral convex cones and the Minkowski–Weyl theorem
 
-The cone half of Rockafellar's §19, and the gate for all of §19–§22.
-
 A convex cone can be described in two ways: *from outside*, as the solution set of finitely many
 homogeneous linear inequalities (`PolyhedralCone`, an H-cone), or *from inside*, as the set of
 nonnegative combinations of finitely many vectors (`FinitelyGeneratedCone`, a V-cone). In finite
-dimensions the two descriptions are equivalent. That is the Minkowski–Weyl theorem, and it is not
-in Mathlib — Mathlib has the two predicates for pointed cones (`PointedCone.DualFG` and
-`PointedCone.FG`) and says in a docstring that they agree by Minkowski–Weyl, without a proof.
+dimensions the two descriptions are equivalent — the Minkowski–Weyl theorem, which is Theorem 19.1
+for cones and the foundation of the rest of the polyhedral theory. Mathlib has the two predicates
+for pointed cones (`PointedCone.DualFG` and `PointedCone.FG`) but not the equivalence.
 
 ## Main results
 
-* `FinitelyGeneratedCone.polyhedralCone` — Weyl's half, V ⇒ H, proved by Fourier–Motzkin
-  elimination. Purely algebraic: no topology, only `FiniteDimensional`.
-* `PolyhedralCone.isClosed` and `FinitelyGeneratedCone.isClosed` — a corollary of Weyl's half,
-  and the reason Weyl is proved first.
+* `FinitelyGeneratedCone.polyhedralCone` — Weyl's half, V ⇒ H, by Fourier–Motzkin elimination.
+  Purely algebraic: no topology, only `FiniteDimensional`.
+* `PolyhedralCone.isClosed`, `FinitelyGeneratedCone.isClosed` — a corollary of Weyl's half, and
+  the reason Weyl is proved first.
 * `PolyhedralCone.finitelyGeneratedCone` — Minkowski's half, H ⇒ V, by separation in the dual.
 * `polyhedralCone_iff_finitelyGeneratedCone` — **Theorem 19.1** for cones.
 
-## Design notes
+## Implementation notes
 
-**Which half is proved by hand.** Fourier–Motzkin is done once, for Weyl's half, in the form
-"adding a ray to a polyhedral cone leaves it polyhedral" (`PolyhedralCone.add_ray`). Rockafellar's
-own route runs the elimination in the other direction and then needs closedness of a finitely
-generated cone as a separate input, proved from Carathéodory. Proving Weyl first makes closedness
-free — a finitely generated cone is an intersection of finitely many closed half-spaces — and
-Carathéodory is not needed at all.
-
-**Minkowski by duality, without the polar calculus.** `Duality/Polar.lean` would give H ⇒ V
-through `polarCone_polarCone_of_isClosed`, at the cost of choosing a pairing of `E` with a space
-that represents its continuous dual. The argument below instead pairs `E` with `Module.Dual ℝ E`
-directly and uses only `geometric_hahn_banach_closed_point`, which is shorter and keeps the
-statement free of a pairing parameter. The polar-calculus form of the theorem is a corollary and
-belongs with §19's set-level results.
-
-**`add_ray` is stated with a difference, not a sum.** `{x | ∃ t ≥ 0, x - t • v ∈ K}` and
-`K + {t • v | t ≥ 0}` are the same set, but the difference form is what the elimination proof
-manipulates and what `coe_hull_insert` produces, so it is the one that is stated.
+Fourier–Motzkin is run once, for Weyl's half, in the form "adding a ray to a polyhedral cone
+leaves it polyhedral" (`PolyhedralCone.add_ray`); closedness of a finitely generated cone is then
+free, and Carathéodory is not needed. Minkowski's half pairs `E` with `Module.Dual ℝ E` directly
+and uses only `geometric_hahn_banach_closed_point`, which keeps the statement free of a pairing
+parameter. `add_ray` is stated with a difference, `{x | ∃ t ≥ 0, x - t • v ∈ K}`, rather than the
+equal `K + {t • v | t ≥ 0}`, because that is the form the elimination proof manipulates.
 
 ## References
 
