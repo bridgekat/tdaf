@@ -87,10 +87,17 @@ literal form from it, so nothing is lost. This follows the precedent of Corollar
 condition.** Rockafellar's hypotheses are `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅`,
 `ri (dom f) ∩ ri (dom A) ≠ ∅` and `ri (range A) ∩ ri (dom B) ≠ ∅`. The backbone states each of the
 three as the exactness of the relevant sum (Theorem 16.4's conclusion), one instance per dual
-vector, and the surface transcribes that hypothesis verbatim. The reduction is *not* the routine
-one: `IsExactSum.of_relint` asks for **proper** summands, and the summands here are
-`u ↦ -⟨Aᵢ u, x*⟩`, which take the value `-∞` at every `u` where `Aᵢ u` is unbounded in the
-direction `x*`. See the report.
+vector, and the surface transcribes that hypothesis verbatim.
+
+That hypothesis is **strictly stronger** than the book's, not a restatement of it, and the gap is
+not closable by `IsExactSum.of_relint`. `IsExactSum` demands **proper** summands, and the summands
+here are `u ↦ -⟨Aᵢ u, x*⟩`, which take the value `-∞` at every `u` where `Aᵢ u` is unbounded in
+the direction `x*`. Quantified over *all* `x*`, as Theorems 39.5 and 39.8 are, this forces
+`dom Aᵢ* = ℝⁿ` — and it already fails for §39's own running example
+`Au = {x | x ≤ Bu} if u ≥ 0`, whose `A0 = {x | x ≤ 0}` has `⟨A0, x*⟩ = +∞` at every `x*` with a
+negative coordinate. So `theorem_39_5` and `theorem_39_8` are true but do not cover the section's
+motivating example. This is a backbone defect, recorded in the report; the surface neither invents
+a weaker statement and numbers it as the book's, nor pretends the hypothesis is the book's.
 
 **Theorem 39.3's last assertion is stated without closedness on the `u` side.** The book prefixes
 both halves with "if `A` is closed"; the `u` half is Corollary 33.2.1, whose only input is that a
