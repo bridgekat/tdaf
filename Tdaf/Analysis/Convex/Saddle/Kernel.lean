@@ -520,7 +520,7 @@ end CorFiniteDim
 
 /-! ### Effective domains and the relative-interior clauses -/
 
-section Thm342
+section DomainsRelint
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {K L : U × X → EReal}
@@ -636,11 +636,11 @@ theorem SaddleEquiv.eq_of_mem_relint_dom₂ (h : SaddleEquiv K L) (hclK : Closed
   rw [hclK.eq_partialCl₂_of_mem_relint_dom₂ hK hpK hx u,
     hclL.eq_partialCl₂_of_mem_relint_dom₂ hL hpL hx' u, h.2]
 
-end Thm342
+end DomainsRelint
 
 /-! ### Lower and upper closed representatives -/
 
-section Cor3422
+section ClosedRepresentatives
 
 variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
   [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X] {K L : U × X → EReal}
@@ -687,11 +687,11 @@ theorem SaddleEquiv.eq_partialCl₁_of_upperClosedFn (h : SaddleEquiv K L)
   have hc : partialCl₁ L = L := hL.concaveClosedFn
   rw [← hc, ← h.1]
 
-end Cor3422
+end ClosedRepresentatives
 
 /-! ### The improper closed saddle-functions -/
 
-section Cor3423
+section Constants
 
 variable {E : Type*} [NormedAddCommGroup E]
 
@@ -710,9 +710,9 @@ variable {E : Type*} [NormedAddCommGroup E]
   funext x
   rw [clConcave_apply, congrFun h x, _root_.EReal.neg_top]
 
-end Cor3423
+end Constants
 
-section Cor3423Saddle
+section Improper
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedAddCommGroup X] {K : U × X → EReal}
 
@@ -765,11 +765,11 @@ theorem not_saddleEquiv_const_bot_const_top [Nonempty U] [Nonempty X] :
   rw [h.2, htop] at hbot
   exact absurd hbot.symm (by simp)
 
-end Cor3423Saddle
+end Improper
 
 /-! ### The structure of a closed proper saddle-function -/
 
-section Thm343
+section Structure
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {K : U × X → EReal}
@@ -956,7 +956,7 @@ theorem closedSaddleFn_iff_saddleStructure (hK : ConcaveConvexFn K) (hp : Proper
     ClosedSaddleFn K ↔ SaddleStructure K :=
   ⟨fun hcl => hcl.saddleStructure hK hp, fun hs => hs.closedSaddleFn hK hp⟩
 
-end Thm343
+end Structure
 
 /-! ### The kernel -/
 
@@ -1088,7 +1088,7 @@ end Kernel
 
 /-! ### Equivalence is equality of kernels -/
 
-section Thm344
+section KernelEquiv
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {K L : U × X → EReal}
@@ -1188,11 +1188,11 @@ theorem saddleEquiv_iff_kernel_eq (hclK : ClosedSaddleFn K) (hK : ConcaveConvexF
     rw [partialCl₁_saddleSwap, partialCl₁_saddleSwap] at hswap
     exact saddleSwap_injective hswap
 
-end Thm344
+end KernelEquiv
 
 /-! ### Idempotence of the lower and upper closures, without any duality -/
 
-section Thm341
+section Idempotence
 
 variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
   [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X]
@@ -1240,7 +1240,7 @@ theorem closedSaddleFn_lowerCl (K : U × X → EReal) : ClosedSaddleFn (lowerCl 
 theorem closedSaddleFn_upperCl (K : U × X → EReal) : ClosedSaddleFn (upperCl K) :=
   UpperClosedFn.closedSaddleFn (upperCl_idem K)
 
-end Thm341
+end Idempotence
 
 /-! ### Simple saddle-functions -/
 
@@ -1425,7 +1425,7 @@ theorem dom₂_anti (h : K ≤ L) : dom₂ L ⊆ dom₂ K := fun _ hx u => lt_of
 
 end DomainMono
 
-section Thm345
+section SaddleClass
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {K L : U × X → EReal}
@@ -1558,7 +1558,7 @@ theorem exists_unique_saddleEquiv_class_of_kernel (hK : ConcaveConvexFn K)
     (ProperSaddleFn.lowerCl hK hp) hclL hCC hpL, kernel_lowerCl hK hp hs]
   exact ⟨fun h => h.symm, fun h => h.symm⟩
 
-end Thm345
+end SaddleClass
 
 /-! ### The simple extensions of a finite saddle-function on `C × D` -/
 
@@ -1953,7 +1953,7 @@ end UpperSimpleExtConvex
 
 /-! ### The class `Ω` is a full equivalence class -/
 
-section Cor3424
+section FullClass
 
 variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
   [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X] {C : Set U} {D : Set X}
@@ -2063,7 +2063,7 @@ theorem properSaddleFn_of_mem_saddleClass_simpleExt (hCne : C.Nonempty) (hDne : 
     rw [dom₂_upperSimpleExt (K := K) hCne]
     exact hDne⟩
 
-end Cor3424
+end FullClass
 
 /-! ### The two brackets of a bifunction on a relative interior
 
@@ -2087,7 +2087,7 @@ theorem domConcave_bracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X
 
 end DomBracket
 
-section Cor3321
+section BracketRelint
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -2104,7 +2104,7 @@ theorem bracket_eq_concaveBracket_adjointBifun_of_mem_relint (Bu : U →ₗ[ℝ]
   exact ((concaveFn_bracket hF Bx y).clConcave_eq_of_mem_relint_domConcave
     (by rw [domConcave_bracket]; exact hu)).symm
 
-end Cor3321
+end BracketRelint
 
 /-! ### The two brackets of a polyhedral bifunction
 
@@ -2215,7 +2215,7 @@ pair, which is exactly what the representation by a closed convex bifunction ask
 closure computations are already done — they are what the class `Ω` runs on — so the result is
 their composition. -/
 
-section Cor3333Closed
+section SimpleExtClosed
 
 variable {U Y : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
   [TopologicalSpace Y] [AddCommGroup Y] [IsTopologicalAddGroup Y] {C : Set U} {D : Set Y}
@@ -2237,9 +2237,9 @@ theorem upperClosedFn_upperSimpleExt (hCcl : IsClosed C) (hDcl : IsClosed D) (hC
   rw [upperClosedFn_iff, upperCl_def, partialCl₂_upperSimpleExt hDcl hDne hcontD,
     partialCl₁_lowerSimpleExt hCcl hCne hcontC]
 
-end Cor3333Closed
+end SimpleExtClosed
 
-section Cor3333
+section SimpleExtBifun
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -2266,6 +2266,6 @@ theorem exists_unique_bifun_of_simpleExt (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
   exists_unique_bifun_of_closure_pair Bu Bx (concaveConvexFn_lowerSimpleExt hC hconv hconc)
     (partialCl₁_lowerSimpleExt hCcl hCne hcontC) (partialCl₂_upperSimpleExt hDcl hDne hcontD)
 
-end Cor3333
+end SimpleExtBifun
 
 end Tdaf.ConvexAnalysis
