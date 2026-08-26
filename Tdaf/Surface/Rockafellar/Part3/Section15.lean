@@ -462,10 +462,8 @@ theorem theorem_15_3 {f : Rn n → EReal} :
         (IsGauge k ∧ ClosedFn k) ∧ f = monotoneComp g k :=
   closedProperConvexFn_and_isGaugeLike_iff (pairing n)
 
-/-- **Theorem 15.3**, second assertion: `f* (x*) = g⁺(k°(x*))`, where `g⁺` is the
-monotone conjugate of `g`.
-
-It needs neither non-constancy of `g` nor any hypothesis on the pairing. -/
+/-- **Theorem 15.3**, second assertion: `f* (x*) = g⁺(k°(x*))`, where `g⁺` is the monotone
+conjugate of `g`. -/
 theorem theorem_15_3_conj {g : ℝ → EReal} {k : Rn n → EReal} (hk : IsGauge k) (hkc : ClosedFn k)
     (hg : MonotoneHalfLineFn g) (hfin : ∃ z : ℝ, 0 < z ∧ g z ≠ ⊤) :
     conj (pairing n) (monotoneComp g k)

@@ -472,8 +472,8 @@ theorem constancySubmodule_isGreatest_surface (f : Rn n → EReal) :
 
 /-! ### Theorem 8.7 -/
 
-/-- **Theorem 8.7**, first assertion: for closed convex `f`, all the non-empty level sets
-`{x | f x ≤ α}` have the same recession cone, namely that of `f`. Properness is not needed. -/
+/-- **Theorem 8.7**, first assertion: for a closed proper convex `f`, all the non-empty level
+sets `{x | f x ≤ α}` have the same recession cone, namely that of `f`. -/
 theorem theorem_8_7_recessionCone (hf : ClosedProperConvexFn f) {α : ℝ}
     (hne : {x : Rn n | f x ≤ (α : EReal)}.Nonempty) :
     recessionCone {x : Rn n | f x ≤ (α : EReal)} = recessionConeFn f :=
