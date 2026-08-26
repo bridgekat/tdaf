@@ -60,9 +60,10 @@ this is the module that owns the polyhedral constraint qualifications, not becau
 `polyhedralFn_mapLin` states the polyhedrality half and lives in `Optimization/Perturbation.lean`
 (§29), which is *above* this module, so it cannot be cited from here; the attainment half was not
 in the backbone at all. `epi_mapLin_of_polyhedralFn` is the identity both halves come from, and
-`polyhedralFn_mapLin` should move down beside it — everything its proof uses (`Polyhedral.image`,
-`epi_mapLin`, `IsEpiLike.of_isClosed`) is already in this module's import closure, and §29 uses it
-only through `PolyhedralBifun.polyhedralFn_infBifun`.
+`polyhedralFn_mapLin` should move down beside it: everything its proof uses (`Polyhedral.image`,
+`epi_mapLin`, `IsEpiLike.of_isClosed`) is already in this module's import closure, and its four
+consumers — `PolyhedralBifun.polyhedralFn_infBifun`, two in `Saddle/Correspondence.lean`, and §19's
+`corollary_19_3_1_image` — all sit above it.
 
 **The general case is Rockafellar's own reduction, and it runs on an indicator.** With
 `M = aff (dom g)` and `δ = δ(· | M)`, the function `δ + f` is again polyhedral — `M` is polyhedral
