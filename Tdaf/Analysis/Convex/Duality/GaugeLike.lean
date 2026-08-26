@@ -1604,7 +1604,7 @@ end IsGaugeLikeTopology
 The two halves, assembled. The pairing enters only through the forward implication, where
 closedness of `g ∘ k` comes from Fenchel–Moreau. -/
 
-section Theorem153
+section Characterisation
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -1647,6 +1647,6 @@ theorem closedProperConvexFn_and_isGaugeLike_iff (B : E →ₗ[ℝ] F →ₗ[ℝ
     exact ⟨closedProperConvexFn_monotoneComp B hkg hkc hgm hfin hne,
       isGaugeLike_monotoneComp hkg hkc hgm hne hfin⟩
 
-end Theorem153
+end Characterisation
 
 end Tdaf.ConvexAnalysis

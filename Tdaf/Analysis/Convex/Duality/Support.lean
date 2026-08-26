@@ -374,7 +374,7 @@ end ContinuousPairing
 
 /-! ### The closed convex hull -/
 
-section Theorem131
+section ClosedConvexHull
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -414,13 +414,13 @@ theorem closure_convexHull_subset_iff_supportFn_le (s t : Set E) :
     rw [mem_closure_convexHull_iff_le_supportFn (B := B)] at hx ⊢
     exact fun y => (hx y).trans (h y)
 
-end Theorem131
+end ClosedConvexHull
 
 /-! ### The closure of a positively homogeneous convex function
 
 Only the space `F` carries a topology here: this is `biconj_eq_clFn` for the *flipped* pairing. -/
 
-section Corollary1321
+section PosHomClosure
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
@@ -466,13 +466,13 @@ theorem nonempty_supportSet (hg : PosHomogeneous g) (hcpc : ClosedProperConvexFn
     exact absurd (congrFun hg' y₀).symm (hcpc.proper.ne_bot y₀)
   · exact hne
 
-end Corollary1321
+end PosHomClosure
 
 /-! ### Sets and their support functions, in bijection
 
 Both spaces carry topologies compatible with the pairing, exactly as for `conjEquiv`. -/
 
-section Theorem132
+section SupportCorrespondence
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -566,6 +566,6 @@ theorem exists_supportFn_finite_iff [IsContinuousPairing B] [IsCompatiblePairing
     rw [← hg]
     exact lt_top_iff_ne_top.2 (ht y)
 
-end Theorem132
+end SupportCorrespondence
 
 end Tdaf.ConvexAnalysis
