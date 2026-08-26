@@ -190,8 +190,9 @@ property of the proximation (13851–13885), which is named here as `prox_contra
 
 ## Backbone gaps
 
-Three of the six private declarations this file once carried are now in the backbone; the three
-below are still open, and are numbered as they were.
+Three of the six private declarations this file once carried are now in the backbone, and the
+lemma the sixth item asked for exists there too. Items 4 and 5 are still open. The numbering is
+unchanged.
 
 1. **Corollary 30.5.2** — **done**. `exists_infBifun_eq_of_concaveStronglyConsistent` is public in
    `Tdaf/Analysis/Convex/Optimization/Normal.lean`, and `corollary_31_2_1_b_attained` cites it.
@@ -222,13 +223,18 @@ below are still open, and are numbered as they were.
    says it belongs in `Optimization/Perturbation.lean`; §31 must not import a §37 module, so it is
    restated here. Wanted in `Tdaf/Analysis/Convex/Optimization/Perturbation.lean`, next to
    `polyhedralFn_mapLin`.
-6. **A separable conjugate.** Nothing in the backbone computes `conj` of a finite direct sum, so
-   the separable specialisation of Corollary 31.4.2 (Problems (I) and (II), 13695–13733) cannot be
-   stated at all. Wanted in `Tdaf/Analysis/Convex/Duality/FiniteProduct.lean` as
+6. **A separable conjugate** — the backbone half is **done**. `conj_piFn` is public in
+   `Tdaf/Analysis/Convex/Duality/FiniteProduct.lean` (which is already in this file's import
+   closure), as
 
-       theorem conj_piFn [Fintype ι] (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : ι → E → EReal)
-           (hf : ∀ i, Proper (f i)) (y : ι → F) :
+       theorem conj_piFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : ι → E → EReal) (hf : ∀ i, Proper (f i))
+           (y : ι → F) :
            conj (piPairing B) (fun x => ∑ i, f i (x i)) y = ∑ i, conj B (f i) (y i)
+
+   What is still not carried is the *surface* statement: Problems (I) and (II) of 13695–13733 also
+   need the separable subgradient rule `x* ∈ ∂f(x) ⟺ ξⱼ* ∈ ∂fⱼ(ξⱼ) for every j` (13726), which the
+   book itself sets as an exercise, and a `Rn n ≃ (Fin s → Rn nⱼ)` decomposition — remediation
+   §12.31's `s`-fold product, still open.
 
 Two smaller local proofs are surface-level rather than backbone gaps: `polyhedral_nonnegOrthant`
 and `smul_nonnegOrthant` describe `Rockafellar.nonnegOrthant` from §12 and belong with it, and

@@ -26,6 +26,8 @@ does not exist.
   the relative interiors.
 * `supportFn_univ_pi` — the support function of a product set is the sum of the support functions
   of the factors: the supremum of a separable sum over a product splits.
+* `conj_piFn` — the conjugate of a separable sum of proper functions is the separable sum of the
+  conjugates, `(∑ i, fᵢ ∘ prᵢ)* = ∑ i, fᵢ* ∘ prᵢ`.
 * `iInter_relint_nonempty_iff_supportFn`, `iInter_relint_dom_nonempty_iff` — a finite family of
   convex sets (resp. of effective domains) has a common relative-interior point exactly when there
   is no family `y` with `∑ i, yᵢ = 0`, `∑ i, δ*(yᵢ | Cᵢ) ≤ 0` and `∑ i, δ*(-yᵢ | Cᵢ) > 0`.
@@ -38,11 +40,12 @@ so finiteness has to be data there; `Convex.relint_univ_pi`, which mentions no s
 all the factors to be the *same* space. Everything up to and including `Convex.relint_univ_pi`
 would hold verbatim for a dependent product `(i : ι) → E i`; nothing here needs it.
 
-**The separable-sum route is not taken.** A family `f₁, …, fₘ` could be packaged as the single
-function `x ↦ ∑ i, fᵢ (xᵢ)` on `ι → E`, whose conjugate is the corresponding separable sum. That
-detour needs the conjugate *and* the recession function of a separable sum before it can be used.
-Going through `supportFn` instead needs neither: the effective domain of a separable sum is a
-product set already, and `recessionFn_conj` converts once, at the end, one coordinate at a time.
+**The separable-sum route is not taken for Corollary 16.2.2.** A family `f₁, …, fₘ` could be
+packaged as the single function `x ↦ ∑ i, fᵢ (xᵢ)` on `ι → E`, whose conjugate is the corresponding
+separable sum (`conj_piFn`). That detour needs the *recession function* of a separable sum as well,
+which is still missing. Going through `supportFn` instead needs neither: the effective domain of a
+separable sum is a product set already, and `recessionFn_conj` converts once, at the end, one
+coordinate at a time.
 
 **`⊥` absorbs, so the empty factor is a case and not an accident.** `⨆ x ∈ ∅, u x = ⊥` and
 `⊥ + z = ⊥`, so `supportFn_univ_pi` is true with no nonemptiness hypothesis — but its two sides are
@@ -52,10 +55,9 @@ decoupled one coordinate from the rest.
 
 ## What is not here
 
-**No `m`-ary conjugate or recession function of a separable sum.** The conjugate of
-`fun x => ∑ i, f i (x i)` against `piPairing B` is `fun y => ∑ i, conj B (f i) (y i)`, the other
-half of the finite-product dictionary; nothing here needs it, and it is left to whoever wants an
-`m`-ary infimal convolution.
+**No recession function of a separable sum.** The conjugate is here (`conj_piFn`); its recession
+counterpart, `recessionFn (fun x => ∑ i, f i (x i)) = fun x => ∑ i, recessionFn (f i) (x i)`, is
+not, and is what an `m`-ary infimal convolution would want next.
 
 **No sum map.** The linear map `(xᵢ) ↦ ∑ xᵢ` from `ι → E` to `E` appears only inside the proof of
 `iInter_relint_nonempty_iff_supportFn`, as the adjoint of the diagonal; its recession cone and
@@ -207,14 +209,14 @@ section Support
 
 variable {ι E F : Type*} [Fintype ι] [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
-omit [Fintype ι] in
+omit [Fintype ι] [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F] in
 /-- The supremum over a product set of a sum indexed by a `Finset`, decoupled coordinate by
-coordinate. The nonemptiness hypothesis is needed only for the empty `Finset`, where the supremum
-of the constant `0` has to be `0` rather than `⊥`. -/
-private theorem biSup_sum_univ_pi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) {C : ι → Set E}
-    (hne : ∀ i, (C i).Nonempty) (y : ι → F) (t : Finset ι) :
-    (⨆ x ∈ univ.pi C, ∑ i ∈ t, ((B (x i) (y i) : ℝ) : EReal))
-      = ∑ i ∈ t, supportFn B (C i) (y i) := by
+coordinate. The values are only asked to avoid `⊥` *on the sets*, which is what
+`Tdaf.EReal.biSup_add_biSup` consumes; the nonemptiness hypothesis is needed only for the empty
+`Finset`, where the supremum of the constant `0` has to be `0` rather than `⊥`. -/
+private theorem biSup_sum_univ_pi {C : ι → Set E} (hne : ∀ i, (C i).Nonempty) (u : ι → E → EReal)
+    (hu : ∀ i, ∀ z ∈ C i, u i z ≠ ⊥) (t : Finset ι) :
+    (⨆ x ∈ univ.pi C, ∑ i ∈ t, u i (x i)) = ∑ i ∈ t, ⨆ z ∈ C i, u i z := by
   classical
   obtain ⟨x₀, hx₀⟩ : (univ.pi C).Nonempty := Set.univ_pi_nonempty_iff.2 hne
   induction t using Finset.cons_induction with
@@ -223,24 +225,18 @@ private theorem biSup_sum_univ_pi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) {C : ι 
     exact le_antisymm (iSup₂_le fun _ _ => le_rfl)
       (le_iSup₂_of_le (f := fun x (_ : x ∈ univ.pi C) => (0 : EReal)) x₀ hx₀ le_rfl)
   | cons i t hi ih =>
-    have hgne : ∀ x ∈ univ.pi C, (∑ j ∈ t, ((B (x j) (y j) : ℝ) : EReal)) ≠ ⊥ := by
-      intro x _
-      rw [← Tdaf.EReal.coe_sum]
-      exact _root_.EReal.coe_ne_bot _
-    have key : (⨆ x ∈ univ.pi C, (((B (x i) (y i) : ℝ) : EReal)
-          + ∑ j ∈ t, ((B (x j) (y j) : ℝ) : EReal)))
-        = supportFn B (C i) (y i)
-          + ⨆ x ∈ univ.pi C, ∑ j ∈ t, ((B (x j) (y j) : ℝ) : EReal) := by
-      rw [supportFn_apply,
-        Tdaf.EReal.biSup_add_biSup (fun z _ => _root_.EReal.coe_ne_bot _) hgne]
+    have hgne : ∀ x ∈ univ.pi C, (∑ j ∈ t, u j (x j)) ≠ ⊥ := fun x hx =>
+      Tdaf.EReal.sum_ne_bot fun j _ => hu j (x j) (hx j (mem_univ j))
+    have key : (⨆ x ∈ univ.pi C, (u i (x i) + ∑ j ∈ t, u j (x j)))
+        = (⨆ z ∈ C i, u i z) + ⨆ x ∈ univ.pi C, ∑ j ∈ t, u j (x j) := by
+      rw [Tdaf.EReal.biSup_add_biSup (hu i) hgne]
       refine le_antisymm (iSup₂_le fun x hx => ?_) (iSup₂_le fun z hz => iSup₂_le fun x hx => ?_)
       · exact le_iSup₂_of_le (x i) (hx i (mem_univ i)) (le_iSup₂_of_le x hx le_rfl)
       · refine le_iSup₂_of_le (Function.update x i z) (fun j _ => ?_) ?_
         · rcases eq_or_ne j i with rfl | hj
           · rw [Function.update_self]; exact hz
           · rw [Function.update_of_ne hj]; exact hx j (mem_univ j)
-        · have hsum : ∑ j ∈ t, ((B (Function.update x i z j) (y j) : ℝ) : EReal)
-              = ∑ j ∈ t, ((B (x j) (y j) : ℝ) : EReal) :=
+        · have hsum : ∑ j ∈ t, u j (Function.update x i z j) = ∑ j ∈ t, u j (x j) :=
             Finset.sum_congr rfl fun j hj => by
               rw [Function.update_of_ne (ne_of_mem_of_not_mem hj hi)]
           rw [Function.update_self, hsum]
@@ -259,8 +255,9 @@ theorem supportFn_univ_pi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : ι → Set 
         ((piPairing B x y : ℝ) : EReal) = ∑ i, ((B (x i) (y i) : ℝ) : EReal) := fun x => by
       rw [piPairing_apply, Tdaf.EReal.coe_sum]
     rw [supportFn_apply]
-    simp only [hcoe]
-    exact biSup_sum_univ_pi B hne y Finset.univ
+    simp only [hcoe, supportFn_apply]
+    exact biSup_sum_univ_pi hne (fun i z => ((B z (y i) : ℝ) : EReal))
+      (fun i z _ => _root_.EReal.coe_ne_bot _) Finset.univ
   · simp only [not_forall, Set.not_nonempty_iff_eq_empty] at hne
     obtain ⟨i₀, hi₀⟩ := hne
     have hempty : univ.pi C = ∅ := Set.univ_pi_eq_empty_iff.2 ⟨i₀, hi₀⟩
@@ -269,6 +266,113 @@ theorem supportFn_univ_pi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : ι → Set 
     exact (_root_.EReal.bot_add _).symm
 
 end Support
+
+/-! ### The conjugate of a separable sum
+
+The other half of the finite-product dictionary. The interchange is `biSup_sum_univ_pi` again, run
+over the product of the effective domains; what is new is arithmetic, because
+`⟨x, y⟩ - ∑ fᵢ (xᵢ)` splits as `∑ (⟨xᵢ, yᵢ⟩ - fᵢ (xᵢ))` only once the `⊤` case is disposed of, and
+that case is disposed of by `⊥` absorbing on both sides. -/
+
+section SeparableAux
+
+/-- A supremum is unchanged by restricting to a set off which the function is `⊥`. -/
+private theorem iSup_eq_biSup_of_notMem {α : Type*} {s : Set α} {w : α → EReal}
+    (h : ∀ a ∉ s, w a = ⊥) : (⨆ a, w a) = ⨆ a ∈ s, w a := by
+  refine le_antisymm (iSup_le fun a => ?_) (iSup₂_le fun a _ => le_iSup w a)
+  by_cases ha : a ∈ s
+  · exact le_iSup₂_of_le a ha le_rfl
+  · rw [h a ha]
+    exact bot_le
+
+/-- A `Finset` sum with a `⊥` term is `⊥`: on `EReal` addition, `⊥` absorbs `⊤`. -/
+private theorem sum_eq_bot_of_mem {ι : Type*} {v : ι → EReal} {t : Finset ι} {j : ι} (hj : j ∈ t)
+    (h : v j = ⊥) : (∑ k ∈ t, v k) = ⊥ := by
+  classical
+  rw [← Finset.add_sum_erase t v hj, h, _root_.EReal.bot_add]
+
+/-- A real minuend distributes over a two-term subtrahend, provided neither term is `⊥`. Both `⊤`
+cases come out `⊥` on each side, which is why no finiteness is needed. -/
+private theorem coe_add_sub_add (a b : ℝ) {p q : EReal} (hp : p ≠ ⊥) (hq : q ≠ ⊥) :
+    ((a + b : ℝ) : EReal) - (p + q) = (((a : ℝ) : EReal) - p) + (((b : ℝ) : EReal) - q) := by
+  induction p with
+  | bot => exact absurd rfl hp
+  | top =>
+    rw [_root_.EReal.top_add_of_ne_bot hq, _root_.EReal.sub_top, _root_.EReal.sub_top,
+      _root_.EReal.bot_add]
+  | coe r =>
+    induction q with
+    | bot => exact absurd rfl hq
+    | top =>
+      rw [_root_.EReal.add_top_of_ne_bot (_root_.EReal.coe_ne_bot r), _root_.EReal.sub_top,
+        _root_.EReal.sub_top, _root_.EReal.add_bot]
+    | coe s =>
+      simp only [← _root_.EReal.coe_add, ← _root_.EReal.coe_sub]
+      rw [_root_.EReal.coe_eq_coe_iff]
+      ring
+
+/-- The `Finset` form of `coe_add_sub_add`: a real minuend distributes over a finite sum of
+subtrahends none of which is `⊥`. -/
+private theorem coe_sum_sub_sum {ι : Type*} (c : ι → ℝ) (v : ι → EReal) (t : Finset ι)
+    (hv : ∀ j, v j ≠ ⊥) :
+    ((∑ j ∈ t, c j : ℝ) : EReal) - ∑ j ∈ t, v j
+      = ∑ j ∈ t, (((c j : ℝ) : EReal) - v j) := by
+  induction t using Finset.cons_induction with
+  | empty => simp
+  | cons j t hj ih =>
+    rw [Finset.sum_cons, Finset.sum_cons, Finset.sum_cons, ← ih]
+    exact coe_add_sub_add (c j) (∑ k ∈ t, c k) (hv j) (Tdaf.EReal.sum_ne_bot fun k _ => hv k)
+
+end SeparableAux
+
+section Separable
+
+variable {ι E F : Type*} [Fintype ι] [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+
+/-- **The conjugate of a separable sum is the separable sum of the conjugates.** For a finite
+family of proper functions, `(∑ i, fᵢ ∘ prᵢ)* = ∑ i, fᵢ* ∘ prᵢ` against `piPairing B`.
+
+Properness is what keeps the two sides from colliding at `∞ - ∞`. It gives `fᵢ z ≠ ⊥`, so the
+difference `⟨z, yᵢ⟩ - fᵢ z` is `⊥` exactly off `dom fᵢ` and the supremum defining `fᵢ*` may be taken
+over `dom fᵢ`; and it gives `dom fᵢ ≠ ∅`, so `fᵢ* yᵢ ≠ ⊥` and no summand on the right can absorb.
+Rockafellar uses the identity without comment (13704) in the separable specialisation of
+Corollary 31.4.2. -/
+theorem conj_piFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : ι → E → EReal) (hf : ∀ i, Proper (f i))
+    (y : ι → F) :
+    conj (piPairing B) (fun x => ∑ i, f i (x i)) y = ∑ i, conj B (f i) (y i) := by
+  have hbot : ∀ i z, f i z ≠ ⊥ := fun i z => (hf i).ne_bot z
+  have hoff : ∀ i, ∀ z ∉ dom (f i), (((B z (y i) : ℝ) : EReal) - f i z) = ⊥ := by
+    intro i z hz
+    have hz' : ¬ (f i z < ⊤) := hz
+    rw [top_le_iff.1 (not_lt.1 hz'), _root_.EReal.sub_top]
+  have hval : ∀ i, ∀ z ∈ dom (f i), (((B z (y i) : ℝ) : EReal) - f i z) ≠ ⊥ := by
+    intro i z hz
+    obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hbot i z) hz
+    rw [hr, ← _root_.EReal.coe_sub]
+    exact _root_.EReal.coe_ne_bot _
+  have hcoord : ∀ i, conj B (f i) (y i)
+      = ⨆ z ∈ dom (f i), (((B z (y i) : ℝ) : EReal) - f i z) :=
+    fun i => iSup_eq_biSup_of_notMem (hoff i)
+  have hsplit : ∀ x : ι → E, ((piPairing B x y : ℝ) : EReal) - (∑ i, f i (x i))
+      = ∑ i, (((B (x i) (y i) : ℝ) : EReal) - f i (x i)) := by
+    intro x
+    rw [piPairing_apply]
+    exact coe_sum_sub_sum (fun i => B (x i) (y i)) (fun i => f i (x i)) Finset.univ
+      fun i => hbot i (x i)
+  have hprod : conj (piPairing B) (fun x => ∑ i, f i (x i)) y
+      = ⨆ x ∈ univ.pi fun i => dom (f i), ∑ i, (((B (x i) (y i) : ℝ) : EReal) - f i (x i)) := by
+    rw [conj_apply]
+    simp only [hsplit]
+    refine iSup_eq_biSup_of_notMem fun x hx => ?_
+    obtain ⟨i₀, -, hi₀⟩ : ∃ i₀ ∈ (univ : Set ι), x i₀ ∉ dom (f i₀) := by
+      simpa [Set.mem_pi] using hx
+    exact sum_eq_bot_of_mem (Finset.mem_univ i₀) (hoff i₀ (x i₀) hi₀)
+  rw [hprod]
+  simp only [hcoord]
+  exact biSup_sum_univ_pi (fun i => (hf i).dom_nonempty)
+    (fun i z => ((B z (y i) : ℝ) : EReal) - f i z) hval Finset.univ
+
+end Separable
 
 /-! ### A common relative interior point of a finite family
 
