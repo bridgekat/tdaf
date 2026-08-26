@@ -30,7 +30,7 @@ objective functions that §36 takes up; and both of the section's unnumbered cou
   `concaveNormal_iff_clConcave_supBifun_zero` |
 | Theorem 30.1 | `theorem_30_1_concave`, `theorem_30_1_closed`, `theorem_30_1_proper`,
   `theorem_30_1_biadjoint`, `theorem_30_1_biadjoint_closed`, `theorem_30_1_injective`,
-  `theorem_30_1_polyhedral` |
+  `theorem_30_1_surjective`, `theorem_30_1_polyhedral` |
 | §30 example, 12313 | `linearIndicatorBifun_self`,
   `linearIndicatorBifun_of_ne`, `dualProgram_linearIndicatorBifun` |
 | Theorem 30.2 | `theorem_30_2_first`, `theorem_30_2_second`, `theorem_30_2_third`,
@@ -149,11 +149,6 @@ in at 12511, by `dualProgram_zero_eq_iInf_lagrangian`. Everything else is `m`-ar
 (Theorems 16.1 and 16.4 with right scalar multiples) plus bookkeeping over
 `ℝᵏ = ℝᵐ × ℝⁿ × ⋯ × ℝⁿ`; carrying it would formalise §16's `m`-ary infimal convolution, not §30.
 
-**The surjectivity half of Theorem 30.1's one-to-one correspondence.** `theorem_30_1_injective` says
-that a closed convex bifunction is determined by its adjoint. The other half — that every closed
-proper *concave* bifunction from `ℝⁿ` to `ℝᵐ` is `F*` for some closed proper convex `F` — needs the
-concave-side biadjoint `G** = cl G`, which the backbone does not have. See `## Backbone gaps`.
-
 **The abnormal example of 12671 is transcribed and its decisive halves are proved, but it is not
 shown to be a convex bifunction.** Rockafellar calls it "the closed proper convex bifunction `F`";
 what is proved here is `inf F0 = 1` (`infBifun_abnormalBifun_zero`), `inf Fu = 0` for `u > 0` and
@@ -187,12 +182,18 @@ recorded below with the signature wanted and the module it belongs in.
   follow, and `not_normal_abnormalBifun` becomes a corollary of `abnormalBifun_duality_gap` through
   Theorem 30.3 instead of a separate `liminf` argument. It belongs in Mathlib, or failing that in
   `Tdaf/Analysis/Convex/Eponyms.lean`.
-* **The concave-side biadjoint**, for the surjectivity half of Theorem 30.1:
-  `theorem adjointBifun_concaveAdjointBifun_eq (hG : ConcaveBifun G) :
-  adjointBifun Bu Bx (concaveAdjointBifun Bu Bx G) = <the concave closure of G, bifunction-wise>`,
-  in `Optimization/Adjoint.lean`. The convex-side statement
-  `concaveAdjointBifun_adjointBifun_eq_clBifun` is there; its mirror is not, and neither is a
-  `clConcaveBifun`. Not attempted here.
+* **The concave-side biadjoint**, wanted as
+  `theorem adjointBifun_concaveAdjointBifun_eq_clConcaveBifun (hG : ConcaveBifun G) :
+  adjointBifun Bu Bx (concaveAdjointBifun Bu Bx G) = clConcaveBifun G`, together with the
+  `clConcaveBifun` that does not exist either. It is **not** blocking `theorem_30_1_surjective`
+  any more: the same identity with the two negations moved outside is
+  `lowerAdjointBifun_lowerAdjointBifun_eq_clBifun` in `Bifunction/Algebra.lean`, and that is what
+  the surjectivity clause runs on. What is left is a naming and placement question, and its answer
+  is **not** `Optimization/Adjoint.lean`: `Bifunction/Algebra.lean` *imports* that module, so the
+  three-line derivation is unavailable there, and stating it at the named home would mean
+  re-deriving the adjoint dictionary one module *below* the copy that already exists. The right
+  home is `Bifunction/Algebra.lean` itself, beside the theorem it is a corollary of;
+  `clConcaveBifun` can sit beside `clBifun` in `Optimization/Adjoint.lean`.
 
 **What the backbone gained.** `mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin` (the dual half of
 Theorem 30.5) and `exists_infBifun_eq_of_concaveStronglyConsistent` (Corollary 30.5.2's first
@@ -296,6 +297,48 @@ theorem theorem_30_1_injective {F₁ F₂ : Bifun (Rn m) (Rn n)} (hF₁ : Convex
     (hcl₁ : ClosedBifun F₁) (hF₂ : ConvexBifun F₂) (hcl₂ : ClosedBifun F₂)
     (h : dualProgram F₁ = dualProgram F₂) : F₁ = F₂ := by
   rw [← theorem_30_1_biadjoint_closed hF₁ hcl₁, ← theorem_30_1_biadjoint_closed hF₂ hcl₂, h]
+
+/-- **Rockafellar, Theorem 30.1** (12303), the surjectivity half of the one-to-one correspondence:
+every closed proper *concave* bifunction `G` from `ℝⁿ` to `ℝᵐ` is the adjoint of a closed proper
+convex bifunction from `ℝᵐ` to `ℝⁿ` — namely of `G⫸`, read here as `G`'s own lower adjoint.
+
+Together with `theorem_30_1_injective` this is the book's "one-to-one correspondence" in full.
+
+The backbone has no concave-side biadjoint `G** = cl G` and no `clConcaveBifun`. What it does have
+is the same identity with the two negations moved outside —
+`lowerAdjointBifun_lowerAdjointBifun_eq_clBifun` in `Bifunction/Algebra.lean`, whose own docstring
+says "nothing concave has to be built". Read at `F = G⫸` that theorem *is* the concave biadjoint,
+and closedness of `G` collapses the closure; the properness clause is `theorem_30_1_proper`. -/
+theorem theorem_30_1_surjective {G : Bifun (Rn n) (Rn m)} (hG : ConcaveBifun G)
+    (hclG : ClosedConcaveFn (graphFn G)) (hpG : ProperConcave (graphFn G)) :
+    ∃ F : Bifun (Rn m) (Rn n),
+      ConvexBifun F ∧ ClosedBifun F ∧ Proper (graphFn F) ∧ dualProgram F = G := by
+  have hgraph : graphFn (invBifun G)
+      = compLin (fun q => -(graphFn G q)) (swapLin (Rn m) (Rn n)) := rfl
+  have hconv : ConvexBifun (invBifun G) := by
+    rw [convexBifun_iff, hgraph]
+    exact convexFn_compLin _ (concaveFn_iff_convexFn_neg.1 hG)
+  have hclosed : ClosedBifun (invBifun G) := by
+    have hcont : Continuous (swapLin (Rn m) (Rn n)) := by
+      change Continuous fun p : Rn m × Rn n => ((p.2, p.1) : Rn n × Rn m)
+      exact continuous_snd.prodMk continuous_fst
+    rw [closedBifun_iff, hgraph]
+    exact closedFn_compLin (closedConcaveFn_iff.1 hclG) hcont
+  have hdual : dualProgram (lowerAdjointBifun (pairing m) (pairing n) (invBifun G)) = G := by
+    have hbi := lowerAdjointBifun_lowerAdjointBifun_eq_clBifun
+      (Bu := pairing m) (Bx := pairing n) (F := invBifun G) hconv
+    simp only [flip_pairing] at hbi
+    rw [hclosed.clBifun_eq] at hbi
+    funext y v
+    have hval := congrFun (congrFun hbi v) y
+    rw [lowerAdjointBifun_apply, invBifun_apply] at hval
+    exact neg_inj.1 hval
+  have hconvF : ConvexBifun (lowerAdjointBifun (pairing m) (pairing n) (invBifun G)) :=
+    convexBifun_lowerAdjointBifun (pairing m) (pairing n) (invBifun G)
+  have hclF : ClosedBifun (lowerAdjointBifun (pairing m) (pairing n) (invBifun G)) :=
+    closedBifun_lowerAdjointBifun
+  refine ⟨lowerAdjointBifun (pairing m) (pairing n) (invBifun G), hconvF, hclF, ?_, hdual⟩
+  exact (theorem_30_1_proper hconvF hclF).1 (by rw [hdual]; exact hpG)
 
 /-- **Rockafellar, Theorem 30.1** (12309), last clause: "If `F` is polyhedral, so is `F*`."
 
