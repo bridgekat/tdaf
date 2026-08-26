@@ -1262,9 +1262,6 @@ theorem theorem_31_2_stronglyConsistent_iff (A : Rn n →ₗ[ℝ] Rn m) {f : Rn 
 
 /-- Regrouping the five terms of Rockafellar's third display. Both sides are sums of the same
 `EReal`s, so associativity and commutativity settle it — no finiteness needed. -/
-
-/-- Regrouping the five terms of Rockafellar's third display. Both sides are sums of the same
-`EReal`s, so `AddCommMonoid` associativity and commutativity settle it — no finiteness needed. -/
 private theorem ereal_regroup (a b : EReal) (P K : ℝ) :
     a - b + ((P - K : ℝ) : EReal) = ((P : ℝ) : EReal) - b + (a - ((K : ℝ) : EReal)) := by
   rw [EReal.coe_sub, sub_eq_add_neg a b, sub_eq_add_neg ((P : ℝ) : EReal) ((K : ℝ) : EReal),
@@ -1417,12 +1414,6 @@ theorem theorem_31_2_concaveStronglyConsistent_iff (A : Rn n →ₗ[ℝ] Rn m) {
 /-- **Corollary 31.2.1** under condition (b): if `ri (dom g*)` contains a `u*` with
 `A* u* ∈ ri (dom f*)` then the Fenchel duality equation holds. This is Theorem 31.2 followed by
 Theorem 30.4(b) and Theorem 30.3. -/
-
-/-- **Corollary 31.2.1** under condition (b): if `ri (dom g*)` contains
-a `u*` with `A* u* ∈ ri (dom f*)` then the Fenchel duality equation holds.
-
-This is Theorem 31.2 followed by Theorem 30.4(b) (a convex program whose dual is strongly
-consistent is normal) and Theorem 30.3 (normality is the absence of a duality gap). -/
 theorem corollary_31_2_1_b (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hf : ClosedProperConvexFn f) (hg : ClosedProperConcaveFn g) {v₀ : Rn m}
     (hv : v₀ ∈ ri (domConcave (concaveConj (pairing m) g)))

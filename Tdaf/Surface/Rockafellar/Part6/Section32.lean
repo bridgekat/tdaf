@@ -419,9 +419,6 @@ theorem theorem_32_4_ball {x : Rn n} (hx : ‖x‖ = 1)
 
 /-- **§32.** The parabolic convex set `K = {(ξ₁, ξ₂) | ξ₁² + 4ξ₂ + 4 ≤ 0}`, whose support function
 is `parabolicFn`. -/
-
-/-- **§32.** The parabolic convex set `K = {(ξ₁, ξ₂) | ξ₁² + 4ξ₂ + 4 ≤ 0}`, whose support function
-is `parabolicFn`. -/
 def parabolicSet : Set (Rn 2) := {y : Rn 2 | y 0 ^ 2 + 4 * y 1 + 4 ≤ 0}
 
 theorem mem_parabolicSet {y : Rn 2} :

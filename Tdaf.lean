@@ -1,40 +1,3 @@
-/-!
-# TDAF
-
-A formal library of applied mathematics, built in two layers.
-
-`Tdaf.Analysis` is the **backbone**: general mathematics, named for its subject and stated at the
-weakest hypotheses that carry the proof. It is meant to be read and used without reference to any
-particular text.
-
-`Tdaf.Surface` holds the **surfaces**, one directory per textbook, aligned to that text section by
-section. A surface proves almost nothing of its own: each declaration instantiates a backbone
-result at the book's own hypotheses, so a surface reads as an integration test of the backbone
-against a published account of the subject.
-
-## Convex analysis
-
-`Tdaf.Analysis.Convex` is the backbone for convex analysis over real vector spaces, developed at
-four levels of generality — a bare real vector space, a topological vector space, a locally convex
-space, and finite-dimensional Euclidean space — with each result stated at the weakest of the four
-that supports it.
-
-`Tdaf.Surface.Rockafellar` is its surface for R. T. Rockafellar, *Convex Analysis* (Princeton,
-1970), covering all thirty-nine sections of the book. Every numbered result is formalized except
-the five making up §22's elementary-vector development, which is combinatorial matroid theory that
-the book itself presents as independent of convexity.
-
-**Surface declarations are named for the results they state**, so the name is the index:
-`theorem_33_1` is Theorem 33.1 and `corollary_37_5_2` is Corollary 37.5.2. Where one numbered
-result needs several declarations — its clauses, or the two directions of an equivalence — a
-trailing word distinguishes them, as in `theorem_37_5_a` and `theorem_34_2_dom₁`. Everything sits
-in the flat `Rockafellar` namespace.
-
-## References
-
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970.
--/
-
 import Tdaf.Analysis.Convex.Bifunction.Algebra
 import Tdaf.Analysis.Convex.Bifunction.Cofinite
 import Tdaf.Analysis.Convex.Bifunction.LinearProcess
@@ -208,3 +171,40 @@ import Tdaf.Surface.Rockafellar.Part7.Section37
 import Tdaf.Surface.Rockafellar.Part8
 import Tdaf.Surface.Rockafellar.Part8.Section38
 import Tdaf.Surface.Rockafellar.Part8.Section39
+
+/-!
+# TDAF
+
+A formal library of applied mathematics, built in two layers.
+
+`Tdaf.Analysis` is the **backbone**: general mathematics, named for its subject and stated at the
+weakest hypotheses that carry the proof. It is meant to be read and used without reference to any
+particular text.
+
+`Tdaf.Surface` holds the **surfaces**, one directory per textbook, aligned to that text section by
+section. A surface proves almost nothing of its own: each declaration instantiates a backbone
+result at the book's own hypotheses, so a surface reads as an integration test of the backbone
+against a published account of the subject.
+
+## Convex analysis
+
+`Tdaf.Analysis.Convex` is the backbone for convex analysis over real vector spaces, developed at
+four levels of generality — a bare real vector space, a topological vector space, a locally convex
+space, and finite-dimensional Euclidean space — with each result stated at the weakest of the four
+that supports it.
+
+`Tdaf.Surface.Rockafellar` is its surface for R. T. Rockafellar, *Convex Analysis* (Princeton,
+1970), covering all thirty-nine sections of the book. Every numbered result is formalized except
+the five making up §22's elementary-vector development, which is combinatorial matroid theory that
+the book itself presents as independent of convexity.
+
+**Surface declarations are named for the results they state**, so the name is the index:
+`theorem_33_1` is Theorem 33.1 and `corollary_37_5_2` is Corollary 37.5.2. Where one numbered
+result needs several declarations — its clauses, or the two directions of an equivalence — a
+trailing word distinguishes them, as in `theorem_37_5_a` and `theorem_34_2_dom₁`. Everything sits
+in the flat `Rockafellar` namespace.
+
+## References
+
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970.
+-/
