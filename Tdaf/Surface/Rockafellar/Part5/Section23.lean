@@ -34,6 +34,8 @@ Theorem 16.3.
 | Theorem 23.4 | `theorem_23_4_notMem_dom`, `theorem_23_4_nonempty`, `theorem_23_4_proper`,
   `theorem_23_4_closed`, `theorem_23_4_supportFn`, `theorem_23_4_isBounded_iff`,
   `theorem_23_4_finite_iff` |
+| p. 218 example | `nonsmoothMaxFn`, `notConvex_domSubgradient_nonsmoothMaxFn`,
+  `proper_convexFn_nonsmoothMaxFn` |
 | Theorem 23.5 | `theorem_23_5_a`, `theorem_23_5_b`, `theorem_23_5_c`, `theorem_23_5_d`,
   `theorem_23_5_a_star`, `theorem_23_5_b_star`, `theorem_23_5_a_star_star` |
 | Corollary 23.5.1 | `corollary_23_5_1`, `corollary_23_5_1_mem` |
@@ -67,6 +69,14 @@ Both of the section's objects are backbone definitions and are used without a su
   book records about `∂_ε` — it is closed and convex, it shrinks with `ε`, and its intersection
   over `ε > 0` is `∂f(x)` — are `epsSubgradient_convex_closed` and
   `epsSubgradient_iInter` below.
+
+The one definition introduced here is `Rockafellar.nonsmoothMaxFn`, the book's counterexample of
+p. 218: `f(ξ₁, ξ₂) = max {1 - ξ₁^{1/2}, |ξ₂|}` on the right half-plane, `+∞` off it. It is kept as a
+*test case* rather than as a remark — `notConvex_domSubgradient_nonsmoothMaxFn` proves that
+`dom ∂f` is not convex, which is the sentence the book uses it for, and
+`proper_convexFn_nonsmoothMaxFn` checks that it really is a proper convex function so that the
+counterexample is to the statement the book makes. The three points that do the work are `(0, 1)`,
+`(0, -1)` and their midpoint `(0, 0)`; the failure at the midpoint is the vertical tangent of `√`.
 
 ## Where the book's hypotheses had to change
 
@@ -335,6 +345,213 @@ Specialises `dom_dirDeriv_eq_univ_iff_mem_interior_dom`; "finite for every `y`" 
 theorem theorem_23_4_finite_iff {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n}
     (hx : x ∈ ri (dom f)) : dom (dirDeriv f x) = univ ↔ x ∈ interior (dom f) :=
   dom_dirDeriv_eq_univ_iff_mem_interior_dom hf hp hx
+
+/-! ### `dom ∂f` need not be convex
+
+Theorem 23.4 places the set of points at which a proper convex function is subdifferentiable
+between `ri (dom f)` and `dom f`. Rockafellar immediately observes (p. 218) that it need not be
+convex, and gives the example transcribed here. -/
+
+/-- The pairing on `ℝ²` in coordinates. -/
+private theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
+  simp only [pairing_apply, PiLp.inner_apply, Fin.sum_univ_two, RCLike.inner_apply,
+    conj_trivial]
+  ring
+
+/-- **Rockafellar, p. 218.** The function `f(ξ₁, ξ₂) = max {g(ξ₁), |ξ₂|}` on `ℝ²`, where
+`g(ξ₁) = 1 - ξ₁^{1/2}` for `ξ₁ ≥ 0` and `g(ξ₁) = +∞` for `ξ₁ < 0`.
+
+Its effective domain is the closed right half-plane, and it is subdifferentiable everywhere on that
+half-plane **except** in the relative interior of the segment joining `(0, 1)` and `(0, -1)` — so
+`dom ∂f` is not convex. The three points that witness this are `(0, 1)`, `(0, -1)` and their
+midpoint `(0, 0)`; see `notConvex_domSubgradient_nonsmoothMaxFn`. -/
+noncomputable def nonsmoothMaxFn : Rn 2 → EReal :=
+  Tdaf.ConvexAnalysis.restrict {x : Rn 2 | 0 ≤ x 0}
+    fun x => ((max (1 - Real.sqrt (x 0)) |x 1| : ℝ) : EReal)
+
+/-- The real-valued function underneath `nonsmoothMaxFn` is convex on the right half-plane. The
+first component is convex because `√` is concave (`Real.strictConcaveOn_sqrt`), the second because
+`|·|` is a norm, and a maximum of convex functions is convex. -/
+private theorem convexOn_nonsmoothMax :
+    ConvexOn ℝ {x : Rn 2 | 0 ≤ x 0} fun x => max (1 - Real.sqrt (x 0)) |x 1| := by
+  have hconv : Convex ℝ {x : Rn 2 | 0 ≤ x 0} := by
+    intro u hu v hv a b ha hb _
+    have hu' : (0 : ℝ) ≤ u 0 := hu
+    have hv' : (0 : ℝ) ≤ v 0 := hv
+    have hcoord : (a • u + b • v) 0 = a * u 0 + b * v 0 := by simp
+    change (0 : ℝ) ≤ (a • u + b • v) 0
+    rw [hcoord]
+    positivity
+  refine ⟨hconv, fun u hu v hv a b ha hb hab => ?_⟩
+  have hu' : (0 : ℝ) ≤ u 0 := hu
+  have hv' : (0 : ℝ) ≤ v 0 := hv
+  have hc0 : (a • u + b • v) 0 = a * u 0 + b * v 0 := by simp
+  have hc1 : (a • u + b • v) 1 = a * u 1 + b * v 1 := by simp
+  have hsqrt : a * Real.sqrt (u 0) + b * Real.sqrt (v 0)
+      ≤ Real.sqrt (a * u 0 + b * v 0) := by
+    have h := Real.strictConcaveOn_sqrt.concaveOn.2 (Set.mem_Ici.2 hu') (Set.mem_Ici.2 hv') ha hb
+      hab
+    simpa using h
+  have habs : |a * u 1 + b * v 1| ≤ a * |u 1| + b * |v 1| := by
+    calc |a * u 1 + b * v 1| ≤ |a * u 1| + |b * v 1| := abs_add_le _ _
+      _ = a * |u 1| + b * |v 1| := by
+          rw [abs_mul, abs_mul, abs_of_nonneg ha, abs_of_nonneg hb]
+  simp only [hc0, hc1, smul_eq_mul]
+  refine max_le ?_ ?_
+  · have hexp : a * (1 - Real.sqrt (u 0)) + b * (1 - Real.sqrt (v 0))
+        = 1 - (a * Real.sqrt (u 0) + b * Real.sqrt (v 0)) := by linear_combination hab
+    have hstep : 1 - Real.sqrt (a * u 0 + b * v 0)
+        ≤ a * (1 - Real.sqrt (u 0)) + b * (1 - Real.sqrt (v 0)) := by
+      rw [hexp]; linarith
+    exact hstep.trans (add_le_add (mul_le_mul_of_nonneg_left (le_max_left _ _) ha)
+      (mul_le_mul_of_nonneg_left (le_max_left _ _) hb))
+  · exact habs.trans (add_le_add (mul_le_mul_of_nonneg_left (le_max_right _ _) ha)
+      (mul_le_mul_of_nonneg_left (le_max_right _ _) hb))
+
+/-- The book's example is a convex function. -/
+private theorem convexFn_nonsmoothMaxFn : ConvexFn nonsmoothMaxFn :=
+  (convexOn_iff_convexFn _ _).1 convexOn_nonsmoothMax
+
+/-- The value of the example at a point of the right half-plane. -/
+private theorem nonsmoothMaxFn_of_nonneg {x : Rn 2} (hx : 0 ≤ x 0) :
+    nonsmoothMaxFn x = ((max (1 - Real.sqrt (x 0)) |x 1| : ℝ) : EReal) :=
+  Tdaf.ConvexAnalysis.restrict_of_mem hx
+
+/-- Off the right half-plane the example is `+∞`. -/
+private theorem nonsmoothMaxFn_of_neg {x : Rn 2} (hx : ¬ 0 ≤ x 0) : nonsmoothMaxFn x = ⊤ :=
+  Tdaf.ConvexAnalysis.restrict_of_notMem hx
+
+/-- The upper vertex `(0, 1)` of the book's segment. -/
+private noncomputable def upperPoint : Rn 2 := WithLp.toLp 2 ![(0 : ℝ), 1]
+
+/-- The lower vertex `(0, -1)` of the book's segment. -/
+private noncomputable def lowerPoint : Rn 2 := WithLp.toLp 2 ![(0 : ℝ), -1]
+
+/-- `(0, 1)` is a subgradient of the example at `(0, 1)`: the affine function `z ↦ ζ₂` minorizes
+`f` and is exact there. -/
+private theorem mem_subgradient_upperPoint :
+    upperPoint ∈ subgradient (pairing 2) nonsmoothMaxFn upperPoint := by
+  have h0 : upperPoint 0 = (0 : ℝ) := rfl
+  have h1 : upperPoint 1 = (1 : ℝ) := rfl
+  have hval : nonsmoothMaxFn upperPoint = ((1 : ℝ) : EReal) := by
+    rw [nonsmoothMaxFn_of_nonneg (by rw [h0]), h0, h1]
+    norm_num
+  intro z
+  rw [hval, pairing_two]
+  simp only [PiLp.sub_apply, h0, h1]
+  by_cases hz : 0 ≤ z 0
+  · rw [nonsmoothMaxFn_of_nonneg hz]
+    have : (1 : ℝ) + ((z 0 - 0) * 0 + (z 1 - 1) * 1) ≤ max (1 - Real.sqrt (z 0)) |z 1| := by
+      have := le_max_right (1 - Real.sqrt (z 0)) |z 1|
+      have hle : z 1 ≤ |z 1| := le_abs_self _
+      linarith
+    exact_mod_cast this
+  · rw [nonsmoothMaxFn_of_neg hz]
+    exact le_top
+
+/-- `(0, -1)` is a subgradient of the example at `(0, -1)`. -/
+private theorem mem_subgradient_lowerPoint :
+    lowerPoint ∈ subgradient (pairing 2) nonsmoothMaxFn lowerPoint := by
+  have h0 : lowerPoint 0 = (0 : ℝ) := rfl
+  have h1 : lowerPoint 1 = (-1 : ℝ) := rfl
+  have hval : nonsmoothMaxFn lowerPoint = ((1 : ℝ) : EReal) := by
+    rw [nonsmoothMaxFn_of_nonneg (by rw [h0]), h0, h1]
+    norm_num
+  intro z
+  rw [hval, pairing_two]
+  simp only [PiLp.sub_apply, h0, h1]
+  by_cases hz : 0 ≤ z 0
+  · rw [nonsmoothMaxFn_of_nonneg hz]
+    have : (1 : ℝ) + ((z 0 - 0) * 0 + (z 1 - -1) * -1) ≤ max (1 - Real.sqrt (z 0)) |z 1| := by
+      have := le_max_right (1 - Real.sqrt (z 0)) |z 1|
+      have hle : -z 1 ≤ |z 1| := neg_le_abs _
+      linarith
+    exact_mod_cast this
+  · rw [nonsmoothMaxFn_of_neg hz]
+    exact le_top
+
+/-- **The origin is the point Rockafellar's example is about.** `f` is finite at `(0, 0)`, but the
+difference quotient in the direction `(1, 0)` behaves like `-λ^{-1/2}`, so `f'(0; (1,0)) = -∞` and
+`∂f(0) = ∅` by Theorem 23.3. The argument here is the direct one: a subgradient `y` would have to
+satisfy `t · y₁ ≤ -1` for every `t ∈ (0, 1]`, which fails at `t = 1 / (|y₁| + 1)`. -/
+private theorem subgradient_nonsmoothMaxFn_zero :
+    subgradient (pairing 2) nonsmoothMaxFn 0 = ∅ := by
+  rw [Set.eq_empty_iff_forall_notMem]
+  intro y hy
+  have hz0 : (0 : Rn 2) 0 = (0 : ℝ) := rfl
+  have hz1 : (0 : Rn 2) 1 = (0 : ℝ) := rfl
+  have hval : nonsmoothMaxFn 0 = ((1 : ℝ) : EReal) := by
+    rw [nonsmoothMaxFn_of_nonneg (by rw [hz0]), hz0, hz1]
+    norm_num
+  set t : ℝ := 1 / (|y 0| + 1) with htdef
+  have habs : (0 : ℝ) ≤ |y 0| := abs_nonneg _
+  have hpos : (0 : ℝ) < |y 0| + 1 := by linarith
+  have ht0 : 0 < t := by rw [htdef]; positivity
+  have ht1 : t ≤ 1 := by
+    rw [htdef, div_le_one hpos]
+    linarith
+  set z : Rn 2 := WithLp.toLp 2 ![t ^ 2, (0 : ℝ)] with hzdef
+  have hz0' : z 0 = t ^ 2 := rfl
+  have hz1' : z 1 = (0 : ℝ) := rfl
+  have hsq : Real.sqrt (z 0) = t := by rw [hz0', Real.sqrt_sq ht0.le]
+  have hzval : nonsmoothMaxFn z = ((1 - t : ℝ) : EReal) := by
+    rw [nonsmoothMaxFn_of_nonneg (by rw [hz0']; positivity), hsq, hz1']
+    have : max (1 - t) |(0 : ℝ)| = 1 - t := by
+      rw [abs_zero]
+      exact max_eq_left (by linarith)
+    rw [this]
+  have hsub := hy z
+  rw [hval, hzval, pairing_two] at hsub
+  simp only [PiLp.sub_apply, hz0, hz1, hz0', hz1'] at hsub
+  have hreal : (1 : ℝ) + ((t ^ 2 - 0) * y 0 + (0 - 0) * y 1) ≤ 1 - t := by exact_mod_cast hsub
+  have hkey : t * y 0 ≤ -1 := by
+    have h2 : t ^ 2 * y 0 ≤ -t := by nlinarith
+    nlinarith [ht0]
+  have hbound : -1 < t * y 0 := by
+    have h1 : -(t * |y 0|) ≤ t * y 0 := by
+      have := neg_abs_le (y 0)
+      nlinarith [ht0.le]
+    have h2 : t * |y 0| < 1 := by
+      rw [htdef, div_mul_eq_mul_div, one_mul, div_lt_one hpos]
+      linarith
+    linarith
+  linarith
+
+/-- **Rockafellar, p. 218**: the set of points at which a proper convex function is
+subdifferentiable need not be convex.
+
+`dom ∂f` contains `(0, 1)` and `(0, -1)` but not their midpoint `(0, 0)`. This is the test case the
+book supplies immediately after Theorem 23.4, and it is why that theorem can only *sandwich*
+`dom ∂f` between `ri (dom f)` and `dom f`. -/
+theorem notConvex_domSubgradient_nonsmoothMaxFn :
+    ¬ Convex ℝ (domSubgradient (pairing 2) nonsmoothMaxFn) := by
+  intro hconv
+  have hup : upperPoint ∈ domSubgradient (pairing 2) nonsmoothMaxFn :=
+    ⟨upperPoint, mem_subgradient_upperPoint⟩
+  have hlow : lowerPoint ∈ domSubgradient (pairing 2) nonsmoothMaxFn :=
+    ⟨lowerPoint, mem_subgradient_lowerPoint⟩
+  have hmid := hconv hup hlow (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (0:ℝ) ≤ 1/2)
+    (by norm_num)
+  have hzero : (1/2 : ℝ) • upperPoint + (1/2 : ℝ) • lowerPoint = (0 : Rn 2) := by
+    ext j
+    fin_cases j <;> simp [upperPoint, lowerPoint]
+  rw [hzero] at hmid
+  obtain ⟨y, hy⟩ := hmid
+  rw [subgradient_nonsmoothMaxFn_zero] at hy
+  exact hy
+
+/-- The example really is a *proper convex* function, so it is a witness for the statement the book
+makes and not for a weaker one. -/
+theorem proper_convexFn_nonsmoothMaxFn : ConvexFn nonsmoothMaxFn ∧ Proper nonsmoothMaxFn := by
+  refine ⟨convexFn_nonsmoothMaxFn, ⟨⟨0, ?_⟩, fun x => ?_⟩⟩
+  · have hz0 : (0 : Rn 2) 0 = (0 : ℝ) := rfl
+    rw [mem_dom, nonsmoothMaxFn_of_nonneg (by rw [hz0])]
+    exact _root_.EReal.coe_lt_top _
+  · by_cases hx : 0 ≤ x 0
+    · rw [nonsmoothMaxFn_of_nonneg hx]
+      exact _root_.EReal.coe_ne_bot _
+    · rw [nonsmoothMaxFn_of_neg hx]
+      exact top_ne_bot
 
 /-! ### Theorem 23.5: the four conditions, and the three starred ones -/
 
