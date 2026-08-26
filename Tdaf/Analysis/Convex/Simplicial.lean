@@ -12,22 +12,20 @@ import Tdaf.Analysis.Convex.RelativeInterior
 /-!
 # Simplices, locally simplicial sets, and upper semicontinuity
 
-Rockafellar's **Theorem 10.2**: a convex function is upper semicontinuous relative to any
-*locally simplicial* subset of its effective domain — so a closed convex function is continuous
-relative to such a set. This is the sharp form of "a convex function is continuous on a simplex in
-its domain", the phenomenon that the parabolic example of §10 shows is genuinely about simplices
-and not about arbitrary subsets of `dom f`.
-
-**Theorem 10.3** is the application: a finite convex function on `ri C`, bounded above on bounded
-subsets, extends uniquely to a continuous finite convex function on a locally simplicial convex
-`C`.
+A convex function is upper semicontinuous relative to any *locally simplicial* subset of its
+effective domain, so a closed convex function is continuous relative to such a set: Rockafellar's
+**Theorem 10.2**. This is the sharp form of "a convex function is continuous on a simplex in its
+domain"; the parabolic example of §10 shows that the phenomenon is genuinely about simplices and
+not about arbitrary subsets of `dom f`. **Theorem 10.3** is the application: a finite convex
+function on `ri C`, bounded above on bounded subsets, extends uniquely to a continuous finite
+convex function on a locally simplicial convex `C`.
 
 ## Main definitions
 
 * `IsSimplex S` — `S` is the convex hull of a finite affinely independent family.
 * `LocallySimplicial S` — every point of `S` has a neighbourhood in which `S` coincides with a
-  finite union of simplices contained in `S`. Rockafellar's definition, §10. Theorem 20.5 will
-  say that every polyhedral convex set is locally simplicial.
+  finite union of simplices contained in `S` (Rockafellar §10). Theorem 20.5 will say that every
+  polyhedral convex set is locally simplicial.
 
 ## Main results
 
@@ -36,33 +34,18 @@ subsets, extends uniquely to a continuous finite convex function on a locally si
   one of its points.
 * `ConvexFn.upperSemicontinuousOn_of_locallySimplicial` — **Theorem 10.2**.
 * `ConvexFn.continuousOn_of_locallySimplicial` — Theorem 10.2 for a closed `f`.
-* `exists_closedFn_continuousOn_of_locallySimplicial` and
-  `eqOn_of_continuousOn_of_eqOn_relint` — **Theorem 10.3**, existence and uniqueness.
+* `exists_closedFn_continuousOn_of_locallySimplicial`, `eqOn_of_continuousOn_of_eqOn_relint` —
+  **Theorem 10.3**, existence and uniqueness.
 
-## Design notes
+## Implementation notes
 
-**No triangulation is needed.** Rockafellar reduces to the case where `x` is a *vertex* of the
-simplex, by triangulating the simplex around `x` — a step he calls "intuitively obvious" and does
-not prove. The reduction is avoidable. Writing `x = Σ μᵢ vᵢ` and `z = Σ wᵢ vᵢ`, the identity
-
-`w = (1 - ε) • μ + ε • ((w - (1 - ε) • μ) / ε)`
-
-exhibits *any* `z` whose weights satisfy `wᵢ ≥ (1 - ε) μᵢ` as `(1 - ε) x + ε y` with `y` again in
-the simplex — for a *fixed* `ε`, chosen in advance from the target bound. Convexity then gives
-`f z ≤ (1 - ε) β + ε ν` where `β` is a bound above `f x` and `ν` a bound above `f` on the whole
-simplex. Rockafellar's vertex case is the special case `μ = eᵢ₀`.
-
-**The weight condition is a neighbourhood condition, by compactness.** The set of weights failing
-`wᵢ ≥ (1 - ε) μᵢ` at some `i` in the support of `μ` is a closed subset of the standard simplex,
-hence compact, hence has closed image; and `x` is not in that image, because affine independence
-makes the weights of a point unique. So the failure set misses a neighbourhood of `x`. This is the
-only place affine independence is used, and it is the only place a topology is used: no metric,
-no finite dimension, no local convexity.
-
-**Only two real numbers are ever multiplied.** The estimate never multiplies an `EReal` by
-anything: `ConvexFn.epi_combo` takes real bounds `β`, `ν` on the two endpoints and returns the real
-bound `(1 - ε) β + ε ν`. Choosing `ε` small enough that this stays below the target is then a
-one-line real inequality.
+The analytic core needs no triangulation. Rockafellar reduces to the case where `x` is a *vertex*
+of the simplex by triangulating around `x`. Instead, writing `x = Σ μᵢ vᵢ` and `z = Σ wᵢ vᵢ`, every
+`z` whose weights satisfy `wᵢ ≥ (1 - ε) μᵢ` is `(1 - ε) x + ε y` with `y` again in the simplex, for
+a *fixed* `ε` chosen in advance from the target bound; convexity then bounds `f z` by
+`(1 - ε) β + ε ν`. That weight condition holds on a neighbourhood of `x` by compactness of the
+standard simplex, affine independence making the weights of a point unique — the only use of
+affine independence, and the only use of a topology: no metric, no finite dimension.
 
 ## References
 
@@ -149,10 +132,7 @@ variable {ι : Type*} [Finite ι] {E : Type*} [AddCommGroup E] [Module ℝ E] [T
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [T2Space E] {f : E → EReal}
 
 /-- **The heart of Rockafellar's Theorem 10.2.** A convex function whose value at each vertex of a
-simplex is `< ⊤` is upper semicontinuous relative to that simplex, at every point of it.
-
-See the module docstring: no triangulation is required, because for a suitable *fixed* `ε` every
-point of the simplex near `x` can be written as `(1 - ε) x + ε y` with `y` again in the simplex. -/
+simplex is `< ⊤` is upper semicontinuous relative to that simplex, at every point of it. -/
 theorem ConvexFn.upperSemicontinuousWithinAt_convexHull_range (hf : ConvexFn f) {v : ι → E}
     (hv : AffineIndependent ℝ v) (hdom : ∀ i, v i ∈ dom f) {x : E}
     (hx : x ∈ convexHull ℝ (Set.range v)) :
@@ -326,14 +306,8 @@ theorem eqOn_of_continuousOn_of_eqOn_relint (hC : Convex ℝ C) {g₁ g₂ : E �
 
 /-- **Rockafellar, Theorem 10.3**, existence. A convex function finite exactly on `ri C` and
 bounded above on every bounded subset of `ri C` has a closure that is finite and continuous on the
-whole of a locally simplicial convex `C`, and still agrees with `f` on `ri C`.
-
-The proof is Rockafellar's. `cl f` agrees with `f` on `ri (dom f) = ri C` by Theorem 7.4; it is
-finite on the relative boundary because along a segment from a relative interior point the values
-of `f` stay bounded, and Theorem 7.5 identifies the limit of those values with `cl f`; and then
-Theorem 10.2 applies, `C` being a locally simplicial subset of `dom (cl f)`.
-
-Uniqueness is `eqOn_of_continuousOn_of_eqOn_relint`. -/
+whole of a locally simplicial convex `C`, and still agrees with `f` on `ri C`. Uniqueness is
+`eqOn_of_continuousOn_of_eqOn_relint`. -/
 theorem exists_closedFn_continuousOn_of_locallySimplicial (hC : Convex ℝ C)
     (hCls : LocallySimplicial C) (hne : C.Nonempty) (hf : ConvexFn f) (hbot : ∀ x, f x ≠ ⊥)
     (hdom : dom f = ri C)

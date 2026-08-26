@@ -11,11 +11,10 @@ import Mathlib.Analysis.Convex.Function
 
 Restricting a function to a line through `x` in direction `d` — `t ↦ f (x + t • d)`, on the set of
 steps that keep the point inside `S` — preserves convexity, and for convex `S` it **detects** it.
-
-The forward direction is a one-line computation; the converse is what makes the reduction useful,
-because it turns a statement about a function on a vector space into a statement about functions of
-one real variable, where the whole calculus of a single derivative applies. That is how the
-second-derivative criterion for convexity on `ℝⁿ` is proved from the one on an interval.
+The converse is what makes the reduction useful: it turns a statement about a function on a vector
+space into a statement about functions of one real variable, where the calculus of a single
+derivative applies. That is how the second-derivative criterion for convexity on `ℝⁿ`
+(Theorem 4.5) is proved from the one on an interval (Theorem 4.4).
 
 ## Main results
 
@@ -25,20 +24,14 @@ second-derivative criterion for convexity on `ℝⁿ` is proved from the one on 
 * `continuousAt_comp_line_of_convexOn`, `…_of_concaveOn` — continuity along a line through an
   interior point.
 
-## Design notes
+## Implementation notes
 
-**The step set is `{t | x + t • d ∈ S}`, not an interval.** It *is* an interval when `S` is convex,
-but saying so requires the convexity hypothesis, and the forward lemmas do not need it. Leaving the
-set in preimage form also makes `isOpen_line_steps` a one-liner.
-
-**The converse takes the direction to be `y - x`.** Given two points of `S`, the segment between
-them is the image of `[0, 1]` under `t ↦ x + t • (y - x)`, so a single line carries the whole
-convexity inequality for that pair. No hypothesis on `d` is needed, and none is imposed.
+The step set is written `{t | x + t • d ∈ S}` rather than as an interval: it is an interval only
+when `S` is convex, and the forward lemmas do not need that hypothesis.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970 — §4, where the reduction
-  to lines is what carries the second-derivative criterion (Theorem 4.4) up to `ℝⁿ` (Theorem 4.5).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §4.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -49,11 +42,8 @@ section Line
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {S : Set E} {f : E → ℝ} {x d : E}
 
-/-- A convex function stays convex along a line: `t ↦ f (x + t • d)` is convex on the set of
-steps that keep `x + t • d` inside `S`.
-
-The proof is the identity `x + (a t₁ + b t₂) • d = a • (x + t₁ • d) + b • (x + t₂ • d)`, valid
-because `a + b = 1`. -/
+/-- A convex function stays convex along a line: `t ↦ f (x + t • d)` is convex on the set of steps
+that keep `x + t • d` inside `S`. -/
 theorem convexOn_comp_line (hf : ConvexOn ℝ S f) (x d : E) :
     ConvexOn ℝ {t : ℝ | x + t • d ∈ S} fun t => f (x + t • d) := by
   have key : ∀ a b t₁ t₂ : ℝ, a + b = 1 →
@@ -77,11 +67,8 @@ theorem concaveOn_comp_line (hf : ConcaveOn ℝ S f) (x d : E) :
   neg_convexOn_iff.1 (convexOn_comp_line hf.neg x d)
 
 /-- **The restrictions to lines detect convexity.** For convex `S`, `f` is convex on `S` exactly
-when every line restriction is convex on its step set.
-
-The converse direction is the useful one: it is what lets a criterion for convexity of a function
-of one real variable be lifted to `E`. Given `x, y ∈ S`, the line through `x` in direction `y - x`
-carries the convexity inequality for that pair, with steps `0` and `1`. -/
+when every line restriction is convex on its step set. Given `x, y ∈ S`, the line through `x` in
+direction `y - x` carries the convexity inequality for that pair, with steps `0` and `1`. -/
 theorem convexOn_iff_lines (hS : Convex ℝ S) :
     ConvexOn ℝ S f ↔ ∀ x d : E, ConvexOn ℝ {t : ℝ | x + t • d ∈ S} fun t => f (x + t • d) := by
   refine ⟨fun hf x d => convexOn_comp_line hf x d,

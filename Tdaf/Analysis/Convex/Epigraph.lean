@@ -10,8 +10,12 @@ import Tdaf.Order.EReal
 /-!
 # Extended-real-valued convex functions
 
-This file introduces the basic theory of convex functions `f : E → EReal` on a real vector space,
-following Rockafellar, *Convex Analysis*, §4.
+The basic theory of convex functions `f : E → EReal` on a real vector space. Following Rockafellar
+§4, convexity is *defined* geometrically, as convexity of the epigraph, rather than by the
+inequality `f (a • x + b • y) ≤ a * f x + b * f y`: the right-hand side can be the undefined
+`∞ - ∞` when `f` takes both infinite values, and improper functions are admitted throughout. The
+epigraph lives in `E × ℝ`, not `E × EReal` — the second coordinate ranges over the *reals*, unlike
+Mathlib's `ConvexOn.convex_epigraph`, which uses the codomain of the function.
 
 ## Main definitions
 
@@ -25,32 +29,15 @@ following Rockafellar, *Convex Analysis*, §4.
 
 ## Main results
 
-* `convexFn_iff_forall_lt` — Rockafellar's Theorem 4.2, the characterisation of convexity by
-  strict inequalities. This is the form that avoids `∞ - ∞` entirely.
-* `convexFn_iff_le` — Rockafellar's Theorem 4.1, the familiar inequality, valid when `f` never
-  takes the value `⊥`.
-* `convexFn_add_coe`, `ConvexFn.comp_add_left` — the two elementary operations that preserve
-  convexity outright: adding a real-valued affine coordinate, and translating the argument.
-* `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — Theorem 4.6.
-* `epi_coe_mul`, `convexFn_coe_mul`, `dom_coe_mul`, `proper_coe_mul` — a non-negative real
-  multiple `cf`: its epigraph, and the preservation of convexity, effective domain and
-  properness. `closedFn_coe_mul` is in `Convex/Closure.lean`, where the topology is.
+* `convexFn_iff_forall_lt` — **Theorem 4.2**, convexity by strict inequalities: the form that
+  avoids `∞ - ∞` entirely.
+* `convexFn_iff_le` — **Theorem 4.1**, the familiar inequality, valid when `f` never takes `⊥`.
+* `convexFn_add_coe`, `ConvexFn.comp_add_left` — adding a real-valued affine coordinate, and
+  translating the argument, preserve convexity.
+* `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — **Theorem 4.6**.
+* `convexFn_coe_mul`, `dom_coe_mul`, `proper_coe_mul` — a non-negative multiple `cf`.
 * `convexOn_iff_convexFn` — the bridge to Mathlib's `ConvexOn`.
-* `ConvexFn.sum_le` — Jensen's inequality for a finite convex combination, which is one
-  `Convex.sum_mem` on the epigraph and so needs nothing beyond this file.
-
-## Design notes
-
-Following Rockafellar, convexity is *defined* geometrically, as convexity of the epigraph, rather
-than by the inequality `f (a • x + b • y) ≤ a * f x + b * f y`. The inequality is problematic as a
-definition because `a * f x + b * f y` can be the undefined `∞ - ∞` when `f` takes both infinite
-values, and Rockafellar admits such improper functions throughout: they arise naturally from proper
-ones, and Part VII of the book depends on them.
-
-Note also that the epigraph lives in `E × ℝ`, not `E × EReal`: the second coordinate ranges over
-the *reals*. This differs from Mathlib's `ConvexOn.convex_epigraph`, which uses the codomain of the
-function for the second coordinate. For `EReal`-valued functions the two are genuinely different
-sets, so `epi` is a new definition rather than a specialisation.
+* `ConvexFn.sum_le` — Jensen's inequality for a finite convex combination.
 
 ## References
 
@@ -67,10 +54,8 @@ section Basic
 
 variable {E : Type*}
 
-/-- The epigraph of `f : E → EReal`, as a subset of `E × ℝ`.
-
-Rockafellar §4: `epi f = {(x, μ) | x ∈ E, μ ∈ ℝ, μ ≥ f x}`. The second coordinate ranges over the
-*reals*, not over `EReal`. -/
+/-- The epigraph of `f : E → EReal`, `{(x, μ) | μ ∈ ℝ, f x ≤ μ} ⊆ E × ℝ`. The second coordinate
+ranges over the *reals*, not over `EReal`. -/
 def epi (f : E → EReal) : Set (E × ℝ) := {p | f p.1 ≤ (p.2 : EReal)}
 
 @[simp]
@@ -88,16 +73,15 @@ theorem le_iff_epi_subset {f g : E → EReal} : f ≤ g ↔ epi g ⊆ epi f := b
   obtain ⟨q, hgq, hqf⟩ := EReal.lt_iff_exists_real_btwn.1 (not_le.1 hx)
   exact absurd (h (show (x, q) ∈ epi g from hgq.le)) (not_le.2 hqf)
 
-/-- The effective domain of `f`: the set where `f < ⊤`.
-
-Rockafellar §4: `dom f` is the projection of `epi f` on `E`. -/
+/-- The effective domain of `f`: the set where `f < ⊤`. Equivalently the projection of `epi f` on
+`E` (Rockafellar §4). -/
 def dom (f : E → EReal) : Set E := {x | f x < ⊤}
 
 @[simp] theorem mem_dom {f : E → EReal} {x : E} : x ∈ dom f ↔ f x < ⊤ := Iff.rfl
 
-/-- Rockafellar defines `dom f` as the projection of `epi f` on `E`. That holds with no hypothesis
-on `f`, improper functions included, which is why `dom` must not be restricted to functions that
-avoid `⊥`: Theorem 7.2 is a statement about `ri (dom f)` for *improper* `f`. -/
+/-- Rockafellar defines `dom f` as the projection of `epi f`. That holds with no hypothesis on `f`,
+improper functions included, which is why `dom` must not be restricted to functions avoiding `⊥`:
+Theorem 7.2 is a statement about `ri (dom f)` for *improper* `f`. -/
 theorem dom_eq_fst_image_epi (f : E → EReal) : dom f = Prod.fst '' epi f := by
   ext x
   constructor
@@ -113,29 +97,24 @@ theorem dom_eq_fst_image_epi (f : E → EReal) : dom f = Prod.fst '' epi f := by
 theorem epi_nonempty_iff (f : E → EReal) : (epi f).Nonempty ↔ (dom f).Nonempty := by
   rw [dom_eq_fst_image_epi, Set.image_nonempty]
 
-/-- The epigraph is empty exactly when the effective domain is: both say `f ≡ +∞`. -/
 theorem epi_eq_empty_iff (f : E → EReal) : epi f = ∅ ↔ dom f = ∅ := by
   rw [← Set.not_nonempty_iff_eq_empty, ← Set.not_nonempty_iff_eq_empty, epi_nonempty_iff]
 
-/-- The function identically `+∞` has empty epigraph. -/
 @[simp] theorem epi_top : epi (⊤ : E → EReal) = ∅ := by
   ext p
   simp [epi, Pi.top_apply]
 
-/-- `f` is *proper* when it is finite somewhere and never takes the value `⊥`.
-
-Rockafellar §4: equivalently, `epi f` is nonempty and contains no vertical lines. -/
+/-- `f` is *proper* when it is finite somewhere and never takes the value `⊥`; equivalently, `epi f`
+is nonempty and contains no vertical lines (Rockafellar §4). -/
 structure Proper (f : E → EReal) : Prop where
   /-- `f` is not identically `⊤`. -/
   dom_nonempty : (dom f).Nonempty
   /-- `f` never takes the value `⊥`. -/
   ne_bot : ∀ x, f x ≠ ⊥
 
-/-- `f` restricted to `s` and extended by `⊤` off `s`.
-
-This encoding of "a convex function given on a convex set" recurs constantly; Rockafellar adopts it
-as the standing convention in §4. The `⨅` formulation avoids a decidability hypothesis; see
-`restrict_of_mem` and `restrict_of_notMem` for the defining equations. -/
+/-- `f` restricted to `s` and extended by `⊤` off `s` — the standing encoding of "a convex function
+given on a convex set" (Rockafellar §4). The `⨅` formulation avoids a decidability hypothesis;
+`restrict_of_mem` and `restrict_of_notMem` are the defining equations. -/
 noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x => ⨅ _ : x ∈ s, f x
 
 @[simp] theorem restrict_of_mem {s : Set E} {f : E → EReal} {x : E} (hx : x ∈ s) :
@@ -146,11 +125,8 @@ noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x 
 
 /-! #### Non-negative scalar multiples
 
-Rockafellar writes `λf` for a non-negative real `λ` throughout §28 and §29 — a Lagrange multiplier
-times a constraint — and uses `dom (λf) = dom f` and properness of `λf` without comment. The
-coefficient `0` is not a degenerate case to be excluded: `EReal` obeys the convention `0 · ∞ = 0`,
-so `0 · f` is the constant `0`, which is proper and convex. Only the *effective domain* statement
-needs `0 < c`, because `dom (0 · f)` is all of `E`. -/
+`EReal` obeys `0 · ∞ = 0`, so `0 · f` is the constant `0`, which is proper and convex; only the
+*effective domain* statement needs `0 < c`, because `dom (0 · f)` is all of `E`. -/
 
 /-- **A positive multiple of `f` has the same effective domain as `f`.** The hypothesis is
 `0 < c`, not `0 ≤ c`: at `c = 0` the product is the constant `0` and its domain is everything. -/
@@ -182,10 +158,8 @@ section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
-/-- A function `f : E → EReal` is convex when its epigraph is a convex subset of `E × ℝ`.
-
-This is Rockafellar's definition (§4). See `convexFn_iff_forall_lt` (Theorem 4.2) and
-`convexFn_iff_le` (Theorem 4.1) for the analytic characterisations. -/
+/-- A function `f : E → EReal` is convex when its epigraph is a convex subset of `E × ℝ`
+(Rockafellar §4). See `convexFn_iff_forall_lt` and `convexFn_iff_le` for the analytic forms. -/
 structure ConvexFn (f : E → EReal) : Prop where
   /-- The epigraph of a convex function is convex. -/
   convex_epi : Convex ℝ (epi f)
@@ -193,8 +167,7 @@ structure ConvexFn (f : E → EReal) : Prop where
 @[simp] theorem convexFn_iff_convex_epi {f : E → EReal} : ConvexFn f ↔ Convex ℝ (epi f) :=
   ⟨fun h => h.convex_epi, fun h => ⟨h⟩⟩
 
-/-- A convex-combination goal in which one coefficient may vanish reduces to the case where both
-coefficients are positive. -/
+/-- A convex-combination goal reduces to the case of two positive coefficients. -/
 theorem combo_of_pos {P : E → Prop} {x y : E} {a b : ℝ} (hx : P x) (hy : P y)
     (ha : 0 ≤ a) (hb : 0 ≤ b) (hab : a + b = 1) (h : 0 < a → 0 < b → P (a • x + b • y)) :
     P (a • x + b • y) := by
@@ -223,8 +196,8 @@ theorem convexFn_of_epi_combo {f : E → EReal}
   exact h x y μ ν hx hy a b ha hb hab
 
 /-- **A real-valued affine coordinate added to a convex function keeps it convex.** The hypothesis
-is the combination law rather than linearity, so that the same lemma serves a coordinate of a
-pairing, a projection of a product and an affine function alike. -/
+is the combination law rather than linearity, so the same lemma serves a coordinate of a pairing, a
+projection of a product and an affine function alike. -/
 theorem convexFn_add_coe {f : E → EReal} (hf : ConvexFn f) {l : E → ℝ}
     (hl : ∀ (x y : E) (a b : ℝ), a + b = 1 → l (a • x + b • y) = a * l x + b * l y) :
     ConvexFn (fun x => f x + ((l x : ℝ) : EReal)) := by
@@ -255,11 +228,8 @@ noncomputable def scaleSnd (c : ℝ) : (E × ℝ) →ₗ[ℝ] (E × ℝ) :=
 theorem scaleSnd_apply (c : ℝ) (p : E × ℝ) : scaleSnd c p = (p.1, c * p.2) := rfl
 
 /-- **The epigraph of a positive multiple.** `epi (cf)` is `epi f` pulled back along the vertical
-scaling `(x, μ) ↦ (x, μ / c)`, which is what makes convexity (`convexFn_coe_mul`) and closedness
-(`closedFn_coe_mul`) one-line preimage arguments.
-
-The identity fails at `c = 0`, where the left side is `E × Ici 0` and the right side is everything;
-both preserved properties are proved by a separate constant-function case there. -/
+scaling `(x, μ) ↦ (x, μ / c)`, which makes convexity and closedness of `cf` preimage arguments. The
+identity fails at `c = 0`, where the left side is `E × Ici 0` and the right side is everything. -/
 theorem epi_coe_mul {c : ℝ} (hc : 0 < c) (f : E → EReal) :
     epi (fun x => (c : EReal) * f x) = scaleSnd c⁻¹ ⁻¹' epi f := by
   ext p
@@ -268,9 +238,8 @@ theorem epi_coe_mul {c : ℝ} (hc : 0 < c) (f : E → EReal) :
   rw [show c⁻¹ * p.2 = p.2 / c from (div_eq_inv_mul p.2 c).symm]
   exact Tdaf.EReal.coe_mul_le_coe_iff hc
 
-/-- **A non-negative multiple of a convex function is convex.** This is the `EReal`-valued form of
-"`λf` is convex for `λ ≥ 0`", which Rockafellar uses whenever a Lagrange multiplier meets a
-constraint function. -/
+/-- **A non-negative multiple of a convex function is convex**, the `EReal`-valued form of "`λf` is
+convex for `λ ≥ 0`". -/
 theorem convexFn_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : E → EReal} (hf : ConvexFn f) :
     ConvexFn (fun x => (c : EReal) * f x) := by
   rcases eq_or_lt_of_le hc with h | h
@@ -288,10 +257,8 @@ theorem convexFn_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : E → EReal} (hf : Convex
 /-! ### Theorem 4.2 -/
 
 /-- **Rockafellar, Theorem 4.2.** A function `f : E → EReal` is convex if and only if
-`f ((1 - λ) x + λ y) < (1 - λ) α + λ β` whenever `f x < α` and `f y < β` and `0 < λ < 1`.
-
-This characterisation is stated with strict inequalities precisely so that the forbidden expression
-`∞ - ∞` never arises: `α` and `β` range over the reals. -/
+`f ((1 - λ) x + λ y) < (1 - λ) α + λ β` whenever `f x < α`, `f y < β` and `0 < λ < 1`. The strict
+inequalities keep `α` and `β` real, so the forbidden `∞ - ∞` never arises. -/
 theorem convexFn_iff_forall_lt (f : E → EReal) :
     ConvexFn f ↔ ∀ (x y : E) (a b : ℝ), 0 < a → 0 < b → a + b = 1 →
       ∀ α β : ℝ, f x < (α : EReal) → f y < (β : EReal) →
@@ -439,15 +406,9 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal}
 
 /-- **Jensen's inequality** for a convex `EReal`-valued function, in the form the epigraph supplies
 it: a convex combination of points at which `f` is bounded above by reals `m j` is bounded above by
-the same combination of the `m j`.
-
-The proof is `Convex.sum_mem` applied to `epi f`, which is why it belongs here and not further up:
-it needs nothing but the epigraph, and §4 of a surface library wants Jensen without importing the
-differential theory. Aliased as `jensen` in `Eponyms.lean`.
-
-The bound is by *reals* `m j`, not by `f (u j)` directly. The `EReal`-valued form
-`f (∑ wt j • u j) ≤ ∑ wt j • f (u j)` needs the `0 · ∞ = 0` convention at the indices where
-`wt j = 0` and `f (u j) = ⊤`, which is a separate argument and not one every consumer wants. -/
+the same combination of the `m j`. The bound is by *reals*, not by `f (u j)` directly; the
+`EReal`-valued form `f (∑ wt j • u j) ≤ ∑ wt j • f (u j)` needs the `0 · ∞ = 0` convention at
+indices where `wt j = 0` and `f (u j) = ⊤`. Aliased as `jensen`. -/
 theorem ConvexFn.sum_le {ι : Type*} (hf : ConvexFn f) (t : Finset ι) (u : ι → E) (m wt : ι → ℝ)
     (hm : ∀ j ∈ t, f (u j) ≤ ((m j : ℝ) : EReal)) (hw : ∀ j ∈ t, 0 ≤ wt j)
     (hw1 : ∑ j ∈ t, wt j = 1) :

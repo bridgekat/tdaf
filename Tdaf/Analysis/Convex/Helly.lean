@@ -16,14 +16,22 @@ import Tdaf.Analysis.Convex.RelativeInterior
 
 Rockafellar's §21. The section's engine is **Theorem 21.1**: for proper convex functions
 `f₁, …, f_m` that are finite on `ri C`, either the strict system `fᵢ(x) < 0` has a solution in `C`,
-or some non-trivial non-negative combination `λ₁f₁ + ⋯ + λ_mf_m` is non-negative on all of `C`.
-It is the existence workhorse behind the Lagrange multiplier theorems of §27 and §28.
+or some non-trivial non-negative combination `λ₁f₁ + ⋯ + λ_mf_m` is non-negative on all of `C`. It
+is the existence workhorse behind the Lagrange multiplier theorems of §27 and §28.
+
+The hypothesis `ri C ⊆ dom fᵢ` is not decoration. Rockafellar's counterexample: on `ℝ` take
+`f₁ x = -√x` for `x ≥ 0` and `+∞` otherwise, `f₂ x = x`, `C = ℝ`; neither alternative holds.
+
+Theorems 21.4 and 21.5, which weaken Theorem 21.3's recession hypothesis, are in
+`Tdaf/Analysis/Convex/HellyRefined.lean`; they share this file's tail, since
+`exists_multipliers_of_posHomGen_convFn_conj_eq_bot` is the half of Theorem 21.3 that does not
+mention recession at all.
 
 ## Main results
 
-* `alternative_of_convex_system` — **Theorem 21.1**, the substantial half.
-* `not_exists_forall_neg_of_forall_zero_le_weighted` — Theorem 21.1, the easy half: the two
-  alternatives exclude each other.
+* `alternative_of_convex_system` — **Theorem 21.1**, the substantial half;
+  `not_exists_forall_neg_of_forall_zero_le_weighted` is the easy half, that the two alternatives
+  exclude each other.
 * `alternative_of_convex_system_affine` — **Theorem 21.2**, the refinement that keeps affine
   constraints apart and so sharpens alternative (b) to "not all of the `λᵢ` on the *convex*
   constraints vanish".
@@ -35,77 +43,28 @@ It is the existence workhorse behind the Lagrange multiplier theorems of §27 an
 * `alternative_infinite_system_univ`, `alternative_infinite_system` — **Theorem 21.3**: the
   alternative for *weak* inequalities over an arbitrary index set.
 * `exists_multipliers_of_posHomGen_convFn_conj_eq_bot` — the multiplier half of Theorem 21.3, with
-  `k(0) = -∞` as a hypothesis rather than a consequence of the recession assumption; this is what
-  **Theorem 21.4** reuses.
-* `exists_forall_le_zero_of_forall_subsystem` — **Corollary 21.3.1**;
-  `not_forall_le_weighted_of_forall_subsystem` is its contradiction step, shared with Theorem
-  21.4's version.
+  `k(0) = -∞` as a hypothesis rather than a consequence of the recession assumption.
+* `exists_forall_le_zero_of_forall_subsystem` — **Corollary 21.3.1**.
 * `helly_of_no_common_recession` — **Corollary 21.3.2**, Helly's theorem for infinite families.
-* `helly_of_exists_isBounded_biInter` — the **exercise of book line 7593**: when every subfamily has
-  a common point, the recession hypothesis may be replaced by "some finite subfamily has a bounded
-  intersection". The equivalence of the two hypotheses is
-  `iInter_recessionCone_eq_zero_iff_exists_isBounded`, in `Recession/Cone.lean`.
+* `helly_of_exists_isBounded_biInter` — the exercise after Corollary 21.3.2: when every subfamily
+  has a common point, the recession hypothesis may be replaced by "some finite subfamily has a
+  bounded intersection".
 * `finrank_eq_of_isCompatiblePairing` — the bookkeeping lemma that lets the multiplier count be
   stated as `dim E + 1` although Carathéodory is applied in `F`.
 
-## What is not here
+## Implementation notes
 
-**Theorems 21.4 and 21.5 are elsewhere.** They live in
-`Tdaf/Analysis/Convex/HellyRefined.lean`, which weakens Theorem 21.3's recession hypothesis to
-"finitely many of the `fᵢ` are affine (resp. finitely many of the `Cᵢ` are polyhedral), and every
-common direction of recession is a direction of *constancy* (resp. of linearity) for the rest".
-They import Corollary 19.1.2 for functions and Theorems 20.1 and 20.2, none of which this file
-needs, and they share this file's tail: `exists_multipliers_of_posHomGen_convFn_conj_eq_bot` is the
-half of Theorem 21.3 that does not mention recession at all, and
-`not_forall_le_weighted_of_forall_subsystem` is the contradiction step of Corollary 21.3.1.
+The weighted sum is read in `EReal` with Rockafellar's `0 · ∞ = 0`: `∑ i, (l i : EReal) * f i x` is
+exactly `λ₁f₁(x) + ⋯ + λ_mf_m(x)`, and a vanishing multiplier silently drops its constraint.
+Multipliers are *not* normalised to sum to `1`; Rockafellar's alternative (b) is `∑ λᵢ fᵢ(x) ≥ ε`
+with the `λᵢ` unnormalised, and that is what is proved.
 
-**No §27 result waits on Theorems 21.4 and 21.5 any more.** Theorem 27.3's polyhedral refinement,
-the one downstream consumer named for Theorem 21.5, is proved in `Optimization/Minimum.lean` by
-projecting along the constancy space of the objective.
-
-**The multipliers of Theorem 21.3 are not claimed to be normalisable to sum to `1`.** Rockafellar's
-statement (b) is `∑ λᵢ fᵢ(x) ≥ ε` with the `λᵢ` unnormalised, and that is what is proved; the
-normalised form appears inside the proof of Corollary 21.3.1 only.
-
-## Design notes
-
-**The weighted sum is read in `EReal` with Rockafellar's `0 · ∞ = 0`.** `∑ i, (l i : EReal) * f i x`
-is exactly Rockafellar's `λ₁f₁(x) + ⋯ + λ_mf_m(x)`: `EReal` multiplication already sends `0 * ⊤`
-to `0`, so a vanishing multiplier silently drops its constraint, which is the convention the
-theorem needs.
-
-**The proof is Rockafellar's, with `ℝ^m` read as `ι → ℝ`.** The convex set
-`C₁ = {z | ∃ x ∈ C, ∀ i, fᵢ(x) < zᵢ}` is disjoint from the non-positive orthant exactly when the
-strict system is unsolvable, and Theorem 11.3 separates the two properly. The separating
-functional's coordinates are the multipliers; the non-positive orthant forces them non-negative,
-and properness of the separation forces them not all zero.
-
-**The passage from `ri C` to `C` is Corollary 7.3.3.** Separation only delivers the inequality at
-points where every `fᵢ` is finite, which is where `ri C ⊆ dom fᵢ` puts them. `ConvexFn.sum` and
-`ConvexFn.smul` make the weighted sum a convex function, and `ConvexFn.le_of_mem_closure` carries
-its lower bound from `ri C` to `cl (ri C) = cl C ⊇ C`.
-
-**The hypothesis `ri C ⊆ dom fᵢ` is not decoration.** Rockafellar's own counterexample: on `ℝ`
-take `f₁ x = -√x` for `x ≥ 0` and `+∞` otherwise, `f₂ x = x`, `C = ℝ`. Neither alternative holds.
-
-**Theorem 21.2 keeps the affine constraints in a separate index type.** Rockafellar splits
-`1, …, m` at `k`; here the convex constraints are indexed by `ι` and the affine ones by `κ`, and the
-separating space is `(ι ⊕ κ) → ℝ`. The affine constraints enter `C₁` as *equations*
+Theorem 21.2 keeps the affine constraints in a separate index type — the convex constraints in `ι`,
+the affine ones in `κ`, and the separating space `(ι ⊕ κ) → ℝ`. They enter as *equations*
 `aⱼ(x) = z(inr j)` rather than inequalities, which is what makes the non-containment clause of
-Theorem 20.2 usable, and
-they are modelled as `E →ᵃ[ℝ] ℝ` rather than as `EReal`-valued convex functions — an affine function
-is real-valued by definition, and the three little lemmas `combo_affine_sum`,
-`convexFn_coe_affine_sum` and `eq_zero_of_nonneg_of_mem_relint_affine_sum` supply everything the
-proof asks of them without needing the `AffineMap` module structure.
-
-**Theorem 21.1 is the case `κ = Empty` of Theorem 21.2, but is proved independently.** Rockafellar
-remarks that §21 can be read without §20 provided Theorems 21.2, 21.4 and 21.5 are skipped, and the
-independent proof is what makes that true: 21.1 needs only Theorem 11.3, while 21.2 needs the
-polyhedral separation Theorem 20.2. Corollary 28.2.1 uses the cheaper route.
-
-**Corollary 21.6.2 is stated with an explicit support `Finset`.** `∃ S l, S.card ≤ n + 1 ∧
-(∀ i ∉ S, l i = 0) ∧ …` avoids having to decide `l i ≠ 0`, and extending the subsystem's multipliers
-by zero is harmless in `EReal` precisely because `0 · (+∞) = 0`.
+Theorem 20.2 usable, and they are modelled as `E →ᵃ[ℝ] ℝ` rather than as `EReal`-valued convex
+functions. Theorem 21.1 is the case `κ = Empty` but is proved independently, so that §21 can be
+read without §20: 21.1 needs only Theorem 11.3, while 21.2 needs Theorem 20.2.
 
 ## References
 
@@ -168,9 +127,8 @@ variable {ι : Type*} [Fintype ι] {C : Set E} {f : ι → E → EReal}
 
 /-- **Rockafellar, Theorem 21.1.** For proper convex functions finite on `ri C`, exactly one of the
 two alternatives holds: either the strict system `fᵢ(x) < 0` is solvable in `C`, or a non-trivial
-non-negative combination of the `fᵢ` is non-negative throughout `C`.
-
-Exclusivity is `not_exists_forall_neg_of_forall_zero_le_weighted`; this is the half with content. -/
+non-negative combination of the `fᵢ` is non-negative throughout `C`. This is the half with content;
+exclusivity is `not_exists_forall_neg_of_forall_zero_le_weighted`. -/
 theorem alternative_of_convex_system [Nonempty ι] (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
     (hp : ∀ i, Proper (f i)) (hdom : ∀ i, ri C ⊆ dom (f i)) :
     (∃ x ∈ C, ∀ i, f i x < 0) ∨
@@ -447,12 +405,9 @@ variable {a : κ → (E →ᵃ[ℝ] ℝ)}
 /-- **Rockafellar, Theorem 21.2.** The refinement of Theorem 21.1 that treats affine constraints
 separately: if the affine system `a_j x ≤ 0` is solvable in `ri C`, then either the mixed system
 `f_i x < 0`, `a_j x ≤ 0` is solvable in `C`, or there are non-negative multipliers — *not all of
-the `λ_i` zero* — making the combined function non-negative on `C`.
-
-Theorem 21.1 is the case `κ = Empty`. What the affine constraints buy is the sharper conclusion
-`l ≠ 0`, which alternative (b) of Theorem 21.1 could not give if the affine constraints were folded
-in as ordinary convex functions; the price is that the separation must be the polyhedral one
-(Theorem 20.2) rather than Theorem 11.3. -/
+the `λ_i` zero* — making the combined function non-negative on `C`. Theorem 21.1 is the case
+`κ = Empty`; what the affine constraints buy is the sharper conclusion `l ≠ 0`, at the price of
+needing polyhedral separation (Theorem 20.2) rather than Theorem 11.3. -/
 theorem alternative_of_convex_system_affine (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
     (hp : ∀ i, Proper (f i)) (hdom : ∀ i, ri C ⊆ dom (f i))
     (hfeas : ∃ x ∈ ri C, ∀ j, a j x ≤ 0) :
@@ -691,11 +646,8 @@ variable {ι κ : Type*} {C : Set E} {f : ι → E → EReal} {g : κ → E → 
 
 /-- **Rockafellar, Theorem 21.6** (Helly's theorem for finite collections): a finite collection of
 convex sets in an `n`-dimensional space has a common point as soon as every `n + 1` of them do. No
-closedness and no recession hypothesis is needed — that is what distinguishes this from Corollary
-21.3.2.
-
-This is Mathlib's `Convex.helly_theorem'`; the alias exists so that the book's numbering has a
-name in this development, and so that Corollary 21.6.1 below reads as Rockafellar's proof does. -/
+closedness and no recession hypothesis is needed — that is what distinguishes it from
+Corollary 21.3.2. This is Mathlib's `Convex.helly_theorem'` under the book's number. -/
 theorem helly_finite {F : ι → Set E} {s : Finset ι} (hconv : ∀ i ∈ s, Convex ℝ (F i))
     (hinter : ∀ I ⊆ s, I.card ≤ Module.finrank ℝ E + 1 → (⋂ i ∈ I, F i).Nonempty) :
     (⋂ i ∈ s, F i).Nonempty :=
@@ -703,12 +655,9 @@ theorem helly_finite {F : ι → Set E} {s : Finset ι} (hconv : ∀ i ∈ s, Co
 
 /-- **Rockafellar, Corollary 21.6.1.** A finite system of convex inequalities — some strict, some
 weak — is solvable in a convex set `C` as soon as every subsystem of at most `n + 1` inequalities
-is solvable in `C`.
-
-Rockafellar's proof, verbatim: `C` and the sublevel sets `{x | fᵢ x < 0}`, `{x | gⱼ x ≤ 0}` form a
-finite collection of convex sets to which Theorem 21.6 applies. Counting is the only fiddly point:
-a subcollection of at most `n + 1` of the sets uses at most `n + 1` of the inequalities whether or
-not it also uses `C`, so the hypothesis here covers every case of the Helly hypothesis. -/
+is solvable in `C`. Counting is the only fiddly point: a subcollection of at most `n + 1` of the
+sets `C`, `{fᵢ < 0}`, `{gⱼ ≤ 0}` uses at most `n + 1` of the inequalities whether or not it also
+uses `C`. -/
 theorem exists_mem_of_forall_subsystem [Finite ι] [Finite κ] (hC : Convex ℝ C)
     (hf : ∀ i, ConvexFn (f i)) (hg : ∀ j, ConvexFn (g j))
     (hsub : ∀ (S : Finset ι) (T : Finset κ), S.card + T.card ≤ Module.finrank ℝ E + 1 →
@@ -782,13 +731,10 @@ theorem exists_mem_of_forall_subsystem_lt [Finite ι] (hC : Convex ℝ C)
 
 variable [Fintype ι]
 
-/-- **Rockafellar, Corollary 21.6.2.** The multipliers of Theorem 21.1 can be chosen supported on
-at most `n + 1` indices.
-
-The proof is Rockafellar's one-liner: if alternative (a) fails, Corollary 21.6.1 says it already
-fails for a subsystem of at most `n + 1` inequalities, and Theorem 21.1 applied to *that* subsystem
-produces multipliers which extend by zero. The extension is harmless in `EReal` because
-`0 · (+∞) = 0`, so the added terms contribute nothing even where the dropped `fᵢ` are infinite. -/
+/-- **Rockafellar, Corollary 21.6.2.** The multipliers of Theorem 21.1 can be chosen supported on at
+most `n + 1` indices: if alternative (a) fails, Corollary 21.6.1 says it already fails for a
+subsystem of at most `n + 1` inequalities, and the multipliers Theorem 21.1 produces for that
+subsystem extend by zero — harmless in `EReal` because `0 · (+∞) = 0`. -/
 theorem sparse_alternative_of_convex_system [Nonempty ι] (hC : Convex ℝ C)
     (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i)) (hdom : ∀ i, ri C ⊆ dom (f i)) :
     (∃ x ∈ C, ∀ i, f i x < 0) ∨
@@ -875,11 +821,9 @@ variable {E F : Type*}
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {ι : Type*} {f : ι → E → EReal} {C : Set E}
 
 /-- In finite dimensions a **compatible pairing forces the two spaces to have equal dimension**:
-`evalCLM B` and `evalCLM B.flip` are surjective linear maps onto the two continuous duals, and in
-finite dimensions the continuous dual has the dimension of the space.
-
-This is what lets §21's multiplier count be stated as Rockafellar's `n + 1`, with `n = dim E`,
-even though the multipliers are produced by Carathéodory's theorem applied in `F`. -/
+`evalCLM B` and `evalCLM B.flip` are surjective onto the two continuous duals, which in finite
+dimensions have the dimension of the space. This is what lets §21's multiplier count be stated as
+`n + 1` with `n = dim E`, although Carathéodory is applied in `F`. -/
 theorem finrank_eq_of_isCompatiblePairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
     [IsCompatiblePairing B] [IsCompatiblePairing B.flip] :
     Module.finrank ℝ F = Module.finrank ℝ E := by
@@ -898,16 +842,10 @@ theorem finrank_eq_of_isCompatiblePairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
   omega
 
 /-- **Rockafellar, Theorem 21.3**, the multiplier half, isolated from the recession hypothesis.
-
 Once the positively homogeneous convex function `k` generated by `conv {fᵢ*}` has `k(0) = -∞`,
 Corollary 17.1.3 produces the multipliers directly. Theorem 21.3 gets `k(0) = -∞` from the
-recession hypothesis through Theorems 13.5 and 7.4; **Theorem 21.4** gets it from a polyhedral
-subfamily instead (`apply_zero_eq_bot_of_le_of_le`, `Tdaf/Analysis/Convex/HellyRefined.lean`), and
-that is the *only* difference between the two theorems.
-
-The final step is *not* Rockafellar's. He runs `f* = cl(f₁*λ₁ □ ⋯ □ fₘ*λₘ)` through Theorems 16.4
-and 16.1; but the inequality `∑ λᵢ fᵢ(x) ≥ -∑ λᵢ fᵢ*(yᵢ)` is Fenchel's inequality summed termwise,
-using only `∑ λᵢ yᵢ = 0`, and no infimal convolution is needed. -/
+recession hypothesis; **Theorem 21.4** gets it from a polyhedral subfamily instead
+(`apply_zero_eq_bot_of_le_of_le`), and that is the *only* difference between the two theorems. -/
 theorem exists_multipliers_of_posHomGen_convFn_conj_eq_bot [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip] (hf : ∀ i, ClosedProperConvexFn (f i))
     (hk0 : posHomGen (convFn fun i => conj B (f i)) (0 : F) = ⊥) :
@@ -992,14 +930,12 @@ theorem exists_multipliers_of_posHomGen_convFn_conj_eq_bot [IsCompatiblePairing 
 solvable, or finitely many non-negative multipliers — at most `n + 1` of them non-zero — make
 `∑ λᵢ fᵢ` bounded away from `0` from above.
 
-Rockafellar's proof: with `h = conv {fᵢ*}` and `k` the positively homogeneous convex function it
-generates, Theorem 13.5 makes `cl k` the support function of `{x | ∀ i, fᵢ(x) ≤ 0}`, which is
-empty when (a) fails, so `(cl k)(0) = -∞`; the recession hypothesis puts `0` in `ri (dom k)`, so
-`k(0) = -∞` too, i.e. `h(0) < 0`; and Corollary 17.1.3 turns that into the multipliers.
-
-The final step is *not* Rockafellar's. He runs `f* = cl(f₁*λ₁ □ ⋯ □ fₘ*λₘ)` through Theorems 16.4
-and 16.1; but the inequality `∑ λᵢ fᵢ(x) ≥ -∑ λᵢ fᵢ*(yᵢ)` is Fenchel's inequality summed termwise,
-using only `∑ λᵢ yᵢ = 0`, and no infimal convolution is needed. -/
+With `h = conv {fᵢ*}` and `k` the positively homogeneous convex function it generates, Theorem 13.5
+makes `cl k` the support function of `{x | ∀ i, fᵢ(x) ≤ 0}`, which is empty when (a) fails, so
+`(cl k)(0) = -∞`; the recession hypothesis puts `0` in `ri (dom k)`, so `k(0) = -∞`; and
+Corollary 17.1.3 turns that into the multipliers. The final step is not Rockafellar's: the
+inequality `∑ λᵢ fᵢ(x) ≥ -∑ λᵢ fᵢ*(yᵢ)` is Fenchel's inequality summed termwise, using only
+`∑ λᵢ yᵢ = 0`, so no infimal convolution is needed. -/
 theorem alternative_infinite_system_univ [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ∀ i, ClosedProperConvexFn (f i))
     (hrec : ∀ y : E, (∀ i, recessionFn (f i) y ≤ 0) → y = 0) :
@@ -1064,14 +1000,11 @@ theorem alternative_infinite_system_univ [IsCompatiblePairing B] [IsCompatiblePa
 /-- **Rockafellar, Theorem 21.3.** For a collection of closed proper convex functions indexed by an
 *arbitrary* set and a non-empty closed convex set `C`, exactly one of the following holds: the weak
 system `fᵢ(x) ≤ 0` is solvable in `C`, or there are non-negative multipliers — only finitely many
-non-zero, and at most `n + 1` of them — with `∑ λᵢ fᵢ ≥ ε > 0` throughout `C`.
-
-The hypothesis is Rockafellar's: the `fᵢ` have no common direction of recession which is also a
-direction of recession of `C`. His counterexample with the two hyperbolas shows it cannot be
-dropped.
-
-`C` is folded into the collection as its indicator function, exactly as the book does; that is why
-the index type of the auxiliary system is `Option ι`. -/
+non-zero, and at most `n + 1` of them — with `∑ λᵢ fᵢ ≥ ε > 0` throughout `C`. The hypothesis is
+Rockafellar's: the `fᵢ` have no common direction of recession which is also a direction of
+recession of `C`; his counterexample with two hyperbolas shows it cannot be dropped. `C` is folded
+into the collection as its indicator function, which is why the index type of the auxiliary system
+is `Option ι`. -/
 theorem alternative_infinite_system [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ∀ i, ClosedProperConvexFn (f i)) (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
     (hrec : ∀ y : E, (∀ i, recessionFn (f i) y ≤ 0) → y ∈ recessionCone C → y = 0) :
@@ -1131,15 +1064,11 @@ theorem alternative_infinite_system [IsCompatiblePairing B] [IsCompatiblePairing
             exact Finset.sum_congr rfl fun i _ => rfl
 
 omit [FiniteDimensional ℝ E] in
-/-- **Alternative (b) of Theorem 21.3 is incompatible with the tolerance hypothesis of Corollary
-21.3.1.** Multipliers that keep `∑ λᵢ fᵢ` at least `ε > 0` on `C` cannot coexist with subsystems
-solvable to within `ε / (2 ∑ λᵢ)`.
-
-Rockafellar normalises the multipliers to sum to `1` and derives a contradiction with a strict
-inequality; here the tolerance is halved instead, which makes every step non-strict — worth doing,
-since `EReal` is not a cancellative ordered monoid and strict sums do not add.
-
-Isolating this step lets Corollary 21.3.1 and its refinement under **Theorem 21.4** share it. -/
+/-- **Alternative (b) of Theorem 21.3 is incompatible with the tolerance hypothesis of
+Corollary 21.3.1.** Multipliers that keep `∑ λᵢ fᵢ` at least `ε > 0` on `C` cannot coexist with
+subsystems solvable to within `ε / (2 ∑ λᵢ)`. Rockafellar normalises the multipliers to sum to `1`
+and argues with a strict inequality; halving the tolerance instead makes every step non-strict,
+which matters because `EReal` is not a cancellative ordered monoid and strict sums do not add. -/
 theorem not_forall_le_weighted_of_forall_subsystem {t : Finset ι} {l : ι → ℝ} {ε : ℝ}
     (hCne : C.Nonempty) (hl0 : ∀ i, 0 ≤ l i) (hε : 0 < ε)
     (hcard : t.card ≤ Module.finrank ℝ E + 1)
@@ -1181,12 +1110,7 @@ theorem not_forall_le_weighted_of_forall_subsystem {t : Finset ι} {l : ι → �
 
 /-- **Rockafellar, Corollary 21.3.1.** Under the recession hypothesis of Theorem 21.3, an infinite
 system of weak convex inequalities is solvable in `C` as soon as every subsystem of at most `n + 1`
-of the inequalities is solvable in `C` to within an arbitrarily small tolerance.
-
-The proof is the book's: alternative (b) is incompatible with the tolerance hypothesis. Rockafellar
-normalises the multipliers to sum to `1` and derives a contradiction with a strict inequality; here
-the tolerance is taken to be `ε / (2λ)` instead of `ε / λ`, which makes every step non-strict —
-worth doing, since `EReal` is not a cancellative ordered monoid and strict sums do not add. -/
+of the inequalities is solvable in `C` to within an arbitrarily small tolerance. -/
 theorem exists_forall_le_zero_of_forall_subsystem [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip]
     (hf : ∀ i, ClosedProperConvexFn (f i)) (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
@@ -1201,13 +1125,10 @@ theorem exists_forall_le_zero_of_forall_subsystem [IsCompatiblePairing B]
 
 /-- **Rockafellar, Corollary 21.3.2** — Helly's theorem for an *infinite* family. A family of
 non-empty closed convex sets with **no common direction of recession** has a common point as soon
-as every `n + 1` of them do.
-
-The recession hypothesis cannot be dropped: Rockafellar's family `{x | fₖ(x) ≤ ε}` built from the
-two hyperbolas has the `(n+1)`-intersection property and empty total intersection.
-
-Compare `helly_finite` (Theorem 21.6), where the family is finite and neither closedness nor a
-recession hypothesis is needed. -/
+as every `n + 1` of them do. The recession hypothesis cannot be dropped: Rockafellar's family built
+from two hyperbolas has the `(n+1)`-intersection property and empty total intersection. Compare
+`helly_finite` (Theorem 21.6), where the family is finite and neither closedness nor a recession
+hypothesis is needed. -/
 theorem helly_of_no_common_recession [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     {K : ι → Set E} (hconv : ∀ i, Convex ℝ (K i)) (hcl : ∀ i, IsClosed (K i))
     (hne : ∀ i, (K i).Nonempty)
@@ -1242,14 +1163,12 @@ theorem helly_of_no_common_recession [IsCompatiblePairing B] [IsCompatiblePairin
   rw [indicatorFn_of_notMem hcon] at h0
   exact absurd h0 (by simp)
 
-/-- **Rockafellar, §21, book line 7593** — the exercise after Corollary 21.3.2, read as a Helly
-theorem. A family of closed convex sets *every finite subfamily of which has a common point* has a
-common point outright, as soon as **some** finite subfamily has a bounded intersection.
-
-This is the usable form of `helly_of_no_common_recession`. Under the standing hypothesis the
-recession hypothesis and the bounded-subfamily hypothesis are equivalent
+/-- **Rockafellar, §21**, the exercise after Corollary 21.3.2, read as a Helly theorem. A family of
+closed convex sets *every finite subfamily of which has a common point* has a common point
+outright, as soon as **some** finite subfamily has a bounded intersection. Under that standing
+hypothesis the recession and the bounded-subfamily hypotheses are equivalent
 (`iInter_recessionCone_eq_zero_iff_exists_isBounded`), and the bounded subfamily is in practice a
-single bounded `K i`, which is the case Rockafellar mentions first. -/
+single bounded `K i`. -/
 theorem helly_of_exists_isBounded_biInter [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     {K : ι → Set E} (hconv : ∀ i, Convex ℝ (K i)) (hcl : ∀ i, IsClosed (K i))
     (hne : ∀ S : Finset ι, (⋂ i ∈ S, K i).Nonempty)

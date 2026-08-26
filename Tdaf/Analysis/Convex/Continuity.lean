@@ -10,14 +10,12 @@ import Tdaf.Analysis.Convex.Recession.Function
 /-!
 # Continuity of a convex function on the relative interior of its domain
 
-Rockafellar's **Theorem 10.1**: a proper convex function on a finite-dimensional space is
+**Rockafellar's Theorem 10.1**: a proper convex function on a finite-dimensional space is
 continuous, relative to the affine hull of its effective domain, at every relative interior point
-of that domain.
-
-Mathlib proves the *interior* statement (`ConvexOn.continuousOn_interior`) and leaves the relative
-version as a `proof_wanted` in `Mathlib/Analysis/Convex/Continuous.lean`, because
-`intrinsicInterior` lives in `Mathlib/Analysis/Convex/Intrinsic.lean` and the two files do not meet.
-This file supplies it.
+of that domain. Mathlib proves the *interior* statement (`ConvexOn.continuousOn_interior`) and
+leaves the relative version open, because `intrinsicInterior` lives in a file that does not meet
+`Mathlib/Analysis/Convex/Continuous.lean`. This file supplies it, and with it the quantitative
+Theorems 10.4 and 10.5.
 
 ## Main results
 
@@ -25,11 +23,11 @@ This file supplies it.
   `C` on a subspace `V` spanned by `C - x₀`. This is the reduction "relative interior = interior in
   the affine hull", carried out in a linear chart rather than in the affine hull itself, so that
   `Convex` and `ConvexOn` — which need a module, not a torsor — still apply.
-* `ConvexFn.continuousOn_toReal_relint_dom`, `ConvexFn.continuousOn_relint_dom` —
-  **Theorem 10.1**, in the real-valued and the `EReal`-valued form.
 * `exists_chart_retraction` — the chart packaged with a *continuous linear* retraction, which is
   what carries continuity and Lipschitz constants back from the chart to `E`.
-* `ConvexFn.continuous_of_dom_eq_univ` — **Corollary 10.1.1**.
+* `ConvexFn.continuousOn_toReal_relint_dom`, `ConvexFn.continuousOn_relint_dom` —
+  **Theorem 10.1**, in the real-valued and the `EReal`-valued form;
+  `ConvexFn.continuous_of_dom_eq_univ` is **Corollary 10.1.1**.
 * `ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset`,
   `ConvexOn.exists_lipschitzOnWith_of_isCompact`, `ConvexFn.exists_lipschitzOnWith_of_isCompact` —
   **Theorem 10.4**: the quantitative form with the constant `2M/ε` exhibited (which is what
@@ -42,35 +40,22 @@ This file supplies it.
 * `intrinsicInterior_vadd` — translation invariance of `ri`, which the chart needs and which
   Mathlib does not state.
 
-## Design notes
+## Implementation notes
 
-**The chart is a linear subspace, not the affine hull.** `intrinsicInterior ℝ C` is *defined* as the
-image of the interior taken inside `↥(affineSpan ℝ C)`, so it looks as if that subtype is the right
-place to work. It is not: `↥(affineSpan ℝ C)` is an `AddTorsor`, and `Convex`, `ConvexOn` and every
-Mathlib continuity theorem need a *module*. Fixing a point `x₀ ∈ C` and moving to a subspace `V`
-spanned by `C - x₀` costs one translation and buys the entire module API.
-
-**The subspace is a parameter, not a definition.** Every lemma here takes `V` together with
-`hV : V = span ℝ (C - x₀)` rather than mentioning a `chartSpace C x₀` of its own. The reason is
-operational: `chart C x₀ V` has type `Set ↥V`, so instance synthesis for `↥V` happens constantly,
-and with `V` a definition that unfolds to a `Submodule.span` every such query redoes the unfolding
-— rewriting inside `Set ↥(chartSpace C x₀)` then times out. With `V` opaque the same proofs go
-through immediately, and the caller obtains an opaque `V` from `⟨_, rfl⟩`.
-
-**Three lemmas do the reduction.** `Convex.relint_image` (Theorem 6.6) moves `ri` across the
-inclusion `V → E`; `intrinsicInterior_eq_interior` collapses `ri` to `interior` inside `V`, because
-`chart C x₀ V` affinely spans `V` by construction; and `intrinsicInterior_vadd` handles the
-translation. None of them is new.
-
-**Transporting continuity back needs a retraction, not an embedding.** `ContinuousOn` on the image
-`x₀ + ι (int D)` does not follow formally from `ContinuousOn` on `int D` — the inclusion is an
-embedding, but the cheap way to exploit that is to exhibit a continuous left inverse. In finite
-dimensions `V` has a complement, so `LinearMap.linearProjOfIsCompl` gives one, and
-`ContinuousOn.congr` finishes.
+The chart is a linear subspace, not the affine hull. `intrinsicInterior ℝ C` is defined as the
+interior taken inside `↥(affineSpan ℝ C)`, but that subtype is an `AddTorsor`, while `Convex`,
+`ConvexOn` and every Mathlib continuity theorem need a *module*; fixing `x₀ ∈ C` and moving to a
+subspace `V` spanned by `C - x₀` costs one translation and buys the whole module API. The subspace
+is a parameter rather than a definition — every lemma takes `V` with `hV : V = span ℝ (C - x₀)` —
+so that instance synthesis for `↥V` never has to unfold a `Submodule.span`; callers obtain an
+opaque `V` from `⟨_, rfl⟩`. Transporting continuity back to `E` uses a continuous left inverse
+rather than the embedding, which finite-dimensionality supplies through
+`LinearMap.linearProjOfIsCompl`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10 (Theorem 10.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10 (Theorems 10.1, 10.4,
+  10.5).
 -/
 
 open Pointwise Set
@@ -159,15 +144,11 @@ theorem relint_eq_vadd_image_interior (hC : Convex ℝ C) (hx₀ : x₀ ∈ C)
     exact h1
   rw [← hstep, intrinsicInterior_vadd, vadd_vadd, add_neg_cancel, zero_vadd]
 
-/-- **The chart, packaged for reuse.** For a convex `C` and a point `x₀ ∈ C` there is a subspace
-`V` and a *continuous linear retraction* `r : E →L[ℝ] V` such that `x ↦ r (x - x₀)` carries `ri C`
-into `interior (chart C x₀ V)` and `x₀ + r (x - x₀) = x` there, together with the chart identity
-`relint_eq_vadd_image_interior` for that `V`.
-
-This is everything Theorems 10.1 and 10.4 use: continuity transports along `r` because `r` is
-continuous, and Lipschitz constants transport because `r` is a *bounded* linear map. The subspace
-`V` is existentially quantified precisely so that callers never see the `Submodule.span` — see the
-module docstring. -/
+/-- **The chart, packaged for reuse.** For a convex `C` and a point `x₀ ∈ C` there is a subspace `V`
+and a *continuous linear retraction* `r : E →L[ℝ] V` such that `x ↦ r (x - x₀)` carries `ri C` into
+`interior (chart C x₀ V)` and `x₀ + r (x - x₀) = x` there, together with the chart identity
+`relint_eq_vadd_image_interior` for that `V`. Continuity transports along `r` because `r` is
+continuous, and Lipschitz constants because `r` is *bounded*. -/
 theorem exists_chart_retraction (hC : Convex ℝ C) (hx₀ : x₀ ∈ C) :
     ∃ (V : Submodule ℝ E) (r : E →L[ℝ] V),
       ri C = x₀ +ᵥ (V.subtype '' interior (chart C x₀ V)) ∧
@@ -277,19 +258,14 @@ variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W] [FiniteDimension
 omit [FiniteDimensional ℝ W] in
 /-- **The quantitative core of Rockafellar's Theorem 10.4**: if `ψ` is convex on `D` and bounded by
 `M` in absolute value on the closed `ε`-collar of `S`, and that collar lies inside `D`, then `ψ` is
-Lipschitz on `S` with constant `2M/ε`.
+Lipschitz on `S` with constant `2M/ε`. For `x ≠ y` in `S` the point
+`z = y + (ε / ‖y - x‖) • (y - x)` sits in the collar and expresses `y` as a convex combination of
+`x` and `z`, so convexity bounds the increment by the oscillation of `ψ` over the collar.
 
-This is Rockafellar's own argument. For `x ≠ y` in `S` the point `z = y + (ε / ‖y - x‖) • (y - x)`
-sits in the collar and expresses `y` as a convex combination of `x` and `z` with weight
-`‖y - x‖ / (ε + ‖y - x‖)` on `z`. Convexity then bounds the increment by that weight times the
-oscillation of `ψ` over the collar.
-
-The constant is *exhibited* rather than existentially quantified because it depends on the data
-only through `ε` and `M`: a whole family of convex functions sharing one collar and one bound is
-therefore equi-Lipschitzian with a single constant, which is Rockafellar's Theorem 10.6.
-
-Mathlib has the two-sided ball version (`ConvexOn.lipschitzOnWith_of_abs_le`) but nothing for a
-general compact subset, and the collar argument does not follow from it. -/
+The constant is *exhibited* rather than existentially quantified: a family of convex functions
+sharing one collar and one bound is therefore equi-Lipschitzian with a single constant, which is
+Theorem 10.6. Mathlib's `ConvexOn.lipschitzOnWith_of_abs_le` is the two-sided ball version, and
+the collar argument does not follow from it. -/
 theorem ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset (hψ : ConvexOn ℝ D ψ) {S : Set W}
     {ε M : ℝ} (hε : 0 < ε) (hM : 0 ≤ M) (hsub : Metric.cthickening ε S ⊆ D)
     (hMabs : ∀ w ∈ Metric.cthickening ε S, |ψ w| ≤ M) :
@@ -347,11 +323,8 @@ theorem ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset (hψ : ConvexOn
     linarith [key x hx y hy]
 
 /-- **The interior form of Rockafellar's Theorem 10.4**: a function convex on `D` is Lipschitz on
-every compact subset of `interior D`.
-
-Compactness supplies an `ε`-collar of `S` still inside `interior D`, and continuity (Theorem 10.1
-in Mathlib's `interior` form) bounds `ψ` on that collar; the quantitative form above does the
-rest. -/
+every compact subset of `interior D`. Compactness supplies an `ε`-collar of `S` still inside
+`interior D`, on which continuity bounds `ψ`. -/
 theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {S : Set W}
     (hS : IsCompact S) (hSD : S ⊆ interior D) : ∃ K : ℝ≥0, LipschitzOnWith K ψ S := by
   obtain ⟨ε, hε, hsub⟩ := hS.exists_cthickening_subset_open isOpen_interior hSD
@@ -367,12 +340,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {f : E → EReal}
 
 /-- **Rockafellar, Theorem 10.4**: a proper convex function is Lipschitz on every compact subset of
-`ri (dom f)`.
-
-Rockafellar states it for closed bounded subsets of `ri (dom f)`, which in finite dimensions is
-compactness. The proof is `ConvexOn.exists_lipschitzOnWith_of_isCompact` read through the chart of
-Theorem 10.1: the retraction that carries continuity back is a continuous linear map, hence
-Lipschitz, so it carries Lipschitz constants back as well. -/
+`ri (dom f)`. Rockafellar states it for closed bounded subsets of `ri (dom f)`, which in finite
+dimensions is compactness. The retraction of the chart is a continuous linear map, hence Lipschitz,
+so it carries Lipschitz constants back as well as continuity. -/
 theorem ConvexFn.exists_lipschitzOnWith_of_isCompact (hf : ConvexFn f) (hp : Proper f) {S : Set E}
     (hS : IsCompact S) (hSD : S ⊆ ri (dom f)) :
     ∃ K : ℝ≥0, LipschitzOnWith K (fun x => (f x).toReal) S := by
@@ -430,12 +400,9 @@ theorem ConvexFn.isClosed_epi_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f)
     (hf.continuous_of_dom_eq_univ hp hdom).lowerSemicontinuous
 
 /-- The quantitative half of **Theorem 10.5**: when `f0⁺` is finite everywhere it is bounded by a
-linear function of the norm. This is Rockafellar's
-
-`α = sup {(f0⁺) z | ‖z‖ = 1} < ∞`,
-
-finite because `f0⁺` is a finite convex function, hence continuous (Corollary 10.1.1), and the
-unit ball is compact. Positive homogeneity spreads the bound over the whole space. -/
+linear function of the norm. The constant is Rockafellar's `α = sup {(f0⁺) z | ‖z‖ = 1}`, finite
+because `f0⁺` is a finite convex function, hence continuous (Corollary 10.1.1), and the unit ball is
+compact; positive homogeneity spreads the bound over the whole space. -/
 theorem exists_recessionFn_le_of_forall_ne_top (hp : Proper f)
     (hrec : ∀ y, recessionFn f y ≠ ⊤) :
     ∃ M : ℝ, 0 ≤ M ∧ ∀ y, recessionFn f y ≤ ((M * ‖y‖ : ℝ) : EReal) := by
@@ -468,10 +435,8 @@ theorem exists_recessionFn_le_of_forall_ne_top (hp : Proper f)
           nlinarith [hyn.le]
 
 /-- **Rockafellar, Theorem 10.5**, sufficiency: if the recession function of a finite convex
-function on the whole space is finite everywhere, the function is Lipschitz.
-
-The Lipschitz constant is Rockafellar's `α`, and the estimate is Corollary 8.5.1
-(`le_add_recessionFn`) fed with the linear bound on `f0⁺`. -/
+function on the whole space is finite everywhere, the function is Lipschitz, with Rockafellar's `α`
+as constant. -/
 theorem ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) (hrec : ∀ y, recessionFn f y ≠ ⊤) :
     ∃ K : ℝ≥0, LipschitzWith K fun x => (f x).toReal := by
@@ -497,11 +462,8 @@ theorem ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top (hf : ConvexFn f) (h
 
 omit [FiniteDimensional ℝ E] in
 /-- **Rockafellar, Theorem 10.5**, necessity: a uniformly continuous finite convex function has a
-finite recession function.
-
-Uniform continuity at `ε = 1` bounds `f (x + z) - f x` by `1` uniformly in `x` for every short
-`z`, which is exactly the difference formula of Theorem 8.5 saying `(f0⁺) z ≤ 1`; positive
-homogeneity then makes `f0⁺` finite in every direction. -/
+finite recession function. Uniform continuity at `ε = 1` bounds `f (x + z) - f x` by `1` uniformly
+in `x` for short `z`, which by Theorem 8.5 says `(f0⁺) z ≤ 1`. -/
 theorem ConvexFn.recessionFn_ne_top_of_uniformContinuous (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) (hu : UniformContinuous fun x => (f x).toReal) (y : E) :
     recessionFn f y ≠ ⊤ := by
@@ -572,11 +534,9 @@ theorem ConvexFn.exists_lipschitzWith_of_frequently_le (hf : ConvexFn f) (hp : P
       (le_trans (le_max_left a 1) ha'ge)).trans hq'
   exact ne_top_of_le_ne_top (_root_.EReal.coe_ne_top _) hbound
 
-/-- **Rockafellar, Corollary 10.5.2**: a finite convex function dominated by a Lipschitz function
-is itself Lipschitz.
-
-Rockafellar assumes the dominating `g` convex; the proof does not use it, so the statement here
-takes an arbitrary Lipschitz `g : E → ℝ`. -/
+/-- **Rockafellar, Corollary 10.5.2**: a finite convex function dominated by a Lipschitz function is
+itself Lipschitz. Rockafellar assumes the dominating `g` convex; the proof does not use it, so `g`
+here is an arbitrary Lipschitz function. -/
 theorem ConvexFn.exists_lipschitzWith_of_le_lipschitz (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) {g : E → ℝ} {K : ℝ≥0} (hg : LipschitzWith K g)
     (hle : ∀ x, f x ≤ ((g x : ℝ) : EReal)) :

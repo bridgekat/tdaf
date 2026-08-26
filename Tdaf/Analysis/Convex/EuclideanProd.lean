@@ -14,70 +14,41 @@ import Mathlib.Analysis.InnerProductSpace.PiL2
 
 `EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n)` and `EuclideanSpace ℝ (Fin (m + n))` are
 different types, and a text written in `ℝⁿ` moves between them without comment. This module is that
-move: the concatenation `(x, y) ↦ (x₁, …, x_m, y₁, …, y_n)`, together with the transport of the
-three operations a convexity statement is made of — `conj`, `subgradient` and `ri`.
+move: the concatenation `(x, y) ↦ (x₁, …, x_m, y₁, …, y_n)`, together with the transport along it
+of the operations a convexity statement is made of — `conj`, `subgradient`, `ri`, the polar and the
+pointed-cone hull.
+
+Everything turns on `inner_euclideanProdEquiv`: concatenation adds the two inner products, so the
+form `prodPairing` that a product is paired with *is* the inner product of `ℝᵐ⁺ⁿ` read through the
+concatenation. `isAdjointPair_euclideanProdEquiv` packages that as an adjointness datum, and each
+transport lemma is one application of a general substitution rule to it.
 
 ## Main definitions
 
-* `euclideanProdIsometry m n` — the concatenation as a **linear isometry**
+* `euclideanProdIsometry m n` — the concatenation as a linear isometry
   `WithLp 2 (ℝᵐ × ℝⁿ) ≃ₗᵢ[ℝ] ℝᵐ⁺ⁿ`.
-* `euclideanProdEquiv m n` — the same map as a **continuous linear equivalence**
-  `ℝᵐ × ℝⁿ ≃L[ℝ] ℝᵐ⁺ⁿ` out of the plain product.
+* `euclideanProdEquiv m n` — the same map out of the plain product, `ℝᵐ × ℝⁿ ≃L[ℝ] ℝᵐ⁺ⁿ`.
 * `euclideanOne` — `ℝ ≃L[ℝ] ℝ¹`, the scalar read as a one-dimensional Euclidean space.
-* `euclideanTripleEquiv n` — `ℝ × ℝⁿ × ℝ ≃L[ℝ] ℝⁿ⁺²`, the concatenation with a scalar factor at
-  each end, which is what a text means by the vectors `(λ, x, μ) ∈ ℝⁿ⁺²`.
+* `euclideanTripleEquiv n` — `ℝ × ℝⁿ × ℝ ≃L[ℝ] ℝⁿ⁺²`, what a text means by `(λ, x, μ) ∈ ℝⁿ⁺²`.
 
 ## Main results
 
-* `euclideanProdEquiv_apply_castAdd`, `euclideanProdEquiv_apply_natAdd`,
-  `euclideanProdEquiv_symm_apply` — the coordinates, which is what every consumer actually uses.
-* `inner_euclideanProdEquiv` — concatenation adds the two inner products, so the pairing on the
-  product that the backbone's bifunction theory is stated against (`prodPairing`) *is* the inner
-  product of `ℝᵐ⁺ⁿ` read through the concatenation.
-* `isAdjointPair_euclideanProdEquiv` — the previous line as the backbone's adjointness datum,
-  which is the hypothesis every transport below discharges.
-* `conj_comp_euclideanProdEquiv`, `subgradient_comp_euclideanProdEquiv` — a function on the
-  product and its transport to `ℝᵐ⁺ⁿ` have the same conjugate and the same subgradients, read
-  through the concatenation.
-* `relint_image_euclideanProdEquiv`, `relint_image_euclideanProdEquiv_symm` — the relative
-  interior commutes with the concatenation, in both directions.
-* `subgradient_comp_linearEquiv` — the general lemma the subgradient transport is a case of: the
-  companion of `conj_comp_linearEquiv` for the subdifferential.
-* `polarCone_image_of_pairing_eq`, `coe_hull_image` — the same transport for the two operations a
-  statement about *cones* is made of: the polar, which consumes the adjointness datum, and the
-  pointed-cone hull, which needs only linearity.
-* `inner_euclideanOne`, `inner_euclideanTripleEquiv`,
-  `closure_image_euclideanTripleEquiv` — the triple concatenation carries the inner product of
-  `ℝⁿ⁺²` to `λ λ* + ⟨x, y⟩ + μ μ*`, and commutes with the closure. This is everything a consumer
-  needs: the individual coordinates of a triple never have to be inspected.
+* `inner_euclideanProdEquiv`, `isAdjointPair_euclideanProdEquiv` — the pairing and its adjointness
+  datum; `euclideanProdEquiv_apply_castAdd` and friends give the coordinates.
+* `conj_comp_euclideanProdEquiv`, `subgradient_comp_euclideanProdEquiv`,
+  `relint_image_euclideanProdEquiv` — conjugate, subdifferential and relative interior transport.
+* `polarCone_image_of_pairing_eq`, `coe_hull_image` — the same for the polar of a set and for the
+  pointed-cone hull, which is what a statement about *cones* is made of.
+* `inner_euclideanTripleEquiv`, `closure_image_euclideanTripleEquiv` — the triple concatenation
+  carries the inner product of `ℝⁿ⁺²` to `λ λ* + ⟨x, y⟩ + μ μ*` and commutes with the closure. That
+  is all a consumer needs: which `Fin (n + 2)` index carries `λ` is an artefact of the assembly.
 
-## Design notes
+## Implementation notes
 
-**The isometry is out of `WithLp 2 (ℝᵐ × ℝⁿ)`, not out of `ℝᵐ × ℝⁿ`.** Mathlib's norm on a product
-is the *supremum* norm (`gotchas.md` SET4), so concatenation of coordinates is not an isometry of
-the plain product — `‖(x, y)‖ = max ‖x‖ ‖y‖` while `‖(x₁, …, y_n)‖ = (‖x‖² + ‖y‖²)^(1/2)`. The
-Euclidean structure on the product is `WithLp 2`, and that is where the isometry lives. This is a
-statement about `Fin m ⊕ Fin n ≃ Fin (m + n)` and `EuclideanSpace`, not about `Prod`.
-
-**Everything else uses the plain product.** `conj`, `subgradient` and `ri` need only the linear
-structure and the topology, and those the two norms share: `ℝᵐ × ℝⁿ ≃L[ℝ] ℝᵐ⁺ⁿ` is the object the
-transport lemmas are stated against, so that no consumer has to move a `Convex`, a `ConvexFn` or an
-`IsClosed` across a type synonym. `euclideanProdEquiv_eq_isometry` records that the two maps agree.
-
-**The pairing is the point.** The backbone pairs `E × F` with itself through `prodPairing`, and
-`ℝᵐ⁺ⁿ` with itself through its inner product; `inner_euclideanProdEquiv` says these are the same
-form, and `isAdjointPair_euclideanProdEquiv` packages it as the datum of design decision D3. Every
-transport below is `conj_comp_linearEquiv` or its subgradient analogue applied to that datum, which
-is why none of them has a proof longer than three lines.
-
-## What is not here
-
-* **Coordinate formulas for `euclideanTripleEquiv`.** Only `inner_euclideanTripleEquiv` is
-  supplied, because only the inner product is used: which `Fin (n + 2)` index carries `λ` is an
-  artefact of how the composite was assembled, and no statement should depend on it.
-* **A general `WithLp` on sigma types.** `PiLp.sumPiLpEquivProdLpPiLp` and
-  `LinearIsometryEquiv.piLpCongrLeft` are the two Mathlib facts this module is built from, and
-  everything beyond them is coordinate bookkeeping for `Fin (m + n)`.
+The isometry is out of `WithLp 2 (ℝᵐ × ℝⁿ)` because Mathlib's norm on a product is the *supremum*
+norm. Everything else is stated for the plain product, whose linear structure and topology are all
+that `conj`, `subgradient` and `ri` need, so that no consumer has to move a `Convex` or an
+`IsClosed` across a type synonym; `euclideanProdEquiv_eq_isometry` records that the two agree.
 -/
 
 open Set
@@ -90,19 +61,17 @@ section Defs
 
 variable (m n : ℕ)
 
-/-- **Concatenation of coordinates**, `(x, y) ↦ (x₁, …, x_m, y₁, …, y_n)`, as a linear isometry.
-
-The source is `WithLp 2 (ℝᵐ × ℝⁿ)` and not `ℝᵐ × ℝⁿ`: Mathlib's product norm is the supremum norm,
-and concatenation is an isometry only for the Euclidean one. See the module docstring. -/
+/-- **Concatenation of coordinates**, `(x, y) ↦ (x₁, …, x_m, y₁, …, y_n)`, as a linear isometry out
+of `WithLp 2 (ℝᵐ × ℝⁿ)`: Mathlib's product norm is the supremum norm, and concatenation is an
+isometry only for the Euclidean one. -/
 noncomputable def euclideanProdIsometry :
     WithLp 2 (EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n)) ≃ₗᵢ[ℝ]
       EuclideanSpace ℝ (Fin (m + n)) :=
   (PiLp.sumPiLpEquivProdLpPiLp 2 (fun _ : Fin m ⊕ Fin n => ℝ)).symm.trans
     (LinearIsometryEquiv.piLpCongrLeft 2 ℝ ℝ finSumFinEquiv)
 
-/-- **Concatenation of coordinates** out of the plain product, which carries the supremum norm.
-It is no longer an isometry, but it is still a linear homeomorphism, and that is all the transport
-of `conj`, `subgradient` and `ri` needs. -/
+/-- **Concatenation of coordinates** out of the plain product, which carries the supremum norm. No
+longer an isometry, but still a linear homeomorphism, which is all the transports below need. -/
 noncomputable def euclideanProdEquiv :
     (EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n)) ≃L[ℝ]
       EuclideanSpace ℝ (Fin (m + n)) :=
@@ -139,9 +108,8 @@ theorem euclideanProdEquiv_symm_apply (z : EuclideanSpace ℝ (Fin (m + n))) :
     (i : Fin n) : ((euclideanProdEquiv m n).symm z).2 i = z (Fin.natAdd m i) := by
   rw [euclideanProdEquiv_symm_apply]
 
-/-- **Concatenation adds the two inner products.** This is the whole content of the transport: the
-form the backbone pairs a product with, `prodPairing`, is the inner product of `ℝᵐ⁺ⁿ` read through
-the concatenation. -/
+/-- **Concatenation adds the two inner products.** So `prodPairing`, the form a product is paired
+with, is the inner product of `ℝᵐ⁺ⁿ` read through the concatenation. -/
 theorem inner_euclideanProdEquiv
     (p q : EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n)) :
     (inner ℝ (euclideanProdEquiv m n p) (euclideanProdEquiv m n q) : ℝ)
@@ -150,11 +118,7 @@ theorem inner_euclideanProdEquiv
 
 end Defs
 
-/-! ### The adjointness datum
-
-The backbone keeps the transpose of a linear map as data (design decision D3). Concatenation is
-its own transpose, in the sense that it carries `prodPairing` to the inner product, and that is
-the datum every transport below consumes. -/
+/-! ### The adjointness datum -/
 
 section Pairing
 
@@ -170,9 +134,9 @@ theorem prodPairing_euclideanProdEquiv_symm (z : EuclideanSpace ℝ (Fin (m + n)
   rw [ContinuousLinearEquiv.apply_symm_apply] at h
   exact h.symm
 
-/-- **Concatenation is an adjoint pair for the two pairings.** This is the hypothesis that
-`conj_comp_linearEquiv` and `subgradient_comp_linearEquiv` take, and it is the only mathematical
-input the transport has. -/
+/-- **Concatenation is an adjoint pair for the two pairings.** This is the hypothesis
+`conj_comp_linearEquiv` and `subgradient_comp_linearEquiv` take, and the only mathematical input the
+transport has. -/
 theorem isAdjointPair_euclideanProdEquiv :
     IsAdjointPair (innerₗ (EuclideanSpace ℝ (Fin (m + n))))
       (prodPairing (innerₗ (EuclideanSpace ℝ (Fin m))) (innerₗ (EuclideanSpace ℝ (Fin n))))
@@ -187,10 +151,8 @@ end Pairing
 
 /-! ### Transporting the subdifferential along a linear isomorphism
 
-`Duality/Conjugate.lean` has `conj_comp_linearEquiv`, Rockafellar's substitution row for the
-conjugate. The subdifferential obeys the same rule and has no such lemma; it is proved here,
-in the generality of an arbitrary adjoint pair of isomorphisms, because that is what the
-concatenation is an instance of. -/
+`conj_comp_linearEquiv` is Rockafellar's substitution row for the conjugate. The subdifferential
+obeys the same rule, in the generality of an arbitrary adjoint pair of isomorphisms. -/
 
 section SubgradientTransport
 
@@ -280,10 +242,8 @@ end Transport
 
 /-! ### Transporting polarity and cone hulls
 
-Two more operations move along a linear isomorphism in the same way as `conj`, `subgradient` and
-`ri`, and both are needed wherever a *cone* in a product is read in `ℝᵏ`: the polar of a set,
-which consumes the same adjointness datum, and the pointed-cone hull, which needs only
-linearity. -/
+Both are needed wherever a *cone* in a product is read in `ℝᵏ`: the polar consumes the adjointness
+datum, the pointed-cone hull needs only linearity. -/
 
 section PolarTransport
 
@@ -319,9 +279,8 @@ end PolarTransport
 
 /-! ### The one-dimensional factor, and `ℝ × ℝⁿ × ℝ` as `ℝⁿ⁺²`
 
-`ℝ` is not `EuclideanSpace ℝ (Fin 1)`, so a concatenation with a scalar factor at each end needs
-one more transport prepended and one appended. `euclideanTripleEquiv` is the composite, and
-`inner_euclideanTripleEquiv` is the only thing about it a consumer needs. -/
+`ℝ` is not `EuclideanSpace ℝ (Fin 1)`, so a concatenation with a scalar factor at each end needs one
+more transport prepended and one appended. -/
 
 section Triple
 
@@ -340,9 +299,8 @@ theorem inner_euclideanOne (a b : ℝ) :
 
 variable (n : ℕ)
 
-/-- **Concatenation of `ℝ × ℝⁿ × ℝ` into `ℝⁿ⁺²`**: `(λ, x, μ) ↦ (λ, x₁, …, xₙ, μ)`. It is a
-linear homeomorphism, and it carries the inner product of `ℝⁿ⁺²` to
-`λ λ* + ⟨x, y⟩ + μ μ*` (`inner_euclideanTripleEquiv`). -/
+/-- **Concatenation of `ℝ × ℝⁿ × ℝ` into `ℝⁿ⁺²`**: `(λ, x, μ) ↦ (λ, x₁, …, xₙ, μ)`, a linear
+homeomorphism. Its effect on the inner product is `inner_euclideanTripleEquiv`. -/
 noncomputable def euclideanTripleEquiv :
     ((ℝ × EuclideanSpace ℝ (Fin n)) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 2)) :=
   ((euclideanOne.prodCongr (ContinuousLinearEquiv.refl ℝ (EuclideanSpace ℝ (Fin n)))).prodCongr

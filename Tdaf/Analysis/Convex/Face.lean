@@ -9,67 +9,39 @@ import Tdaf.Analysis.Convex.RelativeInterior
 /-!
 # Faces of a convex set
 
-Rockafellar's §18. A **face** of a convex set `C` is a convex subset `C'` of `C` such that every
-closed line segment in `C` with a relative interior point in `C'` has both endpoints in `C'`. The
-whole section rests on **Theorem 18.1**, which upgrades "line segment" to "arbitrary convex
-subset": if `D ⊆ C` is convex and `ri D` meets `C'`, then all of `D` lies in `C'`.
+A **face** of a convex set `C` is a convex subset `C'` of `C` such that every closed line segment
+in `C` with a relative interior point in `C'` has both endpoints in `C'`. Rockafellar's §18 rests
+on **Theorem 18.1**, which upgrades "line segment" to "arbitrary convex subset": if `D ⊆ C` is
+convex and `ri D` meets `C'`, then all of `D` lies in `C'`. From it come the partition of `C` by
+the relative interiors of its faces (Theorem 18.2) and, for compact `C`, Minkowski's theorem.
 
-## Main results
-
-* `IsFace` — Rockafellar's face, as `Mathlib`'s `IsExtreme ℝ C C'` plus convexity of `C'`.
-* `IsFace.subset_of_relint_inter_nonempty` — **Theorem 18.1**.
-* `IsFace.eq_inter_closure` — Corollary 18.1.1: `C' = C ∩ cl C'`; a face of a closed convex set is
-  closed.
-* `IsFace.eq_of_relint_inter_nonempty` — Corollary 18.1.2: faces whose relative interiors meet are
-  equal.
-* `IsFace.disjoint_relint`, `IsFace.subset_intrinsicFrontier`,
-  `IsFace.finrank_vectorSpan_lt` — Corollary 18.1.3: a proper face lies in the relative boundary
-  and has strictly smaller dimension.
-* `exists_isFace_subset_relint` — the engine of **Theorem 18.2**: every nonempty relatively open
-  convex subset of `C` lies in the relative interior of a (unique) face of `C`.
-* `exists_isFace_mem_relint`, `eq_iUnion_relint_isFace`, `IsFace.relint_pairwise_disjoint`,
-  `IsFace.relint_maximal` — **Theorem 18.2**: the relative interiors of the nonempty faces
-  partition `C`, and they are exactly the maximal relatively open convex subsets of `C`.
-* `exists_notMem_relint_mem_segment` — **Theorem 18.4** for compact sets.
-* `convexHull_extremePoints` — **Corollary 18.5.1** (Minkowski's theorem): a compact convex set is
-  the convex hull of its extreme points. This is Theorem 18.5 in the bounded case.
-* `extremePoints_nonempty` — **Corollary 18.5.3** for compact sets.
+This file treats the bounded case, which is what §19's polyhedral theory and the Krein–Milman
+corollaries consume. Theorem 18.5 for unbounded sets, and Theorems 18.3, 18.4 in general and 18.6,
+are stated in terms of hulls of points *and* directions (`convexHullPD` in `HullDirections.lean`)
+and live in `Representation.lean`; Theorems 18.7 and 18.8 are in `Exposed.lean` and `Tangent.lean`.
 
 Extreme points and exposed faces are Mathlib's `Set.extremePoints` and `IsExposed`;
 `isFace_singleton` and `IsExposed.isFace` connect them to `IsFace`.
 
-## What is not here
+## Main results
 
-**Theorem 18.5 for unbounded sets, and with it Theorems 18.3, 18.4 in general, 18.6, 18.7 and
-18.8, are elsewhere.** All of them are stated in terms of Rockafellar's `conv S` for an `S`
-containing both points *and directions*, which is `convexHullPD P D` in `HullDirections.lean`;
-`Representation.lean` then carries Theorems 18.3, 18.4, 18.5 and 18.6 (Straszewicz) with
-Corollaries 18.3.1 and 18.5.2–18.5.3, and `Exposed.lean` and `Tangent.lean` carry Theorems 18.7
-and 18.8. What is here is the bounded case, which is what §19's polyhedral theory and the
-Krein–Milman corollaries actually consume.
-
-## Design notes
-
-**`IsFace` bundles `IsExtreme` with convexity, and the convexity is not redundant.** For convex
-`C`, an extreme subset need not be a face: `C = [0, 1] ⊆ ℝ` has `C' = {0, 1}` extreme but not
-convex, and `{0, 1}` is not a face of `[0, 1]` in Rockafellar's sense — the plan file's earlier
-guess that the two notions coincide for convex `C` is wrong in exactly this way. Everything else
-about extreme subsets does transfer, so `IsFace` is a structure extending `IsExtreme ℝ` and the
-`IsExtreme` API is reused verbatim through `toIsExtreme`.
-
-**Theorem 18.1 is the prolongation lemma of §6 read backwards.**
-`exists_one_lt_smul_mem_of_mem_relint` prolongs the segment from `x ∈ D` past a relative interior
-point `z ∈ ri D` and stays in `D`;
-`combo_prolong` then exhibits `z` as an interior point of the segment from `x` to the prolonged
-point, and the face property returns `x ∈ C'`. No case distinction for `x = z` is needed — the
-prolongation lemma already handles it.
-
-**Theorem 18.2 needs a supporting hyperplane, and that is Corollary 11.6.2.** For the smallest face
-`C'` containing a relatively open convex `D`, if `D` missed `ri C'` then
-`notMem_relint_iff_exists_isMaxOn` would produce a linear function maximised over `C'` at a point of
-`D` but not constant on `C'`; `eq_of_isMaxOn_of_mem_relint` makes it constant on `D` (this is where
-`ri D = D` is used), so the exposed face it cuts out of `C'` would be a strictly smaller face still
-containing `D`. Corollary 6.5.2 then upgrades `D ∩ ri C' ≠ ∅` to `D = ri D ⊆ ri C'`.
+* `IsFace` — Rockafellar's face, as Mathlib's `IsExtreme ℝ C C'` plus convexity of `C'`.
+* `IsFace.subset_of_relint_inter_nonempty` — **Theorem 18.1**.
+* `IsFace.eq_inter_closure` — **Corollary 18.1.1**: `C' = C ∩ cl C'`; a face of a closed convex set
+  is closed.
+* `IsFace.eq_of_relint_inter_nonempty` — **Corollary 18.1.2**: faces whose relative interiors meet
+  are equal.
+* `IsFace.disjoint_relint`, `IsFace.subset_intrinsicFrontier`, `IsFace.finrank_vectorSpan_lt` —
+  **Corollary 18.1.3**: a proper face lies in the relative boundary and has strictly smaller
+  dimension.
+* `exists_isFace_subset_relint` — every nonempty relatively open convex subset of `C` lies in the
+  relative interior of a unique face of `C`.
+* `exists_isFace_mem_relint`, `eq_iUnion_relint_isFace`, `IsFace.relint_pairwise_disjoint`,
+  `IsFace.relint_maximal` — **Theorem 18.2**: the relative interiors of the nonempty faces
+  partition `C`, and are exactly the maximal relatively open convex subsets of `C`.
+* `exists_notMem_relint_mem_segment` — **Theorem 18.4** for compact sets.
+* `convexHull_extremePoints` — **Corollary 18.5.1** (Minkowski): a compact convex set is the convex
+  hull of its extreme points; `extremePoints_nonempty` is **Corollary 18.5.3**.
 
 ## References
 
@@ -88,10 +60,9 @@ section Defs
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C C' C'' D : Set E}
 
 /-- **Rockafellar's face**: a convex subset `C'` of a convex set `C` such that every closed line
-segment in `C` with a relative interior point in `C'` has both endpoints in `C'`.
-
-The segment condition is exactly Mathlib's `IsExtreme ℝ C C'`. Convexity of `C'` is a genuine extra
-requirement: `{0, 1}` is an extreme subset of `[0, 1]` but not a face of it. -/
+segment in `C` with a relative interior point in `C'` has both endpoints in `C'`. The segment
+condition is exactly Mathlib's `IsExtreme ℝ C C'`; convexity of `C'` is a genuine extra
+requirement, since `{0, 1}` is an extreme subset of `[0, 1]` but not a face of it. -/
 structure IsFace (C C' : Set E) : Prop extends IsExtreme ℝ C C' where
   /-- A face is a convex set. -/
   convex : Convex ℝ C'
@@ -176,12 +147,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C C' C₁ C₂ D : Set E}
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 18.1**: a face absorbs every convex subset of `C` whose relative
-interior it meets. This is the strengthening of the defining segment property to arbitrary convex
-sets, and every other result of §18 goes through it.
-
-Convexity of `D` is not needed: the prolongation lemma `exists_one_lt_smul_mem_of_mem_relint`
-already carries everything the argument uses about `ri D`. -/
+/-- **Rockafellar, Theorem 18.1**: a face absorbs every convex subset of `C` whose relative interior
+it meets. This strengthens the defining segment property to arbitrary convex sets, and every other
+result of §18 goes through it. Convexity of `D` is not needed. -/
 theorem IsFace.subset_of_relint_inter_nonempty (hface : IsFace C C')
     (hDC : D ⊆ C) (h : (ri D ∩ C').Nonempty) : D ⊆ C' := by
   obtain ⟨z, hzD, hzC'⟩ := h
@@ -274,11 +242,9 @@ theorem IsFace.finrank_vectorSpan_lt (hface : IsFace C C') (hne' : C'.Nonempty)
 /-! ### Theorem 18.2: the relative interiors of the faces partition `C` -/
 
 /-- The engine of **Theorem 18.2**: every nonempty relatively open convex subset `D` of `C` lies in
-the relative interior of a face of `C`, namely the smallest face containing `D`.
-
-Rockafellar's proof: were `D` inside the relative boundary of that smallest face `C'`, a supporting
-hyperplane to `C'` through `D` (Corollary 11.6.2) would cut out a strictly smaller face still
-containing `D`. So `D` meets `ri C'`, and Corollary 6.5.2 gives `D = ri D ⊆ ri C'`. -/
+the relative interior of a face of `C`, namely the smallest face containing `D`. Were `D` inside
+the relative boundary of that face, a supporting hyperplane through `D` (Corollary 11.6.2) would
+cut out a strictly smaller face still containing `D`. -/
 theorem exists_isFace_subset_relint (hC : Convex ℝ C) (hD : Convex ℝ D) (hDC : D ⊆ C)
     (hne : D.Nonempty) (hopen : ri D = D) : ∃ C', IsFace C C' ∧ D ⊆ ri C' := by
   classical
@@ -356,12 +322,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
 omit [FiniteDimensional ℝ E] in
 /-- **Rockafellar, Theorem 18.4** for compact sets: a relative interior point of a compact set of
 positive dimension lies on a segment joining two points that are not relative interior points.
-
 Rockafellar states Theorem 18.4 for closed convex sets that are neither affine sets nor closed
-halves of affine sets; compactness is a cruder hypothesis but it is all that Minkowski's theorem
-needs, and it makes the proof elementary. The line through `x` in a direction of `vectorSpan ℝ C`
-meets `C` in a compact set of parameters, and the prolongation principle puts its largest and
-smallest elements outside `ri C`. Convexity of `C` is never used. -/
+halves of affine sets; compactness is cruder but is all Minkowski's theorem needs. Convexity of `C`
+is never used. -/
 theorem exists_notMem_relint_mem_segment (hcomp : IsCompact C) (hdim : vectorSpan ℝ C ≠ ⊥)
     {x : E} (hx : x ∈ ri C) :
     ∃ a ∈ C, ∃ b ∈ C, a ∉ ri C ∧ b ∉ ri C ∧ x ∈ segment ℝ a b := by
@@ -473,13 +436,9 @@ private theorem subset_convexHull_extremePoints_aux :
 /-- **Rockafellar, Corollary 18.5.1** (Minkowski's theorem): a closed bounded convex set is the
 convex hull of its extreme points. This is Theorem 18.5 in the case where `C` has no directions of
 recession, and it is stronger than Mathlib's Krein–Milman theorem
-(`closure_convexHull_extremePoints`), which only gives the *closed* convex hull — the set of
-extreme points need not be closed even for a compact `C`.
-
-The proof is Rockafellar's induction on `dim C`: a relative boundary point lies in the relative
-interior of a face of strictly smaller dimension (Theorem 18.2 and Corollary 18.1.3), which is
-again compact (Corollary 18.1.1), and a relative interior point lies on a segment joining two
-relative boundary points (Theorem 18.4). -/
+(`closure_convexHull_extremePoints`), which gives only the *closed* convex hull — the set of
+extreme points need not be closed even for a compact `C`. The proof is Rockafellar's induction on
+`dim C`, through Theorems 18.2 and 18.4 and Corollaries 18.1.1 and 18.1.3. -/
 theorem convexHull_extremePoints (hcomp : IsCompact C) (hconv : Convex ℝ C) :
     convexHull ℝ (C.extremePoints ℝ) = C :=
   Subset.antisymm (convexHull_min extremePoints_subset hconv)

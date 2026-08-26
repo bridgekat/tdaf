@@ -10,68 +10,44 @@ import Tdaf.Analysis.Convex.Representation
 
 An **exposed face** of a convex set `C` is the set on which some continuous linear functional
 attains its maximum over `C`; an **exposed point** is a one-point exposed face, and an **exposed
-direction** is the direction of an exposed face that is a closed half-line. Every exposed face is
-a face, so exposed points are extreme points and exposed directions are extreme directions, but
-not conversely.
+direction** is the direction of an exposed face that is a closed half-line. Every exposed face is a
+face, so exposed points are extreme points and exposed directions are extreme directions, but not
+conversely.
 
 The theorem proved here is that a closed convex set containing no lines is recovered from its
-exposed points and exposed directions alone, up to closure:
-`C = cl (conv (exp C ∪ expdir C))`. `Representation.lean` gives the same recovery from the
-*extreme* points and directions with no closure at all; the closure is the price of passing to the
-smaller, exposed, data, and it cannot be dropped, because the exposed points of a closed convex
-set need not be closed.
+exposed points and exposed directions alone, up to closure: `C = cl (conv (exp C ∪ expdir C))`.
+`Representation.lean` gives the same recovery from the *extreme* points and directions with no
+closure at all; the closure is the price of passing to the smaller, exposed, data, and it cannot be
+dropped, because the exposed points of a closed convex set need not be closed. The dual
+representation — a closed convex set with nonempty interior is the intersection of the closed
+half-spaces *tangent* to it — is in `Tangent.lean`.
 
 ## Main definitions
 
 * `IsExposedDirection C y` — the direction of `y` is an *exposed direction* of `C`: some closed
   half-line in the direction of `y` is an exposed face of `C`. `exposedDirections C` is the set of
-  vectors generating such directions. This is the analogue for `exposedPoints` of
-  `IsExtremeDirection`.
+  vectors generating such directions, the analogue for `exposedPoints` of `IsExtremeDirection`.
 
 ## Main results
 
 * `exists_forall_sub_le_mul_sub` — the multiplier for one linear equation: if `g ≤ γ` on the slice
   `C ∩ {f = β}`, and `f` takes values on both sides of `β` on `C`, then `g - γ ≤ c * (f - β)` on
   all of `C` for some `c`.
-* `closure_convexHullPD_exposedPoints_exposedDirections` — **Theorem 18.7**: a closed convex set
-  containing no lines is the closure of the hull of its exposed points and exposed directions.
+* `closure_convexHullPD_exposedPoints_exposedDirections` — **Theorem 18.7**.
 * `closure_coneHull_exposedDirections`, `closure_coneHull_of_forall_exposedDirection` —
   **Corollary 18.7.1** for a closed convex cone containing no lines.
 * `isExposed_recessionCone` — the recession cone of an exposed face is an exposed face of the
   recession cone, given that it is contained in it; the exposed analogue of `isFace_recessionCone`.
   `exposedDirections_subset_exposedDirections_recessionCone` is the consequence Rockafellar records
-  on p. 163, and `isExposedDirection_recessionCone` is its topology-free form.
+  in §18, and `isExposedDirection_recessionCone` its topology-free form.
 
-## What is not here
+## Implementation notes
 
-The dual representation — a closed convex set with nonempty interior is the intersection of the
-closed half-spaces *tangent* to it — is in `Tangent.lean`. It is a statement about the polar set,
-so it does not belong in the import closure of `Representation.lean`.
-
-## Design notes
-
-**A codimension-two affine set is really a multiplier.** The classical proof slices `C` with a
-hyperplane `H = {f = β}` missing the exposed hull, takes an exposed point `x` of `C ∩ H` with
-exposing functional `g`, and extends the codimension-two affine set `H ∩ {g = g x}` to a supporting
-hyperplane of `C`. That extension is exactly the statement that some combination `g - c • f` is
-maximised over `C` at `x`, and `exists_forall_sub_le_mul_sub` produces the `c` by an elementary
-one-dimensional argument: the quotients `(g z - g x) / (f z - β)` taken over the two sides of `H`
-are separated, and `c` is the supremum of those on the far side. No dimension bookkeeping is
-needed at any point, and the argument is valid in every dimension.
-
-**The final case split is bounded/unbounded, not segment/half-line.** The classical argument
-concludes that the exposed face `C'` it has built is one-dimensional and then enumerates its three
-possible shapes. Here the bounded case is settled in every dimension by Minkowski's theorem
-(`convexHull_extremePoints`): a compact face is the hull of its extreme points, which are extreme
-points of `C` and hence — by Straszewicz — in the exposed hull. Only the unbounded case uses
-`dim C' ≤ 1`, through `exists_eq_halfLine`, and there the half-line is an exposed face of `C` by
-construction, so its direction is an exposed direction *by definition*.
-
-**The cone statement does not need `K ≠ {0}`.** The book excludes the zero cone; but
-`exposedDirections {0} = ∅` and `PointedCone.hull ℝ ∅ = {0}`, so the statement is true there too.
-What that hypothesis really buys is the identification `exposedPoints K = {0}`, and that follows
-from the representation theorem itself: were the exposed points empty, the hull would be empty and
-so would `K`.
+Rockafellar's proof of Theorem 18.7 extends a codimension-two affine set to a supporting
+hyperplane, which is really a multiplier: `exists_forall_sub_le_mul_sub` produces it by a
+one-dimensional argument valid in every dimension. The final case split is then bounded/unbounded
+rather than by the shape of a one-dimensional face — the bounded case is Minkowski's theorem in
+every dimension, and only the unbounded case uses `dim C' ≤ 1`.
 
 ## References
 
@@ -90,12 +66,9 @@ section Directions
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] {C : Set E} {y : E}
 
 /-- `y` generates an **exposed direction** of `C`: `y ≠ 0` and some closed half-line in the
-direction of `y` is an exposed face of `C`.
-
-Rockafellar's *exposed direction* — an "exposed point at infinity" — is the direction of such a
-half-line; representing it by a generating vector avoids a quotient, at the cost of the set
-`exposedDirections C` being closed under multiplication by positive scalars. This is the exposed
-counterpart of `IsExtremeDirection`. -/
+direction of `y` is an exposed face of `C`. Rockafellar's exposed direction — an "exposed point at
+infinity" — is the direction itself; representing it by a generating vector avoids a quotient, at
+the cost of `exposedDirections C` being closed under multiplication by positive scalars. -/
 def IsExposedDirection (C : Set E) (y : E) : Prop :=
   y ≠ 0 ∧ ∃ x, IsExposed ℝ C (halfLine x y)
 
@@ -130,13 +103,10 @@ theorem IsExposedDirection.halfLine_subset (h : IsExposedDirection C y) :
   obtain ⟨-, x, hx⟩ := h
   exact ⟨x, IsExposed.subset hx⟩
 
-/-- **The recession cone of an exposed face is an exposed face of the recession cone**, and the
-same functional exposes it.
-
-This is the exposed analogue of `isFace_recessionCone`, with the same hypothesis `0⁺C' ⊆ 0⁺C`
-supplying the monotonicity the recession cone does not have. The mechanism is that a functional
-maximised over `C` is non-positive on `0⁺C` and vanishes exactly on the directions in which the
-face itself recedes. -/
+/-- **The recession cone of an exposed face is an exposed face of the recession cone**, exposed by
+the same functional. The hypothesis `0⁺C' ⊆ 0⁺C` supplies the monotonicity the recession cone does
+not have; the mechanism is that a functional maximised over `C` is non-positive on `0⁺C` and
+vanishes exactly on the directions in which the face itself recedes. -/
 theorem isExposed_recessionCone {C' : Set E} (h : IsExposed ℝ C C')
     (hrec : recessionCone C' ⊆ recessionCone C) :
     IsExposed ℝ (recessionCone C) (recessionCone C') := by
@@ -205,9 +175,8 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTop
   [ContinuousSMul ℝ E] {C : Set E}
 
 /-- **Every exposed direction of a closed convex set is an exposed direction of its recession
-cone** (Rockafellar, §18, p. 163), the exposed half of
-`extremeDirections_subset_extremeDirections_recessionCone`. Closedness enters only through
-Theorem 8.3, to know that the direction of a half-line exposed face recedes in `C`. -/
+cone** (Rockafellar §18). Closedness enters only through Theorem 8.3, to know that the direction of
+a half-line exposed face recedes in `C`. -/
 theorem exposedDirections_subset_exposedDirections_recessionCone (hC : Convex ℝ C)
     (hCcl : IsClosed C) : exposedDirections C ⊆ exposedDirections (recessionCone C) :=
   fun _ hy =>
@@ -225,14 +194,11 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C : Set E}
 
 /-- **A linear function dominated on a slice is dominated up to a multiple of the slicing
 function.** If `g ≤ γ` wherever `f = β` on a convex set `C`, and `f` takes values strictly below
-and strictly above `β` on `C`, then there is a scalar `c` with `g - γ ≤ c * (f - β)` everywhere on
-`C`.
-
-Geometrically, the image of `C` under `z ↦ (f z - β, g z - γ)` is a convex subset of `ℝ²` that
-misses the open upward vertical ray, so it lies below a line through the origin; `c` is the slope
-of that line. This is the only content of the "extend an `(n-2)`-dimensional affine set to a
-supporting hyperplane" step in Rockafellar's proof of Theorem 18.7, and unlike that step it needs
-no dimension hypothesis. -/
+and strictly above `β` on `C`, then `g - γ ≤ c * (f - β)` on all of `C` for some scalar `c`.
+Geometrically, the image of `C` under `z ↦ (f z - β, g z - γ)` misses the open upward vertical ray,
+so it lies below a line through the origin, and `c` is that line's slope. This replaces the
+"extend an `(n-2)`-dimensional affine set to a supporting hyperplane" step of Theorem 18.7, and
+needs no dimension hypothesis. -/
 theorem exists_forall_sub_le_mul_sub (hC : Convex ℝ C) (f g : E →ₗ[ℝ] ℝ) {β γ : ℝ}
     (hslice : ∀ z ∈ C, f z = β → g z ≤ γ)
     (hlo : ∃ z ∈ C, f z < β) (hhi : ∃ z ∈ C, β < f z) :
@@ -307,23 +273,16 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C : Set E}
 
 /-- **Rockafellar, Theorem 18.7**: a closed convex set containing no lines is the closure of the
-convex hull of its exposed points and exposed directions.
+convex hull of its exposed points and exposed directions. Unlike Theorem 18.5 the closure cannot be
+dropped — the exposed points of a closed convex set need not be closed, and Straszewicz's theorem
+only places the extreme points in their closure.
 
-Unlike Theorem 18.5 the closure cannot be dropped — the exposed points of a closed convex set need
-not be closed, and Straszewicz's theorem only places the extreme points in their closure.
-
-The proof is Rockafellar's, with his dimension bookkeeping replaced by
-`exists_forall_sub_le_mul_sub`. Suppose the exposed hull `C₀` is not all of `C`. Separate a point
-of `C \ C₀` from `C₀` by a hyperplane `H = {f = β}`; then `H` meets `C`, and the slice `C ∩ H` is
-a nonempty closed convex set containing no lines, so it has an extreme point (Corollary 18.5.3)
-and hence an exposed point `x` (Theorem 18.6), exposed by some `g`. The multiplier lemma turns
-`g` into a functional `g - c • f` maximised over `C` at `x`, whose exposed face `C'` meets `H`
-only at `x`. Since the extreme points of `C'` are extreme points of `C`, and those lie in `C₀`,
-which misses `H`, the point `x` is not an extreme point of `C'`; that forces `f` to take values on
-both sides of `β` on `C'`, hence `x ∈ ri C'` (Theorem 6.6), hence `dim C' ≤ 1`. A bounded `C'` is
-the hull of its extreme points and so lies in `C₀`; an unbounded one is a closed half-line whose
-endpoint is an extreme point of `C` and whose direction is an exposed direction of `C`, so it lies
-in `C₀` too. Either way `x ∈ C₀`, a contradiction. -/
+Sketch: if the exposed hull `C₀` were not all of `C`, separate a point of `C \ C₀` from `C₀` by
+`H = {f = β}`. The slice `C ∩ H` is a nonempty closed convex set containing no lines, so it has an
+exposed point `x` (Corollary 18.5.3 and Theorem 18.6), and `exists_forall_sub_le_mul_sub` turns its
+exposing functional into one maximised over `C` at `x`. Its exposed face `C'` meets `H` only at
+`x`, which forces `x ∈ ri C'` and `dim C' ≤ 1`; a bounded `C'` is then the hull of its extreme
+points, an unbounded one a half-line whose direction is exposed, and either way `x ∈ C₀`. -/
 theorem closure_convexHullPD_exposedPoints_exposedDirections
     (hC : Convex ℝ C) (hCcl : IsClosed C) (hnl : ContainsNoLine C) :
     closure (convexHullPD (C.exposedPoints ℝ) (exposedDirections C)) = C := by
@@ -517,10 +476,9 @@ theorem closure_convexHullPD_exposedPoints_exposedDirections
 /-! ### The cone case -/
 
 /-- **Rockafellar, Corollary 18.7.1**: a closed convex cone containing no lines is the closure of
-the cone generated by its exposed directions.
-
-Rockafellar assumes the cone contains more than the origin. That hypothesis is unnecessary: the
-zero cone has no exposed directions and `PointedCone.hull ℝ ∅ = {0}`. -/
+the cone generated by its exposed directions. Rockafellar assumes the cone contains more than the
+origin; that is unnecessary, since the zero cone has no exposed directions and
+`PointedCone.hull ℝ ∅ = {0}`. -/
 theorem closure_coneHull_exposedDirections (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hne : C.Nonempty) (hcone : ∀ x ∈ C, ∀ a : ℝ, 0 ≤ a → a • x ∈ C)
     (hnl : ContainsNoLine C) :

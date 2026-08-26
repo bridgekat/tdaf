@@ -13,67 +13,41 @@ A hyperplane is **tangent** to a closed convex set `C` at a point `y` when it is
 supporting hyperplane to `C` at `y`, and a **tangent half-space** is a supporting half-space whose
 boundary hyperplane is tangent. The theorem proved here is that a closed convex set with nonempty
 interior is the intersection of its tangent closed half-spaces — a sharpening of the statement
-that a closed convex set is the intersection of *all* the closed half-spaces containing it
-(`isClosed_convex_eq_iInter_halfspaces`).
+that a closed convex set is the intersection of *all* the closed half-spaces containing it.
+
+The interior hypothesis is not removable as stated: a closed convex set with empty interior lies in
+a proper affine subspace and has no tangent hyperplane anywhere, since every supporting hyperplane
+at a point can be tilted around that subspace. The right general statement intersects the tangent
+half-spaces *within the affine hull* and adds the affine hull itself.
 
 Tangency is dual to exposedness: after translating so that `0 ∈ int C`, the tangent half-spaces of
-`C` correspond exactly to the exposed points of the polar `C°`, and this correspondence is what
-carries the proof.
+`C` correspond exactly to the exposed points of the polar `C°`, and this correspondence carries
+the proof.
 
 ## Main definitions
 
-* `IsSupportingAt C f y` — `y ∈ C` and the linear functional `f` attains its maximum over `C`
-  at `y`, so `{z | f z ≤ f y}` is a supporting half-space and `{z | f z = f y}` a supporting
+* `IsSupportingAt C f y` — `y ∈ C` and the linear functional `f` attains its maximum over `C` at
+  `y`, so `{z | f z ≤ f y}` is a supporting half-space and `{z | f z = f y}` a supporting
   hyperplane.
 * `IsTangentAt C f y` — that supporting hyperplane is the only one at `y`: every nonzero
   functional supported at `y` is a *positive* multiple of `f`.
 
 ## Main results
 
-* `eq_iInter_tangent_halfSpaces` — a closed convex set with nonempty interior is the intersection
-  of the closed half-spaces tangent to it.
+* `eq_iInter_tangent_halfSpaces` — **Theorem 18.8**: a closed convex set with nonempty interior is
+  the intersection of the closed half-spaces tangent to it.
 * `exists_isTangentAt_lt_of_zero_mem_interior` — the separating form: a point outside such a set
   is cut off by a tangent half-space.
 
-## What is not here
+## Implementation notes
 
-**The interior hypothesis is not removable as stated.** A closed convex set with empty interior
-lies in a proper affine subspace and has *no* tangent hyperplane anywhere: every supporting
-hyperplane at a point can be tilted around that subspace. The relative version — a closed convex
-set is the intersection of its tangent half-spaces *within its affine hull*, together with that
-affine hull — is the right general statement and is not proved here.
-
-**The correspondence between tangent half-spaces of `C` and exposed points of `C°` is not stated
-as a lemma of its own.** It is used inside `exists_isTangentAt_lt_of_zero_mem_interior`, where
-the point of contact is produced explicitly; isolating it would need names for the two directions
-of the correspondence and for the normalisation they involve.
-
-## Design notes
-
-**The proof goes through the polar, not through a homogenisation.** The classical route
-homogenises, applying the cone form of the exposed representation theorem to the epigraph of the
-support function of `C` inside `ℝⁿ⁺¹`, and then reads the non-vertical exposed rays of that cone
-as tangent half-spaces. The route here is shorter and stays in the polar picture: after
-translating so that `0 ∈ int C`, the polar `C°` is a *compact* convex set, and
-
-* Minkowski's theorem (`convexHull_extremePoints`) writes `C°` as the hull of its extreme points;
-* Straszewicz's theorem (`extremePoints_subset_closure_exposedPoints`) puts those in the closure
-  of the exposed points of `C°`;
-* the exposed points of `C°` are exactly the normals of the tangent half-spaces to `C`.
-
-So a point outside `C` is already excluded by the half-space of some *exposed* point of `C°`, and
-that half-space is tangent. The exposed representation theorem of `Exposed.lean` is not used.
-
-**The correspondence needs reflexivity, not a weak topology.** An exposed point of `C° ⊆ E*` is
-exposed by a functional on `E*`, and it is the identification of that functional with a point of
-`E` that produces the point of contact. In finite dimensions this is `Module.evalEquiv`;
-`exists_forall_apply_eq` packages it. The step is invisible in `ℝⁿ`, where the dual is identified
-with the space itself.
-
-**Tangency is stated as "unique up to a positive multiple".** A hyperplane determines its
-functional only up to a nonzero scalar, and the supporting condition then fixes the sign, so
-"`H` is the unique supporting hyperplane at `y`" is exactly the third clause of `IsTangentAt`.
-Phrasing it this way avoids having to talk about hyperplanes as sets.
+The proof stays in the polar picture rather than homogenising. After translating so that
+`0 ∈ int C`, the polar `C°` is compact; Minkowski's theorem writes it as the hull of its extreme
+points, Straszewicz's theorem puts those in the closure of its exposed points, and the exposed
+points of `C°` are exactly the normals of the tangent half-spaces to `C`. So a point outside `C` is
+already excluded by the half-space of some *exposed* point of `C°`. Identifying an exposing
+functional on `E*` with a point of `E`, which produces the point of contact, uses reflexivity
+(`Module.evalEquiv`, packaged as `exists_forall_apply_eq`) — a step invisible in `ℝⁿ`.
 
 ## References
 
@@ -96,12 +70,10 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {C : Set E}
 def IsSupportingAt (C : Set E) (f : StrongDual ℝ E) (y : E) : Prop :=
   y ∈ C ∧ ∀ z ∈ C, f z ≤ f y
 
-/-- The hyperplane `{z | f z = f y}` is **tangent** to `C` at `y`: it supports `C` at `y`, and it
-is the only supporting hyperplane there.
-
-Rockafellar's "`H` is the unique supporting hyperplane to `C` at `y`" is rendered as uniqueness of
-the functional up to a *positive* multiple: a hyperplane determines its functional up to a nonzero
-scalar, and the supporting inequality fixes the sign. -/
+/-- The hyperplane `{z | f z = f y}` is **tangent** to `C` at `y`: it supports `C` at `y`, and it is
+the only supporting hyperplane there. Uniqueness is stated up to a *positive* multiple of the
+functional — a hyperplane determines its functional up to a nonzero scalar, and the supporting
+inequality fixes the sign. -/
 def IsTangentAt (C : Set E) (f : StrongDual ℝ E) (y : E) : Prop :=
   f ≠ 0 ∧ IsSupportingAt C f y ∧
     ∀ g : StrongDual ℝ E, g ≠ 0 → (∀ z ∈ C, g z ≤ g y) → ∃ a : ℝ, 0 < a ∧ g = a • f
@@ -146,12 +118,9 @@ private theorem smul_div_norm_mem_closedBall {x : E} (hx : x ≠ 0) {r s : ℝ} 
 
 variable [FiniteDimensional ℝ E]
 
-/-- The heart of Theorem 18.8: for a closed convex set with the origin in its interior, every
-point outside is cut off by a *tangent* half-space.
-
-The normal of that half-space is an exposed point of the polar `C°`, which is compact because
-`0 ∈ int C`; Minkowski's theorem and Straszewicz's theorem together show that the exposed points
-of `C°` already determine `C°`, and hence `C`. -/
+/-- The heart of Theorem 18.8: for a closed convex set with the origin in its interior, every point
+outside is cut off by a *tangent* half-space. The normal of that half-space is an exposed point of
+the polar `C°`, which is compact because `0 ∈ int C`. -/
 theorem exists_isTangentAt_lt_of_zero_mem_interior (hC : Convex ℝ C) (hCcl : IsClosed C)
     (h0 : (0 : E) ∈ interior C) {x₀ : E} (hx₀ : x₀ ∉ C) :
     ∃ (f : StrongDual ℝ E) (y : E), IsTangentAt C f y ∧ f y < f x₀ := by
@@ -302,11 +271,9 @@ theorem exists_isTangentAt_lt_of_zero_mem_interior (hC : Convex ℝ C) (hCcl : I
   exact hgeq.trans (by rw [heq])
 
 /-- **Rockafellar, Theorem 18.8**: a closed convex set with nonempty interior is the intersection
-of the closed half-spaces tangent to it.
-
-"`n`-dimensional in `ℝⁿ`" is `(interior C).Nonempty`. This is a sharpening of Theorem 11.5
-(`isClosed_convex_eq_iInter_halfspaces`), which intersects *all* the closed half-spaces containing
-`C`. -/
+of the closed half-spaces tangent to it. ("`n`-dimensional in `ℝⁿ`" is `(interior C).Nonempty`.)
+This sharpens Theorem 11.5, `isClosed_convex_eq_iInter_halfspaces`, which intersects *all* the
+closed half-spaces containing `C`. -/
 theorem eq_iInter_tangent_halfSpaces (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hint : (interior C).Nonempty) :
     ⋂ (f : StrongDual ℝ E) (y : E) (_ : IsTangentAt C f y), {z : E | f z ≤ f y} = C := by

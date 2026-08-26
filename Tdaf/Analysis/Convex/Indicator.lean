@@ -15,13 +15,10 @@ which every statement about convex *sets* becomes an instance of a statement abo
 ## Main results
 
 * `convexFn_indicatorFn` — `δ(· | s)` is convex iff `s` is convex.
-* `indicatorFn_ne_bot` — indicator functions never take the value `⊥`.
-* `dom_indicatorFn` — the effective domain of `δ(· | s)` is `s`.
-* `proper_indicatorFn` — `δ(· | s)` is proper exactly when `s` is non-empty.
-* `indicatorFn_add`, `indicatorFn_finsetSum` — adding indicators intersects the sets, for two
-  summands and for a `Finset` of them.
-* `epi_indicatorFn` — the epigraph of `δ(· | s)` is the "half-cylinder" `s ×ˢ Ici 0`.
-* `indicatorFn_vadd` — translating the set translates the indicator.
+* `dom_indicatorFn`, `proper_indicatorFn` — the effective domain is `s`, and `δ(· | s)` is proper
+  exactly when `s` is non-empty.
+* `indicatorFn_add`, `indicatorFn_finsetSum` — adding indicators intersects the sets.
+* `epi_indicatorFn` — the epigraph is the half-cylinder `s ×ˢ Ici 0`.
 
 ## References
 
@@ -51,32 +48,24 @@ theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥ := by
 @[simp] theorem dom_indicatorFn (s : Set E) : dom (indicatorFn s) = s := by
   ext x; by_cases hx : x ∈ s <;> simp [hx]
 
-/-- **`δ(· | s)` is proper exactly when `s` is non-empty.** The two fields of `Proper` are
-`dom_indicatorFn` and `indicatorFn_ne_bot`, so nothing is left to prove; what the packaging buys is
-that every minimisation of `h + δ(· | C)` — Rockafellar's standing device for a constrained problem
-(§4, §27) — can cite properness of the constraint term without also assuming `C` closed. -/
+/-- **`δ(· | s)` is proper exactly when `s` is non-empty.** In particular a constrained problem
+`h + δ(· | C)` has a proper constraint term without `C` being closed. -/
 @[simp] theorem proper_indicatorFn {s : Set E} : Proper (indicatorFn s) ↔ s.Nonempty :=
   ⟨fun h => by simpa using h.dom_nonempty,
     fun h => ⟨by simpa using h, indicatorFn_ne_bot s⟩⟩
 
-/-- **Adding indicators intersects the sets.** `0 + 0 = 0`, and `⊤` absorbs everything an
-indicator can be. This is why every "intersection" corollary in the book — Cor 16.4.1's polar of
-an intersection, Cor 23.8.1's normal cone to an intersection — is the indicator instance of a
-statement about sums, with no side condition. -/
+/-- **Adding indicators intersects the sets.** `0 + 0 = 0`, and `⊤` absorbs everything an indicator
+can be, so there is no side condition. This is why the book's "intersection" corollaries are the
+indicator instances of statements about sums. -/
 @[simp] theorem indicatorFn_add (s t : Set E) :
     indicatorFn s + indicatorFn t = indicatorFn (s ∩ t) := by
   funext x
   by_cases hs : x ∈ s <;> by_cases ht : x ∈ t <;>
     simp [Pi.add_apply, hs, ht]
 
-/-- **The `m`-ary `indicatorFn_add`**: a finite sum of indicators is the indicator of the
-intersection, `δ(· | C₁) + ⋯ + δ(· | Cₘ) = δ(· | C₁ ∩ ⋯ ∩ Cₘ)`, with no side condition and no
-`s.Nonempty`: over the empty `Finset` both sides are the zero function, since `⋂ i ∈ ∅, C i` is
-`univ`.
-
-The point is the same as `indicatorFn_add`'s. Rockafellar's intersection corollaries for `m` sets
-— Corollary 23.8.1's normal cone to `C₁ ∩ ⋯ ∩ Cₘ` — are the indicator instances of his `m`-ary
-statements about sums, and it is the sum over a `Finset` that they need. -/
+/-- **The `m`-ary `indicatorFn_add`**: `δ(· | C₁) + ⋯ + δ(· | Cₘ) = δ(· | C₁ ∩ ⋯ ∩ Cₘ)`, with no
+side condition. Over the empty `Finset` both sides are the zero function, since `⋂ i ∈ ∅, C i` is
+`univ`. -/
 theorem indicatorFn_finsetSum {ι : Type*} (C : ι → Set E) (s : Finset ι) :
     ∑ i ∈ s, indicatorFn (C i) = indicatorFn (⋂ i ∈ s, C i) := by
   induction s using Finset.cons_induction with
@@ -110,9 +99,7 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E]
     exact h.prod (convex_Ici 0)
 
 omit [Module ℝ E] in
-/-- **Translating the set translates the indicator**: `δ(x | a + s) = δ(x - a | s)`. This is what
-turns Rockafellar's normal form for a partial affine function, `δ(· | L + a) + ⟨·, a*⟩ + α`, into an
-instance of the translation row of Theorem 12.3. -/
+/-- **Translating the set translates the indicator**: `δ(x | a + s) = δ(x - a | s)`. -/
 @[simp] theorem indicatorFn_vadd (a : E) (s : Set E) (x : E) :
     indicatorFn (a +ᵥ s) x = indicatorFn s (x - a) := by
   have hmem : x ∈ a +ᵥ s ↔ x - a ∈ s := by
