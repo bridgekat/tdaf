@@ -75,7 +75,7 @@ see below.
   `theorem_24_7_isClosed`, `theorem_24_7_isBounded` |
 | Theorem 24.8 | `theorem_24_8`, `theorem_24_8_of_isCyclicallyMonotone` |
 | Theorem 24.9 | `theorem_24_9`, `theorem_24_9_subgradientRel`, `theorem_24_9_unique` |
-| §24 closing (9611–9631) | `isMonotoneRel_subgradientRel_rn`,
+| §24 closing (9613–9631) | `isMonotoneRel_subgradientRel_rn`,
   `isMonotoneRel_iff_isCyclicallyMonotone_line` |
 
 ## The section's definitions
@@ -110,7 +110,7 @@ see below.
 
 **Omitted with a reason.**
 
-* **The two worked examples** (lines 9053–9069, the function `|x| - 2(1-x)^{1/2}` on `[-3, 1]`, and
+* **The two worked examples** (lines 9049–9069, the function `|x| - 2(1-x)^{1/2}` on `[-3, 1]`, and
   lines 9073–9095, the non-closed `f` whose `f'₊` is not right-continuous at `0`) are numerical
   illustrations, not results. The second is recorded as a design note in the backbone's
   `Subgradient/OneDim.lean`, which is where the closedness hypothesis of the four limit formulas is
@@ -156,11 +156,13 @@ properness.** Rockafellar states it for a closed proper convex `f` and proves it
 intersection of preimages of `epi f` and uses convexity nowhere. The surface states the book's
 hypotheses and records the difference rather than re-deriving them.
 
-**Theorem 24.5 asks for the `f i` to be finite on `C`, which already forces properness.** An
-improper convex function is `-∞` throughout `ri (dom f)` (Theorem 7.2), and `C` is open and
-contained in `dom f`, so a convex function finite on a non-empty `C` cannot be improper. The
-backbone takes `Proper` as an explicit hypothesis; the surface passes it, and the reader should
-read it as a consequence of the book's own "finite on `C`" rather than as an extra assumption.
+**Theorem 24.5's properness is derived, not assumed.** The book asks only that the functions be
+*finite* on the open convex `C`; the backbone asks for `Proper` and `C ⊆ dom`. The two are the
+same here, and `proper_of_finite_on_isOpen` below is the derivation: an improper convex function is
+`-∞` throughout `ri (dom f)` (Theorem 7.2), `C` is open and inside `dom f`, hence inside
+`ri (dom f)`, and `f` is finite at the point of `C` the theorem quantifies over. So the surface
+states the book's hypotheses verbatim and pays one private lemma for them, rather than adding
+`Proper` to the statement.
 
 **Theorem 24.7 is stated with a constant that is at least the book's `α`.** Rockafellar defines
 `α = sup {|x*| : x* ∈ ∂f(S)}` and then proves the two inequalities for it. The backbone produces a
@@ -175,8 +177,9 @@ follow from Theorem 24.9 together with "cyclically monotone implies monotone": a
 the smaller class need not be maximal in the larger one. This module therefore states
 `theorem_24_9` for maximal *cyclic* monotonicity only, and `isMonotoneRel_subgradientRel_rn` for
 plain monotonicity of `∂f`, with no bridge between them. The backbone keeps the two apart in the
-same way. On the **line** the two classes do coincide (`isMonotoneRel_iff_isCyclicallyMonotone_line`,
-book line 9623), which is exactly why Theorem 24.3 can be stated for maximal chains; that
+same way. On the **line** the two classes do coincide (book line 9623, and
+`isMonotoneRel_iff_isCyclicallyMonotone_line` here), which is exactly why Theorem 24.3 can be
+stated for maximal chains; that
 coincidence is one-dimensional and is not available for `n > 1`.
 
 ## References
@@ -258,7 +261,8 @@ theorem theorem_24_1_tendsto_leftDeriv_Iio (hf : ClosedProperConvexFn f) (x : �
 
 Only properness is needed. -/
 theorem theorem_24_1_subgradient (hp : Proper f) (x : ℝ) :
-    subgradient (innerₗ ℝ) f x = {y : ℝ | leftDeriv f x ≤ (y : EReal) ∧ (y : EReal) ≤ rightDeriv f x} :=
+    subgradient (innerₗ ℝ) f x
+      = {y : ℝ | leftDeriv f x ≤ (y : EReal) ∧ (y : EReal) ≤ rightDeriv f x} :=
   Set.ext fun _ => mem_subgradient_iff_le_rightDeriv hp
 
 end OneDim
@@ -473,6 +477,18 @@ section Convergence
 
 variable {n : ℕ} {C : Set (Rn n)} {f : ℕ → Rn n → EReal} {g : Rn n → EReal}
 
+/-- **Finiteness on a non-empty open set forces properness** (Theorem 7.2), and supplies the
+inclusion `C ⊆ dom f` at the same time. This is what lets Theorem 24.5 be stated with the book's
+own hypotheses instead of the backbone's. -/
+private theorem proper_of_finite_on_isOpen {g : Rn n → EReal} (hg : ConvexFn g) (hC : IsOpen C)
+    (hfin : ∀ z ∈ C, g z ≠ ⊥ ∧ g z ≠ ⊤) {x : Rn n} (hx : x ∈ C) : Proper g ∧ C ⊆ dom g := by
+  have hCdom : C ⊆ dom g := fun z hz => mem_dom.2 (lt_top_iff_ne_top.2 (hfin z hz).2)
+  refine ⟨?_, hCdom⟩
+  by_contra hp
+  have hxi : x ∈ interior (dom g) := hC.subset_interior_iff.2 hCdom hx
+  exact (hfin x hx).1 (hg.eq_bot_of_mem_relint_dom hp
+    (Convex.interior_subset_relint hg.convex_dom ⟨x, hxi⟩ hxi))
+
 /-- **Rockafellar, Theorem 24.5**, first assertion, spelled without junk values: every real `μ`
 above `f'(x; y)` eventually bounds `fᵢ'(xᵢ; yᵢ)`.
 
@@ -480,16 +496,19 @@ This is the `limsup` inequality of the book with the extended-real limit superio
 defining property, which is the form every consumer uses. `theorem_24_5_limsup` is the literal
 statement.
 
-`hgp` and `hfp` are properness. They are not extra hypotheses: the book asks the functions to be
-*finite* on the non-empty open convex `C`, and an improper convex function is `-∞` throughout the
-relative interior of its effective domain (Theorem 7.2), hence throughout `C`. -/
+The hypotheses are the book's: the `fᵢ` and `g` are convex on `Rⁿ` and *finite on* the open convex
+`C`. Properness and `C ⊆ dom` are derived by `proper_of_finite_on_isOpen`. -/
 theorem theorem_24_5_lt (hC : IsOpen C) (hCc : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
-    (hfp : ∀ i, Proper (f i)) (hfC : ∀ i, C ⊆ dom (f i)) (hg : ConvexFn g) (hgp : Proper g)
-    (hgC : C ⊆ dom g) (hconv : ∀ z ∈ C, Tendsto (fun i => f i z) atTop (𝓝 (g z))) {x : Rn n}
+    (hfin : ∀ i, ∀ z ∈ C, f i z ≠ ⊥ ∧ f i z ≠ ⊤) (hg : ConvexFn g)
+    (hgfin : ∀ z ∈ C, g z ≠ ⊥ ∧ g z ≠ ⊤)
+    (hconv : ∀ z ∈ C, Tendsto (fun i => f i z) atTop (𝓝 (g z))) {x : Rn n}
     (hx : x ∈ C) {xs : ℕ → Rn n} (hxs : Tendsto xs atTop (𝓝 x)) {y : Rn n} {ys : ℕ → Rn n}
     (hys : Tendsto ys atTop (𝓝 y)) {μ : ℝ} (hμ : dirDeriv g x y < (μ : EReal)) :
-    ∀ᶠ i in atTop, dirDeriv (f i) (xs i) (ys i) < (μ : EReal) :=
-  eventually_dirDeriv_lt hC hCc hf hfp hfC hg hgp hgC hconv hx hxs hys hμ
+    ∀ᶠ i in atTop, dirDeriv (f i) (xs i) (ys i) < (μ : EReal) := by
+  obtain ⟨hgp, hgC⟩ := proper_of_finite_on_isOpen hg hC hgfin hx
+  have h := fun i => proper_of_finite_on_isOpen (hf i) hC (hfin i) hx
+  exact eventually_dirDeriv_lt hC hCc hf (fun i => (h i).1) (fun i => (h i).2) hg hgp hgC hconv hx
+    hxs hys hμ
 
 /-- **Rockafellar, Theorem 24.5**, first assertion, literally:
 `limsup_i fᵢ'(xᵢ; yᵢ) ≤ f'(x; y)`.
@@ -497,26 +516,31 @@ theorem theorem_24_5_lt (hC : IsOpen C) (hCc : Convex ℝ C) (hf : ∀ i, Convex
 Equality can fail: `fᵢ(x) = |x|^{pᵢ}` with `pᵢ ↓ 1` converges pointwise to `|x|` on `R` with every
 `fᵢ'(0; 1) = 0` while `f'(0; 1) = 1`. -/
 theorem theorem_24_5_limsup (hC : IsOpen C) (hCc : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
-    (hfp : ∀ i, Proper (f i)) (hfC : ∀ i, C ⊆ dom (f i)) (hg : ConvexFn g) (hgp : Proper g)
-    (hgC : C ⊆ dom g) (hconv : ∀ z ∈ C, Tendsto (fun i => f i z) atTop (𝓝 (g z))) {x : Rn n}
+    (hfin : ∀ i, ∀ z ∈ C, f i z ≠ ⊥ ∧ f i z ≠ ⊤) (hg : ConvexFn g)
+    (hgfin : ∀ z ∈ C, g z ≠ ⊥ ∧ g z ≠ ⊤)
+    (hconv : ∀ z ∈ C, Tendsto (fun i => f i z) atTop (𝓝 (g z))) {x : Rn n}
     (hx : x ∈ C) {xs : ℕ → Rn n} (hxs : Tendsto xs atTop (𝓝 x)) {y : Rn n} {ys : ℕ → Rn n}
     (hys : Tendsto ys atTop (𝓝 y)) :
     limsup (fun i => dirDeriv (f i) (xs i) (ys i)) atTop ≤ dirDeriv g x y := by
   refine le_of_forall_gt_imp_ge_of_dense fun c hc => ?_
   obtain ⟨μ, hμ₁, hμ₂⟩ := EReal.lt_iff_exists_real_btwn.1 hc
   have hev : ∀ᶠ i in atTop, dirDeriv (f i) (xs i) (ys i) ≤ (μ : EReal) :=
-    (theorem_24_5_lt hC hCc hf hfp hfC hg hgp hgC hconv hx hxs hys hμ₁).mono fun _ h => h.le
+    (theorem_24_5_lt hC hCc hf hfin hg hgfin hconv hx hxs hys hμ₁).mono fun _ h => h.le
   exact le_trans (limsup_le_of_le (h := hev)) hμ₂.le
 
 /-- **Rockafellar, Theorem 24.5**, second assertion: given `ε > 0` there is an index `i₀` with
 `∂fᵢ(xᵢ) ⊆ ∂f(x) + εB` for all `i ≥ i₀`, `B` the Euclidean unit ball. -/
 theorem theorem_24_5_subgradient (hC : IsOpen C) (hCc : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
-    (hfp : ∀ i, Proper (f i)) (hfC : ∀ i, C ⊆ dom (f i)) (hg : ConvexFn g) (hgp : Proper g)
-    (hgC : C ⊆ dom g) (hconv : ∀ z ∈ C, Tendsto (fun i => f i z) atTop (𝓝 (g z))) {x : Rn n}
+    (hfin : ∀ i, ∀ z ∈ C, f i z ≠ ⊥ ∧ f i z ≠ ⊤) (hg : ConvexFn g)
+    (hgfin : ∀ z ∈ C, g z ≠ ⊥ ∧ g z ≠ ⊤)
+    (hconv : ∀ z ∈ C, Tendsto (fun i => f i z) atTop (𝓝 (g z))) {x : Rn n}
     (hx : x ∈ C) {xs : ℕ → Rn n} (hxs : Tendsto xs atTop (𝓝 x)) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ i in atTop, subgradient (pairing n) (f i) (xs i)
-      ⊆ subgradient (pairing n) g x + Metric.closedBall (0 : Rn n) ε :=
-  eventually_subgradient_subset_add_closedBall hC hCc hf hfp hfC hg hgp hgC hconv hx hxs hε
+      ⊆ subgradient (pairing n) g x + Metric.closedBall (0 : Rn n) ε := by
+  obtain ⟨hgp, hgC⟩ := proper_of_finite_on_isOpen hg hC hgfin hx
+  have h := fun i => proper_of_finite_on_isOpen (hf i) hC (hfin i) hx
+  exact eventually_subgradient_subset_add_closedBall hC hCc hf (fun i => (h i).1)
+    (fun i => (h i).2) hg hgp hgC hconv hx hxs hε
 
 /-- **Rockafellar, Corollary 24.5.1**, first assertion: `f'(x; y)` is an upper semicontinuous
 function of `(x, y) ∈ int (dom f) × Rⁿ`.
@@ -547,7 +571,7 @@ section Boundary
 
 variable {n : ℕ} {f : Rn n → EReal} {x y : Rn n}
 
-/-- **Rockafellar, §24 (line 9401).** `∂f(x)_y` is the set of points `x* ∈ ∂f(x)` at which `y` is
+/-- **Rockafellar, §24 (line 9373).** `∂f(x)_y` is the set of points `x* ∈ ∂f(x)` at which `y` is
 *normal* to `∂f(x)`.
 
 `subgradientNormal_eq_sep` is the bridge to the maximisation form — `x*` maximises `⟨y, ·⟩` over
@@ -725,7 +749,7 @@ theorem theorem_24_9_unique {g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     ∃ α : ℝ, ∀ x, g x = f x + (α : EReal) :=
   eq_add_coe_of_subgradientRel_subset hf hg h.subset
 
-/-- **Rockafellar, §24 (line 9611)**: `∂f` is a monotone mapping, this being the case `m = 1` of
+/-- **Rockafellar, §24 (line 9613)**: `∂f` is a monotone mapping, this being the case `m = 1` of
 cyclic monotonicity.
 
 Kept deliberately separate from `theorem_24_9`. The book warns at line 9631 that maximal
