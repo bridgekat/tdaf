@@ -10,70 +10,36 @@ import Tdaf.Analysis.Convex.Operations.Epi
 # Infimal convolution
 
 Rockafellar's `f □ g`, the functional operation corresponding to addition of epigraphs
-(*Convex Analysis*, §5, Theorem 5.4). It is the first application of the device of Theorem 5.3,
-and it is dual to pointwise addition of convex functions under the conjugacy of §16.
+(**Theorem 5.4**). It is the first application of the device of Theorem 5.3, and it is dual to
+pointwise addition of convex functions under the conjugacy of §16.
+
+`f □ g` is *defined* as `ofEpi (epi f + epi g)`, not by the classical formula
+`(f □ g) x = ⨅ y, f (x - y) + g y`, which is ill-formed as soon as one function reaches `⊤` where
+the other reaches `⊥`: for `f ≡ ⊤` and `g 0 = ⊥`, `epi f + epi g = ∅` so the left side is `⊤` and
+the right side `⊤ + ⊥ = ⊥`. `infConv_apply` recovers the formula under `f, g ≠ ⊥`; since that
+example uses only one `⊤` value and one `⊥` value, a single such hypothesis will not do.
 
 ## Main definitions
 
-* `infConv f g` — the infimal convolute `f □ g`, **defined** as `ofEpi (epi f + epi g)`.
-* `InfConvFn E` — the type synonym `E → EReal` carrying `□` as its addition, so that
-  Rockafellar's m-ary `f₁ □ ⋯ □ fₘ` is a `Finset.sum`.
+* `infConv f g` — the infimal convolute `f □ g`.
+* `InfConvFn E` — the type synonym `E → EReal` carrying `□` as its addition, so that Rockafellar's
+  `f₁ □ ⋯ □ fₘ` is a `Finset.sum`. A synonym is forced, since `E → EReal` already carries the
+  pointwise `+` that `□` is dual to; additive notation is right, `□` being addition of epigraphs.
 
 ## Main results
 
-* `convexFn_infConv` — **Theorem 5.4**: `f □ g` is convex when `f` and `g` are.
-* `infConv_apply` — the classical formula `(f □ g) x = ⨅ y, f (x - y) + g y`, valid when
-  neither function takes the value `⊥`.
+* `convexFn_infConv` — **Theorem 5.4**; `convexFn_sum_toInfConvFn` is the book's m-ary form.
+* `infConv_apply`, `infConv_le_add` — the classical infimum formula and its inequality half;
+  `sum_toInfConvFn_apply_le`, `sum_toInfConvFn_le_sum` are the m-ary versions.
 * `dom_infConv` — `dom (f □ g) = dom f + dom g`, with no hypothesis at all.
-* `infConv_comm`, `infConv_assoc`, `infConv_indicatorFn_zero` — `□` is commutative
-  and associative with identity `δ(· | 0)`, exactly as Rockafellar states in the paragraph after
-  Theorem 5.4. `InfConvFn.instAddCommMonoid` records this as a Mathlib `AddCommMonoid`.
-* `infConv_indicatorFn_singleton` — `f □ δ(· | a)` translates the graph of `f` by `a`.
-* `convexFn_sum_toInfConvFn` — Theorem 5.4 for `m` functions, as a `Finset.sum` in
-  `InfConvFn E`.
-* `sum_toInfConvFn_apply_le`, `sum_toInfConvFn_le_sum`, `dom_sum_toInfConvFn` — the `m`-ary forms
-  of `infConv_apply_le`, `infConv_le_add` and `dom_infConv`.
-
-## Design notes
-
-**Why the definition is not the infimum formula.** Rockafellar states Theorem 5.4 for *proper*
-convex functions and then remarks that "infimal convolution of improper functions [is not] defined
-by this formula, because of the rule of avoiding `∞ - ∞`", giving instead the epigraph definition
-`(f₁ □ f₂) x = inf {μ | (x, μ) ∈ epi f₁ + epi f₂}`. That is the definition used here. The infimum
-formula is recovered as `infConv_apply` under `∀ x, f x ≠ ⊥` and `∀ x, g x ≠ ⊥`; the
-hypotheses are not decoration. Take `f ≡ ⊤` and `g` with `g 0 = ⊥`: then `epi f = ∅`, so
-`epi f + epi g = ∅` and `(f □ g) x = ⊤`, while `⨅ y, f (x - y) + g y = ⊤ + ⊥ = ⊥`. One `≠ ⊥`
-hypothesis does not suffice either — that example uses only `f x = ⊤` and `g y = ⊥` — so both are
-carried, inline, following the treatment of Theorem 5.2 in `Operations/Basic.lean`.
-
-**`epi (f □ g) = epi f + epi g` is false.** Only `epi f + epi g ⊆ epi (f □ g)` holds
-(`subset_epi_infConv`): the infimum defining `f □ g` need not be attained, and a sum of
-epigraphs need not be an epigraph. On `ℝ`, take `f x = 1/x` for `x > 0` and `⊤` otherwise, and
-`g ≡ 0`. Both are convex, `epi g = ℝ ×ˢ Ici 0`, and every vertical section of `epi f + epi g` is
-`Ioi 0`: the sum is `ℝ ×ˢ Ioi 0`, which is not an epigraph. Indeed `f □ g ≡ 0`, whose epigraph is
-`ℝ ×ˢ Ici 0`. `epi_infConv` therefore carries `IsEpiLike (epi f + epi g)` as a
-hypothesis.
-
-**Associativity is not `add_assoc`.** Because `epi (f □ g)` is strictly larger than
-`epi f + epi g` in general, `epi ((f □ g) □ h)` is *not* `(epi f + epi g) + epi h`, and
-associativity does not follow from associativity of set addition alone. What makes it work is
-`epi_ofEpi_add_subset`: enlarging a summand to the epigraph it determines does not move the
-lower boundary of the sum, so `infConv_ofEpi_left` lets the `ofEpi` be peeled off. The same
-lemma is what a future `smulRight` / `convFn` / `mapLin` file will need.
-
-**The monoid instance.** Rockafellar: "infimal convolution is commutative, associative and
-convexity-preserving. The function `δ(· | 0)` acts as the identity element". That is an
-`AddCommMonoid`, and it is instantiated on the type synonym `InfConvFn E` — a synonym is
-forced, since `E → EReal` already carries `Pi.addCommMonoid` (pointwise `+`, the operation `□` is
-*dual* to) and `Pi.commMonoid` (pointwise `*`). Additive notation is the right one: `□` is
-epigraph addition, and its unit `δ(· | 0)` is an indicator of `{0}`. The payoff is Theorem 5.4 in
-the book's own m-ary form, `convexFn_sum_toInfConvFn`, via `Finset.sum` and
-`Finset.cons_induction`.
+* `InfConvFn.instAddCommMonoid` — `□` is commutative and associative with identity `δ(· | 0)`;
+  `infConv_indicatorFn_singleton` translates the graph of `f` by `a`.
+* `subset_epi_infConv`, `epi_infConv` — `epi f + epi g ⊆ epi (f □ g)` always; equality needs
+  `IsEpiLike (epi f + epi g)`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §5 (Theorem 5.4 and the
-  discussion following it).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §5.
 -/
 
 open Pointwise Set
@@ -86,33 +52,27 @@ section Basic
 
 variable {E : Type*} [AddCommGroup E] {f g f₁ f₂ g₁ g₂ : E → EReal} {y z : E} {ν ρ : ℝ}
 
-/-- **Infimal convolution**, Rockafellar §5: `f □ g`.
-
-*Defined* by addition of epigraphs, not by the infimum formula
-`(f □ g) x = ⨅ y, f (x - y) + g y`: the latter is ill-formed when `f` or `g` takes the value `⊥`,
-because it then produces the forbidden `∞ - ∞`. Rockafellar makes exactly this point after Theorem
-5.4 and gives this definition instead. See `infConv_apply` for the infimum formula as a
-theorem. -/
+/-- **Infimal convolution** `f □ g`, defined by addition of epigraphs rather than by the infimum
+formula `(f □ g) x = ⨅ y, f (x - y) + g y`, which is ill-formed when `f` or `g` takes the value
+`⊥`. The formula is `infConv_apply`. -/
 noncomputable def infConv (f g : E → EReal) : E → EReal := ofEpi (epi f + epi g)
 
-/-- The definition of `infConv`, as a rewrite rule. -/
 theorem infConv_def (f g : E → EReal) : infConv f g = ofEpi (epi f + epi g) := rfl
 
-/-- The sum of the epigraphs is always contained in the epigraph of the infimal convolute. The
-reverse inclusion is `epi_infConv` and is genuinely conditional. -/
 theorem subset_epi_infConv (f g : E → EReal) : epi f + epi g ⊆ epi (infConv f g) :=
   subset_epi_ofEpi _
 
 /-- Rockafellar's description of `epi (f □ g)`, under the hypothesis that makes it true.
 
-The hypothesis is not removable: the infimum defining `f □ g` need not be attained, so a sum of
-epigraphs need not be an epigraph. See the module docstring. -/
+The hypothesis is not removable: a sum of epigraphs need not be an epigraph. On `ℝ` take
+`f x = 1/x` for `x > 0` and `⊤` otherwise, and `g ≡ 0`; both are convex, every vertical section of
+`epi f + epi g` is `Ioi 0`, so the sum is `ℝ ×ˢ Ioi 0`, whereas `f □ g ≡ 0` has epigraph
+`ℝ ×ˢ Ici 0`. -/
 theorem epi_infConv (h : IsEpiLike (epi f + epi g)) : epi (infConv f g) = epi f + epi g :=
   epi_ofEpi h
 
-/-- The vertical sections of a sum of epigraphs are upward closed. This is the half of
-`IsEpiLike` that holds unconditionally; the other half is what closedness of `epi f + epi g` has
-to supply before `epi_infConv` applies. -/
+/-- Vertical sections of a sum of epigraphs are upward closed: the half of `IsEpiLike` that holds
+unconditionally, closedness having to supply the other. -/
 theorem mem_epi_add_epi_of_le {x : E} {μ ν : ℝ} (h : ((x, μ) : E × ℝ) ∈ epi f + epi g)
     (hμν : μ ≤ ν) : ((x, ν) : E × ℝ) ∈ epi f + epi g := by
   obtain ⟨⟨y', a⟩, h₁, ⟨z', b⟩, h₂, heq⟩ := h
@@ -123,9 +83,7 @@ theorem mem_epi_add_epi_of_le {x : E} {μ ν : ℝ} (h : ((x, μ) : E × ℝ) �
   · change ((y', a) : E × ℝ) + (z', b + (ν - μ)) = (x, ν)
     rw [Prod.mk_add_mk, hy, show a + (b + (ν - μ)) = ν by linarith]
 
-/-- The basic upper bound, phrased entirely inside the epigraphs so that no `∞ - ∞` can arise:
-a point of `epi f` over `y` and a point of `epi g` over `z` bound `f □ g` at `y + z`. This is
-`ofEpi_apply_le` specialised to a sum of epigraphs. -/
+/-- The basic upper bound, phrased inside the epigraphs so that no `∞ - ∞` can arise. -/
 theorem infConv_apply_le (hy : f y ≤ (ν : EReal)) (hz : g z ≤ (ρ : EReal)) :
     infConv f g (y + z) ≤ ((ν + ρ : ℝ) : EReal) := by
   refine ofEpi_apply_le ?_
@@ -135,22 +93,16 @@ theorem infConv_apply_le (hy : f y ≤ (ν : EReal)) (hz : g z ≤ (ρ : EReal))
 
 /-! ### The effective domain -/
 
-/-- "The effective domain of `f □ g` is the sum of `dom f` and `dom g`" (Rockafellar, §5, after
-Theorem 5.4).
-
-No hypothesis is needed, in contrast with `dom_add` for pointwise addition: `dom` is the
-projection of the epigraph (`dom_eq_fst_image_epi`) with no properness assumption, and
-projection is an additive hom, so it commutes with the pointwise sum of sets. -/
+/-- `dom (f □ g) = dom f + dom g`, with no hypothesis, unlike `dom_add` for pointwise addition:
+`dom` is the projection of the epigraph, and projection is an additive hom. -/
 theorem dom_infConv (f g : E → EReal) : dom (infConv f g) = dom f + dom g := by
   rw [infConv_def, dom_ofEpi, dom_eq_fst_image_epi f, dom_eq_fst_image_epi g]
   exact Set.image_add (AddMonoidHom.fst E ℝ)
 
 /-! ### The infimum formula -/
 
-/-- The infimum formula as an inequality: `(f □ g) x ≤ f (x - y) + g y`.
-
-Both `≠ ⊥` hypotheses are needed. Without them the right-hand side can be `⊤ + ⊥ = ⊥` while the
-left-hand side is `⊤`; see the module docstring. -/
+/-- `(f □ g) x ≤ f (x - y) + g y`. Both `≠ ⊥` hypotheses are needed: without them the right side
+can be `⊤ + ⊥ = ⊥` while the left is `⊤`. -/
 theorem infConv_le_add (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) (x y : E) :
     infConv f g x ≤ f (x - y) + g y := by
   rcases eq_top_or_lt_top (f (x - y)) with h1 | h1
@@ -165,14 +117,7 @@ theorem infConv_le_add (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) (x y 
   simpa using infConv_apply_le (f := f) (g := g) hp.le hq.le
 
 /-- **Rockafellar's formula for `□`**: `(f □ g) x = ⨅ y, f (x - y) + g y`, "analogous to the
-classical formula for integral convolution".
-
-The hypotheses `∀ x, f x ≠ ⊥` and `∀ x, g x ≠ ⊥` are exactly what makes the right-hand side
-meaningful: `f (x - y) + g y` is the forbidden `∞ - ∞` as soon as one function reaches `⊤` where
-the other reaches `⊥`, and `EReal` resolves it as `⊥`, which is the wrong value. Concretely, for
-`f ≡ ⊤` and `g` with `g 0 = ⊥` the left side is `⊤` and the right side is `⊥`. This is why
-`infConv` is defined through epigraphs and this identity is a theorem rather than the
-definition. -/
+classical formula for integral convolution". The `≠ ⊥` hypotheses make the right side meaningful. -/
 theorem infConv_apply (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) (x : E) :
     infConv f g x = ⨅ y, f (x - y) + g y := by
   refine le_antisymm (le_iInf fun y => infConv_le_add hf hg x y) (le_ofEpi fun μ hμ => ?_)
@@ -184,17 +129,12 @@ theorem infConv_apply (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) (x : E
 
 /-! ### Commutativity, associativity, monotonicity -/
 
-/-- `□` is commutative, because addition of sets is (Rockafellar, §5). -/
 theorem infConv_comm (f g : E → EReal) : infConv f g = infConv g f := by
   rw [infConv_def, infConv_def, add_comm]
 
-/-- Enlarging a summand from `F` to the epigraph `epi (ofEpi F)` it determines does not move the
-lower boundary of the sum.
-
-This is the lemma that makes `□` associative. The inclusion `F ⊆ epi (ofEpi F)` is always strict
-in the relevant cases — `epi (ofEpi F)` fills in the unattained infima of the vertical sections of
-`F` — but every filled-in point is a limit from above of points of `F`, and `ofEpi` only sees
-infima, so the sum's lower boundary is unchanged. -/
+/-- Enlarging a summand from `F` to the epigraph it determines does not move the lower boundary of
+the sum: the points `epi (ofEpi F)` adds are limits from above of points of `F`. This is what makes
+`□` associative. -/
 theorem epi_ofEpi_add_subset (F G : Set (E × ℝ)) :
     epi (ofEpi F) + G ⊆ epi (ofEpi (F + G)) := by
   rintro p hp
@@ -211,28 +151,21 @@ theorem epi_ofEpi_add_subset (F G : Set (E × ℝ)) :
   have hτ' : τ < μ + (q - (μ + σ)) := by exact_mod_cast hτ
   exact_mod_cast (by linarith : τ + σ < q)
 
-/-- The `ofEpi` of a set may be convolved by adding the set itself: the `epi (ofEpi ·)` in the
-definition of `infConv` can be peeled off on the left. -/
 theorem infConv_ofEpi_left (F : Set (E × ℝ)) (g : E → EReal) :
     infConv (ofEpi F) g = ofEpi (F + epi g) := by
   refine le_antisymm (ofEpi_mono (Set.add_subset_add_right (subset_epi_ofEpi F))) ?_
   exact subset_epi_iff_le_ofEpi.1 (epi_ofEpi_add_subset F (epi g))
 
-/-- `infConv_ofEpi_left` on the right. -/
 theorem infConv_ofEpi_right (f : E → EReal) (G : Set (E × ℝ)) :
     infConv f (ofEpi G) = ofEpi (epi f + G) := by
   rw [infConv_comm, infConv_ofEpi_left, add_comm]
 
-/-- `□` is associative (Rockafellar, §5).
-
-Note that this is *not* a direct consequence of associativity of set addition: `epi (f □ g)` is
-larger than `epi f + epi g` in general. `epi_ofEpi_add_subset`, through
-`infConv_ofEpi_left`, is what closes the gap. -/
+/-- `□` is associative. Not a direct consequence of associativity of set addition: `epi (f □ g)` is
+larger than `epi f + epi g` in general, and `epi_ofEpi_add_subset` closes the gap. -/
 theorem infConv_assoc (f g h : E → EReal) :
     infConv (infConv f g) h = infConv f (infConv g h) := by
   rw [infConv_def f g, infConv_def g h, infConv_ofEpi_left, infConv_ofEpi_right, add_assoc]
 
-/-- `□` is monotone in both arguments, since `epi` and `ofEpi` are both antitone. -/
 theorem infConv_mono (hf : f₁ ≤ f₂) (hg : g₁ ≤ g₂) : infConv f₁ g₁ ≤ infConv f₂ g₂ :=
   ofEpi_mono (Set.add_subset_add (epi_anti hf) (epi_anti hg))
 
@@ -260,24 +193,21 @@ theorem epi_add_epi_indicatorFn_singleton (f : E → EReal) (a : E) :
       Set.add_mem_add (mk_mem_epi.2 (mk_mem_epi.1 hp)) ⟨rfl, le_refl (0 : ℝ)⟩
     simpa using hmem
 
-/-- "`f □ δ(· | a)` is the function whose graph is obtained by translating the graph of `f`
-horizontally by `a`" (Rockafellar, §5). -/
+/-- `f □ δ(· | a)` translates the graph of `f` horizontally by `a`. -/
 theorem infConv_indicatorFn_singleton (f : E → EReal) (a : E) :
     infConv f (indicatorFn ({a} : Set E)) = fun x => f (x - a) := by
   rw [infConv_def, epi_add_epi_indicatorFn_singleton, ofEpi_epi]
 
-/-- **`δ(· | 0)` is the identity element for `□`** (Rockafellar, §5). -/
+/-- **`δ(· | 0)` is the identity element for `□`.** -/
 @[simp] theorem infConv_indicatorFn_zero (f : E → EReal) :
     infConv f (indicatorFn ({0} : Set E)) = f := by
   simpa using infConv_indicatorFn_singleton f 0
 
-/-- `δ(· | 0)` is the identity on the left as well. -/
 @[simp] theorem indicatorFn_zero_infConv (f : E → EReal) :
     infConv (indicatorFn ({0} : Set E)) f = f := by
   rw [infConv_comm, infConv_indicatorFn_zero]
 
-/-- If `g` is nonpositive at the origin then `f □ g ≤ f`: the identity `δ(· | 0)` dominates such a
-`g`, and `□` is monotone. -/
+/-- If `g` is nonpositive at the origin then `f □ g ≤ f`, since `δ(· | 0)` dominates such a `g`. -/
 theorem infConv_le_left (f : E → EReal) (hg : g 0 ≤ 0) : infConv f g ≤ f := by
   refine le_of_le_of_eq (infConv_mono (le_refl f) ?_) (infConv_indicatorFn_zero f)
   intro w
@@ -287,7 +217,6 @@ theorem infConv_le_left (f : E → EReal) (hg : g 0 ≤ 0) : infConv f g ≤ f :
   · have hw' : w ∉ ({0} : Set E) := fun hmem => hw hmem
     simp [hw']
 
-/-- If `f` is nonpositive at the origin then `f □ g ≤ g`. -/
 theorem infConv_le_right (hf : f 0 ≤ 0) (g : E → EReal) : infConv f g ≤ g := by
   rw [infConv_comm]
   exact infConv_le_left g hf
@@ -300,31 +229,18 @@ section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f g : E → EReal}
 
-/-- **Rockafellar, Theorem 5.4.** The infimal convolute of two convex functions is convex.
-
-The proof is the one in the book: `epi f + epi g` is a convex set because a sum of convex sets is
-convex, and `f □ g` is the function it determines by Theorem 5.3. Note that no properness is
-needed — that hypothesis in the book is there only to make the infimum formula meaningful, and the
+/-- **Rockafellar, Theorem 5.4.** The infimal convolute of two convex functions is convex. No
+properness is needed: the book's hypothesis only makes the infimum formula meaningful, and the
 epigraph definition does not use it. -/
 theorem convexFn_infConv (hf : ConvexFn f) (hg : ConvexFn g) : ConvexFn (infConv f g) :=
   convexFn_ofEpi (hf.convex_epi.add hg.convex_epi)
 
 end Module
 
-/-! ### `□` as a commutative monoid
+/-! ### `□` as a commutative monoid -/
 
-Rockafellar: "As an operation on the collection of all functions from `Rⁿ` to `[-∞, +∞]`, infimal
-convolution is commutative, associative and convexity-preserving. The function `δ(· | 0)` acts as
-the identity element for this operation." That is precisely an `AddCommMonoid`, recorded here on a
-type synonym because `E → EReal` already carries the pointwise `AddCommMonoid` and `CommMonoid`
-structures. -/
-
-/-- `E → EReal`, carrying infimal convolution as its addition and `δ(· | 0)` as its zero.
-
-A type synonym is unavoidable: the pointwise `+` on `E → EReal` is `Pi.addCommMonoid`, and it is
-the operation *dual* to `□`, not `□` itself. Additive notation is chosen because `□` is addition
-of epigraphs and its unit is the indicator of `{0}`; in particular `∑ i ∈ s, toInfConvFn (f i)` is
-Rockafellar's `f₁ □ ⋯ □ fₘ`. -/
+/-- `E → EReal`, carrying infimal convolution as its addition and `δ(· | 0)` as its zero;
+`∑ i ∈ s, toInfConvFn (f i)` is Rockafellar's `f₁ □ ⋯ □ fₘ`. -/
 def InfConvFn (E : Type*) : Type _ := E → EReal
 
 /-- A function `E → EReal`, regarded as an element of the infimal-convolution monoid. -/
@@ -333,11 +249,9 @@ def toInfConvFn {E : Type*} (f : E → EReal) : InfConvFn E := f
 /-- An element of the infimal-convolution monoid, regarded as a function `E → EReal`. -/
 def ofInfConvFn {E : Type*} (F : InfConvFn E) : E → EReal := F
 
-/-- `toInfConvFn` and `ofInfConvFn` are mutually inverse. -/
 @[simp] theorem ofInfConvFn_toInfConvFn {E : Type*} (f : E → EReal) :
     ofInfConvFn (toInfConvFn f) = f := rfl
 
-/-- `ofInfConvFn` and `toInfConvFn` are mutually inverse. -/
 @[simp] theorem toInfConvFn_ofInfConvFn {E : Type*} (F : InfConvFn E) :
     toInfConvFn (ofInfConvFn F) = F := rfl
 
@@ -351,29 +265,19 @@ noncomputable instance InfConvFn.instAdd : Add (InfConvFn E) := ⟨infConv⟩
 /-- `δ(· | 0)` is the zero of `InfConvFn E`. -/
 noncomputable instance InfConvFn.instZero : Zero (InfConvFn E) := ⟨indicatorFn {0}⟩
 
-/-- Addition in `InfConvFn E` is infimal convolution. -/
 @[simp] theorem toInfConvFn_add (f g : E → EReal) :
     toInfConvFn f + toInfConvFn g = toInfConvFn (infConv f g) := rfl
 
-/-- The zero of `InfConvFn E` is `δ(· | 0)`. -/
 @[simp] theorem toInfConvFn_indicatorFn_zero :
     toInfConvFn (indicatorFn ({0} : Set E)) = 0 := rfl
 
-/-- `ofInfConvFn` turns the monoid addition back into `infConv`. -/
 @[simp] theorem ofInfConvFn_add (F G : InfConvFn E) :
     ofInfConvFn (F + G) = infConv (ofInfConvFn F) (ofInfConvFn G) := rfl
 
-/-- `ofInfConvFn` turns the monoid zero back into `δ(· | 0)`. -/
 @[simp] theorem ofInfConvFn_zero :
     ofInfConvFn (0 : InfConvFn E) = indicatorFn ({0} : Set E) := rfl
 
-/-- **Rockafellar, §5**: the functions `E → EReal` form a commutative monoid under infimal
-convolution, with `δ(· | 0)` as identity.
-
-The `add` and `zero` fields are taken from `InfConvFn.instAdd` and `InfConvFn.instZero`
-rather than being spelled out again: `nsmul := nsmulRec` needs `Add` and `Zero` *instances*, not
-structure fields, and the class default `nsmulRecAuto` needs an `AddSemigroup` instance that does
-not exist until this declaration is complete. -/
+/-- `E → EReal` is a commutative monoid under `□`, with identity `δ(· | 0)`. -/
 noncomputable instance InfConvFn.instAddCommMonoid : AddCommMonoid (InfConvFn E) where
   add := (· + ·)
   zero := 0
@@ -392,9 +296,7 @@ section MonoidConvex
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 /-- **Rockafellar, Theorem 5.4** in the book's own m-ary form: `f₁ □ ⋯ □ fₘ` is convex whenever
-`f₁, …, fₘ` are. The `□`-product is the `AddCommMonoid` sum in `InfConvFn E`, so the
-induction is `Finset.cons_induction`; the empty case is `δ(· | 0)`, which is convex because `{0}`
-is. -/
+`f₁, …, fₘ` are. The empty case is `δ(· | 0)`, which is convex because `{0}` is. -/
 theorem convexFn_sum_toInfConvFn {ι : Type*} {s : Finset ι} {f : ι → E → EReal}
     (hf : ∀ i ∈ s, ConvexFn (f i)) :
     ConvexFn (ofInfConvFn (∑ i ∈ s, toInfConvFn (f i))) := by
@@ -411,10 +313,7 @@ section MonoidSum
 
 variable {ι E : Type*} [AddCommGroup E] {s : Finset ι} {g : ι → E → EReal}
 
-/-- **The `m`-ary basic upper bound**, phrased entirely inside the epigraphs so that no `∞ - ∞`
-can arise: a point of `epi (gᵢ)` over `yᵢ` for each `i` bounds `g₁ □ ⋯ □ gₘ` at `∑ yᵢ`.
-
-This is `infConv_apply_le` over a `Finset`, and like it, it needs no hypothesis at all. -/
+/-- **The `m`-ary basic upper bound**, `infConv_apply_le` iterated; no hypothesis is needed. -/
 theorem sum_toInfConvFn_apply_le {y : ι → E} {c : ι → ℝ}
     (h : ∀ i ∈ s, g i (y i) ≤ (c i : EReal)) :
     ofInfConvFn (∑ i ∈ s, toInfConvFn (g i)) (∑ i ∈ s, y i) ≤ ((∑ i ∈ s, c i : ℝ) : EReal) := by
@@ -428,14 +327,9 @@ theorem sum_toInfConvFn_apply_le {y : ι → E} {c : ι → ℝ}
       ofInfConvFn_toInfConvFn]
     exact infConv_apply_le (h i (by simp)) (ih fun j hj => h j (by simp [hj]))
 
-/-- **The `m`-ary infimum bound**: `(g₁ □ ⋯ □ gₘ) (y₁ + ⋯ + yₘ) ≤ g₁ y₁ + ⋯ + gₘ yₘ`.
-
-This is `infConv_le_add` over a `Finset`, and the point of the statement is *where* the `≠ ⊥`
-hypothesis sits: on each `gᵢ` separately, never on a partial convolute. Infimal convolution does
-not preserve `≠ ⊥` — `g₁ x = -x` and `g₂ x = x` are everywhere finite with `g₁ □ g₂ ≡ -∞` — so an
-induction that re-applied `infConv_le_add` to `g₁ □ ⋯ □ gₘ₋₁` would be proving a different
-statement. The epigraph-level `sum_toInfConvFn_apply_le` has no such hypothesis and carries the
-induction instead. -/
+/-- **The `m`-ary infimum bound**: `(g₁ □ ⋯ □ gₘ) (y₁ + ⋯ + yₘ) ≤ g₁ y₁ + ⋯ + gₘ yₘ`. The `≠ ⊥`
+hypothesis sits on each `gᵢ` separately, never on a partial convolute: `□` does not preserve
+`≠ ⊥`, since `g₁ x = -x` and `g₂ x = x` are everywhere finite with `g₁ □ g₂ ≡ -∞`. -/
 theorem sum_toInfConvFn_le_sum (hg : ∀ i ∈ s, ∀ x, g i x ≠ ⊥) (y : ι → E) :
     ofInfConvFn (∑ i ∈ s, toInfConvFn (g i)) (∑ i ∈ s, y i) ≤ ∑ i ∈ s, g i (y i) := by
   rcases eq_or_ne (∑ i ∈ s, g i (y i)) ⊤ with htop | htop
@@ -450,9 +344,8 @@ theorem sum_toInfConvFn_le_sum (hg : ∀ i ∈ s, ∀ x, g i x ≠ ⊥) (y : ι 
   rw [hsum]
   exact sum_toInfConvFn_apply_le fun i hi => (hci i hi).le
 
-/-- The effective domain of `g₁ □ ⋯ □ gₘ` is `dom g₁ + ⋯ + dom gₘ`, with no hypothesis
-(`dom_infConv` over a `Finset`). Note that the empty convolute is `δ(· | 0)`, whose effective
-domain is `{0}`, which is the empty sum of sets. -/
+/-- `dom (g₁ □ ⋯ □ gₘ) = dom g₁ + ⋯ + dom gₘ`, with no hypothesis; the empty convolute is
+`δ(· | 0)`, whose domain `{0}` is the empty sum of sets. -/
 theorem dom_sum_toInfConvFn (s : Finset ι) (g : ι → E → EReal) :
     dom (ofInfConvFn (∑ i ∈ s, toInfConvFn (g i))) = ∑ i ∈ s, dom (g i) := by
   induction s using Finset.cons_induction with

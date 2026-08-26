@@ -41,11 +41,8 @@ end Conventions
 
 namespace EReal
 
-/-- If `z` is below every real number strictly above `r`, then `z ≤ r`.
-
-This is the standard device for turning a family of strict inequalities into a non-strict one, and
-is what lets Rockafellar's strict form of convexity (Theorem 4.2) be converted back into the
-epigraph form. -/
+/-- If `z` is below every real number strictly above `r`, then `z ≤ r`. This is what turns
+Rockafellar's strict form of convexity (Theorem 4.2) back into the epigraph form. -/
 theorem le_coe_of_forall_lt {z : EReal} {r : ℝ} (h : ∀ q : ℝ, r < q → z < (q : EReal)) :
     z ≤ (r : EReal) := by
   by_contra hz
@@ -93,8 +90,8 @@ theorem neg_combo {a b : ℝ} (ha : 0 < a) (hb : 0 < b) {u v : EReal} (hu : u �
     (a : EReal) * -u + (b : EReal) * -v = -((a : EReal) * u + (b : EReal) * v) := by
   rw [neg_add_of_ne_top (coe_mul_ne_top ha hu) (coe_mul_ne_top hb hv), mul_neg, mul_neg]
 
-/-! The hypotheses of `Tdaf.EReal.neg_combo` are load-bearing, not defensive: at `u = ⊤`, `v = ⊥`
-the two sides are `⊥` and `⊤`. Do not weaken them away. -/
+/-! The hypotheses of `Tdaf.EReal.neg_combo` are load-bearing: at `u = ⊤`, `v = ⊥` the two sides
+are `⊥` and `⊤`. -/
 
 example : (1 : EReal) * -(⊤ : EReal) + (1 : EReal) * -(⊥ : EReal) = ⊥ := by simp
 
@@ -112,10 +109,8 @@ theorem coe_mul_le_coe_mul_iff {a : ℝ} (ha : 0 < a) {z w : EReal} :
     _root_.EReal.coe_one, one_mul, one_mul] at h'
 
 /-- **If `z` is at most every positive real, then `z ≤ 0`.** The conclusion is genuinely weaker
-than `z ≤ r` for a fixed `r`: `z` may be any non-positive extended real.
-
-Both of §30's counterexamples run on this — it is how "the optimal value is not positive" is
-extracted from a family of feasible solutions whose values tend to `0`. -/
+than `z ≤ r` for a fixed `r`: `z` may be any non-positive extended real. It is how "the optimal
+value is not positive" is extracted from feasible solutions whose values tend to `0`. -/
 theorem le_zero_of_forall_le_pos {z : EReal} (h : ∀ ε : ℝ, 0 < ε → z ≤ (ε : EReal)) : z ≤ 0 := by
   by_contra hc
   obtain ⟨q, hq0, hqz⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 (not_le.1 hc)
@@ -137,9 +132,7 @@ theorem coe_mul_add_coe {l : ℝ} (hl : 0 < l) (a : EReal) (c : ℝ) :
 
 /-- **Scaling an inequality that carries a real offset**, `cA + ct ≤ cB ↔ A + t ≤ B` for `c > 0`.
 
-`Tdaf.EReal.coe_mul_le_coe_mul_iff` reflects the order through a positive factor but has no
-distribution lemma to feed it; this is that combination. It is what a positive Lagrange multiplier
-does to a constraint, and §28 needed it four times. -/
+This is what a positive Lagrange multiplier does to a constraint. -/
 theorem coe_mul_add_coe_le_coe_mul_iff {c : ℝ} (hc : 0 < c) (A B : EReal) (t : ℝ) :
     (c : EReal) * A + ((c * t : ℝ) : EReal) ≤ (c : EReal) * B ↔ A + (t : EReal) ≤ B := by
   rw [← coe_mul_add_coe hc, coe_mul_le_coe_mul_iff hc]
@@ -197,10 +190,7 @@ theorem neg_le_of_zero_le_add {u v : EReal} (hu : u ≠ ⊥) (h : 0 ≤ u + v) :
       rw [← _root_.EReal.coe_neg]
       exact_mod_cast (by linarith : -r ≤ s)
 
-/-- A finite sum of `EReal`s none of which is `⊥` is not `⊥`.
-
-This is an `EReal` fact rather than a convexity fact; it is stated here because
-`Tdaf.ConvexAnalysis.ConvexFn.sum` is its only consumer so far. -/
+/-- A finite sum of `EReal`s none of which is `⊥` is not `⊥`. -/
 theorem sum_ne_bot {ι : Type*} {s : Finset ι} {g : ι → EReal} (h : ∀ i ∈ s, g i ≠ ⊥) :
     ∑ i ∈ s, g i ≠ ⊥ := by
   induction s using Finset.cons_induction with
@@ -277,10 +267,7 @@ theorem coe_sub_eq_bot_iff {a : ℝ} {z : EReal} : (a : EReal) - z = ⊥ ↔ z =
     rw [← _root_.EReal.coe_sub]
     exact _root_.EReal.coe_ne_bot _
 
-/-- Moving a real summand across an inequality against a real coercion.
-
-The three copies this replaced — in `Subgradient/Approx.lean`, `Saddle/Defs.lean` and
-`Saddle/Correspondence.lean` — arose because none of those files imports the others. -/
+/-- Moving a real summand across an inequality against a real coercion. -/
 theorem add_coe_le_coe_iff {z : EReal} {c m : ℝ} :
     z + (c : EReal) ≤ (m : EReal) ↔ z ≤ ((m - c : ℝ) : EReal) := by
   rw [_root_.EReal.coe_sub, _root_.EReal.le_sub_iff_add_le (.inl (_root_.EReal.coe_ne_bot c))
@@ -352,7 +339,7 @@ theorem le_of_forall_coe_le {u v : EReal} (h : ∀ s : ℝ, v ≤ (s : EReal) �
   | top => exact le_top
 
 /-- Multiplication by a positive real commutes with an infimum. `EReal` has `PosMulMono` but no
-`PosMulStrictMono` (`gotchas.md` ER1), so the reverse inequality goes through `a⁻¹`. -/
+`PosMulStrictMono`, so the reverse inequality goes through `a⁻¹`. -/
 theorem coe_mul_iInf {ι : Sort*} {a : ℝ} (ha : 0 < a) (g : ι → EReal) :
     (a : EReal) * ⨅ i, g i = ⨅ i, (a : EReal) * g i := by
   have hcancel : ∀ z : EReal, ((a⁻¹ : ℝ) : EReal) * ((a : EReal) * z) = z := fun z => by
@@ -391,9 +378,8 @@ theorem neg_iInf {ι : Sort*} (u : ι → EReal) : -(⨅ i, u i) = ⨆ i, -(u i)
     simp only [iSup_le_iff, _root_.EReal.neg_le, le_iInf_iff]
 
 /-- **Negating a difference whose minuend is a *real* number turns it around**, with no side
-condition whatsoever: the finite term rules out both `∞ - ∞` collisions by itself. The unrestricted
-`EReal.neg_sub` needs two hypotheses; this is the case that actually occurs, where the minuend is a
-pairing value. -/
+condition: the finite term rules out both `∞ - ∞` collisions by itself, where the unrestricted
+`EReal.neg_sub` needs two hypotheses. -/
 theorem neg_coe_sub (r : ℝ) (z : EReal) : -((r : EReal) - z) = z - (r : EReal) := by
   induction z with
   | bot => simp
@@ -401,13 +387,8 @@ theorem neg_coe_sub (r : ℝ) (z : EReal) : -((r : EReal) - z) = z - (r : EReal)
   | top => simp
 
 /-- **Negation turns a difference around**, provided neither of the two `∞ - ∞` collisions occurs.
-`EReal.neg_sub`'s hypotheses are a disjunction each; these are the two ways of satisfying them, and
-the two that come up. `neg_coe_sub` above is the case where a finite minuend satisfies both at
-once.
-
-Public because the pair was written `private` twice, under two different names — `neg_sub_swap` in
-`Bifunction/Algebra.lean` and `neg_sub_comm` in `Optimization/Fenchel.lean` — with byte-identical
-proofs. Neither module imports the other. -/
+`EReal.neg_sub`'s hypotheses are a disjunction each; this and `neg_sub_comm'` are the two ways of
+satisfying them. `neg_coe_sub` above is the case where a finite minuend satisfies both at once. -/
 theorem neg_sub_comm {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠ ⊤) : -(a - b) = b - a := by
   rw [_root_.EReal.neg_sub (.inl ha) (.inr hb), sub_eq_add_neg, add_comm]
 
@@ -415,9 +396,7 @@ theorem neg_sub_comm {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠ ⊤) : -(a - b) 
 theorem neg_sub_comm' {a b : EReal} (ha : a ≠ ⊤) (hb : b ≠ ⊥) : -(a - b) = b - a := by
   rw [_root_.EReal.neg_sub (.inr hb) (.inl ha), sub_eq_add_neg, add_comm]
 
-/-- A positive real scalar commutes with a supremum. Mathlib has no `EReal.mul_iSup`; the proof is
-the standard one for an order isomorphism, run by hand because multiplication by `a` is not
-registered as one. -/
+/-- A positive real scalar commutes with a supremum. -/
 theorem coe_mul_iSup {a : ℝ} (ha : 0 < a) {ι : Sort*} (u : ι → EReal) :
     (a : EReal) * ⨆ i, u i = ⨆ i, (a : EReal) * u i := by
   have key : ∀ b : ℝ, 0 < b → ∀ v : ι → EReal,
@@ -451,11 +430,9 @@ theorem iSup_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
     _ = ⨆ i, (u i + (r : EReal)) := by
         rw [_root_.EReal.coe_neg, ← sub_eq_add_neg, _root_.EReal.sub_add_cancel]
 
-/-- **A constant that is not `-∞` slides out of a supremum as a subtrahend.**
-
-The hypothesis is exactly what rules out the disagreement at `c = ⊥`: there `(⨆ i, u i) - ⊥` is
-`⊤` as soon as the supremum is not `⊥`, while `u i - ⊥` is `⊤` only where `u i ≠ ⊥`. No
-`[Nonempty ι]` is needed — over an empty index set both sides are `⊥`. -/
+/-- **A constant that is not `-∞` slides out of a supremum as a subtrahend.** The hypothesis rules
+out the disagreement at `c = ⊥`: there `(⨆ i, u i) - ⊥` is `⊤` as soon as the supremum is not `⊥`,
+while `u i - ⊥` is `⊤` only where `u i ≠ ⊥`. Over an empty index set both sides are `⊥`. -/
 theorem iSup_sub_of_ne_bot {ι : Sort*} (u : ι → EReal) {c : EReal} (hc : c ≠ ⊥) :
     (⨆ i, u i) - c = ⨆ i, (u i - c) := by
   induction c with
@@ -468,9 +445,8 @@ theorem iSup_sub_of_ne_bot {ι : Sort*} (u : ι → EReal) {c : EReal} (hc : c �
       rw [sub_eq_add_neg, _root_.EReal.neg_top, _root_.EReal.add_bot]
     simp only [h, iSup_bot]
 
-/-- A *real* constant may be moved in and out of an infimum. This is the dual of
-`Tdaf.EReal.iSup_add_coe` and, like it, needs no hypothesis: the constant is finite, so no `∞ - ∞`
-arises, and the empty index set works too, since `⊤ + r = ⊤`. -/
+/-- The dual of `Tdaf.EReal.iSup_add_coe`, and like it hypothesis-free: the empty index set works
+too, since `⊤ + r = ⊤`. -/
 theorem iInf_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
     (⨅ i, u i) + (r : EReal) = ⨅ i, (u i + (r : EReal)) := by
   have key : ∀ (c : ℝ) (v : ι → EReal), (⨅ i, v i) + (c : EReal) ≤ ⨅ i, (v i + (c : EReal)) :=
@@ -491,8 +467,8 @@ theorem biSup_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
   rw [iSup_add_coe]
   exact iSup_congr fun a => iSup_add_coe _ r
 
-/-- **A real summand cancels from the right.** No hypothesis is needed: `r` is finite, so
-`u + r - r = u` holds for every `u : EReal` (`EReal.add_sub_cancel_right`). -/
+/-- **A real summand cancels from the right**, with no hypothesis: `r` is finite, so
+`u + r - r = u` for every `u : EReal`. -/
 theorem add_coe_right_cancel {u v : EReal} {r : ℝ} (h : u + (r : EReal) = v + (r : EReal)) :
     u = v := by
   rw [← _root_.EReal.add_sub_cancel_right (a := u) (b := r),
@@ -522,11 +498,9 @@ theorem biSup_add_of_ne_bot {α : Type*} {s : Set α} {u : α → EReal} (hu : �
         _ ≤ ⨆ a ∈ s, (u a + (⊤ : EReal)) :=
           le_iSup₂ (f := fun a (_ : a ∈ s) => u a + (⊤ : EReal)) a₀ ha₀
 
-/-- **The supremum of a sum splits**, provided neither family takes `⊥`. Both degenerate cases work
-out: if either index set is empty both sides are `⊥`, because `⊥ + M = M + ⊥ = ⊥`.
-
-This is what turns "the epigraph of an infimal convolution is a sum of epigraphs" into
-"the conjugate of an infimal convolution is a sum of conjugates" (Rockafellar's Theorem 16.4). -/
+/-- **The supremum of a sum splits**, provided neither family takes `⊥`; if either index set is
+empty both sides are `⊥`. This is what turns "the epigraph of an infimal convolution is a sum of
+epigraphs" into "the conjugate of an infimal convolution is a sum of conjugates" (Theorem 16.4). -/
 theorem biSup_add_biSup {α β : Type*} {s : Set α} {t : Set β} {u : α → EReal} {v : β → EReal}
     (hu : ∀ a ∈ s, u a ≠ ⊥) (hv : ∀ b ∈ t, v b ≠ ⊥) :
     (⨆ a ∈ s, u a) + (⨆ b ∈ t, v b) = ⨆ a ∈ s, ⨆ b ∈ t, (u a + v b) := by
@@ -548,11 +522,9 @@ theorem coe_sub_iInf {ι : Sort*} (r : ℝ) (u : ι → EReal) :
   rw [sub_eq_add_neg, neg_iInf, add_comm, iSup_add_coe]
   exact iSup_congr fun i => by rw [add_comm, ← sub_eq_add_neg]
 
-/-- An arbitrary constant may be moved in and out of an infimum **whose value is not `⊥`**.
-
-Note where the hypothesis sits: for suprema (`Tdaf.EReal.biSup_add_of_ne_bot`) it is the *values*
-that must avoid `⊥`; here it is the infimum itself. Only `a = ⊤` needs an argument, and there
-`⨅ u ≠ ⊥` is what makes every `u i + ⊤` equal `⊤`. -/
+/-- An arbitrary constant may be moved in and out of an infimum **whose value is not `⊥`**. Note
+where the hypothesis sits: for suprema (`Tdaf.EReal.biSup_add_of_ne_bot`) it is the *values* that
+must avoid `⊥`; here it is the infimum itself. -/
 theorem add_iInf_of_ne_bot {ι : Sort*} [Nonempty ι] (a : EReal) (u : ι → EReal)
     (hu : (⨅ i, u i) ≠ ⊥) : a + (⨅ i, u i) = ⨅ i, (a + u i) := by
   have hui : ∀ i, u i ≠ ⊥ := fun i h => hu (le_bot_iff.1 (h ▸ iInf_le u i))
@@ -576,8 +548,7 @@ theorem iInf_add_of_ne_bot {ι : Sort*} [Nonempty ι] (u : ι → EReal)
   rw [add_comm, add_iInf_of_ne_bot c u hu]
   exact iInf_congr fun i => add_comm _ _
 
-/-- **An infimum of `⊥` survives adding any constant but `⊤`.** The case the two lemmas above
-cannot state, and the one the product form below needs to dispose of its degenerate corner. -/
+/-- **An infimum of `⊥` survives adding any constant but `⊤`.** -/
 theorem iInf_add_eq_bot {ι : Sort*} [Nonempty ι] {u : ι → EReal} (hu : (⨅ i, u i) = ⊥)
     {c : EReal} (hc : c ≠ ⊤) : (⨅ i, (u i + c)) = ⊥ := by
   induction c with
@@ -587,8 +558,7 @@ theorem iInf_add_eq_bot {ι : Sort*} [Nonempty ι] {u : ι → EReal} (hu : (⨅
 
 /-- **The infimum of a sum splits**, provided neither infimum is `⊥`. The infimal mirror of
 `Tdaf.EReal.biSup_add_biSup`, but with a *different* hypothesis: for suprema it is the values that
-must avoid `⊥`, here it is the two infima themselves. Values avoiding `⊤` would do as well, but
-that is not what properness supplies. -/
+must avoid `⊥`, here it is the two infima themselves. -/
 theorem iInf_add_iInf_of_ne_bot {ι κ : Sort*} [Nonempty ι] [Nonempty κ]
     (u : ι → EReal) (v : κ → EReal) (hu : (⨅ i, u i) ≠ ⊥) (hv : (⨅ j, v j) ≠ ⊥) :
     (⨅ i, u i) + (⨅ j, v j) = ⨅ i, ⨅ j, (u i + v j) := by
@@ -596,12 +566,9 @@ theorem iInf_add_iInf_of_ne_bot {ι κ : Sort*} [Nonempty ι] [Nonempty κ]
   exact iInf_congr fun i => add_iInf_of_ne_bot (u i) v hv
 
 /-- **An infimum over a product of a separated sum splits**, under the single hypothesis that
-neither infimum is `⊤`.
-
-This is the form a bifunction adjoint needs, and its hypothesis is *not* the one of
-`Tdaf.EReal.iInf_add_iInf_of_ne_bot`: the `⊥` cases are not excluded here but handled, since when
-one infimum is `⊥` the other being below `⊤` forces both sides to `⊥`. Some hypothesis is
-necessary — with `ψ i = -i` on `ℕ` and `φ ≡ ⊤` the left side is `⊤` and the right side is `⊥`. -/
+neither infimum is `⊤`. Unlike `Tdaf.EReal.iInf_add_iInf_of_ne_bot`, the `⊥` cases are handled
+rather than excluded: when one infimum is `⊥` the other being below `⊤` forces both sides to `⊥`.
+Some hypothesis is necessary — for `ψ i = -i` on `ℕ` and `φ ≡ ⊤` the sides are `⊤` and `⊥`. -/
 theorem iInf_prod_add {α β : Type*} [Nonempty α] [Nonempty β] (ψ : α → EReal) (φ : β → EReal)
     (hψ : (⨅ a, ψ a) ≠ ⊤) (hφ : (⨅ b, φ b) ≠ ⊤) :
     (⨅ p : α × β, (ψ p.1 + φ p.2)) = (⨅ a, ψ a) + ⨅ b, φ b := by
@@ -626,10 +593,7 @@ theorem iInf_prod_add {α β : Type*} [Nonempty α] [Nonempty β] (ψ : α → E
   · exact (iInf_add_iInf_of_ne_bot ψ φ hψb hφb).symm
 
 /-- **A real summand slides out of a difference.** `(p + q) - u = (p - u) + q` for real `p`, `q`
-and arbitrary `u : EReal`.
-
-`EReal` is not a `SubNegMonoid`, so `sub_eq_add_neg` does not fire and `abel` cannot see the `-`;
-the proof unfolds `a - b` to `a + -b` by `rfl` and then rearranges (see `gotchas.md` ER2). -/
+and arbitrary `u : EReal`. -/
 theorem coe_add_sub (p q : ℝ) (u : EReal) :
     ((p + q : ℝ) : EReal) - u = (((p : ℝ) : EReal) - u) + ((q : ℝ) : EReal) := by
   rw [_root_.EReal.coe_add]
@@ -637,10 +601,7 @@ theorem coe_add_sub (p q : ℝ) (u : EReal) :
   rw [add_assoc, add_assoc, add_comm ((q : ℝ) : EReal) (-u)]
 
 /-- **A real summand slides out of the subtrahend.** `p - (u + q) = (p - q) - u` for real `p`, `q`
-and arbitrary `u : EReal`.
-
-The companion of `Tdaf.EReal.coe_add_sub` on the other side of the difference. Both `p` and `q` are
-finite, so no `∞ - ∞` collision arises and no hypothesis on `u` is needed: at `u = ⊤` both sides
+and arbitrary `u : EReal`. Both are finite, so no `∞ - ∞` collision arises: at `u = ⊤` both sides
 are `⊥` and at `u = ⊥` both sides are `⊤`. -/
 theorem coe_sub_add_coe (p q : ℝ) (u : EReal) :
     ((p : ℝ) : EReal) - (u + ((q : ℝ) : EReal)) = ((p - q : ℝ) : EReal) - u := by
@@ -654,13 +615,9 @@ theorem coe_sub_add_coe (p q : ℝ) (u : EReal) :
     ring
   | top => rw [_root_.EReal.top_add_coe, _root_.EReal.sub_top, _root_.EReal.sub_top]
 
-/-- **The same difference, folded the other way**: `p - (u + q) = (p - u) + (-q)`.
-
-The unprimed form above collects both reals on the left of the difference; this one keeps `p - u`
-intact and moves `-q` outside. They are interderivable, but a `rw` matches one and not the other, so
-call sites depend on the orientation and both are kept. This one was `Tdaf.ConvexAnalysis`'s, in
-`Subgradient/Monotone.lean`, under the **same bare name** as its twin here (remediation §11.20) —
-two namespaces, one name, and no error, because the two are never in scope together. -/
+/-- **The same difference, folded the other way**: `p - (u + q) = (p - u) + (-q)`. The unprimed
+form collects both reals on the left; this one keeps `p - u` intact. Interderivable, but a `rw`
+matches one and not the other. -/
 theorem coe_sub_add_coe' (p q : ℝ) (u : EReal) :
     ((p : ℝ) : EReal) - (u + ((q : ℝ) : EReal)) = (((p : ℝ) : EReal) - u) + ((-q : ℝ) : EReal) := by
   induction u with
@@ -672,12 +629,9 @@ theorem coe_sub_add_coe' (p q : ℝ) (u : EReal) :
   | top => simp
 
 /-- **The difference quotient of a sum splits.** For `c > 0`, reals `p`, `q` and `u`, `v` never
-`⊥`, `c * (u - p) + c * (v - q) = c * ((u + v) - (p + q))`.
-
-This is the one piece of `EReal` arithmetic behind the recession-function half of Rockafellar's
-Theorem 9.3: the difference quotients defining `f0⁺` and `g0⁺` add up to the one defining
-`(f + g)0⁺`. Neither `⊥` can occur on either side, so the identity is the real one wherever both
-values are real, and `⊤` on both sides otherwise. -/
+`⊥`, `c * (u - p) + c * (v - q) = c * ((u + v) - (p + q))`. This is the `EReal` arithmetic behind
+the recession-function half of Rockafellar's Theorem 9.3: the difference quotients defining `f0⁺`
+and `g0⁺` add up to the one defining `(f + g)0⁺`. -/
 theorem coe_mul_sub_add_coe_mul_sub {c : ℝ} (hc : 0 < c) {u v : EReal} (hu : u ≠ ⊥) (hv : v ≠ ⊥)
     (p q : ℝ) :
     (c : EReal) * (u - (p : ℝ)) + (c : EReal) * (v - (q : ℝ))
@@ -716,14 +670,10 @@ theorem coe_mul_sub_add_coe_mul_sub {c : ℝ} (hc : 0 < c) {u v : EReal} (hu : u
   ring
 
 /-- **Two slack inequalities cannot compensate each other.** If `u` and `v` are bounded below by
-reals `p` and `q`, and their sum is bounded above by `p + q`, then each is pinned to its own
-bound.
-
-Stated one-sided; apply it again with `add_comm` for the other summand. The `≠ ⊥` and `≠ ⊤`
-bookkeeping that makes this true — and that makes the naive `linarith` reading of it false in
-`EReal` — is all inside the proof. Rockafellar's Theorem 23.8 is where it is needed: the exact-sum
-hypothesis delivers one *joint* equality in Fenchel's inequality, and this is what splits it into
-the two separate equalities that say `y₁ ∈ ∂f x` and `y₂ ∈ ∂g x`. -/
+reals `p` and `q`, and their sum is bounded above by `p + q`, then each is pinned to its own bound.
+Stated one-sided; apply it again with `add_comm` for the other summand. Rockafellar's Theorem 23.8
+is where it is needed: the exact-sum hypothesis delivers one *joint* equality in Fenchel's
+inequality, and this splits it into `y₁ ∈ ∂f x` and `y₂ ∈ ∂g x`. -/
 theorem le_coe_of_add_le_coe_add {p q : ℝ} {u v : EReal} (hp : (p : EReal) ≤ u)
     (hq : (q : EReal) ≤ v) (h : u + v ≤ ((p + q : ℝ) : EReal)) : u ≤ (p : EReal) := by
   have hub : u ≠ ⊥ := ((_root_.EReal.bot_lt_coe p).trans_le hp).ne'
@@ -738,18 +688,10 @@ theorem le_coe_of_add_le_coe_add {p q : ℝ} {u v : EReal} (hp : (p : EReal) ≤
   linarith
 
 /-- **The `m`-ary form of `Tdaf.EReal.le_coe_of_add_le_coe_add`.** If each `u i` is bounded below
-by the real `c i` and the sum of the `u i` is bounded above by the sum of the `c i`, then every
-one of the `m` inequalities is tight.
-
-The two-summand version does not iterate: there is no subtraction on `EReal` to peel a summand off
-with, and `∑_{i ≠ j} u i ≤ ∑_{i ≠ j} c i` is not available. What does work is to split `s` as
-`{j} ∪ s.erase j` and apply the two-summand lemma *once*, with the two partial sums as the second
-pair — which is why this is a lemma and not a corollary.
-
-Rockafellar's Theorem 23.8 for `m` summands is the consumer, exactly as the binary version is the
-consumer of the two-summand one: the exact-sum hypothesis delivers a single *joint* equality in
-Fenchel's inequality, and this splits it into the `m` separate equalities that say
-`y' i ∈ ∂(f i) x`. -/
+by the real `c i` and the sum of the `u i` is bounded above by the sum of the `c i`, then every one
+of the `m` inequalities is tight. The two-summand version does not iterate — there is no
+subtraction on `EReal` to peel a summand off with — so the proof splits `s` as `{j} ∪ s.erase j`
+and applies it once, with the two partial sums as the second pair. -/
 theorem le_coe_of_sum_le_coe_sum {ι : Type*} {s : Finset ι} {c : ι → ℝ} {u : ι → EReal}
     (hle : ∀ i ∈ s, ((c i : ℝ) : EReal) ≤ u i)
     (hsum : ∑ i ∈ s, u i ≤ ((∑ i ∈ s, c i : ℝ) : EReal)) {j : ι} (hj : j ∈ s) :

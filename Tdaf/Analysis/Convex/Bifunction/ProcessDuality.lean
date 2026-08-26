@@ -9,83 +9,47 @@ import Tdaf.Analysis.Convex.Saddle.Kernel
 /-!
 # The two inner products of a convex process
 
-Rockafellar's §39, Theorem 39.3. A convex process `A` carries two inner products,
+A convex process `A` carries two inner products,
 
   `⟨Au, x*⟩ = sup {⟨x, x*⟩ | x ∈ A u}`  and  `⟨u, A* x*⟩ = inf {⟨u, u*⟩ | u* ∈ A* x*}`,
 
 the first a maximisation over a value of `A`, the second a minimisation over a value of `A*`. They
-are the bracket and the concave bracket of §33, taken at the indicator bifunction of `A` and at its
+are the bracket and the concave bracket of §33 at the indicator bifunction of `A` and at its
 adjoint, so everything that separates them is a partial closure. `Bifunction/Process.lean` proves
-the clauses that need only Theorem 33.2's first equation; this module adds the ones that need the
-*second* — closedness of `A` — and the ones that need relative interiors.
+the clauses of Theorem 39.3 needing only Theorem 33.2's first equation; this module adds those
+needing the *second* — closedness of `A` — and those needing relative interiors.
 
 ## Main results
 
 * `ConvexProcess.closedBifun_indicatorBifun_iff` — `A` is a closed convex process exactly when its
-  indicator bifunction is a closed convex bifunction.
-* `ConvexProcess.domConcaveBifun_adjointBifun_indicatorBifun` — `dom (F*) = dom (A*)`.
+  indicator bifunction is closed. `domConcaveBifun_adjointBifun_indicatorBifun`: `dom F* = dom A*`.
 * `ConvexProcess.partialCl₂_concaveBracket_adjointBifun_indicatorBifun` — **Theorem 39.3**, fourth
   assertion: `⟨Au, x*⟩ = cl_{x*} ⟨u, A* x*⟩` for a closed convex process.
-* `bracket_eq_concaveBracket_adjointBifun_of_mem_relint_domConcaveBifun` — the dual half of
-  **Corollary 33.2.1**, for a general closed convex bifunction: the two brackets agree at every
-  relative interior point of `dom F*`.
-* `ConvexProcess.bracket_eq_concaveBracket_of_mem_relint_dom` and
-  `ConvexProcess.bracket_eq_concaveBracket_of_mem_relint_dom_adjoint` — **Theorem 39.3**, last
-  assertion: `⟨Au, x*⟩ = ⟨u, A* x*⟩` whenever `u ∈ ri (dom A)` or `x* ∈ ri (dom A*)`.
-* `ConvexProcess.isClosed_eval`, `ConvexProcess.concaveConvexFn_bracket_indicatorBifun`,
-  `ConvexProcess.lowerClosedFn_bracket_indicatorBifun`,
-  `ConvexProcess.eval_eq_supportSet_bracket_indicatorBifun` — the four properties of `⟨Au, x*⟩`
-  that **Theorem 39.4** turns into a characterisation.
+* `ConvexProcess.bracket_eq_concaveBracket_of_mem_relint_dom` and `…_of_mem_relint_dom_adjoint` —
+  **Theorem 39.3**, last assertion: `⟨Au, x*⟩ = ⟨u, A* x*⟩` whenever `u ∈ ri (dom A)` or
+  `x* ∈ ri (dom A*)`. `bracket_eq_concaveBracket_adjointBifun_of_mem_relint_domConcaveBifun` is the
+  dual half of **Corollary 33.2.1**, for a general closed convex bifunction.
 * `exists_unique_convexProcess_bracket_indicatorBifun_eq` — **Theorem 39.4**: a lower closed
-  concave-convex `K` with `K (0, 0) = 0` that is positively homogeneous in each variable
-  separately is `⟨Au, x*⟩` for exactly one closed convex process `A`.
-* `ConvexProcess.closedFn_imageBifun_indicatorBifun`,
-  `ConvexProcess.exists_imageBifun_indicatorBifun_eq`,
-  `ConvexProcess.exists_mem_eval_and_eq_imageBifun`,
-  `ConvexProcess.conj_imageBifun_indicatorBifun_eq_clFn` — **Theorem 39.7**, closed half: for a
-  closed convex process `A` and a closed proper convex `f`, the image `Af` is closed, the infimum
-  defining `(Af)(x)` is attained, and `(Af)* = cl (A*⁻¹ f*)`. The open half is in
-  `Bifunction/Process.lean`.
+  concave-convex `K` with `K (0, 0) = 0` that is positively homogeneous in each variable separately
+  is `⟨Au, x*⟩` for exactly one closed convex process `A`. `ConvexProcess.isClosed_eval` and the
+  `…_bracket_indicatorBifun` results beside it are the four properties it inverts.
+* `ConvexProcess.closedFn_imageBifun_indicatorBifun` and the results beside it — **Theorem 39.7**,
+  closed half: for a closed convex process `A` and a closed proper convex `f`, the image `Af` is
+  closed, the infimum defining `(Af)(x)` is attained, and `(Af)* = cl (A*⁻¹ f*)`. The open half is
+  in `Bifunction/Process.lean`.
 
-## Design notes
+## Implementation notes
 
-**The `u` side of Theorem 39.3's last assertion needs no closedness.** Rockafellar prefixes both
-halves with "if `A` is closed", but the `u` half is Corollary 33.2.1, whose only input is that a
-concave function agrees with its concave closure on the relative interior of its effective domain.
-Closedness is genuinely needed only on the `x*` side, where Theorem 33.2's *second* equation —
-which rests on `F** = cl F` — is what identifies `cl_{x*} ⟨u, A* x*⟩` with `⟨Au, x*⟩`.
+Rockafellar prefixes both halves of Theorem 39.3's last assertion with "if `A` is closed", but the
+`u` half is Corollary 33.2.1, whose only input is that a concave function agrees with its concave
+closure on the relative interior of its effective domain. Closedness is genuinely needed only on
+the `x*` side, where Theorem 33.2's *second* equation — which rests on `F** = cl F` — identifies
+`cl_{x*} ⟨u, A* x*⟩` with `⟨Au, x*⟩`; there it is `Y`, not `U`, that must be finite-dimensional.
 
-**Closedness of a process is closedness of its indicator bifunction, in both directions.**
-`clFn (δ(· | S)) = δ(· | cl S)` (Rockafellar §7) makes the equivalence an unfolding, once one
-observes that `δ(· | ·)` is injective as a function of the set. This is what lets the §33 theorems
-be applied to a process without a separate closedness argument.
-
-**The dual half of Corollary 33.2.1 was missing from the backbone.** `Saddle/Kernel.lean` proves
-only the `u` side; the `y` side is its mirror, with `ConvexFn.clFn_eq_of_mem_relint_dom` in place
-of `ConcaveFn.clConcave_eq_of_mem_relint_domConcave` and `dom_concaveBracket` in place of
-`domConcave_bracket`, and it needs `Y` finite-dimensional rather than `U`. It is stated here for a
-general bifunction because that is the level at which it is true; see the relocation note.
-
-**Theorem 39.4's "easy exercise" hides Corollary 7.2.1.** Rockafellar gets the correspondence from
-Theorem 33.3 and leaves it to the reader that the bifunction `F` it produces is an indicator
-bifunction. The step that needs an argument is that `F u` is nowhere `⊥` — without it,
-`conj_eq_indicatorFn_of_posHomogeneous` does not apply and `F u` need not be `δ(· | ·)`. Nothing in
-the hypotheses says so directly. What does say so is `K (0, 0) = 0`: it forces `F 0` to be
-somewhere finite, and then Corollary 7.2.1 (`ConvexFn.eq_bot_or_eq_top`) applied to the closed
-convex `graphFn F` spreads `≠ ⊥` to every `u`. So the book's hypotheses *are* sufficient — no extra
-properness hypothesis is added here — but the exercise is not one line.
-
-**Theorem 39.4 is stated as a `∃!`, with closedness inside it.** The correspondence is between
-closed convex processes and kernels, so `IsClosed (A.graph)` belongs to the property being
-characterised rather than to the hypotheses; uniqueness is then uniqueness among closed processes,
-which is what `ConvexProcess.indicatorBifun_injective` and Theorem 33.3's own uniqueness deliver.
-
-## What is not here
-
-The infimum-oriented mirror of Theorem 39.4. Rockafellar states the correspondence for
-supremum-oriented processes and notes that the infimum-oriented one is the same statement with
-convexity and concavity exchanged; by gotcha ER5 that mirror is not obtainable by `simp`-normalising
-through negation, so it is a separate piece of work.
+A process is closed exactly when its indicator bifunction is, since `cl δ(· | S) = δ(· | cl S)`.
+That is what lets §33's theorems be read for processes without a separate closedness argument.
+Theorem 39.4 is stated as a `∃!` with closedness inside it: the correspondence is between *closed*
+convex processes and kernels, so uniqueness is uniqueness among closed processes.
 
 ## References
 
@@ -105,12 +69,8 @@ variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [TopologicalSpace U]
 
 namespace ConvexProcess
 
-/-- A convex process is closed exactly when its indicator bifunction is a closed convex
-bifunction.
-
-The indicator function of a set determines the set, and `cl δ(· | S) = δ(· | cl S)`
-(`clFn_indicatorFn`), so `ClosedBifun` for an indicator bifunction *is* `closure (graph A) =
-graph A`. This is the bridge that lets §33's theorems be read for processes. -/
+/-- A convex process is closed exactly when its indicator bifunction is a closed convex bifunction:
+`ClosedBifun` for an indicator bifunction *is* `closure (graph A) = graph A`. -/
 theorem closedBifun_indicatorBifun_iff (A : ConvexProcess U X) :
     ClosedBifun A.indicatorBifun ↔ IsClosed (A.graph : Set (U × X)) := by
   have hgr : ClosedBifun A.indicatorBifun
@@ -146,8 +106,7 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
 namespace ConvexProcess
 
 /-- The concave effective domain of the adjoint of an indicator bifunction is the effective domain
-of the adjoint process: `⟨u, A* x*⟩` is `+∞` exactly where `A* x*` is empty. This is the last
-missing entry of the §38/§39 dictionary. -/
+of the adjoint process: `⟨u, A* x*⟩` is `+∞` exactly where `A* x*` is empty. -/
 @[simp] theorem domConcaveBifun_adjointBifun_indicatorBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) :
     domConcaveBifun (adjointBifun Bu Bx A.indicatorBifun) = (adjointProcess Bu Bx A).dom := by
@@ -214,11 +173,9 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
 /-- **Rockafellar, Corollary 33.2.1**, on the dual side: for a closed convex bifunction the two
 brackets `⟨Fu, y⟩` and `⟨u, F* y⟩` already agree at every relative interior point of `dom F*`.
 
-The proof is the mirror of `bracket_eq_concaveBracket_adjointBifun_of_mem_relint`: Theorem 33.2's
-second equation says the two differ by the convex closure in `y`; `⟨u, F*·⟩` is convex with
-effective domain `dom F*` (`convexFn_concaveBracket`, `dom_concaveBracket`), and a convex function
-agrees with its closure on the relative interior of its effective domain. Note that it is `Y`, not
-`U`, that has to be finite-dimensional. -/
+Theorem 33.2's second equation says the two differ by the convex closure in `y`; `⟨u, F*·⟩` is
+convex with effective domain `dom F*`, and a convex function agrees with its closure on the
+relative interior of its effective domain. It is `Y`, not `U`, that must be finite-dimensional. -/
 theorem bracket_eq_concaveBracket_adjointBifun_of_mem_relint_domConcaveBifun
     (hF : ConvexBifun F) (hcl : ClosedBifun F) (u : U)
     {y : Y} (hy : y ∈ ri (domConcaveBifun (adjointBifun Bu Bx F))) :
@@ -246,9 +203,8 @@ namespace ConvexProcess
 /-- **Rockafellar, Theorem 39.3**, last assertion, on the `u` side: `⟨Au, x*⟩ = ⟨u, A* x*⟩` at
 every relative interior point of `dom A`.
 
-Rockafellar prefixes the assertion with "if `A` is closed"; **no closedness is needed here**. The
-statement is Corollary 33.2.1 for the indicator bifunction, and Corollary 33.2.1 asks only that a
-concave function meet its concave closure on `ri` of its effective domain. -/
+Rockafellar prefixes the assertion with "if `A` is closed"; **no closedness is needed here**, the
+statement being Corollary 33.2.1 for the indicator bifunction. -/
 theorem bracket_eq_concaveBracket_of_mem_relint_dom (A : ConvexProcess U X) {u : U}
     (hu : u ∈ ri A.dom) (y : Y) :
     bracket Bx A.indicatorBifun u y
@@ -349,13 +305,12 @@ the closed convex processes from `U` to `X` and the lower closed concave-convex 
 inverse map is `A u = {x | ⟨x, x*⟩ ≤ K (u, x*) for every x*}`
 (`ConvexProcess.eval_eq_supportSet_bracket_indicatorBifun`).
 
-Theorem 33.3 does all the work on the bifunction side; what remains is Rockafellar's "easy
-exercise", that the closed convex bifunction it produces is an indicator bifunction. Three steps
-do it. `K (0, 0) = 0` bounds `F 0` below by `0` and makes it finite somewhere, so the closed convex
-`graphFn F` cannot take `-∞` (Corollary 7.2.1) and hence no slice `K (u, ·)` is identically `+∞`.
-The conjugate of a positively homogeneous function that is not identically `+∞` is an indicator
-function (`conj_eq_indicatorFn_of_posHomogeneous`), so each `F u` is one. And positive homogeneity
-in `u` makes the resulting set a cone, its convexity coming from convexity of `F`. -/
+Theorem 33.3 does all the work on the bifunction side; what remains is that the closed convex
+bifunction it produces is an indicator bifunction. `K (0, 0) = 0` bounds `F 0` below by `0` and
+makes it finite somewhere, so the closed convex `graphFn F` cannot take `-∞` (Corollary 7.2.1) and
+no slice `K (u, ·)` is identically `+∞`. The conjugate of a positively homogeneous function that is
+not identically `+∞` is an indicator function, so each `F u` is one; positive homogeneity in `u`
+makes the resulting set a cone, its convexity coming from convexity of `F`. -/
 theorem exists_unique_convexProcess_bracket_indicatorBifun_eq
     (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]

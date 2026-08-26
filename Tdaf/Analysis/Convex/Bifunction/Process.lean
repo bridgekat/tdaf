@@ -9,202 +9,63 @@ import Tdaf.Analysis.Convex.Recession.Closedness
 /-!
 # Convex processes
 
-Rockafellar's §39. A **convex process** from `U` to `X` is a multivalued map `A : u ↦ A u`
-satisfying `A (u₁ + u₂) ⊇ A u₁ + A u₂`, `A (λ u) = λ (A u)` for `λ > 0`, and `0 ∈ A 0`. Rockafellar
-observes immediately that these three conditions say exactly that
+A **convex process** from `U` to `X` is a multivalued map `A : u ↦ A u` with
+`A (u₁ + u₂) ⊇ A u₁ + A u₂`, `A (λ u) = λ (A u)` for `λ > 0`, and `0 ∈ A 0`. These conditions say
+exactly that the graph `{(u, x) | x ∈ A u}` is a convex cone containing the origin, so that is what
+`ConvexProcess` *is*: a bundled `PointedCone ℝ (U × X)`, with `A.eval u` the `u`-slice of the cone
+and every elementary property a `Submodule` fact in disguise. Processes sit between linear
+transformations and convex bifunctions — `ofLinearMap` embeds the former, `indicatorBifun` embeds a
+process into the latter — and carry the adjoint, sum, product and inverse of §38.
 
-  `graph A = {(u, x) | x ∈ A u}`
+The adjoint `A*` is the polar of the graph with a sign flip on one factor: `(y, v) ∈ graph A*` iff
+`(-v, y) ∈ (graph A)°` (`mem_graph_adjointProcess_iff_mem_polarCone`), the sign convention
+`adjointBifun` uses, so everything topological about `A*` comes from §14.
 
-is a convex cone containing the origin, so that is what `ConvexProcess` *is*: a bundled
-`PointedCone ℝ (U × X)`, with `A.eval u` the `u`-slice of the cone. Convex processes sit between
-linear transformations and convex bifunctions: `ConvexProcess.ofLinearMap` embeds the former, and
-`ConvexProcess.indicatorBifun` embeds a process into the latter.
+Rockafellar carries "supremum oriented" and "infimum oriented" as extra data on a convex set and
+defines the adjoint of an infimum-oriented process by reversing the inequality. Here the two are two
+definitions, `adjointProcess` and `coadjointProcess`, and `A**` uses one of each: with
+`adjointProcess` twice the sign flips *add* instead of cancelling, giving
+`{p | ∀ w ∈ K°, 0 ≤ ⟨p, w⟩}` in place of the bipolar `K°°`. Reflection through the origin
+(`reflect`) exchanges the two adjoints and commutes with sums and products, so every
+infimum-oriented statement below — they carry a `co` in their names — is the supremum-oriented one
+read back through it. Theorem 39.3 is the exception: reflection flips the *dual* variable only, and
+`coBracket_eq_neg_bracket` records the sign.
 
 ## Main definitions
 
-* `ConvexProcess U X` — a convex process, carried by its graph.
-* `ConvexProcess.eval`, `dom`, `range`, `image`, `inv` — `A u`, `dom A`, `range A`, `A C`, `A⁻¹`.
-* `ConvexProcess.ofLinearMap` — a linear transformation as a convex process.
-* `ConvexProcess.indicatorBifun` — the indicator bifunction `(F u)(x) = δ(x | A u)` of a
-  supremum-oriented process.
-* `ConvexProcess.comp`, and the `Add` and `SMul` instances — the product `B A`, the sum
-  `A₁ + A₂` and the scalar multiple `λ A`.
-* `ConvexProcess.adjointProcess`, `ConvexProcess.coadjointProcess` — the adjoint `A*` of a
-  supremum-oriented process, and the adjoint of an infimum-oriented one (the same definition with
-  the inequality reversed).
-* `ConvexProcess.reflect`, `ConvexProcess.reflectAut` — the reflection of a process through the
-  origin, `graph = -graph`, and its bundling as an additive automorphism. It is the single
-  dictionary entry between the two orientations: `coadjointProcess` is the reflection of
-  `adjointProcess`, and vice versa.
-* `ConvexProcess.coBracket` — the inner product `⟨Au, x*⟩ = inf {⟨x, x*⟩ | x ∈ A u}` of an
-  **infimum-oriented** process, the concave conjugate of the concave indicator `-δ(· | A u)`.
+* `ConvexProcess U X` — a convex process, carried by its graph. `eval`, `dom`, `range`, `image`,
+  `inv` are `A u`, `dom A`, `range A`, `A C`, `A⁻¹`; `comp` with the `Add` and `SMul` instances are
+  `B A`, `A₁ + A₂` and `λ A`. `ofLinearMap` embeds a linear transformation, and `indicatorBifun` is
+  the bifunction `(F u)(x) = δ(x | A u)`.
+* `ConvexProcess.adjointProcess`, `coadjointProcess`, `reflect` — the two adjoints and the
+  reflection exchanging them; `coBracket` is the inner product `⟨Au, x*⟩ = inf {⟨x, x*⟩ | x ∈ A u}`
+  of an infimum-oriented process.
 
 ## Main results
 
-* `ConvexProcess.convex_eval`, `convex_dom`, `convex_range`, `convex_image`,
-  `add_eval_zero_subset` — the elementary properties §39 opens with.
-* `ConvexProcess.exists_linearMap_of_isBounded` — **Theorem 39.1**: a convex process with full
-  domain and bounded `A 0` is a linear transformation.
-* `ConvexProcess.graphFn_indicatorBifun`, `convexBifun_indicatorBifun`,
-  `domBifun_indicatorBifun` — the dictionary between §39 and §38.
-* `ConvexProcess.dom_add`, `eval_comp`, `inv_comp`, `indicatorBifun_add`,
-  `indicatorBifun_comp` — the algebra of processes and its translation into §38: the indicator
-  bifunction of `A₁ + A₂` is `F₁ □ F₂` and that of `B A` is `G F`.
-* `ConvexProcess.adjointBifun_indicatorBifun` — **Theorem 39.2**, last assertion: the adjoint of
-  the indicator bifunction of `A` is the indicator bifunction of `A*`.
-* `ConvexProcess.isClosed_graph_adjointProcess` — **Theorem 39.2**, first assertion: `A*` is
-  always closed.
-* `ConvexProcess.graph_coadjointProcess_adjointProcess_eq_closure`,
-  `coadjointProcess_adjointProcess_eq_self_iff` — **Theorem 39.2**, second assertion:
-  `A** = cl A`, and `A** = A` exactly for closed `A`.
-* `ConvexProcess.isClosed_image`, `isClosed_image_of_isBounded` — **Corollary 39.7.1**: `A C` is
-  closed when `A` is a closed convex process, `C` is a nonempty closed convex set, and no non-zero
-  vector of `A⁻¹ 0` recedes `C`.
-* `ConvexProcess.adjointProcess_smul`, `coadjointProcess_smul` — **Theorem 39.6**:
-  `(λ A)* = λ (A*)` for `λ > 0`, in both orientations.
-* `ConvexProcess.adjointProcess_add` — **Theorem 39.5**: `(A₁ + A₂)* = A₁* + A₂*`, under the
-  exactness hypothesis of Theorem 16.4 for the two support functions `⟨Aᵢ ·, x*⟩`. The auxiliary
-  `infConv_indicatorFn`, `supConv_neg_indicatorFn` and `indicatorFn_injective` are the dictionary
-  between sums of sets and (supremal or infimal) convolution of their indicators.
-* `ConvexProcess.bracket_indicatorBifun`, `bracket_indicatorBifun_apply`,
-  `posHomogeneous_bracket_indicatorBifun`, `convexFn_bracket_indicatorBifun`,
-  `closedFn_bracket_indicatorBifun`, `posHomogeneous_bracket_indicatorBifun_arg`,
-  `concaveFn_bracket_indicatorBifun` — **Theorem 39.3**, first two assertions: `⟨Au, x*⟩` is the
-  support function of `A u`, hence positively homogeneous, closed and convex in `x*`, and it is
-  positively homogeneous and concave in `u`.
-* `ConvexProcess.concaveBracket_adjointBifun_indicatorBifun` — the second of the two extremum
-  problems, `⟨u, A* x*⟩ = inf {⟨u, u*⟩ | u* ∈ A* x*}`.
-* `ConvexProcess.concaveBracket_adjointBifun_indicatorBifun_eq_partialCl₁` — **Theorem 39.3**,
-  third assertion: `⟨u, A* x*⟩ = cl_u ⟨Au, x*⟩`.
-* `indicatorFn_injective`, `ConvexProcess.indicatorBifun_injective`,
-  `ConvexProcess.bracket_indicatorBifun_zero_zero` — the two facts **Theorem 39.4** needs on this
-  side of the correspondence: a process is determined by its indicator bifunction, and `⟨Au, x*⟩`
-  vanishes at the origin.
-* `exists_pairing_sandwich` — Fenchel's duality theorem read at a positively homogeneous pair: a
-  concave `p` below a convex `q`, both straddling `0` at the origin, admit a linear `⟨·, y⟩`
-  between them.
-* `ConvexProcess.comp_adjointProcess_le`, `ConvexProcess.adjointProcess_comp` —
-  **Theorem 39.8**: `(BA)* = A* B*`, under the exactness hypothesis of Theorem 16.4 for
-  `⟨B·, z*⟩` and `⟨·, u*⟩` on `A⁻¹`.
-* `ConvexProcess.indicatorBifun_inv`, `ConvexProcess.coadjointProcess_inv`,
-  `ConvexProcess.lowerAdjointBifun_indicatorBifun` — the last entries of the §38/§39 dictionary:
-  `(A⁻¹)* = A*⁻¹`, and `F⁎*` for an indicator bifunction is the indicator bifunction of `A*⁻¹`.
-* `ConvexProcess.conj_imageBifun_indicatorBifun`,
-  `ConvexProcess.exists_imageBifun_indicatorBifun_adjointProcess_eq` — **Theorem 39.7**, first
-  two assertions: `(Af)* = A*⁻¹ f*`, with the infimum defining `(A*⁻¹ f*)(x*)` attained.
-* `ConvexProcess.reflect_add`, `reflect_comp`, `adjointProcess_reflect`, `coadjointProcess_reflect`,
-  `coadjointProcess_eq_reflect_adjointProcess`, `reflectAut` — the orientation dictionary:
-  reflection is an automorphism of the algebra of processes and exchanges the two adjoints.
-* `ConvexProcess.isClosed_graph_coadjointProcess`,
-  `graph_adjointProcess_coadjointProcess_eq_closure`, `adjointProcess_coadjointProcess_eq_self_iff`
-  — **Theorem 39.2** for an infimum-oriented process: `A*` is closed, `A** = cl A`, and `A** = A`
-  exactly for closed `A`, the biadjoint now being `adjointProcess ∘ coadjointProcess`.
-* `ConvexProcess.coadjointProcess_add`, `coadjointProcess_comp` — **Theorems 39.5 and 39.8** for
-  infimum-oriented processes.
-* `ConvexProcess.add_eq_coadjointProcess_add`, `isClosed_graph_add`,
-  `graph_adjointProcess_add_eq_closure` — **Theorem 39.5**, closed half: `A₁ + A₂` is closed and
-  `(A₁ + A₂)* = cl (A₁* + A₂*)`.
-* `ConvexProcess.comp_eq_coadjointProcess_comp`, `isClosed_graph_comp`,
-  `graph_adjointProcess_comp_eq_closure` — **Theorem 39.8**, closed half: `BA` is closed and
-  `(BA)* = cl (A* B*)`.
-* `ConvexProcess.coBracket_eq_neg_bracket`, `posHomogeneous_coBracket`, `concaveFn_coBracket`,
-  `closedConcaveFn_coBracket`, `posHomogeneous_coBracket_arg`, `convexFn_coBracket_arg`,
-  `coBracket_zero_zero`, `iSup_coadjointProcess_eq_neg_concaveBracket`,
-  `iSup_coadjointProcess_eq_clFn` — **Theorem 39.3** for infimum-oriented processes: `⟨Au, x*⟩` is
-  positively homogeneous, closed and *concave* in `x*` and positively homogeneous and *convex* in
-  `u`, and `⟨u, A* x*⟩ = cl_u ⟨Au, x*⟩` with the ordinary convex closure.
+* `exists_linearMap_of_isBounded` — **Theorem 39.1**: a convex process with full domain and
+  bounded `A 0` is a linear transformation.
+* `isClosed_graph_adjointProcess`, `coadjointProcess_adjointProcess_eq_self_iff` — **Theorem
+  39.2**: `A*` is always closed, `A** = cl A`, and `A** = A` exactly for closed `A`.
+* `bracket_indicatorBifun` and the results beside it — **Theorem 39.3**: `⟨Au, x*⟩` is the support
+  function of `A u`, hence closed convex in `x*` and concave in `u`, and `⟨u, A* x*⟩` is its convex
+  closure in `u`.
+* `adjointProcess_add`, `adjointProcess_comp`, `adjointProcess_smul` — **Theorems 39.5, 39.8 and
+  39.6**: `(A₁ + A₂)* = A₁* + A₂*`, `(BA)* = A* B*` and `(λ A)* = λ (A*)` for `λ > 0`;
+  `isClosed_graph_add`, `graph_adjointProcess_add_eq_closure` and the `comp` analogues are the
+  closed halves.
+* `conj_imageBifun_indicatorBifun` — **Theorem 39.7**, open half: `(Af)* = A*⁻¹ f*`, the defining
+  infimum attained.
+* `isClosed_image` — **Corollary 39.7.1**: `A C` is closed for closed `A`, nonempty closed convex
+  `C`, and no non-zero vector of `A⁻¹ 0` receding `C`.
+* `exists_pairing_sandwich` — Fenchel duality at a positively homogeneous pair: a concave `p` below
+  a convex `q`, both straddling `0` at the origin, admit a linear `⟨·, y⟩` between them.
 
-## Design notes
+## Implementation notes
 
-**A convex process is its graph, and the graph is a `PointedCone`.** Rockafellar's three axioms are
-never used again after he proves they amount to "the graph is a convex cone containing the origin",
-so `ConvexProcess` is a one-field structure wrapping `PointedCone ℝ (U × X)` and every elementary
-property is a `Submodule` fact in disguise (`smul_mem_graph`, `add_mem_graph`, `zero_mem_graph`).
-The structure wrapper, rather than an abbreviation, is what lets `A.eval`, `A.dom` and `A.inv` be
-dot notation and keeps `ConvexProcess X U` and `ConvexProcess U X` from being confused.
-
-**Corollary 39.7.1 is Theorem 9.1, not Theorem 39.7.** Rockafellar deduces it by specializing
-Theorem 39.7 and separating the barrier cone of `C` from the range of `A*`. But `A C` is the
-projection of `graph A ∩ (C × X)` on the second factor (`image_eq_image_snd`), the recession cone
-of that intersection is `graph A ∩ (0⁺C × X)` — a pointed convex cone is its own recession cone —
-and its intersection with the kernel of the projection is `{(v, 0) | v ∈ A⁻¹ 0 ∩ 0⁺C}`. So the
-hypothesis of Theorem 9.1 is literally Rockafellar's hypothesis, and the proof needs no duality at
-all. Only the projection's source needs to be finite-dimensional, which is where
-`isClosed_image_of_recessionCone_inter_ker` puts it.
-
-**Orientation is a second adjoint, not a flag.** Rockafellar carries "supremum oriented" and
-"infimum oriented" as extra data on a convex set, and defines the adjoint of an infimum-oriented
-process by reversing the inequality. Rather than bundle an orientation into the structure — which
-would double every statement — the two adjoints are two definitions, `adjointProcess` and
-`coadjointProcess`, and `A**` is spelled
-`coadjointProcess Bx.flip Bu.flip (adjointProcess Bu Bx A)`. This is not bookkeeping: with
-`adjointProcess` used twice the sign flips *add* instead of cancelling,
-and one gets `{p | ∀ w ∈ K°, 0 ≤ ⟨p, w⟩}` instead of the bipolar `K°°`.
-
-**The infimum-oriented statements are reflections, not `simp`-normalisations.** Reflecting the
-graph through the origin exchanges the two adjoints (`adjointProcess_reflect`), commutes with sums
-and products (`reflect_add`, `reflect_comp`), and preserves closedness, so every infimum-oriented
-statement of §39 is the supremum-oriented one read back through the reflection. It is the
-*adjoint* that is reflected, not the process: `coadjointProcess_eq_reflect_adjointProcess` puts
-the involution on the conclusion, where `reflect_add` and `reflect_comp` cancel it, so no
-infimum-oriented statement carries `reflect` in its hypotheses. The one place
-where this is not a pure transport is Theorem 39.3: reflection alone flips the *dual* variable of
-the inner product, and `coBracket_eq_neg_bracket` records the resulting sign, `⟨Au, x*⟩` for the
-infimum orientation being minus the supremum-oriented inner product at `-x*`. The primal variable
-is untouched, which is why the mirror of the third assertion comes out as an honest convex closure
-in `u` rather than a reindexed one.
-
-**The closed halves of Theorems 39.5 and 39.8 do not need Corollaries 38.2.1 and 38.5.1.**
-Rockafellar deduces them from the bifunction corollaries. But `A₁ + A₂` is *equal* to the
-infimum-oriented adjoint of `A₁* + A₂*` whenever the two adjoints add exactly
-(`add_eq_coadjointProcess_add`), because `A₁** = A₁` and `A₂** = A₂` for closed processes and
-`coadjointProcess_add` is the open half read in the other orientation. An adjoint is closed with no
-hypothesis, so closedness is free, and the closure formula for `(A₁ + A₂)*` is then the mirrored
-bipolar theorem `graph_adjointProcess_coadjointProcess_eq_closure`. The same argument gives
-Theorem 39.8's closed half from `coadjointProcess_comp`. No bifunction corollary is used.
-
-**Theorem 39.5 carries an `IsExactSum` per `x*`, not a relative-interior condition.**
-Rockafellar's hypothesis is `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅`. Converting it into the exactness of
-`(⟨A₁ ·, x*⟩ + ⟨A₂ ·, x*⟩)*` would go through `IsExactSum.of_relint`, which demands that both
-summands be *closed* proper convex functions; `u ↦ -⟨Aᵢ u, x*⟩` is proper and convex but is not
-concave-closed even for closed `Aᵢ` — its concave closure is `⟨u, Aᵢ* x*⟩`, and the gap between the
-two is exactly Theorem 39.3's third assertion. So the exactness is taken as the hypothesis, one
-instance per `x*`. `IsExactSum.of_relint` no longer demands closedness (it asks only for proper
-convex summands with a common relative interior point of the effective domains), so discharging the
-hypothesis from Rockafellar's `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅` is now available and simply has not
-been done. The same remark applies to Theorem 38.2.
-
-**Theorem 39.8 does not need Theorem 38.5.** Rockafellar deduces `(BA)* = A* B*` from the adjoint
-formula for a product of bifunctions. Read directly, `(z*, u*) ∈ (BA)*` says that the concave
-`x ↦ ⟨Bx, z*⟩` lies below the convex `x ↦ ⟨u*, A⁻¹x⟩`, and a factorisation through `A*` and `B*` is
-precisely a linear functional running between them. `exists_pairing_sandwich` produces one from
-Fenchel's duality theorem: both functions are positively homogeneous and straddle `0` at the
-origin, so the two extrema are pinned at `0` and the attained dual value splits into the two
-inequalities. No convexity hypothesis has to be stated, because `IsExactSum` already carries it.
-
-**The adjoint is the polar of the graph, with a sign flip on one factor.**
-`mem_graph_adjointProcess_iff_mem_polarCone` says `(y, v) ∈ graph A*` if and only if
-`(-v, y) ∈ (graph A)°` for the product pairing, which is the same sign convention §30 uses for
-`adjointBifun`. Everything topological about `A*` then comes from §14 for free:
-`isClosed_polarCone` gives Theorem 39.2's first assertion (proved here directly, to avoid
-transporting the pairing instance across `LinearMap.flip`), and `polarCone_polarCone` gives
-`A** = cl A`.
-
-## What is not here
-
-* **Theorem 39.4**, the one-to-one correspondence between closed convex processes and the
-  saddle-like kernels `K (u, x*) = ⟨Au, x*⟩`. It needs the closure operations of §33 and hence a
-  topology, so it lives in `Bifunction/ProcessDuality.lean` with the rest of the layer-B material;
-  the two ingredients contributed from this side are listed above.
-* The closed half of **Theorem 39.7** — `Af` closed, its infimum attained, and
-  `(Af)* = cl (A*⁻¹ f*)`. It needs a topology, so it lives in `Bifunction/ProcessDuality.lean`
-  with the rest of the layer-B material; the open half is here.
-* The infimum-oriented mirrors of **Theorem 39.3**'s *fourth* and *last* assertions —
-  `⟨Au, x*⟩ = cl_{x*} ⟨u, A* x*⟩` for closed `A`, and the two inner products agreeing at a
-  relative interior point. The supremum-oriented forms are in `Bifunction/ProcessDuality.lean`,
-  and the mirrors belong there with them: `coBracket_eq_neg_bracket` transports them, but the
-  statements are about `partialCl₂` and `ri`, which is layer-B and layer-D material. The first
-  three assertions are mirrored here.
+Theorems 39.5 and 39.8 take an `IsExactSum` hypothesis, one instance per dual vector, where
+Rockafellar assumes `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅`. `IsExactSum` also requires both summands
+proper, so the hypothesis carried here is stronger than the book's; see those declarations.
 
 ## References
 
@@ -326,7 +187,6 @@ theorem range_inv (A : ConvexProcess U X) : A.inv.range = A.dom := by
 
 /-! ### Elementary structure -/
 
-/-- The graph of a convex process is a convex set. -/
 theorem convex_graph (A : ConvexProcess U X) : Convex ℝ (A.graph : Set (U × X)) :=
   ((A.graph : ConvexCone ℝ (U × X))).convex
 
@@ -367,14 +227,13 @@ theorem add_eval_zero_subset (A : ConvexProcess U X) (u : U) :
   have h : ((u, x) : U × X) + (0, y) ∈ A.graph := add_mem_graph hx hy
   rwa [Prod.mk_add_mk, add_zero] at h
 
-/-- The effective domain of a convex process is a convex cone containing the origin. -/
+/-- The effective domain of a convex process is convex. -/
 theorem convex_dom (A : ConvexProcess U X) : Convex ℝ A.dom := by
   rintro u₁ ⟨x₁, h₁⟩ u₂ ⟨x₂, h₂⟩ a b ha hb hab
   exact ⟨a • x₁ + b • x₂,
     by simpa [Prod.smul_mk, Prod.mk_add_mk] using
       add_mem_graph (smul_mem_graph ha h₁) (smul_mem_graph hb h₂)⟩
 
-/-- The range of a convex process is convex. -/
 theorem convex_range (A : ConvexProcess U X) : Convex ℝ A.range := by
   rintro x₁ ⟨u₁, h₁⟩ x₂ ⟨u₂, h₂⟩ a b ha hb hab
   exact ⟨a • u₁ + b • u₂,
@@ -819,8 +678,6 @@ theorem graph_coadjointProcess_adjointProcess (Bu : U →ₗ[ℝ] V →ₗ[ℝ] 
     simp only [map_neg] at hb
     linarith
 
-/-- Dividing an inequality by a positive real, as an iff. Used twice in Theorem 39.6, once in each
-direction of the set equality. -/
 private theorem mul_le_iff_le_inv_mul {a : ℝ} (ha : 0 < a) (r s : ℝ) :
     a * r ≤ s ↔ r ≤ a⁻¹ * s := by
   constructor
@@ -831,7 +688,6 @@ private theorem mul_le_iff_le_inv_mul {a : ℝ} (ha : 0 < a) (r s : ℝ) :
     have h' := mul_le_mul_of_nonneg_left h ha.le
     rwa [← mul_assoc, mul_inv_cancel₀ ha.ne', one_mul] at h'
 
-/-- The mirror of `mul_le_iff_le_inv_mul`, for the infimum-oriented adjoint. -/
 private theorem le_mul_iff_inv_mul_le {a : ℝ} (ha : 0 < a) (r s : ℝ) :
     s ≤ a * r ↔ a⁻¹ * s ≤ r := by
   constructor
@@ -1133,16 +989,9 @@ namespace ConvexProcess
 
 /-- **Rockafellar, Theorem 39.5**: `(A₁ + A₂)* = A₁* + A₂*`.
 
-Proof idea: pass to indicator bifunctions. `(A₁ + A₂)` has indicator bifunction `F₁ □ F₂`
-(`indicatorBifun_add`, Theorem 38.1), Theorem 38.2 (`adjointBifun_infConvBifun`) turns its adjoint
-into the supremal convolute of the two adjoints, and `adjointBifun_indicatorBifun` (Theorem 39.2)
-identifies each of those with `-δ(· | Aᵢ* y)`. `supConv_neg_indicatorFn` collapses the supremal
-convolute to `-δ(· | A₁* y + A₂* y)`, and `indicatorFn_injective` reads off the sets. Since a
-convex process is determined by its values, that is the theorem.
-
-The hypothesis is Rockafellar's relative-interior condition in `IsExactSum` form, one instance per
-`y` — the support functions `u ↦ ⟨A₁ u, y⟩` and `u ↦ ⟨A₂ u, y⟩` are the two concave functions of
-`u` whose sum must be conjugated exactly (Theorem 16.4). -/
+Where the book assumes `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅`, the hypothesis here is exactness of the
+sum of the two support functions `u ↦ ⟨Aᵢ u, y⟩` (Theorem 16.4), one instance per `y`. Since
+`IsExactSum` also requires both summands proper, this is stronger than the book's hypothesis. -/
 theorem adjointProcess_add (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (A₁ A₂ : ConvexProcess U X)
     (hex : ∀ y : Y, IsExactSum Bu (fun u => -(supportFn Bx (A₁.eval u) y))
@@ -1273,18 +1122,14 @@ theorem comp_adjointProcess_le (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X �
 
 /-- **Rockafellar, Theorem 39.8**: `(BA)* = A* B*`.
 
-Rockafellar deduces this from Theorem 38.5's adjoint formula for a product of bifunctions, which
-the library does not have. Proved directly it is a *sandwich*: `(x*, u*) ∈ (BA)*` says that the
-concave function `x ↦ ⟨Bx, z*⟩` lies below the convex function `x ↦ ⟨u*, A⁻¹x⟩`, and a
-factorisation through `A*` and `B*` is exactly a linear functional `⟨·, x*⟩` running between them.
-`exists_pairing_sandwich` produces one from Fenchel's duality theorem; both functions are
-positively homogeneous and straddle `0` at the origin, which is what turns the attained dual value
-into the two inequalities.
+Read directly this is a *sandwich*: `(x*, u*) ∈ (BA)*` says the concave `x ↦ ⟨Bx, z*⟩` lies below
+the convex `x ↦ ⟨u*, A⁻¹x⟩`, and a factorisation through `A*` and `B*` is exactly a linear
+functional running between them, which `exists_pairing_sandwich` supplies.
 
-The hypothesis is Rockafellar's `ri (range A) ∩ ri (dom B) ≠ ∅` in `IsExactSum` form, one instance
-per `(z*, u*)`: the two effective domains involved *are* `range A` and `dom B`. As for Theorem
-39.5, the exactness is taken as the hypothesis rather than derived; `IsExactSum.of_relint` no longer
-demands closed summands, so the derivation is available and simply has not been done. -/
+Where the book assumes `ri (range A) ∩ ri (dom B) ≠ ∅`, the hypothesis here is that condition in
+`IsExactSum` form, one instance per `(z*, u*)` — the two effective domains involved *are*
+`range A` and `dom B`. As `IsExactSum` also requires both summands proper, it is stronger than the
+book's hypothesis. -/
 theorem adjointProcess_comp (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (Bz : Z →ₗ[ℝ] W →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (B : ConvexProcess X Z)
     (hex : ∀ (w : W) (v : V), IsExactSum Bx
@@ -1500,12 +1345,10 @@ namespace ConvexProcess
 convex set, and no non-zero vector of `A⁻¹ 0` recedes `C`, then `A C` is closed. In particular this
 holds when `C` is bounded, since then `0⁺C = {0}`.
 
-This is exactly **Theorem 9.1** for the projection `(u, x) ↦ x`: `A C` is the image of
+This is **Theorem 9.1** for the projection `(u, x) ↦ x`: `A C` is the image of
 `graph A ∩ (C × X)`, whose recession cone is `graph A ∩ (0⁺C × X)` — the graph is its own recession
 cone, being a pointed convex cone — and whose intersection with the kernel of the projection is
-`{(v, 0) | v ∈ A⁻¹ 0 ∩ 0⁺C}`. Rockafellar instead specializes Theorem 39.7 and separates the
-barrier cone of `C` from the range of `A*`; the route through Theorem 9.1 is shorter and needs no
-duality. -/
+`{(v, 0) | v ∈ A⁻¹ 0 ∩ 0⁺C}`. No duality is needed. -/
 theorem isClosed_image (hA : IsClosed (A.graph : Set (U × X))) (hC : Convex ℝ C)
     (hC' : IsClosed C) (hCne : C.Nonempty)
     (h : ∀ v : U, (v, (0 : X)) ∈ A.graph → v ∈ recessionCone C → v = 0) :
@@ -1558,14 +1401,12 @@ namespace ConvexProcess
 /-- The **reflection** of a convex process: the process whose graph is the reflection of
 `graph A` through the origin, so that `(A.reflect) u = -(A (-u))`.
 
-Reflection is what exchanges the two orientations. Rockafellar defines the adjoint of an
-infimum-oriented process by reversing the inequality; reversing the inequality is the same as
-reflecting the graph, so `adjointProcess Bu Bx A.reflect = coadjointProcess Bu Bx A`
-(`adjointProcess_reflect`). The same fact read the other way round,
-`coadjointProcess Bu Bx A = (adjointProcess Bu Bx A).reflect`
-(`coadjointProcess_eq_reflect_adjointProcess`), is the one the mirrors of Theorems 39.5 and
-39.8 use: it puts the reflection on the *conclusion*, where `reflect_add` and `reflect_comp`
-cancel it, so those mirrors carry the supremum-oriented hypotheses unchanged. -/
+Reflection is what exchanges the two orientations: reversing the inequality in the definition of
+the adjoint is the same as reflecting the graph, so
+`adjointProcess Bu Bx A.reflect = coadjointProcess Bu Bx A` (`adjointProcess_reflect`). Read the
+other way round (`coadjointProcess_eq_reflect_adjointProcess`) it puts the reflection on the
+*conclusion*, where `reflect_add` and `reflect_comp` cancel it, so the infimum-oriented mirrors
+carry the supremum-oriented hypotheses unchanged. -/
 def reflect (A : ConvexProcess U X) : ConvexProcess U X where
   graph :=
     { carrier := {p : U × X | -p ∈ A.graph}
@@ -1587,7 +1428,6 @@ def reflect (A : ConvexProcess U X) : ConvexProcess U X where
 @[simp] theorem mem_graph_reflect {A : ConvexProcess U X} {p : U × X} :
     p ∈ A.reflect.graph ↔ -p ∈ A.graph := Iff.rfl
 
-/-- Reflection is an involution. -/
 theorem reflect_involutive :
     Function.Involutive (reflect : ConvexProcess U X → ConvexProcess U X) := fun A => by
   refine ConvexProcess.ext (SetLike.ext fun p => ?_)
@@ -1596,19 +1436,16 @@ theorem reflect_involutive :
 @[simp] theorem reflect_reflect (A : ConvexProcess U X) : A.reflect.reflect = A :=
   reflect_involutive A
 
-/-- Reflection is injective, being an involution. -/
 theorem reflect_injective :
     Function.Injective (reflect : ConvexProcess U X → ConvexProcess U X) :=
   reflect_involutive.injective
 
-/-- The values of the reflected process: `(A.reflect) u = -(A (-u))`. -/
 theorem eval_reflect (A : ConvexProcess U X) (u : U) : A.reflect.eval u = -(A.eval (-u)) := by
   ext x
   change -((u, x) : U × X) ∈ A.graph ↔ x ∈ -(A.eval (-u))
   rw [Set.mem_neg]
   exact Iff.rfl
 
-/-- Reflection distributes over sums of processes. -/
 theorem reflect_add (A₁ A₂ : ConvexProcess U X) :
     (A₁ + A₂).reflect = A₁.reflect + A₂.reflect := by
   refine ConvexProcess.ext (SetLike.ext fun p => ?_)
@@ -1616,7 +1453,6 @@ theorem reflect_add (A₁ A₂ : ConvexProcess U X) :
   rw [← mem_eval, ← mem_eval, eval_reflect, eval_add, eval_add, eval_reflect, eval_reflect,
     _root_.neg_add]
 
-/-- Reflection distributes over products of processes. -/
 theorem reflect_comp (B : ConvexProcess X Z) (A : ConvexProcess U X) :
     (B.comp A).reflect = B.reflect.comp A.reflect := by
   refine ConvexProcess.ext (SetLike.ext fun p => ?_)
@@ -1788,9 +1624,7 @@ namespace ConvexProcess
 
 Rockafellar states Theorem 39.5 for two processes "with the same orientation" and leaves the
 infimum-oriented case implicit. It is the supremum-oriented theorem read through
-`coadjointProcess_eq_reflect_adjointProcess`: the infimum-oriented adjoint *is* the reflection of
-the supremum-oriented one, and reflection distributes over sums (`reflect_add`). Reflecting the
-adjoint rather than the process is what keeps the involution out of the hypothesis, which is
+`coadjointProcess_eq_reflect_adjointProcess`, reflection distributing over sums; the hypothesis is
 Theorem 39.5's own, verbatim. -/
 theorem coadjointProcess_add (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (A₁ A₂ : ConvexProcess U X)
@@ -2024,7 +1858,6 @@ theorem coBracket_eq_neg_bracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : Con
   refine iInf_congr fun _ => ?_
   rw [← _root_.EReal.coe_neg, map_neg (Bx x) y, _root_.neg_neg]
 
-/-- The sign dictionary as an equation between functions of the primal variable. -/
 theorem coBracket_eq_neg_bracket_fun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (A : ConvexProcess U X) (y : Y) :
     (fun u => coBracket Bx A u y) = fun u => -(bracket Bx A.indicatorBifun u (-y)) :=
   funext fun u => coBracket_eq_neg_bracket Bx A u y
@@ -2116,7 +1949,6 @@ namespace ConvexProcess
 
 omit [Module ℝ U] [Module ℝ V] [AddCommGroup X] [Module ℝ X] [AddCommGroup Y]
   [Module ℝ Y] in
-/-- A supremum over a reflected set is the supremum of the reflected integrand. -/
 private theorem iSup_mem_neg (s : Set V) (f : V → EReal) :
     ⨆ v ∈ -s, f v = ⨆ v ∈ s, f (-v) := by
   refine le_antisymm (iSup₂_le fun v hv => ?_) (iSup₂_le fun v hv => ?_)
