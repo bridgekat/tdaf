@@ -10,8 +10,8 @@ import Tdaf.Analysis.Convex.Subgradient.Differentiability
 /-!
 # A convex function of one variable is the integral of its derivative
 
-Rockafellar's **Corollary 24.2.1**: on an open interval where it is finite, a convex function is
-recovered from either of its one-sided derivatives by integration,
+**Corollary 24.2.1**: on an open interval where it is finite, a convex function is recovered from
+either of its one-sided derivatives by integration,
 
 ```
 f y - f x = ∫ₓʸ f'₊(t) dt = ∫ₓʸ f'₋(t) dt.
@@ -19,53 +19,28 @@ f y - f x = ∫ₓʸ f'₊(t) dt = ∫ₓʸ f'₋(t) dt.
 
 ## Main results
 
-* `sub_eq_intervalIntegral_derivWithin_Ioi` — the statement for a real-valued convex
-  function on an open convex subset of the line. This is the theorem; everything else is
-  translation.
-* `rightDeriv_eq_coe_derivWithin` — the bridge: at an interior point of `dom f` the project's
-  `EReal`-valued `rightDeriv` is the coercion of Mathlib's `derivWithin f (Ioi t) t`.
+* `sub_eq_intervalIntegral_derivWithin_Ioi` — the statement for a real-valued convex function on
+  an open convex subset of the line. This is the theorem; the rest is translation.
+* `rightDeriv_eq_coe_derivWithin` — at an interior point of `dom f`, the `EReal`-valued
+  `rightDeriv` is the coercion of Mathlib's `derivWithin f (Ioi t) t`.
 * `sub_eq_intervalIntegral_rightDeriv`, `sub_eq_intervalIntegral_leftDeriv` — **Corollary 24.2.1**
-  in the project's vocabulary, both halves.
+  for an `EReal`-valued `f`, both halves.
 
-## Design notes
+## Implementation notes
 
-**The fundamental theorem of calculus does all the work, and it applies unchanged.**
-`intervalIntegral.integral_eq_sub_of_hasDeriv_right` asks for continuity on the closed interval, a
-derivative *from the right* at each interior point, and interval integrability of that derivative.
-A convex function supplies all three with nothing to spare: continuity is Theorem 10.1 (Mathlib's
-`ConvexOn.continuousOn_interior`), the right derivative exists at every interior point
-(`ConvexOn.hasDerivWithinAt_rightDeriv_of_mem_interior`), and it is nondecreasing
-(`ConvexOn.monotoneOn_rightDeriv`), hence integrable on compacts. No measure-theoretic subtlety
-survives — in particular this needs no a.e. differentiability and no Lebesgue theory of monotone
-functions.
+The fundamental theorem of calculus applies unchanged: a convex function is continuous on the
+interior of its domain, has a right derivative at every interior point, and that derivative is
+nondecreasing, hence integrable on compacts. No a.e. differentiability is needed.
 
-**The bridge is the only real work.** The project defines `rightDeriv f t` as an infimum of
-difference quotients in `EReal`, which is the right definition when `f` can be infinite; Mathlib
-defines the right derivative as a limit. At an interior point of `dom f` the two agree, and proving
-it is `le_antisymm` between an `EReal` infimum and a real `sInf`: one direction is `csInf_le` at
-each admissible slope, the other is `exists_lt_of_csInf_lt` at a real number squeezed in by
-`EReal.lt_iff_exists_real_btwn`. The points outside `dom f` contribute `⊤` to the `EReal` infimum
-and are simply absent from the real one, which is why the statement asks for `t` interior rather
-than merely for `f t` finite.
-
-**The left-derivative half needs no second bridge.** `f'₋` and `f'₊` differ only on the jump set of
-`f'₊`, which is countable (`countable_leftDeriv_ne_rightDeriv`) and hence null, so the two
-integrals agree by `intervalIntegral.integral_congr_ae`.
-
-## What is not here
-
-**Theorem 24.2's integral formula itself.** The book *defines* `f (x) = ∫ₐˣ φ` for an arbitrary
-nondecreasing `φ : ℝ → [-∞, +∞]` and proves that `f` is closed proper convex with
-`f'₋ = φ₋ ≤ φ ≤ φ₊ = f'₊`. That asks for the integral at the finite endpoints of the interval where
-`φ` is finite, as a limit of Riemann integrals, and for `+∞` outside it — an improper integral.
-`Primitive.lean` already proves the *existence* half of Theorem 24.2 with no integral at all, by
-pinning the primitive down through its graph, so what is missing is only the formula, and nothing
-downstream uses it.
+`rightDeriv f t` is an infimum of difference quotients in `EReal`, where Mathlib's right derivative
+is a limit. The two agree at *interior* points of `dom f`; points outside `dom f` contribute `⊤` to
+the `EReal` infimum and are absent from the real one, which is why interiority rather than
+finiteness of `f t` is the hypothesis.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorem 24.2 and
-  Corollary 24.2.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24
+  (Corollary 24.2.1).
 -/
 
 open Set MeasureTheory intervalIntegral
@@ -78,11 +53,9 @@ section Real
 
 variable {S : Set ℝ} {g : ℝ → ℝ} {x y : ℝ}
 
-/-- **Rockafellar, Corollary 24.2.1**, in Mathlib's vocabulary: a convex function on an open convex
-subset of the line is the integral of its right derivative.
-
-`S` is open and convex rather than "a non-empty open interval": in `ℝ` those are the same thing,
-and the proof uses only `uIcc x y ⊆ S`. -/
+/-- **Corollary 24.2.1** for a real-valued function: a convex function on an open convex subset of
+the line is the integral of its right derivative. `S` is asked to be open and convex rather than a
+non-empty open interval; in `ℝ` these are the same. -/
 theorem sub_eq_intervalIntegral_derivWithin_Ioi (hg : ConvexOn ℝ S g) (hS : IsOpen S)
     (hx : x ∈ S) (hy : y ∈ S) :
     g y - g x = ∫ t in x..y, derivWithin g (Ioi t) t := by
@@ -106,8 +79,7 @@ section Bridge
 variable {f : ℝ → EReal} {t : ℝ}
 
 /-- A difference quotient of `f` in the direction `1`, taken between two points where `f` is
-finite, is the coercion of Mathlib's `slope`. No order relation between the two points is needed:
-at `z = t` both sides are `0`. -/
+finite, is the coercion of Mathlib's `slope`. No order relation between the points is needed. -/
 theorem sub_div_eq_coe_slope (hb : f t ≠ ⊥) (ht : f t ≠ ⊤) {z : ℝ} (hz : z ∈ dom f)
     (hzb : f z ≠ ⊥) :
     (f (t + (z - t) • (1 : ℝ)) - f t) / ((z - t : ℝ) : EReal)
@@ -116,12 +88,9 @@ theorem sub_div_eq_coe_slope (hb : f t ≠ ⊥) (ht : f t ≠ ⊤) {z : ℝ} (hz
   rw [hzt, ← _root_.EReal.coe_toReal (mem_dom.1 hz).ne hzb, ← _root_.EReal.coe_toReal ht hb,
     ← _root_.EReal.coe_sub, ← _root_.EReal.coe_div, slope_def_field]
 
-/-- **The two right derivatives agree.** At an interior point of `dom f`, the project's `EReal`
-infimum of difference quotients is the coercion of Mathlib's `derivWithin f (Ioi t) t`.
-
-Both are the infimum of the slopes `slope f t z` over the `z > t` at which `f` is finite; the
-`EReal` version ranges over the other `z` as well, where the quotient is `⊤` and contributes
-nothing. -/
+/-- At an interior point of `dom f`, the `EReal` infimum of difference quotients `rightDeriv f t`
+is the coercion of Mathlib's `derivWithin f (Ioi t) t`. Both are the infimum of the slopes
+`slope f t z` over the `z > t` at which `f` is finite. -/
 theorem rightDeriv_eq_coe_derivWithin (hf : ConvexFn f) (hp : Proper f)
     (ht : t ∈ interior (dom f)) :
     rightDeriv f t = ((derivWithin (fun z => (f z).toReal) (Ioi t) t : ℝ) : EReal) := by
@@ -171,8 +140,8 @@ section EReal
 
 variable {f : ℝ → EReal} {x y : ℝ}
 
-/-- **Rockafellar, Corollary 24.2.1**, right-derivative half: on the interior of its effective
-domain a proper convex function on the line is the integral of `f'₊`. -/
+/-- **Corollary 24.2.1**, right-derivative half: on the interior of its effective domain, a proper
+convex function on the line is the integral of `f'₊`. -/
 theorem sub_eq_intervalIntegral_rightDeriv (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ interior (dom f)) (hy : y ∈ interior (dom f)) :
     (f y).toReal - (f x).toReal = ∫ t in x..y, (rightDeriv f t).toReal := by
@@ -184,8 +153,8 @@ theorem sub_eq_intervalIntegral_rightDeriv (hf : ConvexFn f) (hp : Proper f)
   have htint : t ∈ interior (dom f) := (convex_iff_ordConnected.1 hconv).uIcc_subset hx hy ht
   rw [rightDeriv_eq_coe_derivWithin hf hp htint, _root_.EReal.toReal_coe]
 
-/-- **Rockafellar, Corollary 24.2.1**, left-derivative half. The two one-sided derivatives differ
-only on the jump set of `f'₊`, which is countable and therefore null. -/
+/-- **Corollary 24.2.1**, left-derivative half. The two one-sided derivatives differ only on the
+jump set of `f'₊`, which is countable and therefore null. -/
 theorem sub_eq_intervalIntegral_leftDeriv (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ interior (dom f)) (hy : y ∈ interior (dom f)) :
     (f y).toReal - (f x).toReal = ∫ t in x..y, (leftDeriv f t).toReal := by

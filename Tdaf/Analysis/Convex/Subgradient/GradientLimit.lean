@@ -8,39 +8,29 @@ import Tdaf.Analysis.Convex.Subgradient.Rademacher
 /-!
 # Convergence of gradients
 
-Rockafellar's **Theorem 25.7**: if convex functions finite and differentiable on an open convex set
-converge pointwise there to a function that is also finite and differentiable, then their gradients
-converge too — and uniformly on every compact subset. For arbitrary differentiable functions this
-is false; convexity is what makes it work, through the upper semicontinuity of the subdifferential
-under pointwise convergence (Theorem 24.5).
+**Theorem 25.7**: if convex functions, finite and differentiable on an open convex set, converge
+pointwise there to a function that is also finite and differentiable, then their gradients converge
+too, and uniformly on every compact subset. For arbitrary differentiable functions this is false.
+Convexity is what makes it work, through the upper semicontinuity of the subdifferential under
+pointwise convergence (Theorem 24.5): both subdifferentials are singletons, so an inclusion
+`∂fᵢ x ⊆ ∂f x + εB` *is* a bound on `‖∇fᵢ x - ∇f x‖`.
 
 ## Main results
 
-* `dist_le_of_subgradient_subset` — the bookkeeping step: an inclusion `∂p u ⊆ ∂q v + ε B` between
-  subdifferentials that are *singletons* is the bound `‖∇p u - ∇q v‖ ≤ ε`.
-* `tendsto_of_hasGradientAt` — **Theorem 25.7**, the displayed statement: `∇fᵢ x → ∇f x`.
-* `tendstoUniformlyOn_fderiv_toReal` — **Theorem 25.7**, the sentence after it: the convergence is
-  uniform on every compact subset.
+* `dist_le_of_subgradient_subset` — an inclusion `∂p u ⊆ ∂q v + ε B` between *singleton*
+  subdifferentials is the bound `‖∇p u - ∇q v‖ ≤ ε`.
+* `tendsto_of_hasGradientAt` — **Theorem 25.7**: `∇fᵢ x → ∇f x`.
+* `tendstoUniformlyOn_fderiv_toReal` — **Theorem 25.7**, uniformly on every compact subset.
 
-## Design notes
+## Implementation notes
 
-**The pointwise clause is Theorem 24.5 at a constant sequence.** `∂fᵢ(x) ⊆ ∂f(x) + εB` for large
-`i`; both sides are singletons by Theorem 25.1, so the inclusion *is* `‖∇fᵢ x - ∇f x‖ ≤ ε`. No
-contradiction argument and no compactness are involved, and — unlike in Rockafellar's proof — no
-appeal to Theorem 10.8 either, since Theorem 24.5 has already absorbed it.
+Subgradients are taken for the pairing `innerₗ E`, where they are vectors, while a gradient lives
+in `StrongDual ℝ E`. The Riesz isomorphism translates between the two, and being an isometry it
+costs no constant.
 
-**The uniform clause is the same theorem along a subsequence.** Rockafellar reduces to partial
-derivatives and argues by contradiction on one coordinate at a time; here the contradiction is run
-once, on the norm. If the convergence is not uniform on the compact `S`, there are indices `φ n`
-and points `zₙ ∈ S` with `‖∇f(zₙ) - ∇f_{φ n}(zₙ)‖ ≥ ε`; compactness of `S` extracts a convergent
-subsequence `zₙ → w ∈ S`, and then Theorem 24.5 along that subsequence and Corollary 24.5.1 at `w`
-bound both gradients within `ε/3` of `∇f w`, which the triangle inequality contradicts. Theorem
-24.5 is stated for a moving sequence of points exactly so that this works.
+## References
 
-**Both clauses are stated for `innerₗ E` internally and for `fderiv` outwardly.** The
-subdifferential theory of §24 is available for the inner-product pairing, whose subgradients are
-vectors, while a gradient is an element of `StrongDual ℝ E`; `subgradient_innerL_eq_singleton`
-translates, and it is an isometry, so `dist_le_of_subgradient_subset` loses nothing.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorem 25.7).
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -52,9 +42,9 @@ section GradientLimit
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : ℕ → E → EReal} {g : E → EReal} {U : Set E} {x : E}
 
-/-- **An inclusion of singleton subdifferentials is a bound on gradients.** If `a` is the only
+/-- An inclusion of singleton subdifferentials is a bound on gradients: if `a` is the only
 subgradient of `p` at `u`, `b` the only one of `q` at `v`, and `∂p u ⊆ ∂q v + ε B`, then
-`‖a - b‖ ≤ ε`. The Riesz isomorphism is an isometry, so the `ε` crosses it unchanged. -/
+`‖a - b‖ ≤ ε`. -/
 theorem dist_le_of_subgradient_subset {p q : E → EReal} {u v : E} {a b : StrongDual ℝ E} {ε : ℝ}
     (hp : ConvexFn p) (hq : ConvexFn q) (ha : HasGradientAt p a u) (hb : HasGradientAt q b v)
     (hsub : subgradient (innerₗ E) p u ⊆ subgradient (innerₗ E) q v + closedBall (0 : E) ε) :
@@ -74,11 +64,8 @@ theorem dist_le_of_subgradient_subset {p q : E → EReal} {u v : E} {a b : Stron
   rw [hdist, ← hcd, add_sub_cancel_left]
   exact hd
 
-/-- **Rockafellar, Theorem 25.7**: the gradients of convex functions converging pointwise on an
-open convex set converge at every point of that set.
-
-Theorem 24.5 at the constant sequence `xᵢ = x`, with both subdifferentials collapsed to singletons
-by Theorem 25.1. -/
+/-- **Theorem 25.7**: the gradients of convex functions converging pointwise on an open convex set
+converge at every point of that set. This is Theorem 24.5 at the constant sequence `xᵢ = x`. -/
 theorem tendsto_of_hasGradientAt (hU : IsOpen U) (hUc : Convex ℝ U) (hf : ∀ i, ConvexFn (f i))
     (hfp : ∀ i, Proper (f i)) (hfU : ∀ i, U ⊆ dom (f i)) (hg : ConvexFn g) (hgp : Proper g)
     (hgU : U ⊆ dom g) (hconv : ∀ z ∈ U, Tendsto (fun i => f i z) atTop (𝓝 (g z))) (hx : x ∈ U)
@@ -90,14 +77,10 @@ theorem tendsto_of_hasGradientAt (hU : IsOpen U) (hUc : Convex ℝ U) (hf : ∀ 
   filter_upwards [hev] with i hi
   exact lt_of_le_of_lt (dist_le_of_subgradient_subset (hf i) hg (hG i) hG' hi) (half_lt_self hε)
 
-/-- **Rockafellar, Theorem 25.7**, the uniform clause: on every compact subset of the open set, the
-gradients converge uniformly.
-
-Rockafellar argues one partial derivative at a time; the contradiction is run here once, on the
-norm. A failure of uniform convergence produces indices `φ n` and points `zₙ` of the compact set
-with `‖∇f zₙ - ∇f_{φ n} zₙ‖ ≥ ε`; a convergent subsequence `zₙ → w` turns Theorem 24.5 (along the
-subsequence) and Corollary 24.5.1 (at `w`) into two `ε/3` bounds whose triangle inequality
-contradicts it. -/
+/-- **Theorem 25.7**, uniform clause: on every compact subset of the open set the gradients
+converge uniformly. A failure gives points `zₙ` of the compact set with
+`‖∇f zₙ - ∇f_{φ n} zₙ‖ ≥ ε`; a convergent subsequence `zₙ → w` turns Theorem 24.5 along the
+subsequence and Corollary 24.5.1 at `w` into two `ε/3` bounds that contradict it. -/
 theorem tendstoUniformlyOn_fderiv_toReal (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexFn (f i)) (hfp : ∀ i, Proper (f i)) (hfU : ∀ i, U ⊆ dom (f i))
     (hg : ConvexFn g) (hgp : Proper g) (hgU : U ⊆ dom g)
