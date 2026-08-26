@@ -151,7 +151,7 @@ end Pairing
 
 /-! ### Transporting the subdifferential along a linear isomorphism
 
-`conj_comp_linearEquiv` is Rockafellar's substitution row for the conjugate. The subdifferential
+`conj_comp_linearEquiv` is the substitution rule for the conjugate. The subdifferential
 obeys the same rule, in the generality of an arbitrary adjoint pair of isomorphisms. -/
 
 section SubgradientTransport

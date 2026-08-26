@@ -8,57 +8,57 @@ import Tdaf.Analysis.Convex.Continuity
 /-!
 # Equi-Lipschitz families and convergence of convex functions
 
-Rockafellar's **Theorems 10.6–10.9**: a pointwise bounded family of convex functions on a
-relatively open convex set is uniformly bounded and equi-Lipschitzian on compact subsets (10.6); a
-function convex in `x` and continuous in `t` is jointly continuous (10.7); pointwise convergence on
-a dense subset propagates and becomes uniform on compact subsets (10.8); and a bounded sequence has
-a subsequence converging uniformly on compact subsets (10.9).
+Four theorems about families of convex functions on a relatively open convex set. A pointwise
+bounded family is uniformly bounded and equi-Lipschitzian on compact subsets; a function convex in
+`x` and continuous in `t` is jointly continuous; pointwise convergence on a dense subset propagates
+and becomes uniform on compact subsets; and a bounded sequence has a subsequence converging
+uniformly on compact subsets.
 
 Each theorem appears twice: an `interior` form, on an **open** convex set, which carries the whole
 argument, and a `_relint` form, on `ri C` for an arbitrary convex `C`, obtained from it through the
-linear chart of `Continuity.lean`. The hypotheses are Rockafellar's weakened pair (a), (b)
-throughout: a subset `C'` with `ri C ⊆ cl C'` on which the family is pointwise bounded above, plus
-a single point of `ri C` at which it is bounded below. Taking `C' = ri C` recovers the headline
-statements, and Theorems 10.8 and 10.9 *need* the weakened form, their own hypotheses being about
-a dense subset.
+linear chart of `Continuity.lean`. The hypotheses are the weakened pair throughout: a subset `C'`
+with `ri C ⊆ cl C'` on which the family is pointwise bounded above, plus a single point of `ri C`
+at which it is bounded below. Taking `C' = ri C` recovers the headline statements, and the two
+convergence theorems *need* the weakened form, their own hypotheses being about a dense subset.
 
 ## Main results
 
 * `exists_forall_abs_le_of_isCompact`, `exists_forall_lipschitzOnWith_of_isCompact` and their
-  `_relint` twins — **Theorem 10.6**, with
+  `_relint` twins — uniform boundedness and equi-Lipschitz continuity, with
   `exists_forall_abs_le_and_lipschitzOnWith_of_isCompact_relint` as the headline form for a
   pointwise bounded family. The uniform bound splits into `exists_forall_le_of_isCompact` and
   `exists_forall_ge_of_isBounded`, and `bddAbove_range_of_subset_convexHull_closure` is the step
   that spreads pointwise boundedness off a dense subset.
-* `continuousOn_prod_of_convexOn`, `continuousOn_prod_of_convexOn_relint` — **Theorem 10.7**, for
+* `continuousOn_prod_of_convexOn`, `continuousOn_prod_of_convexOn_relint` — joint continuity, for
   an arbitrary locally compact `T`.
-* `exists_tendstoUniformlyOn_of_dense`, `exists_tendstoUniformlyOn_of_dense_relint` —
-  **Theorem 10.8**, with `tendstoUniformlyOn_of_tendsto`(`_relint`) for the case where the limit is
-  already known and `eventually_forall_le_add_of_eventually_le`(`_relint`) for
-  **Corollary 10.8.1**. `uniformCauchySeqOn_of_dense` is the analytic core.
-* `exists_subseq_tendstoUniformlyOn`, `exists_subseq_tendstoUniformlyOn_relint` — **Theorem 10.9**.
+* `exists_tendstoUniformlyOn_of_dense`, `exists_tendstoUniformlyOn_of_dense_relint` — convergence
+  from a dense subset, with `tendstoUniformlyOn_of_tendsto`(`_relint`) for the case where the limit
+  is already known and `eventually_forall_le_add_of_eventually_le`(`_relint`) for the eventual
+  upper bound. `uniformCauchySeqOn_of_dense` is the analytic core.
+* `exists_subseq_tendstoUniformlyOn`, `exists_subseq_tendstoUniformlyOn_relint` — a uniformly
+  convergent subsequence.
 * `convexOn_ciSup` — a finite pointwise supremum of convex functions is convex.
 * `convexOn_chart`, `mem_relint_of_mem_interior_chart`, `mem_interior_chart_of_mem_relint`,
   `chart_subset_interior_chart`, `interior_chart_subset_closure_chart` — the chart bookkeeping.
 
 ## Implementation notes
 
-The functions are real-valued rather than `EReal`-valued: §10.6–10.9 are about families *finite* on
-a relatively open convex set, and every conclusion — a supremum, a Lipschitz constant, a uniform
-bound, a limit — is a statement about real numbers. So the family is `f : ι → E → ℝ` with
+The functions are real-valued rather than `EReal`-valued: these theorems are about families
+*finite* on a relatively open convex set, and every conclusion — a supremum, a Lipschitz constant,
+a uniform bound, a limit — is a statement about real numbers. So the family is `f : ι → E → ℝ` with
 `∀ i, ConvexOn ℝ C (f i)`, which composes directly with Mathlib; a caller holding an
-`EReal`-valued `ConvexFn` converts with `ConvexFn.convexOn_toReal_dom`. Rockafellar's hypothesis
-(a) actually asks only for `C ⊆ conv (cl C')`, which is what
+`EReal`-valued `ConvexFn` converts with `ConvexFn.convexOn_toReal_dom`. The upper-bound hypothesis
+actually needs only `C ⊆ conv (cl C')`, which is what
 `bddAbove_range_of_subset_convexHull_closure` proves; the theorems are stated with `cl C'` because
 the step from a bound to *uniform* convergence needs points of `C'` metrically near `S`, which a
-convex hull does not supply. Theorem 10.9 avoids a diagonal argument: the values on a countable
+convex hull does not supply. The subsequence theorem avoids a diagonal argument: the values on a
+countable
 dense subset live in a compact box in `ℕ → ℝ`, compact by Tychonoff and sequentially compact
 because `ℕ → ℝ` is first countable.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10
-  (Theorems 10.6–10.9, Corollary 10.8.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10.
 -/
 open Set Filter Topology Metric
 open scoped NNReal Pointwise
@@ -84,8 +84,8 @@ theorem convexOn_ciSup [Nonempty ι] (hUc : Convex ℝ U) (hf : ∀ i, ConvexOn 
 
 /-- **Pointwise boundedness spreads through a convex hull.** If a family of functions convex on an
 open convex set `U` is pointwise bounded above on a subset `C'` of `U` with `U ⊆ conv (cl C')`,
-then it is pointwise bounded above on all of `U`. This is Rockafellar's hypothesis (a) in
-Theorem 10.6: the set of points where the family is bounded above is convex, so its closure
+then it is pointwise bounded above on all of `U`. This is the weakest form of the upper-bound
+hypothesis: the set of points where the family is bounded above is convex, so its closure
 contains `conv (cl C')`, and a convex set contains the interior of its own closure. -/
 theorem bddAbove_range_of_subset_convexHull_closure (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexOn ℝ U (f i)) {C' : Set W} (hC' : C' ⊆ U)
@@ -116,10 +116,10 @@ theorem bddAbove_range_of_subset_convexHull_closure (hU : IsOpen U) (hUc : Conve
     exact intrinsicInterior_subset this
   exact hxA.2
 
-/-- **Uniform boundedness from above** (Theorem 10.6, upper half): a family of functions convex on
-an open convex set `U` and pointwise bounded above there is *uniformly* bounded above on every
-compact subset of `U`. The pointwise supremum is a finite convex function, hence continuous
-(Theorem 10.1), hence bounded on compact sets. -/
+/-- **Uniform boundedness from above**: a family of functions convex on an open convex set `U` and
+pointwise bounded above there is *uniformly* bounded above on every compact subset of `U`. The
+pointwise supremum is a finite convex function, hence continuous, hence bounded on compact
+sets. -/
 theorem exists_forall_le_of_isCompact (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexOn ℝ U (f i)) (hbdd : ∀ x ∈ U, BddAbove (Set.range fun i => f i x))
     {S : Set W} (hS : IsCompact S) (hSU : S ⊆ U) :
@@ -136,8 +136,8 @@ theorem exists_forall_le_of_isCompact (hU : IsOpen U) (hUc : Convex ℝ U)
   rw [Real.norm_eq_abs] at h
   exact (le_abs_self _).trans h
 
-/-- **Uniform boundedness from below** (Theorem 10.6, lower half): if a family of functions convex
-on an open convex set `U` is pointwise bounded above on `U` and bounded *below* at a single point
+/-- **Uniform boundedness from below**: if a family of functions convex on an open convex set
+`U` is pointwise bounded above on `U` and bounded *below* at a single point
 `x₀`, it is uniformly bounded below on every bounded subset of `U`. For `x ∈ U` the point
 `z = x₀ + (δ/‖x₀ - x‖) • (x₀ - x)` lies on the sphere of radius `δ` about `x₀`, and `x₀` is a
 convex combination of `z` and `x`, which gives a bound depending on `x` only through
@@ -210,10 +210,10 @@ theorem exists_forall_ge_of_isBounded (hU : IsOpen U) (hUc : Convex ℝ U)
   have h4 : (δ + R) * (β₁ - β₂) ≤ (δ + t) * (β₁ - β₂) := by nlinarith [hRS x hx]
   gcongr
 
-/-! ### Theorem 10.6, in the `interior` form -/
+/-! ### Pointwise boundedness in the `interior` form -/
 
-/-- **Rockafellar, Theorem 10.6** (interior form), the uniform boundedness half: a family of
-functions convex on an open convex set `U`, pointwise bounded above on a subset `C'` whose closure
+/-- **The uniform boundedness half**, in the interior form: a family of functions convex on an
+open convex set `U`, pointwise bounded above on a subset `C'` whose closure
 contains `U` and bounded below at a single point of `U`, is uniformly bounded on every compact
 subset of `U`. Taking `C' = U` recovers the headline statement. -/
 theorem exists_forall_abs_le_of_isCompact (hU : IsOpen U) (hUc : Convex ℝ U)
@@ -234,7 +234,7 @@ theorem exists_forall_abs_le_of_isCompact (hU : IsOpen U) (hUc : Convex ℝ U)
     linarith [hm i x hx]
   · exact (hM₁ i x hx).trans ((le_abs_self M₁).trans (le_max_left _ _))
 
-/-- **Rockafellar, Theorem 10.6** (interior form), the equi-Lipschitz half: under the hypotheses of
+/-- **The equi-Lipschitz half**, in the interior form: under the hypotheses of
 `exists_forall_abs_le_of_isCompact` a single Lipschitz constant works for every member of the
 family on every compact subset of `U`. One `ε`-collar and one bound `M` feed
 `ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset`, whose constant `2M/ε` does not mention
@@ -253,18 +253,18 @@ theorem exists_forall_lipschitzOnWith_of_isCompact (hU : IsOpen U) (hUc : Convex
 
 end OpenConvex
 
-/-! ### Theorem 10.8: convergence from a dense subset -/
+/-! ### Convergence from a dense subset -/
 
 section Sequence
 
 variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W] [FiniteDimensional ℝ W]
   {U : Set W} {f : ℕ → W → ℝ}
 
-/-- **The uniform Cauchy property behind Rockafellar's Theorem 10.8**: a sequence of functions
-convex on an open convex set `U` which is pointwise Cauchy on a subset `C'` whose closure contains
-`U` is *uniformly* Cauchy on every compact subset of `U`. Given `ε`, Theorem 10.6 supplies one
-Lipschitz constant for the whole sequence on a compact collar of `S`, and finitely many points of
-`C'` then suffice. -/
+/-- **The uniform Cauchy property.** A sequence of functions convex on an open convex set `U`
+which is pointwise Cauchy on a subset `C'` whose closure contains `U` is *uniformly* Cauchy on
+every compact subset of `U`. Given `ε`, equi-Lipschitz continuity supplies one Lipschitz constant
+for the whole sequence on a compact collar of `S`, and finitely many points of `C'` then
+suffice. -/
 theorem uniformCauchySeqOn_of_dense (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexOn ℝ U (f i)) {C' : Set W} (hC' : C' ⊆ U) (hdense : U ⊆ closure C')
     (hab : ∀ x ∈ C', BddAbove (Set.range fun i => f i x))
@@ -314,8 +314,9 @@ theorem uniformCauchySeqOn_of_dense (hU : IsOpen U) (hUc : Convex ℝ U)
   rw [dist_comm (f n z) (f n x)] at htri
   linarith
 
-/-- **Rockafellar, Theorem 10.8** (interior form): a sequence of functions convex on an open convex
-set `U` which converges pointwise on a subset `C'` whose closure contains `U` converges pointwise
+/-- **Convergence from a dense subset**, in the interior form: a sequence of functions convex on
+an open convex set `U` which converges pointwise on a subset `C'` whose closure contains `U`
+converges pointwise
 on all of `U`, the limit is convex, and the convergence is uniform on every compact subset of `U`.
 
 Taking `C' = U` gives the version in which convergence is assumed everywhere. -/
@@ -352,8 +353,8 @@ theorem exists_tendstoUniformlyOn_of_dense (hU : IsOpen U) (hUc : Convex ℝ U)
     (((hcauU x hx).tendsto_limUnder.const_mul a).add
       ((hcauU y hy).tendsto_limUnder.const_mul b)) fun i => (hf i).2 hx hy ha hb hs
 
-/-- **Rockafellar, Theorem 10.8** (interior form), with the limit function supplied: pointwise
-convergence on all of an open convex `U` upgrades to uniform convergence on compact subsets. -/
+/-- The same with the limit function supplied: **pointwise convergence on all of an open convex
+`U` upgrades to uniform convergence on compact subsets.** -/
 theorem tendstoUniformlyOn_of_tendsto (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexOn ℝ U (f i)) {g : W → ℝ}
     (hg : ∀ x ∈ U, Tendsto (fun i => f i x) atTop (𝓝 (g x)))
@@ -363,8 +364,9 @@ theorem tendstoUniformlyOn_of_tendsto (hU : IsOpen U) (hUc : Convex ℝ U)
   exact (huc hS hSU).congr_right fun x hx =>
     tendsto_nhds_unique (hg' x (hSU hx)) (hg x (hSU hx))
 
-/-- **Rockafellar, Corollary 10.8.1** (interior form): if a sequence of functions convex on an open
-convex set `U` satisfies `limsup_i f i x ≤ g x` pointwise for a convex `g`, then on each compact
+/-- **An eventual upper bound**, in the interior form: if a sequence of functions convex on an
+open convex set `U` satisfies `limsup_i f i x ≤ g x` pointwise for a convex `g`, then on each
+compact
 `S ⊆ U` the bound `f i ≤ g + ε` holds for all large `i`. The `limsup` hypothesis is spelled as "for
 every `ε > 0`, eventually `f i x ≤ g x + ε`", which avoids the junk values `Filter.limsup` takes on
 unbounded sequences. -/
@@ -390,10 +392,10 @@ theorem eventually_forall_le_add_of_eventually_le (hU : IsOpen U) (hUc : Convex 
   rw [Real.dist_eq, abs_sub_comm, abs_of_nonneg (by simp)] at h1
   exact (le_max_left (f i x) (g x)).trans (by linarith)
 
-/-- **Rockafellar, Theorem 10.9** (interior form): a sequence of functions convex on an open convex
-set `U` whose values are bounded at each point of a subset `C'` with `U ⊆ cl C'` has a subsequence
-converging, uniformly on every compact subset of `U`, to a finite convex function. This is
-Arzelà–Ascoli for convex functions. -/
+/-- **Arzelà–Ascoli for convex functions**, in the interior form: a sequence of functions convex
+on an open convex set `U` whose values are bounded at each point of a subset `C'` with `U ⊆ cl C'`
+has a subsequence
+converging, uniformly on every compact subset of `U`, to a finite convex function. -/
 theorem exists_subseq_tendstoUniformlyOn (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexOn ℝ U (f i)) {C' : Set W} (hC' : C' ⊆ U) (hdense : U ⊆ closure C')
     (hbdd : ∀ x ∈ C', Bornology.IsBounded (Set.range fun i => f i x)) :
@@ -437,17 +439,17 @@ theorem exists_subseq_tendstoUniformlyOn (hU : IsOpen U) (hUc : Convex ℝ U)
 
 end Sequence
 
-/-! ### Theorem 10.7: joint continuity -/
+/-! ### Joint continuity -/
 
 section JointContinuity
 
 variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W] [FiniteDimensional ℝ W]
   {U : Set W} {T : Type*} [TopologicalSpace T] [LocallyCompactSpace T]
 
-/-- **Rockafellar, Theorem 10.7** (interior form): a real-valued function on `U × T`, with `U` open
+/-- **Joint continuity**, in the interior form: a real-valued function on `U × T`, with `U` open
 and convex and `T` locally compact, that is convex in its first argument and continuous in its
-second is *jointly* continuous. As in the book, continuity in `t` is only needed at the points of a
-subset `C'` of `U` whose closure contains `U`; taking `C' = U` gives the headline statement. -/
+second is *jointly* continuous. Continuity in `t` is only needed at the points of a subset `C'` of
+`U` whose closure contains `U`; taking `C' = U` gives the headline statement. -/
 theorem continuousOn_prod_of_convexOn (hU : IsOpen U) (hUc : Convex ℝ U) {F : W × T → ℝ}
     (hconv : ∀ t : T, ConvexOn ℝ U fun x => F (x, t))
     {C' : Set W} (hC' : C' ⊆ U) (hdense : U ⊆ closure C')
@@ -585,17 +587,17 @@ theorem interior_chart_subset_closure_chart
 
 end Chart
 
-/-! ### Theorem 10.6, in the `ri` form -/
+/-! ### Pointwise boundedness in the `ri` form -/
 
 section Relint
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {ι : Type*} {C C' : Set E} {f : ι → E → ℝ}
 
-/-- **Rockafellar, Theorem 10.6**, the uniform boundedness half: a family of functions convex on a
-convex set `C`, pointwise bounded above on a subset `C'` of `ri C` whose closure contains `ri C`
-and bounded below at one point of `ri C`, is uniformly bounded on every compact subset of `ri C`.
-Rockafellar states this for a *relatively open* `C`; taking `C' = ri C` gives his hypothesis. -/
+/-- **The uniform boundedness half**: a family of functions convex on a convex set `C`, pointwise
+bounded above on a subset `C'` of `ri C` whose closure contains `ri C` and bounded below at one
+point of `ri C`, is uniformly bounded on every compact subset of `ri C`. Taking `C' = ri C` gives
+the usual hypothesis, for a relatively open `C`. -/
 theorem exists_forall_abs_le_of_isCompact_relint (hC : Convex ℝ C)
     (hf : ∀ i, ConvexOn ℝ C (f i)) (hC' : C' ⊆ ri C) (hdense : ri C ⊆ closure C')
     (hab : ∀ x ∈ C', BddAbove (Set.range fun i => f i x))
@@ -620,7 +622,7 @@ theorem exists_forall_abs_le_of_isCompact_relint (hC : Convex ℝ C)
   have h := hM i _ (Set.mem_image_of_mem (fun x : E => r (x - x₀)) hx)
   rwa [hid x (hSC hx)] at h
 
-/-- **Rockafellar, Theorem 10.6**, the equi-Lipschitz half: under the hypotheses of
+/-- **The equi-Lipschitz half**: under the hypotheses of
 `exists_forall_abs_le_of_isCompact_relint` a *single* Lipschitz constant serves the whole family on
 any compact subset of `ri C`. -/
 theorem exists_forall_lipschitzOnWith_of_isCompact_relint (hC : Convex ℝ C)
@@ -660,14 +662,15 @@ theorem exists_forall_lipschitzOnWith_of_isCompact_relint (hC : Convex ℝ C)
 
 end Relint
 
-/-! ### Theorems 10.8 and 10.9, in the `ri` form -/
+/-! ### Convergence, in the `ri` form -/
 
 section RelintSequence
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {C C' : Set E} {f : ℕ → E → ℝ}
 
-/-- **Rockafellar, Theorem 10.8**: a sequence of functions convex on a convex set `C` which
+/-- **Convergence from a dense subset**: a sequence of functions convex on a convex set `C`
+which
 converges pointwise on a subset `C'` of `ri C` whose closure contains `ri C` converges pointwise on
 all of `ri C`, to a finite convex limit, uniformly on every compact subset of `ri C`. -/
 theorem exists_tendstoUniformlyOn_of_dense_relint (hC : Convex ℝ C)
@@ -707,8 +710,8 @@ theorem exists_tendstoUniformlyOn_of_dense_relint (hC : Convex ℝ C)
     have h := hi (r (x - x₀)) (Set.mem_image_of_mem _ hx)
     rwa [hid x (hSC hx)] at h
 
-/-- **Rockafellar, Theorem 10.8**, with the limit supplied: pointwise convergence on `ri C`
-upgrades to uniform convergence on its compact subsets. -/
+/-- The same with the limit supplied: **pointwise convergence on `ri C` upgrades to uniform
+convergence on its compact subsets.** -/
 theorem tendstoUniformlyOn_of_tendsto_relint (hC : Convex ℝ C) (hf : ∀ i, ConvexOn ℝ C (f i))
     {g : E → ℝ} (hg : ∀ x ∈ ri C, Tendsto (fun i => f i x) atTop (𝓝 (g x)))
     {S : Set E} (hS : IsCompact S) (hSC : S ⊆ ri C) : TendstoUniformlyOn f g atTop S := by
@@ -719,7 +722,7 @@ theorem tendstoUniformlyOn_of_tendsto_relint (hC : Convex ℝ C) (hf : ∀ i, Co
   rw [tendsto_nhds_unique (hg x (hSC hx)) (hg' x (hSC hx))]
   exact hi x hx
 
-/-- **Rockafellar, Corollary 10.8.1**: if `limsup_i f i x ≤ g x` for every `x ∈ ri C`, with `g`
+/-- **An eventual upper bound**: if `limsup_i f i x ≤ g x` for every `x ∈ ri C`, with `g`
 convex, then on each compact `S ⊆ ri C` the bound `f i ≤ g + ε` holds uniformly for large `i`.
 
 The `limsup` hypothesis is spelled as "for every `δ > 0`, eventually `f i x ≤ g x + δ`". -/
@@ -745,7 +748,8 @@ theorem eventually_forall_le_add_of_eventually_le_relint (hC : Convex ℝ C)
   rw [Real.dist_eq, abs_sub_comm, abs_of_nonneg (by simp)] at h1
   exact (le_max_left (f i x) (g x)).trans (by linarith)
 
-/-- **Rockafellar, Theorem 10.9**: a sequence of functions convex on `C` whose values are bounded
+/-- **Arzelà–Ascoli for convex functions**: a sequence of functions convex on `C` whose values are
+bounded
 at each point of a subset `C'` of `ri C` with `ri C ⊆ cl C'` has a subsequence converging uniformly
 on the compact subsets of `ri C` to a finite convex function. -/
 theorem exists_subseq_tendstoUniformlyOn_relint (hC : Convex ℝ C)
@@ -779,14 +783,14 @@ theorem exists_subseq_tendstoUniformlyOn_relint (hC : Convex ℝ C)
 
 end RelintSequence
 
-/-! ### Theorem 10.7, in the `ri` form -/
+/-! ### Joint continuity, in the `ri` form -/
 
 section RelintJoint
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {C C' : Set E} {T : Type*} [TopologicalSpace T] [LocallyCompactSpace T]
 
-/-- **Rockafellar, Theorem 10.7**: a real-valued function on `ri C × T`, with `T` locally compact,
+/-- **Joint continuity**: a real-valued function on `ri C × T`, with `T` locally compact,
 convex in its first argument and continuous in its second, is jointly continuous relative to
 `ri C × T`. -/
 theorem continuousOn_prod_of_convexOn_relint (hC : Convex ℝ C) {F : E × T → ℝ}
@@ -814,16 +818,15 @@ theorem continuousOn_prod_of_convexOn_relint (hC : Convex ℝ C) {F : E × T →
 
 end RelintJoint
 
-/-! ### The headline form of Theorem 10.6 -/
+/-! ### The headline form -/
 
 section Headline
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {ι : Type*} {C : Set E} {f : ι → E → ℝ}
 
-/-- **Rockafellar, Theorem 10.6** as he states it: a family of convex functions finite and
-*pointwise bounded* on `ri C` is uniformly bounded and equi-Lipschitzian on every compact subset of
-`ri C`. -/
+/-- **A family of convex functions finite and *pointwise bounded* on `ri C` is uniformly bounded
+and equi-Lipschitzian on every compact subset of `ri C`.** -/
 theorem exists_forall_abs_le_and_lipschitzOnWith_of_isCompact_relint (hC : Convex ℝ C)
     (hf : ∀ i, ConvexOn ℝ C (f i))
     (hbdd : ∀ x ∈ ri C, Bornology.IsBounded (Set.range fun i => f i x))

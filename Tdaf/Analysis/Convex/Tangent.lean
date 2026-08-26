@@ -34,8 +34,8 @@ the proof.
 
 ## Main results
 
-* `eq_iInter_tangent_halfSpaces` — **Theorem 18.8**: a closed convex set with nonempty interior is
-  the intersection of the closed half-spaces tangent to it.
+* `eq_iInter_tangent_halfSpaces` — a closed convex set with nonempty interior is the intersection
+  of the closed half-spaces tangent to it.
 * `exists_isTangentAt_lt_of_zero_mem_interior` — the separating form: a point outside such a set
   is cut off by a tangent half-space.
 
@@ -51,7 +51,7 @@ functional on `E*` with a point of `E`, which produces the point of contact, use
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18 (Theorem 18.8).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18.
 -/
 
 open Set Bornology
@@ -118,8 +118,8 @@ private theorem smul_div_norm_mem_closedBall {x : E} (hx : x ≠ 0) {r s : ℝ} 
 
 variable [FiniteDimensional ℝ E]
 
-/-- The heart of Theorem 18.8: for a closed convex set with the origin in its interior, every point
-outside is cut off by a *tangent* half-space. The normal of that half-space is an exposed point of
+/-- For a closed convex set with the origin in its interior, every point outside is cut off by a
+*tangent* half-space. The normal of that half-space is an exposed point of
 the polar `C°`, which is compact because `0 ∈ int C`. -/
 theorem exists_isTangentAt_lt_of_zero_mem_interior (hC : Convex ℝ C) (hCcl : IsClosed C)
     (h0 : (0 : E) ∈ interior C) {x₀ : E} (hx₀ : x₀ ∉ C) :
@@ -270,10 +270,10 @@ theorem exists_isTangentAt_lt_of_zero_mem_interior (hC : Convex ℝ C) (hCcl : I
     rw [smul_smul, mul_inv_cancel₀ (ne_of_gt hμpos), one_smul]
   exact hgeq.trans (by rw [heq])
 
-/-- **Rockafellar, Theorem 18.8**: a closed convex set with nonempty interior is the intersection
-of the closed half-spaces tangent to it. ("`n`-dimensional in `ℝⁿ`" is `(interior C).Nonempty`.)
-This sharpens Theorem 11.5, `isClosed_convex_eq_iInter_halfspaces`, which intersects *all* the
-closed half-spaces containing `C`. -/
+/-- **A closed convex set with nonempty interior is the intersection of the closed half-spaces
+tangent to it.** ("`n`-dimensional in `ℝⁿ`" is `(interior C).Nonempty`.) This sharpens
+`isClosed_convex_eq_iInter_halfspaces`, which intersects *all* the closed half-spaces containing
+`C`. -/
 theorem eq_iInter_tangent_halfSpaces (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hint : (interior C).Nonempty) :
     ⋂ (f : StrongDual ℝ E) (y : E) (_ : IsTangentAt C f y), {z : E | f z ≤ f y} = C := by

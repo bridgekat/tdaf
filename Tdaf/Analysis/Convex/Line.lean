@@ -13,8 +13,8 @@ Restricting a function to a line through `x` in direction `d` — `t ↦ f (x + 
 steps that keep the point inside `S` — preserves convexity, and for convex `S` it **detects** it.
 The converse is what makes the reduction useful: it turns a statement about a function on a vector
 space into a statement about functions of one real variable, where the calculus of a single
-derivative applies. That is how the second-derivative criterion for convexity on `ℝⁿ`
-(Theorem 4.5) is proved from the one on an interval (Theorem 4.4).
+derivative applies. That is how the second-derivative criterion for convexity on `ℝⁿ` is proved
+from the one on an interval.
 
 ## Main results
 

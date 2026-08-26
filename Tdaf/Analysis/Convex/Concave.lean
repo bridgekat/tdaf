@@ -34,9 +34,10 @@ forms a sum of infinities, needs no hypothesis at all.
 * `concaveFn_iff_convexFn_neg` — "`g` is concave when `-g` is convex", recovered as a theorem. With
   `domConcave_eq_dom_neg` and `properConcave_iff_proper_neg` this is the sign dictionary through
   which the concave theory is derived from the convex one.
-* `concaveFn_iff_forall_gt`, `concaveFn_iff_le` — the mirrors of Theorems 4.2 and 4.1.
-* `ConcaveFn.convex_gt`, `ConcaveFn.convex_ge` — the mirror of Theorem 4.6: superlevel sets of a
-  concave function are convex.
+* `concaveFn_iff_forall_gt`, `concaveFn_iff_le` — concavity as an inequality on values, strict
+  and non-strict.
+* `ConcaveFn.convex_gt`, `ConcaveFn.convex_ge` — superlevel sets of a concave function are
+  convex.
 * `concaveOn_iff_concaveFn` — the bridge to Mathlib's `ConcaveOn`.
 
 ## References
@@ -55,8 +56,8 @@ section Basic
 
 variable {E : Type*}
 
-/-- The hypograph of `g : E → EReal`, `{(x, μ) | μ ∈ ℝ, μ ≤ g x} ⊆ E × ℝ`. Rockafellar (§30) writes
-this `epi g`, reusing the epigraph notation; we keep the two names apart. As with `epi`, the second
+/-- The hypograph of `g : E → EReal`, `{(x, μ) | μ ∈ ℝ, μ ≤ g x} ⊆ E × ℝ`. Rockafellar writes this
+`epi g`, reusing the epigraph notation; we keep the two names apart. As with `epi`, the second
 coordinate ranges over the *reals*. -/
 def hypo (g : E → EReal) : Set (E × ℝ) := {p | (p.2 : EReal) ≤ g p.1}
 
@@ -100,8 +101,8 @@ theorem hypo_eq_image_epi_neg (g : E → EReal) :
       (Prod.map (id : E → E) (Neg.neg : ℝ → ℝ)) := fun p => by simp [Prod.map]
   rw [Set.image_eq_preimage_of_inverse hinv hinv, hypo_neg]
 
-/-- The effective domain of a concave function: the set where `g > -∞` (Rockafellar §30). It is the
-projection of the hypograph, `domConcave_eq_fst_image_hypo`. -/
+/-- The effective domain of a concave function: the set where `g > -∞`. It is the projection of
+the hypograph, `domConcave_eq_fst_image_hypo`. -/
 def domConcave (g : E → EReal) : Set E := {x | ⊥ < g x}
 
 @[simp] theorem mem_domConcave {g : E → EReal} {x : E} : x ∈ domConcave g ↔ ⊥ < g x := Iff.rfl
@@ -119,7 +120,7 @@ theorem domConcave_eq_fst_image_hypo (g : E → EReal) : domConcave g = Prod.fst
   rfl
 
 /-- `g` is a *proper* concave function when it is finite somewhere and never takes the value `⊤`;
-equivalently, when `-g` is proper (`properConcave_iff_proper_neg`). Rockafellar §30. -/
+equivalently, when `-g` is proper (`properConcave_iff_proper_neg`). -/
 structure ProperConcave (g : E → EReal) : Prop where
   /-- `g` is not identically `⊥`. -/
   domConcave_nonempty : (domConcave g).Nonempty
@@ -165,7 +166,7 @@ section Module
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
 /-- A function `g : E → EReal` is concave when its hypograph is a convex subset of `E × ℝ`. This
-mirrors `ConvexFn`, and agrees with Rockafellar's "`-g` is convex" (§30) by
+mirrors `ConvexFn`, and agrees with the definition by "`-g` is convex" through
 `concaveFn_iff_convexFn_neg`. -/
 structure ConcaveFn (g : E → EReal) : Prop where
   /-- The hypograph of a concave function is convex. -/
@@ -190,7 +191,7 @@ theorem concaveFn_of_hypo_combo {g : E → EReal}
   rintro ⟨x, μ⟩ hx ⟨y, ν⟩ hy a b ha hb hab
   exact h x y μ ν hx hy a b ha hb hab
 
-/-- **Rockafellar, §30.** A function is concave exactly when its negative is convex. Like
+/-- **A function is concave exactly when its negative is convex.** Like
 `hypo_neg`, this needs no side condition: negation reverses only the *order* here, never a sum. -/
 theorem concaveFn_iff_convexFn_neg {g : E → EReal} : ConcaveFn g ↔ ConvexFn fun x => -(g x) := by
   constructor
@@ -221,9 +222,9 @@ theorem ConcaveFn.convexFn_neg {g : E → EReal} (hg : ConcaveFn g) : ConvexFn f
 theorem ConvexFn.concaveFn_neg {f : E → EReal} (hf : ConvexFn f) : ConcaveFn fun x => -(f x) :=
   concaveFn_iff_convexFn_neg.2 (by simpa using hf)
 
-/-! ### Theorem 4.2, mirrored -/
+/-! ### Concavity as a strict inequality on values -/
 
-/-- **The mirror of Theorem 4.2.** A function `g : E → EReal` is concave if and only if
+/-- **Concavity in strict inequalities.** A function `g : E → EReal` is concave if and only if
 `g ((1 - λ) x + λ y) > (1 - λ) α + λ β` whenever `g x > α`, `g y > β` and `0 < λ < 1`. The strict
 inequalities keep `α` and `β` real, so no `∞ - ∞` arises and no hypothesis on `g` is needed. -/
 theorem concaveFn_iff_forall_gt (g : E → EReal) :
@@ -249,10 +250,10 @@ theorem concaveFn_iff_forall_gt (g : E → EReal) :
     rw [show (a * -α + b * -β : ℝ) = -(a * α + b * β) by ring, _root_.EReal.coe_neg] at key
     exact _root_.EReal.neg_lt_comm.1 key
 
-/-! ### Theorem 4.1, mirrored -/
+/-! ### Concavity as an inequality on values -/
 
-/-- **The mirror of Theorem 4.1.** For a function `g` that never takes the value `⊤` —
-equivalently, a function into `[-∞, +∞)` — concavity is the familiar reversed inequality. The
+/-- For a function `g` that never takes the value `⊤` — equivalently, a function into
+`[-∞, +∞)` — **concavity is the familiar reversed inequality**. The
 hypothesis is what makes the right-hand side of the convex form negate to the left-hand side here:
 on `EReal`, `-(u + v) = -u + -v` fails when one summand is `⊤` and the other `⊥`. -/
 theorem concaveFn_iff_le {g : E → EReal} (hg : ∀ x, g x ≠ ⊤) :
@@ -264,25 +265,24 @@ theorem concaveFn_iff_le {g : E → EReal} (hg : ∀ x, g x ≠ ⊤) :
   refine forall₃_congr fun ha hb _ => ?_
   rw [EReal.neg_combo ha hb (hg x) (hg y), _root_.EReal.neg_le_neg_iff]
 
-/-! ### Level sets and the effective domain: Theorem 4.6, mirrored -/
+/-! ### Level sets and the effective domain -/
 
-/-- **The mirror of Theorem 4.6** (strict form). Strict superlevel sets of a concave function are
-convex. -/
+/-- **Strict superlevel sets of a concave function are convex.** -/
 theorem ConcaveFn.convex_gt {g : E → EReal} (hg : ConcaveFn g) (α : EReal) :
     Convex ℝ {x | α < g x} := by
   have hset : {x | α < g x} = {x | -(g x) < -α} := by ext x; simp
   rw [hset]
   exact hg.convexFn_neg.convex_lt (-α)
 
-/-- **The mirror of Theorem 4.6** (non-strict form). Superlevel sets of a concave function are
-convex. These are the sets whose closedness characterises upper semicontinuity (§30). -/
+/-- **Superlevel sets of a concave function are convex.** These are the sets whose closedness
+characterises upper semicontinuity. -/
 theorem ConcaveFn.convex_ge {g : E → EReal} (hg : ConcaveFn g) (α : EReal) :
     Convex ℝ {x | α ≤ g x} := by
   have hset : {x | α ≤ g x} = {x | -(g x) ≤ -α} := by ext x; simp
   rw [hset]
   exact hg.convexFn_neg.convex_le (-α)
 
-/-- The effective domain of a concave function is convex (Rockafellar §30, mirroring §4). -/
+/-- The effective domain of a concave function is convex. -/
 theorem ConcaveFn.convex_domConcave {g : E → EReal} (hg : ConcaveFn g) : Convex ℝ (domConcave g) :=
   hg.convex_gt ⊥
 

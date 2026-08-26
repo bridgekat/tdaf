@@ -33,17 +33,19 @@ half-spaces *tangent* to it — is in `Tangent.lean`.
 * `exists_forall_sub_le_mul_sub` — the multiplier for one linear equation: if `g ≤ γ` on the slice
   `C ∩ {f = β}`, and `f` takes values on both sides of `β` on `C`, then `g - γ ≤ c * (f - β)` on
   all of `C` for some `c`.
-* `closure_convexHullPD_exposedPoints_exposedDirections` — **Theorem 18.7**.
-* `closure_coneHull_exposedDirections`, `closure_coneHull_of_forall_exposedDirection` —
-  **Corollary 18.7.1** for a closed convex cone containing no lines.
+* `closure_convexHullPD_exposedPoints_exposedDirections` — the exposed representation of a
+  line-free closed convex set.
+* `closure_coneHull_exposedDirections`, `closure_coneHull_of_forall_exposedDirection` — the cone
+  case: a line-free closed convex cone is the closure of the cone its exposed directions
+  generate.
 * `isExposed_recessionCone` — the recession cone of an exposed face is an exposed face of the
   recession cone, given that it is contained in it; the exposed analogue of `isFace_recessionCone`.
-  `exposedDirections_subset_exposedDirections_recessionCone` is the consequence Rockafellar records
-  in §18, and `isExposedDirection_recessionCone` its topology-free form.
+  `exposedDirections_subset_exposedDirections_recessionCone` is the consequence for closed `C`,
+  and `isExposedDirection_recessionCone` its topology-free form.
 
 ## Implementation notes
 
-Rockafellar's proof of Theorem 18.7 extends a codimension-two affine set to a supporting
+The classical proof extends a codimension-two affine set to a supporting
 hyperplane, which is really a multiplier: `exists_forall_sub_le_mul_sub` produces it by a
 one-dimensional argument valid in every dimension. The final case split is then bounded/unbounded
 rather than by the shape of a one-dimensional face — the bounded case is Minkowski's theorem in
@@ -51,8 +53,7 @@ every dimension, and only the unbounded case uses `dim C' ≤ 1`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18 (Theorem 18.7 and
-  Corollary 18.7.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18.
 -/
 
 open Set Bornology
@@ -151,9 +152,8 @@ theorem isExposed_recessionCone {C' : Set E} (h : IsExposed ℝ C C')
       rw [map_add, map_smul, smul_eq_mul, hu0, mul_zero, add_zero]
       exact hw.2 q hq
 
-/-- **An exposed direction in which `C` recedes is an exposed direction of `0⁺C`** (Rockafellar,
-§18, p. 163): the exposed analogue of `isExtremeDirection_recessionCone`, and proved the same
-way. -/
+/-- **An exposed direction in which `C` recedes is an exposed direction of `0⁺C`**: the exposed
+analogue of `isExtremeDirection_recessionCone`, and proved the same way. -/
 theorem isExposedDirection_recessionCone (h : IsExposedDirection C y)
     (hy : y ∈ recessionCone C) : IsExposedDirection (recessionCone C) y := by
   obtain ⟨hy0, x, hexp⟩ := h
@@ -175,8 +175,8 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTop
   [ContinuousSMul ℝ E] {C : Set E}
 
 /-- **Every exposed direction of a closed convex set is an exposed direction of its recession
-cone** (Rockafellar §18). Closedness enters only through Theorem 8.3, to know that the direction of
-a half-line exposed face recedes in `C`. -/
+cone.** Closedness enters only in knowing that the direction of a half-line exposed face recedes
+in `C`. -/
 theorem exposedDirections_subset_exposedDirections_recessionCone (hC : Convex ℝ C)
     (hCcl : IsClosed C) : exposedDirections C ⊆ exposedDirections (recessionCone C) :=
   fun _ hy =>
@@ -197,8 +197,8 @@ function.** If `g ≤ γ` wherever `f = β` on a convex set `C`, and `f` takes v
 and strictly above `β` on `C`, then `g - γ ≤ c * (f - β)` on all of `C` for some scalar `c`.
 Geometrically, the image of `C` under `z ↦ (f z - β, g z - γ)` misses the open upward vertical ray,
 so it lies below a line through the origin, and `c` is that line's slope. This replaces the
-"extend an `(n-2)`-dimensional affine set to a supporting hyperplane" step of Theorem 18.7, and
-needs no dimension hypothesis. -/
+"extend an `(n-2)`-dimensional affine set to a supporting hyperplane" step of the classical
+proof, and needs no dimension hypothesis. -/
 theorem exists_forall_sub_le_mul_sub (hC : Convex ℝ C) (f g : E →ₗ[ℝ] ℝ) {β γ : ℝ}
     (hslice : ∀ z ∈ C, f z = β → g z ≤ γ)
     (hlo : ∃ z ∈ C, f z < β) (hhi : ∃ z ∈ C, β < f z) :
@@ -272,14 +272,14 @@ section Representation
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {C : Set E}
 
-/-- **Rockafellar, Theorem 18.7**: a closed convex set containing no lines is the closure of the
-convex hull of its exposed points and exposed directions. Unlike Theorem 18.5 the closure cannot be
+/-- **A closed convex set containing no lines is the closure of the convex hull of its exposed
+points and exposed directions.** Unlike the extreme-point representation the closure cannot be
 dropped — the exposed points of a closed convex set need not be closed, and Straszewicz's theorem
 only places the extreme points in their closure.
 
 Sketch: if the exposed hull `C₀` were not all of `C`, separate a point of `C \ C₀` from `C₀` by
 `H = {f = β}`. The slice `C ∩ H` is a nonempty closed convex set containing no lines, so it has an
-exposed point `x` (Corollary 18.5.3 and Theorem 18.6), and `exists_forall_sub_le_mul_sub` turns its
+exposed point `x`, and `exists_forall_sub_le_mul_sub` turns its
 exposing functional into one maximised over `C` at `x`. Its exposed face `C'` meets `H` only at
 `x`, which forces `x ∈ ri C'` and `dim C' ≤ 1`; a bounded `C'` is then the hull of its extreme
 points, an unbounded one a half-line whose direction is exposed, and either way `x ∈ C₀`. -/
@@ -475,9 +475,9 @@ theorem closure_convexHullPD_exposedPoints_exposedDirections
 
 /-! ### The cone case -/
 
-/-- **Rockafellar, Corollary 18.7.1**: a closed convex cone containing no lines is the closure of
-the cone generated by its exposed directions. Rockafellar assumes the cone contains more than the
-origin; that is unnecessary, since the zero cone has no exposed directions and
+/-- **A closed convex cone containing no lines is the closure of the cone generated by its exposed
+directions.** The usual statement assumes the cone contains more than the origin; that is
+unnecessary, since the zero cone has no exposed directions and
 `PointedCone.hull ℝ ∅ = {0}`. -/
 theorem closure_coneHull_exposedDirections (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hne : C.Nonempty) (hcone : ∀ x ∈ C, ∀ a : ℝ, 0 ≤ a → a • x ∈ C)
@@ -495,8 +495,8 @@ theorem closure_coneHull_exposedDirections (hC : Convex ℝ C) (hCcl : IsClosed 
     rw [subset_antisymm hsub (singleton_subset_iff.2 hzero), convexHullPD_zero_singleton] at h
     exact h
 
-/-- **Rockafellar, Corollary 18.7.1** in his own phrasing: any set of vectors of a line-free closed
-convex cone that generates all of its exposed rays generates the cone, up to closure. -/
+/-- **The generating form**: any set of vectors of a line-free closed convex cone that generates
+all of its exposed rays generates the cone, up to closure. -/
 theorem closure_coneHull_of_forall_exposedDirection {T : Set E} (hC : Convex ℝ C)
     (hCcl : IsClosed C) (hne : C.Nonempty) (hcone : ∀ x ∈ C, ∀ a : ℝ, 0 ≤ a → a • x ∈ C)
     (hnl : ContainsNoLine C) (hTC : T ⊆ C)
