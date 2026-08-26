@@ -24,8 +24,8 @@ strict convexity on a set. Theorem 26.3 read backwards returns essential smoothn
 
 ## Main results
 
-* `StrictConvexOnFn.add_convexFn` — a strictly convex summand makes the sum strictly convex, on a
-  set where both summands are finite.
+* `StrictConvexOnFn.add_convexFn`, `ConvexFn.add_strictConvexOnFn` — a strictly convex summand
+  makes the sum strictly convex, on a set where both summands are finite, whichever side it is on.
 * `StrictConvexOnFn.compLin` — strict convexity pulls back along an injective linear map.
 * `IsExactSum.essentiallyStrictlyConvex_add` — the conjugate-side statement of Corollary 26.3.2.
 * `IsExactSum.essentiallySmooth_infConv`, `essentiallySmooth_infConv_of_relint` —
@@ -100,6 +100,15 @@ theorem StrictConvexOnFn.add_convexFn (hC : Convex ℝ C) (hsc : StrictConvexOnF
   simp only [Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add, _root_.EReal.coe_lt_coe_iff,
     _root_.EReal.coe_le_coe_iff] at hstrict hconv ⊢
   linarith
+
+/-- **The same with the summands the other way round.** `f + g` is `g + f`, so this is
+`StrictConvexOnFn.add_convexFn` and an `add_comm`; it is stated because a caller with a *convex*
+first summand should not have to commute the sum itself. -/
+theorem ConvexFn.add_strictConvexOnFn (hC : Convex ℝ C) (hf : ConvexFn f)
+    (hsc : StrictConvexOnFn g C) (hpf : Proper f) (hpg : Proper g) (hCf : C ⊆ dom f)
+    (hCg : C ⊆ dom g) : StrictConvexOnFn (f + g) C := by
+  rw [add_comm]
+  exact StrictConvexOnFn.add_convexFn hC hsc hf hpg hpf hCg hCf
 
 /-- **Strict convexity pulls back along an injective linear map.** The image of two distinct points
 is two distinct points, and the map carries convex combinations to convex combinations. -/

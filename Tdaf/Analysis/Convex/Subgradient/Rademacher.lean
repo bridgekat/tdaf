@@ -32,9 +32,11 @@ differentiability are dense there, and the gradient map is continuous where it i
   corollary of Theorem 25.5 rather than its source.
 * `subgradient_topDualPairing_eq_singleton`, `hasGradientAt_toDual_of_subgradient_eq_singleton` —
   Theorem 25.1 and its converse carried across that bridge, in vector form.
-* `mem_subgradient_innerL_iff`, `subgradient_innerL_eq_singleton` — the Riesz bridge between the
-  two pairings the library uses on an inner-product space, which is what lets Corollary 24.5.1
-  (stated for `innerₗ E`) speak about gradients (which live in `StrongDual ℝ E`).
+* `topDualPairing_flip_toDual`, `mem_subgradient_innerL_iff`, `conj_innerL_eq_conj_topDualPairing`,
+  `subgradient_innerL_eq_singleton` — the Riesz bridge between the two pairings the library uses on
+  an inner-product space, which is what lets Corollary 24.5.1 (stated for `innerₗ E`) speak about
+  gradients (which live in `StrongDual ℝ E`), and what carries `Subgradient/Legendre.lean`'s
+  general-normed-space Theorem 26.4 to a statement about `conj (innerₗ E)`.
 
 ## Design notes
 
@@ -241,17 +243,32 @@ section GradientContinuity
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x : E} {f' : StrongDual ℝ E}
 
+/-- **The Riesz bridge at the level of the pairings themselves.** Pairing `x` with the *vector* `v`
+through the inner product is pairing `x` with the *functional* `⟪v, ·⟫` through the canonical
+pairing of `E` with its continuous dual. Everything below is this one identity under a
+quantifier. -/
+theorem topDualPairing_flip_toDual (x v : E) :
+    (topDualPairing ℝ E).flip x (InnerProductSpace.toDual ℝ E v) = (innerₗ E) x v := by
+  simp [innerₗ_apply_apply, real_inner_comm]
+
+/-- **The Riesz bridge for the conjugate.** `Subgradient/Legendre.lean` — the whole of
+Theorem 26.4 — is written on a general normed space, where the only pairing available is
+`⟨x, y⟩ = y x`, while `Subgradient/LegendreType.lean` and everything downstream of it is written
+against `innerₗ E`. This is the line that carries a value from one to the other, and it is
+`mem_subgradient_innerL_iff` for `conj` in place of `subgradient`. -/
+theorem conj_innerL_eq_conj_topDualPairing (f : E → EReal) (v : E) :
+    conj (innerₗ E) f v = conj (topDualPairing ℝ E).flip f (InnerProductSpace.toDual ℝ E v) := by
+  simp only [conj_apply]
+  exact iSup_congr fun x => by rw [topDualPairing_flip_toDual x v]
+
 /-- **The Riesz bridge between the two pairings of an inner-product space with itself and with its
 dual**: `v` is a subgradient for `innerₗ E` exactly when the functional `⟪v, ·⟫` is one for the
 canonical pairing with the dual. -/
 theorem mem_subgradient_innerL_iff {v : E} :
     v ∈ subgradient (innerₗ E) f x ↔
       InnerProductSpace.toDual ℝ E v ∈ subgradient (topDualPairing ℝ E).flip f x := by
-  have key : ∀ z : E, (innerₗ E) (z - x) v
-      = (topDualPairing ℝ E).flip (z - x) (InnerProductSpace.toDual ℝ E v) := fun z => by
-    simp [innerₗ_apply_apply, real_inner_comm]
   simp only [mem_subgradient]
-  exact forall_congr' fun z => by rw [key z]
+  exact forall_congr' fun z => by rw [← topDualPairing_flip_toDual (z - x) v]
 
 /-- **Theorem 25.1 in vector form**: at a point of differentiability the subdifferential for the
 inner-product pairing is the single vector representing the gradient. -/
