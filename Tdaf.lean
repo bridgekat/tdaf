@@ -162,6 +162,7 @@ import Tdaf.Surface.Rockafellar.Part6.Section29
 import Tdaf.Surface.Rockafellar.Part6.Section30
 import Tdaf.Surface.Rockafellar.Part6.Section31
 import Tdaf.Surface.Rockafellar.Part6.Section32
+import Tdaf.Surface.Rockafellar.Part7
 import Tdaf.Surface.Rockafellar.Part7.Section33
 import Tdaf.Surface.Rockafellar.Part7.Section34
 import Tdaf.Surface.Rockafellar.Part7.Section35
