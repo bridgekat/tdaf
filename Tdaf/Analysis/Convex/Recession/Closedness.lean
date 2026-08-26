@@ -12,47 +12,46 @@ import Tdaf.Analysis.Convex.Recession.Function
 /-!
 # When is a linear image closed?
 
-A linear image `A C` of a convex set need not be closed. **Theorem 9.1** says that it is, and that
-its recession cone is the image of the recession cone, as soon as
+A linear image `A C` of a convex set need not be closed. It is closed, and its recession cone is
+the image of the recession cone, as soon as
 
 ```
-0⁺(cl C) ∩ ker A ⊆ lin (cl C).
+0⁺(cl C) ∩ ker A ⊆ lin (cl C),
 ```
 
-Everything else in §9 — and Theorem 16.4's constraint qualification, and §27's existence theorems
-— is a consequence.
+that is, as soon as every direction of recession of `cl C` killed by `A` is also one backwards.
+Sums of sets, images and sums and infimal convolutions of functions, and pointwise suprema follow.
 
 ## Main results
 
 * `isClosed_image_of_recessionCone_inter_ker`, `recessionCone_image_of_recessionCone_inter_ker` —
-  the two halves of **Theorem 9.1** under the *reduced* hypothesis `0⁺C ∩ ker A ⊆ {0}`;
-  `Convex.closure_image_eq_and_recessionCone` and its three components are Theorem 9.1 as
-  Rockafellar states it, and `image_recessionCone_subset` is the unconditional inclusion.
-* `Convex.isClosed_add`, `Convex.closure_add_eq`, `Convex.recessionCone_add` — **Corollary 9.1.1**
-  for two sets, with **Corollaries 9.1.2 and 9.1.3** following from it.
-* `closedProperConvexFn_mapLin` — **Theorem 9.2**: a linear image of a closed proper convex
-  function is closed proper convex, and the infimum defining it is attained.
-* `closedProperConvexFn_infConv_of_recessionFn_symm`, `closedProperConvexFn_infConv` —
-  **Corollaries 9.2.1 and 9.2.2**, for infimal convolution.
+  the closedness and recession-cone halves under the *reduced* hypothesis `0⁺C ∩ ker A ⊆ {0}`;
+  `Convex.closure_image_eq_and_recessionCone` and its three components are the full statement
+  (Theorem 9.1 in [^1]), and `image_recessionCone_subset` is the unconditional inclusion.
+* `Convex.isClosed_add`, `Convex.closure_add_eq`, `Convex.recessionCone_add` — the same three
+  conclusions for a sum `C + D`, with the no-cancellation, bounded and conic cases following.
+* `closedProperConvexFn_mapLin` — a linear image of a closed proper convex function is closed
+  proper convex, and the infimum defining it is attained.
+* `closedProperConvexFn_infConv_of_recessionFn_symm`, `closedProperConvexFn_infConv` — the same
+  for infimal convolution, under a symmetry and under a positivity hypothesis.
 * `ClosedProperConvexFn.add`, `closedProperConvexFn_finsetSum`, `recessionFn_add`, `clFn_add` —
-  **Theorem 9.3**: a sum of closed proper convex functions whose effective domains share a point is
-  closed proper convex, its recession function is the sum, and `cl (f + g) = cl f + cl g`.
-* `isClosed_epi_iSup`, `recessionFn_iSup`, `lscHull_iSup` — **Theorem 9.4**, pointwise suprema;
-  `isClosed_epi_compLin`, `recessionFn_compLin`, `clFn_compLin` — **Theorem 9.5**, composition
-  with a linear map.
+  a sum of closed proper convex functions whose effective domains share a point is closed proper
+  convex, its recession function is the sum, and `cl (f + g) = cl f + cl g`.
+* `isClosed_epi_iSup`, `recessionFn_iSup`, `lscHull_iSup` — pointwise suprema;
+  `isClosed_epi_compLin`, `recessionFn_compLin`, `clFn_compLin` — composition with a linear map.
 
 ## Implementation notes
 
-Both halves of Theorem 9.1 come from one compactness argument: a decreasing sequence of nonempty
-closed convex sets, each with recession cone `{0}`, hence compact (Theorem 8.4), hence with
-nonempty intersection. The hypothesis says exactly that `N := 0⁺(cl C) ∩ ker A` is a subspace, and
-splitting `cl C = N + (cl C ∩ M)` along a complement `M` of `N` leaves the image unchanged while
-cutting the recession cone down to one that meets `ker A` only at `0`. Finite dimensionality of
-the source is used only through Theorem 8.4; the target space needs none.
+Both halves come from one compactness argument: a decreasing sequence of nonempty closed convex
+sets, each with recession cone `{0}`, is a sequence of compact sets, so its intersection is
+nonempty. The hypothesis says exactly that `N := 0⁺(cl C) ∩ ker A` is a subspace, and splitting
+`cl C = N + (cl C ∩ M)` along a complement `M` of `N` leaves the image unchanged while cutting the
+recession cone down to one that meets `ker A` only at `0`. Finite dimensionality of the source is
+used only to get that compactness; the target space needs none.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §9.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §9.
 -/
 
 open Filter Metric Pointwise Set Topology
@@ -87,8 +86,8 @@ section Unconditional
 
 variable {E G : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup G] [Module ℝ G]
 
-/-- **Half of Theorem 9.1, unconditionally**: a linear map carries directions of recession to
-directions of recession. No convexity, no closedness, no hypothesis on `A`. -/
+/-- **A linear map carries directions of recession forward**: `A (0⁺C) ⊆ 0⁺(A C)`. No convexity,
+no closedness, no hypothesis on `A`. -/
 theorem image_recessionCone_subset (A : E →ₗ[ℝ] G) (C : Set E) :
     A '' recessionCone C ⊆ recessionCone (A '' C) := by
   rintro _ ⟨y, hy, rfl⟩ _ ⟨x, hx, rfl⟩ a ha
@@ -96,7 +95,7 @@ theorem image_recessionCone_subset (A : E →ₗ[ℝ] G) (C : Set E) :
 
 end Unconditional
 
-/-! ### Theorem 9.1 under the reduced hypothesis -/
+/-! ### Images under the reduced hypothesis -/
 
 section Reduced
 
@@ -105,8 +104,8 @@ variable {E G : Type*}
   [NormedAddCommGroup G] [NormedSpace ℝ G]
   {C : Set E} {A : E →ₗ[ℝ] G}
 
-/-- **Theorem 9.1**, closedness, under the reduced hypothesis: if a closed convex set recedes in no
-direction of `ker A` other than `0`, its image under `A` is closed. -/
+/-- **Closedness under the reduced hypothesis**: if a closed convex set recedes in no direction
+of `ker A` other than `0`, its image under `A` is closed. -/
 theorem isClosed_image_of_recessionCone_inter_ker (A : E →ₗ[ℝ] G) (hC : Convex ℝ C)
     (hC' : IsClosed C) (h : recessionCone C ∩ (LinearMap.ker A : Set E) ⊆ {0}) :
     IsClosed (A '' C) := by
@@ -147,7 +146,7 @@ theorem isClosed_image_of_recessionCone_inter_ker (A : E →ₗ[ℝ] G) (hC : Co
   have hd : ∀ n : ℕ, dist (A x) y ≤ ((n : ℝ) + 1)⁻¹ := fun n => (Set.mem_iInter.1 hx n).2
   exact dist_le_zero.1 (ge_of_tendsto tendsto_inv_nat_add_one_atTop_nhds_zero (.of_forall hd))
 
-/-- **Theorem 9.1**, recession cones, under the reduced hypothesis. -/
+/-- **The recession cone of the image**, under the reduced hypothesis: `0⁺(A C) = A (0⁺C)`. -/
 theorem recessionCone_image_of_recessionCone_inter_ker (A : E →ₗ[ℝ] G) (hC : Convex ℝ C)
     (hC' : IsClosed C) (hne : C.Nonempty)
     (h : recessionCone C ∩ (LinearMap.ker A : Set E) ⊆ {0}) :
@@ -207,7 +206,7 @@ theorem recessionCone_image_of_recessionCone_inter_ker (A : E →ₗ[ℝ] G) (hC
 
 end Reduced
 
-/-! ### Theorem 9.1 -/
+/-! ### Closedness of a linear image -/
 
 section Main
 
@@ -216,11 +215,11 @@ variable {E G : Type*}
   [NormedAddCommGroup G] [NormedSpace ℝ G]
   {C : Set E} {A : E →ₗ[ℝ] G}
 
-/-- **The reduction step of Theorem 9.1.** Rockafellar's hypothesis says exactly that
-`N := 0⁺(cl C) ∩ ker A` sits inside the lineality space, hence is a subspace. Splitting `cl C`
-along any complement `M` of `N` produces a set with the same image, the same image of the recession
-cone, and the *reduced* hypothesis `0⁺ ∩ ker A ⊆ {0}`. It is packaged as an existential so that
-both halves of Theorem 9.1 can consume it. -/
+/-- **The reduction step.** The hypothesis says exactly that `N := 0⁺(cl C) ∩ ker A` sits inside
+the lineality space, hence is a subspace. Splitting `cl C` along any complement `M` of `N`
+produces a set with the same image, the same image of the recession cone, and the *reduced*
+hypothesis `0⁺ ∩ ker A ⊆ {0}`. It is packaged as an existential so that the closedness half and
+the recession-cone half can both consume it. -/
 theorem exists_reduction_of_recessionCone_inter_ker (hC : Convex ℝ C) (hne : C.Nonempty)
     (A : E →ₗ[ℝ] G)
     (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
@@ -266,8 +265,8 @@ theorem exists_reduction_of_recessionCone_inter_ker (hC : Convex ℝ C) (hne : C
     rw [hM.inf_eq_bot] at hbot
     simpa using hbot
 
-/-- **Rockafellar, Theorem 9.1**, closedness: if `cl C` recedes in no direction of `ker A` other
-than those it also recedes in backwards, then `A (cl C)` is closed. -/
+/-- **Closedness of a linear image**: if `cl C` recedes in no direction of `ker A` other than
+those it also recedes in backwards, then `A (cl C)` is closed. -/
 theorem Convex.isClosed_image_closure (hC : Convex ℝ C) (A : E →ₗ[ℝ] G)
     (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
     IsClosed (A '' closure C) := by
@@ -278,7 +277,7 @@ theorem Convex.isClosed_image_closure (hC : Convex ℝ C) (A : E →ₗ[ℝ] G)
   rw [← himg]
   exact isClosed_image_of_recessionCone_inter_ker A hDconv hDcl hred
 
-/-- **Rockafellar, Theorem 9.1**: `cl (A C) = A (cl C)`. -/
+/-- **The closure of a linear image**: `cl (A C) = A (cl C)`. -/
 theorem Convex.closure_image_eq (hC : Convex ℝ C) (A : E →ₗ[ℝ] G)
     (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
     closure (A '' C) = A '' closure C := by
@@ -287,7 +286,7 @@ theorem Convex.closure_image_eq (hC : Convex ℝ C) (A : E →ₗ[ℝ] G)
   rw [← (Convex.isClosed_image_closure hC A h).closure_eq]
   exact closure_mono (Set.image_mono subset_closure)
 
-/-- **Rockafellar, Theorem 9.1**, recession cones: `0⁺(A (cl C)) = A (0⁺(cl C))`. -/
+/-- **The recession cone of a linear image**: `0⁺(A (cl C)) = A (0⁺(cl C))`. -/
 theorem Convex.recessionCone_image_closure (hC : Convex ℝ C) (hne : C.Nonempty) (A : E →ₗ[ℝ] G)
     (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
     recessionCone (A '' closure C) = A '' recessionCone (closure C) := by
@@ -296,7 +295,7 @@ theorem Convex.recessionCone_image_closure (hC : Convex ℝ C) (hne : C.Nonempty
   rw [← himg, ← hrec]
   exact recessionCone_image_of_recessionCone_inter_ker A hDconv hDcl hDne hred
 
-/-- **Rockafellar, Theorem 9.1**, both conclusions together. -/
+/-- **The closure and the recession cone of a linear image**, both conclusions together. -/
 theorem Convex.closure_image_eq_and_recessionCone (hC : Convex ℝ C) (hne : C.Nonempty)
     (A : E →ₗ[ℝ] G)
     (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
@@ -306,7 +305,7 @@ theorem Convex.closure_image_eq_and_recessionCone (hC : Convex ℝ C) (hne : C.N
 
 end Main
 
-/-! ### Corollary 9.1.1: sums of sets -/
+/-! ### Sums of sets -/
 
 section Sum
 
@@ -315,13 +314,13 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
 
 omit [FiniteDimensional ℝ E] in
 /-- The sum `C + D` is the image of `C ×ˢ D` under the linear map `(x, y) ↦ x + y`. This is what
-turns **Corollary 9.1.1** into an instance of **Theorem 9.1**. -/
+turns a question about a sum into a question about a linear image. -/
 theorem image_coprod_id_prod (C D : Set E) :
     (LinearMap.id.coprod LinearMap.id : E × E →ₗ[ℝ] E) '' C ×ˢ D = C + D :=
   Set.add_image_prod
 
 omit [FiniteDimensional ℝ E] in
-/-- Rockafellar's hypothesis in Corollary 9.1.1, transported to the product. -/
+/-- The cancellation hypothesis for two sets, transported to the product. -/
 theorem forall_mem_linealitySpace_prod (hCne : C.Nonempty) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone (closure C), ∀ w ∈ recessionCone (closure D), z + w = 0 →
       z ∈ linealitySpace (closure C) ∧ w ∈ linealitySpace (closure D)) :
@@ -333,9 +332,9 @@ theorem forall_mem_linealitySpace_prod (hCne : C.Nonempty) (hDne : D.Nonempty)
   rw [closure_prod_eq, linealitySpace_prod hCne.closure hDne.closure]
   exact h z hp.1 w hp.2 hzero
 
-/-- **Rockafellar, Corollary 9.1.1**, closedness: the sum of two closed convex sets is closed as
-soon as the only way a direction of recession of `C` and a direction of recession of `D` can cancel
-is inside the two lineality spaces. -/
+/-- **Closedness of a sum**: the sum of two closed convex sets is closed as soon as the only way a
+direction of recession of `C` and a direction of recession of `D` can cancel is inside the two
+lineality spaces. -/
 theorem Convex.isClosed_add (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
     (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, ∀ w ∈ recessionCone D, z + w = 0 →
@@ -347,7 +346,7 @@ theorem Convex.isClosed_add (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Non
   have := Convex.isClosed_image_closure (hC.prod hD) (LinearMap.id.coprod LinearMap.id) hkey
   rwa [closure_prod_eq, hCcl, hDcl, image_coprod_id_prod] at this
 
-/-- **Rockafellar, Corollary 9.1.1**: `cl (C + D) = cl C + cl D`. -/
+/-- **The closure of a sum**: `cl (C + D) = cl C + cl D`. -/
 theorem Convex.closure_add_eq (hC : Convex ℝ C) (hCne : C.Nonempty) (hD : Convex ℝ D)
     (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone (closure C), ∀ w ∈ recessionCone (closure D), z + w = 0 →
@@ -357,7 +356,7 @@ theorem Convex.closure_add_eq (hC : Convex ℝ C) (hCne : C.Nonempty) (hD : Conv
     (forall_mem_linealitySpace_prod hCne hDne h)
   rwa [image_coprod_id_prod, closure_prod_eq, image_coprod_id_prod] at this
 
-/-- **Rockafellar, Corollary 9.1.1**, recession cones: `0⁺(cl C + cl D) = 0⁺(cl C) + 0⁺(cl D)`. -/
+/-- **The recession cone of a sum**: `0⁺(cl C + cl D) = 0⁺(cl C) + 0⁺(cl D)`. -/
 theorem Convex.recessionCone_add (hC : Convex ℝ C) (hCne : C.Nonempty) (hD : Convex ℝ D)
     (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone (closure C), ∀ w ∈ recessionCone (closure D), z + w = 0 →
@@ -370,12 +369,12 @@ theorem Convex.recessionCone_add (hC : Convex ℝ C) (hCne : C.Nonempty) (hD : C
   rwa [closure_prod_eq, image_coprod_id_prod,
     recessionCone_prod hCne.closure hDne.closure, image_coprod_id_prod] at this
 
-/-! ### Corollaries 9.1.2 and 9.1.3 -/
+/-! ### Sums under a no-cancellation hypothesis -/
 
 omit [FiniteDimensional ℝ E] in
-/-- Rockafellar's hypothesis in **Corollary 9.1.2** implies the one in Corollary 9.1.1: if no
-direction of recession of `C` has its opposite among the directions of recession of `D`, the only
-cancelling pair is `(0, 0)`, which lies in both lineality spaces. -/
+/-- The no-cancellation hypothesis implies the lineality one: if no direction of recession of `C`
+has its opposite among the directions of recession of `D`, the only cancelling pair is `(0, 0)`,
+which lies in both lineality spaces. -/
 theorem forall_mem_linealitySpace_of_neg_notMem
     (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) :
     ∀ z ∈ recessionCone C, ∀ w ∈ recessionCone D, z + w = 0 →
@@ -389,14 +388,14 @@ theorem forall_mem_linealitySpace_of_neg_notMem
   rw [neg_zero]
   exact zero_mem_linealitySpace D
 
-/-- **Rockafellar, Corollary 9.1.2**: the sum of two closed convex sets is closed as soon as no
-direction of recession of one is the opposite of a direction of recession of the other. -/
+/-- The sum of two closed convex sets is closed as soon as no direction of recession of one is
+the opposite of a direction of recession of the other. -/
 theorem Convex.isClosed_add_of_neg_notMem_recessionCone (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) : IsClosed (C + D) :=
   Convex.isClosed_add hC hCc hCne hD hDc hDne (forall_mem_linealitySpace_of_neg_notMem h)
 
-/-- **Rockafellar, Corollary 9.1.2**, the recession-cone identity. -/
+/-- Under the same hypothesis, `0⁺(C + D) = 0⁺C + 0⁺D`. -/
 theorem Convex.recessionCone_add_of_neg_notMem_recessionCone (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) :
@@ -405,8 +404,8 @@ theorem Convex.recessionCone_add_of_neg_notMem_recessionCone (hC : Convex ℝ C)
     (by rw [hCc.closure_eq, hDc.closure_eq]; exact forall_mem_linealitySpace_of_neg_notMem h)
   rwa [hCc.closure_eq, hDc.closure_eq] at key
 
-/-- **Rockafellar, Corollary 9.1.2**, the special case the statement singles out: a bounded factor
-makes the hypothesis automatic, because a bounded set recedes in no direction. -/
+/-- **A bounded summand suffices**: a bounded set recedes in no direction, so the hypothesis is
+automatic and `C + D` is closed. -/
 theorem Convex.isClosed_add_of_isBounded (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
     (hCb : Bornology.IsBounded C) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty) :
     IsClosed (C + D) := by
@@ -414,8 +413,8 @@ theorem Convex.isClosed_add_of_isBounded (hC : Convex ℝ C) (hCc : IsClosed C) 
   rw [recessionCone_eq_zero_of_isBounded hCne hCb] at hz
   exact hz
 
-/-- **Rockafellar, Corollary 9.1.3**: for pointed convex cones, whose recession cones are the
-cones themselves, Corollary 9.1.1's hypothesis becomes a hypothesis about the closures. -/
+/-- **The closure of a sum of two pointed convex cones**: the cancellation hypothesis reads on
+the closures, and gives `cl (K + L) = cl K + cl L`. -/
 theorem closure_add_coe_pointedCone (K L : PointedCone ℝ E)
     (h : ∀ z ∈ closure (K : Set E), ∀ w ∈ closure (L : Set E), z + w = 0 →
       z ∈ linealitySpace (closure (K : Set E)) ∧ w ∈ linealitySpace (closure (L : Set E))) :
@@ -426,15 +425,15 @@ theorem closure_add_coe_pointedCone (K L : PointedCone ℝ E)
 
 end Sum
 
-/-! ### Theorem 9.2: images of functions -/
+/-! ### Images of functions -/
 
 section FnAlg
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal} {z : E}
 
-/-- Rockafellar's hypothesis for Theorem 9.2 at the level of the epigraph: `(z, 0)` is a direction
-of recession of `epi f` exactly when `f` recedes in the direction `z`, and it lies in the lineality
-space exactly when `f` is *constant* along `z`. -/
+/-- The hypothesis at the level of the epigraph: `(z, 0)` is a direction of recession of `epi f`
+exactly when `f` recedes in the direction `z`, and it lies in the lineality space exactly when `f`
+is *constant* along `z`. -/
 theorem mk_zero_mem_linealitySpace_epi_iff (hp : Proper f) :
     ((z, (0 : ℝ)) : E × ℝ) ∈ linealitySpace (epi f) ↔ z ∈ constancySpace f := by
   rw [mk_mem_linealitySpace_epi_iff hp, mem_constancySpace]
@@ -460,13 +459,13 @@ variable {E G : Type*}
   [NormedAddCommGroup G] [NormedSpace ℝ G]
   {f : E → EReal} {A : E →ₗ[ℝ] G}
 
-/-- **Rockafellar, Theorem 9.2**: the image of a closed proper convex function under a linear map
+/-- **The image of a function under a linear map**: the image of a closed proper convex function
 is again closed proper convex, and the infimum defining it is attained, provided `f` is *constant*
 along every direction of recession that `A` kills.
 
-The three conclusions are packaged together because they come from one application of Theorem 9.1:
-the epigraph identity is the statement that the infimum is attained, and closedness and properness
-are read off it. -/
+The three conclusions are packaged together because they come from one application of the image
+theorem to `epi f`: the epigraph identity is the statement that the infimum is attained, and
+closedness and properness are read off it. -/
 theorem closedProperConvexFn_mapLin (hf : ConvexFn f) (hp : Proper f) (hc : IsClosed (epi f))
     (A : E →ₗ[ℝ] G)
     (h : ∀ z, recessionFn f z ≤ 0 → A z = 0 → z ∈ constancySpace f) :
@@ -479,7 +478,7 @@ theorem closedProperConvexFn_mapLin (hf : ConvexFn f) (hp : Proper f) (hc : IsCl
     obtain ⟨x, hx⟩ := hp.dom_nonempty
     obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hp.ne_bot x) hx
     exact ⟨(x, r), mk_mem_epi.2 hr.le⟩
-  -- Rockafellar's hypothesis, transported to the epigraph
+  -- the hypothesis, transported to the epigraph
   have hkey : ∀ q ∈ recessionCone (closure (epi f)), Aid q = 0 →
       q ∈ linealitySpace (closure (epi f)) := by
     rintro ⟨w, ν⟩ hq hzero
@@ -537,8 +536,8 @@ theorem closedProperConvexFn_mapLin (hf : ConvexFn f) (hp : Proper f) (hc : IsCl
   exact ClosedProperConvexFn.of_isClosed_epi (convexFn_mapLin A hf)
     (by rw [hepi]; exact hclosed) ⟨hdomne, hnebot⟩
 
-/-- **Rockafellar, Theorem 9.2**, the attainment statement on its own: under the same hypothesis
-the infimum defining `(A f) y` is attained whenever it is bounded above by a real. -/
+/-- **Attainment on its own**: under the same hypothesis the infimum defining `(A f) y` is
+attained whenever it is bounded above by a real. -/
 theorem exists_mapLin_eq (hf : ConvexFn f) (hp : Proper f) (hc : IsClosed (epi f))
     (A : E →ₗ[ℝ] G) (h : ∀ z, recessionFn f z ≤ 0 → A z = 0 → z ∈ constancySpace f)
     {y : G} {μ : ℝ} (hμ : mapLin A f y ≤ (μ : EReal)) :
@@ -551,7 +550,7 @@ theorem exists_mapLin_eq (hf : ConvexFn f) (hp : Proper f) (hc : IsClosed (epi f
 
 end Fn
 
-/-! ### Corollaries 9.2.1 and 9.2.2: infimal convolution -/
+/-! ### Infimal convolution -/
 
 section InfConvFn
 
@@ -559,8 +558,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {f g : E → EReal}
 
 omit [FiniteDimensional ℝ E] in
-/-- Rockafellar's hypothesis in **Corollary 9.2.2**, transported to the epigraphs: a direction of
-recession of `epi f` whose opposite recedes from `epi g` has to be zero.
+/-- The positivity hypothesis, transported to the epigraphs: a direction of recession of `epi f`
+whose opposite recedes from `epi g` has to be zero.
 
 The vertical coordinate is what makes this more than a restatement: at `z = 0` the hypothesis says
 nothing, and it is properness — `f0⁺ 0 = g0⁺ 0 = 0` — that pins the vertical coordinate to `0`. -/
@@ -630,7 +629,7 @@ theorem forall_mem_linealitySpace_epi_of_recessionFn_symm (hpf : Proper f) (hpg 
   rw [hneg]
   exact recessionFn_le_coe_iff.1 hgz
 
-/-- **Rockafellar, Corollary 9.2.1** for two functions. If `f` and `g` are closed proper convex
+/-- **Infimal convolution under a symmetry hypothesis.** If `f` and `g` are closed proper convex
 and the set of directions of joint recession — those `z` with `(f0⁺) z + (g0⁺) (-z) ≤ 0` — is
 symmetric, then `f □ g` is a closed proper convex function, the infimum defining it is attained,
 and `(f □ g)0⁺ = f0⁺ □ g0⁺`.
@@ -726,8 +725,8 @@ theorem closedProperConvexFn_infConv_of_recessionFn_symm (hf : ClosedProperConve
   rw [hL, hR]
 
 omit [FiniteDimensional ℝ E] in
-/-- Rockafellar's hypothesis in **Corollary 9.2.2** implies the one in Corollary 9.2.1: if the only
-direction of joint recession is `0`, the set of them is trivially symmetric. -/
+/-- The positivity hypothesis implies the symmetry one: if the only direction of joint recession
+is `0`, the set of them is trivially symmetric. -/
 theorem recessionFn_symm_of_recessionFn_add_pos (hpf : Proper f) (hpg : Proper g)
     (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
     ∀ z : E, recessionFn f z + recessionFn g (-z) ≤ 0 →
@@ -738,17 +737,17 @@ theorem recessionFn_symm_of_recessionFn_add_pos (hpf : Proper f) (hpg : Proper g
     rw [neg_zero, recessionFn_apply_zero hpf, recessionFn_apply_zero hpg, add_zero]
   · exact absurd hz (not_le.2 (h z hne))
 
-/-- **Rockafellar, Corollary 9.2.2.** If `f` and `g` are closed proper convex functions with
-`(f0⁺) z + (g0⁺) (-z) > 0` for every `z ≠ 0`, then `f □ g` is a
+/-- **Infimal convolution under a positivity hypothesis.** If `f` and `g` are closed proper convex
+functions with `(f0⁺) z + (g0⁺) (-z) > 0` for every `z ≠ 0`, then `f □ g` is a
 closed proper convex function, the infimum defining it is attained, and
 `(f □ g)0⁺ = f0⁺ □ g0⁺`.
 
-The three conclusions come from one application of Corollary 9.1.2 to `epi f` and `epi g`: the
-epigraph identity `epi (f □ g) = epi f + epi g` *is* the attainment statement, since a sum of
-epigraphs is an epigraph exactly when every infimum defining `f □ g` is achieved.
+The three conclusions come from one application of the no-cancellation sum rule to `epi f` and
+`epi g`: the epigraph identity `epi (f □ g) = epi f + epi g` *is* the attainment statement, since
+a sum of epigraphs is an epigraph exactly when every infimum defining `f □ g` is achieved.
 
-The hypothesis is stronger than it needs to be: Corollary 9.2.1 asks only that the set of
-directions of joint recession be *symmetric*, not that it be `{0}`. That is
+The hypothesis is stronger than it needs to be: it is enough that the set of directions of joint
+recession be *symmetric*, not that it be `{0}`. That is
 `closedProperConvexFn_infConv_of_recessionFn_symm`, of which this is a specialisation. -/
 theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
@@ -757,7 +756,7 @@ theorem closedProperConvexFn_infConv (hf : ClosedProperConvexFn f) (hg : ClosedP
   closedProperConvexFn_infConv_of_recessionFn_symm hf hg
     (recessionFn_symm_of_recessionFn_add_pos hf.proper hg.proper h)
 
-/-- **Rockafellar, Corollary 9.2.1**, the attainment statement on its own: the infimum defining
+/-- **Attainment for infimal convolution**, under the symmetry hypothesis: the infimum defining
 `(f □ g) x` is attained whenever it is bounded above by a real. -/
 theorem exists_add_eq_of_infConv_le_of_recessionFn_symm (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g)
@@ -777,7 +776,7 @@ theorem exists_add_eq_of_infConv_le_of_recessionFn_symm (hf : ClosedProperConvex
   rw [hr1]
   exact hr
 
-/-- **Rockafellar, Corollary 9.2.2**, the attainment statement on its own. -/
+/-- Attainment for infimal convolution, under the positivity hypothesis. -/
 theorem exists_add_eq_of_infConv_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     (h : ∀ z : E, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) {x : E} {μ : ℝ}
     (hμ : infConv f g x ≤ (μ : EReal)) :
@@ -788,7 +787,7 @@ theorem exists_add_eq_of_infConv_le (hf : ClosedProperConvexFn f) (hg : ClosedPr
 
 end InfConvFn
 
-/-! ### Theorem 9.3: sums of functions -/
+/-! ### Sums of functions -/
 
 section AddFn
 
@@ -807,8 +806,8 @@ theorem Proper.add (hf : Proper f) (hg : Proper g) (hne : (dom (f + g)).Nonempty
     Proper (f + g) := ⟨hne, add_ne_bot hf.ne_bot hg.ne_bot⟩
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 9.3**, the closed case: the sum of two closed proper convex functions
-is again closed proper convex, as soon as it is not identically `+∞`.
+/-- **A sum of two closed proper convex functions** is again closed proper convex, as soon as it
+is not identically `+∞`.
 
 Lower semicontinuity of the sum is Mathlib's `LowerSemicontinuous.add'`, whose explicit continuity
 hypothesis is exactly what properness supplies: neither summand is `⊥`, so `EReal` addition is
@@ -822,8 +821,8 @@ theorem ClosedProperConvexFn.add (hf : ClosedProperConvexFn f) (hg : ClosedPrope
     _root_.EReal.continuousAt_add (Or.inr (hg.proper.ne_bot x)) (Or.inl (hf.proper.ne_bot x))
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 9.3** for a finite sum: `f₁ + ⋯ + fₘ` is closed proper convex as soon
-as the summands are and their effective domains share a point.
+/-- **A finite sum**: `f₁ + ⋯ + fₘ` is closed proper convex as soon as the summands are and their
+effective domains share a point.
 
 The binary rule needs a point of the domain at every step, so the induction carries one: what is
 proved is the conjunction of the conclusion with `x₀ ∈ dom (∑ i ∈ s, gᵢ)`. -/
@@ -857,11 +856,11 @@ theorem closedProperConvexFn_finsetSum {ι : Type*} {s : Finset ι} {g : ι → 
   exact (key s hg hx₀).1
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 9.3**, the recession function of a sum.
+/-- **The recession function of a sum**: `(f + g)0⁺ = f0⁺ + g0⁺`.
 
-Both sides are limits of difference quotients based at one common point of `dom f ∩ dom g`
-(Theorem 8.5), and `Tdaf.EReal.coe_mul_sub_add_coe_mul_sub` says the quotients themselves add up.
-Uniqueness of limits finishes; closedness is what makes a single base point enough. -/
+Both sides are limits of difference quotients based at one common point of `dom f ∩ dom g`, and
+`Tdaf.EReal.coe_mul_sub_add_coe_mul_sub` says the quotients themselves add up. Uniqueness of
+limits finishes; closedness is what makes a single base point enough. -/
 theorem recessionFn_add (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     (hne : (dom (f + g)).Nonempty) :
     recessionFn (f + g) = recessionFn f + recessionFn g := by
@@ -893,12 +892,12 @@ theorem recessionFn_add (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn
       (hg.proper.ne_bot _) p q
   exact tendsto_nhds_unique h3 (Filter.Tendsto.congr' heq hadd)
 
-/-- **Rockafellar, Theorem 9.3**, the closure formula at the level of `lscHull`: when the two
-effective domains share a relative interior point, the lower semicontinuous hull of a sum is the
-sum of the hulls.
+/-- **The lower semicontinuous hull of a sum**: when the two effective domains share a relative
+interior point, the hull of a sum is the sum of the hulls.
 
-The proof is the book's. Theorem 7.5 turns each of the three hulls at `y` into a limit along one
-and the same segment, and Theorem 6.5 is what puts the common point in `ri (dom (f + g))`. -/
+Each of the three hulls at `y` is a limit along one and the same segment based at the common
+point, which lies in `ri (dom (f + g))` because the relative interior of an intersection of convex
+sets with a common relative interior point is the intersection of the relative interiors. -/
 theorem lscHull_add (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
     {x : E} (hxf : x ∈ ri (dom f)) (hxg : x ∈ ri (dom g)) :
     lscHull (f + g) = lscHull f + lscHull g := by
@@ -916,8 +915,8 @@ theorem lscHull_add (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : 
       (Or.inl (hf.lscHull_ne_bot hpf y))
   exact tendsto_nhds_unique h3 (hcont.tendsto.comp (h1.prodMk_nhds h2))
 
-/-- **Rockafellar, Theorem 9.3**, the closure formula: `cl (f + g) = cl f + cl g` when the
-effective domains share a relative interior point. -/
+/-- **The closure of a sum**: `cl (f + g) = cl f + cl g` when the effective domains share a
+relative interior point. -/
 theorem clFn_add (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
     {x : E} (hxf : x ∈ ri (dom f)) (hxg : x ∈ ri (dom g)) :
     clFn (f + g) = clFn f + clFn g := by
@@ -934,7 +933,7 @@ theorem clFn_add (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Pro
 
 end AddFn
 
-/-! ### Theorem 9.4: pointwise suprema -/
+/-! ### Pointwise suprema -/
 
 section SupFn
 
@@ -942,16 +941,16 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {ι : Type*} {f : ι → E → EReal}
 
 omit [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 9.4**, the closed case: a pointwise supremum of closed convex functions
-is closed, because its epigraph is an intersection of epigraphs. Nothing else is needed. -/
+/-- **A pointwise supremum of closed functions is closed**, because its epigraph is an
+intersection of epigraphs. Nothing else is needed. -/
 theorem isClosed_epi_iSup (hc : ∀ i, IsClosed (epi (f i))) :
     IsClosed (epi fun z => ⨆ i, f i z) := by
   rw [epi_iSup]
   exact isClosed_iInter hc
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 9.4**, the recession function of a supremum. This is Corollary 8.3.3
-read through `epi_recessionFn`. -/
+/-- **The recession function of a pointwise supremum**: `(⨆ i, fᵢ)0⁺ = ⨆ i, (fᵢ)0⁺`. It is the
+recession cone of an intersection, read through `epi_recessionFn`. -/
 theorem recessionFn_iSup (hconv : ∀ i, ConvexFn (f i)) (hc : ∀ i, IsClosed (epi (f i)))
     (hne : (epi fun z => ⨆ i, f i z).Nonempty) :
     recessionFn (fun z => ⨆ i, f i z) = fun z => ⨆ i, recessionFn (f i) z := by
@@ -961,11 +960,11 @@ theorem recessionFn_iSup (hconv : ∀ i, ConvexFn (f i)) (hc : ∀ i, IsClosed (
     recessionCone_iInter (fun i => (hconv i).convex_epi) hc hne]
   exact iInter_congr fun i => (epi_recessionFn (f i)).symm
 
-/-- **Rockafellar, Theorem 9.4**, the closure formula at the level of `lscHull`.
+/-- **The lower semicontinuous hull of a pointwise supremum**: `cl (⨆ i, fᵢ) = ⨆ i, cl fᵢ`.
 
-Lemma 7.3 supplies the common relative interior point that Theorem 6.5 needs: if `x` lies in every
-`ri (dom fᵢ)` and the supremum is finite there, then `(x, μ)` lies in every `ri (epi fᵢ)` for any
-real `μ` above the supremum. -/
+A point `x` lying in every `ri (dom fᵢ)` at which the supremum is finite supplies a common
+relative interior point of the epigraphs: `(x, μ)` lies in every `ri (epi fᵢ)` for any real `μ`
+above the supremum, which is what lets the closure pass inside the intersection. -/
 theorem lscHull_iSup (hconv : ∀ i, ConvexFn (f i)) {x : E} (hx : ∀ i, x ∈ ri (dom (f i)))
     (hfin : (⨆ i, f i x) < ⊤) :
     lscHull (fun z => ⨆ i, f i z) = fun z => ⨆ i, lscHull (f i) z := by
@@ -980,7 +979,7 @@ theorem lscHull_iSup (hconv : ∀ i, ConvexFn (f i)) {x : E} (hx : ∀ i, x ∈ 
 
 end SupFn
 
-/-! ### Theorem 9.5: composition with a linear map -/
+/-! ### Composition with a linear map -/
 
 section CompLinFn
 
@@ -988,17 +987,16 @@ variable {E G : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G] {g : G → EReal}
 
 omit [FiniteDimensional ℝ G] in
-/-- **Rockafellar, Theorem 9.5**, the closed case: `g A` is closed whenever `g` is, with no
-relative interior hypothesis, because `epi (g A)` is a preimage of `epi g` under a continuous
-map. -/
+/-- **Closedness of a composition**: `g A` is closed whenever `g` is, with no relative interior
+hypothesis, because `epi (g A)` is a preimage of `epi g` under a continuous map. -/
 theorem isClosed_epi_compLin (hc : IsClosed (epi g)) (A : E →ₗ[ℝ] G) :
     IsClosed (epi (compLin g A)) := by
   rw [epi_compLin]
   exact hc.preimage (prodMapId A).continuous_of_finiteDimensional
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ G] in
-/-- **Rockafellar, Theorem 9.5**, the recession function of a composition: `(gA)0⁺ = (g0⁺)A`.
-This is Corollary 8.3.4 read through `epi_recessionFn`. -/
+/-- **The recession function of a composition**: `(gA)0⁺ = (g0⁺)A`. It is the recession cone of a
+preimage, read through `epi_recessionFn`. -/
 theorem recessionFn_compLin (hg : ConvexFn g) (hc : IsClosed (epi g)) (A : E →ₗ[ℝ] G)
     (hne : (dom (compLin g A)).Nonempty) :
     recessionFn (compLin g A) = compLin (recessionFn g) A := by
@@ -1010,7 +1008,8 @@ theorem recessionFn_compLin (hg : ConvexFn g) (hc : IsClosed (epi g)) (A : E →
   exact ⟨(x, μ), mk_mem_epi.2 hμ.le⟩
 
 omit [FiniteDimensional ℝ E] in
-/-- The relative interior hypothesis of **Theorem 9.5**, transported to epigraphs by Lemma 7.3. -/
+/-- The relative interior hypothesis, transported to epigraphs: if `A x` is a relative interior
+point of `dom g`, some `(x, μ)` is carried into `ri (epi g)`. -/
 theorem preimage_relint_epi_nonempty (hg : ConvexFn g) (A : E →ₗ[ℝ] G) {x : E}
     (hx : A x ∈ ri (dom g)) : ((prodMapId A) ⁻¹' ri (epi g)).Nonempty := by
   obtain ⟨μ, hμ, -⟩ :=
@@ -1019,8 +1018,8 @@ theorem preimage_relint_epi_nonempty (hg : ConvexFn g) (A : E →ₗ[ℝ] G) {x 
   rw [Set.mem_preimage, hg.relint_epi]
   exact ⟨hx, hμ⟩
 
-/-- **Rockafellar, Theorem 9.5**, the closure formula at the level of `lscHull`: `cl (g A) =
-(cl g) A` as soon as some `A x` is a relative interior point of `dom g`. This is Theorem 6.7
+/-- **The lower semicontinuous hull of a composition**: `cl (g A) = (cl g) A` as soon as some
+`A x` is a relative interior point of `dom g`. It is the rule for the closure of a preimage,
 applied to `epi g`. -/
 theorem lscHull_compLin (hg : ConvexFn g) (A : E →ₗ[ℝ] G) {x : E} (hx : A x ∈ ri (dom g)) :
     lscHull (compLin g A) = compLin (lscHull g) A := by
@@ -1029,7 +1028,7 @@ theorem lscHull_compLin (hg : ConvexFn g) (A : E →ₗ[ℝ] G) {x : E} (hx : A 
   exact Convex.closure_preimage hg.convex_epi (prodMapId A)
     (preimage_relint_epi_nonempty hg A hx)
 
-/-- **Rockafellar, Theorem 9.5**, the closure formula for `clFn`. -/
+/-- The same for `clFn`: `cl (g A) = (cl g) A` for proper `g`. -/
 theorem clFn_compLin (hg : ConvexFn g) (hp : Proper g) (A : E →ₗ[ℝ] G) {x : E}
     (hx : A x ∈ ri (dom g)) : clFn (compLin g A) = compLin (clFn g) A := by
   have hcomp : ConvexFn (compLin g A) := convexFn_compLin A hg
