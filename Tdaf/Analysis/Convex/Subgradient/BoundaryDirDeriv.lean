@@ -9,16 +9,17 @@ import Tdaf.Analysis.Convex.Subgradient.EssentiallySmooth
 /-!
 # Condition (c) of essential smoothness, in directional-derivative form
 
-**Lemma 26.2**: given conditions (a) and (b) of essential smoothness, condition (c) — the norms of
-the gradients blow up at the boundary of `C = int (dom f)` — may be replaced by
+Given conditions (a) and (b) of essential smoothness, condition (c) — the norms of the gradients
+blow up at the boundary of `C = int (dom f)` — may be replaced by
 
 ```
 (c')  f'(x + λ(a − x); a − x) ↓ −∞ as λ ↓ 0,   for every a ∈ C and every x ∉ C.
 ```
 
-Both say the same thing at a single point `x`, namely that `∂f x = ∅`: (c) by Theorems 24.4 and
-25.6, and (c') by Theorem 23.3 read through the restriction of `f` to the line through `x` and `a`
-(Theorem 24.1). Those two halves are separate theorems below, so either can be used on its own.
+Both say the same thing at a single point `x`, namely that `∂f x = ∅`: (c) because `∂f` has a
+closed graph and is recovered from limits of gradients, and (c') because along the line through `x`
+and `a` the directional derivative collapses to `−∞` exactly when `∂f x` is empty. Those two halves
+are separate theorems below, so either can be used on its own.
 
 ## Main results
 
@@ -26,7 +27,7 @@ Both say the same thing at a single point `x`, namely that `∂f x = ∅`: (c) b
   line is closed proper convex, based at *any* point of the line, not only a point of `dom f`.
 * `subgradient_eq_empty_iff_tendsto_dirDeriv`, `subgradient_eq_empty_iff_tendsto_norm_fderiv` —
   conditions (c') and (c) at `x` each say that `∂f x = ∅`.
-* `essentiallySmooth_iff_tendsto_dirDeriv` — **Lemma 26.2**.
+* `essentiallySmooth_iff_tendsto_dirDeriv` — (c) may be replaced by (c') (Lemma 26.2 in [^1]).
 
 ## Implementation notes
 
@@ -37,7 +38,7 @@ limit is used.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26 (Lemma 26.2).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -58,8 +59,8 @@ theorem closedFn_lineRestrict (hp : Proper f) (hcl : ClosedFn f) (x y : E) :
     (hcont.tendsto t).eventually (hcl.lowerSemicontinuous _ c hc)
 
 /-- The restriction of a proper function to a line is proper as soon as the line meets `dom f`.
-Unlike `proper_lineRestrict`, this does not ask the *base point* to lie in `dom f` — in Lemma 26.2
-the base point `x` is precisely the one that may fail to. -/
+Unlike `proper_lineRestrict`, this does not ask the *base point* to lie in `dom f` — here the base
+point `x` is precisely the one that may fail to. -/
 theorem proper_lineRestrict_of_mem_dom (hp : Proper f) {t₀ : ℝ} (ht : x + t₀ • y ∈ dom f) :
     Proper fun t : ℝ => f (x + t • y) :=
   ⟨⟨t₀, ht⟩, fun _ => hp.ne_bot _⟩
@@ -84,15 +85,14 @@ theorem rightDeriv_lineRestrict_eq_dirDeriv (hp : Proper f) (x y : E) {t : ℝ}
 
 end LineRestrict
 
-/-! ### Theorem 24.1 along a segment -/
+/-! ### The directional derivative along a segment -/
 
 section LineSegment
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → EReal} {a : E}
 
-/-- **Theorem 24.1** along the segment from `x` to `a`: the directional derivative
-`f'(x + t(a − x); a − x)` tends, as `t` decreases to `0`, to the right derivative at `0` of the
-restriction of `f` to that line. -/
+/-- Along the segment from `x` to `a`, the directional derivative `f'(x + t(a − x); a − x)` tends,
+as `t` decreases to `0`, to the right derivative at `0` of the restriction of `f` to that line. -/
 theorem tendsto_dirDeriv_lineRestrict (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (ha : a ∈ dom f) (x : E) :
     Tendsto (fun t : ℝ => dirDeriv f (x + t • (a - x)) (a - x)) (𝓝[>] 0)
@@ -148,10 +148,10 @@ theorem subgradient_eq_empty_iff_tendsto_dirDeriv (hf : ConvexFn f) (hp : Proper
   · exact (rightDeriv_lineRestrict_zero_eq_bot_iff hf hp ha x).1
       (tendsto_nhds_unique htend hlim)
 
-/-- Condition (c) at `x` says exactly that `f` has no subgradient at `x`. Forwards is Theorem 24.4:
-a bounded subsequence of gradients has a convergent sub-subsequence whose limit is a subgradient at
-`x`. Backwards is Theorem 25.6: a subgradient at `x` produces a convergent sequence of gradients,
-which (c) forbids. -/
+/-- Condition (c) at `x` says exactly that `f` has no subgradient at `x`. Forwards, a bounded
+subsequence of gradients has a convergent sub-subsequence whose limit is a subgradient at `x`.
+Backwards, a subgradient at `x` is built from limits of gradients, and that produces a convergent
+sequence of gradients which (c) forbids. -/
 theorem subgradient_eq_empty_iff_tendsto_norm_fderiv (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (hne : (interior (dom f)).Nonempty)
     (hdiff : ∀ ⦃z : E⦄, z ∈ interior (dom f) → DifferentiableAtFn f z) (x : E) :
@@ -180,7 +180,7 @@ theorem subgradient_eq_empty_iff_tendsto_norm_fderiv (hf : ConvexFn f) (hp : Pro
   · intro hc
     rw [← Set.not_nonempty_iff_eq_empty]
     rintro ⟨v, hv⟩
-    -- Theorem 25.6 turns a subgradient into a limit of gradients.
+    -- A subgradient is built from limits of gradients, by convex hull and normal cone.
     rw [subgradient_eq_closure_convexHull_gradientLimits_add_normalCone hf hp hcl hne] at hv
     obtain ⟨u, hu, -, -, -⟩ := hv
     obtain ⟨w, xs, vs, hxs, hgrad, hvs⟩ : (gradientLimits f x).Nonempty := by
@@ -194,8 +194,8 @@ theorem subgradient_eq_empty_iff_tendsto_norm_fderiv (hf : ConvexFn f) (hp : Pro
     rw [tendsto_congr hnorm] at htop
     exact not_tendsto_atTop_of_tendsto_nhds hvs.norm htop
 
-/-- **Lemma 26.2** at a single point: given (a) and (b), condition (c) at `x` and condition (c') at
-`x` in the direction of any `a ∈ C` say the same thing. -/
+/-- At a single point: given (a) and (b), condition (c) at `x` and condition (c') at `x` in the
+direction of any `a ∈ C` say the same thing. -/
 theorem tendsto_norm_fderiv_iff_tendsto_dirDeriv (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (hne : (interior (dom f)).Nonempty)
     (hdiff : ∀ ⦃z : E⦄, z ∈ interior (dom f) → DifferentiableAtFn f z)
@@ -207,9 +207,9 @@ theorem tendsto_norm_fderiv_iff_tendsto_dirDeriv (hf : ConvexFn f) (hp : Proper 
     (subgradient_eq_empty_iff_tendsto_dirDeriv hf hp hcl
       (Convex.interior_subset_relint hf.convex_dom hne ha) x)
 
-/-- **Lemma 26.2**: for a closed proper convex function satisfying (a) and (b), essential smoothness
-is condition (c'), the collapse of the directional derivative to `−∞` along every segment reaching
-a point outside `C = int (dom f)`. -/
+/-- For a closed proper convex function satisfying (a) and (b), essential smoothness is condition
+(c'), the collapse of the directional derivative to `−∞` along every segment reaching a point
+outside `C = int (dom f)`. -/
 theorem essentiallySmooth_iff_tendsto_dirDeriv (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hne : (interior (dom f)).Nonempty)
     (hdiff : ∀ ⦃z : E⦄, z ∈ interior (dom f) → DifferentiableAtFn f z) :

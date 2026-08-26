@@ -8,19 +8,19 @@ import Tdaf.Analysis.Convex.Subgradient.Rademacher
 /-!
 # Convergence of gradients
 
-**Theorem 25.7**: if convex functions, finite and differentiable on an open convex set, converge
-pointwise there to a function that is also finite and differentiable, then their gradients converge
-too, and uniformly on every compact subset. For arbitrary differentiable functions this is false.
-Convexity is what makes it work, through the upper semicontinuity of the subdifferential under
-pointwise convergence (Theorem 24.5): both subdifferentials are singletons, so an inclusion
-`∂fᵢ x ⊆ ∂f x + εB` *is* a bound on `‖∇fᵢ x - ∇f x‖`.
+If convex functions, finite and differentiable on an open convex set, converge pointwise there to a
+function that is also finite and differentiable, then their gradients converge too, and uniformly on
+every compact subset. For arbitrary differentiable functions this is false. Convexity is what makes
+it work, through the upper semicontinuity of the subdifferential under pointwise convergence: both
+subdifferentials are singletons, so an inclusion `∂fᵢ x ⊆ ∂f x + εB` *is* a bound on
+`‖∇fᵢ x - ∇f x‖`.
 
 ## Main results
 
 * `dist_le_of_subgradient_subset` — an inclusion `∂p u ⊆ ∂q v + ε B` between *singleton*
   subdifferentials is the bound `‖∇p u - ∇q v‖ ≤ ε`.
-* `tendsto_of_hasGradientAt`, `tendstoUniformlyOn_fderiv_toReal` — **Theorem 25.7**, pointwise and
-  uniformly on every compact subset.
+* `tendsto_of_hasGradientAt`, `tendstoUniformlyOn_fderiv_toReal` — convergence of the gradients,
+  pointwise and uniformly on every compact subset (Theorem 25.7 in [^1]).
 
 ## Implementation notes
 
@@ -30,7 +30,7 @@ costs no constant.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorem 25.7).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -64,8 +64,8 @@ theorem dist_le_of_subgradient_subset {p q : E → EReal} {u v : E} {a b : Stron
   rw [hdist, ← hcd, add_sub_cancel_left]
   exact hd
 
-/-- **Theorem 25.7**: the gradients of convex functions converging pointwise on an open convex set
-converge at every point of that set. This is Theorem 24.5 at the constant sequence `xᵢ = x`. -/
+/-- The gradients of convex functions converging pointwise on an open convex set converge at every
+point of it — upper semicontinuity of the subdifferential at the constant sequence `xᵢ = x`. -/
 theorem tendsto_of_hasGradientAt (hU : IsOpen U) (hUc : Convex ℝ U) (hf : ∀ i, ConvexFn (f i))
     (hfp : ∀ i, Proper (f i)) (hfU : ∀ i, U ⊆ dom (f i)) (hg : ConvexFn g) (hgp : Proper g)
     (hgU : U ⊆ dom g) (hconv : ∀ z ∈ U, Tendsto (fun i => f i z) atTop (𝓝 (g z))) (hx : x ∈ U)
@@ -77,10 +77,10 @@ theorem tendsto_of_hasGradientAt (hU : IsOpen U) (hUc : Convex ℝ U) (hf : ∀ 
   filter_upwards [hev] with i hi
   exact lt_of_le_of_lt (dist_le_of_subgradient_subset (hf i) hg (hG i) hG' hi) (half_lt_self hε)
 
-/-- **Theorem 25.7**, uniform clause: on every compact subset of the open set the gradients
-converge uniformly. A failure gives points `zₙ` of the compact set with
-`‖∇f zₙ - ∇f_{φ n} zₙ‖ ≥ ε`; a convergent subsequence `zₙ → w` turns Theorem 24.5 along the
-subsequence and Corollary 24.5.1 at `w` into two `ε/3` bounds that contradict it. -/
+/-- **Uniform clause**: on every compact subset of the open set the gradients converge uniformly.
+A failure gives points `zₙ` of the compact set with `‖∇f zₙ - ∇f_{φ n} zₙ‖ ≥ ε`; a convergent
+subsequence `zₙ → w` turns the subdifferential inclusion along the subsequence and the upper
+semicontinuity of `∂g` at `w` into two `ε/3` bounds that contradict it. -/
 theorem tendstoUniformlyOn_fderiv_toReal (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexFn (f i)) (hfp : ∀ i, Proper (f i)) (hfU : ∀ i, U ⊆ dom (f i))
     (hg : ConvexFn g) (hgp : Proper g) (hgU : U ⊆ dom g)

@@ -12,22 +12,24 @@ import Tdaf.Analysis.Convex.Subgradient.OneDim
 /-!
 # Where a convex function is differentiable
 
-The continuity theory of §24, read as an existence theory for derivatives. **Theorem 25.3**: a
+The continuity theory of one-sided derivatives, read as an existence theory for derivatives. A
 convex function on the line has a two-sided derivative off a countable set, and that derivative is
-continuous and nondecreasing there. **Theorem 25.4**: in a fixed direction `y`, the two-sided
-directional derivative exists exactly where `x ↦ f'(x; y)` is continuous, and that happens on a
-dense subset of `int (dom f)`.
+continuous and nondecreasing there. In a fixed direction `y`, the two-sided directional derivative
+exists exactly where `x ↦ f'(x; y)` is continuous, and that happens on a dense subset of
+`int (dom f)`.
 
 ## Main results
 
-* `continuousAt_rightDeriv_iff` — **Theorem 24.1** read as a continuity criterion: `f'₊` is
-  continuous at `x` exactly when `f'₋(x) = f'₊(x)`.
+* `continuousAt_rightDeriv_iff` — a continuity criterion: `f'₊` is continuous at `x` exactly when
+  `f'₋(x) = f'₊(x)`.
 * `countable_leftDeriv_ne_rightDeriv` — the jump set of `f'₊` is countable.
 * `differentiableAtFn_iff_leftDeriv_eq_rightDeriv` — on the line, differentiability at an interior
   point of `dom f` *is* the equality of the two one-sided derivatives.
 * `countable_not_differentiableAtFn`, `continuousAt_rightDeriv_of_differentiableAtFn`,
-  `subset_closure_differentiableAtFn` — **Theorem 25.3**, its three assertions.
-* `continuousAt_dirDeriv_iff`, `subset_closure_twoSided_dirDeriv` — **Theorem 25.4**.
+  `subset_closure_differentiableAtFn` — a countable exceptional set, continuity of the derivative
+  where it exists, and density of the points of differentiability (Theorem 25.3 in [^1]).
+* `continuousAt_dirDeriv_iff`, `subset_closure_twoSided_dirDeriv` — the same in a fixed direction
+  (Theorem 25.4 in [^1]).
 
 ## Implementation notes
 
@@ -35,23 +37,22 @@ dense subset of `int (dom f)`.
 so the continuity assertions here are the ordinary `ContinuousAt`, stronger than the book's
 "continuous relative to `D`". Monotonicity is likewise global.
 
-Three of the book's hypotheses are absent. Theorem 25.3's countability and density clauses need no
+Three of the classical hypotheses are absent. The countability and density clauses need no
 closedness of `f`, because only the easy half of the continuity criterion is used; closedness
-enters only in the converse, through the one-sided limit formulas of §24. Theorem 25.4 needs no
-`y ≠ 0`, since at `y = 0` both sides of the equivalence hold, and its density clause is proved by
-restricting to a line rather than through Lebesgue measure, so it needs no finite-dimensionality.
+enters only in the converse, through the one-sided limit formulas for `f'₊`. The directional form
+needs no `y ≠ 0`, since at `y = 0` both sides hold, and its density clause is proved by restricting
+to a line rather than through Lebesgue measure, so it needs no finite-dimensionality.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorems 25.3 and
-  25.4, except the measure-zero clause of the latter).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25.
 -/
 
 open Set Filter Topology
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Theorem 24.1 as a continuity criterion -/
+/-! ### A continuity criterion for `f'₊` -/
 
 section Line
 
@@ -69,9 +70,8 @@ theorem leftDeriv_eq_rightDeriv_of_continuousAt (hf : ConvexFn f) (hp : Proper f
   rw [← hsup]
   exact iSup₂_le fun z hz => rightDeriv_le_leftDeriv hp hz
 
-/-- **Theorem 24.1** read as a continuity criterion: for a closed proper convex function on the
-line, the nondecreasing function `f'₊` is continuous at `x` exactly when it agrees with `f'₋`
-there. -/
+/-- For a closed proper convex function on the line, the nondecreasing function `f'₊` is continuous
+at `x` exactly when it agrees with `f'₋` there. -/
 theorem continuousAt_rightDeriv_iff (hf : ClosedProperConvexFn f) (x : ℝ) :
     ContinuousAt (rightDeriv f) x ↔ leftDeriv f x = rightDeriv f x := by
   refine ⟨leftDeriv_eq_rightDeriv_of_continuousAt hf.convex hf.proper, fun h => ?_⟩
@@ -124,8 +124,8 @@ theorem dirDeriv_eq_of_leftDeriv_eq_rightDeriv (hf : ConvexFn f) (hp : Proper f)
     congr 1
     ring
 
-/-- **Theorems 25.2 and 25.3 together**: on the line, a convex function is differentiable at an
-interior point of its effective domain exactly when its two one-sided derivatives agree there. -/
+/-- On the line, a convex function is differentiable at an interior point of its effective domain
+exactly when its two one-sided derivatives agree there. -/
 theorem differentiableAtFn_iff_leftDeriv_eq_rightDeriv (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ interior (dom f)) :
     DifferentiableAtFn f x ↔ leftDeriv f x = rightDeriv f x := by
@@ -145,27 +145,27 @@ theorem differentiableAtFn_iff_leftDeriv_eq_rightDeriv (hf : ConvexFn f) (hp : P
         rw [dirDeriv_eq_of_leftDeriv_eq_rightDeriv hf hp hx h v]
         norm_num⟩
 
-/-! ### Theorem 25.3 -/
+/-! ### Differentiability off a countable set -/
 
-/-- **Theorem 25.3**, first assertion: a convex function on the line is differentiable at all but
-countably many points of the interior of its effective domain. No closedness is needed, so the
-book's preliminary extension of `f` to a closed proper convex function on `ℝ` is not made. -/
+/-- **First assertion**: a convex function on the line is differentiable at all but countably many
+points of the interior of its effective domain. No closedness is needed, so the usual preliminary
+extension of `f` to a closed proper convex function on `ℝ` is not made. -/
 theorem countable_not_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
     {x ∈ interior (dom f) | ¬DifferentiableAtFn f x}.Countable := by
   refine Set.Countable.mono ?_ (countable_leftDeriv_ne_rightDeriv hf hp)
   rintro z ⟨hz, hzd⟩
   exact fun hcon => hzd ((differentiableAtFn_iff_leftDeriv_eq_rightDeriv hf hp hz).2 hcon)
 
-/-- **Theorem 25.3**, second assertion: the derivative is continuous where it exists. Stronger than
-the book's "continuous relative to `D`": `rightDeriv f` is continuous at `x` on the whole line. -/
+/-- **Second assertion**: the derivative is continuous where it exists. Stronger than "continuous
+relative to `D`": `rightDeriv f` is continuous at `x` on the whole line. -/
 theorem continuousAt_rightDeriv_of_differentiableAtFn (hf : ClosedProperConvexFn f)
     (hx : x ∈ interior (dom f)) (hd : DifferentiableAtFn f x) :
     ContinuousAt (rightDeriv f) x :=
   (continuousAt_rightDeriv_iff hf x).2
     ((differentiableAtFn_iff_leftDeriv_eq_rightDeriv hf.convex hf.proper hx).1 hd)
 
-/-- **Theorem 25.3**, third assertion: the points of differentiability are dense in the interior of
-the effective domain, a countable subset of `ℝ` having dense complement. -/
+/-- **Third assertion**: the points of differentiability are dense in the interior of the effective
+domain, a countable subset of `ℝ` having dense complement. -/
 theorem subset_closure_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
     interior (dom f) ⊆ closure {z : ℝ | DifferentiableAtFn f z} := by
   intro z hz
@@ -212,14 +212,14 @@ theorem dirDeriv_lineRestrict (f : E → EReal) (x y : E) (t v : ℝ) :
 
 end Restrict
 
-/-! ### Theorem 25.4 -/
+/-! ### The two-sided derivative in a fixed direction -/
 
 section TwoSided
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → EReal} {x : E}
 
-/-- **Corollary 24.5.1** in one variable: for a fixed direction `y`, the function `z ↦ f'(z; y)` is
-upper semicontinuous at every interior point of `dom f`. -/
+/-- For a fixed direction `y`, the function `z ↦ f'(z; y)` is upper semicontinuous at every
+interior point of `dom f`. -/
 theorem upperSemicontinuousAt_dirDeriv_left [FiniteDimensional ℝ E] (hf : ConvexFn f)
     (hp : Proper f) (hx : x ∈ interior (dom f)) (y : E) :
     UpperSemicontinuousAt (fun z => dirDeriv f z y) x := by
@@ -250,9 +250,9 @@ theorem dirDeriv_sub_smul_le (hp : Proper f) (hfx : f x < ⊤) (y : E) {l : ℝ}
   have h3 := _root_.EReal.neg_le_neg_iff.2 h2
   rwa [← _root_.EReal.coe_neg, show -((s - r) / l) = (r - s) / l from by ring] at h3
 
-/-- **Theorem 25.4**, first assertion: on the interior of `dom f`, the set where the two-sided
-directional derivative in the direction `y` exists is exactly the set where `x ↦ f'(x; y)` is
-continuous. The book's `y ≠ 0` is not needed — at `y = 0` both sides hold. -/
+/-- **First assertion**: on the interior of `dom f`, the set where the two-sided directional
+derivative in the direction `y` exists is exactly the set where `x ↦ f'(x; y)` is continuous. The
+usual `y ≠ 0` is not needed — at `y = 0` both sides hold. -/
 theorem continuousAt_dirDeriv_iff [FiniteDimensional ℝ E] (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ interior (dom f)) (y : E) :
     ContinuousAt (fun z => dirDeriv f z y) x ↔ dirDeriv f x y = -dirDeriv f x (-y) := by
@@ -283,7 +283,7 @@ theorem continuousAt_dirDeriv_iff [FiniteDimensional ℝ E] (hf : ConvexFn f) (h
     · have hc' : dirDeriv f x y < c := hc
       exact upperSemicontinuousAt_dirDeriv_left hf hp hx y c hc'
 
-/-- **Theorem 25.4**, density: the points of `int (dom f)` at which the two-sided directional
+/-- **Density**: the points of `int (dom f)` at which the two-sided directional
 derivative in the direction `y` exists are dense in `int (dom f)`. Proved on a line rather than
 through Lebesgue measure: `t ↦ f (x + t • y)` is a proper convex function of one variable whose
 one-sided derivatives at `t` are `f'(x + t y; ±y)`, and its jump set is countable. -/

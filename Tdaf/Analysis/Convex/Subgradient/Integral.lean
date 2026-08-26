@@ -10,9 +10,8 @@ import Tdaf.Analysis.Convex.Subgradient.Differentiability
 /-!
 # A convex function of one variable is the integral of its derivative
 
-**Corollary 24.2.1**: on an open interval where it is finite, a convex function is recovered from
-either of its one-sided derivatives by integration,
-`f y - f x = ∫ₓʸ f'₊(t) dt = ∫ₓʸ f'₋(t) dt`.
+On an open interval where it is finite, a convex function is recovered from either of its one-sided
+derivatives by integration, `f y - f x = ∫ₓʸ f'₊(t) dt = ∫ₓʸ f'₋(t) dt`.
 
 ## Main results
 
@@ -20,8 +19,8 @@ either of its one-sided derivatives by integration,
   an open convex subset of the line. This is the theorem; the rest is translation.
 * `rightDeriv_eq_coe_derivWithin` — at an interior point of `dom f`, the `EReal`-valued
   `rightDeriv` is the coercion of Mathlib's `derivWithin f (Ioi t) t`.
-* `sub_eq_intervalIntegral_rightDeriv`, `sub_eq_intervalIntegral_leftDeriv` — **Corollary 24.2.1**
-  for an `EReal`-valued `f`, both halves.
+* `sub_eq_intervalIntegral_rightDeriv`, `sub_eq_intervalIntegral_leftDeriv` — both halves for an
+  `EReal`-valued `f` (Corollary 24.2.1 in [^1]).
 
 ## Implementation notes
 
@@ -33,22 +32,22 @@ is an infimum of difference quotients where Mathlib's right derivative is a limi
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Corollary 24.2.1).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24.
 -/
 
 open Set MeasureTheory intervalIntegral
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Corollary 24.2.1 for a real-valued convex function -/
+/-! ### The real-valued case -/
 
 section Real
 
 variable {S : Set ℝ} {g : ℝ → ℝ} {x y : ℝ}
 
-/-- **Corollary 24.2.1** for a real-valued function: a convex function on an open convex subset of
-the line is the integral of its right derivative. `S` is asked to be open and convex rather than a
-non-empty open interval; in `ℝ` these are the same. -/
+/-- A real-valued convex function on an open convex subset of the line is the integral of its right
+derivative. `S` is asked to be open and convex rather than a non-empty open interval; in `ℝ` these
+are the same. -/
 theorem sub_eq_intervalIntegral_derivWithin_Ioi (hg : ConvexOn ℝ S g) (hS : IsOpen S)
     (hx : x ∈ S) (hy : y ∈ S) :
     g y - g x = ∫ t in x..y, derivWithin g (Ioi t) t := by
@@ -127,14 +126,14 @@ theorem rightDeriv_eq_coe_derivWithin (hf : ConvexFn f) (hp : Proper f)
 
 end Bridge
 
-/-! ### Corollary 24.2.1 in the project's vocabulary -/
+/-! ### The `EReal`-valued form -/
 
 section EReal
 
 variable {f : ℝ → EReal} {x y : ℝ}
 
-/-- **Corollary 24.2.1**, right-derivative half: on the interior of its effective domain, a proper
-convex function on the line is the integral of `f'₊`. -/
+/-- **Right-derivative half**: on the interior of its effective domain, a proper convex function on
+the line is the integral of `f'₊`. -/
 theorem sub_eq_intervalIntegral_rightDeriv (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ interior (dom f)) (hy : y ∈ interior (dom f)) :
     (f y).toReal - (f x).toReal = ∫ t in x..y, (rightDeriv f t).toReal := by
@@ -146,8 +145,8 @@ theorem sub_eq_intervalIntegral_rightDeriv (hf : ConvexFn f) (hp : Proper f)
   have htint : t ∈ interior (dom f) := (convex_iff_ordConnected.1 hconv).uIcc_subset hx hy ht
   rw [rightDeriv_eq_coe_derivWithin hf hp htint, _root_.EReal.toReal_coe]
 
-/-- **Corollary 24.2.1**, left-derivative half. The two one-sided derivatives differ only on the
-jump set of `f'₊`, which is countable and therefore null. -/
+/-- **Left-derivative half**. The two one-sided derivatives differ only on the jump set of `f'₊`,
+which is countable and therefore null. -/
 theorem sub_eq_intervalIntegral_leftDeriv (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ interior (dom f)) (hy : y ∈ interior (dom f)) :
     (f y).toReal - (f x).toReal = ∫ t in x..y, (leftDeriv f t).toReal := by

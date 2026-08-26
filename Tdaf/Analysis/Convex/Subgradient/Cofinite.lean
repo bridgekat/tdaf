@@ -9,19 +9,19 @@ import Tdaf.Analysis.Convex.Subgradient.LegendreType
 /-!
 # Co-finiteness and the blow-up of the gradient
 
-**Lemma 26.7**: a finite differentiable convex function on a finite-dimensional space is
-*co-finite* exactly when `‖∇f xᵢ‖ → ∞` for every sequence with `‖xᵢ‖ → ∞`. This is the criterion
-that makes Theorem 26.6 usable: it turns a hypothesis about the recession function — equivalently
-about `dom f*` — into one that can be checked on the gradient mapping alone.
+A finite differentiable convex function on a finite-dimensional space is *co-finite* exactly when
+`‖∇f xᵢ‖ → ∞` for every sequence with `‖xᵢ‖ → ∞`. This is the criterion that makes co-finiteness
+usable: it turns a hypothesis about the recession function — equivalently about `dom f*` — into one
+that can be checked on the gradient mapping alone.
 
 ## Main results
 
 * `forall_tendsto_norm_atTop_iff_isBounded` — for an arbitrary `g`, the sequential condition is
   boundedness of every sublevel set `{x | ‖g x‖ ≤ b}`.
 * `isBounded_setOf_norm_gradient_le_of_dom_conj_eq_univ` — the easy half: when `dom f* = E`, the
-  set of points whose gradient lies in a ball is `∂f*` of that ball, hence compact (Theorem 24.7).
+  set of points whose gradient lies in a ball is `∂f*` of that ball, hence compact.
 * `dom_conj_eq_univ_of_isBounded`, `cofinite_iff_forall_tendsto_norm_gradient_atTop` — the hard
-  half and **Lemma 26.7**.
+  half, and the criterion itself (Lemma 26.7 in [^1]).
 
 ## Implementation notes
 
@@ -32,7 +32,7 @@ non-zero `n` normal to `dom f*` at `v = ∇f x` puts the whole half-line `x + t 
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26 (Lemma 26.7).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -72,15 +72,15 @@ theorem forall_tendsto_norm_atTop_iff_isBounded (g : E → F) :
 
 end Metric
 
-/-! ### Lemma 26.7 -/
+/-! ### The gradient criterion for co-finiteness -/
 
 section Lemma267
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- The easy half of Lemma 26.7: if `dom f* = E` then `{x | ‖∇f x‖ ≤ b}` is bounded, being
-contained in `∂f*` of the closed ball of radius `b`, which Theorem 24.7 makes compact. -/
+/-- The easy half: if `dom f* = E` then `{x | ‖∇f x‖ ≤ b}` is bounded, being contained in `∂f*` of
+the closed ball of radius `b`, which is compact. -/
 theorem isBounded_setOf_norm_gradient_le_of_dom_conj_eq_univ (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = univ) (hdiff : ∀ z : E, DifferentiableAtFn f z)
     (hdc : dom (conj (innerₗ E) f) = univ) (b : ℝ) :
@@ -97,7 +97,7 @@ theorem isBounded_setOf_norm_gradient_le_of_dom_conj_eq_univ (hf : ConvexFn f) (
       ← hasGradientAt_toDual_iff_mem_subgradient hf hp hcl hes]
     exact (hdiff x).hasGradientAt_gradient
 
-/-- The hard half of Lemma 26.7, first step: the range of `∇f` lies inside `int (dom f*)`. A
+/-- The hard half, first step: the range of `∇f` lies inside `int (dom f*)`. A
 non-zero `n` normal to `dom f*` at `v = ∇f x` may be added to `x` with any non-negative coefficient
 without leaving `∂f*(v)`, so the whole half-line `x + t n` has gradient `v` and
 `{y | ‖∇f y‖ ≤ ‖v‖}` is unbounded. -/
@@ -112,7 +112,7 @@ theorem gradientRange_subset_interior_dom_conj_of_isBounded (hf : ConvexFn f) (h
     (gradientRange_subset_dom_conj hf hp hcl hes hv) ?_
   refine eq_singleton_iff_unique_mem.2 ⟨fun z _ => by simp, fun n hn => ?_⟩
   by_contra hn0
-  -- A point of `∂f*(v)`, supplied by Corollary 26.4.1.
+  -- A point of `∂f*(v)`: `v` is a gradient of `f`, so `∂f*(v)` is non-empty.
   obtain ⟨x, hx⟩ : (subgradient (innerₗ E) (conj (innerₗ E) f) v).Nonempty := by
     rw [← mem_domSubgradient, ← gradientRange_eq_domSubgradient_conj hf hp hcl hes]
     exact hv
@@ -144,7 +144,7 @@ theorem gradientRange_subset_interior_dom_conj_of_isBounded (hf : ConvexFn f) (h
   rw [hnorm] at hsub
   linarith
 
-/-- The hard half of Lemma 26.7, second step: the range of `∇f` is closed. A convergent sequence of
+/-- The hard half, second step: the range of `∇f` is closed. A convergent sequence of
 gradients is bounded, so the points carrying them lie in one bounded sublevel set, and a convergent
 subsequence of those points has the limit gradient as its gradient. -/
 theorem isClosed_gradientRange_of_isBounded (hf : ConvexFn f) (hp : Proper f)
@@ -170,7 +170,7 @@ theorem isClosed_gradientRange_of_isBounded (hf : ConvexFn f) (hp : Proper f)
     exact (hlim.comp hφ.tendsto_atTop).congr fun n => (hgrad (φ n)).symm
   exact ⟨a, hva ▸ (hdiff a).hasGradientAt_gradient⟩
 
-/-- The hard half of Lemma 26.7: bounded sublevel sets of `‖∇f‖` force `dom f* = E`. Here `∇f(E)`
+/-- The hard half: bounded sublevel sets of `‖∇f‖` force `dom f* = E`. Here `∇f(E)`
 is non-empty, open and closed, and `E` is connected. -/
 theorem dom_conj_eq_univ_of_isBounded (hf : ConvexFn f) (hp : Proper f) (hdom : dom f = univ)
     (hdiff : ∀ z : E, DifferentiableAtFn f z)
@@ -189,8 +189,8 @@ theorem dom_conj_eq_univ_of_isBounded (hf : ConvexFn f) (hp : Proper f) (hdom : 
   have huniv : interior (dom (conj (innerₗ E) f)) = univ := heq ▸ hclopen.eq_univ hne
   exact eq_univ_of_univ_subset (huniv.ge.trans interior_subset)
 
-/-- **Lemma 26.7**: a finite differentiable convex function is co-finite exactly when the norm of
-its gradient tends to infinity along every sequence tending to infinity. -/
+/-- A finite differentiable convex function is co-finite exactly when the norm of its gradient
+tends to infinity along every sequence tending to infinity. -/
 theorem cofinite_iff_forall_tendsto_norm_gradient_atTop (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = univ) (hdiff : ∀ z : E, DifferentiableAtFn f z) :
     Cofinite f ↔ ∀ xs : ℕ → E, Tendsto (fun i => ‖xs i‖) atTop atTop →

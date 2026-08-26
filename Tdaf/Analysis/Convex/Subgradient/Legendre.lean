@@ -10,15 +10,15 @@ import Tdaf.Analysis.Convex.Subgradient.Gradient
 
 Let `f` be a convex function, differentiable on an open set `C`. Its *Legendre conjugate* is the
 pair `(D, g)` with `D = ∇f(C)` the image of the gradient mapping and `g y = ⟨x, y⟩ - f x` for any
-`x` with `∇f x = y`. **Theorem 26.4** says that `g` is well defined and is nothing but the
-restriction of the Fenchel conjugate `f*` to `D`; in particular `D ⊆ dom f*`.
+`x` with `∇f x = y`. The value of `g` does not depend on which such `x` is chosen, and `g` is
+nothing but the restriction of the Fenchel conjugate `f*` to `D`; in particular `D ⊆ dom f*`.
 
 ## Main results
 
 * `legendreDom` — the set `D`, the image of the gradient mapping, with
   `legendreDom_subset_dom_conj` for `D ⊆ dom f*`.
 * `conj_eq_of_hasGradientAt` — `f*(∇f x) = ⟨x, ∇f x⟩ - f x`: both the formula for `g` and, at a
-  stroke, its well-definedness.
+  stroke, its well-definedness (Theorem 26.4 in [^1]).
 
 ## Implementation notes
 
@@ -28,7 +28,7 @@ a choice function and would then have to be proved equal to `conj B f` on `D` an
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26.
 -/
 
 open Set Filter Topology
@@ -56,21 +56,20 @@ theorem HasGradientAt.exists_coe (h : HasGradientAt f y x) : ∃ r : ℝ, f x = 
   obtain ⟨g, hfg, -⟩ := h
   exact ⟨g x, hfg.self_of_nhds⟩
 
-/-- **Theorem 26.4**, the engine: where `f` is differentiable, Fenchel's inequality holds with
-equality at `(x, ∇f x)`. -/
+/-- Where `f` is differentiable, Fenchel's inequality holds with equality at `(x, ∇f x)`. -/
 theorem HasGradientAt.add_conj_eq (hf : ConvexFn f) (h : HasGradientAt f y x) :
     f x + conj (topDualPairing ℝ E).flip f y = ((y x : ℝ) : EReal) :=
   (h.proper hf).mem_subgradient_iff_add_conj_eq.1 (h.mem_subgradient hf)
 
-/-- **Theorem 26.4**: the Legendre conjugate at `∇f x` *is* `f*` at `∇f x`, given by the formula
+/-- The Legendre conjugate at `∇f x` *is* `f*` at `∇f x`, given by the formula
 `⟨x, ∇f x⟩ - f x`. -/
 theorem conj_eq_of_hasGradientAt (hf : ConvexFn f) (h : HasGradientAt f y x) {r : ℝ}
     (hr : f x = ((r : ℝ) : EReal)) :
     conj (topDualPairing ℝ E).flip f y = ((y x - r : ℝ) : EReal) :=
   eq_coe_of_coe_add_eq_coe (by rw [← hr]; exact h.add_conj_eq hf)
 
-/-- **Theorem 26.4**, well-definedness: `⟨x, y⟩ - f x` is the same for every `x` with `∇f x = y`,
-because it is `f* y`. So `∇f` need not be one-to-one for `g` to be single-valued. -/
+/-- **Well-definedness**: `⟨x, y⟩ - f x` is the same for every `x` with `∇f x = y`, because it is
+`f* y`. So `∇f` need not be one-to-one for `g` to be single-valued. -/
 theorem sub_eq_sub_of_hasGradientAt (hf : ConvexFn f) {x₁ x₂ : E} {r₁ r₂ : ℝ}
     (h₁ : HasGradientAt f y x₁) (h₂ : HasGradientAt f y x₂)
     (hr₁ : f x₁ = ((r₁ : ℝ) : EReal)) (hr₂ : f x₂ = ((r₂ : ℝ) : EReal)) :
@@ -93,7 +92,7 @@ theorem exists_mem_interior_dom_of_mem_legendreDom (hy : y ∈ legendreDom f) :
   obtain ⟨x, hx⟩ := hy
   exact ⟨x, hx.mem_interior_dom, hx⟩
 
-/-- **Theorem 26.4**: `D ⊆ dom f*`. -/
+/-- Every gradient of `f` is a point where `f*` is finite: `D ⊆ dom f*`. -/
 theorem legendreDom_subset_dom_conj (hf : ConvexFn f) :
     legendreDom f ⊆ dom (conj (topDualPairing ℝ E).flip f) := by
   rintro y ⟨x, hx⟩
