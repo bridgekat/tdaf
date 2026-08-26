@@ -143,10 +143,13 @@ omitted whenever the corresponding function `f` or `g` is actually polyhedral. H
 will not be given here." Both halves are proved here, as `corollary_31_2_1_a_polyhedral_right`
 (`g` polyhedral) and `corollary_31_2_1_a_polyhedral_left` (`f` polyhedral). Condition (a) has two
 jobs in the composed setting — an exact *sum* on `ℝⁿ` and an exact *image* along `A` — and the
-polyhedral form has to replace both. `IsExactSum.of_polyhedral` covers the first, once
-`polyhedralFn_neg_comp` says that `-(g ∘ A)` is polyhedral; the second has no backbone constructor
-at all and is built here as `isExactImage_of_polyhedralFn` out of Theorem 19.2, Corollary 19.3.1
-and Theorem 16.3's closure formula.
+polyhedral form has to replace both, and the backbone now has a constructor for each:
+`IsExactSum.of_polyhedral` for the sum, once `polyhedralFn_compLin` says that `-(g ∘ A)` is
+polyhedral, and `IsExactImage.of_polyhedral` for the image. **Both were re-derived here when this
+section was written** — the first because `polyhedralFn_compLin` was stranded in a §37 module §31
+must not import, the second because its `## Backbone gaps` note said no image constructor existed.
+The note was wrong: `IsExactImage.of_polyhedral` had landed a round earlier (remediation §12.4),
+and §31 was the one file still carrying its own copy.
 
 **Corollary 31.5.1 is stated with no proof.** Rockafellar gives the statement (13889) and moves on,
 exactly as with Corollary 23.5.1. `corollary_31_5_1` proves it: bijectivity is Theorem 31.5, and
@@ -206,23 +209,18 @@ unchanged.
    witness-value hypotheses proposed here — strictly more general, since it *handles* the `⊥`
    corners instead of excluding them — so the call site derives the two hypotheses from one finite
    value on each side.
-4. **A polyhedral constructor for `IsExactImage`.** `isExactImage_of_polyhedralFn` is Theorem
-   20.1's companion for the image rule; `Tdaf/Analysis/Convex/Polyhedral/Duality.lean` has
-   `IsExactSum.of_polyhedral` and `IsExactFinsetSum.of_polyhedral` but nothing for images. Wanted
-   there as
-
-       theorem IsExactImage.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B']
-           {h : G → EReal} (hA : IsAdjointPair B B' A A') (hh : PolyhedralFn h) (hp : Proper h)
-           {x₀ : E} (hx₀ : A x₀ ∈ dom h) : IsExactImage B B' A A' hA h
-
-   `Tdaf/Surface/Rockafellar/Part5/Section23.lean` proves the same lemma privately for Theorem
-   23.9; the two are now duplicated.
-5. **A polyhedral function composed with a linear map is polyhedral.** `polyhedralFn_neg_comp` is
-   `Polyhedral.comap` applied to `epi_compLin`. The public `polyhedralFn_compLin` in
-   `Tdaf/Analysis/Convex/Saddle/Correspondence.lean` says the same thing, and its own docstring
-   says it belongs in `Optimization/Perturbation.lean`; §31 must not import a §37 module, so it is
-   restated here. Wanted in `Tdaf/Analysis/Convex/Optimization/Perturbation.lean`, next to
-   `polyhedralFn_mapLin`.
+4. **A polyhedral constructor for `IsExactImage`** — **done, and it was done before this note was
+   written.** `IsExactImage.of_polyhedral` is in
+   `Tdaf/Analysis/Convex/Polyhedral/Duality.lean`, beside `IsExactSum.of_polyhedral` and
+   `IsExactFinsetSum.of_polyhedral`, exactly as this item asked (remediation §12.4). This section
+   carried a private copy for a whole round because the item was never re-checked; §12.4's closing
+   note counted the §16 and §23 duplicates and missed this one.
+5. **A polyhedral function composed with a linear map is polyhedral** — **done.**
+   `polyhedralFn_compLin` is in `Tdaf/Analysis/Convex/Polyhedral/Duality.lean` (remediation
+   §12.14b), which this file imports. It was stranded in `Saddle/Correspondence.lean` (§37), which
+   §31 must not import, and the row that moved it named `Optimization/Perturbation.lean` — the home
+   its docstring pointed at, which by then was the wrong one, because §12.14 had moved
+   `polyhedralFn_mapLin` out of that file in the same batch.
 6. **A separable conjugate** — the backbone half is **done**. `conj_piFn` is public in
    `Tdaf/Analysis/Convex/Duality/FiniteProduct.lean` (which is already in this file's import
    closure), as
@@ -551,49 +549,6 @@ private theorem isExactSum_neg_comp_of_relint {f : Rn n → EReal} {g : Rn m →
     exact hxg'
   exact IsExactSum.of_relint hf hpf hcomp hpcomp hxf hri
 
-/-- **Composing with a linear map keeps a polyhedral concave function polyhedral.**
-`epi (-(g A))` is `epi (-g)` pulled back along `(x, μ) ↦ (A x, μ)`. -/
-private theorem polyhedralFn_neg_comp {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
-    (hg : PolyhedralFn fun w => -(g w)) : PolyhedralFn fun x => -(g (A x)) := by
-  change Polyhedral (epi (compLin (fun w => -(g w)) A))
-  rw [epi_compLin]
-  exact Polyhedral.comap hg _
-
-/-- **The polyhedral constructor for `IsExactImage`** — Theorem 20.1's companion for the image
-rule, which the backbone does not have (see `## Backbone gaps`).
-
-The route is entirely §19's, and it is the one Rockafellar points at for Theorem 23.9: `h*` is
-polyhedral (**Theorem 19.2**), so `A*h*` is polyhedral with its infimum attained
-(**Corollary 19.3.1**), and a proper polyhedral convex function is closed, so Theorem 16.3's
-closure formula has nothing left to close. -/
-private theorem isExactImage_of_polyhedralFn {h : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
-    (hh : PolyhedralFn h) (hp : Proper h) {x₀ : Rn n} (hx₀ : A x₀ ∈ dom h) :
-    IsExactImage (pairing n) (pairing m) A (LinearMap.adjoint A)
-      (isAdjointPair_adjoint A) h := by
-  have hhcl : ClosedFn h := hh.closedFn hp.ne_bot
-  have hconjpoly : PolyhedralFn (conj (pairing m) h) := PolyhedralFn.conj (B := pairing m) hh
-  have hmappoly : PolyhedralFn (mapLin (LinearMap.adjoint A) (conj (pairing m) h)) :=
-    polyhedralFn_mapLin hconjpoly _
-  have hne : (dom (compLin h A)).Nonempty := ⟨x₀, by rwa [mem_dom, compLin_apply]⟩
-  have hbot : ∀ y, conj (pairing n) (compLin h A) y ≠ ⊥ := fun y => conj_ne_bot hne y
-  have hmapbot : ∀ y, mapLin (LinearMap.adjoint A) (conj (pairing m) h) y ≠ ⊥ := by
-    intro y hy
-    exact hbot y
-      (le_bot_iff.1 (hy ▸ conj_compLin_le_mapLin (isAdjointPair_adjoint A) h y))
-  have hmapcl : ClosedFn (mapLin (LinearMap.adjoint A) (conj (pairing m) h)) :=
-    hmappoly.closedFn hmapbot
-  have heq : conj (pairing n) (compLin h A)
-      = mapLin (LinearMap.adjoint A) (conj (pairing m) h) := by
-    have hstep := theorem_16_3_closure A hh.convexFn
-    rwa [show clFn h = h from hhcl,
-      show clFn (mapLin (LinearMap.adjoint A) (conj (pairing m) h))
-        = mapLin (LinearMap.adjoint A) (conj (pairing m) h) from hmapcl] at hstep
-  refine ⟨hp, fun y hy => ?_⟩
-  rw [heq] at hy ⊢
-  obtain ⟨μ, hμ⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hmapbot y) hy
-  obtain ⟨z, hz, hzeq⟩ := corollary_19_3_1_attained hconjpoly (LinearMap.adjoint A) hμ
-  exact ⟨z, hz, le_of_eq hzeq⟩
-
 /-- **Rockafellar, Corollary 31.2.1** (13365) under condition **(a)** (13373): for a proper convex
 `f` on `ℝⁿ`, a closed proper concave `g` on `ℝᵐ` and a linear `A : ℝⁿ → ℝᵐ`,
 
@@ -632,8 +587,8 @@ theorem corollary_31_2_1_a_attained {f : Rn n → EReal} {g : Rn m → EReal} (A
 is actually polyhedral. However, the proof will not be given here."
 
 Here is the proof for `g`. Both of condition (a)'s jobs have polyhedral constructors: `-(g A)` is
-polyhedral (`polyhedralFn_neg_comp`), so **Theorem 20.1** replaces Theorem 16.4 in the sum, and
-`isExactImage_of_polyhedralFn` — Corollary 19.3.1 in place of Theorem 16.3 — replaces the pullback.
+polyhedral (`polyhedralFn_compLin`), so **Theorem 20.1** replaces Theorem 16.4 in the sum, and
+`IsExactImage.of_polyhedral` — Corollary 19.3.1 in place of Theorem 16.3 — replaces the pullback.
 Neither needs a relative interior on the `g` side, and closedness of `g` is automatic
 (Corollary 19.1.2). -/
 theorem corollary_31_2_1_a_polyhedral_right {f : Rn n → EReal} {g : Rn m → EReal}
@@ -646,9 +601,9 @@ theorem corollary_31_2_1_a_polyhedral_right {f : Rn n → EReal} {g : Rn m → E
   have hpgn : Proper fun w => -(g w) := properConcave_iff_proper_neg.1 hpg
   have hxg' : A x₀ ∈ dom fun w => -(g w) := by rwa [← domConcave_eq_dom_neg]
   refine fenchel_duality_comp (isAdjointPair_adjoint A)
-    ((IsExactSum.of_polyhedral (polyhedralFn_neg_comp A hg)
+    ((IsExactSum.of_polyhedral (polyhedralFn_compLin hg A)
       ⟨⟨x₀, hxg'⟩, fun x => hpgn.ne_bot (A x)⟩ hf hpf hxg' hxf).symm)
-    (isExactImage_of_polyhedralFn A hg hpgn hxg')
+    (IsExactImage.of_polyhedral (isAdjointPair_adjoint A) hg hpgn hxg')
 
 /-- **Rockafellar, Corollary 31.2.1** (13379), the polyhedral strengthening with `f` polyhedral,
 the other half of the clause the book leaves unproved: `ri (dom f)` may be replaced by `dom f`.

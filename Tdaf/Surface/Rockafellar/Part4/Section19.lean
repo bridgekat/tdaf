@@ -256,14 +256,12 @@ theorem theorem_19_1_face {C C' : Set (Rn n)} (hC : Polyhedral C) (hface : IsFac
 finitely many extreme points.
 
 The book argues that extreme points are the faces which are points, and Theorem 19.1 bounds the
-faces. Here it is `extremePoints_convexHullPD_subset`: every extreme point of `conv P + cone D` is
-one of the generating points. -/
+faces. The backbone gets there more directly, through `extremePoints_convexHullPD_subset`: every
+extreme point of `conv P + cone D` is one of the generating points. Specialises
+`FinitelyGenerated.finite_extremePoints`. -/
 theorem corollary_19_1_1_extremePoints {C : Set (Rn n)} (hC : Polyhedral C) :
-    (C.extremePoints ℝ).Finite := by
-  obtain ⟨P, D, hPD⟩ := hC.finitelyGenerated
-  have hPD' : C = convexHullPD (P : Set (Rn n)) (D : Set (Rn n)) := hPD
-  rw [hPD']
-  exact P.finite_toSet.subset (extremePoints_convexHullPD_subset _ _)
+    (C.extremePoints ℝ).Finite :=
+  hC.finitelyGenerated.finite_extremePoints
 
 /-- **Rockafellar, Corollary 19.1.1**, the directions half: a polyhedral convex set has at most
 finitely many extreme directions.
@@ -389,43 +387,23 @@ theorem corollary_19_3_1_image {f : Rn n → EReal} (hf : PolyhedralFn f) (A : R
 attained wherever it is finite.
 
 `epi (Af)` really is the image of `epi f`, because the image is polyhedral hence closed; a point of
-it splits, and `mapLin_le` turns the resulting inequality into an equality. -/
+it splits, and `mapLin_le` turns the resulting inequality into an equality. Specialises
+`exists_mapLin_eq_of_polyhedralFn`, which has carried that argument since the §16 round; this file
+reproduced all eighteen lines of it. -/
 theorem corollary_19_3_1_attained {f : Rn n → EReal} (hf : PolyhedralFn f) (A : Rn n →ₗ[ℝ] Rn m)
     {y : Rn m} {μ : ℝ} (hy : mapLin A f y = (μ : EReal)) :
-    ∃ x : Rn n, A x = y ∧ f x = mapLin A f y := by
-  have hmem : ((y, μ) : Rn m × ℝ) ∈ epi (mapLin A f) := mk_mem_epi.2 (le_of_eq hy)
-  rw [mapLin_eq_ofEpi] at hmem
-  have hpoly : Polyhedral (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f) :=
-    Polyhedral.image hf _
-  have hepi : IsEpiLike (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f) := by
-    refine IsEpiLike.of_isClosed ?_ hpoly.isClosed
-    rintro z ν ρ ⟨⟨x, σ⟩, hx, hxz⟩ hνρ
-    have h1 : A x = z := congrArg Prod.fst hxz
-    have h2 : σ = ν := congrArg Prod.snd hxz
-    refine ⟨(x, ρ), mk_mem_epi.2 ?_, ?_⟩
-    · exact le_trans (h2 ▸ mk_mem_epi.1 hx) (by exact_mod_cast hνρ)
-    · rw [LinearMap.prodMap_apply, h1]
-      rfl
-  rw [← mapLin_eq_ofEpi, epi_mapLin hepi] at hmem
-  obtain ⟨⟨x, ν⟩, hx, hxy⟩ := hmem
-  have h1 : A x = y := congrArg Prod.fst hxy
-  have h2 : ν = μ := congrArg Prod.snd hxy
-  refine ⟨x, h1, le_antisymm ?_ (mapLin_le h1)⟩
-  rw [hy]
-  exact h2 ▸ mk_mem_epi.1 hx
+    ∃ x : Rn n, A x = y ∧ f x = mapLin A f y :=
+  exists_mapLin_eq_of_polyhedralFn hf A hy
 
 /-- **Rockafellar, Corollary 19.3.1**, second half: for each polyhedral convex function `g` on
 `ℝᵐ`, `gA` is polyhedral on `ℝⁿ`.
 
 `epi (gA)` is the preimage of `epi g` under `(x, μ) ↦ (Ax, μ)`, so this is Theorem 19.3 again.
-The backbone has this as `polyhedralFn_compLin`, but that lemma is stranded in
-`Saddle/Correspondence.lean`; the two-line proof is reproduced here rather than importing §33 into
-§19. -/
+Specialises `polyhedralFn_compLin`, which used to be stranded in `Saddle/Correspondence.lean` (§37)
+where §19 could not reach it, and is now in `Polyhedral/Duality.lean` (remediation §12.14b). -/
 theorem corollary_19_3_1_preimage {g : Rn m → EReal} (hg : PolyhedralFn g)
-    (A : Rn n →ₗ[ℝ] Rn m) : PolyhedralFn (compLin g A) := by
-  change Polyhedral (epi (compLin g A))
-  rw [epi_compLin]
-  exact hg.comap _
+    (A : Rn n →ₗ[ℝ] Rn m) : PolyhedralFn (compLin g A) :=
+  polyhedralFn_compLin hg A
 
 /-- **Rockafellar, Corollary 19.3.2.** If `C₁` and `C₂` are polyhedral convex sets in `ℝⁿ`, then
 `C₁ + C₂` is polyhedral.

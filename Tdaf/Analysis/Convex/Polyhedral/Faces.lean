@@ -130,6 +130,24 @@ theorem exists_finite_generating_extremeDirections
     exact Submodule.span_mono (Set.singleton_subset_iff.2 hgmem) hone
   · exact absurd rfl (hno x y hy)
 
+/-- **A finitely generated set has only finitely many extreme points** — Corollary 18.3.1 counted.
+
+`extremePoints_convexHullPD_subset` puts every extreme point among the generating *points*, so a
+`Finset` of generators bounds them. Nothing here is finite-dimensional or even normed: both
+`FinitelyGenerated` and `finite_extremePoints_convexHullPD` are layer A, and it was the
+unused-section-variable linter that said so (`gotchas.md` LINT3).
+
+This module is where the statement can be made at all. `FinitelyGenerated` is defined in
+`Polyhedral/Defs.lean` and `finite_extremePoints_convexHullPD` in `Representation.lean`, and those
+two modules are **incomparable** in the import order — neither imports the other — so neither can
+host it (remediation §12.27). -/
+theorem FinitelyGenerated.finite_extremePoints (hC : FinitelyGenerated C) :
+    (C.extremePoints ℝ).Finite := by
+  obtain ⟨P, D, hPD⟩ := hC
+  have hPD' : C = convexHullPD (P : Set E) (D : Set E) := hPD
+  rw [hPD']
+  exact finite_extremePoints_convexHullPD P D
+
 end Counting
 
 /-! ### The faces of a finitely generated set -/
