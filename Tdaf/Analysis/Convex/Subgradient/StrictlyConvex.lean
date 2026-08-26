@@ -9,10 +9,13 @@ import Tdaf.Analysis.Convex.Duality.InnerPairing
 /-!
 # Essential strict convexity
 
-Rockafellar's **Theorem 26.3**: a closed proper convex function is *essentially strictly convex*
-exactly when its conjugate is essentially smooth. Together with Theorem 26.1 this is the duality
-that makes the Legendre transformation of §26 an involution — strict convexity on one side is
-smoothness on the other.
+A closed proper convex function is *essentially strictly convex* — strictly convex on every convex
+subset of `dom ∂f` — exactly when its conjugate is essentially smooth (**Theorem 26.3**). Together
+with Theorem 26.1 this is the duality that makes the Legendre transformation of §26 an involution:
+strict convexity on one side is smoothness on the other. The proof is one reformulation plus
+Theorem 26.1. Corollary 23.5.1 makes `∂f*` the inverse of `∂f`, so single-valuedness of `∂f*` *is*
+the statement that distinct points never share a subgradient of `f`, and
+`essentiallyStrictlyConvex_iff_pairwise_disjoint` identifies that with essential strict convexity.
 
 ## Main definitions
 
@@ -24,33 +27,18 @@ smoothness on the other.
 
 * `mem_subgradient_of_combo`, `le_combo_of_mem_subgradient` — a subgradient shared by two points
   is a subgradient at every point between them, and `f` is affine along that segment.
-* `mem_subgradient_conj_innerL_iff`, `subsingleton_subgradient_conj_iff`,
-  `pairwise_disjoint_subgradient_conj_iff` — Corollary 23.5.1 for the self-pairing, and the two
-  transfers it gives between single-valuedness and injectivity.
-* `essentiallyStrictlyConvex_iff_pairwise_disjoint` — the reformulation Theorem 26.3 runs on:
-  `f` is essentially strictly convex exactly when distinct points never share a subgradient.
-* `essentiallyStrictlyConvex_conj_iff_essentiallySmooth` — **Theorem 26.3** the other way
-  round, via `conj_conj_innerL`.
-* `essentiallySmooth_conj_iff_essentiallyStrictlyConvex` — **Theorem 26.3**.
+* `mem_subgradient_conj_innerL_iff`, `pairwise_disjoint_subgradient_conj_iff` — Corollary 23.5.1
+  for the self-pairing, and the transfer it gives between single-valuedness and injectivity.
+* `essentiallySmooth_conj_iff_essentiallyStrictlyConvex` and
+  `essentiallyStrictlyConvex_conj_iff_essentiallySmooth` — **Theorem 26.3**, both ways round.
 * `subgradient_injective_iff` — **Corollary 26.3.1**.
 
-## Design notes
+## Implementation notes
 
-**The theorem is one reformulation plus Theorem 26.1.** Corollary 23.5.1 makes `∂f*` the inverse
-of `∂f`, so single-valuedness of `∂f*` *is* "distinct points never share a subgradient of `f`",
-and Theorem 26.1 turns that into essential smoothness of `f*`. What is left is the equivalence of
-the sharing condition with essential strict convexity, and both directions of it are one
-computation read forwards and backwards: a shared subgradient forces `f` to be affine along the
-segment, and affineness along a segment inside `dom ∂f` produces a shared subgradient.
-
-**Every value in sight is finite, so the arithmetic is real.** Points of `dom ∂f` lie in `dom f`
-and `f` is proper, so `f` is real there; the only `EReal` case split is on `f z` at the *test*
-point of the subgradient inequality, where `f z = ⊤` makes the inequality trivial. That is why
-`sub_le_of_mem_subgradient` is stated in `ℝ`.
-
-**The definitions are layer A and the theorems are not.** `StrictConvexOnFn`, `domSubgradient` and
-`EssentiallyStrictlyConvex` need only a real module; Theorem 26.3 needs an inner-product space,
-because `EssentiallySmooth` does.
+Every value in sight is finite, so the arithmetic is real: points of `dom ∂f` lie in `dom f` and
+`f` is proper. The only `EReal` case split is on `f z` at the *test* point of the subgradient
+inequality, where `f z = ⊤` makes it trivial. The definitions need only a real vector space;
+Theorem 26.3 needs an inner-product space, because `EssentiallySmooth` does.
 
 ## References
 
@@ -79,13 +67,11 @@ theorem StrictConvexOnFn.mono {C D : Set E} (h : StrictConvexOnFn f C) (hDC : D 
   h (hDC hx) (hDC hy) hne ha hb hab
 
 /-- **The bridge to Mathlib's `StrictConvexOn`.** On a convex set where `f` is finite, strict
-convexity of the `EReal`-valued `f` and of its real trace are the same condition.
-
-This is the only way in for a *concrete* function. Mathlib's strict-convexity API — and every
-second-derivative criterion in it — is stated for real-valued functions, so without this there is
-nothing between the definition above and the theorems that consume it. The finiteness is genuinely
-needed in both directions: where `f x = ⊤` the `EReal` inequality is vacuous and the real one is
-not, and where `f x = ⊥` the real one is vacuous and the `EReal` one is not. -/
+convexity of the `EReal`-valued `f` and of its real trace are the same condition — and so the only
+way in for a *concrete* function, since Mathlib's strict-convexity API and its second-derivative
+criteria are stated for real-valued functions. Finiteness is needed in both directions: where
+`f x = ⊤` the `EReal` inequality is vacuous and the real one is not, and where `f x = ⊥` the real
+one is vacuous and the `EReal` one is not. -/
 theorem strictConvexOnFn_iff_strictConvexOn {C : Set E} (hC : Convex ℝ C)
     (hbot : ∀ x ∈ C, f x ≠ ⊥) (htop : ∀ x ∈ C, f x ≠ ⊤) :
     StrictConvexOnFn f C ↔ StrictConvexOn ℝ C (fun x => (f x).toReal) := by
@@ -103,12 +89,9 @@ theorem strictConvexOnFn_iff_strictConvexOn {C : Set E} (hC : Convex ℝ C)
       Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add, _root_.EReal.coe_lt_coe_iff]
     simpa using hlt
 
-/-- **Rockafellar's essential strict convexity**: `f` is strictly convex on every convex subset of
-`dom ∂f`.
-
-Rockafellar's warning is worth repeating: this is *weaker* than strict convexity on `dom f` and
-*stronger* than strict convexity on `ri (dom f)`, and the two examples separating it from both are
-in the text after the definition. -/
+/-- **Essential strict convexity**: `f` is strictly convex on every convex subset of `dom ∂f`.
+This is *weaker* than strict convexity on `dom f` and *stronger* than strict convexity on
+`ri (dom f)`; §26 of the book gives examples separating it from both. -/
 def EssentiallyStrictlyConvex (f : E → EReal) : Prop :=
   ∀ ⦃C : Set E⦄, Convex ℝ C → C ⊆ domSubgradient B f → StrictConvexOnFn f C
 
@@ -271,12 +254,10 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
 
 /-- **The reformulation Theorem 26.3 runs on**: a proper convex function is essentially strictly
-convex exactly when two distinct points never share a subgradient.
-
-Forwards: a shared subgradient makes the whole segment lie in `dom ∂f` and `f` affine on it, so
-strict convexity fails on that segment, a convex subset of `dom ∂f`. Backwards: a failure of
-strict convexity on a convex `C ⊆ dom ∂f` puts a subgradient at a point between two points of `C`,
-and the failed inequality forces that subgradient to serve at both of them. -/
+convex exactly when two distinct points never share a subgradient. Forwards, a shared subgradient
+makes the whole segment lie in `dom ∂f` and `f` affine on it, so strict convexity fails there.
+Backwards, a failure of strict convexity on a convex `C ⊆ dom ∂f` puts a subgradient at a point
+between two points of `C`, and the failed inequality forces it to serve at both of them. -/
 theorem essentiallyStrictlyConvex_iff_pairwise_disjoint (hf : ConvexFn f) (hp : Proper f) :
     EssentiallyStrictlyConvex (B := B) f ↔
       ∀ x₁ x₂ : E, x₁ ≠ x₂ → Disjoint (subgradient B f x₁) (subgradient B f x₂) := by
@@ -373,7 +354,7 @@ theorem pairwise_disjoint_subgradient_conj_iff (hf : ConvexFn f) (hcl : ClosedFn
     exact hne (h z ((mem_subgradient_conj_innerL_iff hf hcl z y₁).1 hz₁)
       ((mem_subgradient_conj_innerL_iff hf hcl z y₂).1 hz₂))
 
-/-- **Rockafellar, Theorem 26.3**: a closed proper convex function is essentially strictly convex
+/-- **Theorem 26.3**: a closed proper convex function is essentially strictly convex
 exactly when its conjugate is essentially smooth. -/
 theorem essentiallySmooth_conj_iff_essentiallyStrictlyConvex (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) :
@@ -393,21 +374,19 @@ theorem conj_conj_innerL (hf : ConvexFn f) (hcl : ClosedFn f) :
   have h : conj ((innerₗ E).flip) (conj (innerₗ E) f) = f := biconj_eq_self hf hcl
   rwa [flip_innerₗ] at h
 
-/-- **Rockafellar, Theorem 26.3**, read in the other direction: the conjugate of a closed proper
-convex function is essentially strictly convex exactly when the function itself is essentially
-smooth. This is Theorem 26.3 applied to `f*`, together with `f** = f`. -/
+/-- **Theorem 26.3**, read in the other direction: the conjugate of a closed proper convex
+function is essentially strictly convex exactly when the function itself is essentially smooth.
+This is Theorem 26.3 applied to `f*`, together with `f** = f`. -/
 theorem essentiallyStrictlyConvex_conj_iff_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) :
     EssentiallyStrictlyConvex (B := innerₗ E) (conj (innerₗ E) f) ↔ EssentiallySmooth f := by
   rw [← essentiallySmooth_conj_iff_essentiallyStrictlyConvex (convexFn_conj _ f)
     (proper_conj ⟨hf, hcl, hp⟩) closedFn_conj, conj_conj_innerL hf hcl]
 
-/-- **Rockafellar, Corollary 26.3.1**: `∂f` is a one-to-one mapping — single-valued and injective —
-exactly when `f` is essentially smooth and strictly convex on `int (dom f)`.
-
-Under essential smoothness `dom ∂f` *is* `int (dom f)` (Theorem 26.1), so essential strict
-convexity, which quantifies over all convex subsets of `dom ∂f`, collapses to strict convexity on
-that one set. -/
+/-- **Corollary 26.3.1**: `∂f` is a one-to-one mapping — single-valued and injective — exactly
+when `f` is essentially smooth and strictly convex on `int (dom f)`. Under essential smoothness
+`dom ∂f` *is* `int (dom f)` (Theorem 26.1), so essential strict convexity, which quantifies over
+all convex subsets of `dom ∂f`, collapses to strict convexity on that one set. -/
 theorem subgradient_injective_iff (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f) :
     ((∀ z : E, (subgradient (innerₗ E) f z).Subsingleton) ∧
         ∀ x₁ x₂ : E, x₁ ≠ x₂ →

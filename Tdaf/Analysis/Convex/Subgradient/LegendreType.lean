@@ -10,67 +10,42 @@ import Tdaf.Analysis.Convex.Subgradient.StrictlyConvex
 /-!
 # Convex functions of Legendre type
 
-Rockafellar's §26, the second half. A closed proper convex function is **of Legendre type** when it
-is essentially smooth and strictly convex on the interior of its effective domain — by
-Corollary 26.3.1 exactly when `∂f` is a one-to-one mapping.
-
-**Theorem 26.5** is the duality: `f` is of Legendre type exactly when `f*` is, and then `∇f` is a
-bijection from `C = int (dom f)` onto `C* = int (dom f*)`, continuous in both directions, with
+A closed proper convex function is *of Legendre type* when it is essentially smooth and strictly
+convex on the interior `C` of its effective domain — by Corollary 26.3.1, exactly when `∂f` is a
+one-to-one mapping. **Theorem 26.5** is the duality: `f` is of Legendre type exactly when `f*` is,
+and then `∇f` is a bijection of `C` onto `C* = int (dom f*)`, continuous in both directions, with
 `∇f* = (∇f)⁻¹`. **Corollary 26.4.1** identifies the domain `D` of the Legendre conjugate of an
-essentially smooth function as `dom ∂f*`, hence squeezes it between `ri (dom f*)` and `dom f*`.
+essentially smooth function as `dom ∂f*`, and so squeezes it between `ri (dom f*)` and `dom f*`. In
+general `D` is not convex, which is why the squeeze cannot be improved to an equality.
 
 ## Main definitions
 
-* `gradientRange f` — Rockafellar's `D = ∇f(C)`, as a set of *vectors*: `legendreDom` carried
-  across the Riesz isometry, so that it can be compared with `dom ∂f*`.
+* `gradientRange f` — the set `D = ∇f(C)`, as a set of *vectors*.
 * `LegendreType f` — `f` is essentially smooth and strictly convex on `int (dom f)`.
 
 ## Main results
 
 * `hasGradientAt_toDual_iff_mem_subgradient` — for an essentially smooth `f`, being *the* gradient
-  at `x` and being *a* subgradient at `x` say the same thing. Everything else in this file is that
-  equivalence combined with §23's inversion `∂f* = (∂f)⁻¹`.
+  at `x` and being *a* subgradient at `x` say the same thing. Everything else here is that
+  equivalence combined with the inversion `∂f* = (∂f)⁻¹` of §23.
 * `gradientRange_eq_domSubgradient_conj`, `relint_dom_conj_subset_gradientRange`,
-  `gradientRange_subset_dom_conj`, `strictConvexOnFn_conj_of_subset_gradientRange` —
-  **Corollary 26.4.1**: `D = dom ∂f*`, therefore `ri (dom f*) ⊆ D ⊆ dom f*`, and the Legendre
-  conjugate is strictly convex on every convex subset of `D`.
-* `legendreType_conj_iff` — **Theorem 26.5**, first assertion: `(C*, f*)` is of Legendre type
-  exactly when `(C, f)` is.
-* `hasGradientAt_conj_iff`, `gradient_conj_gradient`, `gradient_gradient_conj` —
-  **Theorem 26.5**, `∇f* = (∇f)⁻¹`.
-* `gradientRange_eq_interior_dom_conj`, `bijOn_gradient_of_legendreType` — **Theorem 26.5**:
-  `∇f` maps `C` one-to-one onto `C*`.
-* `continuousOn_gradient_interior_dom` — **Theorem 26.5**, continuity in both directions: apply it
-  to `f` and to `f*`.
+  `gradientRange_subset_dom_conj` — **Corollary 26.4.1**: `D = dom ∂f*`, therefore
+  `ri (dom f*) ⊆ D ⊆ dom f*`.
+* `legendreType_conj_iff`, `bijOn_gradient_of_legendreType`,
+  `continuousOn_gradient_interior_dom` — **Theorem 26.5**.
 * `bijOn_gradient_univ_iff`, `conj_finite_of_bijOn_gradient_univ` — **Theorem 26.6**: for a finite
   differentiable convex function, `∇f` is a bijection of `E` onto itself exactly when `f` is
   strictly convex with `dom f* = E`, and then `f*` is a function of the same kind.
 
-## Design notes
+## Implementation notes
 
-**`gradientRange` rather than `legendreDom` from here on.** `legendreDom f` lives in
-`StrongDual ℝ E`, which is the right home for §25's gradients; but Corollary 26.4.1 compares it
-with `dom ∂f*`, and `∂f*` for the self-pairing `innerₗ E` produces *vectors*. The two are the same
-set across `InnerProductSpace.toDual`, and `mem_gradientRange_iff_mem_legendreDom` is that
-identification — `rfl`, since `gradientRange` is defined as the preimage.
+`legendreDom f` lives in `StrongDual ℝ E`, but Corollary 26.4.1 compares it with `dom ∂f*`, whose
+elements are *vectors* for the self-pairing `innerₗ E`. `gradientRange` is `legendreDom` carried
+back across the Riesz isometry, so that the comparison is an equality of sets in `E`.
 
-**Mathlib's `gradient` is Rockafellar's `∇f`** applied to the real trace `fun w => (f w).toReal`:
-both are `(InnerProductSpace.toDual ℝ E).symm` of an `fderiv`. Reusing it keeps the bijection of
-Theorem 26.5 stated in terms of an existing Mathlib function rather than a new abbreviation.
+## References
 
-**`LegendreType` is a plain conjunction, not a structure.** Corollary 26.3.1 is already stated as
-an `Iff` against that conjunction, so a structure would only add a wrapper to unfold at every use.
-
-## What is not here
-
-**Openness of `∇f` as a map `C → C*` is not stated separately.** Rockafellar's phrase "continuous
-in both directions" is `continuousOn_gradient_interior_dom` applied to `f` and to `f*`, which is
-what openness would be used for; `bijOn_gradient_of_legendreType` supplies the bijection those two
-continuity statements are inverse across.
-
-**Convexity of `D`** is not claimed: `D` is squeezed between `ri (dom f*)` and `dom f*` and is in
-general *not* convex, which is exactly why Corollary 26.4.1 states the squeeze rather than an
-equality.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -84,8 +59,8 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDim
 
 /-! ### The range of the gradient mapping, in vector form -/
 
-/-- Rockafellar's `D = ∇f(C)`, the domain of the Legendre conjugate, as a set of *vectors*: the
-preimage of `legendreDom f` under the Riesz isometry. -/
+/-- The domain `D = ∇f(C)` of the Legendre conjugate, as a set of *vectors*: the preimage of
+`legendreDom f` under the Riesz isometry. -/
 def gradientRange (f : E → EReal) : Set E :=
   {v | ∃ x, HasGradientAt f (InnerProductSpace.toDual ℝ E v) x}
 
@@ -98,7 +73,7 @@ theorem mem_gradientRange_iff_mem_legendreDom :
 theorem HasGradientAt.mem_gradientRange (h : HasGradientAt f (InnerProductSpace.toDual ℝ E v) x) :
     v ∈ gradientRange f := ⟨x, h⟩
 
-/-- Mathlib's `gradient` of the real trace is Rockafellar's `∇f`. -/
+/-- Mathlib's `gradient` of the real trace is `∇f`. -/
 theorem HasGradientAt.gradient_toReal_eq (h : HasGradientAt f f' x) :
     gradient (fun w => (f w).toReal) x = (InnerProductSpace.toDual ℝ E).symm f' := by
   unfold gradient
@@ -113,9 +88,8 @@ theorem DifferentiableAtFn.hasGradientAt_gradient (h : DifferentiableAtFn f x) :
 
 /-! ### Corollary 26.4.1 -/
 
-/-- **For an essentially smooth function, gradients and subgradients coincide.** On the interior of
-the effective domain this is Theorem 25.1; off it both sides are impossible, by the substantive
-half of Theorem 26.1. -/
+/-- For an essentially smooth function, gradients and subgradients coincide. On the interior of the
+effective domain this is Theorem 25.1; off it, both sides are impossible. -/
 theorem hasGradientAt_toDual_iff_mem_subgradient (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (hes : EssentiallySmooth f) :
     HasGradientAt f (InnerProductSpace.toDual ℝ E v) x ↔ v ∈ subgradient (innerₗ E) f x := by
@@ -132,11 +106,8 @@ theorem hasGradientAt_toDual_iff_mem_subgradient (hf : ConvexFn f) (hp : Proper 
     · rw [subgradient_eq_empty_of_essentiallySmooth hf hp hcl hes hx] at h
       exact absurd h (Set.notMem_empty v)
 
-/-- **Rockafellar, Corollary 26.4.1**: for an essentially smooth closed proper convex function the
-domain `D` of the Legendre conjugate is exactly `dom ∂f*`.
-
-Membership `v ∈ D` says some `x` has `∇f x = v`; by essential smoothness that is `v ∈ ∂f x`, and by
-Corollary 23.5.1 that is `x ∈ ∂f* v`. -/
+/-- **Corollary 26.4.1**: for an essentially smooth closed proper convex function the domain `D` of
+the Legendre conjugate is exactly `dom ∂f*`. -/
 theorem gradientRange_eq_domSubgradient_conj (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hes : EssentiallySmooth f) :
     gradientRange f = domSubgradient (innerₗ E) (conj (innerₗ E) f) := by
@@ -146,7 +117,7 @@ theorem gradientRange_eq_domSubgradient_conj (hf : ConvexFn f) (hp : Proper f) (
   rw [hasGradientAt_toDual_iff_mem_subgradient hf hp hcl hes]
   exact (mem_subgradient_conj_innerL_iff hf hcl z w).symm
 
-/-- **Rockafellar, Corollary 26.4.1**: `ri (dom f*) ⊆ D`. This is Theorem 23.4 for `f*`. -/
+/-- **Corollary 26.4.1**: `ri (dom f*) ⊆ D`. This is Theorem 23.4 for `f*`. -/
 theorem relint_dom_conj_subset_gradientRange (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hes : EssentiallySmooth f) :
     ri (dom (conj (innerₗ E) f)) ⊆ gradientRange f := by
@@ -154,14 +125,14 @@ theorem relint_dom_conj_subset_gradientRange (hf : ConvexFn f) (hp : Proper f) (
   exact fun w hw =>
     subgradient_nonempty_of_mem_relint_dom (convexFn_conj _ f) (proper_conj ⟨hf, hcl, hp⟩) hw
 
-/-- **Rockafellar, Corollary 26.4.1**: `D ⊆ dom f*`. -/
+/-- **Corollary 26.4.1**: `D ⊆ dom f*`. -/
 theorem gradientRange_subset_dom_conj (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hes : EssentiallySmooth f) : gradientRange f ⊆ dom (conj (innerₗ E) f) := by
   rw [gradientRange_eq_domSubgradient_conj hf hp hcl hes]
   exact domSubgradient_subset_dom (proper_conj ⟨hf, hcl, hp⟩)
 
-/-- **Rockafellar, Corollary 26.4.1**, last clause: the Legendre conjugate `g` — which is `f*`
-restricted to `D`, by Theorem 26.4 — is strictly convex on every convex subset of `D`. -/
+/-- **Corollary 26.4.1**, last clause: the Legendre conjugate `g` — which is `f*` restricted to
+`D`, by Theorem 26.4 — is strictly convex on every convex subset of `D`. -/
 theorem strictConvexOnFn_conj_of_subset_gradientRange (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (hes : EssentiallySmooth f) {C : Set E} (hC : Convex ℝ C)
     (hCsub : C ⊆ gradientRange f) : StrictConvexOnFn (conj (innerₗ E) f) C :=
@@ -170,11 +141,8 @@ theorem strictConvexOnFn_conj_of_subset_gradientRange (hf : ConvexFn f) (hp : Pr
 
 /-! ### Functions of Legendre type -/
 
-/-- **A convex function of Legendre type**: essentially smooth, and strictly convex on the interior
-of its effective domain. Rockafellar states this for the pair `(C, f)` with `C = int (dom f)`.
-
-By Corollary 26.3.1 — `subgradient_injective_iff` — this holds exactly when `∂f` is a one-to-one
-mapping, single-valued and injective. -/
+/-- A convex function of Legendre type: essentially smooth, and strictly convex on the interior of
+its effective domain. The book states this for the pair `(C, f)` with `C = int (dom f)`. -/
 def LegendreType (f : E → EReal) : Prop :=
   EssentiallySmooth f ∧ StrictConvexOnFn f (interior (dom f))
 
@@ -187,10 +155,9 @@ theorem legendreType_iff_subgradient_injective (hf : ConvexFn f) (hp : Proper f)
           Disjoint (subgradient (innerₗ E) f x₁) (subgradient (innerₗ E) f x₂)) :=
   (subgradient_injective_iff hf hp hcl).symm
 
-/-- **Rockafellar, Theorem 26.5**, first assertion: `f*` is of Legendre type exactly when `f` is.
-
-Through Corollary 26.3.1 both sides become single-valuedness and injectivity of a subdifferential,
-and inverting the subdifferential swaps those two conditions. -/
+/-- **Theorem 26.5**, first assertion: `f*` is of Legendre type exactly when `f` is. Through
+Corollary 26.3.1 both sides become single-valuedness and injectivity of a subdifferential, and
+inverting the subdifferential swaps those two conditions. -/
 theorem legendreType_conj_iff (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f) :
     LegendreType (conj (innerₗ E) f) ↔ LegendreType f := by
   rw [legendreType_iff_subgradient_injective (convexFn_conj _ f) (proper_conj ⟨hf, hcl, hp⟩)
@@ -203,7 +170,7 @@ theorem LegendreType.conj (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hleg : LegendreType f) : LegendreType (Tdaf.ConvexAnalysis.conj (innerₗ E) f) :=
   (legendreType_conj_iff hf hp hcl).2 hleg
 
-/-- **Rockafellar, Theorem 26.5**: `∇f* = (∇f)⁻¹`. -/
+/-- **Theorem 26.5**: `∇f* = (∇f)⁻¹`. -/
 theorem hasGradientAt_conj_iff (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hleg : LegendreType f) :
     HasGradientAt f (InnerProductSpace.toDual ℝ E v) x ↔
@@ -213,15 +180,15 @@ theorem hasGradientAt_conj_iff (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn
       closedFn_conj (hleg.conj hf hp hcl).1,
     mem_subgradient_conj_innerL_iff hf hcl]
 
-/-- **Rockafellar, Theorem 26.5**: `∇f` maps `C = int (dom f)` onto `C* = int (dom f*)`. -/
+/-- **Theorem 26.5**: `∇f` maps `C = int (dom f)` onto `C* = int (dom f*)`. -/
 theorem gradientRange_eq_interior_dom_conj (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hleg : LegendreType f) : gradientRange f = interior (dom (conj (innerₗ E) f)) := by
   rw [gradientRange_eq_domSubgradient_conj hf hp hcl hleg.1,
     domSubgradient_eq_interior_dom_of_essentiallySmooth (convexFn_conj _ f)
       (proper_conj ⟨hf, hcl, hp⟩) closedFn_conj (hleg.conj hf hp hcl).1]
 
-/-- Two points with the same gradient are equal, when `f` is of Legendre type: the common gradient
-`v` has both of them as gradients of `f*` at `v`, and a gradient is unique. -/
+/-- Two points with the same gradient are equal, when `f` is of Legendre type: both are gradients
+of `f*` at the common value, and a gradient is unique. -/
 theorem eq_of_hasGradientAt_of_legendreType (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hleg : LegendreType f) {x₁ x₂ : E}
     (h₁ : HasGradientAt f (InnerProductSpace.toDual ℝ E v) x₁)
@@ -230,7 +197,7 @@ theorem eq_of_hasGradientAt_of_legendreType (hf : ConvexFn f) (hp : Proper f) (h
   have h := h₁.fderiv_toReal_eq.symm.trans h₂.fderiv_toReal_eq
   exact (InnerProductSpace.toDual ℝ E).injective h
 
-/-- **Rockafellar, Theorem 26.5**: `∇f` is a one-to-one mapping of `C` onto `C*`. -/
+/-- **Theorem 26.5**: `∇f` is a one-to-one mapping of `C` onto `C*`. -/
 theorem bijOn_gradient_of_legendreType (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hleg : LegendreType f) :
     Set.BijOn (gradient fun w => (f w).toReal) (interior (dom f))
@@ -249,7 +216,7 @@ theorem bijOn_gradient_of_legendreType (hf : ConvexFn f) (hp : Proper f) (hcl : 
     exact ⟨z, hz.mem_interior_dom, by
       rw [hz.gradient_toReal_eq, LinearIsometryEquiv.symm_apply_apply]⟩
 
-/-- **Rockafellar, Theorem 26.5**: `∇f*` undoes `∇f` on `C`. -/
+/-- **Theorem 26.5**: `∇f*` undoes `∇f` on `C`. -/
 theorem gradient_conj_gradient (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hleg : LegendreType f) (hx : x ∈ interior (dom f)) :
     gradient (fun w => (conj (innerₗ E) f w).toReal)
@@ -258,7 +225,7 @@ theorem gradient_conj_gradient (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn
   rw [hasGradientAt_conj_iff hf hp hcl hleg] at hgrad
   rw [hgrad.gradient_toReal_eq, LinearIsometryEquiv.symm_apply_apply]
 
-/-- **Rockafellar, Theorem 26.5**: `∇f` undoes `∇f*` on `C*`. -/
+/-- **Theorem 26.5**: `∇f` undoes `∇f*` on `C*`. -/
 theorem gradient_gradient_conj (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f)
     (hleg : LegendreType f) (hv : v ∈ interior (dom (conj (innerₗ E) f))) :
     gradient (fun w => (f w).toReal)
@@ -276,9 +243,9 @@ theorem continuousOn_gradient_toReal (hf : ConvexFn f) (hp : Proper f) :
   (InnerProductSpace.toDual ℝ E).symm.continuous.comp_continuousOn
     (continuousOn_fderiv_toReal hf hp)
 
-/-- **Rockafellar, Theorem 26.5**, continuity in both directions: for an essentially smooth `f`,
-`∇f` is continuous on `int (dom f)`. Applying this to `f` and to `f*` — legitimate by
-`legendreType_conj_iff` — gives continuity of `∇f` and of its inverse `∇f*`. -/
+/-- **Theorem 26.5**, continuity in both directions: for an essentially smooth `f`, `∇f` is
+continuous on `int (dom f)`. Applied to `f` and to `f*`, this gives continuity of `∇f` and of its
+inverse `∇f*`. -/
 theorem continuousOn_gradient_interior_dom (hf : ConvexFn f) (hp : Proper f)
     (hes : EssentiallySmooth f) :
     ContinuousOn (gradient fun w => (f w).toReal) (interior (dom f)) :=
@@ -295,21 +262,16 @@ theorem essentiallySmooth_of_dom_eq_univ (hdom : dom f = Set.univ)
   differentiableAtFn := fun z _ => hdiff z
   tendsto_norm_fderiv := fun z hz => absurd (by rw [hdom, interior_univ]; trivial) hz
 
-/-- **Corollary 7.4.2** in the shape §26 needs it: a proper convex function that is finite
-everywhere is closed. -/
+/-- **Corollary 7.4.2**: a proper convex function that is finite everywhere is closed. -/
 theorem closedFn_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f) (hdom : dom f = Set.univ) :
     ClosedFn f :=
   hf.closedFn_of_dom_eq_coe hp (M := (⊤ : AffineSubspace ℝ E))
     (by rw [hdom, AffineSubspace.top_coe])
 
-/-- **Rockafellar, Theorem 26.6**: for a convex function that is finite and differentiable
-everywhere, `∇f` maps `E` one-to-one onto `E` exactly when `f` is strictly convex and `dom f*` is
-all of `E`.
-
-The second condition is Rockafellar's *co-finiteness*, which Corollary 13.3.1 identifies with
-`dom f* = E`; the recession function does not appear here, so the equation is stated directly. The
-Legendre-conjugate formula of the theorem is `conj_eq_of_hasGradientAt` (Theorem 26.4), and
-`∇f* = (∇f)⁻¹` is `hasGradientAt_conj_iff`. -/
+/-- **Theorem 26.6**: for a convex function that is finite and differentiable everywhere, `∇f` maps
+`E` one-to-one onto `E` exactly when `f` is strictly convex and `dom f*` is all of `E`. The second
+condition is the book's *co-finiteness*, which Corollary 13.3.1 identifies with `dom f* = E`; the
+recession function does not appear here, so the equation is stated directly. -/
 theorem bijOn_gradient_univ_iff (hf : ConvexFn f) (hp : Proper f) (hdom : dom f = Set.univ)
     (hdiff : ∀ z : E, DifferentiableAtFn f z) :
     Set.BijOn (gradient fun w => (f w).toReal) Set.univ Set.univ ↔
@@ -346,10 +308,9 @@ theorem bijOn_gradient_univ_iff (hf : ConvexFn f) (hp : Proper f) (hdom : dom f 
     have hbij := bijOn_gradient_of_legendreType hf hp hcl hleg
     rwa [hint, hdc, interior_univ] at hbij
 
-/-- **Rockafellar, Theorem 26.6**, the concluding clauses: when `∇f` is a one-to-one mapping of `E`
-onto itself, `f*` is again a finite, differentiable, strictly convex function whose own conjugate
-domain is everything — so the hypotheses of the theorem are self-dual, and the Legendre conjugate
-of `f*` is `f` again (`conj_conj_innerL`). -/
+/-- **Theorem 26.6**, concluding clauses: when `∇f` is a one-to-one mapping of `E` onto itself,
+`f*` is again a finite, differentiable, strictly convex function whose own conjugate domain is
+everything. The hypotheses of the theorem are therefore self-dual. -/
 theorem conj_finite_of_bijOn_gradient_univ (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) (hdiff : ∀ z : E, DifferentiableAtFn f z)
     (hbij : Set.BijOn (gradient fun w => (f w).toReal) Set.univ Set.univ) :

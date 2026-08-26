@@ -13,110 +13,50 @@ import Tdaf.Analysis.Convex.Subgradient.Defs
 /-!
 # Gradients and the subdifferential
 
-Rockafellar's §25, the part that does not need measure theory. **Theorem 25.1**: where a convex
-function is differentiable, its gradient is its *only* subgradient, and the directional derivative
-is the corresponding linear function; conversely, a linear directional derivative forces the
-subdifferential to be a single point. **Theorem 25.2**: for a convex function finite at `x`,
-differentiability at `x` is *equivalent* to linearity of `f'(x; ·)`, and in finite dimensions the
-two-sided derivatives along a basis already suffice.
+Where a convex function is differentiable its gradient is its only subgradient, and the directional
+derivative is the corresponding linear function (**Theorem 25.1**). Conversely, for a convex
+function finite at `x`, differentiability at `x` is *equivalent* to linearity of `f'(x; ·)`, and in
+finite dimensions the two-sided derivatives along the vectors of a basis already suffice
+(**Theorem 25.2**).
+
+Dually, a point of `epi f*` is *exposed* exactly when it is `(y, f* y)` for a `y` that is the only
+subgradient of `f` somewhere (**Corollary 25.1.2**), and the same holds for the set cut out by a
+positively homogeneous function (**Corollary 25.1.3**). Both are phrased in terms of unique
+subgradients rather than of differentiability: passing between the two is the converse half of
+Theorem 25.1, which needs `x` interior to `dom f` and is in `Subgradient/Uniqueness.lean`.
 
 ## Main results
 
-* `subgradient_eq_singleton_of_dirDeriv_eq` — **Theorem 25.2**, sufficiency, in its algebraic
-  form: if `f'(x; ·)` is the linear function `⟨·, y₀⟩` then `∂f x = {y₀}`.
-* `clFn_dirDeriv_eq_of_subgradient_eq_singleton` — the converse at the level of closures: a
-  single-valued subdifferential makes `cl f'(x; ·)` linear. This is Theorem 23.2 read backwards.
-* `le_of_hasFDerivAt` — **Theorem 25.1**, the gradient inequality `f z ≥ f x + ⟨z - x, ∇f x⟩`.
-* `subgradient_eq_singleton_of_hasFDerivAt` — **Theorem 25.1**: `∂f x = {∇f x}` at a point of
-  differentiability of a convex function.
-* `eq_of_mem_subgradient_of_hasFDerivAt` — the uniqueness half on its own; it needs no convexity.
-* `dirDeriv_eq_of_hasFDerivAt` — **Theorem 25.2**, necessity: `f'(x; v) = ⟨v, ∇f x⟩`.
-* `hasGradientAt_of_dirDeriv_eq`, `differentiableAtFn_iff_exists_dirDeriv_eq` — **Theorem 25.2**,
-  sufficiency and the resulting equivalence, in finite dimensions.
-* `differentiableAtFn_of_forall_basis_dirDeriv_eq` — **Theorem 25.2**, last sentence: the `n`
-  two-sided partial derivatives suffice.
-* `proper_of_eventuallyEq_coe`, `mem_interior_dom_of_eventuallyEq_coe` — **Corollary 25.1.1**.
-* `mem_exposedPoints_epi_conj_iff` — the exposed points of `epi f*` are the points `(y, f* y)`
-  such that `y` is the *only* subgradient of `f` at some point. **Corollary 25.1.2** in its
-  subgradient form.
-* `mem_exposedPoints_supportSet_iff` — **Corollary 25.1.3** in the same form: for a closed proper
-  convex positively homogeneous `g`, the exposed points of `{x | ⟨x, y⟩ ≤ g y for all y}` are
-  exactly the points that are the unique subgradient of `g` somewhere.
-* `mem_exposedPoints_prod_Ici_iff` — the exposed points of a half-cylinder `C ×ˢ [0, ∞)`, which is
-  what the epigraph of an indicator function looks like.
+* `subgradient_eq_singleton_of_dirDeriv_eq`, `clFn_dirDeriv_eq_of_subgradient_eq_singleton` — if
+  `f'(x; ·)` is `⟨·, y₀⟩` then `∂f x = {y₀}`, and conversely a single-valued subdifferential makes
+  `cl f'(x; ·)` linear; Theorem 23.2 forwards and backwards.
+* `le_hasFDerivAt`, `subgradient_eq_singleton_of_hasFDerivAt` — **Theorem 25.1**: the gradient
+  inequality `f z ≥ f x + ⟨z - x, ∇f x⟩`, and `∂f x = {∇f x}`. The uniqueness half alone,
+  `eq_of_mem_subgradient_of_hasFDerivAt`, needs no convexity.
+* `differentiableAtFn_iff_exists_dirDeriv_eq`,
+  `differentiableAtFn_of_forall_basis_dirDeriv_eq` — **Theorem 25.2** and its last sentence.
+* `mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff` — **Corollaries 25.1.2** and
+  **25.1.3**.
 * `HasGradientAt`, `DifferentiableAtFn` — `∇f x = f'` for an `EReal`-valued `f`, with the results
-  above repackaged as `HasGradientAt.le`, `.subgradient_eq`, `.dirDeriv_eq`, `.mem_interior_dom`,
-  `.proper` and `.unique`. This is the interface §26 uses.
+  above repackaged as `.le`, `.subgradient_eq`, `.dirDeriv_eq`, `.mem_interior_dom`, `.proper` and
+  `.unique`. This is the interface §26 uses.
 
-## Design notes
+## Implementation notes
 
-**Exposedness is dual to unique subdifferentiability, and that is where the corollaries stop.**
-A supporting hyperplane to `epi f*` that touches it at one point only is non-vertical, so it is
-the graph of `⟨x, ·⟩ - α`; supporting at `(y, μ)` says `x ∈ ∂f*(y)`, i.e. `y ∈ ∂f x`, and touching
-nowhere else says `∂f x = {y}`. That is `mem_exposedPoints_epi_conj_iff`. Rockafellar then
-*renames* the conclusion using both halves of Theorem 25.1, arriving at "`f` is differentiable at
-`x` with `∇f x = y`"; the half that is missing here is exactly the half of Theorem 25.1 that is
-missing here (see "What is not here" below), so the corollaries are stated in the subgradient
-form, which is the form the proof produces.
+Differentiability of an `EReal`-valued function is carried by a local real representative:
+`HasFDerivAt` needs a normed target, so a convex `f : E → EReal` is differentiable at `x` when some
+real `g` has `f =ᶠ[𝓝 x] fun z => (g z : EReal)` and `HasFDerivAt g f' x`. This forces
+`x ∈ int (dom f)`, the standing assumption that `f x` is finite. Restricting to `f : E → ℝ` instead
+would lose §26, where the interesting functions are `+∞` outside an open set.
 
-**No finite-dimensionality, but two compatibility hypotheses.** The proof needs a continuous
-linear functional on `F` to be `⟨x, ·⟩` for some `x : E`, which for `F = StrongDual ℝ E` is
-reflexivity. Rather than assume `[FiniteDimensional ℝ E]` it is stated as
-`[IsCompatiblePairing B.flip]`, the pairing-level form of the same thing; `E` finite-dimensional
-paired with `StrongDual ℝ E` satisfies it through `instIsCompatiblePairingTopDualFinite`, and so
-does any pair of spaces in a compatible duality. The other hypothesis, `[IsCompatiblePairing B]`,
-is what makes `∂f*` the inverse of `∂f`.
-
-**Two layers, two pairings.** The directional-derivative statements are algebraic and hold over an
-arbitrary pairing `B`; uniqueness there needs the pairing to be separating in its second variable,
-which is the hypothesis `Function.Injective B.flip`. The Fréchet statements are about a genuine
-normed space and are stated for the canonical pairing `(topDualPairing ℝ E).flip`, where a
-subgradient *is* a continuous linear functional and `∇f x` is `HasFDerivAt`'s `f'`.
-
-**Differentiability of an `EReal`-valued function is expressed by a local real representative.**
-`HasFDerivAt` needs a normed target, so a convex `f : E → EReal` is called differentiable at `x`
-when there is a real-valued `g` with `f =ᶠ[𝓝 x] fun z => (g z : EReal)` and `HasFDerivAt g f' x`.
-That is exactly Rockafellar's situation: his definition of `∇f x` presupposes `f x` finite, and
-differentiability at `x` forces `f` to be finite near `x`, i.e. `x ∈ int (dom f)`
-(`mem_interior_dom_of_eventuallyEq_coe`). Restricting instead to `f : E → ℝ` would lose §26, where
-the interesting functions are `+∞` outside an open set.
-
-**Gâteaux ⇒ Fréchet is a cross-polytope estimate, not a compactness argument.** The sufficiency
-half of Theorem 25.2 is the only genuinely finite-dimensional statement in the file. Rockafellar
-gets it from Theorems 23.2, 7.2 and 4.8; the route taken here is quantitative and shorter. Writing
-`z - x = ∑ ξ j • b j` in a basis and putting `S = ∑ |ξ j|`, the point `z` is a convex combination
-of the `n` points `x + (S * sign (ξ j)) • b j`, each of which lies along a *basis* direction at the
-common distance `S` from `x`; the one-sided estimate `f (x + t • b j) ≤ f x + t c j + |t| η`
-therefore applies to all of them at once, and Jensen's inequality (`ConvexFn.sum_le`, in
-`Epigraph.lean`) reassembles them into `f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖`. No compactness, no
-continuity of `f`, and the hypothesis consumed is only the `2n` one-sided derivatives along
-`± b j` — which is exactly Rockafellar's strengthening.
-
-**The proof of Theorem 25.1 never mentions `dirDeriv`.** Rockafellar routes it through
-Theorem 23.2, but with a Fréchet derivative in hand the one-sided limit of the difference quotient
-along a ray does everything: convexity bounds the quotient above by `f z - f x`, which gives
-`∇f x ∈ ∂f x`, and the subgradient inequality bounds it below by `⟨v, y⟩` for any other subgradient
-`y`, which gives `⟨v, y⟩ ≤ ⟨v, ∇f x⟩` for every `v` — and hence equality, by applying it to `-v`.
-The uniqueness half therefore uses neither convexity nor properness.
-
-## What is not here
-
-**Theorems 25.5–25.7 are not formalised.** Theorem 25.5 (a.e. differentiability) is Rademacher's
-theorem plus the continuity of `∇f`, which is Theorem 24.4 together with Theorem 25.1 but needs the
-measure-theoretic statement first; Theorems 25.6 and 25.7 rest on 25.5 and on §24's convergence
-theory. Theorems 25.3 and 25.4 are in `Subgradient/Differentiability.lean`, which needs §24.
-
-**Theorem 25.1's converse half is in `Subgradient/Uniqueness.lean`**, not here: turning
-`∂f x = {y}` into "`f` is differentiable at `x` with `∇f x = y`" needs `x` to be an *interior* point
-of `dom f`, which costs a normal-cone argument and hence `Subgradient/Calculus.lean` and the
-finite-dimensional separation of `Subgradient/Existence.lean`. What this module gives is the
-subgradient reading of Corollaries 25.1.2 and 25.1.3, `mem_exposedPoints_epi_conj_iff` and
-`mem_exposedPoints_supportSet_iff`; the differentiability reading is there too.
+The directional-derivative statements hold over an arbitrary pairing `B`, with uniqueness needing
+`B` separating in its second variable. In place of `[FiniteDimensional ℝ E]` the exposed point
+results assume `[IsCompatiblePairing B.flip]` — every continuous linear functional on `F` is
+`⟨x, ·⟩` — which holds for finite-dimensional `E` paired with `StrongDual ℝ E`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorems 25.1 and
-  25.2, and Corollaries 25.1.1, 25.1.2 and 25.1.3).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25.
 -/
 
 open Set Filter Topology
@@ -130,13 +70,10 @@ section Linear
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {x : E}
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency, algebraically: if the directional derivative
-`f'(x; ·)` is the linear function `⟨·, y₀⟩`, then `y₀` is the unique subgradient of `f` at `x`.
-
-This is Theorem 23.2 plus the observation that `⟨v, y⟩ ≤ ⟨v, y₀⟩` for *every* `v`, `-v` included,
-forces `⟨·, y⟩ = ⟨·, y₀⟩`. The pairing must separate the points of `F`, which for
-`(topDualPairing ℝ E).flip` is the injectivity of the coercion of a continuous functional to a
-function. -/
+/-- **Theorem 25.2**, sufficiency, algebraically: if the directional derivative `f'(x; ·)` is the
+linear function `⟨·, y₀⟩`, then `y₀` is the unique subgradient of `f` at `x`. This is Theorem 23.2
+plus the observation that `⟨v, y⟩ ≤ ⟨v, y₀⟩` for *every* `v`, `-v` included, forces
+`⟨·, y⟩ = ⟨·, y₀⟩`; the pairing must therefore separate the points of `F`. -/
 theorem subgradient_eq_singleton_of_dirDeriv_eq (hsep : Function.Injective B.flip)
     (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) {y₀ : F}
     (h : ∀ v : E, dirDeriv f x v = ((B v y₀ : ℝ) : EReal)) :
@@ -202,7 +139,7 @@ theorem tendsto_slope_ray_of_hasFDerivAt (hd : HasFDerivAt g f' x) (v : E) :
 /-! ### Corollary 25.1.1 -/
 
 omit [NormedSpace ℝ E] in
-/-- **Rockafellar, Corollary 25.1.1**, first half: a function that agrees with a real-valued
+/-- **Corollary 25.1.1**, first half: a function that agrees with a real-valued
 function near `x` has `x` in the interior of its effective domain. Neither convexity nor
 differentiability plays any role — only local finiteness. -/
 theorem mem_interior_dom_of_eventuallyEq_coe
@@ -210,12 +147,10 @@ theorem mem_interior_dom_of_eventuallyEq_coe
   mem_interior_iff_mem_nhds.2
     (hfg.mono fun z hz => mem_dom.2 (by rw [hz]; exact _root_.EReal.coe_lt_top _))
 
-/-- **Rockafellar, Corollary 25.1.1**, second half: a convex function that is finite near a point
-is proper.
-
+/-- **Corollary 25.1.1**, second half: a convex function that is finite near a point is proper.
 This is the piece of Theorem 7.2 that differentiability needs, and unlike Theorem 7.2 it holds in
-any topological vector space: if `f u = ⊥` then `f` is `⊥` on the half-open segment `[u, x)`
-(`ConvexFn.eq_bot_of_lt_one`), whose points approach `x`, where `f` is finite. -/
+any topological vector space: if `f u = ⊥` then `f` is `⊥` on the half-open segment `[u, x)`,
+whose points approach `x`, where `f` is finite. -/
 theorem proper_of_eventuallyEq_coe (hf : ConvexFn f)
     (hfg : f =ᶠ[𝓝 x] fun z => ((g z : ℝ) : EReal)) : Proper f := by
   have hx : f x = ((g x : ℝ) : EReal) := hfg.self_of_nhds
@@ -236,7 +171,7 @@ theorem proper_of_eventuallyEq_coe (hf : ConvexFn f)
 
 /-! ### Theorem 25.1: the gradient is the unique subgradient -/
 
-/-- **Rockafellar, Theorem 25.1**, the gradient inequality: a convex function lies above its
+/-- **Theorem 25.1**, the gradient inequality: a convex function lies above its
 tangent affine function at every point of differentiability. -/
 theorem le_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f)
     (hfg : f =ᶠ[𝓝 x] fun z => ((g z : ℝ) : EReal)) (hd : HasFDerivAt g f' x) (z : E) :
@@ -289,7 +224,7 @@ theorem eq_of_mem_subgradient_of_hasFDerivAt (hfg : f =ᶠ[𝓝 x] fun z => ((g 
   rw [map_neg, map_neg] at hneg
   linarith
 
-/-- **Rockafellar, Theorem 25.1**: at a point where a convex function is differentiable, the
+/-- **Theorem 25.1**: at a point where a convex function is differentiable, the
 gradient is the unique subgradient. -/
 theorem subgradient_eq_singleton_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f)
     (hfg : f =ᶠ[𝓝 x] fun z => ((g z : ℝ) : EReal)) (hd : HasFDerivAt g f' x) :
@@ -300,13 +235,10 @@ theorem subgradient_eq_singleton_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f
   rw [hval]
   exact le_of_hasFDerivAt hf hp hfg hd z
 
-/-- **Rockafellar, Theorem 25.2**, necessity: at a point of differentiability the directional
-derivative is the linear function `v ↦ ⟨v, ∇f x⟩`.
-
-Both halves come from the defining infimum. The lower bound is the gradient inequality at
-`x + a • v` (`EReal.coe_le_sub_div_iff` turns it into the quotient bound); the upper bound is the
-limit `a ↓ 0`, extracted through `EReal.lt_iff_exists_real_btwn` so that no `EReal` division has
-to be computed. -/
+/-- **Theorem 25.2**, necessity: at a point of differentiability the directional derivative is the
+linear function `v ↦ ⟨v, ∇f x⟩`. Both halves come from the defining infimum: the lower bound is the
+gradient inequality at `x + a • v`, the upper bound the limit `a ↓ 0`, extracted through
+`EReal.lt_iff_exists_real_btwn` so that no `EReal` division has to be computed. -/
 theorem dirDeriv_eq_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f)
     (hfg : f =ᶠ[𝓝 x] fun z => ((g z : ℝ) : EReal)) (hd : HasFDerivAt g f' x) (v : E) :
     dirDeriv f x v = ((f' v : ℝ) : EReal) := by
@@ -338,11 +270,9 @@ theorem dirDeriv_eq_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f)
 /-! ### Packaging: `∇f` for an `EReal`-valued function -/
 
 /-- `f` **has gradient** `f'` at `x`: near `x`, `f` agrees with a real-valued function that is
-Fréchet differentiable at `x` with derivative `f'`.
-
-This is Rockafellar's `∇f x = f'`. An `EReal`-valued function cannot satisfy `HasFDerivAt`
-directly — that needs a normed target — and the local real representative is exactly what his
-definition presupposes: `f x` finite, hence `f` finite near `x`. -/
+Fréchet differentiable at `x` with derivative `f'`. This is `∇f x = f'`. An `EReal`-valued function
+cannot satisfy `HasFDerivAt` directly — that needs a normed target — and the local real
+representative carries exactly what the classical definition presupposes: `f` finite near `x`. -/
 def HasGradientAt (f : E → EReal) (f' : StrongDual ℝ E) (x : E) : Prop :=
   ∃ g : E → ℝ, f =ᶠ[𝓝 x] (fun z => ((g z : ℝ) : EReal)) ∧ HasFDerivAt g f' x
 
@@ -387,7 +317,7 @@ theorem HasGradientAt.dirDeriv_eq (hf : ConvexFn f) (h : HasGradientAt f f' x) (
   obtain ⟨g, hfg, hd⟩ := h
   exact dirDeriv_eq_of_hasFDerivAt hf (proper_of_eventuallyEq_coe hf hfg) hfg hd v
 
-/-- The gradient is unique where it exists. Rockafellar takes this for granted; here it is the
+/-- The gradient is unique where it exists. This is the
 uniqueness of `HasFDerivAt` for the local real representative, and it needs no convexity. -/
 theorem HasGradientAt.unique {f₁' f₂' : StrongDual ℝ E} (h₁ : HasGradientAt f f₁' x)
     (h₂ : HasGradientAt f f₂' x) : f₁' = f₂' := by
@@ -414,9 +344,9 @@ with
 f (x + t • v) ≤ f x + t * c + |t| * η        whenever |t| ≤ a₀,
 ```
 
-for `t` of *either* sign. Both halves are `exists_le_of_dirDeriv_lt`; on the negative side it is
-applied in the direction `-v`, and the linear term survives unchanged because `(-t) * (-c) = t * c`
-while the error term picks up `|t| = -t`. -/
+for `t` of *either* sign. On the negative side the one-sided estimate is applied in the direction
+`-v`; the linear term survives unchanged because `(-t) * (-c) = t * c`, while the error term picks
+up `|t| = -t`. -/
 theorem exists_forall_abs_le_of_dirDeriv_eq (hf : ConvexFn f) {r : ℝ} (hr : f x = (r : EReal))
     {v : E} {c η : ℝ} (hη : 0 < η) (hpos : dirDeriv f x v = (c : EReal))
     (hneg : dirDeriv f x (-v) = ((-c : ℝ) : EReal)) :
@@ -444,8 +374,8 @@ theorem exists_forall_abs_le_of_dirDeriv_eq (hf : ConvexFn f) {r : ℝ} (hr : f 
     rw [_root_.EReal.coe_eq_coe_iff, habs]
     ring
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency, quantitatively: two-sided directional derivatives
-along a *basis* already force the tangent affine estimate
+/-- **Theorem 25.2**, sufficiency, quantitatively: two-sided directional derivatives along a
+*basis* already force the tangent affine estimate
 
 ```
 f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖
@@ -454,12 +384,11 @@ f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖
 on a ball whose radius depends only on `ε`.
 
 Finite-dimensionality enters through a *cross-polytope* decomposition rather than through
-compactness of the unit sphere, which makes the argument quantitative and basis-free at the end.
-Writing `z - x = ∑ ξ j • b j` and `S = ∑ |ξ j|`, the point `z` is the convex combination, with
-weights `|ξ j| / S`, of the points `x + (S * sign (ξ j)) • b j`; each of those sits at distance `S`
-from `x` along a basis direction, where `exists_forall_abs_le_of_dirDeriv_eq` applies. The linear
-terms recombine into `⟨z - x, y₀⟩` exactly, and the error term is `S * η`, which is at most
-`ε ‖z - x‖` once `η` is scaled by the constant relating `∑ |ξ j|` to `‖z - x‖`. -/
+compactness of the unit sphere, which keeps the argument quantitative. Writing `z - x = ∑ ξ j • b j`
+and `S = ∑ |ξ j|`, the point `z` is the convex combination with weights `|ξ j| / S` of the points
+`x + (S * sign (ξ j)) • b j`, each at distance `S` from `x` along a basis direction, where the
+one-sided estimate applies. The linear terms recombine into `⟨z - x, y₀⟩` exactly and the error is
+`S * η`, at most `ε ‖z - x‖` once `η` is scaled by the constant relating `∑ |ξ j|` to `‖z - x‖`. -/
 theorem exists_le_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E] (b : Module.Basis ι ℝ E)
     (hf : ConvexFn f) {r : ℝ} (hr : f x = (r : EReal)) {y₀ : StrongDual ℝ E}
     (hpos : ∀ j, dirDeriv f x (b j) = ((y₀ (b j) : ℝ) : EReal))
@@ -584,9 +513,9 @@ theorem exists_le_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E] (b : Mod
 
 /-- The estimate of `exists_le_of_forall_basis_dirDeriv_eq` recovers `f'(x; ·)` in *every*
 direction, not only along the basis: it bounds `f'(x; v)` above by `⟨v, y₀⟩`, and Theorem 23.1's
-`-f'(x; -v) ≤ f'(x; v)` supplies the matching lower bound. This is the step that turns
-Rockafellar's `n` two-sided partial derivatives into the linearity of `f'(x; ·)`; his own route is
-through Theorems 7.2 and 4.8, which need `f'(x; ·)` to be proper first. -/
+`-f'(x; -v) ≤ f'(x; v)` supplies the matching lower bound. This turns `n` two-sided partial
+derivatives into linearity of `f'(x; ·)` without the detour through Theorems 7.2 and 4.8, which
+would need `f'(x; ·)` to be proper first. -/
 theorem dirDeriv_eq_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
     (b : Module.Basis ι ℝ E) (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥)
     {y₀ : StrongDual ℝ E} (hpos : ∀ j, dirDeriv f x (b j) = ((y₀ (b j) : ℝ) : EReal))
@@ -629,15 +558,11 @@ theorem dirDeriv_eq_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
   rw [← _root_.EReal.coe_neg, neg_neg] at h2
   exact h2.trans (neg_dirDeriv_neg_le hf ht hb v)
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency, from two-sided derivatives along a basis: `f` is
-Fréchet differentiable at `x`, with gradient the functional `y₀` whose values along the basis are
-the given one-sided derivatives.
-
-The two-sided estimate `f x + ⟨z - x, y₀⟩ ≤ f z ≤ f x + ⟨z - x, y₀⟩ + ε ‖z - x‖` does all three
-jobs at once: the lower half comes from `y₀ ∈ ∂f x` (Theorem 23.2), the upper half is
-`exists_le_of_forall_basis_dirDeriv_eq`, and together they make `f` finite near `x` — so that the
-local real representative `z ↦ (f z).toReal` exists — and exhibit the little-o estimate defining
-`HasFDerivAt`. -/
+/-- **Theorem 25.2**, sufficiency, from two-sided derivatives along a basis: `f` is Fréchet
+differentiable at `x`, with gradient the functional `y₀` whose values along the basis are the given
+one-sided derivatives. The two-sided estimate `f x + ⟨z - x, y₀⟩ ≤ f z ≤ f x + ⟨z - x, y₀⟩ +
+ε ‖z - x‖` does all three jobs at once: it makes `f` finite near `x`, so that the local real
+representative exists, and exhibits the little-o estimate defining `HasFDerivAt`. -/
 theorem hasGradientAt_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
     (b : Module.Basis ι ℝ E) (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥)
     {y₀ : StrongDual ℝ E} (hpos : ∀ j, dirDeriv f x (b j) = ((y₀ (b j) : ℝ) : EReal))
@@ -677,18 +602,16 @@ theorem hasGradientAt_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
   rw [hgx, Real.norm_eq_abs, abs_le]
   exact ⟨by linarith, by linarith⟩
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency: if the directional derivative `f'(x; ·)` is the
-linear function `⟨·, y₀⟩`, then `f` is differentiable at `x` with `∇f x = y₀`.
-
-This is the previous theorem read at any basis; the hypothesis in every direction is more than the
-proof consumes. -/
+/-- **Theorem 25.2**, sufficiency: if the directional derivative `f'(x; ·)` is the linear function
+`⟨·, y₀⟩`, then `f` is differentiable at `x` with `∇f x = y₀`. This is the previous theorem read at
+any basis; the hypothesis in every direction is more than the proof consumes. -/
 theorem hasGradientAt_of_dirDeriv_eq [FiniteDimensional ℝ E] (hf : ConvexFn f) (ht : f x ≠ ⊤)
     (hb : f x ≠ ⊥) {y₀ : StrongDual ℝ E}
     (h : ∀ v : E, dirDeriv f x v = ((y₀ v : ℝ) : EReal)) : HasGradientAt f y₀ x :=
   hasGradientAt_of_forall_basis_dirDeriv_eq (Module.finBasis ℝ E) hf ht hb (fun j => h _)
     (fun j => by rw [h, map_neg])
 
-/-- **Rockafellar, Theorem 25.2**, in full: for a convex function finite at `x`, differentiability
+/-- **Theorem 25.2**, in full: for a convex function finite at `x`, differentiability
 at `x` is equivalent to linearity of `f'(x; ·)`. Necessity is `HasGradientAt.dirDeriv_eq` and
 sufficiency is `hasGradientAt_of_dirDeriv_eq`. -/
 theorem differentiableAtFn_iff_exists_dirDeriv_eq [FiniteDimensional ℝ E] (hf : ConvexFn f)
@@ -701,7 +624,7 @@ theorem differentiableAtFn_iff_exists_dirDeriv_eq [FiniteDimensional ℝ E] (hf 
   · rintro ⟨y₀, h⟩
     exact ⟨y₀, hasGradientAt_of_dirDeriv_eq hf ht hb h⟩
 
-/-- **Rockafellar, Theorem 25.2**, last sentence: it is enough that the `n` two-sided partial
+/-- **Theorem 25.2**, last sentence: it is enough that the `n` two-sided partial
 derivatives exist and are finite. Here "the `n` partial derivatives" is the pair of one-sided
 derivatives along the vectors of a basis, and "two-sided and finite" is the requirement that they
 be the negatives of each other and real. The gradient is then `b.constr` of those numbers. -/
@@ -727,14 +650,11 @@ section HalfCylinder
 
 variable {X : Type*} [AddCommGroup X] [Module ℝ X] [TopologicalSpace X]
 
-/-- **The exposed points of a half-cylinder** `C ×ˢ [0, ∞)` are the points `(z, 0)` with `z` an
-exposed point of `C`.
-
-A functional exposing a point of the cylinder must be *strictly* decreasing in the vertical
-direction — otherwise the whole vertical ray attains the maximum — and that forces the height to
-be `0` and reduces the functional to one on `C`. This is the epigraph of an indicator function
-(`epi_indicatorFn`), so it is how a statement about `epi f*` becomes a statement about a convex
-set. -/
+/-- The exposed points of a half-cylinder `C ×ˢ [0, ∞)` are the points `(z, 0)` with `z` an
+exposed point of `C`. A functional exposing a point of the cylinder must be *strictly* decreasing
+in the vertical direction, since otherwise the whole vertical ray attains the maximum; that forces
+the height to be `0` and reduces the functional to one on `C`. The cylinder is the epigraph of an
+indicator function, so this is how a statement about `epi f*` becomes one about a convex set. -/
 theorem mem_exposedPoints_prod_Ici_iff {C : Set X} {z : X} {ν : ℝ} :
     (z, ν) ∈ (C ×ˢ Ici (0 : ℝ)).exposedPoints ℝ ↔ ν = 0 ∧ z ∈ C.exposedPoints ℝ := by
   constructor
@@ -818,17 +738,13 @@ section Topology
 variable [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E]
   [LocallyConvexSpace ℝ E] [TopologicalSpace F]
 
-/-- **The exposed points of the epigraph of a conjugate.** A point `(y, μ)` is an exposed point of
-`epi f*` exactly when `μ = f* y` and `y` is the *only* subgradient of `f` at some point `x`.
+/-- **Corollary 25.1.2**, in subgradient form: `(y, μ)` is an exposed point of `epi f*` exactly
+when `μ = f* y` and `y` is the *only* subgradient of `f` at some point `x`.
 
-Geometrically: a supporting hyperplane to `epi f*` that touches it in a single point is
-necessarily non-vertical, so it is the graph of an affine function `⟨x, ·⟩ - α`; that it supports
-`epi f*` at `(y, μ)` says `x ∈ ∂f*(y)`, i.e. `y ∈ ∂f x`, and that it touches nowhere else says
-`∂f x` is no larger than `{y}`.
-
-Only the forward direction uses closedness — through `∂f* = (∂f)⁻¹` — and neither direction uses
-finite-dimensionality: what replaces it is `IsCompatiblePairing B.flip`, which says that a
-continuous linear functional on `F` is `⟨x, ·⟩` for some `x : E`. -/
+Geometrically, a supporting hyperplane to `epi f*` touching it in a single point is necessarily
+non-vertical, hence the graph of an affine function `⟨x, ·⟩ - α`; supporting `epi f*` at `(y, μ)`
+says `x ∈ ∂f*(y)`, i.e. `y ∈ ∂f x`, and touching nowhere else says `∂f x` is no larger than `{y}`.
+Only the forward direction uses closedness, through `∂f* = (∂f)⁻¹`. -/
 theorem mem_exposedPoints_epi_conj_iff [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ConvexFn f) (hp : Proper f) (hc : ClosedFn f) {y : F} {μ : ℝ} :
     (y, μ) ∈ (epi (conj B f)).exposedPoints ℝ ↔
@@ -965,15 +881,12 @@ section Homogeneous
 variable [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
 
 omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] in
-/-- **The exposed points of a set are the values of the subdifferential of any positively
-homogeneous function that cuts it out.** If `g` is a closed proper convex positively homogeneous
-function and `C = {x | ⟨x, y⟩ ≤ g y for all y}` — for instance the support function of `C` — then
-`z` is an exposed point of `C` exactly when `z` is the *only* subgradient of `g` at some `y`.
-
-The conjugate of `g` is the indicator of `C` (`conj_eq_indicatorFn_of_posHomogeneous`), so
-`epi g*` is the half-cylinder `C ×ˢ [0, ∞)`, whose exposed points are the exposed points of `C`
-sitting at height `0` (`mem_exposedPoints_prod_Ici_iff`). The statement is then
-`mem_exposedPoints_epi_conj_iff` read at height `0`. -/
+/-- **Corollary 25.1.3**: the exposed points of a set are the values of the subdifferential of any
+positively homogeneous function that cuts it out. If `g` is closed proper convex and positively
+homogeneous and `C = {x | ⟨x, y⟩ ≤ g y for all y}` — for instance `g` the support function of
+`C` — then `z` is an exposed point of `C` exactly when `z` is the *only* subgradient of `g` at some
+`y`. The conjugate of `g` is the indicator of `C`, so `epi g*` is the half-cylinder `C ×ˢ [0, ∞)`
+and this is the previous result read at height `0`. -/
 theorem mem_exposedPoints_supportSet_iff [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     {g : F → EReal} (hgh : PosHomogeneous g) (hgc : ConvexFn g) (hgp : Proper g)
     (hgcl : ClosedFn g) {z : E} :

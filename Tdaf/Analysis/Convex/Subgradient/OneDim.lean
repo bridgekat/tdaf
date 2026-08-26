@@ -11,122 +11,49 @@ import Tdaf.Analysis.Convex.Subgradient.Monotone
 
 On the line a convex function has a right derivative `f'₊` and a left derivative `f'₋` at every
 point, with values in `[-∞, +∞]`, and they carry all the first-order information:
-
-```
-∂f(x) = {x* ∈ ℝ | f'₋(x) ≤ x* ≤ f'₊(x)}.
-```
-
-Both are **nondecreasing**, interlaced as
-
-```
-f'₊(z₁) ≤ f'₋(x) ≤ f'₊(x) ≤ f'₋(z₂)          for z₁ < x < z₂,
-```
-
-both are real exactly on `int (dom f)`, and — when `f` is closed — each is the one-sided limit of
-the other:
-
-```
-lim_{z ↓ x} f'₊(z) = lim_{z ↓ x} f'₋(z) = f'₊(x),
-lim_{z ↑ x} f'₊(z) = lim_{z ↑ x} f'₋(z) = f'₋(x).
-```
-
-So `f'₊` is right-continuous, `f'₋` is left-continuous, and either one determines the other. In
-consequence any nondecreasing `φ` with `f'₋ ≤ φ ≤ f'₊` determines `∂f`, and hence determines `f`
-itself up to an additive constant.
+`∂f(x) = {x* ∈ ℝ | f'₋(x) ≤ x* ≤ f'₊(x)}`. Both are nondecreasing, interlaced as
+`f'₊(z₁) ≤ f'₋(x) ≤ f'₊(x) ≤ f'₋(z₂)` for `z₁ < x < z₂`, and both are real exactly on
+`int (dom f)`. When `f` is closed each is the one-sided limit of the other — `f'₊(z)` and `f'₋(z)`
+both tend to `f'₊(x)` as `z ↓ x`, and to `f'₋(x)` as `z ↑ x` — so `f'₊` is right-continuous, `f'₋`
+is left-continuous, and either determines the other. Hence any nondecreasing `φ` with
+`f'₋ ≤ φ ≤ f'₊` determines `∂f`, and so determines `f` up to a constant.
 
 One dimension also collapses the two monotonicity notions of `Subgradient/Monotone.lean` into one.
-A monotone relation on `ℝ` is exactly a set totally ordered by the coordinatewise order of `ℝ × ℝ`
-— a *non-decreasing curve* — and any cycle through such a set may be rotated to start at its
-largest pair, which dominates the cycle in both coordinates and may therefore be deleted without
-decreasing the telescoping sum. So monotone and cyclically monotone agree on the line, and the
-maximal monotone relations — the *complete non-decreasing curves* — are precisely the graphs of the
+A monotone relation on `ℝ` is exactly a set totally ordered by the coordinatewise order of `ℝ × ℝ`,
+a *non-decreasing curve*, and any cycle through such a set may be rotated to start at its largest
+pair, which dominates the cycle in both coordinates and may therefore be deleted without decreasing
+the telescoping sum. So monotone and cyclically monotone agree on the line, and the maximal
+monotone relations — the *complete non-decreasing curves* — are precisely the graphs of the
 subdifferentials of the closed proper convex functions.
 
 ## Main definitions
 
 * `rightDeriv f x`, `leftDeriv f x` — the two one-sided derivatives, extended by `+∞` to the right
   of `dom f` and by `-∞` to its left.
-* `cycleVal B L` — the telescoping sum around the cycle through a list `L` of pairs, a repackaging
-  of `chainVal` that makes rotation invariance expressible.
+* `cycleVal B L` — the telescoping sum around a cycle presented as a single list of pairs, the form
+  in which rotation invariance is expressible.
 
 ## Main results
 
-* `leftDeriv_le_rightDeriv`, `rightDeriv_le_leftDeriv`, `monotone_rightDeriv`,
-  `monotone_leftDeriv` — the interlacing chain and monotonicity.
-* `rightDeriv_lt_top_iff`, `bot_lt_leftDeriv_iff`,
-  `bot_lt_leftDeriv_and_rightDeriv_lt_top_iff` — finiteness, and its identification with
-  interiority of `dom f`.
 * `mem_subgradient_iff_le_rightDeriv` — `∂f(x)` is the interval `[f'₋(x), f'₊(x)]`.
 * `iInf_rightDeriv_Ioi`, `iSup_leftDeriv_Iio`, `iInf_leftDeriv_Ioi`, `iSup_rightDeriv_Iio` and
-  their `Tendsto` forms `tendsto_rightDeriv_nhdsWithin_Ioi` and companions — the four limit
-  formulas, for a closed proper convex `f`.
-* `iInf_Ioi_eq_rightDeriv`, `iSup_Iio_eq_leftDeriv` — a nondecreasing `φ` between `f'₋` and `f'₊`
-  has the same one-sided limits.
-* `exists_eq_add_coe_of_deriv_eq`, `exists_eq_add_coe_of_le_le` — two closed proper convex
-  functions with the same one-sided derivatives, or squeezed around a common `φ`, differ by a
-  constant.
-* `tendsto_nhdsWithin_Ioi_of_monotone`, `tendsto_nhdsWithin_Iio_of_monotone` — the general fact
-  that a monotone map into a complete linear order has one-sided limits, equal to the obvious
-  infimum and supremum.
-* `cycleVal_append_comm` — the sum around a cycle is invariant under rotation.
-* `isMonotoneRel_iff_forall_le_or_le`, `IsMonotoneRel.isCyclicallyMonotone`,
-  `isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone` — on the line, monotone means totally
-  ordered, and coincides with cyclically monotone.
-* `isMaximalMonotoneRel_iff_exists_closedProperConvexFn` — the maximal monotone relations on `ℝ`
-  are exactly the subdifferentials of the closed proper convex functions, and
-  `mem_subgradientRel_iff` describes each of them as the region between two one-sided derivatives.
+  their `Tendsto` forms — the four limit formulas, for a closed proper convex `f`.
+* `exists_eq_add_coe_of_le_le` — two closed proper convex functions squeezed around a common `φ`
+  differ by a constant.
+* `IsMonotoneRel.isCyclicallyMonotone` — on the line the two monotonicity notions coincide.
+* `isMaximalMonotoneRel_iff_exists_closedProperConvexFn` — **Theorem 24.3**.
 
-## Design notes
+## Implementation notes
 
-**The two definitions are guarded infima and suprema.** `f'₊(x)` is `f'(x; 1)` *provided* some
-point of `dom f` lies to the right of `x`, and `+∞` otherwise; the guard is written
-`⨅ _ : ∃ z > x, f z < ⊤, f'(x; 1)`, which is the guarded value on one branch and `⊤` on the other.
-It is genuinely needed: where `f x = ⊤` every difference quotient is `⊤ - ⊤ = ⊥`, so the unguarded
-infimum would be `-∞` on *both* sides of `dom f`, whereas the two sides must be told apart. Where
-`f` is finite the guard is inert (`rightDeriv_eq_dirDeriv`).
-
-**`f'₊` is `f'(x; 1)` and `f'₋` is `-f'(x; -1)`**, so the whole theory of `dirDeriv` from §23 —
-monotone difference quotients, convexity, the link with `∂f` — is available and nothing is
-redefined. The sign in `f'₋` is because the increment `z - x` is negative there.
-
-**The limit formulas need `f` closed and nothing else.** They fail for
-`f = 1 at 0, 0 on (0, ∞), ⊤ on (-∞, 0)`, which is convex and proper but not closed: `f'₊` jumps at
-`0`. The proof is Rockafellar's: a real `μ` below every `f'₊(z)`, `z > x`, bounds `f` above by an
-affine function of slope `μ` on the segment approaching `x`, and closedness (Corollary 7.5.1)
-carries that bound to `x` itself.
-
-**Cycles are lists, and rotation is `cycleVal_append_comm`.** `IsCyclicallyMonotone` presents a
-cycle as a head pair `s` and a list `l`, which is the convenient form for the potential
-construction but not for rotating. `cycleVal B L = chainVal B p l p.1` for `L = p :: l` puts the
-cycle in a single list, and then `cycleVal B (A ++ C) = cycleVal B (C ++ A)` is a two-line
-induction on `A` from the one-step case `cycleVal B (p :: l) = cycleVal B (l ++ [p])`.
-
-**Deleting a pair from a cycle needs the sharpened affineness lemma.** `exists_chainVal_eq` says a
-chain is an affine function `⟨x, y⟩ - c` of its free endpoint; to see that the edge left behind
-when the head is deleted has the right sign, one needs `y` to be the second coordinate of a pair
-*of the cycle*, which is `exists_chainVal_eq_mem`.
-
-**Monotonicity is cheaper than it looks.** `f'₊(y) ≤ f'₋(z)` for `y < z` needs only properness:
-`dirDeriv` is an *infimum* of difference quotients, and the two quotients across `[y, z]` bound it
-whatever `f` is. Convexity enters only in `f'₋(x) ≤ f'₊(x)` at a single point.
-
-## What is not here
-
-**The construction of `f` from `φ` by integration**, `f(x) = ∫ₐˣ φ(t) dt`: given a nondecreasing
-`φ : ℝ → [-∞, +∞]`, exhibiting *some* closed proper convex `f` with `f'₋ ≤ φ ≤ f'₊`. It needs the
-integral of a nondecreasing `[-∞, +∞]`-valued function, improper at the two ends of the interval
-where `φ` is finite, together with the fact that the resulting function is closed there —
-real-analysis machinery the project does not have. The uniqueness half of that statement is proved
-here and does not go through the integral at all: it goes through `∂f = ∂g` and the rigidity
-theorem of `Subgradient/Monotone.lean`. Nor is the integral needed for the description of the
-complete non-decreasing curves, which comes instead from maximal monotonicity together with the
-identification of the maximal cyclically monotone relations.
+`f'₊` is `f'(x; 1)` and `f'₋` is `-f'(x; -1)`, so the whole theory of `dirDeriv` is available and
+nothing is redefined. Both are *guarded*: `f'₊(x)` is `f'(x; 1)` provided some point of `dom f`
+lies to the right of `x`, and `+∞` otherwise. The guard is needed because where `f x = ⊤` every
+difference quotient is `⊤ - ⊤ = ⊥`, so the unguarded infimum would be `-∞` on *both* sides of
+`dom f`, and the two sides must be told apart. Where `f` is finite the guard is inert.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorem 24.1, the
-  remark following it, the uniqueness clause of Theorem 24.2, and Theorem 24.3); §23 (Theorems
-  23.1, 23.2).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23 and §24.
 -/
 
 open Set Filter Topology
@@ -140,7 +67,7 @@ section Outside
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal} {x : E}
 
 /-- Where `f` is `+∞` every difference quotient is `-∞`, so the directional derivative is `-∞` in
-every direction. This is the value Rockafellar wants to the *left* of `dom f` and the value he
+every direction. This is the value wanted to the *left* of `dom f` and the one
 overrides to the right. -/
 theorem dirDeriv_eq_bot_of_eq_top (hx : f x = ⊤) (y : E) : dirDeriv f x y = ⊥ := by
   refine le_antisymm ?_ bot_le
@@ -164,8 +91,7 @@ f'₊(x) = lim_{z ↓ x} (f z - f x) / (z - x),
 
 with the convention that it is `+∞` at every point lying to the right of `dom f`. Without that
 override the difference quotients would all be `-∞` there, which is the value belonging to the
-points on the *left*; the two sides have to be told apart by hand, and the guard
-`∃ z > x, f z < ⊤` is what does it. -/
+points on the *left*. -/
 noncomputable def rightDeriv (f : ℝ → EReal) (x : ℝ) : EReal :=
   ⨅ _ : ∃ z, x < z ∧ f z < ⊤, dirDeriv f x 1
 
@@ -257,12 +183,10 @@ theorem dirDeriv_neg_one_le_slope {y z p q : ℝ} (hyz : y < z) (hfy : f y = (p 
     ← _root_.EReal.coe_sub, ← _root_.EReal.coe_div] at hle
 
 /-- **The step from one point to the next**: `f'₊(y) ≤ f'₋(z)` whenever `y < z`. Together with
-`f'₋ ≤ f'₊` this is Rockafellar's chain `f'₊(z₁) ≤ f'₋(x) ≤ f'₊(x) ≤ f'₋(z₂)` for `z₁ < x < z₂`,
-and it is what makes both functions nondecreasing.
-
-Convexity is *not* needed: `dirDeriv` is an infimum of difference quotients rather than a limit of
-them, so the two quotients across `[y, z]` bound it from above whatever `f` is. Only `f'₋ ≤ f'₊`
-at a single point uses convexity. -/
+`f'₋ ≤ f'₊` this is the chain `f'₊(z₁) ≤ f'₋(x) ≤ f'₊(x) ≤ f'₋(z₂)` for `z₁ < x < z₂`, and it makes
+both functions nondecreasing. Convexity is *not* needed: `dirDeriv` is an infimum of difference
+quotients rather than a limit of them, so the two quotients across `[y, z]` bound it from above
+whatever `f` is. Only `f'₋ ≤ f'₊` at a single point uses convexity. -/
 theorem rightDeriv_le_leftDeriv (hp : Proper f) {y z : ℝ} (hyz : y < z) :
     rightDeriv f y ≤ leftDeriv f z := by
   rcases em (∃ w, y < w ∧ f w < ⊤) with h₂ | h₂
@@ -351,7 +275,7 @@ theorem bot_lt_leftDeriv_iff (hp : Proper f) :
   · rw [dirDeriv_eq_bot_of_eq_top (top_le_iff.1 hx), _root_.EReal.neg_bot]
     exact bot_lt_top
 
-/-- **Both one-sided derivatives are finite exactly on the interior of `dom f`.** Rockafellar
+/-- **Both one-sided derivatives are finite exactly on the interior of `dom f`.** The book
 states the two halves separately, as `f'₊ < +∞` to the left of the right endpoint and `f'₋ > -∞`
 to the right of the left endpoint; on the line those two conditions together *are* interiority. -/
 theorem bot_lt_leftDeriv_and_rightDeriv_lt_top_iff (hf : ConvexFn f) (hp : Proper f) :
@@ -424,9 +348,8 @@ theorem leftDeriv_eq_neg_dirDeriv (hx : f x < ⊤) (hb : f x ≠ ⊥) :
 ∂f(x) = {x* ∈ ℝ | f'₋(x) ≤ x* ≤ f'₊(x)}.
 ```
 
-Rockafellar records this immediately after Theorem 24.1, as a consequence of Theorem 23.2. Only
-the two directions `+1` and `-1` carry information, because `f'(x; ·)` is positively
-homogeneous. -/
+This is a consequence of Theorem 23.2: only the directions `+1` and `-1` carry information,
+because `f'(x; ·)` is positively homogeneous. -/
 theorem mem_subgradient_iff_le_rightDeriv_of_lt_top (hx : f x < ⊤) (hb : f x ≠ ⊥) {y : ℝ} :
     y ∈ subgradient (innerₗ ℝ) f x ↔
       leftDeriv f x ≤ (y : EReal) ∧ (y : EReal) ≤ rightDeriv f x := by
@@ -542,13 +465,10 @@ section Limits
 
 variable {f : ℝ → EReal} {x : ℝ}
 
-/-- **The estimate behind the right-hand limit formulas.** If a real `μ` lies strictly below
-`f'₊(z)` for every `z > x`, then `f` itself is bounded by the affine function of slope `μ` through
-`(y, f y)`, at `x`.
-
+/-- The estimate behind the right-hand limit formulas: if a real `μ` lies strictly below `f'₊(z)`
+for every `z > x`, then `f x` is bounded by the affine function of slope `μ` through `(y, f y)`.
 Along the segment from `y` down to `x`, each interior point `z` has `μ < f'₊(z) ≤` the slope from
-`z` to `y`, which bounds `f z` from above; closedness lets the bound pass to the endpoint `x`
-(Corollary 7.5.1). -/
+`z` to `y`, which bounds `f z` above; closedness lets the bound pass to the endpoint `x`. -/
 theorem le_coe_of_lt_rightDeriv (hf : ClosedProperConvexFn f) {y : ℝ} (hxy : x < y) {q : ℝ}
     (hq : f y = (q : EReal)) {μ : ℝ} (hμ : ∀ z, x < z → (μ : EReal) < rightDeriv f z) :
     f x ≤ ((q - μ * (y - x) : ℝ) : EReal) := by
@@ -591,7 +511,8 @@ theorem le_coe_of_lt_rightDeriv (hf : ClosedProperConvexFn f) {y : ℝ} (hxy : x
 
 /-- **Right-continuity of `f'₊`.** For a closed proper convex function on the line the right
 derivative is the limit of its own values from the right, in the monotone sense
-`f'₊(x) = ⨅ {f'₊(z) | z > x}`. -/
+`f'₊(x) = ⨅ {f'₊(z) | z > x}`. Closedness cannot be dropped: for `f` equal to `1` at `0`, to `0` on
+`(0, ∞)` and to `⊤` on `(-∞, 0)` — convex and proper, but not closed — `f'₊` jumps at `0`. -/
 theorem iInf_rightDeriv_Ioi (hf : ClosedProperConvexFn f) (x : ℝ) :
     ⨅ z ∈ Ioi x, rightDeriv f z = rightDeriv f x := by
   refine le_antisymm ?_ (le_iInf₂ fun z hz => monotone_rightDeriv hf.convex hf.proper hz.le)
@@ -764,7 +685,7 @@ theorem monotone_of_leftDeriv_le_of_le_rightDeriv (hp : Proper f) {φ : ℝ → 
   exact (h₂ y).trans ((rightDeriv_le_leftDeriv hp hlt).trans (h₁ z))
 
 /-- **`φ` determines `f'₊`**: any nondecreasing `φ` between `f'₋` and `f'₊` has `f'₊` as its limit
-from the right. Rockafellar's remark between Theorems 24.1 and 24.2. -/
+from the right; the remark between Theorems 24.1 and 24.2. -/
 theorem iInf_Ioi_eq_rightDeriv (hf : ClosedProperConvexFn f) {φ : ℝ → EReal}
     (h₁ : ∀ z, leftDeriv f z ≤ φ z) (h₂ : ∀ z, φ z ≤ rightDeriv f z) (x : ℝ) :
     ⨅ z ∈ Ioi x, φ z = rightDeriv f x := by
@@ -802,7 +723,7 @@ theorem exists_eq_add_coe_of_deriv_eq (hf : ClosedProperConvexFn f) (hg : Closed
   exact eq_add_coe_of_subgradientRel_subset hf hg
     (subgradientRel_eq_of_deriv_eq hf.proper hg.proper hr hl).subset
 
-/-- **Rockafellar, Theorem 24.2**, uniqueness clause: a nondecreasing `φ` pins down a closed
+/-- **Theorem 24.2**, uniqueness clause: a nondecreasing `φ` pins down a closed
 proper convex function on the line up to an additive constant. -/
 theorem exists_eq_add_coe_of_le_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     {φ : ℝ → EReal} (hf₁ : ∀ z, leftDeriv f z ≤ φ z) (hf₂ : ∀ z, φ z ≤ rightDeriv f z)
@@ -1018,13 +939,10 @@ theorem isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone :
   · rintro ⟨h₁, h₂⟩
     exact ⟨h₁.isMonotoneRel, fun σ hσ hsub => h₂ σ hσ.isCyclicallyMonotone hsub⟩
 
-/-- **Rockafellar, Theorem 24.3**: on the line the maximal monotone mappings — the graphs that are
-maximal chains for the coordinatewise order, Rockafellar's *complete non-decreasing curves* — are
-exactly the subdifferentials of the closed proper convex functions.
-
-Combined with `mem_subgradientRel_iff` this says that a complete non-decreasing curve is always the
-region `f'₋(x) ≤ y ≤ f'₊(x)` between the two one-sided derivatives of a closed proper convex `f`,
-and conversely. -/
+/-- **Theorem 24.3**: on the line the maximal monotone mappings — the maximal chains for the
+coordinatewise order, the *complete non-decreasing curves* — are exactly the subdifferentials of
+the closed proper convex functions. With `mem_subgradientRel_iff`, a complete non-decreasing curve
+is always the region `f'₋(x) ≤ y ≤ f'₊(x)` between two one-sided derivatives, and conversely. -/
 theorem isMaximalMonotoneRel_iff_exists_closedProperConvexFn :
     IsMaximalMonotoneRel (innerₗ ℝ) ρ ↔
       ∃ f : ℝ → EReal, ClosedProperConvexFn f ∧ ρ = subgradientRel (innerₗ ℝ) f := by

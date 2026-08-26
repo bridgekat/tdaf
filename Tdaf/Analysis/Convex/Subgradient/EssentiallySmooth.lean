@@ -8,49 +8,27 @@ import Tdaf.Analysis.Convex.Subgradient.Reconstruction
 /-!
 # Essential smoothness
 
-Rockafellar's **Theorem 26.1**: for a closed proper convex function, the subdifferential is
-single-valued exactly when the function is *essentially smooth* — differentiable on the interior
-of its effective domain, whose interior is non-empty, with the gradient blowing up at every
-boundary point. In that case the subdifferential *is* the gradient on the interior and is empty
-everywhere else.
-
-The theorem is what makes §26's Legendre transformation work: it is the statement that for an
-essentially smooth function the multivalued object `∂f` carries exactly the information of the
-classical gradient mapping.
-
-## Main definitions
-
-* `EssentiallySmooth f` — Rockafellar's three conditions (a), (b), (c), with the gradient written
-  as `fderiv ℝ (fun z => (f z).toReal)`.
+A convex function is *essentially smooth* when the interior `C` of its effective domain is
+non-empty, `f` is differentiable throughout `C`, and `‖∇f xᵢ‖ → ∞` along every sequence in `C`
+approaching a point outside `C`. **Theorem 26.1** says that for a closed proper convex function on
+a finite-dimensional inner product space this happens exactly when the subdifferential is
+single-valued, and that in that case `∂f` is the gradient on `C` and empty elsewhere — so the
+multivalued object `∂f` carries precisely the information of the classical gradient mapping. That
+is what makes the Legendre transformation work.
 
 ## Main results
 
-* `subgradient_eq_singleton_of_essentiallySmooth`, `subgradient_eq_empty_of_essentiallySmooth` —
-  the "in this case" clause of Theorem 26.1.
-* `subsingleton_subgradient_of_essentiallySmooth`,
-  `essentiallySmooth_of_subsingleton_subgradient` — the two halves of **Theorem 26.1**.
+* `EssentiallySmooth f` — the three conditions above, with the gradient written as
+  `fderiv ℝ (fun z => (f z).toReal)`.
+* `domSubgradient_eq_interior_dom_of_essentiallySmooth` — `dom ∂f = int (dom f)`.
 * `subsingleton_subgradient_iff_essentiallySmooth` — **Theorem 26.1**.
 
-## Design notes
+## Implementation notes
 
-**Condition (c) is stated at every point outside the interior, not at boundary points.**
-Rockafellar quantifies over sequences in `C = int (dom f)` converging to a *boundary point* of
-`C`. A sequence in `C` converging to a point not in `C` converges to a boundary point of `C`
-automatically, since `C` is open, so the two readings agree and dropping the word "boundary"
-removes a hypothesis that would otherwise have to be re-derived at every use — including inside
-Theorem 26.1's own proof, where the point is known only to lie outside `int (dom f)`.
-
-**The two halves use different parts of §25.** The forward half — single-valued implies
-essentially smooth — needs only Theorem 24.4 (the graph of `∂f` is closed) beside Theorem 25.1:
-a bounded subsequence of gradients has a convergent sub-subsequence whose limit is a subgradient
-at the limit point, and a subgradient there would make `f` differentiable there, hence put the
-point in the interior. It is the *converse* half that needs Theorem 25.6, and it needs it in the
-weak form "`∂f x ≠ ∅` implies `S(x) ≠ ∅`" rather than as the full reconstruction formula.
-
-**Gradients are compared through their Riesz representatives.** `∂f x` for the pairing `innerₗ E`
-is a set of vectors, while `fderiv` produces an element of `StrongDual ℝ E`; extracting a
-convergent subsequence is done in `E`, where `FiniteDimensional` gives compactness of closed balls
-directly, and `InnerProductSpace.toDual` is an isometry so no constant is lost.
+Condition (c) is stated at every point outside `C`, where the book states it at boundary points of
+`C`. Since `C` is open the two readings agree, and this one avoids re-deriving boundaryness at
+every use. Gradients are compared through their Riesz representatives, since `∂f x` for the pairing
+`innerₗ E` is a set of vectors while `fderiv` lands in `StrongDual ℝ E`.
 
 ## References
 
@@ -66,15 +44,10 @@ section EssentiallySmooth
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x : E}
 
-/-- **Rockafellar's essential smoothness.** A proper convex function is essentially smooth when,
-writing `C = int (dom f)`:
-
-* (a) `C` is non-empty;
-* (b) `f` is differentiable throughout `C`;
-* (c) `‖∇f xᵢ‖ → ∞` for every sequence in `C` converging to a point outside `C`.
-
-A finite differentiable convex function on the whole space is essentially smooth, condition (c)
-holding vacuously. -/
+/-- Essential smoothness. Writing `C = int (dom f)`: (a) `C` is non-empty, (b) `f` is
+differentiable throughout `C`, and (c) `‖∇f xᵢ‖ → ∞` for every sequence in `C` converging to a
+point outside `C`. A finite differentiable convex function on the whole space is essentially
+smooth, (c) holding vacuously. -/
 structure EssentiallySmooth (f : E → EReal) : Prop where
   /-- (a) The effective domain has non-empty interior. -/
   interior_dom_nonempty : (interior (dom f)).Nonempty
@@ -94,11 +67,9 @@ theorem subgradient_eq_singleton_of_essentiallySmooth (hf : ConvexFn f) (hes : E
   subgradient_innerL_eq_singleton hf
     (DifferentiableAtFn.hasGradientAt_fderiv (hes.differentiableAtFn hx))
 
-/-- **The substantive half of Theorem 26.1's "in this case" clause**: off the interior of the
-effective domain an essentially smooth closed proper convex function has *no* subgradient.
-
-By Theorem 25.6 a subgradient at `x` forces `S(x)` to be non-empty, so some sequence of gradients
-converges — which condition (c) forbids. -/
+/-- Off the interior of the effective domain, an essentially smooth closed proper convex function
+has *no* subgradient: a subgradient at `x` would force a sequence of gradients to converge, which
+condition (c) forbids. -/
 theorem subgradient_eq_empty_of_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (hes : EssentiallySmooth f) (hx : x ∉ interior (dom f)) :
     subgradient (innerₗ E) f x = ∅ := by
@@ -124,8 +95,8 @@ theorem subgradient_eq_empty_of_essentiallySmooth (hf : ConvexFn f) (hp : Proper
   rw [tendsto_congr hnorm] at htop
   exact not_tendsto_atTop_of_tendsto_nhds (hvs.norm) htop
 
-/-- **Theorem 26.1's "in this case" clause, as one equation**: for an essentially smooth closed
-proper convex function, `dom ∂f` is exactly the interior of the effective domain. -/
+/-- For an essentially smooth closed proper convex function, `dom ∂f` is exactly the interior of
+the effective domain. -/
 theorem domSubgradient_eq_interior_dom_of_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (hes : EssentiallySmooth f) :
     domSubgradient (innerₗ E) f = interior (dom f) := by
@@ -140,8 +111,8 @@ theorem domSubgradient_eq_interior_dom_of_essentiallySmooth (hf : ConvexFn f) (h
     rw [subgradient_eq_singleton_of_essentiallySmooth hf hes hz]
     exact Set.singleton_nonempty _
 
-/-- **Rockafellar, Theorem 26.1**, the easy half: an essentially smooth closed proper convex
-function has a single-valued subdifferential. -/
+/-- **Theorem 26.1**, one half: an essentially smooth closed proper convex function has a
+single-valued subdifferential. -/
 theorem subsingleton_subgradient_of_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (hes : EssentiallySmooth f) (x : E) :
     (subgradient (innerₗ E) f x).Subsingleton := by
@@ -151,10 +122,9 @@ theorem subsingleton_subgradient_of_essentiallySmooth (hf : ConvexFn f) (hp : Pr
   · rw [subgradient_eq_empty_of_essentiallySmooth hf hp hcl hes hx]
     exact Set.subsingleton_empty
 
-/-- **A single-valued subdifferential is a gradient on the relative interior.** With Theorem 23.4
-supplying a subgradient at every point of `ri (dom f)`, single-valuedness makes the subdifferential
-there a singleton, and Theorem 25.1's converse turns that into differentiability — which in turn
-places the point in the *interior* of `dom f`. -/
+/-- A single-valued subdifferential is a gradient on the relative interior: a subgradient exists
+at every point of `ri (dom f)`, single-valuedness makes it the only one, and a lone subgradient is
+a gradient. -/
 theorem differentiableAtFn_of_subsingleton_subgradient (hf : ConvexFn f) (hp : Proper f)
     (h : ∀ z : E, (subgradient (innerₗ E) f z).Subsingleton) (hx : x ∈ ri (dom f)) :
     DifferentiableAtFn f x := by
@@ -162,14 +132,10 @@ theorem differentiableAtFn_of_subsingleton_subgradient (hf : ConvexFn f) (hp : P
   exact ⟨_, hasGradientAt_toDual_of_subgradient_eq_singleton hf hp
     (Set.eq_singleton_iff_unique_mem.2 ⟨hv, fun z hz => h x hz hv⟩)⟩
 
-/-- **Rockafellar, Theorem 26.1**, the substantive half: a closed proper convex function with a
-single-valued subdifferential is essentially smooth.
-
-Conditions (a) and (b) come from Theorem 23.4 and Theorem 25.1: a subgradient exists on
-`ri (dom f)`, single-valuedness makes it a gradient, and a gradient exists only at interior points,
-so `ri (dom f) ⊆ int (dom f)` and the two coincide. Condition (c) is Theorem 24.4: a bounded
-subsequence of gradients has a convergent sub-subsequence, whose limit is a subgradient at the
-limit point, which would place that point in the interior. -/
+/-- **Theorem 26.1**, the substantive half: a closed proper convex function with a single-valued
+subdifferential is essentially smooth. Conditions (a) and (b) hold because a gradient exists only
+at interior points, forcing `ri (dom f) = int (dom f)`; condition (c) holds because a bounded
+subsequence of gradients would converge to a subgradient at the limit point. -/
 theorem essentiallySmooth_of_subsingleton_subgradient (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) (h : ∀ z : E, (subgradient (innerₗ E) f z).Subsingleton) :
     EssentiallySmooth f := by
@@ -205,8 +171,8 @@ theorem essentiallySmooth_of_subsingleton_subgradient (hf : ConvexFn f) (hp : Pr
   exact hz (hasGradientAt_toDual_of_subgradient_eq_singleton hf hp
     (Set.eq_singleton_iff_unique_mem.2 ⟨hsub, fun u hu => h z hu hsub⟩)).mem_interior_dom
 
-/-- **Rockafellar, Theorem 26.1**: for a closed proper convex function, single-valuedness of the
-subdifferential and essential smoothness are the same thing. -/
+/-- **Theorem 26.1**: for a closed proper convex function, single-valuedness of the subdifferential
+and essential smoothness are the same thing. -/
 theorem subsingleton_subgradient_iff_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) :
     (∀ z : E, (subgradient (innerₗ E) f z).Subsingleton) ↔ EssentiallySmooth f :=

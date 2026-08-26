@@ -11,12 +11,9 @@ import Tdaf.Analysis.Convex.Subgradient.Bounded
 # Convergence of directional derivatives and of subgradients
 
 Convex functions `f i`, finite on an open convex set `U` and converging pointwise there to `g`,
-converge in a much stronger sense than the hypothesis suggests: uniformly on compact subsets, hence
-*continuously* — `f i (x i) → g x` along any `x i → x` in `U`. This file carries that strength over
-to the first-order data.
-
-Differentiation does **not** pass to the limit: only the one-sided inequality survives, and it is
-the `limsup` one. For `x i → x` in `U` and `y i → y`,
+converge uniformly on compact subsets, hence *continuously*: `f i (x i) → g x` along any `x i → x`
+in `U`. Differentiation does **not** pass to the limit; only the one-sided `limsup` inequality
+survives. For `x i → x` in `U` and `y i → y`,
 
 ```
 limsup_i (f i)'(x i; y i)  ≤  g'(x; y),        ∂(f i)(x i)  ⊆  ∂g(x) + ε B  eventually.
@@ -29,71 +26,27 @@ of `f'(x; y)` in `(x, y)` and of `∂f` in `x`.
 ## Main results
 
 * `tendsto_eval_of_tendsto` — continuous convergence: `f i (x i) → g x`.
-* `eventually_dirDeriv_lt` — the `limsup` inequality for directional derivatives, spelled without
-  junk values: every real `μ` above `g'(x; y)` eventually bounds `(f i)'(x i; y i)`.
-* `eventually_subgradient_subset_add_closedBall` — the inclusion `∂(f i)(x i) ⊆ ∂g(x) + ε B`.
-* `upperSemicontinuousAt_dirDeriv`, `eventually_nhds_subgradient_subset_add_closedBall` — the
-  constant-family case: `f'(x; y)` is upper semicontinuous in `(x, y)` on `int (dom f) × E`, and
-  `∂f z ⊆ ∂f x + ε B` for `z` near `x`.
-* `eventually_dirDeriv_lt_of_tendsto_dir` — the same `limsup` inequality for an approach to a
-  point of `dom f` that need not be interior, along a fixed limiting direction `y`, bounded by the
-  second-order derivative `f'(x; y; ·)`.
-* `eventually_subgradient_subset_exposed_add_closedBall` — the subgradient form of that boundary
-  statement: `∂f(x i) ⊆ ∂f(x)_y + ε B`, where `∂f(x)_y` is the face of `∂f x` exposed by `y`.
-* `subgradient_dirDeriv`, `subgradient_dirDeriv_eq_sep_normalCone`,
-  `isExposed_subgradient_dirDeriv` — the identification `∂(f'(x; ·))(y) = ∂f(x)_y`, in three
-  spellings: as a maximisation, as a normal-cone condition, and as `IsExposed`.
-* `mem_interior_dom_smul`, `eventually_mem_interior_dom_of_tendsto_dir`,
-  `mem_interior_dom_dirDeriv`, `proper_dirDeriv_of_ne_bot` — the facts about `dom f` and
-  `dom f'(x; ·)` that approach makes use of.
-* `supportFn_closedBall` — `δ*(y | ε B) = ε ‖y‖`, the set-side identity the inclusion needs.
-* `subgradient_subset_add_closedBall_of_forall_dirDeriv_le` — the support-function endgame shared
-  by the two `∂f ⊆ ∂g + ε B` statements.
-* `dirDeriv_eq_coe_toReal_of_mem_interior_dom`, `convexOn_toReal_dirDeriv`,
-  `toReal_dirDeriv_smul` — `f'(x; ·)` at an interior point of `dom f` as a finite sublinear
-  function, which is the object the uniformity theorems consume.
+* `eventually_dirDeriv_lt`, `eventually_subgradient_subset_add_closedBall` — **Theorem 24.5**, the
+  two displayed statements. The first is spelled without junk values: every real `μ` above
+  `g'(x; y)` eventually bounds `(f i)'(x i; y i)`.
+* `upperSemicontinuousAt_dirDeriv`, `eventually_nhds_subgradient_subset_add_closedBall` —
+  **Corollary 24.5.1**, the constant-family case.
+* `eventually_dirDeriv_lt_of_tendsto_dir`, `eventually_subgradient_subset_exposed_add_closedBall` —
+  **Theorem 24.6**: the same two statements for an approach to a point of `dom f` that need not be
+  interior, along a fixed limiting direction `y`, with the face of `∂f x` exposed by `y` in place
+  of `∂f x`.
+* `subgradient_dirDeriv` — the identification `∂(f'(x; ·))(y) = ∂f(x)_y`.
 
-## Design notes
+## Implementation notes
 
-**Two currencies.** The convergence theory for families of convex functions is stated for
-real-valued `ConvexOn ℝ U (f i)`, while subgradients and directional derivatives are stated for
-`EReal`-valued `ConvexFn`. The bridge is `ConvexFn.convexOn_toReal_dom` together with
-`EReal.coe_toReal` at points where the function is finite, and it is crossed twice: once for the
-`f i` themselves on `U`, once for the sublinear functions `(f i)'(x i; ·)` on the whole space.
+The convergence theory is stated for real-valued `ConvexOn ℝ U (f i)` while subgradients are
+`EReal`-valued; the bridge is `ConvexFn.convexOn_toReal_dom`. `ε B` needs a norm on the dual side,
+so the subgradient statements are for a real inner-product space paired with itself.
 
-**Sequences, not filters.** Both theorems are about sequences, because the uniformity they rest on
-— pointwise convergence of convex functions is uniform on compacta — is a statement about
-sequences. The local corollaries are nevertheless stated for the neighbourhood filter, since
-`𝓝 (x, y)` is countably generated and `Filter.eventually_iff_seq_eventually` converts.
-
-**No membership hypothesis on the sequence.** Rockafellar asks for a sequence *in* `C`; here only
-`x i → x ∈ U` is assumed, and the proof replaces `x i` by `x` at the finitely many indices outside
-`U`. That keeps the theorem usable when the sequence is produced by some other construction.
-
-**`ε B` needs a norm on the dual side**, so the subgradient statement is for a real inner-product
-space paired with itself. The directional-derivative statement needs no such thing and is stated
-for a finite-dimensional normed space.
-
-**Approach to a boundary point needs neither closedness nor a polytope.** Rockafellar proves the
-directional form of the boundary statement by building a simplex around the limiting direction,
-so that `f` is continuous relative to the resulting polytope at `x` itself. That is avoidable: the
-monotonicity of the difference quotient in its step replaces the vanishing step `|x i - x|` by a
-fixed larger one, and then only the continuity of `f` at *interior* points is used. Consequently
-`f` need not be closed, only convex and proper.
-
-**The approaching points are interior after all.** The subgradient form of the boundary statement
-looks blocked, because the uniformity theorem of §10 consumes *finite* convex functions on an open
-set while the sublinear functions `f'(x i; ·)` attached to boundary points take the value `+∞`. But
-the hypotheses of the boundary statement rule that out: `x i = x + ‖x i - x‖ • y i` with `y i → y`
-and `x + α y ∈ int (dom f)`, so `x + α y i` is still interior for large `i`, and the segment
-principle carries the interiority back to the smaller step `‖x i - x‖`
-(`eventually_mem_interior_dom_of_tendsto_dir`). No `EReal`-valued uniformity theorem and no
-subsequence extraction are needed.
-
-**`∂f(x)_y` costs nothing beyond §23.** Rockafellar's exposed face is `∂(f'(x; ·))(y)`, and that is
-Theorem 23.2 (`cl f'(x; ·) = δ*(· | ∂f x)`) followed by Corollary 23.5.2 (closing does not change a
-subdifferential where one exists) and Corollary 23.5.3 (`∂δ*(· | C) y` is the exposed face of `C`).
-All three were already in the library.
+Two of the book's hypotheses are absent: the sequence need not lie in `U`, only converge to a point
+of it, and the approach to a boundary point needs neither closedness of `f` nor the book's simplex
+construction — monotonicity of the difference quotient in its step replaces the vanishing step
+`‖x i - x‖` by a fixed larger one, after which only continuity at *interior* points is used.
 
 ## References
 
@@ -186,12 +139,9 @@ section Eval
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {U : Set E} {f : ℕ → E → ℝ} {g : E → ℝ}
 
-/-- Convex functions converging pointwise on an open convex set converge **continuously** there:
-the values `f i (x i)` along any sequence `x i → x` converge to `g x`.
-
-This is the practical form of the theorem that pointwise convergence of convex functions is
-uniform on compact subsets: a closed ball around `x` inside `U` is compact, uniform convergence
-holds on it, and the limit is continuous. -/
+/-- Convex functions converging pointwise on an open convex set converge *continuously* there:
+the values `f i (x i)` along any sequence `x i → x` converge to `g x`. This is the practical form of
+the fact that pointwise convergence of convex functions is uniform on compact subsets. -/
 theorem tendsto_eval_of_tendsto (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexOn ℝ U (f i)) (hg : ConvexOn ℝ U g)
     (hconv : ∀ z ∈ U, Tendsto (fun i => f i z) atTop (𝓝 (g z)))
@@ -229,11 +179,7 @@ limsup_i (f i)'(x i; y i) ≤ g'(x; y).
 ```
 
 The `limsup` is spelled without junk values: every real `μ` above `g'(x; y)` eventually bounds
-`(f i)'(x i; y i)`.
-
-The proof is Rockafellar's. A single step `a > 0` with `x + a y ∈ U` realises a difference quotient
-of `g` below `μ`; continuous convergence transports it to `f i` at the moving points `x i` and
-`x i + a y i`; and the difference quotient dominates the directional derivative. -/
+`(f i)'(x i; y i)`. -/
 theorem eventually_dirDeriv_lt (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexFn (f i)) (hfp : ∀ i, Proper (f i)) (hfU : ∀ i, U ⊆ dom (f i))
     (hg : ConvexFn g) (hgp : Proper g) (hgU : U ⊆ dom g)
@@ -304,12 +250,9 @@ section LocalDirDeriv
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x : E}
 
-/-- **`f'(x; y)` is upper semicontinuous in `(x, y)` on `int (dom f) × E`.**
-
-This is the previous theorem for the constant sequence `f, f, f, …`: a convex function converges
-pointwise to itself. Only the value at `(x, y)` moves, so the conclusion is a statement about the
-neighbourhood filter, obtained from the sequential one because `𝓝 (x, y)` is countably
-generated. -/
+/-- **Corollary 24.5.1**: `f'(x; y)` is upper semicontinuous in `(x, y)` on `int (dom f) × E`. This
+is the previous theorem for the constant sequence `f, f, f, …`, transported from sequences to the
+neighbourhood filter. -/
 theorem upperSemicontinuousAt_dirDeriv (hf : ConvexFn f) (hfp : Proper f)
     (hx : x ∈ interior (dom f)) (y : E) :
     UpperSemicontinuousAt (fun p : E × E => dirDeriv f p.1 p.2) (x, y) := by
@@ -339,14 +282,10 @@ theorem supportFn_subgradient (hg : ConvexFn g) (hgp : Proper g) (hx : x ∈ ri 
     supportFn (innerₗ E) (subgradient (innerₗ E) g x) = dirDeriv g x := by
   rw [dirDeriv_eq_supportFn_of_mem_relint_dom (B := innerₗ E) hg hgp hx, flip_innerₗ]
 
-/-- **The support-function endgame shared by the two subgradient statements of §24.** If the
-directional derivative of `p` at an interior point `u` of `dom p` is dominated on the unit ball by
-that of `q` at an interior point `v` of `dom q`, up to `ε`, then `∂p u ⊆ ∂q v + ε B`.
-
-Positive homogeneity spreads the bound from the unit ball to `p'(u; z) ≤ q'(v; z) + ε ‖z‖` in every
-direction; `ε ‖·‖` is the support function of `ε B` (`supportFn_closedBall`), so the right-hand
-side is the support function of the compact convex set `∂q v + ε B`, and support functions order
-closed convex sets. -/
+/-- The support-function endgame shared by the two subgradient statements below. If the directional
+derivative of `p` at an interior point `u` of `dom p` is dominated on the unit ball by that of `q`
+at an interior point `v` of `dom q`, up to `ε`, then `∂p u ⊆ ∂q v + ε B`. Positive homogeneity
+spreads the bound to every direction, and support functions order closed convex sets. -/
 theorem subgradient_subset_add_closedBall_of_forall_dirDeriv_le {p q : E → EReal} {u v : E}
     (hp : ConvexFn p) (hpp : Proper p) (hu : u ∈ interior (dom p))
     (hq : ConvexFn q) (hqp : Proper q) (hv : v ∈ interior (dom q)) {ε : ℝ} (hε : 0 < ε)
@@ -406,14 +345,9 @@ then for every `ε > 0`
 ∂(f i)(x i) ⊆ ∂g(x) + ε B
 ```
 
-for all large `i`, where `B` is the closed unit ball.
-
-The subdifferentials are the support sets of the directional derivatives, and the previous theorem
-bounds those pointwise. On the compact unit ball the bound becomes uniform — this is the step where
-Theorem 10.8 is used a second time, now for the sublinear functions `f i'(x i; ·)` — and positive
-homogeneity spreads it to `f i'(x i; y) ≤ g'(x; y) + ε ‖y‖` everywhere. Since `ε ‖·‖` is the
-support function of `ε B`, the right-hand side is the support function of `∂g(x) + ε B`, and
-support functions order closed convex sets. -/
+for all large `i`, where `B` is the closed unit ball. The subdifferentials are the support sets of
+the directional derivatives, and the previous theorem bounds those pointwise; the bound is made
+uniform on the compact unit ball and then spread by positive homogeneity. -/
 theorem eventually_subgradient_subset_add_closedBall (hU : IsOpen U) (hUc : Convex ℝ U)
     (hf : ∀ i, ConvexFn (f i)) (hfp : ∀ i, Proper (f i)) (hfU : ∀ i, U ⊆ dom (f i))
     (hg : ConvexFn g) (hgp : Proper g) (hgU : U ⊆ dom g)
@@ -470,11 +404,8 @@ section LocalSubgradient
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x : E}
 
-/-- **`∂f` is upper semicontinuous at every interior point of `dom f`**: for every `ε > 0` the
-inclusion `∂f z ⊆ ∂f x + ε B` holds for all `z` in a neighbourhood of `x`.
-
-The constant-sequence case of the previous theorem, transported from sequences to the
-neighbourhood filter. -/
+/-- **Corollary 24.5.1**: `∂f` is upper semicontinuous at every interior point of `dom f`, so that
+`∂f z ⊆ ∂f x + ε B` for all `z` in a neighbourhood of `x`. -/
 theorem eventually_nhds_subgradient_subset_add_closedBall (hf : ConvexFn f) (hfp : Proper f)
     (hx : x ∈ interior (dom f)) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ z in 𝓝 x, subgradient (innerₗ E) f z
@@ -510,15 +441,11 @@ theorem mem_interior_dom_smul (hf : ConvexFn f) (hx : x ∈ dom f) {u : E} {α t
   rwa [heq] at h
 
 omit [FiniteDimensional ℝ E] in
-/-- **An approach with a limiting direction that points into the interior is eventually interior.**
-If `x i → x ∈ dom f` with `x i ≠ x`, the unit vectors `‖x i - x‖⁻¹ (x i - x)` converge to `y`, and
-`x + α y` is interior to `dom f` for some `α > 0`, then `x i ∈ int (dom f)` for all large `i`.
-
-This is `mem_interior_dom_smul` applied to the *moving* direction: `x + α y i` is still interior
-for large `i` because `int (dom f)` is open, and `x i = x + ‖x i - x‖ • y i` with the step
-`‖x i - x‖` eventually below `α`. It is what makes Theorem 24.6's second assertion reachable — the
-sublinear functions `f'(x i; ·)` are then finite everywhere, so the uniformity theorem of §10
-applies to them. -/
+/-- An approach with a limiting direction that points into the interior is eventually interior: if
+`x i → x ∈ dom f` with `x i ≠ x`, the unit vectors `‖x i - x‖⁻¹ (x i - x)` converge to `y`, and
+`x + α y` is interior to `dom f` for some `α > 0`, then `x i ∈ int (dom f)` for all large `i`. This
+is what makes the second assertion of Theorem 24.6 reachable: the sublinear functions `f'(x i; ·)`
+are then finite everywhere, so the uniformity theorem of §10 applies to them. -/
 theorem eventually_mem_interior_dom_of_tendsto_dir (hf : ConvexFn f) (hx : x ∈ dom f)
     {xs : ℕ → E} (hxsne : ∀ i, xs i ≠ x) (hxs : Tendsto xs atTop (𝓝 x))
     (hdir : Tendsto (fun i => ‖xs i - x‖⁻¹ • (xs i - x)) atTop (𝓝 y))
@@ -564,10 +491,10 @@ theorem proper_dirDeriv_of_ne_bot (hf : ConvexFn f) (hfp : Proper f) (hx : x ∈
   exact hne (ConvexFn.eq_bot_of_mem_relint_dom hconv h
     (Convex.interior_subset_relint hconv.convex_dom ⟨y, hy⟩ hy))
 
-/-- **Rockafellar, Theorem 24.6**, the directional-derivative half: directional derivatives are
-upper semicontinuous along an approach to a point of `dom f` that need not be interior, provided
-the approach has a limiting direction `y` and the second-order derivative in that direction is used
-as the bound.
+/-- **Theorem 24.6**, the directional-derivative half: directional derivatives are upper
+semicontinuous along an approach to a point of `dom f` that need not be interior, provided the
+approach has a limiting direction `y` and the second-order derivative in that direction is the
+bound.
 
 If `x i → x` inside `dom f` with `x i ≠ x` and the unit vectors `|x i - x|⁻¹ (x i - x)` converge to
 `y`, and if `f'(x; y) > -∞` while the ray `x + ℝ₊ y` meets `int (dom f)`, then
@@ -577,14 +504,7 @@ limsup_i f'(x i; z) ≤ f'(x; y; z) := (f'(x; ·))'(y; z),        ∀ z.
 ```
 
 As in `eventually_dirDeriv_lt` the `limsup` is spelled without junk values: every real `μ` above
-`f'(x; y; z)` eventually bounds `f'(x i; z)`.
-
-The proof adds two difference quotients of `f`, at `x` in the direction `y i` and at `x i` in the
-direction `λ z`, so that they telescope into the quotient at `x` in the direction
-`u i = y i + λ z`, and then uses the monotonicity of that quotient in its step to replace the step
-`|x i - x|`, which tends to `0`, by the fixed larger step `|x i - x| + β`. Since `x + β u i` tends
-to an *interior* point of `dom f`, the right-hand side converges, and the left-hand side converges
-because `f'(x; ·)` is continuous at `y`. -/
+`f'(x; y; z)` eventually bounds `f'(x i; z)`. -/
 theorem eventually_dirDeriv_lt_of_tendsto_dir (hf : ConvexFn f) (hfp : Proper f) (hx : x ∈ dom f)
     {xs : ℕ → E} (hxsdom : ∀ i, xs i ∈ dom f) (hxsne : ∀ i, xs i ≠ x)
     (hxs : Tendsto xs atTop (𝓝 x))
@@ -744,19 +664,11 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {x y : E}
 
-/-- **The subdifferential of `f'(x; ·)` at `y` is the face of `∂f x` exposed by `y`** — the set of
-subgradients at which `⟨y, ·⟩` attains its maximum over `∂f x`. This is Rockafellar's
-`∂f(x)_y`, the set appearing in the second assertion of **Theorem 24.6**.
-
-Three results compose, and no new work is needed. Theorem 23.2 (`clFn_dirDeriv`) says
-`cl (f'(x; ·)) = δ*(· | ∂f x)`; Corollary 23.5.2 (`subgradient_clFn`) says that closing a convex
-function does not change its subdifferential at a point where one exists, and one does exist at
-`y ∈ ri (dom f'(x; ·))` by Theorem 23.4; and Corollary 23.5.3 (`subgradient_supportFn`) identifies
-`∂δ*(· | C) y` with the exposed face of `C`.
-
-Properness of `f'(x; ·)` is what makes `∂f x` non-empty — the support function of `∅` is the
-constant `−∞`, which is Theorem 23.3's criterion
-(`subgradient_eq_empty_iff_exists_dirDeriv_eq_bot`) — so it is not a separate hypothesis. -/
+/-- The subdifferential of `f'(x; ·)` at `y` is the face `∂f(x)_y` of `∂f x` exposed by `y` — the
+set of subgradients at which `⟨y, ·⟩` attains its maximum over `∂f x`. This is the set appearing in
+the second assertion of **Theorem 24.6**, and it composes Theorems 23.2, 23.4 and Corollaries
+23.5.2 and 23.5.3. Properness of `f'(x; ·)` is what makes `∂f x` non-empty, so it is not a separate
+hypothesis. -/
 theorem subgradient_dirDeriv [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) (hgp : Proper (dirDeriv f x))
     (hy : y ∈ ri (dom (dirDeriv f x))) :
@@ -775,7 +687,7 @@ theorem subgradient_dirDeriv [IsCompatiblePairing B] [IsCompatiblePairing B.flip
   rw [← subgradient_clFn (B := B) hgc hv₀, clFn_dirDeriv (B := B) hf ht hb, hsupp]
   simp only [LinearMap.flip_apply]
 
-/-- **Rockafellar's `∂f(x)_y` in his own words**: the subgradients at which `y` is *normal* to
+/-- **`∂f(x)_y` as a normal-cone condition**: the subgradients at which `y` is *normal* to
 `∂f x`. This is `subgradient_dirDeriv` read through the definition of the normal cone. -/
 theorem subgradient_dirDeriv_eq_sep_normalCone [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) (hgp : Proper (dirDeriv f x))
@@ -789,7 +701,7 @@ theorem subgradient_dirDeriv_eq_sep_normalCone [IsCompatiblePairing B] [IsCompat
 
 /-- **`∂(f'(x; ·))(y)` is an exposed face of `∂f x`**, in Mathlib's sense: it is cut out of `∂f x`
 by maximising the continuous linear functional `⟨y, ·⟩`. Composing with `IsExposed.isFace` makes it
-a face of `∂f x` in Rockafellar's §18 sense. -/
+a face of `∂f x` in the sense of §18. -/
 theorem isExposed_subgradient_dirDeriv [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ConvexFn f) (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) (hgp : Proper (dirDeriv f x))
     (hy : y ∈ ri (dom (dirDeriv f x))) :
@@ -807,25 +719,18 @@ section BoundarySubgradient
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x y : E}
 
-/-- **Rockafellar, Theorem 24.6**, second assertion: along an approach to a point of `dom f` with a
-limiting direction `y` pointing into `int (dom f)`, the subdifferentials collapse onto the face of
-`∂f x` exposed by `y`,
+/-- **Theorem 24.6**, second assertion: along an approach to a point of `dom f` with a limiting
+direction `y` pointing into `int (dom f)`, the subdifferentials collapse onto the face of `∂f x`
+exposed by `y`,
 
 ```
 ∂f(x i) ⊆ ∂f(x)_y + ε B        eventually,
 ```
 
-where `∂f(x)_y = {v ∈ ∂f x | ⟨y, ·⟩ is maximised over ∂f x at v}` is Rockafellar's notation and is
-identified with `∂(f'(x; ·))(y)` by `subgradient_dirDeriv`.
-
-The proof is the one of Theorem 24.5's second assertion with `f'(x; ·)` replaced by
-`f'(x; y; ·) = (f'(x; ·))'(y; ·)`, and the step Rockafellar leaves implicit is
-`eventually_mem_interior_dom_of_tendsto_dir`: the hypotheses force `x i ∈ int (dom f)` for all
-large `i`, so the sublinear functions `f'(x i; ·)` are *finite everywhere* and Corollary 10.8.1
-applies to them verbatim. The pointwise bound is the first assertion
-(`eventually_dirDeriv_lt_of_tendsto_dir`); Corollary 10.8.1 makes it uniform on the unit ball; and
-`subgradient_subset_add_closedBall_of_forall_dirDeriv_le` turns that into the inclusion, `∂f(x)_y`
-being compact because `y` is *interior* to `dom f'(x; ·)`. -/
+where `∂f(x)_y = {v ∈ ∂f x | ⟨y, ·⟩ is maximised over ∂f x at v}`, identified with `∂(f'(x; ·))(y)`
+by `subgradient_dirDeriv`. The argument is that of Theorem 24.5's second assertion with `f'(x; ·)`
+replaced by `f'(x; y; ·)`; the step the book leaves implicit is
+`eventually_mem_interior_dom_of_tendsto_dir`, which makes the `f'(x i; ·)` finite everywhere. -/
 theorem eventually_subgradient_subset_exposed_add_closedBall (hf : ConvexFn f) (hfp : Proper f)
     (hx : x ∈ dom f) {xs : ℕ → E} (hxsdom : ∀ i, xs i ∈ dom f) (hxsne : ∀ i, xs i ≠ x)
     (hxs : Tendsto xs atTop (𝓝 x))
