@@ -10,85 +10,23 @@ import Tdaf.Surface.Rockafellar.Part1.Section01
 /-!
 # Rockafellar, §17: Carathéodory's Theorem
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §17, pp. 153–161: Carathéodory's theorem
-for a set `S` that mixes **points and directions**, the closedness consequences of it, and the dual
-result on which half-spaces contain the solution set of a compact system of linear inequalities.
+Carathéodory's theorem for a set `S` that mixes **points and directions**, its closedness
+consequences, and the dual question of which half-spaces contain the solution set of a compact
+system of linear inequalities.
 
-All ten numbered results are here, stated over `Rn n = ℝⁿ`, and each in full — Theorem 17.1's
-simplex clause included. Eight of them specialise
-`Tdaf/Analysis/Convex/{Caratheodory, HullDirections}.lean`; two of them — Corollaries 17.1.4 and
-17.1.6 — are **false as the book states them**, and are stated and refuted rather than dropped.
+All ten numbered results of §17 are formalized over `Rn n = ℝⁿ`: Theorems 17.1–17.3 and
+Corollaries 17.1.1–17.1.6, 17.2.1.
 
-## Contents
+A mixed set `S = S₀ ∪ S₁` is carried as a pair, not as a subset of `ℝⁿ`: a set `P` of points and a
+set `D` of *representative vectors* for the directions, one or more per direction. Every
+construction here is invariant under rescaling a member of `D` by a positive scalar, so no quotient
+type is needed. `ray D` and `coneOf D` are the book's `ray S₁` and `cone S₁`, and `convexHullPD P D`
+is `conv S`.
 
-| label | declaration |
-|---|---|
-| Theorem 17.1 | `theorem_17_1` (membership), `theorem_17_1_simplex` (the simplex clause) |
-| Corollary 17.1.1 | `corollary_17_1_1` |
-| Corollary 17.1.2 | `corollary_17_1_2` |
-| Corollary 17.1.3 | `corollary_17_1_3` |
-| Corollary 17.1.4 | `corollary_17_1_4` (the claim), `corollary_17_1_4_false` (the refutation) |
-| Corollary 17.1.5 | `corollary_17_1_5` |
-| Corollary 17.1.6 | `corollary_17_1_6` (the claim), `corollary_17_1_6_false` (the refutation) |
-| Theorem 17.2 | `theorem_17_2`, `theorem_17_2_isCompact` |
-| Corollary 17.2.1 | `corollary_17_2_1` |
-| Theorem 17.3 | `theorem_17_3` |
-
-## The section's definitions
-
-**A mixed set `S = S₀ ∪ S₁` of points and directions is a *pair*, not a subset of `ℝⁿ`.** It is
-carried here as the backbone carries it (`HullDirections.lean`): a set `P` of points and a set `D`
-of *representative vectors* for the directions, one or more per direction. Nothing is lost, because
-every construction below is invariant under rescaling a member of `D` by a positive scalar, and no
-quotient type is needed.
-
-* **`ray S₁`** is `ray D`, and **`cone S₁`** is `coneOf D`, defined as the backbone's
-  `PointedCone.hull ℝ D`; `coneOf_eq_convexHull_ray` is the **bridge lemma** giving the book's own
-  definition `cone S₁ = conv (ray S₁)`, and `ray_subset_coneOf` and `subset_ray` are its two
-  inclusions.
-* **`conv S`** is the backbone's `convexHullPD P D`. `convexHullPD_eq_add` is the book's formula
-  `conv S = conv S₀ + cone S₁` (stated with `coneOf`, hence with the bridge above), and
-  `convexHullPD_isLeast` is the book's actual *definition*: the least convex set containing the
-  points and receding in all the directions. `convexHullPD_empty_points` is the convention
-  `conv S = ∅` when `S` has directions only.
-* **Affine independence of a mixed set**, the **generalized `m`-dimensional simplex** and the
-  **dimension `dim S`** of a mixed set are the backbone's `AffineIndepPD`, `IsSimplexPD` and
-  `finrankPD` (`HullDirections.lean`); `theorem_17_1_simplex` is the second sentence of Theorem
-  17.1 stated with them.
-
-`ray` and `coneOf` are **local to this file**; §§18–19, written in parallel, may define the same
-notions, and the merge should keep one copy.
-
-## What is not here
-
-**Deferred by scope.**
-
-* **The `m`-dimensional skew orthants of pp. 154–155**, and with them the running-text facts that
-  every generalized simplex is closed and that the `m`-dimensional orthants of `ℝⁿ` are exactly the
-  images of the non-negative orthant of `ℝᵐ` under injective affine maps. A skew orthant is a
-  generalized simplex with a single ordinary vertex, so the predicate is already available as
-  `IsSimplexPD m` with a singleton point family; nothing in §17 consumes the closedness, and §18's
-  faces and extreme directions are where it belongs. The rest of the vertex vocabulary — `aff S`,
-  `dim S`, affine independence of a mixed set and the generalized `m`-dimensional simplex — is in
-  the backbone as `affineSpanPD`, `finrankPD`, `AffineIndepPD` and `IsSimplexPD`.
-
-**Stated and refuted.** Corollaries 17.1.4 and 17.1.6 are **false as Rockafellar states them**.
-Their statements are recorded as the propositions `corollary_17_1_4` and `corollary_17_1_6`, and
-`corollary_17_1_4_false` / `corollary_17_1_6_false` refute them, on `ℝ¹`, with the counterexample
-the two docstrings transcribe. The root cause is one step of Rockafellar's proof: he passes to "a
-minimal `α′` on the vertical line", which does not exist when the generated function is improper,
-and the affine elimination that rescues Corollary 17.1.3 has no conical analogue, because a conical
-dependency can have every coefficient of one sign. `api.md` records the same refutation against
-`Caratheodory.lean`.
-
-**Nothing is omitted without a reason.** The unnumbered running text of pp. 158–160 (which
-half-spaces contain `C`, and why `m ≤ n` suffices) is the derivation of Theorem 17.3 and is recorded
-in its docstring.
-
-## Backbone gaps
-
-* **Theorem 17.3 is false as the book states it** and the backbone already carries the extra
-  hypothesis `0 ∉ S*`; `theorem_17_3` inherits it. The book's `x* ≠ 0` is, conversely, unnecessary.
+Three statements diverge from the book. **Corollaries 17.1.4 and 17.1.6 are false as printed**:
+each is recorded as a proposition (`corollary_17_1_4`, `corollary_17_1_6`) and refuted on `ℝ¹`
+(`corollary_17_1_4_false`, `corollary_17_1_6_false`). **Theorem 17.3 is false without `0 ∉ S*`**,
+so `theorem_17_3` carries that hypothesis; the book's `x* ≠ 0` is conversely unnecessary.
 
 ## References
 
@@ -105,32 +43,24 @@ variable {n : ℕ}
 
 /-! ### Points and directions -/
 
-/-- **`ray S₁`** (p. 153): the origin together with all the vectors whose directions belong to the
-set of directions `S₁`.
-
-A set of directions is represented here by a set `D` of vectors, one or more per direction; both
-`ray D` and `coneOf D` depend only on the directions of the elements of `D`, so nothing is lost
-and no quotient type is needed. -/
+/-- **`ray S₁`** (p. 153): the origin together with all vectors whose directions belong to `S₁`,
+represented here by a set `D` of vectors, one or more per direction. -/
 def ray (D : Set (Rn n)) : Set (Rn n) :=
   insert 0 {x | ∃ y ∈ D, ∃ a : ℝ, 0 < a ∧ x = a • y}
 
-/-- **`cone S₁`** (p. 153): the convex cone generated by all the vectors whose directions belong to
-`S₁`. The book defines it as `conv (ray S₁)`; here it is the backbone's `PointedCone.hull`, and
-`coneOf_eq_convexHull_ray` is the bridge. -/
+/-- **`cone S₁`** (p. 153): the convex cone generated by the vectors of `D`. The book defines it
+as `conv (ray S₁)`; `coneOf_eq_convexHull_ray` is the bridge. -/
 def coneOf (D : Set (Rn n)) : Set (Rn n) := (PointedCone.hull ℝ D : Set (Rn n))
 
-/-- A vector of `D` has its direction in `S₁`, so it belongs to `ray S₁`. -/
 theorem subset_ray (D : Set (Rn n)) : D ⊆ ray D := fun y hy =>
   Or.inr ⟨y, hy, 1, one_pos, (one_smul ℝ y).symm⟩
 
-/-- `ray S₁ ⊆ cone S₁`. -/
 theorem ray_subset_coneOf (D : Set (Rn n)) : ray D ⊆ coneOf D := by
   rintro x (rfl | ⟨y, hy, a, ha, rfl⟩)
   · exact zero_mem _
   · exact Submodule.smul_mem _ (⟨a, ha.le⟩ : {c : ℝ // 0 ≤ c}) (PointedCone.subset_hull hy)
 
-/-- **The bridge lemma for `cone S₁`**: Rockafellar's `cone S₁ = conv (ray S₁)` is the backbone's
-pointed-cone hull of any set of representative vectors. -/
+/-- Rockafellar's definition `cone S₁ = conv (ray S₁)`, for any set of representative vectors. -/
 theorem coneOf_eq_convexHull_ray (D : Set (Rn n)) : coneOf D = convexHull ℝ (ray D) := by
   classical
   refine subset_antisymm (fun x hx => ?_) ?_
@@ -156,13 +86,13 @@ theorem coneOf_eq_convexHull_ray (D : Set (Rn n)) : coneOf D = convexHull ℝ (r
   · exact convexHull_min (ray_subset_coneOf D)
       ((PointedCone.hull ℝ D : ConvexCone ℝ (Rn n)).convex)
 
-/-- **`conv S = conv S₀ + cone S₁`** (p. 153): Rockafellar's formula for the convex hull of a
-mixed set of points and directions, which is the backbone's definition of `convexHullPD`. -/
+/-- **`conv S = conv S₀ + cone S₁`** (p. 153): the book's formula for the convex hull of a mixed
+set, which is the backbone's definition of `convexHullPD`. -/
 theorem convexHullPD_eq_add (P D : Set (Rn n)) :
     convexHullPD P D = convexHull ℝ P + coneOf D := rfl
 
-/-- **Rockafellar's definition of `conv S`** (p. 153): the smallest convex set `C` in `ℝⁿ` with
-`C ⊇ S₀` which recedes in all the directions of `S₁`. -/
+/-- **Rockafellar's definition of `conv S`** (p. 153): the smallest convex set containing `S₀` and
+receding in every direction of `S₁`. -/
 theorem convexHullPD_isLeast (P D : Set (Rn n)) :
     IsLeast {C : Set (Rn n) | Convex ℝ C ∧ P ⊆ C ∧ D ⊆ recessionCone C} (convexHullPD P D) :=
   isLeast_convexHullPD P D
@@ -173,14 +103,10 @@ theorem convexHullPD_empty_points (D : Set (Rn n)) : convexHullPD (∅ : Set (Rn
 
 /-! ### Theorem 17.1 -/
 
-/-- **Rockafellar, Theorem 17.1 (Carathéodory's Theorem).** Let `S` be any set of points and
-directions in `ℝⁿ`, and let `C = conv S`. Then `x ∈ C` if and only if `x` can be expressed as a
-convex combination of `n + 1` of the points and directions in `S` (not necessarily distinct).
-
-Specialises `exists_of_mem_convexHullPD` (`HullDirections.lean`, itself
-`exists_of_mem_convexHull_add_coneHull`) and its converse `sum_mem_convexHullPD`. The `n + 1` of
-the book is `Module.finrank ℝ (Rn n) + 1`; the count is the *total* number of points and directions
-used, and every coefficient produced is strictly positive. -/
+/-- **Theorem 17.1** (Carathéodory's Theorem). For a set `S` of points and directions in `ℝⁿ`,
+`x ∈ conv S` iff `x` is a convex combination of `n + 1` of the points and directions of `S`, not
+necessarily distinct. The count is the total number of points and directions used, and every
+coefficient produced is strictly positive. -/
 theorem theorem_17_1 (P D : Set (Rn n)) (x : Rn n) :
     x ∈ convexHullPD P D ↔
       ∃ (p d : Finset (Rn n)) (a b : Rn n → ℝ), ↑p ⊆ P ∧ ↑d ⊆ D ∧
@@ -194,18 +120,12 @@ theorem theorem_17_1 (P D : Set (Rn n)) (x : Rn n) :
   · rintro ⟨p, d, a, b, hp, hd, ha, hb, hsum, -, rfl⟩
     exact sum_mem_convexHullPD hp hd (fun y hy => (ha y hy).le) (fun y hy => (hb y hy).le) hsum
 
-/-- **Rockafellar, Theorem 17.1**, second sentence. In fact `C = conv S` is the union of all the
-generalized `d`-dimensional simplices whose vertices belong to `S`, where `d = dim C`.
-
-A *generalized `d`-dimensional simplex* is the convex hull of `d + 1` affinely independent points
-and directions (p. 155): the points are its ordinary vertices and the directions its vertices at
-infinity, and affine independence of a mixed set means that the lifted vectors `(1, xᵢ)` and
-`(0, xⱼ)` are linearly independent in `ℝⁿ⁺¹`. Both notions are the backbone's `AffineIndepPD` and
-`IsSimplexPD`, and `isSimplexPD_convexHullPD` says that each set in the union below really is a
-generalized `d`-dimensional simplex with vertices in `S`.
-
-Specialises `convexHullPD_eq_iUnion_simplex`. The hypothesis `S₀ ≠ ∅` is the book's convention
-`conv S = ∅` for a set of directions only. -/
+/-- **Theorem 17.1**, second sentence: `conv S` is the union of the generalized `d`-dimensional
+simplices whose vertices belong to `S`, where `d = dim (conv S)`. A generalized `d`-dimensional
+simplex (p. 155) is `convexHullPD` of `d + 1` affinely independent points and directions — the
+points its ordinary vertices, the directions its vertices at infinity — affine independence of a
+mixed set meaning that the lifted vectors `(1, xᵢ)` and `(0, xⱼ)` are linearly independent in
+`ℝⁿ⁺¹`. The hypothesis `P ≠ ∅` is the book's convention `conv S = ∅` for directions only. -/
 theorem theorem_17_1_simplex {P D : Set (Rn n)} (hP : P.Nonempty) {m : ℕ}
     (hm : dim (convexHullPD P D) = (m : ℤ)) :
     convexHullPD P D =
@@ -221,12 +141,8 @@ theorem theorem_17_1_simplex {P D : Set (Rn n)} (hP : P.Nonempty) {m : ℕ}
   rw [← hdim]
   exact convexHullPD_eq_iUnion_simplex hP
 
-/-- **Rockafellar, Corollary 17.1.1.** Let `{Cᵢ | i ∈ I}` be an arbitrary collection of convex sets
-in `ℝⁿ`, and let `C` be the convex hull of the union of the collection. Then every point of `C` can
-be expressed as a convex combination of `n + 1` or fewer affinely independent points, each
-belonging to a different `Cᵢ`.
-
-Specialises `exists_affineIndependent_of_mem_convexHull_iUnion`. -/
+/-- **Corollary 17.1.1**. Every point of the convex hull of a union of convex sets `Cᵢ` is a
+convex combination of `n + 1` or fewer affinely independent points, each from a different `Cᵢ`. -/
 theorem corollary_17_1_1 {ι : Type*} {C : ι → Set (Rn n)} (hC : ∀ i, Convex ℝ (C i)) {x : Rn n}
     (hx : x ∈ convexHull ℝ (⋃ i, C i)) :
     ∃ (t : Finset ι) (w : ι → ℝ) (p : ι → Rn n), (∀ i ∈ t, 0 < w i) ∧ ∑ i ∈ t, w i = 1 ∧
@@ -237,14 +153,10 @@ theorem corollary_17_1_1 {ι : Type*} {C : ι → Set (Rn n)} (hC : ∀ i, Conve
   rw [finrank_euclideanSpace_fin] at hcard
   exact ⟨t, w, p, hw, hone, hmem, hai, hcard, hval⟩
 
-/-- **Rockafellar, Corollary 17.1.2.** Let `{Cᵢ | i ∈ I}` be an arbitrary collection of non-empty
-convex sets in `ℝⁿ`, and let `K` be the convex cone generated by the union of the collection. Then
-every non-zero vector of `K` can be expressed as a non-negative linear combination of `n` or fewer
-linearly independent vectors, each belonging to a different `Cᵢ`.
-
-Specialises `exists_linearIndepOn_of_mem_coneHull_iUnion`. Neither the book's `x ≠ 0` nor its
-`Cᵢ ≠ ∅` is needed: the empty index set covers the origin, and an empty `Cᵢ` never contributes an
-index. -/
+/-- **Corollary 17.1.2**. Every vector of the convex cone generated by a union of convex sets `Cᵢ`
+is a non-negative combination of `n` or fewer linearly independent vectors, each from a different
+`Cᵢ`. Neither the book's `x ≠ 0` nor its `Cᵢ ≠ ∅` is needed: the empty index set covers the origin,
+and an empty `Cᵢ` never contributes an index. -/
 theorem corollary_17_1_2 {ι : Type*} {C : ι → Set (Rn n)} (hC : ∀ i, Convex ℝ (C i)) {x : Rn n}
     (hx : x ∈ coneOf (⋃ i, C i)) :
     ∃ (t : Finset ι) (w : ι → ℝ) (v : ι → Rn n), (∀ i ∈ t, 0 < w i) ∧ (∀ i ∈ t, v i ∈ C i) ∧
@@ -254,16 +166,10 @@ theorem corollary_17_1_2 {ι : Type*} {C : ι → Set (Rn n)} (hC : ∀ i, Conve
   rw [finrank_euclideanSpace_fin] at hcard
   exact ⟨t, w, v, hw, hmem, hli, hcard, hval⟩
 
-/-- **Rockafellar, Corollary 17.1.3.** Let `{fᵢ | i ∈ I}` be an arbitrary collection of proper
-convex functions on `ℝⁿ`, and let `f` be the convex hull of the collection. Then, for every vector
-`x`, `f x = inf {∑ᵢ λᵢ fᵢ(xᵢ) | ∑ᵢ λᵢ xᵢ = x}`, the infimum being over all expressions of `x` as a
-convex combination in which at most `n + 1` of the coefficients `λᵢ` are non-zero and the vectors
-`xᵢ` with non-zero coefficients are affinely independent.
-
-Specialises `convFn_apply_affineIndependent`. Rockafellar's own proof passes to a "minimal `α′` on
-the vertical line", which is not needed: the elimination behind the backbone lemma may choose the
-sign of an affine dependency by the cost, because both signs of an affine dependency carry a
-positive coefficient. That is precisely what fails for Corollaries 17.1.4 and 17.1.6 below. -/
+/-- **Corollary 17.1.3**. For proper convex `fᵢ`, `(conv fᵢ) x` is the infimum of `∑ λᵢ fᵢ(xᵢ)`
+over convex combinations `∑ λᵢ xᵢ = x` with at most `n + 1` non-zero coefficients whose `xᵢ` are
+affinely independent. The elimination behind it may choose the sign of an affine dependency by the
+cost, both signs carrying a positive coefficient; that is what fails for Corollary 17.1.4. -/
 theorem corollary_17_1_3 {ι : Type*} {f : ι → Rn n → EReal} (hf : ∀ i, ConvexFn (f i))
     (hp : ∀ i, Proper (f i)) (x : Rn n) :
     convFn f x = sInf {z : EReal | ∃ (t : Finset ι) (w : ι → ℝ) (p : ι → Rn n),
@@ -273,13 +179,10 @@ theorem corollary_17_1_3 {ι : Type*} {f : ι → Rn n → EReal} (hf : ∀ i, C
   have h := convFn_apply_affineIndependent hf (fun i y => (hp i).ne_bot y) x
   rwa [finrank_euclideanSpace_fin] at h
 
-/-- **Rockafellar, Corollary 17.1.5.** Let `f` be an arbitrary function from `ℝⁿ` to `(-∞, +∞]`.
-Then `(conv f)(x) = inf {∑_{i=1}^{n+1} λᵢ f(xᵢ) | ∑_{i=1}^{n+1} λᵢ xᵢ = x}`, the infimum being over
-all expressions of `x` as a convex combination of `n + 1` points.
-
-Specialises `convHullFn_apply_fin`. The points are not required to be distinct: repetitions and
-zero coefficients are what turn Carathéodory's "at most `n + 1`" into a statement about the fixed
-index type `Fin (n + 1)`, and `0 · (+∞) = 0` makes a zero coefficient harmless. -/
+/-- **Corollary 17.1.5**. For any `f : ℝⁿ → (-∞, +∞]`, `(conv f) x` is the infimum of
+`∑_{i=1}^{n+1} λᵢ f(xᵢ)` over convex combinations `∑ λᵢ xᵢ = x`. The points need not be distinct:
+repetitions and zero coefficients turn Carathéodory's "at most `n + 1`" into a statement about the
+fixed index type `Fin (n + 1)`, and `0 · (+∞) = 0` makes a zero coefficient harmless. -/
 theorem corollary_17_1_5 {f : Rn n → EReal} (hf : ∀ x, f x ≠ ⊥) (x : Rn n) :
     convHullFn f x = sInf {z : EReal | ∃ (w : Fin (n + 1) → ℝ) (p : Fin (n + 1) → Rn n),
       (∀ i, 0 ≤ w i) ∧ ∑ i, w i = 1 ∧ ∑ i, w i • p i = x ∧
@@ -289,47 +192,33 @@ theorem corollary_17_1_5 {f : Rn n → EReal} (hf : ∀ x, f x ≠ ⊥) (x : Rn 
 
 /-! ### Theorems 17.2 and 17.3 -/
 
-/-- **Rockafellar, Theorem 17.2.** If `S` is a bounded set of points in `ℝⁿ`, then
-`cl (conv S) = conv (cl S)`.
-
-Specialises `Bornology.IsBounded.closure_convexHull`. -/
+/-- **Theorem 17.2**. `cl (conv S) = conv (cl S)` for a bounded set `S ⊆ ℝⁿ`. -/
 theorem theorem_17_2 {S : Set (Rn n)} (hS : Bornology.IsBounded S) :
     closure (convexHull ℝ S) = convexHull ℝ (closure S) :=
   hS.closure_convexHull
 
-/-- **Rockafellar, Theorem 17.2**, second sentence: if `S` is closed and bounded, then `conv S` is
-closed and bounded.
-
-Specialises `IsCompact.isCompact_convexHull`; in `ℝⁿ` "closed and bounded" is "compact". -/
+/-- **Theorem 17.2**, second sentence: `conv S` is closed and bounded whenever `S` is. In `ℝⁿ`
+"closed and bounded" is "compact". -/
 theorem theorem_17_2_isCompact {S : Set (Rn n)} (hS : IsCompact S) :
     IsCompact (convexHull ℝ S) :=
   hS.isCompact_convexHull
 
-/-- **Rockafellar, Corollary 17.2.1.** Let `S` be a non-empty closed bounded set in `ℝⁿ`, let `f`
-be a continuous real-valued function on `S`, and let `f x = +∞` for `x ∉ S`. Then `conv f` is a
-closed proper convex function.
-
-Specialises `closedProperConvexFn_convHullFn_restrict`; in `ℝⁿ` "closed and bounded" is
-"compact". -/
+/-- **Corollary 17.2.1**. If `S` is non-empty, closed and bounded and `h` is continuous on `S`,
+the convex hull of `h` extended by `+∞` off `S` is a closed proper convex function. -/
 theorem corollary_17_2_1 {S : Set (Rn n)} (hSne : S.Nonempty) (hScl : IsClosed S)
     (hSb : Bornology.IsBounded S) {h : Rn n → ℝ} (hcont : ContinuousOn h S) :
     ClosedProperConvexFn (convHullFn (restrict S fun x => ((h x : ℝ) : EReal))) :=
   closedProperConvexFn_convHullFn_restrict hSne
     (Metric.isCompact_of_isClosed_isBounded hScl hSb) hcont
 
-/-- **Rockafellar, Theorem 17.3.** Let `S*` be a non-empty closed bounded set of vectors
-`(x*, μ*)` in `ℝⁿ⁺¹`, and let `C = {x | ⟨x, x*⟩ ≤ μ* for all (x*, μ*) ∈ S*}`. Suppose `C` is
-`n`-dimensional. Then, for a given vector `(x*, μ*)`, the half-space `H = {x | ⟨x, x*⟩ ≤ μ*}`
-contains `C` if and only if there are `(xᵢ*, μᵢ*) ∈ S*` and `λᵢ ≥ 0`, `i = 1, …, m` with `m ≤ n`,
-such that `∑ λᵢ xᵢ* = x*` and `∑ λᵢ μᵢ* ≤ μ*`.
+/-- **Theorem 17.3**. Let `S*` be a non-empty closed bounded set of vectors `(x*, μ*)` in `ℝⁿ⁺¹`
+and let `C = {x | ⟨x, x*⟩ ≤ μ* for all (x*, μ*) ∈ S*}` be `n`-dimensional. The half-space
+`{x | ⟨x, b⟩ ≤ β}` contains `C` iff `b = ∑ λᵢ xᵢ*` and `∑ λᵢ μᵢ* ≤ β` for some `(xᵢ*, μᵢ*) ∈ S*`
+and `λᵢ ≥ 0`, at most `n` terms in all.
 
-Specialises `inequalitySet_subset_halfSpace_iff`.
-
-**The book's statement is false without `0 ∉ S*`**, and that hypothesis appears here. Rockafellar's
-proof concludes that the origin of `ℝⁿ⁺¹` is outside `conv (S* ∪ {(0,1)})`, which fails the moment
-`(0,0) ∈ S*`; the counterexample — a spiral arc in `ℝ² × ℝ` accumulating at the origin along a
-boundary ray — is written out with the backbone lemma. Conversely the book's `x* ≠ 0` is *not*
-needed: the empty combination covers it. -/
+**The book's statement is false without `0 ∉ S*`**, which is assumed here: its proof concludes that
+the origin of `ℝⁿ⁺¹` lies outside `conv (S* ∪ {(0,1)})`, and that fails as soon as `(0,0) ∈ S*`.
+The book's `x* ≠ 0` is conversely unnecessary — the empty combination covers it. -/
 theorem theorem_17_3 {S : Set (Rn n × ℝ)} (hScl : IsClosed S) (hSb : Bornology.IsBounded S)
     (hS0 : (0 : Rn n × ℝ) ∉ S)
     (hdim : dim (inequalitySet (pairing n) S) = (n : ℤ)) (b : Rn n) (β : ℝ) :
@@ -361,7 +250,6 @@ theorem theorem_17_3 {S : Set (Rn n × ℝ)} (hScl : IsClosed S) (hSb : Bornolog
 
 /-! ### Corollaries 17.1.4 and 17.1.6: stated and refuted -/
 
-/-- A non-zero vector of the line `ℝ¹` together with the coordinate functional sending it to `1`. -/
 private theorem exists_unit_coord : ∃ (e : Rn 1) (L : Rn 1 →ₗ[ℝ] ℝ), e ≠ 0 ∧ L e = 1 := by
   obtain ⟨e, he⟩ := exists_ne (0 : Rn 1)
   have hne : pairing 1 e e ≠ 0 := fun h => he (by simpa using h)
@@ -369,23 +257,17 @@ private theorem exists_unit_coord : ∃ (e : Rn 1) (L : Rn 1 →ₗ[ℝ] ℝ), e
   simp only [LinearMap.smul_apply, LinearMap.flip_apply, smul_eq_mul]
   exact inv_mul_cancel₀ hne
 
-/-- An extended real below every real is `-∞`. -/
 private theorem eq_bot_of_forall_le {v : EReal} (h : ∀ r : ℝ, v ≤ (r : EReal)) : v = ⊥ := by
   by_contra hv
   obtain ⟨r, -, hr⟩ :=
     _root_.EReal.lt_iff_exists_real_btwn.1 (lt_of_le_of_ne bot_le (Ne.symm hv))
   exact absurd (h r) (not_le.2 hr)
 
-/-- **Rockafellar, Corollary 17.1.4**, transcribed verbatim: for an arbitrary collection
-`{fᵢ | i ∈ I}` of proper convex functions on `ℝⁿ` and `f` the greatest positively homogeneous
-convex function with `f ≤ fᵢ` for every `i` — that is, the positively homogeneous convex function
-generated by `conv {fᵢ | i ∈ I}` — one has, for every `x ≠ 0`,
-`f x = inf {∑ᵢ λᵢ fᵢ(xᵢ) | ∑ᵢ λᵢ xᵢ = x}`, the infimum being over all expressions of `x` as a
-non-negative linear combination in which at most `n` of the coefficients `λᵢ` are non-zero and the
-vectors `xᵢ` with non-zero coefficients are linearly independent.
-
-**This proposition is false**; `corollary_17_1_4_false` refutes it. It is stated rather than
-silently omitted because the book prints it as a corollary with a proof. -/
+/-- **Corollary 17.1.4** as the book states it: for proper convex `fᵢ` and `f` the positively
+homogeneous convex function generated by `conv {fᵢ}`, `f x` for `x ≠ 0` is the infimum of
+`∑ λᵢ fᵢ(xᵢ)` over non-negative combinations `∑ λᵢ xᵢ = x` with at most `n` non-zero coefficients
+whose `xᵢ` are linearly independent. **The proposition is false**, and `corollary_17_1_4_false`
+refutes it; it is stated because the book prints it as a corollary with a proof. -/
 def corollary_17_1_4 : Prop :=
   ∀ (n : ℕ) (ι : Type) (f : ι → Rn n → EReal), (∀ i, ConvexFn (f i)) → (∀ i, Proper (f i)) →
     ∀ x : Rn n, x ≠ 0 →
@@ -394,20 +276,15 @@ def corollary_17_1_4 : Prop :=
           (∀ i ∈ t, 0 < l i) ∧ t.card ≤ n ∧ LinearIndepOn ℝ p (t : Set ι) ∧
             ∑ i ∈ t, l i • p i = x ∧ z = ∑ i ∈ t, (l i : EReal) * f i (p i)}
 
-/-- **Corollary 17.1.4 is false as Rockafellar states it.**
+/-- **Corollary 17.1.4 is false as stated.** On `ℝ¹` take `f₁ y = -y` and `f₂ y = y`, both proper
+convex. Then `conv {f₁, f₂} ≡ -∞`, since the midpoint of `(y + s, f₁(y + s))` and
+`(y - s, f₂(y - s))` is `(y, -s)` for every `s > 0`, so the positively homogeneous convex function
+generated is `-∞` everywhere; but at `x = e ≠ 0` the infimum on the right is `-1`, because `n = 1`
+admits a single index and `λ x₁ = e` forces the value `-1` or `1`.
 
-On `ℝ¹` take `f₁ y = -y` and `f₂ y = y`, both proper convex. Then `conv {f₁, f₂} ≡ -∞`: the
-midpoint of `(y + s, f₁(y + s))` and `(y - s, f₂(y - s))` is `(y, -s)`, which lies in the convex
-hull of the two epigraphs for every `s > 0`. Hence the positively homogeneous convex function
-generated is `-∞` everywhere. At `x = e ≠ 0`, however, `n = 1` admits only a single index, and
-`λ x₁ = e` forces the value `λ f₁(x₁) = -1` or `λ f₂(x₁) = 1`; the infimum is `-1`, not `-∞`.
-
-**Root cause.** The elimination that proves Corollary 17.1.3 is unavailable here: an *affine*
-dependency has coefficients summing to zero, so both signs occur and the elimination may choose the
-one that lowers the cost, whereas a *conical* dependency can have every coefficient of one sign.
-Rockafellar's proof passes to "a minimal `α′` on the vertical line", which does not exist when the
-generated function is improper. The statement is presumably repairable by assuming that generated
-function proper; that is attempted neither here nor in the backbone. -/
+The elimination that proves Corollary 17.1.3 has no conical analogue: an affine dependency has
+coefficients summing to zero, so both signs occur and one may be chosen to lower the cost, whereas
+a conical dependency can have every coefficient of one sign. -/
 theorem corollary_17_1_4_false : ¬ corollary_17_1_4 := by
   classical
   intro hcor
@@ -464,30 +341,21 @@ theorem corollary_17_1_4_false : ¬ corollary_17_1_4 := by
       · rw [hg1]; norm_num [hLe]
   exact absurd (le_bot_iff.1 hle) (_root_.EReal.coe_ne_bot _)
 
-/-- **Rockafellar, Corollary 17.1.6**, transcribed verbatim: for an arbitrary function `f` from
-`ℝⁿ` to `(-∞, +∞]` and `k` the positively homogeneous convex function generated by `f` (i.e. by
-`conv f`), one has, for each `x ≠ 0`, `k x = inf {∑_{i=1}^{n} λᵢ f(xᵢ) | ∑_{i=1}^{n} λᵢ xᵢ = x}`,
-the infimum being over all expressions of `x` as a non-negative linear combination of `n` vectors.
-
-**This proposition is false**; `corollary_17_1_6_false` refutes it. It is stated rather than
-silently omitted because the book prints it as a corollary with a proof. -/
+/-- **Corollary 17.1.6** as the book states it: for `f : ℝⁿ → (-∞, +∞]` and `k` the positively
+homogeneous convex function generated by `conv f`, `k x` for `x ≠ 0` is the infimum of
+`∑_{i=1}^{n} λᵢ f(xᵢ)` over non-negative combinations `∑ λᵢ xᵢ = x`. **The proposition is false**,
+and `corollary_17_1_6_false` refutes it. -/
 def corollary_17_1_6 : Prop :=
   ∀ (n : ℕ) (f : Rn n → EReal), (∀ x, f x ≠ ⊥) → ∀ x : Rn n, x ≠ 0 →
     posHomGen (convHullFn f) x =
       sInf {z : EReal | ∃ (w : Fin n → ℝ) (p : Fin n → Rn n), (∀ i, 0 ≤ w i) ∧
         ∑ i, w i • p i = x ∧ z = ∑ i, (w i : EReal) * f (p i)}
 
-/-- **Corollary 17.1.6 is false as Rockafellar states it.**
-
-On `ℝ¹` take `f y = -|y|`, which never takes the value `-∞`. Then `conv f ≡ -∞`, because the
-midpoint of `(y + s, -|y + s|)` and `(y - s, -|y - s|)` is `(y, α)` with `α ≤ -s` for every
-`s > 0`; so the positively homogeneous convex function `k` generated by `f` is `-∞` everywhere. At
-`x = e ≠ 0`, however, `n = 1` admits only one vector, and `λ x₁ = e` with `λ ≥ 0` forces
-`λ f(x₁) = -|λ x₁| = -1`; the infimum is `-1`, not `-∞`.
-
-This is Corollary 17.1.4's failure for a one-element family, with the same root cause: the conical
-elimination cannot choose the sign of a dependency, and the "minimal `α′` on the vertical line" of
-Rockafellar's proof does not exist for an improper hull. -/
+/-- **Corollary 17.1.6 is false as stated.** On `ℝ¹` take `f y = -|y|`, which never takes the value
+`-∞`. Then `conv f ≡ -∞`, because the midpoint of `(y + s, -|y + s|)` and `(y - s, -|y - s|)` is
+`(y, α)` with `α ≤ -s` for every `s > 0`, so the generated `k` is `-∞` everywhere. At `x = e ≠ 0`,
+however, `n = 1` admits one vector and `λ x₁ = e` with `λ ≥ 0` forces `λ f(x₁) = -1`, so the
+infimum is `-1`. This is Corollary 17.1.4's failure for a one-element family. -/
 theorem corollary_17_1_6_false : ¬ corollary_17_1_6 := by
   classical
   intro hcor
