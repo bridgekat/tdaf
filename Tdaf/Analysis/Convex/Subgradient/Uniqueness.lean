@@ -24,12 +24,11 @@ book states.
   arbitrary compatible pairing.
 * `hasGradientAt_iff_subgradient_eq_singleton`,
   `differentiableAtFn_iff_exists_subgradient_eq_singleton` — **Theorem 25.1** in full.
-* `ConvexFn.interior_dom_clFn` — Theorem 7.4's companion for *interiors*:
-  `int (dom (cl f)) = int (dom f)`.
 * `hasGradientAt_clFn_iff`, `differentiableAtFn_clFn_iff` — the **remark after Corollary 25.1.1**,
   `∇(cl f) = ∇f`.
-* `exists_subgradient_clFn_eq_singleton_iff`, `posHomogeneous_clFn_and_supportSet_clFn` — the two
-  facts that let the book's reduction to `cl f` be carried out.
+* `exists_subgradient_clFn_eq_singleton_iff` — together with `posHomogeneous_clFn` and
+  `supportSet_clFn` (`Duality/Support.lean`), what lets the book's reduction to `cl f` be carried
+  out.
 * `mem_exposedPoints_epi_conj_iff_of_proper`, `mem_exposedPoints_supportSet_iff_of_proper` —
   **Corollaries 25.1.2 and 25.1.3** for an arbitrary compatible pairing, with the `ClosedFn`
   hypothesis of their `Gradient.lean` originals removed.
@@ -58,9 +57,9 @@ states both for a merely proper convex `f` and reduces to the closed case by rep
 `cl f`, on the strength of a one-sentence remark after Corollary 25.1.1 — that `∇f` and `∇(cl f)`
 coincide "inasmuch as `f` and `cl f` coincide on `int (dom f)`". That is half the argument: it
 gives every gradient of `f` to `cl f`, but the other direction has to know that `cl f` has no
-*extra* interior points to be differentiable at, which is `ConvexFn.interior_dom_clFn` and not the
-sentence quoted. With that, `hasGradientAt_clFn_iff` holds and both corollaries carry the book's
-hypotheses. The corresponding *subgradient* statements in `Gradient.lean` keep their `ClosedFn`,
+*extra* interior points to be differentiable at, which is `ConvexFn.interior_dom_clFn`
+(`RelativeInterior.lean`, beside Corollary 7.4.1) and not the sentence quoted. With that,
+`hasGradientAt_clFn_iff` holds and both corollaries carry the book's hypotheses. The corresponding *subgradient* statements in `Gradient.lean` keep their `ClosedFn`,
 because `∂f = ∂(cl f)` is false at relative boundary points; only the gradients transfer.
 
 **Why not go through Corollary 24.5.1.** Upper semicontinuity of `∂f` gives the Fréchet estimate
@@ -176,25 +175,6 @@ section Closure
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x : E} {f' : StrongDual ℝ E}
 
-/-- **Theorem 7.4's companion for *interiors*.** `ConvexFn.relint_dom_clFn` (Corollary 7.4.1) says
-`dom (cl f)` has the same *relative* interior as `dom f`; the same is true of the plain interior.
-
-The inclusion `⊇` is `cl f ≤ f`. For `⊆`, `interior (dom (cl f))` is an *open* set inside
-`ri (dom (cl f)) = ri (dom f) ⊆ dom f`, and an open subset of a set is inside its interior. No
-separate degenerate case is needed beyond the one `Convex.interior_subset_relint` asks for: where
-there is no interior point at all the left-hand side is empty. -/
-theorem ConvexFn.interior_dom_clFn (hf : ConvexFn f) (hp : Proper f) :
-    interior (dom (clFn f)) = interior (dom f) := by
-  refine Set.Subset.antisymm ?_ (interior_mono fun z hz =>
-    mem_dom.2 (lt_of_le_of_lt (clFn_le f z) (mem_dom.1 hz)))
-  rcases Set.eq_empty_or_nonempty (interior (dom (clFn f))) with hemp | hne
-  · rw [hemp]
-    exact Set.empty_subset _
-  refine interior_maximal ?_ isOpen_interior
-  refine (Convex.interior_subset_relint (convexFn_clFn hf).convex_dom hne).trans ?_
-  rw [hf.relint_dom_clFn hp]
-  exact intrinsicInterior_subset
-
 /-- **`cl f` agrees with `f` on a whole neighbourhood of an interior point of `dom f`.**
 `interior (dom f)` is open and sits inside `ri (dom f)`, where Theorem 7.4 makes the two functions
 equal pointwise. -/
@@ -282,39 +262,22 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {g : F → EReal}
 
-omit [TopologicalSpace E] [FiniteDimensional ℝ F] in
-/-- **The closure of a positively homogeneous convex function is positively homogeneous**, and it
-supports the same set. Corollary 13.2.1 writes `cl g` as a support function, and support functions
-are positively homogeneous; the two conjugates then agree (`conj_clFn`) and are the indicator
-functions of the two supported sets, so the sets agree too. -/
-theorem posHomogeneous_clFn_and_supportSet_clFn [IsCompatiblePairing B.flip]
-    (hgh : PosHomogeneous g) (hgc : ConvexFn g) (hne : ∃ y, g y ≠ ⊤) :
-    PosHomogeneous (clFn g) ∧ supportSet B.flip (clFn g) = supportSet B.flip g := by
-  obtain ⟨w, hw⟩ := hne
-  have hne' : ∃ y, clFn g y ≠ ⊤ := ⟨w, fun h => hw (top_le_iff.1 (h ▸ clFn_le g w))⟩
-  have hph : PosHomogeneous (clFn g) := by
-    rw [clFn_eq_supportFn_of_posHomogeneous (B := B) hgh hgc ⟨w, hw⟩]
-    exact posHomogeneous_supportFn _ _
-  refine ⟨hph, ?_⟩
-  have h₁ := conj_eq_indicatorFn_of_posHomogeneous (B := B.flip) hgh ⟨w, hw⟩
-  have h₂ := conj_eq_indicatorFn_of_posHomogeneous (B := B.flip) hph hne'
-  rw [conj_clFn, h₁] at h₂
-  rw [← dom_indicatorFn (supportSet B.flip (clFn g)), ← h₂, dom_indicatorFn]
-
 /-- **Rockafellar, Corollary 25.1.3** with the book's hypotheses: `g` is merely positively
 homogeneous proper convex. The book's own proof does not reduce to the closed case here — it
 identifies `g*` with an indicator and appeals to Corollary 25.1.2, which by
 `mem_exposedPoints_epi_conj_iff_of_proper` no longer needs closedness. The reduction is done
-directly instead, on the strength of the two facts above. -/
+directly instead, on the strength of `posHomogeneous_clFn` and `supportSet_clFn`
+(`Duality/Support.lean`) together with `exists_subgradient_clFn_eq_singleton_iff`. -/
 theorem mem_exposedPoints_supportSet_iff_of_proper [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E]
     [LocallyConvexSpace ℝ E] (hgh : PosHomogeneous g) (hgc : ConvexFn g) (hgp : Proper g)
     {z : E} :
     z ∈ (supportSet B.flip g).exposedPoints ℝ ↔ ∃ y : F, subgradient B.flip g y = {z} := by
   obtain ⟨w, hw⟩ := hgp.dom_nonempty
-  obtain ⟨hph, hSS⟩ :=
-    posHomogeneous_clFn_and_supportSet_clFn (B := B) hgh hgc ⟨w, (mem_dom.1 hw).ne⟩
-  rw [← hSS, mem_exposedPoints_supportSet_iff (B := B) hph (convexFn_clFn hgc)
+  have hne : ∃ y, g y ≠ ⊤ := ⟨w, (mem_dom.1 hw).ne⟩
+  have hph := posHomogeneous_clFn (B := B) hgh hgc hne
+  rw [← supportSet_clFn (B := B) hgh hgc hne,
+    mem_exposedPoints_supportSet_iff (B := B) hph (convexFn_clFn hgc)
     (hgc.proper_clFn hgp) (closedFn_clFn g)]
   exact exists_subgradient_clFn_eq_singleton_iff hgc hgp
 

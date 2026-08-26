@@ -44,8 +44,8 @@ with it. Four correspondences live here, all of them involutions on a characteri
 
 * `gaugeEquiv` — §15, the correspondence `k(x) = γ(x ∣ C)`, `C = {x ∣ k x ≤ 1}`.
 * `isGauge_iff` — a function is a gauge exactly when it is the gauge of a nonempty convex set.
-* `recessionCone_eq_polarCone_polarSet`, `polarCone_recessionCone`, `polarCone_linealitySpace` —
-  **Theorem 14.6**.
+* `recessionCone_eq_polarCone_polarSet`, `recessionCone_polarSet`, `polarCone_recessionCone`,
+  `polarCone_linealitySpace` — **Theorem 14.6**.
 * `finrank_vectorSpan_polarSet_add_lineality`, `finrank_vectorSpan_add_lineality_polarSet` —
   **Corollary 14.6.1**, the dimension relations `dim C° = n - lin C` and `lin C° = n - dim C`,
   stated without truncated subtraction. `finrank_add_finrank_polarSubmodule` is the underlying
@@ -682,6 +682,19 @@ theorem recessionCone_eq_polarCone_polarSet [IsCompatiblePairing B] (hconv : Con
     exact this y hy
   have h2 : B v y ≤ 0 := hv y hy
   nlinarith
+
+/-- **The recession cone of a polar set is a polar cone**: `0⁺(C°) = C°` read as a *cone* polar
+rather than a *set* polar, for a closed convex `C` containing the origin.
+
+Theorem 14.6 applied to `C°`, whose bipolar is `C` (`polarSet_polarSet`). Both spaces are
+topologised here, because the recession cone being computed lives in `F`. -/
+theorem recessionCone_polarSet [TopologicalSpace F] [IsTopologicalAddGroup F]
+    [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F] [IsCompatiblePairing B]
+    [IsCompatiblePairing B.flip] (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
+    recessionCone (polarSet B C) = polarCone B C := by
+  have h := recessionCone_eq_polarCone_polarSet (B := B.flip) (C := polarSet B C)
+    (convex_polarSet B C) isClosed_polarSet (zero_mem_polarSet B C)
+  rwa [LinearMap.flip_flip, polarSet_polarSet (B := B) hconv hcl h0] at h
 
 /-- **Rockafellar, Theorem 14.6**: the recession cone of `C` and the closed convex cone generated
 by `C°` are polar to each other. -/
@@ -1325,33 +1338,6 @@ theorem polarFn_apply_eq (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 ≤ 0) (y : F) :
 
 end PolarFn
 
-/-! ### Two facts about `polarSet`
-
-`Duality/Polar.lean` proves both of these for `polarCone` but not for `polarSet`. They are needed
-for Theorem 15.4 and belong in that file; they are stated here so that this module can be merged
-on its own. -/
-
-section PolarSetAux
-
-variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-
-/-- The polar of any set is convex — the `polarSet` companion of `convex_polarCone`. -/
-theorem convex_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) : Convex ℝ (polarSet B C) := by
-  intro y hy z hz a b ha hb hab x hx
-  have h1 := hy x hx
-  have h2 := hz x hx
-  simp only [map_add, map_smul, smul_eq_mul]
-  nlinarith
-
-/-- **The polar does not see the closure** — the `polarSet` companion of `polarCone_closure`. -/
-theorem polarSet_closure [TopologicalSpace E] (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B]
-    (C : Set E) : polarSet B (closure C) = polarSet B C := by
-  refine subset_antisymm (polarSet_anti subset_closure) fun y hy x hx => ?_
-  exact closure_minimal (fun z hz => hy z hz)
-    (isClosed_le (continuous_pairing B y) continuous_const) hx
-
-end PolarSetAux
-
 /-! ### Closures of nonnegative functions
 
 A nonnegative function has a nonnegative lower semicontinuous hull, so the exceptional `⊥` branch
@@ -1490,7 +1476,7 @@ theorem polarFn_polarFn (hconv : ConvexFn f) (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 
     simpa using h0
   have hepi : epi (polarFn B.flip (polarFn B f)) = closure (epi f) := by
     rw [epi_polarFn hnn', epi_polarFn hnn, polarSet_image_vNeg B.flip, image_vNeg_image_vNeg,
-      ← epiPairing_flip B, ← polarSet_closure (epiPairing B) (epi f)]
+      ← epiPairing_flip B, ← polarSet_closure (B := epiPairing B) (epi f)]
     exact polarSet_polarSet hconv.convex_epi.closure isClosed_closure hmem
   have hof := congrArg ofEpi hepi
   rwa [ofEpi_epi, ← epi_clFn_of_nonneg hnn, ofEpi_epi] at hof

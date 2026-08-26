@@ -52,6 +52,8 @@ theory that Mathlib's `Mathlib.Analysis.Convex.Intrinsic` does not carry.
 * `ConvexFn.exists_mem_relint_dom_lt` — Corollary 7.3.1.
 * `ConvexFn.le_of_mem_closure` — Corollary 7.3.3.
 * `ConvexFn.proper_clFn`, `ConvexFn.clFn_eq_of_mem_relint_dom` — Theorem 7.4.
+* `ConvexFn.relint_dom_clFn`, `ConvexFn.interior_dom_clFn` — Corollary 7.4.1 and its companion for
+  plain interiors: `dom (cl f)` has the same relative interior *and* the same interior as `dom f`.
 * `ConvexFn.tendsto_lscHull_along_segment_relint` — Theorem 7.5, the `ri` form.
 * `ConvexFn.relint_setOf_le`, `ConvexFn.closure_setOf_le` — Theorem 7.6, the relative interior
   and the closure of a level set `{x | f x ≤ α}` with `α > inf f`, together with
@@ -94,7 +96,7 @@ The following are now proved:
   which needs no hypothesis on `dom f` and locates the `⊥` values precisely on `ri (dom f)`.
 * Theorem 7.4 and Corollaries 7.2.2, 7.4.1, 7.4.2 (deferred by `Tdaf.Analysis.Convex.Closure`) —
   `ConvexFn.clFn_eq_of_mem_relint_dom`, `ConvexFn.proper_clFn`,
-  `ConvexFn.relint_dom_clFn`, `ConvexFn.closedFn_of_dom_eq_coe`.
+  `ConvexFn.relint_dom_clFn`, `ConvexFn.interior_dom_clFn`, `ConvexFn.closedFn_of_dom_eq_coe`.
 * Corollary 8.3.1 (deferred by `Tdaf.Analysis.Convex.Recession.Cone`) —
   `Convex.recessionCone_relint`.
 * Theorem 7.6, the `ri`-flavoured half (deferred by `Tdaf.Analysis.Convex.Closure`, whose
@@ -1225,6 +1227,31 @@ theorem ConvexFn.relint_dom_clFn (hf : ConvexFn f) (hp : Proper f) :
     (Convex.closure_eq_of_relint_subset_of_subset_closure hf.convex_dom
       (intrinsicInterior_subset.trans (dom_subset_dom_lscHull f))
       (dom_lscHull_subset_closure_dom f))
+
+/-- **Corollary 7.4.1's companion for *interiors***: `dom (cl f)` has the same plain interior as
+`dom f`, not only the same relative interior.
+
+The inclusion `⊇` is `cl f ≤ f`. For `⊆`, `interior (dom (cl f))` is an *open* set inside
+`ri (dom (cl f)) = ri (dom f) ⊆ dom f`, and an open subset of a set is inside its interior. No
+separate degenerate case is needed beyond the one the `ri`/`int` collapse asks for: where there is
+no interior point at all the left-hand side is empty.
+
+The step `int ⊆ ri` is `intrinsicInterior_eq_interior` at a full-dimensional domain; it is also
+`Convex.interior_subset_relint`, which sits in `Subgradient/Bounded.lean`, far above this file. -/
+theorem ConvexFn.interior_dom_clFn (hf : ConvexFn f) (hp : Proper f) :
+    interior (dom (clFn f)) = interior (dom f) := by
+  refine Set.Subset.antisymm ?_ (interior_mono fun z hz =>
+    mem_dom.2 (lt_of_le_of_lt (clFn_le f z) (mem_dom.1 hz)))
+  rcases Set.eq_empty_or_nonempty (interior (dom (clFn f))) with hemp | hne
+  · rw [hemp]
+    exact Set.empty_subset _
+  refine interior_maximal ?_ isOpen_interior
+  have hint : interior (dom (clFn f)) ⊆ ri (dom (clFn f)) :=
+    le_of_eq (intrinsicInterior_eq_interior (Convex.interior_nonempty_iff_affineSpan_eq_top
+      (convexFn_clFn hf).convex_dom |>.1 hne)).symm
+  refine hint.trans ?_
+  rw [hf.relint_dom_clFn hp]
+  exact intrinsicInterior_subset
 
 /-- **Rockafellar, Corollary 7.4.2**: a proper convex function whose effective domain is an affine
 set — in particular one that is finite everywhere — is closed. -/

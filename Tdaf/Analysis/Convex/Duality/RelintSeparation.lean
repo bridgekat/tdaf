@@ -27,7 +27,9 @@ of `L`.
   are disjoint exactly when the pairing with some `y` is nowhere larger on `C₁` than on `C₂` and is
   strictly smaller somewhere.
 * `submodule_inter_relint_nonempty_iff` and `submodule_inter_relint_nonempty_iff_supportFn` — the
-  subspace case, pointwise and through the support function.
+  subspace case, pointwise and through the support function. The two readings of `δ*` at the level
+  `0` that the second runs on are `supportFn_le_zero_iff` and `zero_lt_supportFn_iff`, in
+  `Duality/Support.lean`.
 * `submodule_inter_relint_dom_nonempty_iff` — the effective-domain case, with the support function
   of `dom f` rewritten as the recession function of `f*`.
 * `exists_apply_mem_relint_dom_iff` — the same for the range of a linear map, whose annihilator on
@@ -85,23 +87,12 @@ open Set
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Two readings of the support function at the level `0` -/
+/-! ### Boundedness on a subspace -/
 
 section Support
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
-  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Set E} {y : F}
-
-/-- `δ*(y | s) ≤ 0` says that the pairing with `y` is nowhere positive on `s`. -/
-theorem supportFn_le_zero_iff : supportFn B s y ≤ 0 ↔ ∀ x ∈ s, B x y ≤ 0 := by
-  have hzero : ((0 : ℝ) : EReal) = 0 := by norm_num
-  rw [← hzero, supportFn_le_coe_iff]
-
-/-- `0 < δ*(y | s)` says that the pairing with `y` is positive somewhere on `s`. -/
-theorem zero_lt_supportFn_iff : 0 < supportFn B s y ↔ ∃ x ∈ s, 0 < B x y := by
-  have hzero : ((0 : ℝ) : EReal) = 0 := by norm_num
-  rw [supportFn_apply, ← hzero]
-  simp only [lt_iSup_iff, exists_prop, _root_.EReal.coe_lt_coe_iff]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {y : F}
 
 /-- **A linear function bounded above on a subspace vanishes on it.** A subspace is closed under
 arbitrary real scaling, so a single nonzero value would make the pairing unbounded. -/
