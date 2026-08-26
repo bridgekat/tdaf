@@ -191,11 +191,16 @@ formalization is wrong.
 **False as stated.** Corollaries 17.1.4 and 17.1.6 (counterexample recorded in
 `api.md`'s `Caratheodory.lean` record). **Corollary 29.4.1** drops the properness hypothesis its
 own Theorem 29.4 carries, and its clause about the perturbation functions agreeing near `0` is
-false without it — found independently from the Lean side and from the text.
+false without it — found independently from the Lean side and from the text, and *stated and
+refuted* in `Part6/Section29.lean`.
 
-**Defective printed argument.** Theorem 29.4's proof claims `((cl F)u)(y) = −∞` for *all* `y` in
-the improper case, but `cl f` is `+∞` outside `cl (dom f)`. The theorem survives; the justification
-does not.
+**One entry has been withdrawn from this section**, and it is worth leaving the scar. This file used
+to record Theorem 29.4's printed proof as defective, on the ground that `cl f` is `+∞` outside
+`cl (dom f)`. That is the lower semicontinuous hull `f̄`; Rockafellar defines `cl f` by cases at line
+2177, and for an improper convex `f` it is the constant `−∞` **everywhere** — line 2231 draws the
+contrast explicitly. The printed step is correct. A record that accuses the book is a claim like any
+other, and LIB17 applies to it: the entry stood for three rounds and was checked by the first agent
+that had to use it.
 
 **Stated with no proof at all.** Theorem 12.4 (the monotone-conjugacy involution — the surface must
 supply the entire argument), and Corollaries 23.5.1, 25.5.1, 27.2.1, 28.2.2, 28.3.1, 28.4.1,

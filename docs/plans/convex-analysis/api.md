@@ -2519,8 +2519,11 @@ reading is false. `ConvexFn.iSup_sdiff_relint_of_containsNoLine` adds `2 ≤ dim
 `not_containsNoLine_of_isAffineHalf`.
 
 **The attainment clause of Cor 32.3.2 needed a hypothesis, not just Thm 10.1.** For a merely
-compact convex `C ⊆ dom f` it is false: on the closed unit disc, `f = 0` on the open disc and
-`f (cos θ, sin θ) = 1 - θ` for `θ ∈ (0, 2π]` is convex with unattained supremum `1`.
+compact convex `C ⊆ dom f` it is false, and the witnesses are Rockafellar's own two examples at
+book lines 14017–14043, proved in `Surface/Rockafellar/Part6/Section32.lean` as
+`corollary_32_3_2_not_attained_of_subset_dom` and `corollary_32_3_2_not_bddAbove_of_subset_dom`.
+This record previously offered a hand-rolled disc example that **is not convex**; see
+`Maximum.lean`'s own note for why, and do not resurrect it.
 `exists_mem_extremePoints_isMaxOn_of_isCompact` asks for `C ⊆ ri (dom f)`, where
 `ConvexFn.continuousOn_relint_dom` applies; `IsCompact.exists_isMaxOn` then works directly on the
 `EReal`-valued `f`, with no `toReal` detour.

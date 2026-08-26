@@ -464,10 +464,14 @@ Thm 29.3 (12035) G · Cor 29.3.1 (12097) G · Thm 29.4 (12109) C ·
 **Cor 29.4.1 (12151) — X: no proof at all, and drops Thm 29.4's properness hypothesis.**
 **5 G, 6 C, 1 X.**
 
-Two defects, both confirmed independently from the Lean side: Cor 29.4.1's clause that the
-perturbation functions agree near `0` is **false** without properness; and **Thm 29.4's printed
-proof is wrong at 12139**, claiming `((cl F)u)(y) = −∞` for all `y` in the improper case when
-`cl f = +∞` outside `cl(dom f)`. The theorem survives; the argument does not.
+**One defect**, confirmed independently from the Lean side and from the text: Cor 29.4.1's clause
+that the perturbation functions agree near `0` is **false** without properness. It is *stated and
+refuted* in `Part6/Section29.lean`, on `ℝ¹` rather than the `ℝ²` line this file used to record.
+
+A second entry here — "Thm 29.4's printed proof is wrong at 12139" — has been **withdrawn**: it
+confused `cl f` with the lower semicontinuous hull `f̄`. Book line 2177 defines `cl f` as the
+constant `−∞` for an improper convex `f`, and line 2231 says so against `f̄` in as many words. The
+printed step is correct.
 
 ## §30 Adjoint Bifunctions and Dual Programs (12153–13136, pp. 307–326)
 
@@ -505,7 +509,7 @@ makes Cor 31.5.2 work — it should be a named lemma.
 
 No new concepts. Thm 32.1 (13927) G · Cor 32.1.1 (13949) G · Thm 32.2 (13957) G ·
 Cor 32.2.1 (13967) G · Thm 32.3 (13973) C · Cors 32.3.1–32.3.4 (13995, 13999, 14005, 14009) C ·
-Thm 32.4 (14047) G · Cor 32.4.1 (14057) G. **6 G, 5 C.**
+Thm 32.4 (14047) G · Cor 32.4.1 (14057) G. **4 G, 7 C** — corrected: **Cors 32.1.1 and 32.2.1 are C**, not G. They specialise `exists_isFace_forall_eq_of_isMaxOn` and `ConvexFn.iSup_sdiff_relint`, both carrying `[FiniteDimensional ℝ]`, and the dependence is irreducible: they run on Theorems 18.2 and 18.4, which need a non-empty relative interior.
 
 The two examples at 14017–14043 show `C ⊆ ri(dom f)` in Cor 32.3.2 cannot be weakened to
 `C ⊆ dom f` even for closed `f`. Keep both. Cor 32.3.4 is the theoretical basis of the simplex

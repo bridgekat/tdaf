@@ -103,12 +103,24 @@ mean fixing that complement in the statement — Rockafellar fixes `L^⊥`, whic
 product this development does not want to assume.
 
 **The unqualified "supremum is attained" clause of Corollary 32.3.2.** It is false for a merely
-compact convex `C ⊆ dom f`: take `C` the closed unit disc in `ℝ²`, `f = 0` on the open disc and
-`f (cos θ, sin θ) = 1 - θ` for `θ ∈ (0, 2π]`, `f = 0` at `(1, 0)`. Chords between distinct boundary
-points meet the circle only at their endpoints, so `f` is convex; its supremum over `C` is `1` and
-is not attained. `exists_mem_extremePoints_isMaxOn_of_isCompact` therefore asks for
+compact convex `C ⊆ dom f`. Rockafellar's own witnesses are the two examples at book lines
+14017–14043, and both are proved in `Surface/Rockafellar/Part6/Section32.lean` —
+`corollary_32_3_2_not_attained_of_subset_dom` and `corollary_32_3_2_not_bddAbove_of_subset_dom`,
+built on `parabolicFn` with `ConvexFn`, `ClosedFn` and `Proper` all discharged through
+`supportFn_parabolicSet`. `exists_mem_extremePoints_isMaxOn_of_isCompact` therefore asks for
 `C ⊆ ri (dom f)`, where Theorem 10.1 (`ConvexFn.continuousOn_relint_dom`) supplies the continuity
 that compactness needs.
+
+An earlier version of this note offered a hand-rolled example instead — the closed unit disc with
+`f = 0` on the open disc and `f (cos θ, sin θ) = 1 - θ` on the circle — and **that function is not
+convex.** It is negative on most of the circle (`1 - θ < 0` for `θ > 1`) while vanishing on the open
+disc, so at `θ = 2` the segment from the origin has interior midpoint with `f = 0` against a
+required `≤ -1/2`. The justification offered, that chords between distinct boundary points meet the
+circle only at their endpoints, checks the wrong family of segments; the binding ones have an
+interior endpoint. Dividing by `2π` repairs it — `f (cos θ, sin θ) = 1 - θ / (2π)` is non-negative,
+and for an `f` vanishing on the open disc non-negativity on the circle is exactly convexity — and
+also removes an inconsistency, since `θ ∈ (0, 2π]` and "`f = 0` at `(1, 0)`" defined that point
+twice. The book's own examples are better than either, and are what this note now points at.
 
 ## References
 
