@@ -23,6 +23,8 @@ scaffolding the surface library will otherwise pay for per-statement.
 | §2.1 `saddleSwap` transport | **done** — 58 duplicated proof lines → 17; see the correction below |
 | §2.2 de-leak `reflect`'s mirrors | **done, and the prescription was wrong** — see below |
 | §2.3 bundle the involutions | **done** — `reflectAut`, `saddleSwapOrderIso` |
+| §4.1 bundle the adjoint | **closed by measurement** — the count was 32, not ~100, and four of its six sections contribute zero; D3 unmodified |
+| §4.4 `m`-ary `infConv` / `IsExactSum` | **constructors done, one consequence missing** — §12.1 |
 | §3 `closedsOrderIso` | **done** — plus three instantiations; D12 amended |
 | §4.2 `negFst` pairing instances | **done** — this was the `Setup.lean` blocker, and it is closed |
 | §4.9 the reduction to lines | **done** — `Analysis/Convex/Line.lean`, with the converse too (§8.2) |
@@ -241,10 +243,10 @@ Ordered by how many surface statements each one taxes.
 
 | # | item | tax if not done |
 |---|---|---|
-| 4.1 | **Bundle the adjoint.** A `class HasTranspose B B' A` / bundled `AdjointPair` with the finite-dimensional inner-product instance, so instance search supplies `A'` | ~100 statements across §16, §19, §30, §31, §38, §39 each thread `(A')` plus `IsAdjointPair` that the book writes as `A*`. **Largest single friction, and on both future surfaces' critical path** |
+| 4.1 | **Bundle the adjoint.** A `class HasTranspose B B′ A` / bundled `AdjointPair` with the finite-dimensional inner-product instance, so instance search supplies `A′` | §16, §19, §30, §31, §38, §39 | **closed by measurement, not by building it — and the item was wrong three ways.** The library-wide count of statements threading `(A′)` plus `IsAdjointPair` is **32**, not ~100. Four of the six sections named contribute **zero**, because the book’s `A*` and `F*` in §§19, 30, 38 and 39 are *defined operations* (`adjointBifun`, `adjointProcess`) taking no linear map and carrying no adjoint datum — `IsAdjointPair` does not occur once in `Bifunction/{Algebra,Cofinite,Process,ProcessDuality}.lean`. And the *surface* pays none of the remaining friction: `isAdjointPair_adjoint` discharges the datum at **8** call sites in all of Parts I–IV. **D3 stands unmodified.** What Part VIII actually wanted was the one place a transpose of a linear map really occurs — a linear transformation read as a convex process has the adjoint linear transformation for its adjoint — and that is now `Bifunction/LinearProcess.lean` (`ConvexProcess.ofLinearMap`, `adjointProcess_ofLinearMap`, `coadjointProcess_ofLinearMap`) |
 | 4.2 | **`negFst (prodPairing Bu Bx)` pairing-class instances.** Prove the `LinearMap` equation `negFst (prodPairing Bu Bx) = prodPairing (-Bu) Bx` — only the *pointwise* identity exists (`Duality/Pairing.lean:326`) — then derive the instances via `isCompatiblePairing_neg` | §30's adjoint bifunctions conjugate against `negFst`. **Most likely `Setup.lean` blocker** |
 | 4.3 | ~~**Bipolar theorem for `PointedCone`**~~ **done** | `polarCone_polarCone_pointedCone` already existed; the three companions did not. `Duality/Polar.lean` now has the whole Theorem 14.1 family in bundled form — `…_pointedCone`, `…_pointedCone_eq_closure`, `neg_polarCone_neg_polarCone_pointedCone`, `conj_indicatorFn_polarCone_pointedCone` — and the module docstring says to use them rather than discharge the triple by hand |
-| 4.4 | **`m`-ary `infConv` and `IsExactSum`** over a `Finset` | **done** — `IsExactFinsetSum` in `Duality/Exact.lean`, with `.singleton`, `.cons`, `.of_split`, `.of_relint` (Theorem 16.4) and the `Polyhedral/Duality.lean` constructors (Theorem 20.1). The consequences could **not** be inducted and the constructors could: iterating `infConv_le_add` over a partial convolute is not merely awkward but *false*, since `□` does not preserve `≠ ⊥` (take `g₁ x = -x`, `g₂ x = x`), so the epigraph-level `sum_toInfConvFn_apply_le` carries the induction hypothesis-free instead. The load-bearing missing piece was not properness but **Theorem 6.5 over a `Finset`**, which no surface agent could have supplied locally |
+| 4.4 | **`m`-ary `infConv` and `IsExactSum`** over a `Finset` | **constructors done, one consequence missing — see §12.1** — `IsExactFinsetSum` in `Duality/Exact.lean`, with `.singleton`, `.cons`, `.of_split`, `.of_relint` (Theorem 16.4) and the `Polyhedral/Duality.lean` constructors (Theorem 20.1). The consequences could **not** be inducted and the constructors could: iterating `infConv_le_add` over a partial convolute is not merely awkward but *false*, since `□` does not preserve `≠ ⊥` (take `g₁ x = -x`, `g₂ x = x`), so the epigraph-level `sum_toInfConvFn_apply_le` carries the induction hypothesis-free instead. The load-bearing missing piece was not properness but **Theorem 6.5 over a `Finset`**, which no surface agent could have supplied locally. **§23 then found the gate only half closed**: `Subgradient/Calculus.lean` still has only the binary *consequence* `IsExactSum.subgradient_add`, which is what Theorem 23.8 needs in `m`-ary form |
 | 4.5 | **Separable sums** over a finite product, with `conj (sepSum f) = sepSum (conj ∘ f)` | §16's separable rows and §38 |
 | 4.6 | **Theorem 27.1(e)** restated under `[IsCompatiblePairing B] [IsCompatiblePairing B.flip]` | currently excluded as "needs a reflexive pairing"; `ℝⁿ` *is* reflexive, so the surface demands it and cannot get it |
 | 4.7 | ~~**`IsNorm k → ∃ p : Seminorm ℝ E, ∀ x, k x = p x`**~~ **done, and not at layer D** | `IsNorm.toSeminorm` in `Duality/Gauge.lean`, at layer **A**. Mathlib's `Seminorm` is purely algebraic — it asks nothing about a topology — so the old "not here" note declined it on grounds that belong to `NormedSpace` and to nothing else. `IsNorm.apply_smul` (absolute homogeneity, which positive homogeneity does not give) is the one step that needed proving |
@@ -547,7 +549,7 @@ whose first sentence is `theorem_17_1`.
 | 11.20 | **Four private near-duplicates across module boundaries**: `lift_mem_coneHull_liftPD` (private in `Caratheodory.lean`, public in `HullDirections.lean`, which imports it — legitimate, but worth a pointer), `iSup_sub_of_ne_bot` (`Bifunction/Algebra.lean`, `Optimization/Fenchel.lean`), `neg_coe_sub` (`Bifunction/Algebra.lean`, `Optimization/Adjoint.lean`, `Saddle/Existence.lean`, plus a primed variant in `Subgradient/Defs.lean`). Private, so harmless to the build; each is an `EReal` fact that should be a public lemma in `Tdaf/Order/EReal.lean` | sweep | **the two `EReal` facts are done**; `lift_mem_coneHull_liftPD` is not. `Tdaf.EReal.iSup_sub_of_ne_bot` is the `Optimization/Fenchel.lean` variant, which is strictly stronger — `Bifunction/Algebra.lean` asked for `[Nonempty ι]` and over an empty index set both sides are `⊥`. `Tdaf.EReal.neg_coe_sub` is `-(↑r - z) = z - ↑r`. The primed variant is in **`Saddle/Defs.lean`**, not `Subgradient/Defs.lean`, and the sweep found a fifth spelling, `neg_coe_sub_eq` in `Optimization/Normal.lean`; both fold an `add_comm` into the statement and their call sites depend on the orientation, so they are now one-line aliases rather than deletions. Still open: `HullDirections.lean` re-*proves* `lift_mem_coneHull_liftPD` instead of citing `Caratheodory.lean`’s private copy, and `Subgradient/Monotone.lean:564` declares `Tdaf.ConvexAnalysis.coe_sub_add_coe`, the same `EReal` fact as `Tdaf.EReal.coe_sub_add_coe` under the same bare name in a different namespace — LIB1’s shadowing note |
 
 | 11.21 | **Two `Finset`-indexed relative-interior lemmas are parked above their home.** `Convex.relint_biInter_finset` (Theorem 6.5 over a `Finset`, in `Duality/Relint.lean`) and `Convex.relint_univ_pi` (in `Duality/FiniteProduct.lean`) both belong in `RelativeInterior.lean` beside `Convex.relint_iInter` and `intrinsicInterior_prod_eq`. They are where they are because that file has 19 direct importers and editing it costs a near-full rebuild. `RelativeInterior.lean` has Theorem 6.5 only for a `Type`-indexed family; the `Finset` form is what every `m`-ary statement wants | §16, §20 | open — two moves, to be done in one edit of that file |
-| 11.22 | **New modules without an `api.md` record.** House style is one per backbone module (§10.10 treats a missing one as a defect) | sweep | **four of seven done** — the gap round’s three (`Duality/RelintSeparation.lean`, `Duality/PolarBounded.lean`, `Polyhedral/NormalForm.lean`) and `EuclideanProd.lean` plus `Duality/HomConePolar.lean` have records. Still missing: `Duality/FiniteProduct.lean`, `Recession/PiSum.lean`, `Polyhedral/Faces.lean` |
+| 11.22 | **New modules without an `api.md` record.** House style is one per backbone module (§10.10 treats a missing one as a defect) | sweep | **done** — all seven have records: `Duality/RelintSeparation.lean`, `Duality/PolarBounded.lean`, `Polyhedral/NormalForm.lean`, `EuclideanProd.lean`, `Duality/HomConePolar.lean`, and now `Duality/FiniteProduct.lean`, `Recession/PiSum.lean` and `Polyhedral/Faces.lean`. `Bifunction/LinearProcess.lean` was written with its record |
 
 ### What the product round closed
 
@@ -647,5 +649,118 @@ intended reference is 21.3.2, Helly's theorem.
 OCR-truncated in the source text. It is not truncated: the text reads "a non-zero `z ∈ L` whose
 support is minimal with respect to `L`, i.e. does not properly include the support of any other
 non-zero vector of `L`".
+
+## 12. Gaps reported by the Part V surface round
+
+The §§23–26 round, together with the two remediation agents that closed §2.2/§2.3 and §4.1.
+**Part V is complete — all 49 numbered results have declarations, nothing was blocked, and nothing
+is deferred by scope.** Everything below is either a proof that exists on the surface and belongs
+in the backbone, or a fact the backbone does not have and no Part V label needed.
+
+| # | item | reported by | status |
+|---|---|---|---|
+| 12.1 | **`IsExactFinsetSum.subgradient_finsetSum`**, in `Subgradient/Calculus.lean`, with the unconditional `subgradient_finsetSum_subset` beside it. `Calculus.lean` has only the binary `IsExactSum.subgradient_add`, although §16’s `IsExactFinsetSum` interface and both its constructors are `m`-ary throughout. The `m`-ary form is what Rockafellar states and what Corollary 23.8.1 needs; going through the binary rule would re-derive properness and the relative-interior condition of every partial sum, which is exactly what `IsExactFinsetSum.cons` exists to avoid | §23 | open — **the other half of §4.4**, proved `private` in `Part5/Section23.lean` |
+| 12.2 | **`Tdaf.EReal.le_coe_of_sum_le_coe_sum`**, in `Order/EReal.lean`: from `∀ i ∈ s, (c i : EReal) ≤ u i` and `∑ i ∈ s, u i ≤ ↑(∑ i ∈ s, c i)`, conclude `u j ≤ ↑(c j)` for every `j ∈ s`. The binary `le_coe_of_add_le_coe_add` already names Theorem 23.8 as its consumer in its own docstring; the `m`-ary theorem needs the `m`-ary lemma, and the two-summand version does not iterate — there is no subtraction to peel a summand off with | §23 | open — proved `private` in `Part5/Section23.lean` |
+| 12.3 | **`IsExactImage.of_relint` without closedness**, in `Duality/Relint.lean`: `ConvexFn g → Proper g → A x₀ ∈ ri (dom g) → IsExactImage …`. The existing constructor asks for `ClosedProperConvexFn g`, so the closure reduction (`clFn_compLin` plus `ConvexFn.relint_dom_clFn`) is paid three times: inside `theorem_16_3_exact`, inside `theorem_16_3_attained`, and again in §23 to reach Theorem 23.9 with the book’s hypotheses. One constructor removes all three | §23 | open |
+| 12.4 | **`IsExactImage.of_polyhedral`**, in `Polyhedral/Duality.lean`: `PolyhedralFn g → Proper g → A x₀ ∈ dom g → IsExactImage …` — Theorem 20.1’s companion for the *image* rule. That file has the two sum constructors and no image one, so the last clause of **both** Theorem 16.3 and Theorem 23.9 was unreachable from the backbone. The proof is entirely §19’s: `g*` is polyhedral (Theorem 19.2), `A*g*` is polyhedral with its infimum attained (Corollary 19.3.1), and a polyhedral proper function is closed, so Theorem 16.3’s closure formula has nothing left to close | §23 | open — **built**, as `isExactImage_of_polyhedral` in `Part5/Section23.lean`. Hoisting it also gives `theorem_16_3_exact` its missing polyhedral clause, which §16 has been carrying in its `## What is not here` since the Part III round |
+| 12.5 | **`indicatorFn_finsetSum`**, in `Indicator.lean`: `∑ i ∈ s, indicatorFn (C i) = indicatorFn (⋂ i ∈ s, C i)`, the `m`-ary `indicatorFn_add`. That lemma’s own docstring says "every intersection corollary in the book is the indicator instance of a statement about sums"; Corollary 23.8.1 is the `m`-ary one | §23 | open — proved `private` in `Part5/Section23.lean` |
+| 12.6 | **`exists_monotone_ne_bot_ne_top_monotoneCurve_eq`**, in `Subgradient/Primitive.lean`: for `ClosedProperConvexFn f` on `ℝ`, a monotone `φ` **finite at some point** with `subgradientRel (innerₗ ℝ) f = monotoneCurve φ`. `subgradientRel_eq_monotoneCurve_rightDeriv` already gives `∂f = Γ(f′₊)` with `f′₊` monotone; the only missing clause is finiteness at a point, and the only case `f′₊` does not cover is `dom f` a singleton `a`. A witness exists (`-∞` on `Iio a`, `0` at `a`, `+∞` on `Ioi a`, whose curve is `{a} × ℝ = ∂f`); what has to be proved is that perturbing `f′₊` at one point leaves `Γ` unchanged | §24 | open — **the round’s only declined proof.** It is the implication from the book’s order-theoretic *characterisation* of a complete non-decreasing curve (line 9195) back to its *definition* (9181). Theorem 24.3 is unaffected: it is stated in the 9195 form, which is what D12 asks for |
+| 12.7 | **`∇(cl f) = ∇f` for a proper convex `f`**, in `Subgradient/Uniqueness.lean` — or at least the `DifferentiableAtFn` version. Rockafellar states it as an aside after Corollary 25.1.1 and uses it to drop closedness from Corollaries 25.1.2 and 25.1.3. The forward direction is short (`ConvexFn.clFn_eq_of_mem_relint_dom` on a neighbourhood of `x`); the converse needs `int (dom (clFn f)) = int (dom f)`, which is Theorem 7.4’s companion for *interiors* rather than relative interiors and is not in the library | §25 | open — both corollaries are stated with `ClosedFn f` instead, and `corollary_25_1_2_clFn` shows how far the book’s own reduction gets without the remark |
+| 12.8 | **`StrictConvexOnFn f C ↔ StrictConvexOn ℝ C (fun x => (f x).toReal)`** for `f` finite on `C`, plus **`StrictConvexOnFn.add_strictConvexOnFn`** (convex + strictly convex), in `Subgradient/StrictlyConvex.lean`. There is nothing between the definition `StrictConvexOnFn` and the theorems that consume it, so a concrete formula on `ℝ²` cannot reach it. Mathlib’s `StrictConvexOn` and `StrictConvexOn_of_deriv2_pos` stop at real-valued functions of one variable | §26 | open — blocks only the *positive* halves of the two counterexamples of pp. 253–254, whose decisive halves are proved |
+| 12.9 | **`conj (innerₗ E) f v = conj (topDualPairing ℝ E).flip f (toDual v)`**, in `Subgradient/Rademacher.lean` beside `mem_subgradient_innerL_iff`, which is *this exact bridge for `subgradient`* and was written for the same reason. `Subgradient/Legendre.lean` — the whole of Theorem 26.4 — is on a general normed space and so against `topDualPairing`, while `LegendreType.lean` and everything downstream is against `innerₗ`, and nothing connects them | §26 | open — paid once as a `private` lemma in `Part5/Section26.lean` |
+| 12.10 | **`linFn_eq_toDual`** — the surface’s vector-to-functional map is the one `Subgradient/{Rademacher,Reconstruction}.lean` use. Belongs in `Surface/Common/Euclidean.lean` alongside the `*_flip_pairing` rewrites, for the same reason those are there | §25 | open — **friction, not a gap**; every §25 statement pays one rewrite by it, and §26 and any second `ℝⁿ` surface will want it too |
+| 12.11 | **`recessionCone_subgradient_eq_normalCone`** — `rec (∂f(x)) = N_{dom f}(x)`, the book’s p. 218 exercise (line 8477). The backbone has only the easy inclusion `subgradient_add_normalCone_dom_subset`; the equality is proved on the surface in four lines and belongs beside it | §25 | open — see the book finding below: this is **not** discharged where the book says it is |
+| 12.12 | **`Bifunction/Cofinite.lean` has one of the closing discussion’s three co-finiteness facts** (book 16693–16729), and its own `## What is not here` contradicts the paragraph §38 will need. Present: `cofiniteBifun_infConvBifun`, `adjointBifun_infConvBifun_of_cofinite`. Absent: that `Fλ`, `GF` and `F*` preserve co-finiteness (which needs the closedness-and-properness half of Theorem 38.3, and, for `GF`, `IsExactSum` over four spaces), and `dom F = ℝᵐ ∧ dom F* = ℝⁿ ⇒ co-finite`, which is Theorem 34.2 | §4.1 | open — **the one real gap Part VIII inherits.** Schedule it with `Section38.lean`, not ahead of it |
+
+### What the round closed
+
+Three remediation items, and two of them by finding out that they were not what they said.
+
+* **§2.2 and §2.3 are done.** `reflect` occurs in no hypothesis of `Bifunction/Process.lean`:
+  `coadjointProcess_add` and `coadjointProcess_comp` now carry Theorems 39.5’s and 39.8’s own
+  hypotheses verbatim, and the six closed halves are stated about the adjoints themselves. The
+  involutions are bundled as `reflectAut : AddAut` and `saddleSwapOrderIso`. **Part VIII’s §2.2
+  gate is closed.**
+* **§4.1 is closed by measurement.** See the row above: 32 statements, not ~100; four of the six
+  named sections contribute zero, because the book’s `A*` there is a *defined operation* and not a
+  transpose; and the surface discharges the datum at eight call sites in all of Parts I–IV. The
+  right response to "this is the largest single friction on both future surfaces’ critical path"
+  was to count it, and counting it cost a fraction of what building `HasTranspose` would have.
+  One module came out of the exercise — `Bifunction/LinearProcess.lean`, which is the one thing in
+  Part VIII that a transpose of a linear map is actually about.
+* **§4.4’s constructors are done and its consequence is not** — §12.1. A gate is not closed because
+  the interface it asked for exists.
+
+### Documentation errors the round found
+
+`part5.md` was wrong five times, and `inventory.md` inherited two of them.
+
+* **Corollary 24.2.1 was recorded as deferred by scope**, as "one-dimensional Lebesgue theory". The
+  backbone proves it in full in `Subgradient/Integral.lean`, and *that module’s own docstring says
+  the stated reason does not apply*: the fundamental theorem of calculus applies directly, with no
+  improper integral and no Lebesgue theory of monotone functions. A scope deferral is a claim too,
+  and LIB17 covers it.
+* **Theorem 24.2’s existence clause was recorded as out of reach.** `Subgradient/Primitive.lean`
+  builds `f` from the graph `Γ(φ)`, which is a maximal monotone relation, with no integral
+  anywhere. Only the *formula* `f(x) = ∫ₐˣ φ` is genuinely deferred, and nothing in the book uses
+  it — Theorem 24.9’s proof cites Corollary 24.2.1, not the formula.
+* **Three of the four "backbone it specialises" columns were incomplete**, and in each case the
+  missing modules were the ones that closed the section’s hardest items: §24 also needs
+  `Subgradient/{Primitive,Integral}.lean`, §25 six modules rather than three, §26 six rather than
+  two.
+* **§25’s row said `0/11 G`** — no result of the section general. Three are: Theorem 25.1’s
+  forward half, both halves of Corollary 25.1.1, and Theorem 25.4’s density clause.
+* **The advice on Theorem 23.8 was backwards.** `part5.md` recommended the book’s ALTERNATIVE PROOF
+  as "the better route for a port, since it avoids §16’s conjugacy machinery". It reduces `m` to
+  `2` by induction on Theorem 6.5 and omits the polyhedral clause; the printed proof runs on
+  `IsExactFinsetSum.of_relint`, which is `m`-ary and discharges the qualification once. The
+  alternative is the one that puts the induction back.
+
+And one error of the *briefs*, not of the plan: the `G/C` column of a Part table is the
+general/concrete split, and three section agents in a row were handed it as a theorem/corollary
+split. §23 is 10 theorems + 6 corollaries, §24 is 9 + 2, §25 is 7 + 4, §26 is 5 theorems +
+2 lemmas + 4 corollaries. Where a plan’s table is terse, the brief that quotes it should quote the
+header too.
+
+### Book findings from the round
+
+* **Line 8477’s exercise is not discharged where the book says it is.** Rockafellar leaves
+  `rec (∂f(x)) = N_{dom f}(x)` as an exercise in §23 and says the verification "will be given later
+  as part of the proof of Theorem 25.6". The proof of Theorem 25.6 uses only the inclusion `⊆`, so
+  nothing discharges it on the way. §25 discharges it directly, in four lines and independently of
+  Theorem 25.6 (§12.11), and §23 assumes it nowhere.
+* **Theorem 26.5 says "closed convex function" where its own proof needs "closed *proper*
+  convex".** Its first assertion is deduced from Corollary 26.3.1 and its Legendre-conjugate clause
+  from Corollary 26.4.1, both stated for proper functions. Nothing is lost by adding `Proper`: an
+  improper closed convex function is `+∞` everywhere or `−∞` on `cl (dom f)`, and in neither case
+  is it differentiable on a non-empty interior, so both sides of the equivalence fail.
+* **Theorem 26.4’s hypotheses exceed what its first two clauses need.** Well-definedness of `g` and
+  the formula `g = f*` on `D` follow from convexity alone, at each point where a gradient happens
+  to exist. The book’s closedness and global differentiability are what make the *domain* `D`
+  interesting, not what make the value well defined.
+* **Corollary 26.3.3’s "`A` maps `ℝⁿ` onto `ℝᵐ`" is used only through injectivity of `A*`** — the
+  book’s own proof says so, parenthetically.
+* **Theorem 24.5 leaves properness implicit.** Rockafellar asks only that `f` be convex and finite
+  on the open convex `C`, never proper. The two are the same here — an improper convex function is
+  `-∞` throughout `ri (dom f)` (Theorem 7.2), `C` is open and inside `dom f`, and the theorem
+  quantifies over a point of `C` where `f` is finite — so §24 pays one eight-line `private` lemma
+  and states the book’s hypotheses verbatim rather than adding one. Not a defect: a place where a
+  naive transcription would have been *stronger* than the book.
+* **Two theorems need less than the book gives them.** Theorem 23.5’s clauses (a), (b) and (c) need
+  neither convexity nor properness, and Theorem 24.4 needs neither convexity nor closedness, only
+  lower semicontinuity and properness — the backbone writes the graph of `∂f` as an intersection of
+  preimages of `epi f` and never uses convexity. In both cases the surface states the book’s
+  hypotheses and records the difference.
+* **Theorem 24.7’s constant is at least the book’s `α`, not equal to it.** Rockafellar defines
+  `α = sup {|x*| : x* ∈ ∂f(S)}` and proves two inequalities for it; the backbone produces a Lipschitz
+  constant on a compact collar of `S` and reads all three statements off it. What is stated is the
+  existence of *some* `α` with the three properties — implied by, not equivalent to, the book’s
+  sharper reading, and what every consumer uses.
+* **Rockafellar’s warning at line 9631 is load-bearing and is honoured.** Maximal *monotonicity* of
+  `∂f` (Corollary 31.5.2) does **not** follow from Theorem 24.9 plus "cyclically monotone implies
+  monotone": a mapping maximal in the smaller class need not be maximal in the larger. §24 states
+  `theorem_24_9` for maximal *cyclic* monotonicity only and `isMonotoneRel_subgradientRel_rn` for
+  plain monotonicity, with no bridge, and the `n = 1` coincidence separately — which is exactly why
+  Theorem 24.3 can be stated for maximal chains at all.
 
 ---

@@ -332,6 +332,28 @@ finite product of compatible pairings is compatible, so it is the one blocker on
 hypothesis.** `∃ a, 0 ≤ a ∧ y = a • g (halfLine x y)` will not take `rfl`, because `y` occurs on the
 right. Name the equation and feed it forward instead of rewriting.
 
+**EL32. Three explicit-argument traps from the Part V round, each reporting as something else.**
+
+* **`Filter.limsup_le_of_le`'s first explicit argument is the `isBoundedDefault` autoParam, not the
+  hypothesis.** `limsup_le_of_le ?_` feeds the `∀ᶠ … ≤ a` proof into the *cobounded* slot, and the
+  error is an application type mismatch reporting `(∀ᶠ n in ?f, ?u n ≤ ?a) → limsup ?u ?f ≤ ?a`
+  "but is expected to have type `limsup … ≤ ?a`" — which reads as a broken lemma rather than a slot
+  mix-up. Write `limsup_le_of_le (h := hev)`. Same family as EL30.
+* **`Tdaf.Surface.pairing_comm` takes `n` implicitly**, so `pairing_comm n w y` elaborates `n` into
+  the first *vector* slot and `rw` reports *"did not find an occurrence of the pattern `(?m w) y`"*
+  against a goal that visibly contains `((pairing n) w) y`. Write `pairing_comm w y`.
+* **`InnerProductSpace.toDual_apply` is not a name.** It is `toDual_apply_apply`, and it is `rfl`,
+  so `(toDual v) x = pairing n x v` is `real_inner_comm x v` and nothing more.
+
+**EL33. `iInf_pos` / `iInf_neg` unfold `def f x := ⨅ _ : p, c` only in *term* position.**
+`rw [iInf_neg h]` on a goal mentioning `f x` reports "did not find an occurrence". Give the
+`_of_not_mem` equation its own lemma and prove it in term mode. The `⨅ _ : p, c` encoding is still
+the right way to write a piecewise `EReal` function — it keeps `Decidable` out of the statement
+(ER6) — but it costs one equation lemma per branch.
+
+**EL34. `field_simp` normalises `A / c = 0` to `A = c * 0`, not `A = 0`.** Symptom is a leftover
+goal naming `x.ofLp 1 * 4 * 0`. Follow with `simpa using`.
+
 ---
 
 ## LINT — Linters and the zero-warning bar
@@ -713,6 +735,17 @@ added `continuous_finset_sum` → `continuous_finsetSum` to DEP's table, and fou
 `Set.mem_fintype_prod` occurs) — it is what makes `piSum '' univ.pi C = ∑ i, C i` a six-line proof.
 DEP3, again.
 
+**ER15. `EReal` is `DenselyOrdered` in this Mathlib, and that is the clean route from a
+junk-value-free bound to the book's `limsup`.** `le_of_forall_gt_imp_ge_of_dense` plus
+`EReal.lt_iff_exists_real_btwn` turns "every real `μ` above the bound eventually dominates" into
+`limsup ≤ …` in two lines; `theorem_24_5_limsup` and `theorem_24_6_limsup` are four lines each this
+way. Worth knowing before reaching for a filter argument.
+
+**ER16. More renames, from §26.** `div_le_div_iff` → `div_le_div_iff₀`, with `le_div_iff₀` and
+`div_le_iff₀` beside it. `zero_lt_top` is not a root `EReal` name. `EReal.coe_mul_top_of_pos`,
+`EReal.add_top_of_ne_bot` and `EReal.top_add_of_ne_bot` all need the `_root_.` prefix from inside
+`Tdaf.EReal`. DEP3, again.
+
 ---
 
 ## SET — Sets, products, cones
@@ -836,6 +869,18 @@ instance-search key.** `Set.Finite.to_subtype` produces the `↥`-form; `Finite.
 `Subtype`-form its domain is written in, and reports *"failed to synthesize `Finite { C' // … }`"* at
 the `of_equiv` line with a `have` of the "same" fact one line above. Instance search is syntactic
 where `exact` is not; bounce through three `have`s, taking the defeq at each `exact`.
+
+**SET13. The `Rn 2` counterexample toolkit.** Everything the three §26 counterexamples and the
+§23 one needed, and nothing more: `(a • x + b • y) i = a * x i + b * y i` and `(u - v) i = u i - v i`
+are both `rfl`; `WithLp.toLp 2 ![a, b]` with `rfl` coordinate lemmas plus `ext i; fin_cases i`
+discharges every concrete vector goal; and `positivity` **does** consult hypotheses about atoms, so
+a `0 < ξ₁` in context is enough for it. `fderiv` on `Rn 2` can be avoided entirely — compute the
+subgradient by hand and finish with `hasGradientAt_toDual_of_subgradient_eq_singleton`.
+
+**SET14. A concrete counterexample usually needs fewer test points than it looks.** For the p. 257
+parabola, testing the subgradient inequality at just `s = ξ₂`, `ξ₂ + 1` and `ξ₂/2` on the ray
+`(2su₀, s)` forces `u₀² + u₁ = 0` *and* the completed square to vanish, with no case split at all.
+Pick the test points before writing the proof, not during it.
 
 ---
 
@@ -1197,6 +1242,24 @@ and the proof's is the normed one.
 found is `WithLp.instModule` and the one demanded is `InnerProductSpace.toNormedSpace.toModule`;
 derive inner-product identities from the coordinate lemmas plus `Fin.sum_univ_add` instead.
 
+**LIB22. Check for a `to_additive`-generated name by its multiplicative source, not by grepping.**
+`Set.finsetSum_mem_finsetSum` (the `m`-ary `Set.add_mem_add`) exists and a grep of Mathlib's source
+for that name returns nothing — only `finsetProd_mem_finsetProd` occurs. It was written by hand in
+§23 first and then found. Same family as DEP3, and the same fix: search for the multiplicative name
+and let `to_additive` supply the additive one.
+
+**LIB23. A scope deferral is a claim, and LIB17 applies to it.** `part5.md` recorded Corollary
+24.2.1 as deferred by scope — "one-dimensional Lebesgue theory, not convex analysis" — while
+`Subgradient/Integral.lean` proved it in full, *and that module's own docstring said the stated
+reason does not apply*. An item that says why something is out of scope is asserting something about
+the library; check it the same way you would check a named prerequisite.
+
+**LIB24. A gate is not closed because the interface it asked for exists.** Remediation §4.4 asked
+for an `m`-ary `IsExactSum`; the round that closed it built `IsExactFinsetSum` with both
+constructors and marked the item done. `Subgradient/Calculus.lean` still had only the *binary*
+consequence, which is what the section actually needed. When closing an item, name the consumer and
+check that the consumer can now be written — not that the definition exists.
+
 ---
 
 ## BLD — Toolchain, build, worktrees
@@ -1270,10 +1333,16 @@ scratchpad directory, which is a real Windows path. The scratchpad is shared acr
 prefix scratch filenames with the task or `Write` fails with "File has not been read yet" against a
 previous session's file.
 
-**BLD7. Checking the 100-character line limit with `awk 'length > 100'` gives false positives.** `awk`
-counts UTF-8 *bytes*, so every line containing `ℝ`, `≤`, `∈`, `•` or `₂` looks three to fifteen
-characters over and a clean file appears to have dozens of violations. Count codepoints, or just
-build and trust `linter.style.longLine`.
+**BLD7. The 100-character bar is not enforced by anything, and both obvious ways of checking it are
+wrong.** `awk 'length > 100'` counts UTF-8 *bytes*, so every line containing `ℝ`, `≤`, `∈`, `•` or
+`₂` looks three to fifteen characters over and a clean file appears to have dozens of violations.
+And **`linter.style.longLine` never fires in this repository**: `lakefile.toml` sets
+`weak.linter.mathlibStandardSet = true`, and the long-line linter is not in that set. Verified
+empirically — a deliberately inserted 120-codepoint theorem signature produces no warning from a
+clean `lake env lean`. Symptom: a file passes `lake build` with zero warnings and still violates the
+bar. **Count codepoints** (`len(line.rstrip('\n')) > 100` in Python) before every commit; there is
+no linter to fall back on. An earlier version of this entry said to build and trust the linter, and
+that advice let two over-long lines through in one round.
 
 **BLD8. `#print axioms` wraps long declaration names, so grepping its output under-counts.** Piping
 through `grep 'depends on axioms: \[propext, Classical.choice, Quot.sound\]'` silently misses every
@@ -1326,3 +1395,15 @@ zero-warning bar is checked too, and a clean run prints nothing at all. It is no
 the final `lake build`: a declaration you **removed** or whose statement you **changed** is exactly
 what a stale olean will hide (BLD2), so the real rebuild still has to happen before the commit is
 believed. The complement of BLD3's `LEAN_PATH` trick, and it needs no sibling checkout.
+
+**BLD16. `lake env lean FILE | head -N` reports `head`'s exit code, and empty output is not proof of
+a clean file.** One §26 run gave zero output through the pipe; the identical lemma failed with a hard
+`unknown constant` on the next, unpiped run. Echo a marker after the pipeline and check that the
+marker printed — BLD15's "a clean run prints nothing at all" is only safe when nothing can swallow
+the output.
+
+**BLD17. `grep -rn "theorem <name> "` before every new declaration, and mean it.** §26 wrote a
+`private` copy of `Tdaf.EReal.coe_mul_ne_bot`, which already existed in a *weaker* form (`0 ≤ a`).
+The build accepted both, because one was `private`; only the pre-commit grep caught it. LIB1's
+duplicate-name sweep catches public collisions after the fact — this is the check that stops a
+`private` shadow being written in the first place.

@@ -5012,3 +5012,122 @@ which is why it is not stated with `ri`.
 `λ = 0` and `μ ≥ (f0⁺)(x)`. That is the unnumbered paragraph *preceding* Theorem 14.4 in the book,
 it is a `recessionFn` statement, and the theorem does not use it. Two notes in this repository
 recorded it as Theorem 14.4's prerequisite; both were wrong.
+
+### `Tdaf/Analysis/Convex/Duality/FiniteProduct.lean`
+
+```lean
+def piPairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : (ι → E) →ₗ[ℝ] (ι → F) →ₗ[ℝ] ℝ
+@[simp] theorem piPairing_apply : piPairing B x y = ∑ i, B (x i) (y i)
+theorem piPairing_flip (B) : piPairing B.flip = (piPairing B).flip
+instance instIsContinuousPairingPi   [IsContinuousPairing B]
+instance instIsCompatiblePairingPi   [IsCompatiblePairing B]
+instance isInnerPairing_piPairing    [IsInnerPairing B]
+instance isContinuousInnerPairing_piPairing [IsContinuousInnerPairing B]
+
+theorem univ_pi_eq_iInter_proj_preimage (C : ι → Set E) :
+    univ.pi C = ⋂ i, (LinearMap.proj i) ⁻¹' C i
+theorem Convex.relint_univ_pi (C : ι → Set E) (hC : ∀ i, Convex ℝ (C i)) :
+    ri (univ.pi C) = univ.pi fun i => ri (C i)
+theorem supportFn_univ_pi (B) (C : ι → Set E) (y : ι → F) :
+    supportFn (piPairing B) (univ.pi C) y = ∑ i, supportFn B (C i) (y i)
+theorem iInter_relint_nonempty_iff_supportFn (hB : B.SeparatingRight) (C) (hC) (hne) :
+    (⋂ i, ri (C i)).Nonempty ↔ ¬ ∃ y : ι → F, (∑ i, y i = 0) ∧ …
+theorem iInter_relint_dom_nonempty_iff (hB) (f : ι → E → EReal) (hf) (hp) (hc) :
+    (⋂ i, ri (dom (f i))).Nonempty ↔ ¬ ∃ y : ι → F, (∑ i, y i = 0) ∧ …
+```
+
+**The finite-product tower for a dual pair** (remediation §11.14), and the home of **Corollary
+16.2.2**, which is Lemma 16.2 applied in `ι → E` to the diagonal subspace. The `m`-ary constraint
+qualifications of §§9, 16 and 20 all reduce to `iInter_relint_nonempty_iff_supportFn`.
+
+**All four pairing classes are instances here, not two.** The item that asked for this module named
+`IsContinuousPairing` and `IsCompatiblePairing`; `IsInnerPairing` and `IsContinuousInnerPairing` also
+had `prodPairing` instances and no `Set.pi` ones, and `Rn n` reaches the tower through them. The
+compatibility instance is the expensive declaration in the file, and it runs on
+`ContinuousLinearMap.single` and `ContinuousLinearMap.sum_comp_single`, both of which take `R` and
+`φ` explicitly (`gotchas.md` EL30).
+
+**`Convex.relint_univ_pi` needs convexity only**, not non-emptiness: the empty case is separated out
+and both sides are empty. It needs finite dimension, unlike `intrinsicInterior_prod_eq`, because it
+is `Convex.relint_iInter` on the coordinate preimages and that rests on `ri C ≠ ∅`. It belongs in
+`RelativeInterior.lean` beside `Convex.relint_iInter` and is parked here only because that file has
+19 direct importers (remediation §11.21).
+
+**`supportFn_univ_pi` is unconditional**, and its proof is an induction on the index `Finset` using
+`Function.update`, closing on `Tdaf.EReal.biSup_add_biSup` — the same interchange `conj_infConv`
+runs on. No `⊤` case split and no ε appear anywhere in it; two successive plans budgeted this as the
+expensive piece of the module and both were wrong (`gotchas.md` ER13).
+
+### `Tdaf/Analysis/Convex/Recession/PiSum.lean`
+
+```lean
+def piSum : (ι → E) →ₗ[ℝ] E                        -- x ↦ ∑ i, x i
+@[simp] theorem piSum_apply (x : ι → E) : piSum x = ∑ i, x i
+theorem image_piSum_univ_pi (C : ι → Set E) : piSum '' univ.pi C = ∑ i, C i
+theorem forall_mem_linealitySpace_pi (hne) (h) : …            -- the hypothesis transport
+theorem Convex.isClosed_sum (hC) (hCc) (hne) (h) : IsClosed (∑ i, C i)
+theorem Convex.closure_sum_eq (hC) (hne) (h) :
+    closure (∑ i, C i) = ∑ i, closure (C i)
+theorem Convex.recessionCone_sum (hC) (hne) (h) :
+    recessionCone (∑ i, closure (C i)) = ∑ i, recessionCone (closure (C i))
+```
+
+**Rockafellar's Corollary 9.1.1 for `m` sets** (remediation §9.18), by exactly his own route: a sum
+of finitely many sets is the image of their product under the sum map, so the `m`-ary corollary is
+an instance of the binary Theorem 9.1 applied to `piSum`.
+
+`image_piSum_univ_pi` is six lines and rests on `Set.mem_fintype_sum`, which is
+`to_additive`-generated and therefore invisible to a grep of Mathlib's source — only
+`Set.mem_fintype_prod` occurs (`gotchas.md` LIB22).
+
+The hypothesis in all three theorems is the `m`-ary no-cancelling-directions condition: if
+`zᵢ ∈ 0⁺(cl Cᵢ)` for every `i` and `∑ zᵢ = 0`, then every `zᵢ` is a line direction. That is the
+book's own hypothesis, and `forall_mem_linealitySpace_pi` is what carries it across `piSum`.
+
+**What is not here.** `recessionFn` of a separable sum — the last piece of §9.18. The §9 *surface*
+corollaries remain stated for two sets, which is now a choice rather than a constraint.
+
+### `Tdaf/Analysis/Convex/Polyhedral/Faces.lean`
+
+```lean
+-- layer A
+theorem finite_extremePoints_of_finite_setOf_isFace
+    (hfin : {C' | IsFace C C'}.Finite) : (C.extremePoints ℝ).Finite
+theorem exists_finite_generating_extremeDirections (hfin) :
+    ∃ D, D.Finite ∧ D ⊆ extremeDirections C ∧ extremeDirections C ⊆ PointedCone.hull ℝ D
+
+-- layer D
+theorem FinitelyGenerated.of_isFace (hC) (hface : IsFace C C') : FinitelyGenerated C'
+theorem FinitelyGenerated.finite_setOf_isFace (hC) : {C' | IsFace C C'}.Finite
+theorem Polyhedral.of_isFace (hC) (hface) : Polyhedral C'
+theorem Polyhedral.finite_setOf_isFace (hC) : {C' | IsFace C C'}.Finite
+theorem finitelyGenerated_of_finite_setOf_isFace_of_containsNoLine (hC) (hCcl) (hnl) (hfin)
+theorem polyhedral_of_finite_setOf_isFace (hC) (hCcl) (hfin) : Polyhedral C
+theorem finitelyGenerated_of_finite_setOf_isFace (hC) (hCcl) (hfin)
+theorem polyhedral_iff_isClosed_finite_setOf_isFace (hC : Convex ℝ C) :
+    Polyhedral C ↔ IsClosed C ∧ {C' | IsFace C C'}.Finite
+theorem finitelyGenerated_iff_isClosed_finite_setOf_isFace (hC : Convex ℝ C) :
+    FinitelyGenerated C ↔ IsClosed C ∧ {C' | IsFace C C'}.Finite
+```
+
+**Theorem 19.1's clause (b)** — a closed convex set with finitely many faces is polyhedral
+(remediation §11.4). The two implications *into* (b) had lived only on the surface, each re-running
+the same Theorem 18.3 + `Finset.filter` argument; they come down here as
+`Polyhedral.finite_setOf_isFace` and `Polyhedral.of_isFace`, and §19 is two specialisations.
+
+**Theorem 18.8 is not on the route, and the item that scheduled this said it was.** (b) ⇒ (a)
+factors through (c), and (a) ⟺ (c) is `polyhedral_iff_finitelyGenerated`, present all along. What
+the proof needs is Theorem 18.5 and the lineality reduction, both of which the previous round had
+already supplied. Naming 18.8 is what made the item look hard enough to defer for a round.
+
+**The book's unjustified step is avoided, not repaired.** Rockafellar opens the proof of (b) ⇒ (a)
+with "It suffices to treat the case where `C` is `n`-dimensional in `Rⁿ`" and gives no argument. No
+dimension is counted here. The repair the reduction *would* need — a lower-dimensional `C` is
+polyhedral iff it is polyhedral relative to `aff C`, which is itself polyhedral — is recorded in the
+module's `## What is not here`.
+
+**`extremeDirections C` is never finite**, since it is closed under positive rescaling, so the
+book's "only finitely many extreme points and extreme directions" is true of extreme *rays* only.
+`exists_finite_generating_extremeDirections` is the form that survives: a finite subset generating
+all of them as a pointed cone. Every generator of a given half-line face lies in that face's
+recession cone, which is one ray.

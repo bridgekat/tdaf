@@ -233,6 +233,10 @@ needs.
 | 8 | §27–§32 | §27 needs §4.6; §28 is the thickest file and comes last in this group |
 | 9 | §33–§39 | §29–§30 need §4.2 and §4.8 |
 
+**Groups 0 through 7 are done** — §§1–26, in that order, with §22's elementary-vector development
+the one scope deferral. Group 8 (§§27–32) is next; its gate, remediation §4.6, is still open, and
+group 9's gates §4.2 and §4.8 are both closed.
+
 §38 and §39 are the two sections that are **entirely** general (12/0 and 9/0 on the G/C split), so
 they are also the natural first target if a general non-`ℝⁿ` second surface is ever wanted.
 
@@ -360,30 +364,72 @@ Three of the round's findings are worth promoting out of the remediation list:
   only then `C = ∅` and `dim C = −1` by his own p. 154 convention, so the arithmetic fails even
   though the clause is vacuous. `theorem_17_1_simplex` carries the hypothesis.
 
-## 8. Where §§1–22 stand
+**Part V — all four sections written**, 249 declarations for all 49 of the Part's numbered results.
 
-**275 of the 280 numbered results have declarations, and the five that do not are deferred by
+| § | module | declarations | labels |
+|---|---|---|---|
+| 23 | `Part5/Section23.lean` | 72 | 16 |
+| 24 | `Part5/Section24.lean` | 48 | 11 |
+| 25 | `Part5/Section25.lean` | 40 | 11 |
+| 26 | `Part5/Section26.lean` | 89 | 11 |
+
+**Part V is complete**, and it is the first Part written without a single deferral, refutation or
+absent label. It is also the densest: five declarations per numbered result, against three for
+Parts I–IV. Three findings are worth promoting out of the remediation list:
+
+* **A complete non-decreasing curve is a maximal chain, and Mathlib already has that.** §24's
+  `IsCompleteNonDecreasingCurve` is `IsMaxChain (· ≤ ·)` with the product order on `ℝ × ℝ`, per
+  [D12](#d12-order-theoretic-duality-comes-from-mathlib). The book gives its *definition* at line
+  9181 and this *characterisation* at 9195, in that order; taking the second means Theorem 24.3 is
+  stated in order-theoretic vocabulary and needs no curve theory of its own. Only the implication
+  back to the book's definition is missing, and Theorem 24.3 does not use it.
+* **§25 is markedly less finite-dimensional than the plan supposed.** The plan classified all eleven
+  results as concrete; three are general — Theorem 25.1's forward half (the gradient is the unique
+  subgradient, on any normed space), both halves of Corollary 25.1.1, and Theorem 25.4's density
+  clause. What is genuinely finite-dimensional is Theorem 25.1's *converse*, which runs through
+  Corollary 11.6.1 and is false in infinite dimensions.
+* **Line 8477's exercise is not discharged where the book says it is.** Rockafellar leaves
+  `rec (∂f(x)) = N_{dom f}(x)` as an exercise in §23 and promises the verification "as part of the
+  proof of Theorem 25.6". The backbone's proof of Theorem 25.6 uses only the inclusion `⊆`, so
+  nothing discharges it on the way; §25 discharges it directly instead, in four lines and
+  independently of Theorem 25.6, and §23 assumes it nowhere.
+
+## 8. Where §§1–26 stand
+
+**324 of the 329 numbered results have declarations, and the five that do not are deferred by
 scope, not blocked.** They are §22's elementary-vector development — Lemmas 22.4 and 22.5, Corollary
 22.4.1, and Theorems 22.6 and 22.7 — which is combinatorial matroid theory that the book itself
 presents as independent of all convexity theory.
 
-**Parts I, II and III are complete**, and Part IV is complete apart from that one deferral. Nothing
-in §§1–22 is waiting on a backbone gap.
+**Parts I, II, III and V are complete**, and Part IV is complete apart from that one deferral.
+Nothing in §§1–26 is waiting on a backbone gap. That is 1138 declarations across 26 modules,
+five Part aggregators and the shared header.
 
 What is left in [`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) is no longer
 blocking anything: `recessionFn` of a separable sum (§9.18's last piece), two relative-interior
-lemmas parked above their home (§11.21), three `api.md` records (§11.22), and the friction items
-that individual sections absorbed. The next round is §§23–39 — Parts V–VIII, 191 numbered results —
-not more scaffolding.
+lemmas parked above their home (§11.21), three `api.md` records (§11.22), and the eight things the
+Part V round proved on the surface that belong in the backbone (§12). The next round is §§27–39 —
+Parts VI, VII and VIII, 142 numbered results.
 
-### What the four rounds cost, and what they were worth
+### What the five rounds cost, and what they were worth
 
-Sixteen agents over four rounds: two surface rounds writing §§17–22, a gap round closing six of the
-seven blocked labels, and a product round closing the seventh and eleven other items. The
+Twenty-two agents over five rounds: three surface rounds writing §§17–26, a gap round closing six of
+the seven blocked labels, and a product round closing the seventh and eleven other items. The
 recurring lesson is in `gotchas.md` LIB17 and it is about **this repository's own records rather
-than about Lean**: nine times across the two closing rounds, a remediation item named a home, a
-prerequisite, or a cost, and the claim was wrong — an isometry that cannot exist, a theorem not on
-the route, a module that does not define the function it is about, a cost estimate wrong twice in
-the same direction. Every one was found by an agent that checked the claim instead of planning
-around it, and one of them (§11.4) had cost a full round of deferral. An item that names something
-is making a claim, and it gets checked.
+than about Lean**: fourteen times across the last three rounds, a plan or a remediation item named
+a home, a prerequisite, a cost or a scope decision, and the claim was wrong — an isometry that
+cannot exist, a theorem not on the route, a module that does not define the function it is about, a
+cost estimate wrong twice in the same direction, a corollary recorded as out of scope that the
+backbone had proved in full. Every one was found by an agent that checked the claim instead of
+planning around it, and one of them (§11.4) had cost a full round of deferral. An item that names
+something is making a claim, and it gets checked.
+
+The Part V round added a second form of the same lesson, one level down: **a gate is not closed
+because the interface it asked for exists.** §4.4 asked for an `m`-ary `IsExactSum`, the product
+round built `IsExactFinsetSum` with both constructors, and the item was marked done — but
+`Subgradient/Calculus.lean` still had only the binary *consequence*, which is what §23 actually
+needed. Half a gate reads exactly like a whole one from the outside.
+
+And a third, from the same round: **the `G/C` column of the Part plans is not a theorem/corollary
+split**, and three agents in a row were handed it as one. Where a plan's table is terse, the brief
+that quotes it should quote the header too.

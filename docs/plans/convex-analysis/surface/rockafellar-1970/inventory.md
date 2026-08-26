@@ -389,7 +389,7 @@ Thm 24.9 (9559) G. **3 G, 8 C.**
 Line 9631 warns explicitly that maximal *monotonicity* of `∂f` (Cor 31.5.2) does **not** follow from
 Thm 24.9 plus "cyclically monotone ⇒ monotone". Keep the two separate.
 
-**Deferred by scope**: Thm 24.2's integral formula and Cor 24.2.1 (one-dimensional Lebesgue theory).
+**Deferred by scope**: Thm 24.2's integral formula `f(x) = ∫ₐˣ φ` only, and nothing in the book uses it. **Cor 24.2.1 is not deferred** — `Subgradient/Integral.lean` proves it in full, and that module's docstring says the Lebesgue-theory reason does not apply. Thm 24.2's *existence* clause is reachable too, via `Subgradient/Primitive.lean`, with no integral at all.
 
 ## §25 Differentiability of Convex Functions (9633–10008, pp. 241–250)
 
