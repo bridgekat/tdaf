@@ -373,7 +373,7 @@ theorem pairwise_disjoint_subgradient_conj_iff (hf : ConvexFn f) (hcl : ClosedFn
     exact hne (h z ((mem_subgradient_conj_innerL_iff hf hcl z y₁).1 hz₁)
       ((mem_subgradient_conj_innerL_iff hf hcl z y₂).1 hz₂))
 
-/-- **Rockafellar, Theorem 26.3**: a closed proper convex function is essentially strictly convex
+/-- **Theorem 26.3**: a closed proper convex function is essentially strictly convex
 exactly when its conjugate is essentially smooth. -/
 theorem essentiallySmooth_conj_iff_essentiallyStrictlyConvex (hf : ConvexFn f) (hp : Proper f)
     (hcl : ClosedFn f) :
@@ -393,7 +393,7 @@ theorem conj_conj_innerL (hf : ConvexFn f) (hcl : ClosedFn f) :
   have h : conj ((innerₗ E).flip) (conj (innerₗ E) f) = f := biconj_eq_self hf hcl
   rwa [flip_innerₗ] at h
 
-/-- **Rockafellar, Theorem 26.3**, read in the other direction: the conjugate of a closed proper
+/-- **Theorem 26.3**, read in the other direction: the conjugate of a closed proper
 convex function is essentially strictly convex exactly when the function itself is essentially
 smooth. This is Theorem 26.3 applied to `f*`, together with `f** = f`. -/
 theorem essentiallyStrictlyConvex_conj_iff_essentiallySmooth (hf : ConvexFn f) (hp : Proper f)
@@ -402,7 +402,7 @@ theorem essentiallyStrictlyConvex_conj_iff_essentiallySmooth (hf : ConvexFn f) (
   rw [← essentiallySmooth_conj_iff_essentiallyStrictlyConvex (convexFn_conj _ f)
     (proper_conj ⟨hf, hcl, hp⟩) closedFn_conj, conj_conj_innerL hf hcl]
 
-/-- **Rockafellar, Corollary 26.3.1**: `∂f` is a one-to-one mapping — single-valued and injective —
+/-- **Corollary 26.3.1**: `∂f` is a one-to-one mapping — single-valued and injective —
 exactly when `f` is essentially smooth and strictly convex on `int (dom f)`.
 
 Under essential smoothness `dom ∂f` *is* `int (dom f)` (Theorem 26.1), so essential strict

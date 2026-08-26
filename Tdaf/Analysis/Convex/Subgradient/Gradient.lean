@@ -130,7 +130,7 @@ section Linear
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {x : E}
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency, algebraically: if the directional derivative
+/-- **Theorem 25.2**, sufficiency, algebraically: if the directional derivative
 `f'(x; ·)` is the linear function `⟨·, y₀⟩`, then `y₀` is the unique subgradient of `f` at `x`.
 
 This is Theorem 23.2 plus the observation that `⟨v, y⟩ ≤ ⟨v, y₀⟩` for *every* `v`, `-v` included,
@@ -202,7 +202,7 @@ theorem tendsto_slope_ray_of_hasFDerivAt (hd : HasFDerivAt g f' x) (v : E) :
 /-! ### Corollary 25.1.1 -/
 
 omit [NormedSpace ℝ E] in
-/-- **Rockafellar, Corollary 25.1.1**, first half: a function that agrees with a real-valued
+/-- **Corollary 25.1.1**, first half: a function that agrees with a real-valued
 function near `x` has `x` in the interior of its effective domain. Neither convexity nor
 differentiability plays any role — only local finiteness. -/
 theorem mem_interior_dom_of_eventuallyEq_coe
@@ -210,7 +210,7 @@ theorem mem_interior_dom_of_eventuallyEq_coe
   mem_interior_iff_mem_nhds.2
     (hfg.mono fun z hz => mem_dom.2 (by rw [hz]; exact _root_.EReal.coe_lt_top _))
 
-/-- **Rockafellar, Corollary 25.1.1**, second half: a convex function that is finite near a point
+/-- **Corollary 25.1.1**, second half: a convex function that is finite near a point
 is proper.
 
 This is the piece of Theorem 7.2 that differentiability needs, and unlike Theorem 7.2 it holds in
@@ -236,7 +236,7 @@ theorem proper_of_eventuallyEq_coe (hf : ConvexFn f)
 
 /-! ### Theorem 25.1: the gradient is the unique subgradient -/
 
-/-- **Rockafellar, Theorem 25.1**, the gradient inequality: a convex function lies above its
+/-- **Theorem 25.1**, the gradient inequality: a convex function lies above its
 tangent affine function at every point of differentiability. -/
 theorem le_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f)
     (hfg : f =ᶠ[𝓝 x] fun z => ((g z : ℝ) : EReal)) (hd : HasFDerivAt g f' x) (z : E) :
@@ -289,7 +289,7 @@ theorem eq_of_mem_subgradient_of_hasFDerivAt (hfg : f =ᶠ[𝓝 x] fun z => ((g 
   rw [map_neg, map_neg] at hneg
   linarith
 
-/-- **Rockafellar, Theorem 25.1**: at a point where a convex function is differentiable, the
+/-- **Theorem 25.1**: at a point where a convex function is differentiable, the
 gradient is the unique subgradient. -/
 theorem subgradient_eq_singleton_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f)
     (hfg : f =ᶠ[𝓝 x] fun z => ((g z : ℝ) : EReal)) (hd : HasFDerivAt g f' x) :
@@ -300,7 +300,7 @@ theorem subgradient_eq_singleton_of_hasFDerivAt (hf : ConvexFn f) (hp : Proper f
   rw [hval]
   exact le_of_hasFDerivAt hf hp hfg hd z
 
-/-- **Rockafellar, Theorem 25.2**, necessity: at a point of differentiability the directional
+/-- **Theorem 25.2**, necessity: at a point of differentiability the directional
 derivative is the linear function `v ↦ ⟨v, ∇f x⟩`.
 
 Both halves come from the defining infimum. The lower bound is the gradient inequality at
@@ -444,7 +444,7 @@ theorem exists_forall_abs_le_of_dirDeriv_eq (hf : ConvexFn f) {r : ℝ} (hr : f 
     rw [_root_.EReal.coe_eq_coe_iff, habs]
     ring
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency, quantitatively: two-sided directional derivatives
+/-- **Theorem 25.2**, sufficiency, quantitatively: two-sided directional derivatives
 along a *basis* already force the tangent affine estimate
 
 ```
@@ -629,7 +629,7 @@ theorem dirDeriv_eq_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
   rw [← _root_.EReal.coe_neg, neg_neg] at h2
   exact h2.trans (neg_dirDeriv_neg_le hf ht hb v)
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency, from two-sided derivatives along a basis: `f` is
+/-- **Theorem 25.2**, sufficiency, from two-sided derivatives along a basis: `f` is
 Fréchet differentiable at `x`, with gradient the functional `y₀` whose values along the basis are
 the given one-sided derivatives.
 
@@ -677,7 +677,7 @@ theorem hasGradientAt_of_forall_basis_dirDeriv_eq [FiniteDimensional ℝ E]
   rw [hgx, Real.norm_eq_abs, abs_le]
   exact ⟨by linarith, by linarith⟩
 
-/-- **Rockafellar, Theorem 25.2**, sufficiency: if the directional derivative `f'(x; ·)` is the
+/-- **Theorem 25.2**, sufficiency: if the directional derivative `f'(x; ·)` is the
 linear function `⟨·, y₀⟩`, then `f` is differentiable at `x` with `∇f x = y₀`.
 
 This is the previous theorem read at any basis; the hypothesis in every direction is more than the
@@ -688,7 +688,7 @@ theorem hasGradientAt_of_dirDeriv_eq [FiniteDimensional ℝ E] (hf : ConvexFn f)
   hasGradientAt_of_forall_basis_dirDeriv_eq (Module.finBasis ℝ E) hf ht hb (fun j => h _)
     (fun j => by rw [h, map_neg])
 
-/-- **Rockafellar, Theorem 25.2**, in full: for a convex function finite at `x`, differentiability
+/-- **Theorem 25.2**, in full: for a convex function finite at `x`, differentiability
 at `x` is equivalent to linearity of `f'(x; ·)`. Necessity is `HasGradientAt.dirDeriv_eq` and
 sufficiency is `hasGradientAt_of_dirDeriv_eq`. -/
 theorem differentiableAtFn_iff_exists_dirDeriv_eq [FiniteDimensional ℝ E] (hf : ConvexFn f)
@@ -701,7 +701,7 @@ theorem differentiableAtFn_iff_exists_dirDeriv_eq [FiniteDimensional ℝ E] (hf 
   · rintro ⟨y₀, h⟩
     exact ⟨y₀, hasGradientAt_of_dirDeriv_eq hf ht hb h⟩
 
-/-- **Rockafellar, Theorem 25.2**, last sentence: it is enough that the `n` two-sided partial
+/-- **Theorem 25.2**, last sentence: it is enough that the `n` two-sided partial
 derivatives exist and are finite. Here "the `n` partial derivatives" is the pair of one-sided
 derivatives along the vectors of a basis, and "two-sided and finite" is the requirement that they
 be the negatives of each other and real. The gradient is then `b.constr` of those numbers. -/

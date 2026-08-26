@@ -564,7 +564,7 @@ theorem proper_dirDeriv_of_ne_bot (hf : ConvexFn f) (hfp : Proper f) (hx : x ∈
   exact hne (ConvexFn.eq_bot_of_mem_relint_dom hconv h
     (Convex.interior_subset_relint hconv.convex_dom ⟨y, hy⟩ hy))
 
-/-- **Rockafellar, Theorem 24.6**, the directional-derivative half: directional derivatives are
+/-- **Theorem 24.6**, the directional-derivative half: directional derivatives are
 upper semicontinuous along an approach to a point of `dom f` that need not be interior, provided
 the approach has a limiting direction `y` and the second-order derivative in that direction is used
 as the bound.
@@ -807,7 +807,7 @@ section BoundarySubgradient
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x y : E}
 
-/-- **Rockafellar, Theorem 24.6**, second assertion: along an approach to a point of `dom f` with a
+/-- **Theorem 24.6**, second assertion: along an approach to a point of `dom f` with a
 limiting direction `y` pointing into `int (dom f)`, the subdifferentials collapse onto the face of
 `∂f x` exposed by `y`,
 

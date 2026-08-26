@@ -802,7 +802,7 @@ theorem exists_eq_add_coe_of_deriv_eq (hf : ClosedProperConvexFn f) (hg : Closed
   exact eq_add_coe_of_subgradientRel_subset hf hg
     (subgradientRel_eq_of_deriv_eq hf.proper hg.proper hr hl).subset
 
-/-- **Rockafellar, Theorem 24.2**, uniqueness clause: a nondecreasing `φ` pins down a closed
+/-- **Theorem 24.2**, uniqueness clause: a nondecreasing `φ` pins down a closed
 proper convex function on the line up to an additive constant. -/
 theorem exists_eq_add_coe_of_le_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     {φ : ℝ → EReal} (hf₁ : ∀ z, leftDeriv f z ≤ φ z) (hf₂ : ∀ z, φ z ≤ rightDeriv f z)
@@ -1018,7 +1018,7 @@ theorem isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone :
   · rintro ⟨h₁, h₂⟩
     exact ⟨h₁.isMonotoneRel, fun σ hσ hsub => h₂ σ hσ.isCyclicallyMonotone hsub⟩
 
-/-- **Rockafellar, Theorem 24.3**: on the line the maximal monotone mappings — the graphs that are
+/-- **Theorem 24.3**: on the line the maximal monotone mappings — the graphs that are
 maximal chains for the coordinatewise order, Rockafellar's *complete non-decreasing curves* — are
 exactly the subdifferentials of the closed proper convex functions.
 

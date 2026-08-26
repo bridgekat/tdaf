@@ -409,7 +409,7 @@ section Primitive
 
 variable {φ : ℝ → EReal}
 
-/-- **Rockafellar, Theorem 24.2**, existence clause, in its sharpest form: a nondecreasing
+/-- **Theorem 24.2**, existence clause, in its sharpest form: a nondecreasing
 `φ : ℝ → [-∞, +∞]` finite at one point is the "derivative" of a closed proper convex function on
 the line, in the precise sense that the one-sided limits of `φ` *are* the one-sided derivatives of
 `f`.
@@ -478,7 +478,7 @@ theorem exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq (hφ : Monotone �
         (lt_irrefl ⊥)
     · exact ⟨g₁.trans h₁.symm, g₂.trans h₂.symm⟩
 
-/-- **Rockafellar, Theorem 24.2** in full. A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite at one
+/-- **Theorem 24.2** in full. A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite at one
 point lies between the one-sided derivatives of a closed proper convex function on the line, and
 that function is unique up to an additive constant.
 

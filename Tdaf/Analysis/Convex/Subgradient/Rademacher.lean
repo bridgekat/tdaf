@@ -157,7 +157,7 @@ theorem exists_lipschitzOnWith_ball (hf : ConvexFn f) (hp : Proper f)
 
 variable [MeasurableSpace E] [BorelSpace E] {μ : Measure E} [μ.IsAddHaarMeasure]
 
-/-- **Rockafellar, Theorem 25.5**, the measure-zero clause: a proper convex function is
+/-- **Theorem 25.5**, the measure-zero clause: a proper convex function is
 differentiable at almost every point of the interior of its effective domain. -/
 theorem ae_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
     ∀ᵐ z ∂μ, z ∈ interior (dom f) → DifferentiableAtFn f z := by
@@ -196,7 +196,7 @@ theorem twoSided_dirDeriv_of_differentiableAtFn (hf : ConvexFn f)
   obtain ⟨f', hf'⟩ := h
   rw [hf'.dirDeriv_eq hf, hf'.dirDeriv_eq hf, map_neg, _root_.EReal.coe_neg, neg_neg]
 
-/-- **Rockafellar, Theorem 25.4**, the measure-zero clause: in any fixed direction `y`, the
+/-- **Theorem 25.4**, the measure-zero clause: in any fixed direction `y`, the
 two-sided directional derivative exists almost everywhere on `int (dom f)`.
 
 Rockafellar proves this first, by a Fubini argument over lines, and deduces Theorem 25.5 from it
@@ -217,7 +217,7 @@ section Dense
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- **Rockafellar, Theorem 25.5**, the density clause: the points of differentiability are dense in
+/-- **Theorem 25.5**, the density clause: the points of differentiability are dense in
 the interior of the effective domain.
 
 No measure appears in the statement; the proof borrows one, exactly as Mathlib's
@@ -301,14 +301,14 @@ theorem subgradient_topDualPairing_eq_singleton {v : E}
   · rintro rfl
     exact mem_subgradient_innerL_iff.1 (by rw [h]; rfl)
 
-/-- **Rockafellar, Theorem 25.1**, converse half, in vector form: a lone subgradient for the
+/-- **Theorem 25.1**, converse half, in vector form: a lone subgradient for the
 inner-product pairing is the gradient. -/
 theorem hasGradientAt_toDual_of_subgradient_eq_singleton (hf : ConvexFn f) (hp : Proper f) {v : E}
     (h : subgradient (innerₗ E) f x = {v}) :
     HasGradientAt f (InnerProductSpace.toDual ℝ E v) x :=
   hasGradientAt_of_subgradient_eq_singleton hf hp (subgradient_topDualPairing_eq_singleton h)
 
-/-- **Rockafellar, Theorem 25.5**, the continuity clause: the gradient mapping is continuous on the
+/-- **Theorem 25.5**, the continuity clause: the gradient mapping is continuous on the
 set where the function is differentiable.
 
 This is Corollary 24.5.1 — upper semicontinuity of `∂f` — with both subdifferentials collapsed to
@@ -343,7 +343,7 @@ theorem continuousOn_fderiv_toReal (hf : ConvexFn f) (hp : Proper f) :
     _ ≤ ε / 2 := hnorm
     _ < ε := half_lt_self hε
 
-/-- **Rockafellar, Corollary 25.5.1**: a finite convex function differentiable on an open convex
+/-- **Corollary 25.5.1**: a finite convex function differentiable on an open convex
 set is *continuously* differentiable there.
 
 Mathlib's `ConvexOn` enters through `convexOn_iff_convexFn`, which extends `g` by `⊤` off `C`; on

@@ -442,7 +442,7 @@ theorem exists_seq_differentiableAtFn_tendsto_dir (hf : ConvexFn f) (hp : Proper
     refine squeeze_zero (fun i => norm_nonneg _) hdir ?_
     simpa using hεlim.const_mul (4 : ℝ)
 
-/-- **Rockafellar, Theorem 25.6**, the substantive step: an exposed point of `∂f x` is a limit of
+/-- **Theorem 25.6**, the substantive step: an exposed point of `∂f x` is a limit of
 gradients.
 
 If the functional exposing `x*` is zero the subdifferential is the single point `x*`, and Theorem
@@ -530,7 +530,7 @@ theorem exposedPoints_subset_gradientLimits (hf : ConvexFn f) (hp : Proper f)
     rw [dist_eq_norm, ← hcd, add_sub_cancel_left]
     exact lt_of_le_of_lt hd (half_lt_self hε)
 
-/-- **Rockafellar, Theorem 25.6**: for a closed proper convex function whose effective domain has
+/-- **Theorem 25.6**: for a closed proper convex function whose effective domain has
 interior, the subdifferential at *any* point is reconstructed from the gradient mapping,
 
 ```
