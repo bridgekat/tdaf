@@ -1,8 +1,3 @@
-/-
-Copyright (c) 2026 TDAF contributors. All rights reserved.
-Released under Apache 2.0 license as described in the file LICENSE.
-Authors: TDAF contributors
--/
 import Mathlib.Topology.Instances.Real.Lemmas
 import Mathlib.Topology.Order.DenselyOrdered
 import Mathlib.Order.Closure

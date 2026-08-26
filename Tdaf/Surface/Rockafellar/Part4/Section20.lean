@@ -1,8 +1,3 @@
-/-
-Copyright (c) 2026 TDAF contributors. All rights reserved.
-Released under Apache 2.0 license as described in the file LICENSE.
-Authors: TDAF contributors
--/
 import Tdaf.Analysis.Convex.Polyhedral.Closedness
 import Tdaf.Analysis.Convex.Polyhedral.Simplicial
 import Tdaf.Surface.Rockafellar.Part3.Section11
