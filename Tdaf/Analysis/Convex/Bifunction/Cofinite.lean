@@ -14,8 +14,8 @@ A convex bifunction is **co-finite** when every slice `Fu` is a co-finite convex
 proper, convex, with an epigraph containing no non-vertical half-line. This is the condition under
 which the algebra of bifunctions loses its side conditions — a co-finite bifunction has all of `U`
 as its effective domain and an everywhere-finite inner product `⟨Fu, y⟩`, so the relative-interior
-hypotheses become vacuous. The half of Corollary 38.7.2 that needs a relative interior lives here
-too, being Corollary 33.2.1, and for the same reason needs a topology and a finite dimension.
+hypotheses become vacuous. The identity `⟨GFu, z⟩ = ⟨u, F* G* z⟩` lives here too, for the same
+reason: it needs a relative interior, hence a topology and a finite dimension.
 
 ## Main definitions
 
@@ -26,19 +26,18 @@ too, being Corollary 33.2.1, and for the same reason needs a topology and a fini
 * `CofiniteBifun.domBifun_eq_univ`, `CofiniteBifun.proper` — a co-finite bifunction has full
   effective domain and is proper.
 * `CofiniteBifun.bracket_lt_top`, `cofiniteBifun_of_forall_bracket_lt_top` — a closed convex
-  bifunction is co-finite exactly when `⟨Fu, y⟩` is finite for every `u` and `y`; Corollary 13.3.1,
-  slice by slice.
+  bifunction is co-finite exactly when `⟨Fu, y⟩` is finite for every `u` and `y`
+  (Corollary 13.3.1 in [^1], slice by slice).
 * `cofinite_infConv`, `cofiniteBifun_infConvBifun`, `adjointBifun_infConvBifun_of_cofinite` —
   Rockafellar's closing remark: `F₁ □ F₂` is co-finite and `(F₁ □ F₂)* = F₁* □ F₂*`, with no
   hypothesis beyond co-finiteness. `cofinite_smulRight` and `cofiniteBifun_smulRightBifun` are the
   same for `F ↦ Fλ`, `λ > 0`.
 * `cofiniteBifun_iff_domBifun_eq_univ` — a closed proper convex bifunction is co-finite **iff**
-  `dom F = U` and `dom F* = Y`. Rockafellar cites Theorem 34.2; the proof here is Corollary 13.3.1
-  slice by slice and does not go through the saddle-function correspondence.
-* `CofiniteBifun.bracket_eq_concaveBracket_adjointBifun` — `⟨Fu, y⟩ = ⟨u, F* y⟩` for *every* `u`,
-  the co-finite form of Corollary 33.2.1, and
-  `bracket_compBifun_eq_concaveBracket_concaveCompBifun` is **Corollary 38.7.2**'s second equality
-  `⟨GFu, z⟩ = ⟨u, F* G* z⟩`.
+  `dom F = U` and `dom F* = Y`. Rockafellar deduces this from the saddle-function correspondence;
+  the proof here is the finiteness criterion for conjugates, slice by slice.
+* `CofiniteBifun.bracket_eq_concaveBracket_adjointBifun` — `⟨Fu, y⟩ = ⟨u, F* y⟩` for *every* `u`;
+  and `bracket_compBifun_eq_concaveBracket_concaveCompBifun` is the corresponding
+  `⟨GFu, z⟩ = ⟨u, F* G* z⟩` for a product of bifunctions.
 
 ## Implementation notes
 
@@ -52,7 +51,7 @@ discharged, because the functions being added are finite on the whole space and
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §38 and §13.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §38 and §13.
 -/
 
 open Set
@@ -91,7 +90,7 @@ theorem CofiniteBifun.ne_bot (hF : CofiniteBifun F) (u : U) (x : X) : F u x ≠ 
 
 end Defs
 
-/-! ### Corollary 13.3.1, slice by slice -/
+/-! ### Finiteness of the inner product -/
 
 section BracketNeBot
 
@@ -114,8 +113,8 @@ variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U]
   {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
   {F : Bifun U X}
 
-/-- **Rockafellar, §38**: for a co-finite bifunction the inner product `⟨Fu, y⟩` is never `+∞`.
-This is Corollary 13.3.1 read at the slice `Fu`. -/
+/-- **For a co-finite bifunction the inner product `⟨Fu, y⟩` is never `+∞`.** This is the
+finiteness criterion for the conjugate of a co-finite function, read at the slice `Fu`. -/
 theorem CofiniteBifun.bracket_lt_top (hF : CofiniteBifun F) (u : U) (y : Y) :
     bracket Bx F u y < ⊤ :=
   (cofinite_iff_forall_conj_lt_top (B := Bx) (hF.closedProperConvexFn_apply u)).1
@@ -140,7 +139,7 @@ variable {E F : Type*}
   {f g : E → EReal}
 
 omit [FiniteDimensional ℝ E] in
-/-- **Corollary 13.3.1**, forward: the conjugate of a co-finite function is finite everywhere. -/
+/-- **The conjugate of a co-finite function is finite everywhere.** -/
 theorem Cofinite.conj_lt_top (hf : Cofinite f) (y : F) : conj B f y < ⊤ :=
   (cofinite_iff_forall_conj_lt_top (B := B) hf.toClosedProperConvexFn).1 hf y
 
@@ -149,7 +148,7 @@ theorem Cofinite.dom_conj_eq_univ (hf : Cofinite f) : dom (conj B f) = univ :=
   (cofinite_iff_dom_conj_eq_univ (B := B) hf.toClosedProperConvexFn).1 hf
 
 /-- **The conjugates of two co-finite functions add exactly**: their effective domains are the whole
-space, so Theorem 16.4's relative-interior condition holds at the origin. -/
+space, so the relative-interior condition for an exact sum holds at the origin. -/
 theorem Cofinite.isExactSum_conj (hf : Cofinite f) (hg : Cofinite g) :
     IsExactSum B.flip (conj B f) (conj B g) := by
   have hdf : (0 : F) ∈ ri (dom (conj B f)) := by
@@ -203,7 +202,7 @@ theorem cofinite_infConv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
 
 end CofiniteInfConv
 
-/-! ### Rockafellar's closing remark: `F₁ □ F₂` -/
+/-! ### Infimal convolution of co-finite bifunctions -/
 
 section CofiniteAlgebra
 
@@ -217,7 +216,8 @@ variable {U V X Y : Type*}
   {F F₁ F₂ : Bifun U X}
 
 omit [FiniteDimensional ℝ U] in
-/-- Slice by slice this is `cofinite_infConv`; convexity of `F₁ □ F₂` is Theorem 38.1. -/
+/-- Slice by slice this is `cofinite_infConv`; convexity of `F₁ □ F₂` is
+`convexBifun_infConvBifun`. -/
 theorem cofiniteBifun_infConvBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF₁ : CofiniteBifun F₁)
     (hF₂ : CofiniteBifun F₂) : CofiniteBifun (infConvBifun F₁ F₂) :=
@@ -225,8 +225,8 @@ theorem cofiniteBifun_infConvBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     fun u => cofinite_infConv Bx (hF₁.cofinite_apply u) (hF₂.cofinite_apply u)⟩
 
 omit [FiniteDimensional ℝ X] in
-/-- The two brackets add exactly, both being finite everywhere. This is what makes Theorem 38.2
-unconditional for co-finite bifunctions. -/
+/-- The two brackets add exactly, both being finite everywhere. This is what makes
+`adjointBifun_infConvBifun` unconditional for co-finite bifunctions. -/
 theorem isExactSum_neg_bracket_of_cofinite (hF₁ : CofiniteBifun F₁) (hF₂ : CofiniteBifun F₂)
     (y : Y) : IsExactSum Bu (fun u => -(bracket Bx F₁ u y)) (fun u => -(bracket Bx F₂ u y)) := by
   have hp : ∀ G : Bifun U X, CofiniteBifun G → Proper (fun u => -(bracket Bx G u y)) := by
@@ -249,8 +249,8 @@ theorem isExactSum_neg_bracket_of_cofinite (hF₁ : CofiniteBifun F₁) (hF₂ :
     (hp F₂ hF₂) (hd F₁ hF₁) (hd F₂ hF₂)
 
 omit [FiniteDimensional ℝ X] in
-/-- **Rockafellar, §38**: `(F₁ □ F₂)* = F₁* □ F₂*` for co-finite bifunctions, with the exactness
-hypothesis of Theorem 38.2 discharged. -/
+/-- **`(F₁ □ F₂)* = F₁* □ F₂*` for co-finite bifunctions**, with the exactness hypothesis
+discharged. -/
 theorem adjointBifun_infConvBifun_of_cofinite (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
@@ -261,8 +261,8 @@ theorem adjointBifun_infConvBifun_of_cofinite (Bu : U →ₗ[ℝ] V →ₗ[ℝ] 
     (isExactSum_neg_bracket_of_cofinite hF₁ hF₂)
 
 omit [FiniteDimensional ℝ V] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
-/-- **Rockafellar, §38**: for a co-finite bifunction the two inner products agree *everywhere*,
-`⟨Fu, y⟩ = ⟨u, F* y⟩`. This is Corollary 33.2.1 with `ri (dom F) = U`. -/
+/-- **For a co-finite bifunction the two inner products agree at every `u`**,
+`⟨Fu, y⟩ = ⟨u, F* y⟩`. They agree on `ri (dom F)`, and `dom F` is all of `U`. -/
 theorem CofiniteBifun.bracket_eq_concaveBracket_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : CofiniteBifun F) (u : U) (y : Y) :
     bracket Bx F u y = concaveBracket Bu (adjointBifun Bu Bx F) u y :=
@@ -271,7 +271,7 @@ theorem CofiniteBifun.bracket_eq_concaveBracket_adjointBifun (Bu : U →ₗ[ℝ]
 
 end CofiniteAlgebra
 
-/-! ### Rockafellar's closing remark: `Fλ` -/
+/-! ### Right scalar multiplication of co-finite functions -/
 
 section CofiniteSmulRight
 
@@ -281,9 +281,9 @@ variable {E F : Type*}
   {f : E → EReal} {a : ℝ}
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
-/-- **`fa` is the conjugate of `a f*`**, for `a > 0` and closed convex `f`: Theorem 16.1's
-`conj_smul` at `g = f*`, with Fenchel–Moreau turning `f**` back into `f`. It supplies the closedness
-half of Theorem 38.3, which the epigraph-image definition of `smulRight` does not see. -/
+/-- **`fa` is the conjugate of `a f*`**, for `a > 0` and closed convex `f`: the conjugation rule
+`conj_smul` at `g = f*`, with Fenchel–Moreau turning `f**` back into `f`. It supplies closedness of
+`fa`, which the epigraph-image definition of `smulRight` does not see. -/
 theorem smulRight_eq_conj_smul (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
     [IsCompatiblePairing B] [IsCompatiblePairing B.flip] (hc : ConvexFn f) (hcl : ClosedFn f)
     (ha : 0 < a) : smulRight f a = conj B.flip (fun y => (a : EReal) * conj B f y) := by
@@ -291,8 +291,8 @@ theorem smulRight_eq_conj_smul (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
   rw [conj_smul ha B.flip (conj B f), hbi]
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
-/-- **Rockafellar, Theorem 38.3**, closedness: `fa` is closed when `f` is closed convex and
-`a > 0`. It is a conjugate (`smulRight_eq_conj_smul`). -/
+/-- **`fa` is closed** when `f` is closed convex and `a > 0`. It is a conjugate
+(`smulRight_eq_conj_smul`). -/
 theorem closedFn_smulRight (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
     [IsCompatiblePairing B] [IsCompatiblePairing B.flip] (hc : ConvexFn f) (hcl : ClosedFn f)
     (ha : 0 < a) : ClosedFn (smulRight f a) := by
@@ -306,7 +306,7 @@ theorem coe_mul_ne_bot (ha : 0 < a) {u : EReal} (hu : u ≠ ⊥) : (a : EReal) *
   rw [mul_neg, h, _root_.EReal.neg_bot]
 
 omit [FiniteDimensional ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F] in
-/-- **Rockafellar, Theorem 38.3**, properness: `fa` is proper when `f` is and `a > 0`. -/
+/-- **`fa` is proper** when `f` is and `a > 0`. -/
 theorem proper_smulRight (hf : Proper f) (ha : 0 < a) : Proper (smulRight f a) := by
   refine ⟨?_, fun x => ?_⟩
   · obtain ⟨x₀, hx₀⟩ := hf.dom_nonempty
@@ -332,7 +332,7 @@ theorem cofinite_smulRight (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ)
 
 end CofiniteSmulRight
 
-/-! ### Rockafellar's closing remark: `Fλ` and Theorem 34.2 for bifunctions -/
+/-! ### Right scalar multiplication, and the co-finiteness criterion -/
 
 section Cofinite342
 
@@ -347,8 +347,8 @@ variable {U V X Y : Type*}
 
 omit [FiniteDimensional ℝ U] [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
   [FiniteDimensional ℝ X] in
-/-- **Rockafellar, §38**: `F → Fλ` preserves co-finiteness for `λ > 0`. Slice by slice this is
-`cofinite_smulRight`; the convexity of `Fλ` is Theorem 38.3. -/
+/-- **`F ↦ Fλ` preserves co-finiteness** for `λ > 0`. Slice by slice this is `cofinite_smulRight`;
+the convexity of `Fλ` is `convexBifun_smulRightBifun`. -/
 theorem cofiniteBifun_smulRightBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : CofiniteBifun F) (hl : 0 < l) :
     CofiniteBifun (smulRightBifun F l) :=
@@ -357,8 +357,8 @@ theorem cofiniteBifun_smulRightBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
 
 omit [FiniteDimensional ℝ V] [FiniteDimensional ℝ X] in
 /-- **`dom F* = Y`**, the half of the co-finiteness criterion needing no closedness: `⟨F·, y⟩` is a
-finite concave function on `U`, so its negative is proper convex and Theorem 12.1 makes the
-conjugate proper; the sign dictionary carries that back to `F* y`. -/
+finite concave function on `U`, so its negative is proper convex and its conjugate is proper; the
+sign dictionary carries that back to `F* y`. -/
 theorem CofiniteBifun.domConcaveBifun_adjointBifun_eq_univ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : CofiniteBifun F) :
@@ -383,8 +383,8 @@ theorem CofiniteBifun.domConcaveBifun_adjointBifun_eq_univ (Bu : U →ₗ[ℝ] V
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ V] [FiniteDimensional ℝ X]
   [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] in
 /-- The substantial direction: `dom F = U` makes every bracket `⟨Fu, y⟩` finite below, and
-`dom F* = Y` makes it finite above — if `⟨Fu₀, y⟩ = +∞` for a single `u₀` then `F* y ≡ -∞`.
-Corollary 13.3.1, slice by slice, does the rest. -/
+`dom F* = Y` makes it finite above — if `⟨Fu₀, y⟩ = +∞` for a single `u₀` then `F* y ≡ -∞`. The
+finiteness criterion for conjugates, slice by slice, does the rest. -/
 theorem cofiniteBifun_of_domBifun_eq_univ (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (hp : Proper (graphFn F)) (hdom : domBifun F = univ)
     (hadj : domConcaveBifun (adjointBifun Bu Bx F) = univ) : CofiniteBifun F := by
@@ -401,8 +401,8 @@ theorem cofiniteBifun_of_domBifun_eq_univ (hF : ConvexBifun F) (hcl : ClosedBifu
         (g := fun u' => bracket Bx F u' y) htop) v
 
 omit [FiniteDimensional ℝ V] [FiniteDimensional ℝ X] [IsCompatiblePairing Bu.flip] in
-/-- A closed proper convex bifunction is co-finite **iff** `dom F = U` and `dom F* = Y`. Rockafellar
-cites Theorem 34.2; the proof here is Corollary 13.3.1 slice by slice. -/
+/-- **A closed proper convex bifunction is co-finite iff `dom F = U` and `dom F* = Y`.** The proof
+here is the finiteness criterion for conjugates, slice by slice. -/
 theorem cofiniteBifun_iff_domBifun_eq_univ (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (hp : Proper (graphFn F)) :
     CofiniteBifun F ↔
@@ -413,7 +413,7 @@ theorem cofiniteBifun_iff_domBifun_eq_univ (hF : ConvexBifun F) (hcl : ClosedBif
 
 end Cofinite342
 
-/-! ### Corollary 38.7.2, the second equality -/
+/-! ### The inner product of a product of bifunctions -/
 
 section Cor3872
 
@@ -423,9 +423,9 @@ variable {U V X W Y Z : Type*}
   [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
   {F : Bifun U X} {G : Bifun X Y}
 
-/-- **Corollary 38.7.2**, second equality: `⟨GFu, z⟩ = ⟨u, F* G* z⟩`. Corollary 33.2.1 puts the two
-brackets of `GF` together at a relative interior point of `dom (GF)`, and Theorem 38.5 rewrites
-`(GF)*` as `F* G*`. The first equality is `bracket_compBifun_eq_fenchelPairing`. -/
+/-- **`⟨GFu, z⟩ = ⟨u, F* G* z⟩`.** The two brackets of `GF` agree at a relative interior point of
+`dom (GF)`, and `adjointBifun_compBifun` rewrites `(GF)*` as `F* G*`. The companion equality
+`⟨GFu, z⟩ = ⟨Fu, G* z⟩` is `bracket_compBifun_eq_fenchelPairing`. -/
 theorem bracket_compBifun_eq_concaveBracket_concaveCompBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
     (hbF : ∀ u x, F u x ≠ ⊥) (hGF : ConvexBifun (compBifun G F)) {u : U}

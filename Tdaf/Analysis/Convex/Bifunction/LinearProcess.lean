@@ -78,7 +78,7 @@ section Image
 
 variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
 
-/-- **`Ff` at the indicator bifunction of a linear `T` is `T f`** in the sense of §5. The hypothesis
+/-- **`Ff` at the indicator bifunction of a linear `T` is the image `mapLin T f`.** The hypothesis
 that `f` is nowhere `⊥` is not a convenience: off the fibre of `T` the summand is `⊤`, and
 `⊥ + ⊤ = ⊥` would drag the infimum to `⊥` at every point of `X`. -/
 theorem imageBifun_indicatorBifun_ofLinearMap (T : U →ₗ[ℝ] X) {f : U → EReal}
