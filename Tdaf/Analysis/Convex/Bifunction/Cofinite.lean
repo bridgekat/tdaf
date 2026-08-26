@@ -325,7 +325,7 @@ theorem bracket_compBifun_eq_concaveBracket_concaveCompBifun (Bu : U →ₗ[ℝ]
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
     (hbF : ∀ u x, F u x ≠ ⊥) (hGF : ConvexBifun (compBifun G F)) {u : U}
     (hu : u ∈ ri (domBifun (compBifun G F))) {z : Z}
-    (hex : ∀ v : V, IsExactSum Bx (concaveBracket Bu.flip (invBifun F) v)
+    (hex : ∀ v : V, IsExactSum Bx (concaveBracket Bu.flip (inverseBifun F) v)
       (fun x => -(bracket By G x z))) :
     bracket By (compBifun G F) u z
       = concaveBracket Bu (concaveCompBifun (adjointBifun Bx By G) (adjointBifun Bu Bx F)) u z := by

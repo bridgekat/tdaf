@@ -174,18 +174,19 @@ variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Modul
 of the inverse bifunction `F_*`, for the flipped pairing. `Minimax.lean` had to route Theorem 36.5
 through `saddleSwap` because the *closedness* half needs the convex Theorem 33.3; the identity
 itself is an unfolding, `a - (-b) = a + b`. -/
-theorem concaveBracket_inverseBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v : V) (x : X) :
+theorem concaveBracket_inverseBifun_eq_lagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X)
+    (v : V) (x : X) :
     concaveBracket Bu.flip (inverseBifun F) v x = lagrangian Bu F v x := by
   rw [concaveBracket_apply, lagrangian_apply]
   refine iInf_congr fun u => ?_
   rw [inverseBifun_apply, sub_eq_add_neg, neg_neg, LinearMap.flip_apply]
 
-/-- The saddle-function form of `concaveBracket_inverseBifun`: the Lagrangian read on `V × X` is
-the upper bracket of `F_*`. -/
+/-- The saddle-function form of `concaveBracket_inverseBifun_eq_lagrangian`: the Lagrangian read
+on `V × X` is the upper bracket of `F_*`. -/
 theorem saddleLagrangian_eq_concaveBracket (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) :
     saddleLagrangian Bu F
       = fun q : V × X => concaveBracket Bu.flip (inverseBifun F) q.1 q.2 :=
-  funext fun q => (concaveBracket_inverseBifun Bu F q.1 q.2).symm
+  funext fun q => (concaveBracket_inverseBifun_eq_lagrangian Bu F q.1 q.2).symm
 
 end LagrangianBracket
 

@@ -119,6 +119,30 @@ def graphFn (F : Bifun U X) : U × X → EReal := fun p => F p.1 p.2
 
 @[simp] theorem graphFn_apply (F : Bifun U X) (u : U) (x : X) : graphFn F (u, x) = F u x := rfl
 
+/-- **The inverse `F_*` of a bifunction** (Rockafellar, §36, last part): `(F_* x) u = -(Fu)(x)`.
+Unlike `flipBifun` it also changes the sign, so it carries convex bifunctions to concave ones and
+back. It is involutory, and it is the operation §37 is built on. The sign flip is also what makes
+`(Ff)(x) = ⨅ (f - F_* x)` agree with `⨅ u, f u + (Fu)(x)`.
+
+Placed here, beside `Bifun` and `graphFn`, rather than with the §37 material that uses it most:
+`Saddle/Minimax.lean` and `Bifunction/Algebra.lean` both had their own copy — the second under the
+name `invBifun` — and neither module is in the other's import closure, while this one is in both.
+The two spellings coexisted in `Part6/Section29.lean` and `Part6/Section30.lean`, where a goal
+could be written with one and the lemma about it stated with the other, `rfl`-equal and with
+nothing to report the mismatch (remediation §12.34). -/
+noncomputable def inverseBifun (F : Bifun U X) : Bifun X U := fun x u => -(F u x)
+
+@[simp] theorem inverseBifun_apply (F : Bifun U X) (x : X) (u : U) :
+    inverseBifun F x u = -(F u x) := rfl
+
+/-- **The inverse operation is involutory**: `(F_*)_* = F`. -/
+@[simp] theorem inverseBifun_inverseBifun (F : Bifun U X) :
+    inverseBifun (inverseBifun F) = F :=
+  funext fun u => funext fun x => neg_neg (F u x)
+
+theorem graphFn_inverseBifun (F : Bifun U X) (q : X × U) :
+    graphFn (inverseBifun F) q = -(graphFn F (q.2, q.1)) := rfl
+
 /-- The **perturbation function** `inf F` of the program associated with `F`. Its value at `0` is
 the optimal value of the program. -/
 noncomputable def infBifun (F : Bifun U X) : U → EReal := fun u => ⨅ x, F u x

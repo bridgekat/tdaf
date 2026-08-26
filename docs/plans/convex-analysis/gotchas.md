@@ -408,6 +408,14 @@ first with a typed `have`, then compose.
 
 ---
 
+**EL41. `rw` inside a `subgradient` membership leaves a beta-redex, and `exact_mod_cast` then
+reports the redex as if it were a cast failure.** Rewriting under `x ∈ subgradient B f y` produces a
+goal whose head is `(fun z => …) a` rather than the applied form. `exact_mod_cast` sees the redex,
+cannot line the casts up through it, and the error it prints names the coercion — so the natural
+reading is that a `↑` is in the wrong place, and the natural response is to add `push_cast`, which
+does nothing. `beta_reduce` (or `simp only []`) first, then the cast tactic works unchanged. The
+tell is that the reported cast looks *already correct*.
+
 ## LINT — Linters and the zero-warning bar
 
 The bar is **no errors and no warnings**, deprecations included. These are the linters that fail a
@@ -512,6 +520,15 @@ copied from a binary lemma often closes the `Set.pi` version outright**, so the 
 set. When porting `Prod` → `Set.pi`, drop the closer and re-add it only if needed.
 
 ---
+
+**LINT13. Deleting a duplicate can drop the survivor a layer, and the unused-section-variable linter
+is what tells you.** When two copies of a lemma live at different layers and you delete one, the
+survivor often no longer needs every instance its section declares — the deleted copy was the reason
+the section sat where it did. `linter.unusedSectionVars` then fires on the survivor. **Read that
+warning as a layer report, not as noise**: per LINT3 the fix is to move the declaration to the
+section that matches its real hypotheses, not to `omit` the instance and stay put. Four layer drops
+came out of one round's duplicate removal this way, and three of the four were found by the linter
+rather than by a person.
 
 ## DEP — Deprecated and renamed Mathlib
 
@@ -811,6 +828,15 @@ a point beating `c`, with no `⊥`/`⊤` case split.
 
 ---
 
+**ER19. `EReal` is not a semiring, so a scalar does not distribute over a `Finset.sum`.**
+`Finset.mul_sum` and `Finset.sum_mul` do not apply: there is no `NonUnitalNonAssocSemiring EReal`
+instance, because multiplication does not distribute over addition once `⊥` and `⊤` are in play
+(`⊤ * (1 + -1)` against `⊤ * 1 + ⊤ * -1`). The concrete consequence: "each `fᵢ` is separable ⟹
+`∑ᵢ λᵢ fᵢ` is separable" **cannot be proved by distributing `λᵢ` through the sum**, and there is no
+side condition on the `λᵢ` alone that rescues it. Hypothesise the separability of the combination
+instead — which is what Rockafellar does, asserting the step without proof. Related: ER1, `EReal` is
+not cancellative.
+
 ## SET — Sets, products, cones
 
 **SET1. Pointwise `+`, `•` and `-` on `Set` need `open scoped Pointwise`, and no error says so.** In a
@@ -957,6 +983,20 @@ is this one squared (`pow_le_pow_left₀`), not a second `nlinarith`.
 surface file's imports for one lemma, state the two-point inequality directly, as in SET15.
 
 ---
+
+**SET17. State `⋂ i ∈ s` lemmas over a bare predicate, so one lemma serves `Set` and `Finset`
+alike.** Writing the hypothesis as `(s : Finset ι)` forces a second, near-identical lemma the first
+time a caller has a `Set ι`, and the two proofs are the same proof. Take `{p : ι → Prop}` (or an
+implicit `s : Set ι`) and write `⋂ i ∈ s`; `Finset` callers supply `↑s` and pay one coercion lemma,
+`Finset.mem_coe`. This is what `polyhedral_biInter` and `polyhedral_iInter` do, and it is why the
+`Finite ι` form is three lines on top of the indexed one rather than a parallel development.
+
+**SET18. Split a weighted strict-convexity proof by which half actually needs `a + b = 1`.** For
+`f (a•x + b•y) < a • f x + b • f y` the two obligations behave differently: the *strict* inequality
+on the open segment needs only `0 < a`, `0 < b`, while the identification of `a•x + b•y` as a point
+of the segment needs `a + b = 1`. Proving them in one pass means carrying the normalisation
+hypothesis through steps that do not use it, and the resulting proof will not generalise to the
+`a + b ≤ 1` statements that arise from epigraph arguments. Do the positivity half first, unnormalised.
 
 ## PAIR — The pairing classes
 
@@ -1376,6 +1416,82 @@ consumer can now be written.
 
 ---
 
+**LIB31. Grep the *body*, not only the name — two identical public definitions in non-comparable
+modules produce no error at all.** `invBifun` in `Bifunction/Algebra.lean` and `inverseBifun` in
+`Saddle/Minimax.lean` were `fun x u => -(F u x)` twice, each with its own `@[simp]` apply-lemma and
+its own involution lemma, and they coexisted for a full round. Lean's "already declared" error — the
+mechanism that has caught LIB1 seven times — fires only when one module is in the other's import
+closure *and* the names match. Neither condition held. The live hazard is not the duplication but
+what it enables downstream: a third module that imports both has **both names in scope**, so a goal
+can be written with one and the lemma about it stated with the other, `rfl`-equal, with nothing —
+not `simp`, not the elaborator, not a name clash — to report the mismatch. Sweep by normalising
+definition bodies, not by listing names.
+
+**LIB32. A duplicate sweep must key on the signature line, not the proof text.** Three copies of
+`pairing_two` were reported as identical "character for character"; only the **statements** were.
+The three had three different proofs and three different docstrings, and a fourth copy in a fourth
+file was missed entirely by a scan that looked for repeated proof bodies. Normalise the statement —
+name, binders, conclusion — and compare that. Corollary: the count in a duplicate report is a lower
+bound. Related: BLD24, the aggregator module is where a collision first appears.
+
+**LIB33. An import-closure check has two halves, and a claim can be right about one and wrong about
+the other.** "Everything its proof uses is already in the lower module's closure, and all four of
+its consumers sit above" — the first half was right, the second false: one consumer of four (really
+five) had the target in its closure, and two needed a **new** import. Relocations fail in both
+directions, and the consumer direction is the one that turns a move into a cycle. Check *both*
+before writing a relocation into a plan, and count the consumers with a grep rather than from
+memory.
+
+**LIB34. Two modules can be *incomparable* in the import DAG, and then neither can host a lemma
+about both.** Every earlier bad-home diagnosis in this project was "the prerequisite is above the
+target", which moving one module fixes. `Polyhedral/Defs.lean` (which defines `FinitelyGenerated`)
+and `Representation.lean` (which has `finite_extremePoints_convexHullPD`) import neither each other
+nor anything that would make them comparable, so a lemma mentioning both **cannot be typed in
+either**. No check phrased as "is X below Y" reports this, because the answer is *neither*. The fix
+is a third module that imports both — here `Polyhedral/Faces.lean` — not a move.
+
+**LIB35. A relocation's named home can be stale because another row in the same batch moved the
+landmark it points at.** Rows are written independently and applied together. "Beside
+`polyhedralFn_mapLin`" was correct when written and wrong by the time it was applied, because a row
+three lines away relocated `polyhedralFn_mapLin`. **Resolve a relocation's named neighbour after
+applying the batch, not from the row text**, and prefer homes named by module over homes named by
+neighbour. Related: LIB17.
+
+**LIB36. An item asking for an isomorphism to transport a property is usually asking for the wrong
+object.** Read the head symbols of what is actually being transported. If they are `dom`, `argmin`,
+`epi`, `Set.preimage` — anything that is a preimage or a fibrewise condition — a bare **surjection**
+does the whole job, and the isomorphism is decoration that costs a development. One ledger row asked
+for an `ℝ^{n₁} × ⋯ × ℝ^{n_s} ≃ ℝⁿ` isometry with transport of `dom`, `argmin` and `ri`; the book
+passage it cited never mentions `ri` and never uses an isometry, and what it needs is
+`argmin_comp_of_surjective` plus a separable-sum dictionary on a dependent product. A related tell:
+if the hypothesis is stated as a bare `≃` rather than a `≃ₗ[ℝ]`, it is carrying none of the
+arithmetic the passage depends on — a bijection `∀ k, Rn (nk k) ≃ Rn n` exists for *any* `nk`.
+
+**LIB37. Deferral notes, scope warnings and "will name-clash if added there" warnings are claims,
+and they are not exempt from the grep a remediation row gets.** Three instances in one round: an
+`api.md` record warned of a name clash between `convex_polarSet` and `Duality/Polar.lean`, which has
+`convex_polarCone` — a different spelling, no clash, and that false warning is what kept two lemmas
+misfiled for two rounds; a `## What is not here` note named `Surface/Common/Euclidean.lean` as the
+home of `euclideanProdEquiv`, whose own docstring says it is backbone; and a gap note said no
+polyhedral `IsExactImage` constructor existed when one had landed a full round earlier. **The
+warnings in our own records decay exactly like the rows do**, and they are read as settled because
+they look like documentation rather than like a task. Related: LIB16, LIB23, LIB17.
+
+**LIB38. Check whether the blocker a note names is itself a three-line consequence of the
+destination.** A note said a pairing-free proof "wants the closure of a cone is a cone, which exists
+only as a surface declaration" — true, and the missing lemma was three lines from what the
+destination module already had. The shape recurs: a note names a blocker to explain a deferral, and
+the blocker is smaller than the deferral. Price the blocker before accepting the deferral.
+
+**LIB39. A prerequisite can block you from inside the file you are editing, hundreds of lines below
+the target section.** `convex_polarSet` was declared 650 lines below the section that needed it, in
+the **same file**. No import-closure check detects this — the module is trivially in its own closure
+— and a grep for the name finds it and reports success, because the grep does not know about
+declaration order. The elaborator is the only thing that objects, and it objects at the point of
+use. When a move into a specific section of a large file fails on "unknown identifier", check the
+line number of the thing you are citing against the line number of the section, before looking at
+imports at all.
+
 ## BLD — Toolchain, build, worktrees
 
 **BLD1. `lake` keys on content hashes, not mtimes, so `touch` does nothing.** "Touch every file you
@@ -1463,6 +1579,11 @@ it is instant, it covers files the build would not rebuild, and it catches the c
 rewrapping one long line pushes the overflow onto the next (three iterations in one paragraph, this
 round). An earlier version of this entry said to build and trust the linter, and that advice let two
 over-long lines through in one round.
+
+**Confirmed twice more since**, independently: an agent hit the same cascade in its own fence, and a
+central four-character rename (`invBifun` → `inverseBifun`) pushed seven lines over, then pushed an
+eighth over while rewrapping the seventh. Reflow the whole paragraph, not the offending line — a
+per-line fix guarantees a second round.
 
 **BLD8. `#print axioms` wraps long declaration names, so grepping its output under-counts.** Piping
 through `grep 'depends on axioms: \[propext, Classical.choice, Quot.sound\]'` silently misses every
@@ -1588,3 +1709,39 @@ Scan for duplicate declaration names across a parallel round's files *before* bu
 aggregator. Note that `private` copies do **not** collide, being name-mangled: a scan that skips
 `private` misses real duplication (three `pairing_two` copies, remediation §12.32), and one that
 includes it reports non-blockers. Both are worth seeing; only the public ones stop the build.
+
+**BLD25. Removing a public declaration needs the module you deleted it *from* rebuilt, and the
+symptom is a name collision in an unrelated third file.** Deleting a duplicate and rebuilding only
+the survivor's module leaves the deleted declaration live in the stale `.olean` of the module you
+edited. The next module that imports both then fails with "environment already contains `foo`" —
+pointing at a **third** file that you did not touch and that contains only one declaration of `foo`.
+The instinct is to look for a second declaration in the file named in the error; there is none.
+Rebuild the module you deleted from (or delete its `.olean`), then the importer. This is BLD2 and
+BLD21 in the *removal* direction, which is the direction that reads as a mystery.
+
+**BLD26. A full `lake build` outruns the 10-minute tool timeout, and the kill is indistinguishable
+from a hang.** 2994 jobs takes well past 600 s on this tree, `lake` buffers its output so a live
+build can show **zero bytes** for twenty minutes, and a timed-out call looks exactly like a wedged
+one. Run it with `run_in_background` from the start. To tell a live build from a dead one without
+waiting, check for `lean` worker processes burning CPU (`Get-Process lean | Select Name,Id,CPU`) —
+several with rising CPU means it is working; the absence of workers while `lake` is alive is the
+real hang.
+
+**BLD27. Printing matched Lean text from Python dies on the Windows console encoding, and the scan
+aborts *mid-file*.** `UnicodeEncodeError: 'gbk' codec can't encode character` fires the moment a
+scan prints a line containing `ℝ`, `∈`, `⨅` — i.e. on the first interesting hit. The damage is not
+the traceback but what it hides: the script dies partway through the tree, having printed real
+findings for the files it reached, so the output **looks like a completed scan that found three
+things**. Always run these with `PYTHONIOENCODING=utf-8`, and prefer writing results to a UTF-8 file
+over printing them.
+
+**BLD28. Three separate ways a `bash` heredoc corrupts a Python payload.** (a) **Size**: over
+roughly 8 KB the heredoc truncates, and the failure surfaces as a `bash` syntax error —
+"unexpected EOF while looking for matching quote" — naming a line number inside your script, which
+reads as a quoting bug in the text rather than as truncation. Hit three times in one session; the
+fix is to write the file with the file-writing tool and run it by path. (b) **Backslashes**: a
+literal `\\` in the payload arrives as `\`, so `.replace('\\', '/')` becomes an unterminated
+string and `os.sep` is the right thing to use anyway. (c) **`$TMPDIR` is unset** in Git Bash here,
+so `> "$TMPDIR/x.py"` writes to `/x.py` and fails with permission denied — and `/tmp` redirection is
+invisible to the Windows `python` on `PATH`, which resolves the path differently from the shell that
+created it. Use the absolute scratchpad path.

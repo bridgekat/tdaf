@@ -313,31 +313,31 @@ theorem theorem_30_1_surjective {G : Bifun (Rn n) (Rn m)} (hG : ConcaveBifun G)
     (hclG : ClosedConcaveFn (graphFn G)) (hpG : ProperConcave (graphFn G)) :
     ∃ F : Bifun (Rn m) (Rn n),
       ConvexBifun F ∧ ClosedBifun F ∧ Proper (graphFn F) ∧ dualProgram F = G := by
-  have hgraph : graphFn (invBifun G)
+  have hgraph : graphFn (inverseBifun G)
       = compLin (fun q => -(graphFn G q)) (swapLin (Rn m) (Rn n)) := rfl
-  have hconv : ConvexBifun (invBifun G) := by
+  have hconv : ConvexBifun (inverseBifun G) := by
     rw [convexBifun_iff, hgraph]
     exact convexFn_compLin _ (concaveFn_iff_convexFn_neg.1 hG)
-  have hclosed : ClosedBifun (invBifun G) := by
+  have hclosed : ClosedBifun (inverseBifun G) := by
     have hcont : Continuous (swapLin (Rn m) (Rn n)) := by
       change Continuous fun p : Rn m × Rn n => ((p.2, p.1) : Rn n × Rn m)
       exact continuous_snd.prodMk continuous_fst
     rw [closedBifun_iff, hgraph]
     exact closedFn_compLin (closedConcaveFn_iff.1 hclG) hcont
-  have hdual : dualProgram (lowerAdjointBifun (pairing m) (pairing n) (invBifun G)) = G := by
+  have hdual : dualProgram (lowerAdjointBifun (pairing m) (pairing n) (inverseBifun G)) = G := by
     have hbi := lowerAdjointBifun_lowerAdjointBifun_eq_clBifun
-      (Bu := pairing m) (Bx := pairing n) (F := invBifun G) hconv
+      (Bu := pairing m) (Bx := pairing n) (F := inverseBifun G) hconv
     simp only [flip_pairing] at hbi
     rw [hclosed.clBifun_eq] at hbi
     funext y v
     have hval := congrFun (congrFun hbi v) y
-    rw [lowerAdjointBifun_apply, invBifun_apply] at hval
+    rw [lowerAdjointBifun_apply, inverseBifun_apply] at hval
     exact neg_inj.1 hval
-  have hconvF : ConvexBifun (lowerAdjointBifun (pairing m) (pairing n) (invBifun G)) :=
-    convexBifun_lowerAdjointBifun (pairing m) (pairing n) (invBifun G)
-  have hclF : ClosedBifun (lowerAdjointBifun (pairing m) (pairing n) (invBifun G)) :=
+  have hconvF : ConvexBifun (lowerAdjointBifun (pairing m) (pairing n) (inverseBifun G)) :=
+    convexBifun_lowerAdjointBifun (pairing m) (pairing n) (inverseBifun G)
+  have hclF : ClosedBifun (lowerAdjointBifun (pairing m) (pairing n) (inverseBifun G)) :=
     closedBifun_lowerAdjointBifun
-  refine ⟨lowerAdjointBifun (pairing m) (pairing n) (invBifun G), hconvF, hclF, ?_, hdual⟩
+  refine ⟨lowerAdjointBifun (pairing m) (pairing n) (inverseBifun G), hconvF, hclF, ?_, hdual⟩
   exact (theorem_30_1_proper hconvF hclF).1 (by rw [hdual]; exact hpG)
 
 /-- **Rockafellar, Theorem 30.1** (12309), last clause: "If `F` is polyhedral, so is `F*`."

@@ -24,7 +24,7 @@ each behaves under taking adjoints.
 | `Fλ` | `smulRightBifun` | `λ A` |
 | `Ff` | `imageBifun` | `A x` |
 | `GF` | `compBifun` | `B ∘ A` |
-| `F⁎`, `F⁎*` | `invBifun`, `lowerAdjointBifun` | `A⁻¹`, `(A⁻¹)*` |
+| `F⁎`, `F⁎*` | `inverseBifun`, `lowerAdjointBifun` | `A⁻¹`, `(A⁻¹)*` |
 | `⟨f, g⟩` | `fenchelSup` / `fenchelInf` / `HasFenchelPairing` | `⟨x, y⟩` |
 
 ## Main definitions
@@ -38,7 +38,7 @@ each behaves under taking adjoints.
 * `smulRightBifun F l` — Rockafellar's `Fλ`.
 * `imageBifun F f` — Rockafellar's `Ff`, and `concaveImageBifun` for the concave orientation.
 * `compBifun G F` — Rockafellar's product `GF`, and `concaveCompBifun` for the concave one.
-* `invBifun F` — Rockafellar's inverse `F⁎`, the *concave* bifunction `(F⁎ x)(u) = -(Fu)(x)`.
+* `inverseBifun F` — Rockafellar's inverse `F⁎`, the *concave* bifunction `(F⁎ x)(u) = -(Fu)(x)`.
 * `lowerAdjointBifun Bu Bx F` — Rockafellar's `F⁎*`.
 * `fenchelSup B f g`, `fenchelInf B f g` — the two extrema whose common value is Rockafellar's
   inner product `⟨f, g⟩`; `HasFenchelPairing` says they agree, `fenchelPairing` is the value.
@@ -59,13 +59,13 @@ each behaves under taking adjoints.
   `closedFn_imageBifun`, `exists_imageBifun_eq`, `conj_imageBifun_eq_clFn` —
   **Corollary 38.4.1**: for closed proper convex `F` and `f`, `Ff` is closed, the infimum defining
   it is attained, and `(Ff)* = cl (F⁎* f*)`.
-* `convexBifun_compBifun`, `invBifun_compBifun` — **Theorem 38.5**, first assertion, and
+* `convexBifun_compBifun`, `inverseBifun_compBifun` — **Theorem 38.5**, first assertion, and
   `(GF)⁎ = F⁎ G⁎`.
 * `adjointBifun_compBifun`, `exists_adjointBifun_compBifun_eq`, `lowerAdjointBifun_compBifun` —
   **Theorem 38.5**, the adjoint formula `(GF)* = F* G*` with the supremum attained, and its
   convex repackaging `(GF)⁎* = (G⁎*)(F⁎*)`. `adjointBifun_compBifun_eq_iInf` is the primal side,
-  and `concaveBracket_invBifun`, `conj_concaveBracket_invBifun` the dictionary for Rockafellar's
-  `f(x) = ⟨u*, F⁎x⟩`.
+  and `concaveBracket_inverseBifun_eq_imageBifun` with
+  `conj_concaveBracket_inverseBifun` the dictionary for Rockafellar's `f(x) = ⟨u*, F⁎x⟩`.
 * `lowerAdjointBifun_compBifun_lowerAdjointBifun`, `closedBifun_compBifun`,
   `exists_compBifun_eq`, `lowerAdjointBifun_compBifun_eq_clBifun` — **Corollary 38.5.1**:
   for closed proper convex `F` and `G`, `GF` is closed, the infimum defining `((GF)u)(y)` is
@@ -131,15 +131,15 @@ side, so they do not move the extremum, and the plain `⨆`/`⨅` definitions us
 Every theorem below that needs the agreement carries the properness hypothesis explicitly.
 
 **Theorem 38.5's adjoint formula is Fenchel's theorem plus one `EReal` splitting.** Rockafellar's
-`f(x) = ⟨u*, F⁎x⟩` is the image `Fℓ` of the *linear* `ℓ u = ⟨u, u*⟩` (`concaveBracket_invBifun`),
-so its conjugate is `-(F* ·)(u*)` by Theorem 38.4's supremum formula, and `g(x) = ⟨Gx, y*⟩` has
-`G* y*` as its concave conjugate by construction. All that is left is that the triple infimum
-defining `((GF)* y*)(u*)` really is `⨅ x (f x - g x)`, which needs the double infimum over `u`
-and `y` to split. It does — `Tdaf.EReal.iInf_add_iInf_of_ne_bot` — but the hypothesis is that
-neither of the
-two *infima* is `-∞`, not that the values avoid `±∞`. That is the mirror image of
-`Tdaf.EReal.biSup_add_biSup`, whose hypothesis is on the values, and it is the form properness
-supplies: `IsExactSum` demands exactly `f x ≠ -∞` and `g x ≠ +∞`.
+`f(x) = ⟨u*, F⁎x⟩` is the image `Fℓ` of the *linear* `ℓ u = ⟨u, u*⟩`
+(`concaveBracket_inverseBifun_eq_imageBifun`), so its conjugate is `-(F* ·)(u*)` by Theorem
+38.4's supremum formula, and `g(x) = ⟨Gx, y*⟩` has `G* y*` as its concave conjugate by
+construction. All that is left is that the triple infimum defining `((GF)* y*)(u*)` really is
+`⨅ x (f x - g x)`, which needs the double infimum over `u` and `y` to split. It does —
+`Tdaf.EReal.iInf_add_iInf_of_ne_bot` — but the hypothesis is that neither of the two *infima* is
+`-∞`, not that the values avoid `±∞`. That is the mirror image of `Tdaf.EReal.biSup_add_biSup`,
+whose hypothesis is on the values, and it is the form properness supplies: `IsExactSum` demands
+exactly `f x ≠ -∞` and `g x ≠ +∞`.
 
 **Theorem 38.2 needs no image-closedness.** Rockafellar proves it by closing the image of a sum
 of epigraphs. Here `adjointBifun Bu Bx F y` is *by construction* `concaveConj Bu ⟨F·, y⟩`
@@ -154,10 +154,10 @@ than build the concave first-variable convolution the book's phrasing calls for,
 is the convex one and it is applied to the *lower* adjoints, exactly as Corollary 38.5.1 is
 Theorem 38.5 applied to theirs; the whole corollary then stays between convex bifunctions and
 needs no concave closure. The bridge is
-`lowerAdjointBifun_eq_conj_concaveBracket_invBifun`: with `φᵢ y = ⨅ v, (Hᵢ v y + ⟨u, v⟩)` the lower
-adjoint of `Hᵢ` at `u` *is* `φᵢ*`, `φ = φ₁ + φ₂` holds for a first-variable convolute with no
-hypothesis (`conj_infConv`, the unconditional row of Theorem 16.4, plus one `EReal.neg_add`), and
-`IsExactSum.conj_add` turns `(φ₁ + φ₂)*` into the second-variable convolution.
+`lowerAdjointBifun_eq_conj_concaveBracket_inverseBifun`: with `φᵢ y = ⨅ v, (Hᵢ v y + ⟨u, v⟩)` the
+lower adjoint of `Hᵢ` at `u` *is* `φᵢ*`, `φ = φ₁ + φ₂` holds for a first-variable convolute with
+no hypothesis (`conj_infConv`, the unconditional row of Theorem 16.4, plus one `EReal.neg_add`),
+and `IsExactSum.conj_add` turns `(φ₁ + φ₂)*` into the second-variable convolution.
 
 **`HasFenchelPairing` is a `def` unfolding to an equation, so dot notation is unavailable.**
 `h.conj` for `h : HasFenchelPairing B f g` resolves against `Eq`; the lemma is therefore named
@@ -468,27 +468,6 @@ theorem convexFn_imageBifun (hbF : ∀ u x, F u x ≠ ⊥) (hbf : ∀ u, f u ≠
 
 end ImageBifunConvex
 
-/-! ### The inverse of a bifunction and its adjoint -/
-
-section InvBifun
-
-variable {U X : Type*}
-
-/-- The **inverse** `F⁎` of a convex bifunction `F` from `U` to `X`: the *concave* bifunction from
-`X` to `U` given by `(F⁎ x)(u) = -(Fu)(x)`.
-
-Rockafellar writes `F_*`; the sign flip is what turns the convex orientation into the concave one,
-and it is what makes `(Ff)(x) = inf (f - F⁎ x)` agree with `⨅ u, f u + (Fu)(x)`. -/
-noncomputable def invBifun (F : Bifun U X) : Bifun X U := fun x u => -(F u x)
-
-@[simp] theorem invBifun_apply (F : Bifun U X) (x : X) (u : U) : invBifun F x u = -(F u x) := rfl
-
-/-- Inversion is an involution. -/
-theorem invBifun_invBifun (F : Bifun U X) : invBifun (invBifun F) = F :=
-  funext fun _ => funext fun _ => neg_neg _
-
-end InvBifun
-
 section LowerAdjoint
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
@@ -513,12 +492,12 @@ Both sides are the same extremum over `U × X`, read once through `Prod.swap`; t
 is `-(z + c) = -z + (-c)` for a real constant `c`, which needs no side condition. -/
 theorem lowerAdjointBifun_eq_concaveAdjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) :
-    lowerAdjointBifun Bu Bx F = concaveAdjointBifun Bu.flip Bx.flip (invBifun F) := by
+    lowerAdjointBifun Bu Bx F = concaveAdjointBifun Bu.flip Bx.flip (inverseBifun F) := by
   funext v y
   rw [lowerAdjointBifun_apply, adjointBifun_apply, Tdaf.EReal.neg_iInf, concaveAdjointBifun_apply]
   rw [← Function.Surjective.iSup_comp (f := (Prod.swap : X × U → U × X)) Prod.swap_surjective]
   refine iSup_congr fun q => ?_
-  simp only [Prod.fst_swap, Prod.snd_swap, invBifun_apply, LinearMap.flip_apply]
+  simp only [Prod.fst_swap, Prod.snd_swap, inverseBifun_apply, LinearMap.flip_apply]
   have h1 : -(F q.2 q.1 + ((Bu q.2 v - Bx q.1 y : ℝ) : EReal))
       = -(F q.2 q.1) + -(((Bu q.2 v - Bx q.1 y : ℝ) : EReal)) :=
     _root_.EReal.neg_add (.inr (_root_.EReal.coe_ne_top _)) (.inr (_root_.EReal.coe_ne_bot _))
@@ -1227,15 +1206,15 @@ theorem concaveCompBifun_apply (G : Bifun Y X) (F : Bifun X U) (y : Y) (u : U) :
 
 /-- **Rockafellar, §38**: `(GF)⁎ = F⁎ G⁎`. The inverse of a product is the product of the inverses
 in the opposite order, with the concave orientation. -/
-theorem invBifun_compBifun (G : Bifun X Y) (F : Bifun U X) (hbF : ∀ u x, F u x ≠ ⊥)
+theorem inverseBifun_compBifun (G : Bifun X Y) (F : Bifun U X) (hbF : ∀ u x, F u x ≠ ⊥)
     (hbG : ∀ x y, G x y ≠ ⊥) :
-    invBifun (compBifun G F) = concaveCompBifun (invBifun G) (invBifun F) := by
+    inverseBifun (compBifun G F) = concaveCompBifun (inverseBifun G) (inverseBifun F) := by
   funext y u
-  rw [invBifun_apply, compBifun_apply, Tdaf.EReal.neg_iInf, concaveCompBifun_apply]
+  rw [inverseBifun_apply, compBifun_apply, Tdaf.EReal.neg_iInf, concaveCompBifun_apply]
   refine iSup_congr fun x => ?_
   have h : -(F u x + G x y) = -(F u x) + -(G x y) :=
     _root_.EReal.neg_add (.inl (hbF u x)) (.inr (hbG x y))
-  rw [h, invBifun_apply, invBifun_apply, add_comm]
+  rw [h, inverseBifun_apply, inverseBifun_apply, add_comm]
 
 end Defs
 
@@ -1282,21 +1261,22 @@ variable {U V X W Y Z : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] 
 omit [AddCommGroup X] [Module ℝ X] in
 /-- Rockafellar's `f(x) = ⟨u*, F⁎x⟩` is the image `Fℓ` of the *linear* function `ℓ u = ⟨u, u*⟩`
 under `F`. Both sides are `⨅ u, ⟨u, u*⟩ + (Fu)(x)`; the only step is `-(-(Fu)(x)) = (Fu)(x)`. -/
-theorem concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v : V) :
-    concaveBracket Bu.flip (invBifun F) v = imageBifun F fun u => ((Bu u v : ℝ) : EReal) := by
+theorem concaveBracket_inverseBifun_eq_imageBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v : V) :
+    concaveBracket Bu.flip (inverseBifun F) v = imageBifun F fun u => ((Bu u v : ℝ) : EReal) := by
   funext x
   rw [concaveBracket_apply, imageBifun_apply]
   refine iInf_congr fun u => ?_
-  rw [invBifun_apply, LinearMap.flip_apply]
+  rw [inverseBifun_apply, LinearMap.flip_apply]
   change ((Bu u v : ℝ) : EReal) + -(-(F u x)) = _
   rw [neg_neg]
 
 /-- The conjugate of `⟨u*, F⁎·⟩` is `-(F* ·)(u*)`. This is the entry that turns Fenchel's dual
 value into the adjoint of `F`; it is Theorem 38.4's supremum formula read at a linear `f`. -/
-theorem conj_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ)
+theorem conj_concaveBracket_inverseBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ)
     (hbF : ∀ u x, F u x ≠ ⊥) (v : V) (w : W) :
-    conj Bx (concaveBracket Bu.flip (invBifun F) v) w = -(adjointBifun Bu Bx F w v) := by
-  rw [concaveBracket_invBifun, conj_imageBifun_eq_iSup hbF (fun _ => _root_.EReal.coe_ne_bot _),
+    conj Bx (concaveBracket Bu.flip (inverseBifun F) v) w = -(adjointBifun Bu Bx F w v) := by
+  rw [concaveBracket_inverseBifun_eq_imageBifun,
+    conj_imageBifun_eq_iSup hbF (fun _ => _root_.EReal.coe_ne_bot _),
     adjointBifun_eq_concaveConj_bracket, concaveConj_apply, Tdaf.EReal.neg_iInf]
   exact iSup_congr fun u => (Tdaf.EReal.neg_coe_sub _ _).symm
 
@@ -1311,18 +1291,18 @@ properness that
 Fenchel's duality theorem will demand of the two functions. -/
 theorem adjointBifun_compBifun_eq_iInf (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
     (F : Bifun U X) (G : Bifun X Y) {z : Z} {v : V}
-    (hfb : ∀ x, concaveBracket Bu.flip (invBifun F) v x ≠ ⊥)
+    (hfb : ∀ x, concaveBracket Bu.flip (inverseBifun F) v x ≠ ⊥)
     (hgt : ∀ x, bracket By G x z ≠ ⊤) :
     adjointBifun Bu By (compBifun G F) z v
-      = ⨅ x, (concaveBracket Bu.flip (invBifun F) v x - bracket By G x z) := by
+      = ⨅ x, (concaveBracket Bu.flip (inverseBifun F) v x - bracket By G x z) := by
   have hgb : ∀ x : X, (⨅ y, (G x y - ((By y z : ℝ) : EReal))) = -(bracket By G x z) := by
     intro x
     rw [bracket_apply, Tdaf.EReal.neg_iSup]
     exact iInf_congr fun y => (Tdaf.EReal.neg_coe_sub _ _).symm
   have hfa : ∀ x : X, (⨅ u, (((Bu u v : ℝ) : EReal) + F u x))
-      = concaveBracket Bu.flip (invBifun F) v x := by
+      = concaveBracket Bu.flip (inverseBifun F) v x := by
     intro x
-    rw [concaveBracket_invBifun, imageBifun_apply]
+    rw [concaveBracket_inverseBifun_eq_imageBifun, imageBifun_apply]
   have hstep : ∀ (u : U) (y : Y),
       compBifun G F u y + ((Bu u v - By y z : ℝ) : EReal)
         = ⨅ x, ((((Bu u v : ℝ) : EReal) + F u x) + (G x y - ((By y z : ℝ) : EReal))) := by
@@ -1345,7 +1325,7 @@ theorem adjointBifun_compBifun_eq_iInf (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (B
             = ⨅ x : X, ⨅ y : Y, ((((Bu u v : ℝ) : EReal) + F u x)
               + (G x y - ((By y z : ℝ) : EReal))) := fun u => iInf_comm
         rw [iInf_congr hswap, iInf_comm]
-    _ = ⨅ x, (concaveBracket Bu.flip (invBifun F) v x - bracket By G x z) := by
+    _ = ⨅ x, (concaveBracket Bu.flip (inverseBifun F) v x - bracket By G x z) := by
         refine iInf_congr fun x => ?_
         rw [← Tdaf.EReal.iInf_add_iInf_of_ne_bot _ _ (by rw [hfa x]; exact hfb x)
           (by rw [hgb x]; simpa using hgt x), hfa x, hgb x]
@@ -1356,26 +1336,26 @@ the *concave* product of the two adjoints, `((F* G*) z)(v) = ⨆ w, ((G* z)(w) +
 
 Rockafellar deduces it from Fenchel's duality theorem applied to `f(x) = ⟨v, F⁎x⟩` and
 `g(x) = ⟨Gx, z⟩`, and so does this proof; `adjointBifun_compBifun_eq_iInf` is the primal side and
-`conj_concaveBracket_invBifun` together with `adjointBifun_eq_concaveConj_bracket` identify the two
-dual terms. His relative-interior hypothesis `ri (dom F⁎) ∩ ri (dom G) ≠ ∅` is again packaged as
-an `IsExactSum` (Theorem 16.4) — one instance per `(z, v)`, since `f` and `g` depend on them,
-where his single condition does not. As in Theorem 38.4, `IsExactSum` carries the properness that
-selects Rockafellar's main branch; his degenerate branches `z ∉ dom G*` and `v ∉ dom F⁎*` are
-where `f` or `g` fails to be proper. -/
+`conj_concaveBracket_inverseBifun` together with `adjointBifun_eq_concaveConj_bracket` identify
+the two dual terms. His relative-interior hypothesis `ri (dom F⁎) ∩ ri (dom G) ≠ ∅` is again
+packaged as an `IsExactSum` (Theorem 16.4) — one instance per `(z, v)`, since `f` and `g` depend
+on them, where his single condition does not. As in Theorem 38.4, `IsExactSum` carries the
+properness that selects Rockafellar's main branch; his degenerate branches `z ∉ dom G*` and
+`v ∉ dom F⁎*` are where `f` or `g` fails to be proper. -/
 theorem adjointBifun_compBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ)
     (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ) (hbF : ∀ u x, F u x ≠ ⊥) {z : Z} {v : V}
-    (hex : IsExactSum Bx (concaveBracket Bu.flip (invBifun F) v)
+    (hex : IsExactSum Bx (concaveBracket Bu.flip (inverseBifun F) v)
       (fun x => -(bracket By G x z))) :
     adjointBifun Bu By (compBifun G F) z v
       = concaveCompBifun (adjointBifun Bx By G) (adjointBifun Bu Bx F) z v := by
-  have hex' : IsExactSum Bx (concaveBracket Bu.flip (invBifun F) v)
+  have hex' : IsExactSum Bx (concaveBracket Bu.flip (inverseBifun F) v)
       (-fun x => bracket By G x z) := hex
   have hgt : ∀ x, bracket By G x z ≠ ⊤ := fun x hx =>
     hex'.proper_right.ne_bot x (by simp [Pi.neg_apply, hx])
   rw [adjointBifun_compBifun_eq_iInf Bu By F G hex'.proper_left.ne_bot hgt,
     fenchel_duality hex', concaveCompBifun_apply]
   refine iSup_congr fun w => ?_
-  rw [conj_concaveBracket_invBifun Bu Bx hbF v w, ← adjointBifun_eq_concaveConj_bracket]
+  rw [conj_concaveBracket_inverseBifun Bu Bx hbF v w, ← adjointBifun_eq_concaveConj_bracket]
   change _ + - -(adjointBifun Bu Bx F w v) = _
   rw [neg_neg]
 
@@ -1388,7 +1368,7 @@ wants. The two `≠ ⊤` hypotheses are what let the negation split across the s
 theorem lowerAdjointBifun_compBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ)
     (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ) (hbF : ∀ u x, F u x ≠ ⊥) {u₀ : U} {x₀ : X} (hFp : F u₀ x₀ ≠ ⊤)
     {x₁ : X} {y₁ : Y} (hGp : G x₁ y₁ ≠ ⊤) {z : Z} {v : V}
-    (hex : IsExactSum Bx (concaveBracket Bu.flip (invBifun F) v)
+    (hex : IsExactSum Bx (concaveBracket Bu.flip (inverseBifun F) v)
       (fun x => -(bracket By G x z))) :
     lowerAdjointBifun Bu By (compBifun G F) v z
       = compBifun (lowerAdjointBifun Bx By G) (lowerAdjointBifun Bu Bx F) v z := by
@@ -1405,18 +1385,18 @@ theorem lowerAdjointBifun_compBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx :
 `((F* G*) z)(v)` is attained. -/
 theorem exists_adjointBifun_compBifun_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] W →ₗ[ℝ] ℝ)
     (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ) (hbF : ∀ u x, F u x ≠ ⊥) {z : Z} {v : V}
-    (hex : IsExactSum Bx (concaveBracket Bu.flip (invBifun F) v)
+    (hex : IsExactSum Bx (concaveBracket Bu.flip (inverseBifun F) v)
       (fun x => -(bracket By G x z))) :
     ∃ w : W, adjointBifun Bx By G z w + adjointBifun Bu Bx F w v
       = adjointBifun Bu By (compBifun G F) z v := by
-  have hex' : IsExactSum Bx (concaveBracket Bu.flip (invBifun F) v)
+  have hex' : IsExactSum Bx (concaveBracket Bu.flip (inverseBifun F) v)
       (-fun x => bracket By G x z) := hex
   have hgt : ∀ x, bracket By G x z ≠ ⊤ := fun x hx =>
     hex'.proper_right.ne_bot x (by simp [Pi.neg_apply, hx])
   obtain ⟨w, hw⟩ := exists_concaveConj_sub_conj_eq hex'
   refine ⟨w, ?_⟩
   rw [adjointBifun_compBifun_eq_iInf Bu By F G hex'.proper_left.ne_bot hgt, ← hw,
-    conj_concaveBracket_invBifun Bu Bx hbF v w, ← adjointBifun_eq_concaveConj_bracket]
+    conj_concaveBracket_inverseBifun Bu Bx hbF v w, ← adjointBifun_eq_concaveConj_bracket]
   change _ = _ + - -(adjointBifun Bu Bx F w v)
   rw [neg_neg]
 
@@ -1456,7 +1436,7 @@ same reason as in Theorem 38.5 — one instance per `(u, y)`. -/
 theorem lowerAdjointBifun_compBifun_lowerAdjointBifun
     (hF : ClosedProperConvexFn (graphFn F)) (hG : ClosedProperConvexFn (graphFn G))
     {u : U} {y : Y}
-    (hex : IsExactSum Bx.flip (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F)) u)
+    (hex : IsExactSum Bx.flip (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F)) u)
       (fun w => -(bracket By.flip (lowerAdjointBifun Bx By G) w y))) :
     lowerAdjointBifun Bu.flip By.flip
         (compBifun (lowerAdjointBifun Bx By G) (lowerAdjointBifun Bu Bx F)) u y
@@ -1474,7 +1454,7 @@ theorem lowerAdjointBifun_compBifun_lowerAdjointBifun
 theorem closedBifun_compBifun (hF : ClosedProperConvexFn (graphFn F))
     (hG : ClosedProperConvexFn (graphFn G))
     (hex : ∀ (u : U) (y : Y), IsExactSum Bx.flip
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F)) u)
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F)) u)
       (fun w => -(bracket By.flip (lowerAdjointBifun Bx By G) w y))) :
     ClosedBifun (compBifun G F) := by
   have := isContinuousPairing_prodPairing_flip Bu.flip By.flip
@@ -1489,7 +1469,7 @@ theorem closedBifun_compBifun (hF : ClosedProperConvexFn (graphFn F))
 attained. This is Theorem 38.5's attainment clause read at `F⁎*` and `G⁎*`. -/
 theorem exists_compBifun_eq (hF : ClosedProperConvexFn (graphFn F))
     (hG : ClosedProperConvexFn (graphFn G)) {u : U} {y : Y}
-    (hex : IsExactSum Bx.flip (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F)) u)
+    (hex : IsExactSum Bx.flip (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F)) u)
       (fun w => -(bracket By.flip (lowerAdjointBifun Bx By G) w y))) :
     ∃ x : X, F u x + G x y = compBifun G F u y := by
   obtain ⟨p₀, hp₀⟩ := hF.proper.dom_nonempty
@@ -1550,7 +1530,7 @@ statement with the two negations moved to the outside. -/
 theorem lowerAdjointBifun_compBifun_eq_clBifun (hF : ClosedProperConvexFn (graphFn F))
     (hG : ClosedProperConvexFn (graphFn G))
     (hex : ∀ (u : U) (y : Y), IsExactSum Bx.flip
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F)) u)
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F)) u)
       (fun w => -(bracket By.flip (lowerAdjointBifun Bx By G) w y))) :
     lowerAdjointBifun Bu By (compBifun G F)
       = clBifun (compBifun (lowerAdjointBifun Bx By G) (lowerAdjointBifun Bu Bx F)) := by
@@ -1712,8 +1692,8 @@ variable [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
 omit [AddCommGroup Y] [Module ℝ Y] in
 /-- The bracket that the lower adjoint conjugates: `⟨u, H⁎ y⟩ = ⨅ v, ((H v)(y) + ⟨u, v⟩)`. -/
-theorem concaveBracket_invBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) (y : Y) :
-    concaveBracket Bu (invBifun H) u y = ⨅ v : V, (H v y + ((Bu u v : ℝ) : EReal)) := by
+theorem concaveBracket_inverseBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) (y : Y) :
+    concaveBracket Bu (inverseBifun H) u y = ⨅ v : V, (H v y + ((Bu u v : ℝ) : EReal)) := by
   rw [concaveBracket_apply]
   refine iInf_congr fun v => ?_
   change ((Bu u v : ℝ) : EReal) + -(-(H v y)) = _
@@ -1721,9 +1701,9 @@ theorem concaveBracket_invBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H 
 
 omit [AddCommGroup Y] [Module ℝ Y] in
 /-- Minus the bracket is a conjugate in the *first* variable, taken at `-u`. -/
-theorem neg_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) (y : Y) :
-    -(concaveBracket Bu (invBifun H) u y) = conj Bu.flip (fun v => H v y) (-u) := by
-  rw [concaveBracket_invBifun_apply, Tdaf.EReal.neg_iInf, conj_apply]
+theorem neg_concaveBracket_inverseBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) (y : Y) :
+    -(concaveBracket Bu (inverseBifun H) u y) = conj Bu.flip (fun v => H v y) (-u) := by
+  rw [concaveBracket_inverseBifun_apply, Tdaf.EReal.neg_iInf, conj_apply]
   refine iSup_congr fun v => ?_
   have hr : (Bu.flip v (-u) : ℝ) = -(Bu u v) := by
     rw [LinearMap.flip_apply, map_neg, LinearMap.neg_apply]
@@ -1732,14 +1712,15 @@ theorem neg_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H : 
 
 /-- **The lower adjoint at a fixed `u` is an ordinary conjugate** — of the bracket
 `y ↦ ⟨u, H⁎ y⟩`. This is the identity the whole of Corollary 38.2.1 runs through. -/
-theorem lowerAdjointBifun_eq_conj_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+theorem lowerAdjointBifun_eq_conj_concaveBracket_inverseBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (H : Bifun V Y) (u : U) :
-    lowerAdjointBifun Bu.flip Bx.flip H u = conj Bx.flip (concaveBracket Bu (invBifun H) u) := by
+    lowerAdjointBifun Bu.flip Bx.flip H u
+      = conj Bx.flip (concaveBracket Bu (inverseBifun H) u) := by
   funext x
   rw [lowerAdjointBifun_apply, adjointBifun_apply, Tdaf.EReal.neg_iInf, conj_apply, iSup_prod,
     iSup_comm]
   refine iSup_congr fun y => ?_
-  rw [concaveBracket_invBifun_apply, Tdaf.EReal.coe_sub_iInf]
+  rw [concaveBracket_inverseBifun_apply, Tdaf.EReal.coe_sub_iInf]
   refine iSup_congr fun v => ?_
   have hu : (Bu.flip v u : ℝ) = Bu u v := rfl
   have hx : (Bx.flip y x : ℝ) = Bx x y := rfl
@@ -1749,16 +1730,17 @@ theorem lowerAdjointBifun_eq_conj_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V 
 omit [AddCommGroup Y] [Module ℝ Y] in
 /-- The bracket of a first-variable convolute is the **sum** of the brackets: Theorem 16.4's
 unconditional row, `conj_infConv`, read in the first variable of a bifunction. -/
-theorem concaveBracket_invBifun_infConvFstBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H₁ H₂ : Bifun V Y)
-    (u : U) (h₁ : ∀ y, concaveBracket Bu (invBifun H₁) u y ≠ ⊥)
-    (h₂ : ∀ y, concaveBracket Bu (invBifun H₂) u y ≠ ⊥) :
-    concaveBracket Bu (invBifun (infConvFstBifun H₁ H₂)) u
-      = concaveBracket Bu (invBifun H₁) u + concaveBracket Bu (invBifun H₂) u := by
+theorem concaveBracket_inverseBifun_infConvFstBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (H₁ H₂ : Bifun V Y)
+    (u : U) (h₁ : ∀ y, concaveBracket Bu (inverseBifun H₁) u y ≠ ⊥)
+    (h₂ : ∀ y, concaveBracket Bu (inverseBifun H₂) u y ≠ ⊥) :
+    concaveBracket Bu (inverseBifun (infConvFstBifun H₁ H₂)) u
+      = concaveBracket Bu (inverseBifun H₁) u + concaveBracket Bu (inverseBifun H₂) u := by
   funext y
-  have hsum : -(concaveBracket Bu (invBifun (infConvFstBifun H₁ H₂)) u y)
-      = -(concaveBracket Bu (invBifun H₁) u y) + -(concaveBracket Bu (invBifun H₂) u y) := by
-    rw [neg_concaveBracket_invBifun, neg_concaveBracket_invBifun, neg_concaveBracket_invBifun,
-      infConvFstBifun_slice, conj_infConv]
+  have hsum : -(concaveBracket Bu (inverseBifun (infConvFstBifun H₁ H₂)) u y)
+      = -(concaveBracket Bu (inverseBifun H₁) u y)
+        + -(concaveBracket Bu (inverseBifun H₂) u y) := by
+    rw [neg_concaveBracket_inverseBifun, neg_concaveBracket_inverseBifun,
+      neg_concaveBracket_inverseBifun, infConvFstBifun_slice, conj_infConv]
     rfl
   rw [Pi.add_apply, ← neg_add_neg' (h₁ y) (h₂ y), ← hsum, neg_neg]
 
@@ -1766,22 +1748,22 @@ theorem concaveBracket_invBifun_infConvFstBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ
 `(H₁ ⊡ H₂)⁎* = H₁⁎* □ H₂⁎*`.
 
 This is the one new theorem Corollary 38.2.1 needs. Written `φᵢ y = ⨅ v, (Hᵢ v y + ⟨u, v⟩)`, the
-lower adjoint of `Hᵢ` at `u` *is* `φᵢ*` (`lowerAdjointBifun_eq_conj_concaveBracket_invBifun`);
+lower adjoint of `Hᵢ` at `u` *is* `φᵢ*` (`lowerAdjointBifun_eq_conj_concaveBracket_inverseBifun`);
 `φ = φ₁ + φ₂` for a first-variable convolute with no hypothesis at all, and Theorem 16.4
 (`IsExactSum.conj_add`) turns `(φ₁ + φ₂)*` into the infimal convolution. The hypothesis is
 Rockafellar's relative-interior condition in `IsExactSum` form, one instance per `u`. -/
 theorem lowerAdjointBifun_infConvFstBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (H₁ H₂ : Bifun V Y) {u : U}
-    (hex : IsExactSum Bx.flip (concaveBracket Bu (invBifun H₁) u)
-      (concaveBracket Bu (invBifun H₂) u)) :
+    (hex : IsExactSum Bx.flip (concaveBracket Bu (inverseBifun H₁) u)
+      (concaveBracket Bu (inverseBifun H₂) u)) :
     lowerAdjointBifun Bu.flip Bx.flip (infConvFstBifun H₁ H₂) u
       = infConvBifun (lowerAdjointBifun Bu.flip Bx.flip H₁)
           (lowerAdjointBifun Bu.flip Bx.flip H₂) u := by
-  rw [lowerAdjointBifun_eq_conj_concaveBracket_invBifun,
-    concaveBracket_invBifun_infConvFstBifun Bu H₁ H₂ u hex.proper_left.ne_bot
+  rw [lowerAdjointBifun_eq_conj_concaveBracket_inverseBifun,
+    concaveBracket_inverseBifun_infConvFstBifun Bu H₁ H₂ u hex.proper_left.ne_bot
       hex.proper_right.ne_bot, hex.conj_add, infConvBifun_apply,
-    lowerAdjointBifun_eq_conj_concaveBracket_invBifun,
-    lowerAdjointBifun_eq_conj_concaveBracket_invBifun]
+    lowerAdjointBifun_eq_conj_concaveBracket_inverseBifun,
+    lowerAdjointBifun_eq_conj_concaveBracket_inverseBifun]
 
 end LowerAdjointInfConvFst
 
@@ -1808,8 +1790,8 @@ Rockafellar's condition that `ri (dom F₁*)` and `ri (dom F₂*)` have a point 
 theorem lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun (hF₁ : ConvexBifun F₁)
     (hF₁cl : ClosedBifun F₁) (hF₂ : ConvexBifun F₂) (hF₂cl : ClosedBifun F₂) {u : U}
     (hex : IsExactSum Bx.flip
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
     lowerAdjointBifun Bu.flip Bx.flip
         (infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) u
       = infConvBifun F₁ F₂ u := by
@@ -1821,8 +1803,8 @@ theorem lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun (hF₁ : ConvexBifun
 theorem infConvBifun_eq_lowerAdjointBifun_infConvFstBifun (hF₁ : ConvexBifun F₁)
     (hF₁cl : ClosedBifun F₁) (hF₂ : ConvexBifun F₂) (hF₂cl : ClosedBifun F₂)
     (hex : ∀ u : U, IsExactSum Bx.flip
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
     infConvBifun F₁ F₂ = lowerAdjointBifun Bu.flip Bx.flip
       (infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) :=
   funext fun u =>
@@ -1833,8 +1815,8 @@ adjoint, and a lower adjoint is closed with no hypothesis at all. -/
 theorem closedBifun_infConvBifun (hF₁ : ConvexBifun F₁) (hF₁cl : ClosedBifun F₁)
     (hF₂ : ConvexBifun F₂) (hF₂cl : ClosedBifun F₂)
     (hex : ∀ u : U, IsExactSum Bx.flip
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
     ClosedBifun (infConvBifun F₁ F₂) := by
   have := isContinuousPairing_prodPairing_flip Bu.flip Bx.flip
   rw [infConvBifun_eq_lowerAdjointBifun_infConvFstBifun hF₁ hF₁cl hF₂ hF₂cl hex]
@@ -1863,8 +1845,8 @@ is what Rockafellar's `F₁* □ F₂*` becomes once the two negations are moved
 theorem lowerAdjointBifun_infConvBifun_eq_clBifun (hF₁ : ClosedProperConvexFn (graphFn F₁))
     (hF₂ : ClosedProperConvexFn (graphFn F₂))
     (hex : ∀ u : U, IsExactSum Bx.flip
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₁)) u)
-      (concaveBracket Bu (invBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₁)) u)
+      (concaveBracket Bu (inverseBifun (lowerAdjointBifun Bu Bx F₂)) u)) :
     lowerAdjointBifun Bu Bx (infConvBifun F₁ F₂)
       = clBifun (infConvFstBifun (lowerAdjointBifun Bu Bx F₁) (lowerAdjointBifun Bu Bx F₂)) := by
   obtain ⟨p₁, hp₁⟩ := hF₁.proper.dom_nonempty
