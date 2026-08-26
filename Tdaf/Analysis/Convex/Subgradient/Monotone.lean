@@ -30,20 +30,20 @@ from maximal monotonicity, neither implying the other.
 
 ## Main results
 
-* `isCyclicallyMonotone_iff_exists_convexFn` — **Theorem 24.8**.
-* `isClosed_subgradientRel` — **Theorem 24.4**: the graph of `∂f` is closed.
-* `eq_add_coe_of_subgradientRel_subset` — rigidity: `∂f ⊆ ∂g` forces `g = f + α` for a real `α`,
-  proved by subdivision (`abs_sub_increment_le`).
-* `isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn` — **Theorem 24.9**.
+* `isCyclicallyMonotone_iff_exists_convexFn` — cyclic monotonicity *is* containment in some `∂f`.
+* `isClosed_subgradientRel` — the graph of `∂f` is closed.
+* `eq_add_coe_of_subgradientRel_subset` — rigidity: `∂f ⊆ ∂g` forces `g = f + α`, by subdivision.
+* `isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn` — the maximal cyclically monotone
+  mappings are exactly the subdifferentials.
 
 ## Implementation notes
 
 A cycle is a `List (E × F)` with the starting pair carried separately, so that every proof is a
 list induction. `chainVal B s l x` keeps the free endpoint last, which makes `cyclicPotential` a
 supremum of affine functions of `x` and the cycle condition read `chainVal B s l s.1 ≤ 0`.
-Theorem 24.4 asks for *joint* continuity of the pairing, `Continuous fun p : E × F => B p.1 p.2`:
-continuity of `⟨·, y⟩` for each fixed `y` is not enough to pass to the limit in `⟨z - xᵢ, yᵢ⟩` when
-both arguments move. In `ℝⁿ` the hypothesis is automatic.
+Closedness of the graph asks for *joint* continuity of the pairing,
+`Continuous fun p : E × F => B p.1 p.2`: continuity of `⟨·, y⟩` for each fixed `y` is not enough to
+pass to the limit in `⟨z - xᵢ, yᵢ⟩` when both arguments move. In `ℝⁿ` the hypothesis is automatic.
 
 Maximal monotonicity of `∂f` for a closed proper convex `f` is not here: it is
 `isMaximalMonotoneRel_subgradientRel` in `Optimization/Prox.lean`, because its proof is Moreau's
@@ -88,7 +88,7 @@ variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
 
 /-- Appending one more edge to a chain: the value along `l ++ [q]` ending at `z` is the value along
 `l` ending at `q.1`, plus the last edge. This is the step that makes a chain into a longer chain in
-the proof of Theorem 24.8. -/
+the reconstruction below. -/
 theorem chainVal_append_singleton (s q : E × F) (l : List (E × F)) (z : E) :
     chainVal B s (l ++ [q]) z = chainVal B s l q.1 + B (z - q.1) q.2 := by
   induction l generalizing s with
@@ -124,8 +124,8 @@ def IsMonotoneRel (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop
   ∀ p ∈ ρ, ∀ q ∈ ρ, 0 ≤ B (p.1 - q.1) (p.2 - q.2)
 
 /-- A multivalued mapping is **cyclically monotone** when every finite cycle in its graph has
-non-positive telescoping sum. The book's definition, with the cycle written as a starting pair
-`s` followed by a list `l`; `chainVal B s l s.1` is the sum around the cycle. -/
+non-positive telescoping sum. The cycle is written as a starting pair `s` followed by a list `l`;
+`chainVal B s l s.1` is the sum around it. -/
 def IsCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
   ∀ s ∈ ρ, ∀ l : List (E × F), (∀ q ∈ l, q ∈ ρ) → chainVal B s l s.1 ≤ 0
 
@@ -134,7 +134,7 @@ def IsMaximalMonotoneRel (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F)
   IsMonotoneRel B ρ ∧ ∀ σ : SetRel E F, IsMonotoneRel B σ → ρ ⊆ σ → σ ⊆ ρ
 
 /-- A cyclically monotone mapping is **maximal** when no strictly larger cyclically monotone
-mapping contains it. Theorem 24.9 identifies these with the subdifferentials. -/
+mapping contains it. These turn out to be exactly the subdifferentials. -/
 def IsMaximalCyclicallyMonotone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) : Prop :=
   IsCyclicallyMonotone B ρ ∧ ∀ σ : SetRel E F, IsCyclicallyMonotone B σ → ρ ⊆ σ → σ ⊆ ρ
 
@@ -190,7 +190,7 @@ theorem IsMaximalCyclicallyMonotone.nonempty (h : IsMaximalCyclicallyMonotone B 
 
 end Monotone
 
-/-! ### Theorem 24.8, necessity: `∂f` is cyclically monotone -/
+/-! ### Necessity: `∂f` is cyclically monotone -/
 
 section Necessity
 
@@ -218,9 +218,8 @@ theorem le_of_chain_mem_subgradientRel :
       _ ≤ f q.1 + ((chainVal B q l x : ℝ) : EReal) := add_le_add h₁ (le_refl _)
       _ ≤ f x := h₂
 
-/-- **Theorem 24.8**, necessity: the graph of `∂f` is cyclically monotone. Convexity
-of `f` is not used; properness is, and only to know that `f` is finite at the base point of the
-cycle. -/
+/-- The graph of `∂f` is cyclically monotone. Convexity of `f` is not used; properness is, and
+only to know that `f` is finite at the base point of the cycle. -/
 theorem isCyclicallyMonotone_subgradientRel (hp : Proper f) :
     IsCyclicallyMonotone B (subgradientRel B f) := by
   intro s hs l hl
@@ -243,7 +242,7 @@ theorem isMonotoneRel_subgradientRel (hp : Proper f) :
 
 end Necessity
 
-/-! ### Theorem 24.8, sufficiency: the potential -/
+/-! ### Sufficiency: the potential -/
 
 section Potential
 
@@ -268,7 +267,7 @@ theorem cyclicPotential_le {c : EReal} {x : E}
     cyclicPotential B ρ s x ≤ c :=
   iSup₂_le h
 
-/-- The potential is convex: it is a supremum of affine functions (Theorem 5.5). -/
+/-- The potential is convex: it is a supremum of affine functions. -/
 theorem convexFn_cyclicPotential (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (ρ : SetRel E F) (s : E × F) :
     ConvexFn (cyclicPotential B ρ s) := by
   refine convexFn_biSup fun l _ => ?_
@@ -331,7 +330,7 @@ theorem mem_subgradient_cyclicPotential {p : E × F} (hp : p ∈ ρ) :
 
 end Potential
 
-/-! ### Theorem 24.8 and Theorem 24.9 -/
+/-! ### Cyclically monotone mappings and subdifferentials -/
 
 section Main
 
@@ -339,8 +338,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
   {ρ : SetRel E F}
 
-/-- **Theorem 24.8**, sufficiency: a nonempty cyclically monotone multivalued mapping
-is contained in the subdifferential of a closed proper convex function. -/
+/-- A nonempty cyclically monotone multivalued mapping is contained in the subdifferential of a
+closed proper convex function. -/
 theorem exists_convexFn_subgradientRel_of_isCyclicallyMonotone [IsContinuousPairing B]
     (hρ : IsCyclicallyMonotone B ρ) (hne : ρ.Nonempty) :
     ∃ f : E → EReal, ConvexFn f ∧ ClosedFn f ∧ Proper f ∧ ρ ⊆ subgradientRel B f := by
@@ -356,16 +355,16 @@ theorem exists_convexFn_subgradientRel_of_isCyclicallyMonotone [IsContinuousPair
   rw [hfun]
   exact lowerSemicontinuous_affineFn (continuous_pairing B y)
 
-/-- **Theorem 24.8**: for a nonempty multivalued mapping, being contained in a
-subdifferential and being cyclically monotone are the same thing. -/
+/-- For a nonempty multivalued mapping, being contained in a subdifferential and being
+cyclically monotone are the same thing. -/
 theorem isCyclicallyMonotone_iff_exists_convexFn [IsContinuousPairing B] (hne : ρ.Nonempty) :
     IsCyclicallyMonotone B ρ ↔
       ∃ f : E → EReal, ConvexFn f ∧ ClosedFn f ∧ Proper f ∧ ρ ⊆ subgradientRel B f :=
   ⟨fun h => exists_convexFn_subgradientRel_of_isCyclicallyMonotone h hne,
     fun ⟨_, _, _, hp, hsub⟩ => (isCyclicallyMonotone_subgradientRel hp).mono hsub⟩
 
-/-- **Theorem 24.9**, the half that Theorem 24.8 gives at once: a maximal cyclically
-monotone multivalued mapping *is* the subdifferential of a closed proper convex function. -/
+/-- The half the reconstruction gives at once: a maximal cyclically monotone multivalued mapping
+*is* the subdifferential of a closed proper convex function. -/
 theorem exists_eq_subgradientRel_of_isMaximalCyclicallyMonotone [IsContinuousPairing B]
     (h : IsMaximalCyclicallyMonotone B ρ) :
     ∃ f : E → EReal, ConvexFn f ∧ ClosedFn f ∧ Proper f ∧ ρ = subgradientRel B f := by
@@ -376,14 +375,14 @@ theorem exists_eq_subgradientRel_of_isMaximalCyclicallyMonotone [IsContinuousPai
 
 end Main
 
-/-! ### Theorem 24.4: the graph of `∂f` is closed -/
+/-! ### The graph of `∂f` is closed -/
 
 section GraphClosed
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
   [Module ℝ F] [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
 
-/-- **Theorem 24.4**: the graph of `∂f` is closed in `E × F`; equivalently `xᵢ* ∈ ∂f xᵢ`,
+/-- The graph of `∂f` is closed in `E × F`; equivalently `xᵢ* ∈ ∂f xᵢ`,
 `xᵢ → x` and `xᵢ* → x*` force `x* ∈ ∂f x`. Convexity of `f` is not used. Lower semicontinuity is,
 and so is joint continuity of the pairing: the subgradient inequality at `xᵢ` involves
 `⟨z - xᵢ, xᵢ*⟩`, where both arguments move. -/
@@ -497,8 +496,9 @@ section AddConst
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
 /-- **Raising a function by a real constant lowers its conjugate by that constant.** This is the
-one piece of conjugacy Theorem 24.9 needs beyond Fenchel–Moreau: `∂f ⊆ ∂g` pins `g` to `f + α` only
-after the same relation on the conjugate side has been turned back into an inequality on `E`. -/
+one piece of conjugacy the rigidity argument needs beyond Fenchel–Moreau: `∂f ⊆ ∂g` pins `g` to
+`f + α` only after the same relation on the conjugate side has been turned back into an inequality
+on `E`. -/
 theorem conj_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α : ℝ) :
     conj B (fun x => f x + (α : EReal)) = fun y => conj B f y + ((-α : ℝ) : EReal) := by
   funext y
@@ -507,7 +507,7 @@ theorem conj_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α
 
 end AddConst
 
-/-! ### Theorem 24.9: `∂f` determines `f` up to an additive constant -/
+/-! ### `∂f` determines `f` up to an additive constant -/
 
 section Uniqueness
 
@@ -524,10 +524,10 @@ theorem exists_coe_of_subgradient_nonempty (hpg : Proper g) {x : E}
     exact absurd h Set.not_nonempty_empty
   exact EReal.exists_coe_of_ne_bot_of_lt_top (hpg.ne_bot x) hxdom
 
-/-- **Theorem 24.9**, the analytic core: if `∂f ⊆ ∂g` then `f` and `g` have the same increments
-between relative interior points of `dom f`. The book integrates the common one-sided derivative
-along the segment, using the one-dimensional theory of §24.1–24.3; the argument here needs none of
-it. Subdivide `[x₁, x₂]` into `N` equal steps and pick `v i ∈ ∂f (x i)` at each node; each step
+/-- The analytic core: if `∂f ⊆ ∂g` then `f` and `g` have the same increments between relative
+interior points of `dom f`. The classical proof integrates the common one-sided derivative along
+the segment, through the one-dimensional theory; the argument here needs none of it. Subdivide
+`[x₁, x₂]` into `N` equal steps and pick `v i ∈ ∂f (x i)` at each node; each step
 traps both increments in `[⟨d, v i⟩, ⟨d, v (i+1)⟩]`, so the two differ by at most the telescoping
 total `N⁻¹ ⟨x₂ - x₁, v N - v 0⟩`, which tends to `0`. -/
 theorem increment_eq_of_subgradientRel_subset [IsCompatiblePairing B]
@@ -622,10 +622,10 @@ theorem increment_eq_of_subgradientRel_subset [IsCompatiblePairing B]
   have hzero := abs_nonpos_iff.1 hle
   linarith
 
-/-- **Theorem 24.9**, the geometric half: if `∂f ⊆ ∂g` then `g ≤ f + α` for a real constant `α`,
-with equality on `cl (dom f)`. Agreement of the increments on `ri (dom f)` fixes `α`, and Theorem
-7.5 carries the identity out to `cl (dom f)` along a segment running into the boundary point. Off
-`cl (dom f)` the right-hand side is `⊤`. -/
+/-- The geometric half: if `∂f ⊆ ∂g` then `g ≤ f + α` for a real constant `α`, with equality on
+`cl (dom f)`. Agreement of the increments on `ri (dom f)` fixes `α`, and a closed convex function
+is the limit of its values along a segment running into a boundary point, which carries the
+identity out to `cl (dom f)`. Off `cl (dom f)` the right-hand side is `⊤`. -/
 theorem exists_forall_le_add_coe_of_subgradientRel_subset [IsCompatiblePairing B]
     (hf : ConvexFn f) (hpf : Proper f) (hcf : ClosedFn f)
     (hg : ConvexFn g) (hpg : Proper g) (hlg : LowerSemicontinuous g)
@@ -723,7 +723,7 @@ theorem exists_forall_le_add_coe_of_subgradientRel_subset [IsCompatiblePairing B
 
 end Uniqueness
 
-/-! ### Theorem 24.9 in full -/
+/-! ### Maximality of the subdifferential -/
 
 section MaximalCyclic
 
@@ -753,13 +753,13 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
 
-/-- **Theorem 24.9**, uniqueness clause: a closed proper convex function is determined by its
-subdifferential up to an additive constant, and already by the *inclusion* `∂f ⊆ ∂g`.
+/-- A closed proper convex function is determined by its subdifferential up to an additive
+constant, and already by the *inclusion* `∂f ⊆ ∂g`.
 
-The geometric half gives `g ≤ f + α` with equality on `cl (dom f)`; Corollary 23.5.1 turns
-`∂f ⊆ ∂g` into `∂f* ⊆ ∂g*` and repeats it on the conjugate side, giving `g* ≤ f* + β`. Evaluating
-Theorem 23.5 (d) at a pair of the graph of `∂f`, where both equalities apply, forces `β = -α`, and
-conjugating `g* ≤ (f + α)*` back gives `g ≥ f + α`. -/
+The geometric half gives `g ≤ f + α` with equality on `cl (dom f)`; inverting the subdifferential
+turns `∂f ⊆ ∂g` into `∂f* ⊆ ∂g*` and repeats it on the conjugate side, giving `g* ≤ f* + β`.
+Equality in Fenchel's inequality at a pair of the graph of `∂f`, where both hold, forces `β = -α`,
+and conjugating `g* ≤ (f + α)*` back gives `g ≥ f + α`. -/
 theorem eq_add_coe_of_subgradientRel_subset [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     (hsub : subgradientRel B f ⊆ subgradientRel B g) :
@@ -776,7 +776,7 @@ theorem eq_add_coe_of_subgradientRel_subset [IsCompatiblePairing B] [IsCompatibl
     exact fun p hp => hsub hp
   obtain ⟨β, hleβ, heqβ⟩ := exists_forall_le_add_coe_of_subgradientRel_subset hfstar.convex
     hfstar.proper hfstar.closed hgstar.convex hgstar.proper hgstar.lowerSemicontinuous hsub'
-  -- The two constants are opposite: evaluate Theorem 23.5 (d) at a point of the graph of `∂f`.
+  -- The two constants are opposite: use equality in Fenchel's inequality on the graph of `∂f`.
   obtain ⟨x, hx⟩ := Convex.relint_nonempty hf.convex.convex_dom hf.proper.dom_nonempty
   obtain ⟨y, hy⟩ := subgradient_nonempty_of_mem_relint_dom (B := B) hf.convex hf.proper hx
   have hxdom : x ∈ dom f := intrinsicInterior_subset hx
@@ -818,10 +818,10 @@ theorem eq_add_coe_of_subgradientRel_subset [IsCompatiblePairing B] [IsCompatibl
   rw [hbih, hbcg] at hge
   exact ⟨α, fun x => le_antisymm (hle x) (Pi.le_def.1 hge x)⟩
 
-/-- **Theorem 24.9**: the subdifferential of a closed proper convex function is a *maximal*
-cyclically monotone mapping. If `∂f ⊆ σ` with `σ` cyclically monotone then Theorem 24.8 puts
-`σ ⊆ ∂g` for some closed proper convex `g`; uniqueness makes `g = f + α`, and a constant does not
-change a subdifferential. -/
+/-- The subdifferential of a closed proper convex function is a *maximal* cyclically monotone
+mapping. If `∂f ⊆ σ` with `σ` cyclically monotone then the reconstruction puts `σ ⊆ ∂g` for some
+closed proper convex `g`; uniqueness makes `g = f + α`, and a constant does not change a
+subdifferential. -/
 theorem isMaximalCyclicallyMonotone_subgradientRel [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip] (hf : ClosedProperConvexFn f) :
     IsMaximalCyclicallyMonotone B (subgradientRel B f) := by
@@ -837,8 +837,8 @@ theorem isMaximalCyclicallyMonotone_subgradientRel [IsCompatiblePairing B]
   rw [hgeq, subgradientRel_add_coe] at hgsub
   exact hgsub
 
-/-- **Theorem 24.9** in full: on a finite-dimensional space the maximal cyclically
-monotone mappings are exactly the subdifferentials of the closed proper convex functions. -/
+/-- In full: on a finite-dimensional space the maximal cyclically monotone mappings are exactly
+the subdifferentials of the closed proper convex functions. -/
 theorem isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip] {ρ : SetRel E F} :
     IsMaximalCyclicallyMonotone B ρ ↔

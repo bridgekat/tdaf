@@ -11,22 +11,23 @@ import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 /-!
 # Almost everywhere differentiability of a convex function
 
-**Theorem 25.5**: a proper convex function on a finite-dimensional space is differentiable at
-almost every point of the interior of its effective domain, the points of differentiability are
-dense there, and the gradient map is continuous where it is defined.
+A proper convex function on a finite-dimensional space is differentiable at almost every point of
+the interior of its effective domain, the points of differentiability are dense there, and the
+gradient map is continuous where it is defined.
 
 ## Main results
 
 * `HasGradientAt.hasFDerivAt_toReal`, `hasGradientAt_of_hasFDerivAt_toReal` — the dictionary
   between `∇f` for an `EReal`-valued `f` and Mathlib's `fderiv` of the *real trace*
   `fun z => (f z).toReal`, valid at interior points of `dom f`.
-* `exists_lipschitzOnWith_ball` — Theorem 10.4 localized: a proper convex function is Lipschitz on
-  a whole *ball* around any interior point of its effective domain.
+* `exists_lipschitzOnWith_ball` — a proper convex function is Lipschitz on a whole *ball* around
+  any interior point of its effective domain.
 * `ae_differentiableAtFn`, `interior_dom_subset_closure_differentiableAtFn`,
-  `continuousOn_fderiv_toReal` — **Theorem 25.5**, its three clauses;
-  `continuousOn_fderiv_of_convexOn` is **Corollary 25.5.1**, for Mathlib's `ConvexOn`.
-* `measure_diff_twoSided_dirDeriv` — **Theorem 25.4**, the measure-zero clause, here a corollary of
-  Theorem 25.5 rather than its source.
+  `continuousOn_fderiv_toReal` — the almost-everywhere, density and continuity clauses
+  (Theorem 25.5 in [^1]); `continuousOn_fderiv_of_convexOn` restates the last for Mathlib's
+  `ConvexOn`.
+* `measure_diff_twoSided_dirDeriv` — in a fixed direction the two-sided directional derivative
+  exists almost everywhere, a corollary here rather than the source it classically is.
 * `topDualPairing_flip_toDual`, `mem_subgradient_innerL_iff`, `conj_innerL_eq_conj_topDualPairing`,
   `subgradient_innerL_eq_singleton` — the Riesz bridge between the two pairings the library uses on
   an inner-product space, which is what lets results stated for `innerₗ E`, whose subgradients are
@@ -36,20 +37,20 @@ dense there, and the gradient map is continuous where it is defined.
 
 ## Implementation notes
 
-Mathlib's Rademacher theorem does the analysis; convexity only supplies local Lipschitz constants.
-Theorem 10.4 gives them on *compact* subsets of `ri (dom f)`, and `exists_lipschitzOnWith_ball`
-shrinks a closed ball to an open one, so that `DifferentiableWithinAt` upgrades to
-`DifferentiableAt`. The density clause is stated without any measure: a non-empty open set has
-positive Haar measure, so it cannot sit inside a null set.
+**Rademacher's theorem**, from Mathlib, does the analysis; convexity only supplies local Lipschitz
+constants. Convexity gives them on *compact* subsets of `ri (dom f)`, and
+`exists_lipschitzOnWith_ball` shrinks a closed ball to an open one, so that
+`DifferentiableWithinAt` upgrades to `DifferentiableAt`. The density clause is stated without any
+measure: a non-empty open set has positive Haar measure, so it cannot sit inside a null set.
 
-The book's implication runs the other way — Theorem 25.4 first, by a Fubini argument over lines,
-then Theorem 25.5 by intersecting the coordinate directions. With Rademacher available Theorem 25.5
-comes first, since differentiability supplies the two-sided derivative in *every* direction at once.
+The classical implication runs the other way — the fixed-direction statement first, by a Fubini
+argument over lines, then full differentiability by intersecting the coordinate directions. With
+Rademacher available differentiability comes first, since it supplies the two-sided derivative in
+*every* direction at once.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorem 25.5,
-  Corollary 25.5.1).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -110,16 +111,16 @@ theorem DifferentiableAtFn.hasGradientAt_fderiv (h : DifferentiableAtFn f x) :
 
 end RealTrace
 
-/-! ### Theorem 25.5: differentiability almost everywhere -/
+/-! ### Differentiability almost everywhere -/
 
 section Rademacher
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal} {x : E}
 
-/-- **Theorem 10.4, localized**: a proper convex function is Lipschitz on a whole ball around any
-interior point of its effective domain. Balls are what Rademacher's theorem needs, because
-differentiability *within* an open set is differentiability. -/
+/-- A proper convex function is Lipschitz on a whole *ball* around any interior point of its
+effective domain. Balls are what Rademacher's theorem needs, because differentiability *within* an
+open set is differentiability. -/
 theorem exists_lipschitzOnWith_ball (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ interior (dom f)) :
     ∃ r > 0, ball x r ⊆ interior (dom f) ∧
@@ -132,8 +133,8 @@ theorem exists_lipschitzOnWith_ball (hf : ConvexFn f) (hp : Proper f)
 
 variable [MeasurableSpace E] [BorelSpace E] {μ : Measure E} [μ.IsAddHaarMeasure]
 
-/-- **Theorem 25.5**, the measure-zero clause: a proper convex function is
-differentiable at almost every point of the interior of its effective domain. -/
+/-- A proper convex function is differentiable at almost every point of the interior of its
+effective domain. -/
 theorem ae_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
     ∀ᵐ z ∂μ, z ∈ interior (dom f) → DifferentiableAtFn f z := by
   choose! r hr hball K hK using fun z (hz : z ∈ interior (dom f)) =>
@@ -154,7 +155,7 @@ theorem ae_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
   exact (differentiableAtFn_iff_differentiableAt_toReal hp hzU).2
     ((hz p hpT hzp).differentiableAt (isOpen_ball.mem_nhds hzp))
 
-/-- **Theorem 25.5**, the measure-zero clause as a null set. -/
+/-- The points of `int (dom f)` at which `f` fails to be differentiable form a null set. -/
 theorem measure_diff_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
     μ (interior (dom f) \ {z | DifferentiableAtFn f z}) = 0 := by
   have hae := ae_differentiableAtFn (μ := μ) hf hp
@@ -165,15 +166,15 @@ theorem measure_diff_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
 
 omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
 /-- **Where `f` is differentiable, every two-sided directional derivative exists.** Both sides are
-values of the gradient (Theorem 25.2, necessity). -/
+values of the gradient. -/
 theorem twoSided_dirDeriv_of_differentiableAtFn (hf : ConvexFn f)
     (h : DifferentiableAtFn f x) (y : E) : dirDeriv f x y = -dirDeriv f x (-y) := by
   obtain ⟨f', hf'⟩ := h
   rw [hf'.dirDeriv_eq hf, hf'.dirDeriv_eq hf, map_neg, _root_.EReal.coe_neg, neg_neg]
 
-/-- **Theorem 25.4**, the measure-zero clause: in any fixed direction `y`, the two-sided
-directional derivative exists almost everywhere on `int (dom f)`. Here it is a consequence of
-Theorem 25.5, differentiability at `z` supplying the two-sided derivative in *every* direction. -/
+/-- In any fixed direction `y` the two-sided directional derivative exists at almost every point
+of `int (dom f)`. Here this is a consequence of almost-everywhere differentiability, which supplies
+the two-sided derivative in *every* direction at once. -/
 theorem measure_diff_twoSided_dirDeriv (hf : ConvexFn f) (hp : Proper f) (y : E) :
     μ (interior (dom f) \ {z | dirDeriv f z y = -dirDeriv f z (-y)}) = 0 := by
   refine measure_mono_null (fun z hz => ?_) (measure_diff_differentiableAtFn (μ := μ) hf hp)
@@ -188,8 +189,8 @@ section Dense
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- **Theorem 25.5**, the density clause: the points of differentiability are dense in the interior
-of the effective domain. No measure appears in the statement; the proof borrows one. -/
+/-- The points of differentiability are dense in the interior of the effective domain. No measure
+appears in the statement; the proof borrows one. -/
 theorem interior_dom_subset_closure_differentiableAtFn (hf : ConvexFn f) (hp : Proper f) :
     interior (dom f) ⊆ closure {z | DifferentiableAtFn f z} := by
   let _ : MeasurableSpace E := borel E
@@ -207,7 +208,7 @@ theorem interior_dom_subset_closure_differentiableAtFn (hf : ConvexFn f) (hp : P
 
 end Dense
 
-/-! ### Theorem 25.5: continuity of the gradient -/
+/-! ### Continuity of the gradient -/
 
 section GradientContinuity
 
@@ -222,8 +223,8 @@ theorem topDualPairing_flip_toDual (x v : E) :
   simp [innerₗ_apply_apply, real_inner_comm]
 
 /-- The Riesz bridge for the conjugate: `mem_subgradient_innerL_iff` with `conj` in place of
-`subgradient`. It carries Theorem 26.4, stated on a general normed space with the pairing
-`⟨x, y⟩ = y x`, over to statements about `conj (innerₗ E)`. -/
+`subgradient`. It carries results stated on a general normed space with the pairing
+`⟨x, y⟩ = y x` over to statements about `conj (innerₗ E)`. -/
 theorem conj_innerL_eq_conj_topDualPairing (f : E → EReal) (v : E) :
     conj (innerₗ E) f v = conj (topDualPairing ℝ E).flip f (InnerProductSpace.toDual ℝ E v) := by
   simp only [conj_apply]
@@ -238,8 +239,8 @@ theorem mem_subgradient_innerL_iff {v : E} :
   simp only [mem_subgradient]
   exact forall_congr' fun z => by rw [← topDualPairing_flip_toDual (z - x) v]
 
-/-- **Theorem 25.1 in vector form**: at a point of differentiability the subdifferential for the
-inner-product pairing is the single vector representing the gradient. -/
+/-- **In vector form**: at a point of differentiability the subdifferential for the inner-product
+pairing is the single vector representing the gradient. -/
 theorem subgradient_innerL_eq_singleton (hf : ConvexFn f) (h : HasGradientAt f f' x) :
     subgradient (innerₗ E) f x = {(InnerProductSpace.toDual ℝ E).symm f'} := by
   ext v
@@ -266,16 +267,14 @@ theorem subgradient_topDualPairing_eq_singleton {v : E}
   · rintro rfl
     exact mem_subgradient_innerL_iff.1 (by rw [h]; rfl)
 
-/-- **Theorem 25.1**, converse half, in vector form: a lone subgradient for the
-inner-product pairing is the gradient. -/
+/-- Converse, in vector form: a lone subgradient for the inner-product pairing is the gradient. -/
 theorem hasGradientAt_toDual_of_subgradient_eq_singleton (hf : ConvexFn f) (hp : Proper f) {v : E}
     (h : subgradient (innerₗ E) f x = {v}) :
     HasGradientAt f (InnerProductSpace.toDual ℝ E v) x :=
   hasGradientAt_of_subgradient_eq_singleton hf hp (subgradient_topDualPairing_eq_singleton h)
 
-/-- **Theorem 25.5**, the continuity clause: the gradient mapping is continuous on the set where
-the function is differentiable. This is Corollary 24.5.1 — upper semicontinuity of `∂f` — with both
-subdifferentials collapsed to singletons by Theorem 25.1. -/
+/-- The gradient mapping is continuous on the set where the function is differentiable. This is
+upper semicontinuity of `∂f` with both subdifferentials collapsed to singletons. -/
 theorem continuousOn_fderiv_toReal (hf : ConvexFn f) (hp : Proper f) :
     ContinuousOn (fderiv ℝ fun w => (f w).toReal) {z | DifferentiableAtFn f z} := by
   set g := fderiv ℝ fun w => (f w).toReal with hgdef
@@ -306,9 +305,9 @@ theorem continuousOn_fderiv_toReal (hf : ConvexFn f) (hp : Proper f) :
     _ ≤ ε / 2 := hnorm
     _ < ε := half_lt_self hε
 
-/-- **Corollary 25.5.1**: a finite convex function differentiable on an open convex set is
-*continuously* differentiable there. Mathlib's `ConvexOn` enters by extension with `⊤` off `C`,
-which on the open set `C` has the same gradients. -/
+/-- A finite convex function differentiable on an open convex set is *continuously* differentiable
+there. Mathlib's `ConvexOn` enters by extension with `⊤` off `C`, which on the open set `C` has the
+same gradients. -/
 theorem continuousOn_fderiv_of_convexOn {C : Set E} {g : E → ℝ} (hC : IsOpen C)
     (hne : C.Nonempty) (hg : ConvexOn ℝ C g) (hd : DifferentiableOn ℝ g C) :
     ContinuousOn (fderiv ℝ g) C := by
@@ -337,8 +336,8 @@ section NormalCone
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- The normal cone to the unit ball at a boundary point is the ray through that point:
-`N_B(x) = {λx | λ ≥ 0}` for `‖x‖ = 1`. This is what turns Theorem 32.4, at a maximiser over the
-ball, into the eigenvalue condition `λx ∈ ∂f(x)` of §32. Both inclusions are the equality case of
+`N_B(x) = {λx | λ ≥ 0}` for `‖x‖ = 1`. It is what turns the optimality condition at a maximiser
+over the ball into the eigenvalue condition `λx ∈ ∂f(x)`. Both inclusions are the equality case of
 Cauchy–Schwarz, so neither finite-dimensionality nor completeness is needed. -/
 theorem normalCone_innerₗ_closedBall {x : E} (hx : ‖x‖ = 1) :
     normalCone (innerₗ E) (closedBall (0 : E) 1) x
