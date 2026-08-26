@@ -9,6 +9,7 @@ import Tdaf.Analysis.Convex.Duality.Ops
 import Tdaf.Analysis.Convex.Duality.Polar
 import Tdaf.Analysis.Convex.Duality.Relint
 import Tdaf.Analysis.Convex.Duality.RelintSeparation
+import Tdaf.Analysis.Convex.Polyhedral.Duality
 import Tdaf.Analysis.Convex.Recession.Closedness
 import Tdaf.Surface.Rockafellar.Part3.Section13
 
@@ -28,7 +29,8 @@ Each of the four theorems is really three statements, and this module keeps them
   general statement (`theorem_16_3_closure`, `theorem_16_4_closure`, `theorem_16_5_closure`);
 * the **exact form**, in which a relative-interior qualification removes the closure and makes the
   infimum attained (`theorem_16_3_exact`, `theorem_16_3_attained`, `theorem_16_4_exact`,
-  `theorem_16_4_attained`).
+  `theorem_16_4_attained`), together with the *polyhedral* form of the same qualification, which
+  Rockafellar states here as a remark and proves only in §19 (`theorem_16_3_polyhedral`).
 
 The backbone is organised the same way — `Duality/Ops.lean` for the first two rows,
 `Duality/Exact.lean` and `Duality/Relint.lean` for the third — and the split is what makes both
@@ -47,6 +49,7 @@ reusable.
 | Corollary 16.2.2 | `corollary_16_2_2` |
 | Theorem 16.3 | `theorem_16_3_image`, `theorem_16_3_closure`, `theorem_16_3_exact`,
   `theorem_16_3_attained` |
+| §16, unnumbered remark | `theorem_16_3_polyhedral`, `theorem_16_3_polyhedral_attained` |
 | Corollary 16.3.1 | `corollary_16_3_1_image`, `corollary_16_3_1_closure`,
   `corollary_16_3_1_exact` |
 | Corollary 16.3.2 | `corollary_16_3_2_image`, `corollary_16_3_2_preimage` |
@@ -293,17 +296,13 @@ theorem theorem_16_3_closure (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (h
 /-- **Rockafellar, Theorem 16.3**, the exact half: if there is an `x` with `Ax ∈ ri (dom g)`, the
 closure operation can be omitted and `(gA)* = A*g*`.
 
-Rockafellar's hypotheses are `g` proper convex, not closed; the reduction to the closed case is
-Theorem 9.5 (`clFn_compLin`) together with Corollary 7.4.1 (`ConvexFn.relint_dom_clFn`).
-Specialises `IsExactImage.of_relint` and `IsExactImage.conj_compLin`. -/
+Rockafellar's hypotheses are `g` proper convex, not closed. Specialises
+`IsExactImage.of_relint_proper`, which is the backbone constructor carrying that reduction, and
+`IsExactImage.conj_compLin`. -/
 theorem theorem_16_3_exact (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (hg : ConvexFn g)
     (hp : Proper g) {x₀ : Rn n} (hx₀ : A x₀ ∈ ri (dom g)) :
-    conj (pairing n) (compLin g A) = mapLin (LinearMap.adjoint A) (conj (pairing m) g) := by
-  have hcl : ClosedProperConvexFn (clFn g) :=
-    ⟨convexFn_clFn hg, closedFn_clFn g, hg.proper_clFn hp⟩
-  have hri : A x₀ ∈ ri (dom (clFn g)) := by rw [hg.relint_dom_clFn hp]; exact hx₀
-  have hstep := (IsExactImage.of_relint (isAdjointPair_adjoint A) hcl hri).conj_compLin
-  rw [← conj_clFn (B := pairing n) (compLin g A), clFn_compLin hg hp A hx₀, hstep, conj_clFn]
+    conj (pairing n) (compLin g A) = mapLin (LinearMap.adjoint A) (conj (pairing m) g) :=
+  (IsExactImage.of_relint_proper (isAdjointPair_adjoint A) hg hp hx₀).conj_compLin
 
 /-- **Rockafellar, Theorem 16.3**, the attainment: under the same qualification, for each `x*` the
 infimum `inf {g*(y*) | A*y* = x*}` is attained (or is `+∞` vacuously).
@@ -314,16 +313,32 @@ theorem theorem_16_3_attained (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (
     (hp : Proper g) {x₀ : Rn n} (hx₀ : A x₀ ∈ ri (dom g)) {y : Rn n}
     (hy : conj (pairing n) (compLin g A) y < ⊤) :
     ∃ z : Rn m, LinearMap.adjoint A z = y ∧
-      conj (pairing m) g z = conj (pairing n) (compLin g A) y := by
-  have hcl : ClosedProperConvexFn (clFn g) :=
-    ⟨convexFn_clFn hg, closedFn_clFn g, hg.proper_clFn hp⟩
-  have hri : A x₀ ∈ ri (dom (clFn g)) := by rw [hg.relint_dom_clFn hp]; exact hx₀
-  have hcomp : conj (pairing n) (compLin (clFn g) A) = conj (pairing n) (compLin g A) := by
-    rw [← clFn_compLin hg hp A hx₀, conj_clFn]
-  obtain ⟨z, hz, heq⟩ :=
-    (IsExactImage.of_relint (isAdjointPair_adjoint A) hcl hri).exists_conj_compLin_eq
-      (y := y) (by rwa [hcomp])
-  exact ⟨z, hz, by rwa [conj_clFn, hcomp] at heq⟩
+      conj (pairing m) g z = conj (pairing n) (compLin g A) y :=
+  (IsExactImage.of_relint_proper (isAdjointPair_adjoint A) hg hp hx₀).exists_conj_compLin_eq hy
+
+/-- **Rockafellar, §16**, the unnumbered remark at book line 5869: when `g` is *polyhedral*, the
+qualification `Ax ∈ ri (dom g)` of Theorem 16.3 weakens to `Ax ∈ dom g`, and the conclusion is
+unchanged.
+
+Rockafellar states this as a remark just after Corollary 16.3.1 and defers the proof to
+Corollary 19.3.1, which is exactly where the backbone's `IsExactImage.of_polyhedral` gets it: `g*`
+is polyhedral by Theorem 19.2, `A*g*` is polyhedral by Corollary 19.3.1 and hence closed, so the
+closure in the second formula has nothing left to close. Theorem 23.9's last clause
+(`theorem_23_9_polyhedral`) is the subgradient reading of this one. -/
+theorem theorem_16_3_polyhedral (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (hg : PolyhedralFn g)
+    (hp : Proper g) {x₀ : Rn n} (hx₀ : A x₀ ∈ dom g) :
+    conj (pairing n) (compLin g A) = mapLin (LinearMap.adjoint A) (conj (pairing m) g) :=
+  (IsExactImage.of_polyhedral (isAdjointPair_adjoint A) hg hp hx₀).conj_compLin
+
+/-- **Rockafellar, §16**, the same remark (book, line 5869), attainment clause under the weakened
+qualification: for a polyhedral `g` the infimum `inf {g*(y*) | A*y* = x*}` is still attained
+wherever it is finite. -/
+theorem theorem_16_3_polyhedral_attained (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal}
+    (hg : PolyhedralFn g) (hp : Proper g) {x₀ : Rn n} (hx₀ : A x₀ ∈ dom g) {y : Rn n}
+    (hy : conj (pairing n) (compLin g A) y < ⊤) :
+    ∃ z : Rn m, LinearMap.adjoint A z = y ∧
+      conj (pairing m) g z = conj (pairing n) (compLin g A) y :=
+  (IsExactImage.of_polyhedral (isAdjointPair_adjoint A) hg hp hx₀).exists_conj_compLin_eq hy
 
 /-- **Rockafellar, Corollary 16.3.1**, first formula: `δ*(y* | AC) = δ*(A*y* | C)` for any convex
 set `C` in `ℝⁿ`.

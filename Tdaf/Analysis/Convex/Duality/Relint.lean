@@ -21,13 +21,16 @@ A ⁻¹' ri (dom g) ≠ ∅        and        ri (dom f) ∩ ri (dom g) ≠ ∅.
 ```
 
 Until now both were unpopulated interfaces — Theorems 16.3, 16.4, 23.8 and 23.9 were proved
-against them, but nothing produced one. `IsExactImage.of_relint` and `IsExactSum.of_relint` are
-what discharge them.
+against them, but nothing produced one. `IsExactImage.of_relint_proper` and `IsExactSum.of_relint`
+are what discharge them.
 
 ## Main results
 
 * `IsExactImage.of_relint` — **Rockafellar, Theorem 16.3**: if `g` is closed proper convex and the
   range of `A` meets `ri (dom g)`, then `g` pulls back exactly along `A`.
+  `IsExactImage.of_relint_proper` is the book's own statement, for a *proper convex* `g`, with the
+  closedness removed by Theorem 9.3 (`conj_compLin_eq_conj_compLin_clFn`). It is the constructor
+  every consumer should use; `of_relint` is the closed case that carries the argument.
 * `IsExactSum.of_relint` — **Rockafellar, Theorem 16.4**: two *proper convex* functions whose
   effective domains share a relative interior point add exactly. `IsExactSum.of_relint_closed` is
   the closed case, which carries the actual argument.
@@ -441,6 +444,89 @@ theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip
       (hf.tendstoClFnAlongSegment hpf hxf) (hg.tendstoClFnAlongSegment hpg hxg))
 
 end Closure
+
+/-! ### Theorem 9.3 on the image side: dropping closedness from Theorem 16.3 -/
+
+section ClosureImage
+
+open Filter Topology
+
+variable {E F G H : Type*}
+  [AddCommGroup E] [Module ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F]
+  [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G]
+  [NormedAddCommGroup H] [NormedSpace ℝ H] [FiniteDimensional ℝ H]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
+  {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
+
+omit [FiniteDimensional ℝ G] [FiniteDimensional ℝ H] in
+/-- **Rockafellar, Theorem 9.3** on the image side, in the form the constraint qualification
+consumes it: if `g` is recovered along segments issuing from `A x₀`, then `g A` and `(cl g) A`
+have the same conjugate.
+
+This is the exact analogue of `conj_add_eq_conj_clFn_add_clFn`, and it is *cheaper*: there is one
+limit to take rather than two, so no properness is needed anywhere — the continuity of `EReal`
+addition, which is what the sum version spends its properness on, never enters. `E` is not
+topologised either: the segment `(1-a) • x₀ + a • x` is pushed forward by `A` before any limit is
+taken, so all the analysis happens in `G`.
+
+The book's own form of Theorem 9.3 here is `cl (g A) = (cl g) A` (`clFn_compLin`,
+`Recession/Closedness.lean`), which needs `E` finite-dimensional because it is an assertion about
+`cl (g A)`. The conjugate form does not, and it is all Theorem 16.3 asks for. -/
+theorem conj_compLin_eq_conj_compLin_clFn (A : E →ₗ[ℝ] G) {x₀ : E}
+    (hs : TendstoClFnAlongSegment g (A x₀)) :
+    conj B (compLin g A) = conj B (compLin (clFn g) A) := by
+  have hmono : compLin (clFn g) A ≤ compLin g A := fun x => clFn_le g (A x)
+  refine funext fun y => le_antisymm (conj_antitone B hmono y) ?_
+  have key : ∀ c : ℝ, conj B (compLin g A) y ≤ (c : EReal) →
+      conj B (compLin (clFn g) A) y ≤ (c : EReal) := by
+    intro c hc
+    rw [conj_le_coe_iff] at hc ⊢
+    intro x
+    have hlin : ∀ a : ℝ, B ((1 - a) • x₀ + a • x) y = (1 - a) * B x₀ y + a * B x y := by
+      intro a
+      rw [map_add, map_smul, map_smul]
+      simp
+    have hL : Tendsto (fun a : ℝ => affineFn B y c ((1 - a) • x₀ + a • x))
+        (𝓝[<] (1 : ℝ)) (𝓝 (affineFn B y c x)) := by
+      simp only [affineFn_eq_coe, hlin]
+      exact EReal.tendsto_coe.2
+        ((tendsto_affine_nhdsLT_one (B x₀ y) (B x y)).sub tendsto_const_nhds)
+    have hR : Tendsto (fun a : ℝ => compLin g A ((1 - a) • x₀ + a • x))
+        (𝓝[<] (1 : ℝ)) (𝓝 (compLin (clFn g) A x)) := by
+      have hmap : ∀ a : ℝ, A ((1 - a) • x₀ + a • x) = (1 - a) • A x₀ + a • A x := fun a => by
+        rw [map_add, map_smul, map_smul]
+      simpa only [compLin_apply, hmap] using hs (A x)
+    exact le_of_tendsto_of_tendsto' hL hR fun a => hc _
+  by_contra hcon
+  rw [not_le] at hcon
+  obtain ⟨c, h1, h2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hcon
+  exact absurd (key c h1.le) (not_le.2 h2)
+
+/-- **Rockafellar, Theorem 16.3**, with the book's hypotheses: a *proper convex* `g` pulls back
+exactly along a linear map whose range meets `ri (dom g)`. Closedness is not needed, and
+Rockafellar does not assume it.
+
+`IsExactImage.of_relint` is the closed case, which carries the argument; the reduction is
+Theorem 9.3 in the conjugate form `conj_compLin_eq_conj_compLin_clFn`, together with
+Corollary 7.4.1 (`ConvexFn.relint_dom_clFn`), which says `cl g` has the same relative interior of
+effective domain. This is the image-side counterpart of `IsExactSum.of_relint`, and it is what
+lets Theorem 16.3, its attainment clause and Theorem 23.9 be stated with the book's hypotheses
+without each of them re-running the closure reduction. -/
+theorem IsExactImage.of_relint_proper [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
+    [IsCompatiblePairing B.flip] (hA : IsAdjointPair B B' A A') (hg : ConvexFn g) (hp : Proper g)
+    {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) :
+    IsExactImage B B' A A' hA g := by
+  have hcl := IsExactImage.of_relint hA
+    ⟨convexFn_clFn hg, closedFn_clFn g, hg.proper_clFn hp⟩
+    (show A x₀ ∈ ri (dom (clFn g)) by rw [hg.relint_dom_clFn hp]; exact hx₀)
+  have heq : conj B (compLin g A) = conj B (compLin (clFn g) A) :=
+    conj_compLin_eq_conj_compLin_clFn A (hg.tendstoClFnAlongSegment hp hx₀)
+  refine ⟨hp, fun y hy => ?_⟩
+  obtain ⟨z, hz, hle⟩ := hcl.exact_le y (by rw [← heq]; exact hy)
+  exact ⟨z, hz, by rwa [conj_clFn, ← heq] at hle⟩
+
+end ClosureImage
 
 /-! ### Theorem 16.4 for `m` summands -/
 

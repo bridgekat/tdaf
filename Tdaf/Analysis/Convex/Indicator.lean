@@ -17,6 +17,8 @@ which every statement about convex *sets* becomes an instance of a statement abo
 * `convexFn_indicatorFn` — `δ(· | s)` is convex iff `s` is convex.
 * `indicatorFn_ne_bot` — indicator functions never take the value `⊥`.
 * `dom_indicatorFn` — the effective domain of `δ(· | s)` is `s`.
+* `indicatorFn_add`, `indicatorFn_finsetSum` — adding indicators intersects the sets, for two
+  summands and for a `Finset` of them.
 * `epi_indicatorFn` — the epigraph of `δ(· | s)` is the "half-cylinder" `s ×ˢ Ici 0`.
 * `indicatorFn_vadd` — translating the set translates the indicator.
 
@@ -57,6 +59,24 @@ statement about sums, with no side condition. -/
   funext x
   by_cases hs : x ∈ s <;> by_cases ht : x ∈ t <;>
     simp [Pi.add_apply, hs, ht]
+
+/-- **The `m`-ary `indicatorFn_add`**: a finite sum of indicators is the indicator of the
+intersection, `δ(· | C₁) + ⋯ + δ(· | Cₘ) = δ(· | C₁ ∩ ⋯ ∩ Cₘ)`, with no side condition and no
+`s.Nonempty`: over the empty `Finset` both sides are the zero function, since `⋂ i ∈ ∅, C i` is
+`univ`.
+
+The point is the same as `indicatorFn_add`'s. Rockafellar's intersection corollaries for `m` sets
+— Corollary 23.8.1's normal cone to `C₁ ∩ ⋯ ∩ Cₘ` — are the indicator instances of his `m`-ary
+statements about sums, and it is the sum over a `Finset` that they need. -/
+theorem indicatorFn_finsetSum {ι : Type*} (C : ι → Set E) (s : Finset ι) :
+    ∑ i ∈ s, indicatorFn (C i) = indicatorFn (⋂ i ∈ s, C i) := by
+  induction s using Finset.cons_induction with
+  | empty => funext z; simp
+  | cons i t hi ih =>
+    rw [Finset.sum_cons, ih, indicatorFn_add]
+    congr 1
+    ext z
+    simp [Finset.mem_cons]
 
 /-- The epigraph of an indicator function is a "half-cylinder with cross-section `s`"
 (Rockafellar §4). -/
