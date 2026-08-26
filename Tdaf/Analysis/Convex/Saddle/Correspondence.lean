@@ -75,7 +75,7 @@ end Injective
 
 /-! ### The correspondence -/
 
-section Thm333
+section Correspondence
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -156,11 +156,11 @@ theorem exists_unique_convexBifun_bracket_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
   exact eq_of_bracket_eq hF'conv hF hF'cl.imageClosedBifun himg
     (funext fun u => funext fun y => (congrFun hF'br (u, y)).trans (congrFun hbr (u, y)).symm)
 
-end Thm333
+end Correspondence
 
 /-! ### Closure pairs are bracket pairs -/
 
-section Cor3331Order
+section ClosurePairOrder
 
 variable {U Y : Type*} [TopologicalSpace Y] {Klow Kup : U × Y → EReal}
 
@@ -170,9 +170,9 @@ theorem le_of_partialCl₂_eq (h2 : partialCl₂ Kup = Klow) : Klow ≤ Kup := b
   rw [← h2]
   exact partialCl₂_le Kup
 
-end Cor3331Order
+end ClosurePairOrder
 
-section Cor3331
+section ClosurePair
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -203,7 +203,7 @@ theorem exists_unique_bifun_of_closure_pair (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
   rintro F' ⟨hF'conv, hF'cl, hF'br, -⟩
   exact huniq F' ⟨hF'conv, hF'cl, hF'br⟩
 
-end Cor3331
+end ClosurePair
 
 /-! ### The correspondence under image-closedness
 
@@ -259,7 +259,7 @@ theorem imageClosedBifun_bifunOfSaddle : ImageClosedBifun (bifunOfSaddle Bx K) :
 
 end BifunOfSaddleImage
 
-section Cor3312Right
+section RoundTripRight
 
 variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
@@ -272,9 +272,9 @@ theorem saddleOfBifun_bifunOfSaddle (hK : ConcaveConvexFn K) (hcc : ConvexClosed
     saddleOfBifun Bx (bifunOfSaddle Bx K) = K :=
   funext fun p => (bracket_bifunOfSaddle hK p).trans (congrFun hcc p)
 
-end Cor3312Right
+end RoundTripRight
 
-section Cor3312Left
+section RoundTripLeft
 
 variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace X] [IsTopologicalAddGroup X]
@@ -287,9 +287,9 @@ theorem bifunOfSaddle_saddleOfBifun (hF : ConvexBifun F) (hFi : ImageClosedBifun
     bifunOfSaddle Bx (saddleOfBifun Bx F) = F :=
   funext fun u => (clFn_eq_conj_bracket hF u).symm.trans (hFi u)
 
-end Cor3312Left
+end RoundTripLeft
 
-section Cor3312Equiv
+section RoundTripEquiv
 
 variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   [AddCommGroup Y] [Module ℝ Y]
@@ -309,7 +309,7 @@ noncomputable def bifunSaddleEquiv :
   left_inv F := Subtype.ext (bifunOfSaddle_saddleOfBifun F.2.1 F.2.2)
   right_inv K := Subtype.ext (saddleOfBifun_bifunOfSaddle K.2.1 K.2.2)
 
-end Cor3312Equiv
+end RoundTripEquiv
 
 /-! ### The bracket of a polyhedral bifunction
 
@@ -509,7 +509,7 @@ end PolyhedralConcaveBracket
 
 /-! ### The two closures as inverse bijections -/
 
-section Cor3332
+section ClosureBijection
 
 variable {U Y : Type*} [TopologicalSpace U] [TopologicalSpace Y] {K : U × Y → EReal}
 
@@ -527,9 +527,9 @@ theorem partialCl₂_partialCl₁_of_lowerClosedFn (h : LowerClosedFn K) :
 theorem partialCl₁_partialCl₂_of_upperClosedFn (h : UpperClosedFn K) :
     partialCl₁ (partialCl₂ K) = K := h
 
-end Cor3332
+end ClosureBijection
 
-section Cor3332Equiv
+section ClosureEquiv
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -551,7 +551,7 @@ noncomputable def lowerUpperClosedEquiv (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [
   left_inv K := Subtype.ext (partialCl₂_partialCl₁_of_lowerClosedFn K.2.2)
   right_inv K := Subtype.ext (partialCl₁_partialCl₂_of_upperClosedFn K.2.2)
 
-end Cor3332Equiv
+end ClosureEquiv
 
 end Tdaf.ConvexAnalysis
 

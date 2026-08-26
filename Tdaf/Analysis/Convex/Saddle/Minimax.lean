@@ -246,7 +246,7 @@ theorem iSup_clConcave_eq_iSup (g : E → EReal) : (⨆ x, clConcave g x) = ⨆ 
 
 end ClosureExtrema
 
-section Thm364
+section EquivExtrema
 
 variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [TopologicalSpace X]
   [AddCommGroup X] {K L : U × X → EReal} {p : U × X}
@@ -298,11 +298,11 @@ theorem SaddleEquiv.isSaddlePoint_iff (h : SaddleEquiv K L) :
   rw [isSaddlePoint_iff_iSup_eq_iInf, isSaddlePoint_iff_iSup_eq_iInf, h.iSup_slice_eq,
     h.iInf_slice_eq]
 
-end Thm364
+end EquivExtrema
 
 /-! ### Saddle-points of a proper saddle-function -/
 
-section Cor3631
+section ProperSaddlePoints
 
 variable {U X : Type*} {K : U × X → EReal} {p : U × X}
 
@@ -330,11 +330,11 @@ theorem IsSaddlePoint.exists_maximin_eq_coe (hp : ProperSaddleFn K) (h : IsSaddl
     (lt_top_of_mem_domSaddle (h.mem_domSaddle hp))
   exact ⟨r, by rw [h.maximin_eq, hr]⟩
 
-end Cor3631
+end ProperSaddlePoints
 
 /-! ### Minimising a convex function over a set containing the relative interior -/
 
-section Cor731
+section RelintMin
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
@@ -351,11 +351,11 @@ theorem ConvexFn.biInf_eq_iInf_of_relint_dom_subset (hf : ConvexFn f) {S : Set E
   obtain ⟨z, hz, hzq⟩ := hf.exists_mem_relint_dom_lt ⟨x, hx⟩
   exact lt_of_le_of_lt (iInf₂_le (f := fun x (_ : x ∈ S) => f x) z (hS hz)) hzq
 
-end Cor731
+end RelintMin
 
 /-! ### The extrema and the saddle-points live on the effective domain -/
 
-section Thm363
+section DomainExtrema
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {K : U × X → EReal}
@@ -419,7 +419,7 @@ theorem isSaddlePoint_iff_isSaddlePointOn_dom (hK : ConcaveConvexFn K) (hs : Sad
     rw [← biSup_dom₁_eq_iSup_slice hK hs hp, ← biInf_dom₂_eq_iInf_slice hK hs hp]
     exact (isSaddlePointOn_iff_biSup_eq_biInf h.1 h.2.1).1 h
 
-end Thm363
+end DomainExtrema
 
 /-! ### Slices of a bifunction in its *first* variable -/
 
@@ -472,7 +472,7 @@ end SaddleLagrangian
 
 /-! ### Saddle-points of the Lagrangian -/
 
-section Thm293
+section LagrangianSaddlePoints
 
 variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [TopologicalSpace U] [IsTopologicalAddGroup U]
@@ -531,11 +531,11 @@ theorem isSaddlePoint_lagrangian_iff (hF : ConvexBifun F) (hcl : ClosedBifun F)
     rw [h1]
     exact le_antisymm (le_trans h2 (le_of_eq rfl)) hB
 
-end Thm293
+end LagrangianSaddlePoints
 
 /-! ### The general Kuhn–Tucker theorem -/
 
-section Thm366
+section KuhnTucker
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -603,9 +603,9 @@ theorem isSaddlePoint_lagrangian_iff_mem_kuhnTucker (hF : ConvexBifun F) (hcl : 
     IsSaddlePoint (saddleLagrangian Bu F) (v, x) ↔ v ∈ KuhnTucker Bu F :=
   (isSaddlePoint_lagrangian_iff hF hcl hpr).trans ⟨fun h => h.1, fun h => ⟨h, hx⟩⟩
 
-end Thm366
+end KuhnTucker
 
-section Thm366Slater
+section KuhnTuckerSlater
 
 variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
@@ -622,7 +622,7 @@ theorem mem_argmin_iff_exists_isSaddlePoint_lagrangian_of_stronglyConsistent
   mem_argmin_iff_exists_isSaddlePoint_lagrangian hF hcl hpr
     (kuhnTucker_nonempty_of_stronglyConsistent hF hip hs ht)
 
-end Thm366Slater
+end KuhnTuckerSlater
 
 /-! ### Lagrangians are exactly the upper closed concave-convex functions -/
 
@@ -673,7 +673,7 @@ theorem closedBifun_flipBifun (hF : ClosedBifun F) : ClosedBifun (flipBifun F) :
 
 end FlipBifunClosed
 
-section Thm365
+section LagrangianUpperClosed
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -756,7 +756,7 @@ theorem exists_unique_closedBifun_saddleLagrangian_eq (Bu : U →ₗ[ℝ] V →�
       ⟨convexBifun_flipBifun hGconv, closedBifun_flipBifun hGcl, hbr⟩
     rw [← hHG, flipBifun_flipBifun]
 
-end Thm365
+end LagrangianUpperClosed
 
 /-! ## Conjugate saddle-functions -/
 
@@ -959,7 +959,7 @@ end AdjointClosed
 
 /-! ### The two conjugates of a member of `Ω (F)` -/
 
-section Thm371
+section ClassConjugates
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1151,6 +1151,6 @@ theorem lowerClosedFn_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [Is
   exact lowerClosedFn_bracket Bu.flip Bx.flip (convexBifun_inverseBifun_adjointBifun Bu Bx F)
     (closedBifun_inverseBifun_adjointBifun Bu Bx F)
 
-end Thm371
+end ClassConjugates
 
 end Tdaf.ConvexAnalysis
