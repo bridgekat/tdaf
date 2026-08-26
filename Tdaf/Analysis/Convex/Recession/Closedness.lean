@@ -30,6 +30,10 @@ is a consequence.
   `Convex.recessionCone_image_closure`, `Convex.closure_image_eq_and_recessionCone` —
   **Theorem 9.1** as Rockafellar states it.
 * `image_recessionCone_subset` — the unconditional inclusion.
+* `ClosedProperConvexFn.add`, `closedProperConvexFn_finsetSum`, `recessionFn_add` — **Theorem
+  9.3**: a sum of closed proper convex functions whose effective domains share a point is closed
+  proper convex, in the binary and the `m`-ary form, and its recession function is the sum of the
+  recession functions.
 
 ## Design notes
 
@@ -824,6 +828,43 @@ theorem ClosedProperConvexFn.add (hf : ClosedProperConvexFn f) (hg : ClosedPrope
   rw [closedFn_iff_lowerSemicontinuous hbot]
   exact LowerSemicontinuous.add' hf.lowerSemicontinuous hg.lowerSemicontinuous fun x =>
     _root_.EReal.continuousAt_add (Or.inr (hg.proper.ne_bot x)) (Or.inl (hf.proper.ne_bot x))
+
+omit [FiniteDimensional ℝ E] in
+/-- **Rockafellar, Theorem 9.3** for a finite sum: `f₁ + ⋯ + fₘ` is closed proper convex as soon
+as the summands are and their effective domains share a point.
+
+The common domain point is what the binary rule's non-emptiness hypothesis needs at every step, so
+the induction carries it: the statement proved by `Finset.cons_induction` is the conjunction of the
+conclusion with `x₀ ∈ dom (∑ i ∈ s, gᵢ)`, which is also what stops the proof from needing the
+`dom` formula for a finite sum — that lives in `Duality/Exact.lean`, above this file. -/
+theorem closedProperConvexFn_finsetSum {ι : Type*} {s : Finset ι} {g : ι → E → EReal}
+    (hg : ∀ i ∈ s, ClosedProperConvexFn (g i)) {x₀ : E} (hx₀ : ∀ i ∈ s, x₀ ∈ dom (g i)) :
+    ClosedProperConvexFn (∑ i ∈ s, g i) := by
+  have key : ∀ t : Finset ι, (∀ i ∈ t, ClosedProperConvexFn (g i)) → (∀ i ∈ t, x₀ ∈ dom (g i)) →
+      ClosedProperConvexFn (∑ i ∈ t, g i) ∧ x₀ ∈ dom (∑ i ∈ t, g i) := by
+    intro t
+    induction t using Finset.cons_induction with
+    | empty =>
+      intro _ _
+      have h0 : (∑ _i ∈ (∅ : Finset ι), g _i) = fun _ : E => (0 : EReal) := by
+        funext x; simp
+      rw [h0]
+      refine ⟨⟨convexFn_const 0, ?_, ⟨⟨0, ?_⟩, fun _ => by simp⟩⟩, ?_⟩
+      · exact (closedFn_iff_lowerSemicontinuous (f := fun _ : E => (0 : EReal))
+          fun _ => by simp).2 lowerSemicontinuous_const
+      · rw [mem_dom]; exact lt_of_le_of_ne le_top (by simp)
+      · rw [mem_dom]; exact lt_of_le_of_ne le_top (by simp)
+    | cons i t hi ih =>
+      intro hc hd
+      obtain ⟨hall, hdomt⟩ := ih (fun j hj => hc j (Finset.mem_cons_of_mem hj))
+        (fun j hj => hd j (Finset.mem_cons_of_mem hj))
+      have hi₀ : x₀ ∈ dom (g i) := hd i (Finset.mem_cons_self i t)
+      have hmem : x₀ ∈ dom (g i + ∑ j ∈ t, g j) := by
+        rw [mem_dom, Pi.add_apply]
+        exact _root_.EReal.add_lt_top (mem_dom.1 hi₀).ne (mem_dom.1 hdomt).ne
+      rw [Finset.sum_cons]
+      exact ⟨ClosedProperConvexFn.add (hc i (Finset.mem_cons_self i t)) hall ⟨x₀, hmem⟩, hmem⟩
+  exact (key s hg hx₀).1
 
 omit [FiniteDimensional ℝ E] in
 /-- **Rockafellar, Theorem 9.3**, the recession function of a sum.
