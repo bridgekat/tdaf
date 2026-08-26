@@ -14,49 +14,49 @@ import Tdaf.Analysis.Convex.RelativeInterior
 
 `Duality/Exact.lean` names the *conclusions* `IsExactImage` and `IsExactSum` — that a conjugate
 formula holds with the infimum attained. This file supplies the first sufficient condition for
-each, the book's own hypothesis in **Theorems 16.3 and 16.4**:
+each, the classical relative-interior hypothesis:
 
 ```
 A ⁻¹' ri (dom g) ≠ ∅        and        ri (dom f) ∩ ri (dom g) ≠ ∅.
 ```
 
-Both reduce to the same two ingredients: a §9 closedness theorem for the dual object (Theorem 9.2
-for images, Corollary 9.1.1 for sums), and the fact that a linear function which is `≤ 0` on a
-convex set and attains that bound at a *relative interior* point is constant on the set.
+Both reduce to the same two ingredients: closedness of the dual object — a linear image, or a sum,
+of closed convex sets — and the fact that a linear function which is `≤ 0` on a convex set and
+attains that bound at a *relative interior* point is constant on the set.
 
 ## Main results
 
-* `IsExactImage.of_relint` — **Theorem 16.3**: a proper convex `g` pulls back exactly along a
-  linear map whose range meets `ri (dom g)`. `IsExactImage.of_relint_closed` is the closed case,
+* `IsExactImage.of_relint` — a proper convex `g` pulls back exactly along a linear map whose range
+  meets `ri (dom g)` (Theorem 16.3 in [^1]). `IsExactImage.of_relint_closed` is the closed case,
   which carries the argument.
-* `IsExactSum.of_relint` — **Theorem 16.4**: two proper convex functions whose effective domains
-  share a relative interior point add exactly; `IsExactSum.of_relint_closed` is again the closed
-  case, and `IsExactFinsetSum.of_relint` the `m`-ary form.
+* `IsExactSum.of_relint` — two proper convex functions whose effective domains share a relative
+  interior point add exactly (Theorem 16.4 in [^1]); `IsExactSum.of_relint_closed` is again the
+  closed case, and `IsExactFinsetSum.of_relint` the `m`-ary form.
 * `TendstoClFnAlongSegment` — "`cl f` is the limit of `f` along segments issuing from `x₀`", the
-  single hypothesis shared by **Theorem 7.5** (`x₀ ∈ ri (dom f)`) and **Corollary 7.5.1** (`f`
-  closed proper, `x₀ ∈ dom f`).
-* `conj_add_eq_conj_clFn_add_clFn`, `conj_compLin_eq_conj_compLin_clFn` — **Theorem 9.3** in
-  conjugate form, which is what removes closedness from the two constructors.
-* `proper_conj_of_proper` — **Theorem 12.2** in the form §13 uses it: in finite dimensions a proper
-  convex `f` already has `f*` proper, with no closedness hypothesis.
+  single hypothesis shared by the two ways of obtaining it: `x₀ ∈ ri (dom f)` for a proper convex
+  `f`, and `x₀ ∈ dom f` for a closed proper convex one.
+* `conj_add_eq_conj_clFn_add_clFn`, `conj_compLin_eq_conj_compLin_clFn` — passing to closures does
+  not change the conjugate of a sum or of a composition, which is what removes closedness from the
+  two constructors.
+* `proper_conj_of_proper` — in finite dimensions a proper convex `f` already has `f*` proper, with
+  no closedness hypothesis.
 
 ## Implementation notes
 
-Theorem 9.3 is used in the conjugate form `(f + g)* = (cl f + cl g)*` rather than in the book's
+Closures are compared in the conjugate form `(f + g)* = (cl f + cl g)*` rather than as
 `cl (f + g) = cl f + cl g` (which is `clFn_add`, in `Recession/Closedness.lean`). The conjugate
-form is weaker but cheaper: proving the book's identity needs Theorem 7.5 for `f + g` as well,
-hence a relative interior point of *both* domains, whereas Theorem 20.1 has only a point of
-`dom f`.
+form is weaker but cheaper: the identity of closures needs the segment limit for `f + g` as well,
+hence a relative interior point of *both* domains, whereas the conjugate form makes do with a
+point of `dom f` and one of `ri (dom g)`.
 
-The two rules topologise opposite spaces. The image rule puts Theorem 9.2 on `H`, so `H` must be
-finite-dimensional, and `ri (dom g)` puts `G` there too; `F` only receives an image and `E` is
-never topologised. The sum rule is the reverse: `ri (dom f)` needs only a normed `E`, while
-Corollary 9.1.1 runs in `F × ℝ` and so `F` must be finite-dimensional.
+The two rules topologise opposite spaces. The image rule puts the image closedness theorem on `H`,
+so `H` must be finite-dimensional, and `ri (dom g)` puts `G` there too; `F` only receives an image
+and `E` is never topologised. The sum rule is the reverse: `ri (dom f)` needs only a normed `E`,
+while the sum closedness theorem runs in `F × ℝ` and so `F` must be finite-dimensional.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Theorems 16.3
-  and 16.4) and §9 (Theorems 9.2 and 9.3).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §9 and §16.
 -/
 
 open Pointwise
@@ -74,9 +74,9 @@ variable {E F G H : Type*}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
 omit [FiniteDimensional ℝ G] [FiniteDimensional ℝ H] in
-/-- Theorem 9.2's hypothesis for `g*` and the transpose `A'`, discharged from the relative-interior
-condition: "`g*` recedes along `z`, and `A'` kills `z`" says that `⟨·, z⟩` is `≤ 0` on `dom g` and
-vanishes at `A x₀ ∈ ri (dom g)`, so Theorem 6.4 makes it constant there. -/
+/-- The image closedness hypothesis for `g*` and the transpose `A'`, discharged from the
+relative-interior condition: "`g*` recedes along `z`, and `A'` kills `z`" says that `⟨·, z⟩` is
+`≤ 0` on `dom g` and vanishes at `A x₀ ∈ ri (dom g)`, which makes it constant there. -/
 theorem mem_constancySpace_conj_of_relint [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
     (hA : IsAdjointPair B B' A A') (hg : ClosedProperConvexFn g)
     {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) {z : H}
@@ -93,8 +93,8 @@ theorem mem_constancySpace_conj_of_relint [IsCompatiblePairing B'] [IsCompatible
   exact eq_zero_of_nonpos_of_mem_relint hx₀ hnonpos hvanish
 
 omit [FiniteDimensional ℝ G] in
-/-- **Theorem 16.3** for a closed `g`: a closed proper convex function pulls back exactly along a
-linear map whose range meets the relative interior of its effective domain. -/
+/-- **A closed proper convex function pulls back exactly along a linear map whose range meets the
+relative interior of its effective domain.** -/
 theorem IsExactImage.of_relint_closed [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
     [IsCompatiblePairing B.flip] (hA : IsAdjointPair B B' A A') (hg : ClosedProperConvexFn g)
     {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) :
@@ -106,7 +106,7 @@ theorem IsExactImage.of_relint_closed [IsCompatiblePairing B'] [IsCompatiblePair
     fun z hrec hz0 => mem_constancySpace_conj_of_relint hA hg hx₀ hrec hz0
   obtain ⟨-, hcpc⟩ :=
     closedProperConvexFn_mapLin (convexFn_conj B' g) hconjp hconjcpc.isClosed_epi A' hkey
-  -- Theorem 9.2 says the closure in the §16 identity is redundant
+  -- the image of the epigraph is already closed, so the closure in the identity is redundant
   have heq : conj B (compLin g A) = mapLin A' (conj B' g) := by
     rw [conj_compLin_eq_clFn_mapLin hA hg.convex hg.closed]
     exact hcpc.closed
@@ -119,7 +119,7 @@ theorem IsExactImage.of_relint_closed [IsCompatiblePairing B'] [IsCompatiblePair
 
 end Image
 
-/-! ### Theorem 16.4: sums -/
+/-! ### Sums -/
 
 section Sum
 
@@ -129,8 +129,8 @@ variable {E F : Type*}
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
 
 omit [FiniteDimensional ℝ F] in
-/-- A direction of recession of `epi f*` bounds the pairing on `dom f`: this is Theorem 13.3 read
-one point at a time. -/
+/-- A direction of recession of `epi f*` bounds the pairing on `dom f`: the recession function of
+`f*` is the support function of `dom f`, read one point at a time. -/
 theorem le_of_mk_mem_recessionCone_epi_conj [IsCompatiblePairing B] (hf : ClosedProperConvexFn f)
     {z : F} {ν : ℝ} (hp : ((z, ν) : F × ℝ) ∈ recessionCone (epi (conj B f)))
     {x : E} (hx : x ∈ dom f) : B x z ≤ ν := by
@@ -141,8 +141,8 @@ theorem le_of_mk_mem_recessionCone_epi_conj [IsCompatiblePairing B] (hf : Closed
 omit [FiniteDimensional ℝ F] in
 /-- **The relative-interior step for sums.** If `(z, ν)` is a direction of recession of `epi f*`
 whose bound `ν` is already attained at a relative interior point of `dom f`, then `(z, ν)` lies in
-the lineality space: Theorem 13.3 reads the recession direction as "`⟨·, z⟩ ≤ ν` on `dom f`", and
-Theorem 6.4 turns an attained bound at a relative interior point into constancy. -/
+the lineality space: the recession direction reads as "`⟨·, z⟩ ≤ ν` on `dom f`", and a bound
+attained at a relative interior point is attained across the whole domain. -/
 theorem mk_mem_linealitySpace_epi_conj_of_relint [IsCompatiblePairing B]
     (hf : ClosedProperConvexFn f) {x₀ : E} (hx₀ : x₀ ∈ ri (dom f)) {z : F} {ν : ℝ}
     (hp : ((z, ν) : F × ℝ) ∈ recessionCone (epi (conj B f))) (hν : ν ≤ B x₀ z) :
@@ -163,12 +163,12 @@ theorem mk_mem_linealitySpace_epi_conj_of_relint [IsCompatiblePairing B]
     exact hc
   rw [map_neg, hx']
 
-/-- **Theorem 16.4** for closed `f`, `g`: two closed proper convex functions add exactly as soon as
-their effective domains have a common relative interior point.
+/-- **Two closed proper convex functions add exactly as soon as their effective domains have a
+common relative interior point.**
 
-The proof is Corollary 9.1.1 applied to `epi f*` and `epi g*`: once their sum is closed it is the
-epigraph of `f* □ g*`, and the splitting Corollary 9.1.1 supplies at each of its points is the
-attainment `IsExactSum.exact_le` asks for. -/
+The proof is the closedness of a sum of convex sets, applied to `epi f*` and `epi g*`: once their
+sum is closed it is the epigraph of `f* □ g*`, and the splitting supplied at each of its points is
+the attainment `IsExactSum.exact_le` asks for. -/
 theorem IsExactSum.of_relint_closed [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) :
@@ -181,7 +181,7 @@ theorem IsExactSum.of_relint_closed [IsCompatiblePairing B] [IsCompatiblePairing
   have hvcpc : ClosedProperConvexFn (conj B g) := ⟨convexFn_conj B g, closedFn_conj, hvp⟩
   have hune : (epi (conj B f)).Nonempty := (epi_nonempty_iff _).2 hup.dom_nonempty
   have hvne : (epi (conj B g)).Nonempty := (epi_nonempty_iff _).2 hvp.dom_nonempty
-  -- Corollary 9.1.1's hypothesis, discharged by Theorem 13.3 and Theorem 6.4
+  -- the closedness hypothesis, discharged from the relative-interior condition
   have hrec : ∀ p ∈ recessionCone (epi (conj B f)), ∀ q ∈ recessionCone (epi (conj B g)),
       p + q = 0 →
         p ∈ linealitySpace (epi (conj B f)) ∧ q ∈ linealitySpace (epi (conj B g)) := by
@@ -245,7 +245,7 @@ theorem IsExactSum.of_relint_closed [IsCompatiblePairing B] [IsCompatiblePairing
 
 end Sum
 
-/-! ### Theorem 9.3: dropping closedness from the constraint qualifications -/
+/-! ### Dropping closedness from the constraint qualifications -/
 
 section Closure
 
@@ -259,23 +259,23 @@ variable {E F : Type*}
 /-- `f` is **recovered along segments issuing from `x₀`**: at every `y` the value `(cl f) y` is the
 limit of `f` along the half-open segment from `x₀` to `y`.
 
-This is the conclusion of **Theorem 7.5** when `x₀ ∈ ri (dom f)`, and of **Corollary 7.5.1** when
-`f` is closed proper convex and `x₀ ∈ dom f`. It is the only property of `x₀` that Theorem 9.3
-uses, so the two constraint qualifications run through one and the same lemma. -/
+This holds for a proper convex `f` when `x₀ ∈ ri (dom f)`, and for a closed proper convex `f` when
+`x₀ ∈ dom f`. It is the only property of `x₀` the closure-removal argument uses, so the two
+constraint qualifications run through one and the same lemma. -/
 def TendstoClFnAlongSegment (f : E → EReal) (x₀ : E) : Prop :=
   ∀ y, Tendsto (fun a : ℝ => f ((1 - a) • x₀ + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y))
 
 omit [FiniteDimensional ℝ F] in
 /-- **In finite dimensions the conjugate of a proper convex function is proper**, with no
-closedness hypothesis. It goes through **Theorem 7.4**, which is where finite-dimensionality
-enters: `f* = (cl f)*`, and `cl f` is closed proper convex. -/
+closedness hypothesis. It goes through the properness of `cl f`, which is where
+finite-dimensionality enters: `f* = (cl f)*`, and `cl f` is closed proper convex. -/
 theorem proper_conj_of_proper [IsCompatiblePairing B] (hf : ConvexFn f) (hp : Proper f) :
     Proper (conj B f) := by
   rw [← conj_clFn]
   exact proper_conj ⟨convexFn_clFn hf, closedFn_clFn f, hf.proper_clFn hp⟩
 
-/-- **Rockafellar, Theorem 7.5**: a proper convex function is recovered along segments issuing from
-any relative interior point of its effective domain. -/
+/-- **A proper convex function is recovered along segments issuing from any relative interior point
+of its effective domain.** -/
 theorem ConvexFn.tendstoClFnAlongSegment (hf : ConvexFn f) (hp : Proper f) {x₀ : E}
     (hx₀ : x₀ ∈ ri (dom f)) : TendstoClFnAlongSegment f x₀ := by
   intro y
@@ -283,8 +283,8 @@ theorem ConvexFn.tendstoClFnAlongSegment (hf : ConvexFn f) (hp : Proper f) {x₀
   exact hf.tendsto_lscHull_along_segment_relint hx₀ y
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
-/-- **Corollary 7.5.1**: a closed proper convex function is recovered along segments issuing from
-any point of its effective domain — no relative interior needed. -/
+/-- **A closed proper convex function is recovered along segments issuing from any point of its
+effective domain** — no relative interior needed. -/
 theorem ClosedProperConvexFn.tendstoClFnAlongSegment (hf : ClosedProperConvexFn f) {x₀ : E}
     (hx₀ : x₀ ∈ dom f) : TendstoClFnAlongSegment f x₀ := by
   intro y
@@ -292,13 +292,13 @@ theorem ClosedProperConvexFn.tendstoClFnAlongSegment (hf : ClosedProperConvexFn 
   exact tendsto_along_segment_of_closed_proper hf hx₀ y
 
 omit [FiniteDimensional ℝ F] in
-/-- **Theorem 9.3** in the form the constraint qualifications consume: if two proper convex
-functions are both recovered along segments issuing from one common point, then `f + g` and
-`cl f + cl g` have the same conjugate.
+/-- **Passing to closures does not change the conjugate of a sum**, in the form the constraint
+qualifications consume: if two proper convex functions are both recovered along segments issuing
+from one common point, then `f + g` and `cl f + cl g` have the same conjugate.
 
-The book's `cl (f + g) = cl f + cl g` needs Theorem 7.5 for `f + g` as well, hence a point of
-`ri (dom f) ∩ ri (dom g)`. The conjugate form needs no such thing, since `f* = (cl f)*` holds
-outright; that is what lets Theorem 20.1 make do with a point of `dom f` and of `ri (dom g)`. -/
+The stronger `cl (f + g) = cl f + cl g` needs the segment limit for `f + g` as well, hence a point
+of `ri (dom f) ∩ ri (dom g)`. The conjugate form needs no such thing, since `f* = (cl f)*` holds
+outright; that is what lets a caller make do with a point of `dom f` and one of `ri (dom g)`. -/
 theorem conj_add_eq_conj_clFn_add_clFn (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g)
     (hpg : Proper g) {x₀ : E} (hsf : TendstoClFnAlongSegment f x₀)
     (hsg : TendstoClFnAlongSegment g x₀) :
@@ -343,9 +343,9 @@ theorem IsExactSum.of_clFn [IsContinuousPairing B] (hpf : Proper f) (hpg : Prope
   rw [conj_clFn, conj_clFn] at hle
   exact ⟨y₁, y₂, hy, by rw [hconj]; exact hle⟩
 
-/-- **Theorem 16.4** with the book's hypotheses: two *proper convex* functions add exactly as soon
-as their effective domains have a relative interior point in common. Closedness is not needed; the
-reduction to `IsExactSum.of_relint_closed` is Theorem 9.3 together with Corollary 7.4.1. -/
+/-- **Two *proper convex* functions add exactly as soon as their effective domains have a relative
+interior point in common.** Closedness is not needed; `conj_add_eq_conj_clFn_add_clFn` and the
+invariance of `ri (dom f)` under closure reduce it to `IsExactSum.of_relint_closed`. -/
 theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
     {x₀ : E} (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g :=
@@ -358,7 +358,7 @@ theorem IsExactSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip
 
 end Closure
 
-/-! ### Theorem 9.3 on the image side: dropping closedness from Theorem 16.3 -/
+/-! ### Dropping closedness on the image side -/
 
 section ClosureImage
 
@@ -373,8 +373,8 @@ variable {E F G H : Type*}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
 omit [FiniteDimensional ℝ G] [FiniteDimensional ℝ H] in
-/-- **Theorem 9.3** on the image side: if `g` is recovered along segments issuing from `A x₀`, then
-`g A` and `(cl g) A` have the same conjugate.
+/-- **Passing to closures does not change the conjugate of a composition**: if `g` is recovered
+along segments issuing from `A x₀`, then `g A` and `(cl g) A` have the same conjugate.
 
 Cheaper than `conj_add_eq_conj_clFn_add_clFn`: one limit rather than two, so no properness is
 needed, and `E` need not be topologised since the segment is pushed forward by `A` before any limit
@@ -410,10 +410,10 @@ theorem conj_compLin_eq_conj_compLin_clFn (A : E →ₗ[ℝ] G) {x₀ : E}
   obtain ⟨c, h1, h2⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hcon
   exact absurd (key c h1.le) (not_le.2 h2)
 
-/-- **Theorem 16.3** with the book's hypotheses: a *proper convex* `g` pulls back exactly along a
-linear map whose range meets `ri (dom g)`. Closedness is not needed; the reduction to
-`IsExactImage.of_relint_closed` is `conj_compLin_eq_conj_compLin_clFn` together with
-Corollary 7.4.1, which says `cl g` has the same relative interior of effective domain. -/
+/-- **A *proper convex* `g` pulls back exactly along a linear map whose range meets `ri (dom g)`.**
+Closedness is not needed; the reduction to `IsExactImage.of_relint_closed` is
+`conj_compLin_eq_conj_compLin_clFn` together with the fact that `cl g` has the same relative
+interior of effective domain. -/
 theorem IsExactImage.of_relint [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
     [IsCompatiblePairing B.flip] (hA : IsAdjointPair B B' A A') (hg : ConvexFn g) (hp : Proper g)
     {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) :
@@ -429,7 +429,7 @@ theorem IsExactImage.of_relint [IsCompatiblePairing B'] [IsCompatiblePairing B'.
 
 end ClosureImage
 
-/-! ### Theorem 16.4 for `m` summands -/
+/-! ### Finitely many summands -/
 
 section FinsetSum
 
@@ -456,8 +456,8 @@ theorem properConvexFn_finsetSum (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i
     exact Tdaf.EReal.sum_ne_bot fun i hi => hbot i hi x
 
 omit [FiniteDimensional ℝ F] in
-/-- **Theorem 6.5 for effective domains**: a point lying in the relative interior of every
-`dom fᵢ` lies in the relative interior of `dom (f₁ + ⋯ + fₘ)`. -/
+/-- **The relative interior of the effective domain of a sum**: a point lying in the relative
+interior of every `dom fᵢ` lies in the relative interior of `dom (f₁ + ⋯ + fₘ)`. -/
 theorem mem_relint_dom_finsetSum (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i))
     {x₀ : E} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (dom (f i))) : x₀ ∈ ri (dom (∑ i ∈ s, f i)) := by
   rw [dom_finsetSum fun i hi x => (hpf i hi).ne_bot x,
@@ -486,12 +486,12 @@ private theorem isExactFinsetSum_of_relint_aux [IsCompatiblePairing B] [IsCompat
       (mem_relint_dom_finsetSum (fun j hj => hf j (hmt j hj)) (fun j hj => hpf j (hmt j hj))
         (fun j hj => hx₀ j (hmt j hj)))
 
-/-- **Theorem 16.4** in the book's `m`-ary form: finitely many proper convex functions add exactly
-as soon as the relative interiors of their effective domains have a point in common.
+/-- **Finitely many proper convex functions add exactly as soon as the relative interiors of their
+effective domains have a point in common.**
 
-The induction is `IsExactFinsetSum.cons`; beyond the binary theorem it needs only that the
-effective domain of a partial sum is `⋂ dom fᵢ` and that `x₀` lies in the relative interior of that
-intersection, which is **Theorem 6.5**. -/
+The induction is `IsExactFinsetSum.cons`; beyond the binary case it needs only that the effective
+domain of a partial sum is `⋂ dom fᵢ` and that `x₀` lies in the relative interior of that
+intersection (`mem_relint_dom_finsetSum`). -/
 theorem IsExactFinsetSum.of_relint [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hs : s.Nonempty) (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i)) {x₀ : E}
     (hx₀ : ∀ i ∈ s, x₀ ∈ ri (dom (f i))) : IsExactFinsetSum B s f :=
