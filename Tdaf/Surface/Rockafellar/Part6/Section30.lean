@@ -5,7 +5,7 @@ Authors: TDAF contributors
 -/
 import Tdaf.Analysis.Convex.Saddle.Correspondence
 import Tdaf.Analysis.Convex.Saddle.Minimax
-import Tdaf.Surface.Common.Euclidean
+import Tdaf.Surface.Rockafellar.Part6.Section29
 
 /-!
 # Rockafellar, §30: Adjoint Bifunctions and Dual Programs
@@ -31,7 +31,7 @@ objective functions that §36 takes up; and both of the section's unnumbered cou
 | Theorem 30.1 | `theorem_30_1_concave`, `theorem_30_1_closed`, `theorem_30_1_proper`,
   `theorem_30_1_biadjoint`, `theorem_30_1_biadjoint_closed`, `theorem_30_1_injective`,
   `theorem_30_1_polyhedral` |
-| §30 example, 12313 | `linearIndicatorBifun`, `linearIndicatorBifun_self`,
+| §30 example, 12313 | `linearIndicatorBifun_self`,
   `linearIndicatorBifun_of_ne`, `dualProgram_linearIndicatorBifun` |
 | Theorem 30.2 | `theorem_30_2_first`, `theorem_30_2_second`, `theorem_30_2_third`,
   `theorem_30_2_fourth` |
@@ -75,7 +75,8 @@ Theorem 30.4(i) and dual-solution-free by Theorem 30.5.
   `ℝᵐ` to `ℝⁿ`, which *is* the bifunction of the dual program `(P*)` (12357). It is an `abbrev` for
   the backbone's `adjointBifun (pairing m) (pairing n) F`, so it is the backbone object and not a
   copy of it, and `dualProgram_apply` — the book's own formula — holds by `rfl`.
-* `Rockafellar.linearIndicatorBifun A` — the convex indicator bifunction `(Fu)(x) = δ(x | Au)` of a
+* `Rockafellar.linearIndicatorBifun A` (§29) — the convex indicator bifunction `(Fu)(x) = δ(x | Au)`
+  of a
   linear transformation (12313). Named with the `linear` prefix because the backbone's
   `indicatorBifun` is the indicator bifunction of a *convex process* (`Bifunction/Process.lean`),
   of which this is the linear-map case.
@@ -351,22 +352,20 @@ Rockafellar's first example of the adjoint operation, and the one that justifies
 shows that the adjoint operation for bifunctions can rightly be viewed as a generalization of the
 adjoint operation for linear transformations" (12345). -/
 
-/-- **Rockafellar, §30 (12313).** The convex indicator bifunction of a linear transformation `A`
-from `ℝᵐ` to `ℝⁿ`: `(Fu)(x) = δ(x | Au)`, i.e. `0` when `x = Au` and `+∞` otherwise.
-
-Named `linearIndicatorBifun` because the backbone already has `indicatorBifun`, the indicator
-bifunction of a *convex process* (`Bifunction/Process.lean`); this is its linear-map special
-case. -/
-noncomputable def linearIndicatorBifun (A : Rn m →ₗ[ℝ] Rn n) : Bifun (Rn m) (Rn n) :=
-  fun u x => indicatorFn {A u} x
+/-! `linearIndicatorBifun` itself is §29's, defined at the book's earlier appearance of this same
+example (11639) as the backbone's indicator bifunction of the convex process `ofLinearMap A`; that
+route carries its convexity, closedness, properness and `dom F = ℝᵐ` with it. Only the two
+evaluation lemmas the adjoint computation needs are added here. -/
 
 @[simp] theorem linearIndicatorBifun_self (A : Rn m →ₗ[ℝ] Rn n) (u : Rn m) :
-    linearIndicatorBifun A u (A u) = 0 :=
-  indicatorFn_of_mem (Set.mem_singleton _)
+    linearIndicatorBifun A u (A u) = 0 := by
+  rw [linearIndicatorBifun_apply]
+  exact indicatorFn_of_mem (Set.mem_singleton _)
 
 theorem linearIndicatorBifun_of_ne (A : Rn m →ₗ[ℝ] Rn n) {u : Rn m} {x : Rn n} (h : x ≠ A u) :
-    linearIndicatorBifun A u x = ⊤ :=
-  indicatorFn_of_notMem (by simpa using h)
+    linearIndicatorBifun A u x = ⊤ := by
+  rw [linearIndicatorBifun_apply]
+  exact indicatorFn_of_notMem (by simpa using h)
 
 private theorem iInf_linearIndicatorBifun_slice (A : Rn m →ₗ[ℝ] Rn n) (u v : Rn m) (y : Rn n) :
     (⨅ x : Rn n, (linearIndicatorBifun A u x + ((pairing m u v - pairing n x y : ℝ) : EReal)))

@@ -1566,3 +1566,19 @@ modules on one run, seven different ones on the next, and was clean on the third
 `Lean exited with code 3221226505`. None was ever a real diagnostic. `'….olean.private'` in this
 shape is **not** BLD2's scratch-file case; it happens for ordinary project modules, and for toolchain
 files too. Re-run before investigating.
+
+**BLD24. A Part's aggregator module is the first place a name collision can appear.** Section
+modules of one Part do not import each other unless they need to, so two agents writing two sections
+in parallel can define the same name and *both files compile clean*. The clash surfaces only when
+`PartN.lean` imports both:
+`environment already contains 'X' from Tdaf.Surface.Rockafellar.Part6.Section29`.
+
+Not hypothetical: §29 and §30 both defined `linearIndicatorBifun`, because Rockafellar presents the
+same example twice (11639 and 12313) and neither agent could see the other's file. The resolution is
+the general one — keep the definition in the *earlier* section, have the later one import it — and
+cross-section imports are already the surface's convention.
+
+Scan for duplicate declaration names across a parallel round's files *before* building the
+aggregator. Note that `private` copies do **not** collide, being name-mangled: a scan that skips
+`private` misses real duplication (three `pairing_two` copies, remediation §12.32), and one that
+includes it reports non-blockers. Both are worth seeing; only the public ones stop the build.
