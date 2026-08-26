@@ -10,15 +10,15 @@ import Tdaf.Analysis.Convex.RelativeInterior
 # Faces of a convex set
 
 A **face** of a convex set `C` is a convex subset `C'` of `C` such that every closed line segment
-in `C` with a relative interior point in `C'` has both endpoints in `C'`. Rockafellar's §18 rests
-on **Theorem 18.1**, which upgrades "line segment" to "arbitrary convex subset": if `D ⊆ C` is
-convex and `ri D` meets `C'`, then all of `D` lies in `C'`. From it come the partition of `C` by
-the relative interiors of its faces (Theorem 18.2) and, for compact `C`, Minkowski's theorem.
+in `C` with a relative interior point in `C'` has both endpoints in `C'`. Everything here rests on
+one strengthening of that definition: a face absorbs every convex subset of `C` whose relative
+interior it meets. From it come the partition of `C` by the relative interiors of its faces and,
+for compact `C`, Minkowski's theorem.
 
-This file treats the bounded case, which is what §19's polyhedral theory and the Krein–Milman
-corollaries consume. Theorem 18.5 for unbounded sets, and Theorems 18.3, 18.4 in general and 18.6,
-are stated in terms of hulls of points *and* directions (`convexHullPD` in `HullDirections.lean`)
-and live in `Representation.lean`; Theorems 18.7 and 18.8 are in `Exposed.lean` and `Tangent.lean`.
+This file treats the bounded case, which is what the polyhedral theory and the Krein–Milman
+corollaries consume. The representation of an unbounded closed convex set needs hulls of points
+*and* directions (`convexHullPD` in `HullDirections.lean`) and lives in `Representation.lean`; the
+exposed representation is in `Exposed.lean` and `Tangent.lean`.
 
 Extreme points and exposed faces are Mathlib's `Set.extremePoints` and `IsExposed`;
 `isFace_singleton` and `IsExposed.isFace` connect them to `IsFace`.
@@ -28,27 +28,25 @@ Extreme points and exposed faces are Mathlib's `Set.extremePoints` and `IsExpose
 * `IsFace` — Rockafellar's face, as Mathlib's `IsExtreme ℝ C C'` plus convexity of `C'`.
 
 ## Main results
-* `IsFace.subset_of_relint_inter_nonempty` — **Theorem 18.1**.
-* `IsFace.eq_inter_closure` — **Corollary 18.1.1**: `C' = C ∩ cl C'`; a face of a closed convex set
-  is closed.
-* `IsFace.eq_of_relint_inter_nonempty` — **Corollary 18.1.2**: faces whose relative interiors meet
-  are equal.
-* `IsFace.disjoint_relint`, `IsFace.subset_intrinsicFrontier`, `IsFace.finrank_vectorSpan_lt` —
-  **Corollary 18.1.3**: a proper face lies in the relative boundary and has strictly smaller
-  dimension.
+* `IsFace.subset_of_relint_inter_nonempty` — a face absorbs every convex subset of `C` whose
+  relative interior it meets (Theorem 18.1 in [^1]).
+* `IsFace.eq_inter_closure` — `C' = C ∩ cl C'`; a face of a closed convex set is closed.
+* `IsFace.eq_of_relint_inter_nonempty` — faces whose relative interiors meet are equal.
+* `IsFace.disjoint_relint`, `IsFace.subset_intrinsicFrontier`, `IsFace.finrank_vectorSpan_lt` — a
+  proper face lies in the relative boundary and has strictly smaller dimension.
 * `exists_isFace_subset_relint` — every nonempty relatively open convex subset of `C` lies in the
   relative interior of a unique face of `C`.
 * `exists_isFace_mem_relint`, `eq_iUnion_relint_isFace`, `IsFace.relint_pairwise_disjoint`,
-  `IsFace.relint_maximal` — **Theorem 18.2**: the relative interiors of the nonempty faces
-  partition `C`, and are exactly the maximal relatively open convex subsets of `C`.
-* `exists_notMem_relint_mem_segment` — **Theorem 18.4** for compact sets.
-* `convexHull_extremePoints` — **Corollary 18.5.1** (Minkowski): a compact convex set is the convex
-  hull of its extreme points; `extremePoints_nonempty` is **Corollary 18.5.3**.
+  `IsFace.relint_maximal` — the relative interiors of the nonempty faces partition `C`, and are
+  exactly the maximal relatively open convex subsets of `C` (Theorem 18.2 in [^1]).
+* `exists_notMem_relint_mem_segment` — in a compact set of positive dimension, every relative
+  interior point lies on a segment joining two relative boundary points.
+* `convexHull_extremePoints` — **Minkowski's theorem**: a compact convex set is the convex hull of
+  its extreme points; `extremePoints_nonempty` records that it has one.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18 (Theorems 18.1,
-  18.2, 18.4 and 18.5 in the bounded case, Corollaries 18.1.1, 18.1.2, 18.1.3, 18.5.1, 18.5.3).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18.
 -/
 
 open Set
@@ -111,8 +109,8 @@ theorem isFace_singleton {x : E} : IsFace C {x} ↔ x ∈ C.extremePoints ℝ :=
     fun h => ⟨isExtreme_singleton.2 h, convex_singleton x⟩⟩
 
 /-- **Exposed faces are faces**: the set on which a linear function attains its maximum over a
-convex set `C` is a face of `C`. This is the only source of faces used in the proof of
-Theorem 18.2. -/
+convex set `C` is a face of `C`. This is the only source of faces used in the partition theorem
+below. -/
 theorem Convex.isFace_inter_setOf_eq (hC : Convex ℝ C) {g : E →ₗ[ℝ] ℝ} {α : ℝ}
     (hmax : ∀ y ∈ C, g y ≤ α) : IsFace C (C ∩ {w | g w = α}) := by
   refine ⟨⟨inter_subset_left, ?_⟩, hC.inter (convex_hyperplane g.isLinear α)⟩
@@ -141,7 +139,7 @@ protected theorem IsExposed.isFace (h : IsExposed ℝ C C') (hC : Convex ℝ C) 
 
 end Exposed
 
-/-! ### Theorem 18.1 and its corollaries -/
+/-! ### Faces absorb the convex subsets they meet -/
 
 section Main
 
@@ -149,9 +147,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C C' C₁ C₂ D : Set E}
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 18.1**: a face absorbs every convex subset of `C` whose relative interior
-it meets. This strengthens the defining segment property to arbitrary convex sets, and every other
-result of §18 goes through it. Convexity of `D` is not needed. -/
+/-- **A face absorbs every convex subset of `C` whose relative interior it meets.** This
+strengthens the defining segment property to arbitrary convex sets, and every other result in this
+file goes through it. Convexity of `D` is not needed. -/
 theorem IsFace.subset_of_relint_inter_nonempty (hface : IsFace C C')
     (hDC : D ⊆ C) (h : (ri D ∩ C').Nonempty) : D ⊆ C' := by
   obtain ⟨z, hzD, hzC'⟩ := h
@@ -162,8 +160,8 @@ theorem IsFace.subset_of_relint_inter_nonempty (hface : IsFace C C')
   refine hface.left_mem_of_mem_openSegment (hDC hx) (hDC hy) hzC' ?_
   exact ⟨1 - μ⁻¹, μ⁻¹, by linarith, inv_pos.2 hμ0, by ring, combo_prolong x z hμ0.ne'⟩
 
-/-- **Rockafellar, Corollary 18.1.1**: a face is cut out of `C` by its own closure. In particular a
-face of a closed convex set is closed. -/
+/-- A face is cut out of `C` by its own closure. In particular a face of a closed convex set is
+closed. -/
 theorem IsFace.eq_inter_closure (hC : Convex ℝ C) (hface : IsFace C C') :
     C' = C ∩ closure C' := by
   refine Subset.antisymm (fun x hx => ⟨hface.subset hx, subset_closure hx⟩) ?_
@@ -190,8 +188,8 @@ theorem IsFace.isClosed (hC : Convex ℝ C) (hCcl : IsClosed C) (hface : IsFace 
   exact hCcl.inter isClosed_closure
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Corollary 18.1.2**: two faces whose relative interiors have a point in common
-are equal. This is what makes the relative interiors of the faces a *partition* in Theorem 18.2. -/
+/-- Two faces whose relative interiors have a point in common are equal. This is what makes the
+relative interiors of the faces a *partition* of `C`. -/
 theorem IsFace.eq_of_relint_inter_nonempty (h₁ : IsFace C C₁) (h₂ : IsFace C C₂)
     (h : (ri C₁ ∩ ri C₂).Nonempty) : C₁ = C₂ := by
   obtain ⟨z, hz₁, hz₂⟩ := h
@@ -200,7 +198,7 @@ theorem IsFace.eq_of_relint_inter_nonempty (h₁ : IsFace C C₁) (h₂ : IsFace
   · exact h₁.subset_of_relint_inter_nonempty h₂.subset ⟨z, hz₂, intrinsicInterior_subset hz₁⟩
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Corollary 18.1.3**, first half: a face other than `C` itself misses `ri C`. -/
+/-- A face other than `C` itself misses `ri C`. -/
 theorem IsFace.disjoint_relint (hface : IsFace C C') (hne : C' ≠ C) :
     Disjoint C' (ri C) := by
   rw [Set.disjoint_left]
@@ -208,8 +206,7 @@ theorem IsFace.disjoint_relint (hface : IsFace C C') (hne : C' ≠ C) :
   exact hne (Subset.antisymm hface.subset
     (hface.subset_of_relint_inter_nonempty Subset.rfl ⟨x, hxri, hxC'⟩))
 
-/-- **Rockafellar, Corollary 18.1.3**: a face other than `C` itself is contained in the relative
-boundary of `C`. -/
+/-- A face other than `C` itself is contained in the relative boundary of `C`. -/
 theorem IsFace.subset_intrinsicFrontier (hface : IsFace C C') (hne : C' ≠ C) :
     C' ⊆ intrinsicFrontier ℝ C := by
   intro x hx
@@ -218,7 +215,7 @@ theorem IsFace.subset_intrinsicFrontier (hface : IsFace C C') (hne : C' ≠ C) :
     fun hxri => (Set.disjoint_left.1 (hface.disjoint_relint hne)) hx hxri⟩
 
 /-- A face has the same affine hull as `C` only if it is all of `C`. This is the step from the
-relative-boundary statement of Corollary 18.1.3 to the dimension statement. -/
+relative-boundary statement to the dimension statement. -/
 theorem IsFace.affineSpan_ne (hface : IsFace C C') (hne' : C'.Nonempty)
     (hne : C' ≠ C) : affineSpan ℝ C' ≠ affineSpan ℝ C := by
   intro hspan
@@ -228,8 +225,8 @@ theorem IsFace.affineSpan_ne (hface : IsFace C C') (hne' : C'.Nonempty)
   obtain ⟨hzA, ε, hε, hball⟩ := hz
   exact ⟨hspan ▸ hzA, ε, hε, fun y hy hd => hface.subset (hball y (hspan ▸ hy) hd)⟩
 
-/-- **Rockafellar, Corollary 18.1.3**, the dimension statement: a nonempty face other than `C`
-itself has strictly smaller dimension than `C`. -/
+/-- The dimension statement: a nonempty face other than `C` itself has strictly smaller dimension
+than `C`. -/
 theorem IsFace.finrank_vectorSpan_lt (hface : IsFace C C') (hne' : C'.Nonempty)
     (hne : C' ≠ C) :
     Module.finrank ℝ (vectorSpan ℝ C') < Module.finrank ℝ (vectorSpan ℝ C) := by
@@ -241,12 +238,12 @@ theorem IsFace.finrank_vectorSpan_lt (hface : IsFace C C') (hne' : C'.Nonempty)
   · obtain ⟨x, hx⟩ := hne'
     exact ⟨x, subset_affineSpan ℝ C' hx, subset_affineSpan ℝ C (hface.subset hx)⟩
 
-/-! ### Theorem 18.2: the relative interiors of the faces partition `C` -/
+/-! ### The relative interiors of the faces partition `C` -/
 
-/-- The engine of **Theorem 18.2**: every nonempty relatively open convex subset `D` of `C` lies in
+/-- The engine of the partition: every nonempty relatively open convex subset `D` of `C` lies in
 the relative interior of a face of `C`, namely the smallest face containing `D`. Were `D` inside
-the relative boundary of that face, a supporting hyperplane through `D` (Corollary 11.6.2) would
-cut out a strictly smaller face still containing `D`. -/
+the relative boundary of that face, a supporting hyperplane through `D` would cut out a strictly
+smaller face still containing `D`. -/
 theorem exists_isFace_subset_relint (hC : Convex ℝ C) (hD : Convex ℝ D) (hDC : D ⊆ C)
     (hne : D.Nonempty) (hopen : ri D = D) : ∃ C', IsFace C C' ∧ D ⊆ ri C' := by
   classical
@@ -275,15 +272,14 @@ theorem exists_isFace_subset_relint (hC : Convex ℝ C) (hD : Convex ℝ D) (hDC
       hmeet
   exact ⟨C', hC'face, hopen ▸ hsub⟩
 
-/-- **Theorem 18.2**, the union half: every point of `C` is a relative interior point of some face
-of `C`. -/
+/-- The union half: every point of `C` is a relative interior point of some face of `C`. -/
 theorem exists_isFace_mem_relint (hC : Convex ℝ C) {x : E} (hx : x ∈ C) :
     ∃ C', IsFace C C' ∧ x ∈ ri C' := by
   obtain ⟨C', hface, hsub⟩ := exists_isFace_subset_relint hC (convex_singleton x)
     (singleton_subset_iff.2 hx) ⟨x, rfl⟩ (intrinsicInterior_singleton x)
   exact ⟨C', hface, hsub rfl⟩
 
-/-- **Theorem 18.2**, the union half, as an equation. -/
+/-- The union half, as an equation. -/
 theorem eq_iUnion_relint_isFace (hC : Convex ℝ C) :
     C = ⋃ C' ∈ {B : Set E | IsFace C B}, ri C' := by
   refine Subset.antisymm (fun x hx => ?_) ?_
@@ -292,15 +288,15 @@ theorem eq_iUnion_relint_isFace (hC : Convex ℝ C) :
   · exact iUnion₂_subset fun C' hface => intrinsicInterior_subset.trans hface.subset
 
 omit [FiniteDimensional ℝ E] in
-/-- **Theorem 18.2**, the disjointness half: distinct faces have disjoint relative interiors. -/
+/-- The disjointness half: distinct faces have disjoint relative interiors. -/
 theorem IsFace.relint_pairwise_disjoint (h₁ : IsFace C C₁) (h₂ : IsFace C C₂) (hne : C₁ ≠ C₂) :
     Disjoint (ri C₁) (ri C₂) := by
   rw [Set.disjoint_iff_inter_eq_empty]
   by_contra hcon
   exact hne (h₁.eq_of_relint_inter_nonempty h₂ (nonempty_iff_ne_empty.2 hcon))
 
-/-- **Theorem 18.2**, the maximality half: the relative interior of a nonempty face is a *maximal*
-relatively open convex subset of `C`. -/
+/-- The maximality half: the relative interior of a nonempty face is a *maximal* relatively open
+convex subset of `C`. -/
 theorem IsFace.relint_maximal (hC : Convex ℝ C) (hface : IsFace C C') (hne' : C'.Nonempty)
     (hD : Convex ℝ D) (hopen : ri D = D) (hsub : ri C' ⊆ D) (hDC : D ⊆ C) : D = ri C' := by
   obtain ⟨z, hz⟩ := Convex.relint_nonempty hface.convex hne'
@@ -315,18 +311,17 @@ theorem IsFace.relint_relint (hface : IsFace C C') : ri (ri C') = ri C' :=
 
 end Main
 
-/-! ### Theorems 18.4 and 18.5 for bounded sets: Minkowski's theorem -/
+/-! ### The bounded case: Minkowski's theorem -/
 
 section Bounded
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] {C : Set E}
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 18.4** for compact sets: a relative interior point of a compact set of
-positive dimension lies on a segment joining two points that are not relative interior points.
-Rockafellar states Theorem 18.4 for closed convex sets that are neither affine sets nor closed
-halves of affine sets; compactness is cruder but is all Minkowski's theorem needs. Convexity of `C`
-is never used. -/
+/-- For a compact set of positive dimension, a relative interior point lies on a segment joining
+two points that are not relative interior points. The general statement asks instead that `C` be a
+closed convex set which is neither an affine set nor a closed half of one; compactness is cruder
+but is all Minkowski's theorem needs. Convexity of `C` is never used. -/
 theorem exists_notMem_relint_mem_segment (hcomp : IsCompact C) (hdim : vectorSpan ℝ C ≠ ⊥)
     {x : E} (hx : x ∈ ri C) :
     ∃ a ∈ C, ∃ b ∈ C, a ∉ ri C ∧ b ∉ ri C ∧ x ∈ segment ℝ a b := by
@@ -435,19 +430,19 @@ private theorem subset_convexHull_extremePoints_aux :
         exact (convex_convexHull ℝ _).segment_subset (hbd a haC hari) (hbd b hbC hbri) hseg
     · exact hbd x hx hri
 
-/-- **Rockafellar, Corollary 18.5.1** (Minkowski's theorem): a closed bounded convex set is the
-convex hull of its extreme points. This is Theorem 18.5 in the case where `C` has no directions of
-recession, and it is stronger than Mathlib's Krein–Milman theorem
-(`closure_convexHull_extremePoints`), which gives only the *closed* convex hull — the set of
-extreme points need not be closed even for a compact `C`. The proof is Rockafellar's induction on
-`dim C`, through Theorems 18.2 and 18.4 and Corollaries 18.1.1 and 18.1.3. -/
+/-- **Minkowski's theorem**: a closed bounded convex set is the convex hull of its extreme points.
+It is the case of the general representation in which `C` has no directions of recession, and it is
+stronger than Mathlib's Krein–Milman theorem (`closure_convexHull_extremePoints`), which gives only
+the *closed* convex hull — the set of extreme points need not be closed even for a compact `C`. The
+proof is an induction on `dim C`, through the partition of `C` by relative interiors of faces and
+the segment lemma above. -/
 theorem convexHull_extremePoints (hcomp : IsCompact C) (hconv : Convex ℝ C) :
     convexHull ℝ (C.extremePoints ℝ) = C :=
   Subset.antisymm (convexHull_min extremePoints_subset hconv)
     (subset_convexHull_extremePoints_aux _ C le_rfl hcomp hconv)
 
-/-- **Rockafellar, Corollary 18.5.3** for compact sets: a nonempty compact convex set has an
-extreme point. Rockafellar's own derivation — the convex hull of the empty set is empty. -/
+/-- A nonempty compact convex set has an extreme point: the convex hull of the empty set is
+empty. -/
 theorem extremePoints_nonempty (hcomp : IsCompact C) (hconv : Convex ℝ C) (hne : C.Nonempty) :
     (C.extremePoints ℝ).Nonempty := by
   rcases (C.extremePoints ℝ).eq_empty_or_nonempty with hem | h
