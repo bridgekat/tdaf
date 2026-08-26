@@ -9,57 +9,43 @@ import Tdaf.Analysis.Convex.Duality.Pairing
 # Self-pairings of inner-product type
 
 A pairing of a space with **itself** that is symmetric and positive definite behaves like an inner
-product in every way §31 needs, without carrying a `NormedAddCommGroup` structure of its own. This
-matters because Rockafellar's §37 applies Moreau's theorem on `U × X`, which carries the *supremum*
-norm and therefore has no `InnerProductSpace ℝ` instance, even though
-`prodPairing (innerₗ U) (innerₗ X)` is a perfectly good inner product on it.
-
-The alternative — moving to `WithLp 2 (U × X)` — replaces the topology *instance*, so `ClosedFn`,
-`Continuous` and `IsClosed` stop transferring definitionally and every §33–§37 statement would have
-to be transported. Generalising the pairing costs one class and leaves the topology alone.
+product in every way the theory needs, without carrying a `NormedAddCommGroup` structure of its
+own. That matters because Moreau's theorem gets applied on `U × X`, which carries the *supremum*
+norm and so has no `InnerProductSpace ℝ` instance, even though `prodPairing (innerₗ U) (innerₗ X)`
+is a perfectly good inner product on it. Moving to `WithLp 2 (U × X)` instead would replace the
+topology *instance*, so `ClosedFn`, `Continuous` and `IsClosed` would stop transferring
+definitionally; generalising the pairing costs one class and leaves the topology alone.
 
 ## Main definitions
 
 * `IsInnerPairing B` — `B` is symmetric, positive semidefinite, and definite.
 * `IsContinuousInnerPairing B` — an inner pairing whose quadratic form `x ↦ B x x` is continuous.
-  This is the only topological fact Moreau's theorem needs, and it holds for `innerₗ E` on **any**
-  real inner-product space, which is what keeps §31 free of finite-dimensionality.
+  This is the only topological fact Moreau's theorem needs, and it holds for `innerₗ E` on any real
+  inner-product space, with no finite-dimensionality.
 * `pairingNorm B x` — the induced norm `√(B x x)`.
 
 ## Main results
 
 * `self_pairing_add`, `self_pairing_sub`, `self_pairing_combo_le` — the quadratic expansions, and
-  convexity of `½ B z z` with its defect visible. These replace `norm_add_sq_real` and friends in
-  every §31 proof.
+  convexity of `½ B z z` with its defect visible. These replace `norm_add_sq_real` and friends.
 * `pairing_sq_le_mul` — **Cauchy–Schwarz** for a positive semidefinite symmetric form. Only
-  `self_nonneg` is used, not definiteness.
-* `pairingNorm_add_le` — the triangle inequality, hence `pairingNorm` is a genuine norm.
+  `self_nonneg` is used, not definiteness: the proof splits on `B y y = 0`, and semidefiniteness
+  alone forces `B x y = 0` in that branch.
+* `pairingNorm_add_le` — the triangle inequality, so `pairingNorm` is a genuine norm.
 * `exists_pairingNorm_le_and_le_pairingNorm` — in **finite dimensions** the induced norm is
   equivalent to the ambient one, so nothing stated through `pairingNorm` says anything new about
-  the topology. This is what lets a `pairingNorm`-nonexpansive map be continuous.
+  the topology.
 
-## Design notes
+## Implementation notes
 
-**`IsInnerPairing` is a `Prop`-class, not a structure carrying data.** The form `B` is the data and
-it is already a `LinearMap`; the class only records the three properties. This is the same choice
-`IsContinuousPairing` and `IsCompatiblePairing` make, and it means an inner-product space's own
-`innerₗ E` picks the instance up automatically.
+`IsInnerPairing` is a `Prop`-class rather than a structure carrying data: the form `B` is already a
+`LinearMap`, and the class only records the three properties, so an inner-product space's own
+`innerₗ E` picks the instance up automatically. Definiteness is stated as `B x x = 0 → x = 0`,
+which is the form proofs apply; `self_pos` supplies the other.
 
-**Definiteness is stated as `B x x = 0 → x = 0`**, not as `x ≠ 0 → 0 < B x x`. The two are
-equivalent given `self_nonneg`, and the stated form is the one proofs actually apply — `self_pos`
-supplies the other.
-
-**Cauchy–Schwarz does not need definiteness.** The proof splits on `B y y = 0`, and in that branch
-positive *semi*definiteness alone forces `B x y = 0`, by the same discriminant argument run at large
-`t`. Keeping the hypothesis minimal means the lemma survives if a semidefinite variant is ever
-wanted.
-
-## What is not here
-
-**No `InnerProductSpace` instance is manufactured from `IsInnerPairing`.** Doing so through
-`InnerProductSpace.ofCore` would produce a *second* `NormedAddCommGroup` on `E`, which is exactly
-the clash this module exists to avoid. `exists_pairingNorm_le_and_le_pairingNorm` gives what the
-analysis needs without introducing a competing instance.
+No `InnerProductSpace` instance is manufactured from `IsInnerPairing`: doing so through
+`InnerProductSpace.ofCore` would produce a second `NormedAddCommGroup` on `E`, which is the clash
+this module exists to avoid.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -109,8 +95,7 @@ theorem self_pairing_add_smul (t : ℝ) (x y : E) :
 
 /-! #### Expansions
 
-The quadratic identities `‖x ± y‖² = ‖x‖² ± 2⟪x, y⟫ + ‖y‖²` and their companions, which is
-everything §31's proofs use the inner product for. -/
+The quadratic identities `‖x ± y‖² = ‖x‖² ± 2⟪x, y⟫ + ‖y‖²` and their companions. -/
 
 theorem self_pairing_add (x y : E) : B (x + y) (x + y) = B x x + 2 * B x y + B y y := by
   have h := self_pairing_add_smul (B := B) 1 x y
@@ -246,12 +231,9 @@ section Continuous
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
 
-/-- An inner pairing whose **quadratic form is continuous**.
-
-Continuity of `x ↦ B x x` is the only topological fact Moreau's theorem needs about the pairing,
-and it does not follow from `IsContinuousPairing`, which gives continuity only in the first
-variable with the second held fixed. Keeping it as its own class is what lets §31 stay valid in an
-arbitrary real Hilbert space while §37 uses it on a finite-dimensional `U × X`. -/
+/-- An inner pairing whose **quadratic form is continuous**. This does not follow from
+`IsContinuousPairing`, which gives continuity only in the first variable with the second held
+fixed. -/
 class IsContinuousInnerPairing (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) : Prop extends IsInnerPairing B where
   /-- The quadratic form is continuous. -/
   continuous_self (B) : Continuous fun x : E => B x x
@@ -262,10 +244,9 @@ theorem continuous_self_pairing' (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsContin
 
 variable [IsTopologicalAddGroup E]
 
-/-- **Polarization makes the diagonal do all the work.** A symmetric form whose quadratic form is
-continuous is continuous in each variable separately, because
-`B x y = ½ (B (x + y) (x + y) - B x x - B y y)`. So `IsContinuousInnerPairing` subsumes
-`IsContinuousPairing`, and no proof has to carry both. -/
+/-- **Polarization makes the diagonal do all the work**: a symmetric form whose quadratic form is
+continuous is continuous in each variable separately, so `IsContinuousInnerPairing` subsumes
+`IsContinuousPairing`. -/
 instance (priority := 100) isContinuousPairing_of_isContinuousInnerPairing
     (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsContinuousInnerPairing B] : IsContinuousPairing B where
   continuous_left y := by
@@ -278,15 +259,14 @@ instance (priority := 100) isContinuousPairing_of_isContinuousInnerPairing
       (continuous_self_pairing' B)).sub continuous_const).div_const 2
 
 /-- The flip of an inner pairing is continuous, which instance search cannot see through
-`LinearMap.flip` on its own — the same trap as gotcha PAIR1. -/
+`LinearMap.flip` on its own. -/
 instance isContinuousPairing_flip_of_isContinuousInnerPairing
     (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsContinuousInnerPairing B] : IsContinuousPairing B.flip := by
   rw [flip_eq_self]
   infer_instance
 
-/-- The flip of a compatible inner pairing is compatible, for the same reason. Every §37 statement
-that conjugates on both sides asks for `IsCompatiblePairing B` and `IsCompatiblePairing B.flip`
-together; for a symmetric pairing the second is the first. -/
+/-- The flip of a compatible inner pairing is compatible: for a symmetric pairing the two
+conditions coincide. -/
 instance isCompatiblePairing_flip_of_isInnerPairing (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) [IsInnerPairing B]
     [IsCompatiblePairing B] : IsCompatiblePairing B.flip := by
   rw [flip_eq_self]
@@ -315,9 +295,8 @@ instance isInnerPairing_innerL : IsInnerPairing (innerₗ E) where
 @[simp] theorem pairingNorm_innerL (x : E) : pairingNorm (innerₗ E) x = ‖x‖ := by
   rw [pairingNorm, innerₗ_apply_apply, real_inner_self_eq_norm_sq, Real.sqrt_sq (norm_nonneg x)]
 
-/-- The inner product of a real inner-product space has a continuous quadratic form — `‖·‖ ^ 2` —
-with **no finite-dimensionality needed**. This is the instance that keeps Moreau's theorem valid in
-an arbitrary real Hilbert space. -/
+/-- The inner product of a real inner-product space has a continuous quadratic form, `‖·‖ ^ 2`,
+with no finite-dimensionality needed. -/
 instance isContinuousInnerPairing_innerL : IsContinuousInnerPairing (innerₗ E) where
   continuous_self := by
     have h : (fun x : E => (innerₗ E) x x) = fun x : E => ‖x‖ ^ 2 := by
@@ -335,9 +314,8 @@ section Prod
 variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   {Bu : U →ₗ[ℝ] U →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] X →ₗ[ℝ] ℝ}
 
-/-- **A product of inner pairings is an inner pairing.** This is the instance §37 needs: `U × X`
-has no `InnerProductSpace` structure, but `prodPairing (innerₗ U) (innerₗ X)` is an inner
-pairing on it. -/
+/-- **A product of inner pairings is an inner pairing**: `U × X` has no `InnerProductSpace`
+structure, but `prodPairing (innerₗ U) (innerₗ X)` is an inner pairing on it. -/
 instance isInnerPairing_prodPairing [IsInnerPairing Bu] [IsInnerPairing Bx] :
     IsInnerPairing (prodPairing Bu Bx) where
   pairing_comm p q := by
@@ -375,11 +353,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ} [IsInnerPairing B]
 
 omit [IsInnerPairing B] in
-/-- `x ↦ B x x` is continuous: it is a continuous bilinear form evaluated on the diagonal.
-
-No `IsContinuousPairing` hypothesis is needed: in finite dimensions every linear map out of `E` is
-continuous, so `x ↦ B x` is a continuous map into `E →L[ℝ] ℝ`, and evaluation is a bounded
-bilinear map. -/
+/-- `x ↦ B x x` is continuous, being a continuous bilinear form evaluated on the diagonal. No
+`IsContinuousPairing` hypothesis is needed, since in finite dimensions every linear map out of `E`
+is continuous. -/
 theorem continuous_self_pairing : Continuous fun x : E => B x x := by
   set T : E →ₗ[ℝ] (E →L[ℝ] ℝ) :=
     (LinearMap.toContinuousLinearMap (𝕜 := ℝ) (E := E) (F' := ℝ)).toLinearMap.comp B with hT

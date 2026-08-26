@@ -23,45 +23,25 @@ does not exist.
 ## Main results
 
 * `supportFn_univ_pi` — the support function of a product set is the sum of the support functions
-  of the factors: the supremum of a separable sum over a product splits.
+  of the factors.
 * `conj_piFn` — the conjugate of a separable sum of proper functions is the separable sum of the
   conjugates, `(∑ i, fᵢ ∘ prᵢ)* = ∑ i, fᵢ* ∘ prᵢ`.
-* `iInter_relint_nonempty_iff_supportFn`, `iInter_relint_dom_nonempty_iff` — a finite family of
-  convex sets (resp. of effective domains) has a common relative-interior point exactly when there
-  is no family `y` with `∑ i, yᵢ = 0`, `∑ i, δ*(yᵢ | Cᵢ) ≤ 0` and `∑ i, δ*(-yᵢ | Cᵢ) > 0`.
+* `iInter_relint_nonempty_iff_supportFn`, `iInter_relint_dom_nonempty_iff` — **Corollary 16.2.2**:
+  a finite family of convex sets (resp. of effective domains) has a common relative-interior point
+  exactly when there is no family `y` with `∑ i, yᵢ = 0`, `∑ i, δ*(yᵢ ∣ Cᵢ) ≤ 0` and
+  `∑ i, δ*(-yᵢ ∣ Cᵢ) > 0`. The diagonal `{x ∣ x₁ = ⋯ = xₘ}` is a subspace of `ι → E` whose
+  annihilator under the product pairing is the family of `y` summing to zero, so this is the
+  subspace criterion of `Duality/RelintSeparation.lean` read at a product set.
 
-## Design notes
+## Implementation notes
 
-**The index is a `Fintype` and the product is non-dependent.** `piPairing` sums over `Finset.univ`,
-so finiteness has to be data here; `Convex.relint_univ_pi`, which mentions no sum, asks only for
-`[Finite ι]` — and it is no longer in this file, having gone home to `RelativeInterior.lean`
-(remediation §11.21) along with `univ_pi_eq_iInter_proj_preimage`. Non-dependence is forced by the
-one consumer: the diagonal subspace of `ι → E` needs all the factors to be the *same* space. The
-`Set.pi` results would hold verbatim for a dependent product `(i : ι) → E i`; nothing here needs
-it.
+`piPairing` sums over `Finset.univ`, so the index has to be a `Fintype`. The product is
+non-dependent because the diagonal subspace needs all the factors to be the same space; the
+`Set.pi` results would hold verbatim for a dependent product.
 
-**The separable-sum route is not taken for Corollary 16.2.2.** A family `f₁, …, fₘ` could be
-packaged as the single function `x ↦ ∑ i, fᵢ (xᵢ)` on `ι → E`, whose conjugate is the corresponding
-separable sum (`conj_piFn`). That detour needs the *recession function* of a separable sum as well,
-which is still missing. Going through `supportFn` instead needs neither: the effective domain of a
-separable sum is a product set already, and `recessionFn_conj` converts once, at the end, one
-coordinate at a time.
-
-**`⊥` absorbs, so the empty factor is a case and not an accident.** `⨆ x ∈ ∅, u x = ⊥` and
-`⊥ + z = ⊥`, so `supportFn_univ_pi` is true with no nonemptiness hypothesis — but its two sides are
-`⊥` for *different* reasons and the proof splits. The nonempty branch is an induction over the
-index `Finset` whose step is `Tdaf.EReal.biSup_add_biSup`, applied after `Function.update` has
-decoupled one coordinate from the rest.
-
-## What is not here
-
-**No recession function of a separable sum.** The conjugate is here (`conj_piFn`); its recession
-counterpart, `recessionFn (fun x => ∑ i, f i (x i)) = fun x => ∑ i, recessionFn (f i) (x i)`, is
-not, and is what an `m`-ary infimal convolution would want next.
-
-**No sum map.** The linear map `(xᵢ) ↦ ∑ xᵢ` from `ι → E` to `E` appears only inside the proof of
-`iInter_relint_nonempty_iff_supportFn`, as the adjoint of the diagonal; its recession cone and
-image theory belong with the other `Set.pi` results in `Recession/Cone.lean`.
+`⊥` absorbs, so `supportFn_univ_pi` needs no nonemptiness hypothesis — but its two sides are `⊥`
+for different reasons when a factor is empty, and the proof splits. The nonempty branch is an
+induction over the index `Finset` whose step decouples one coordinate with `Function.update`.
 
 ## References
 
@@ -79,10 +59,8 @@ section Pairing
 
 variable {ι E F : Type*} [Fintype ι] [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
-/-- **The pairing of `ι → E` with `ι → F`**, `⟨x, y⟩ = ∑ i, ⟨xᵢ, yᵢ⟩`.
-
-This is `prodPairing` for a finite family instead of two factors, and it is the pairing under
-which a product of sets has a separable support function. -/
+/-- **The pairing of `ι → E` with `ι → F`**, `⟨x, y⟩ = ∑ i, ⟨xᵢ, yᵢ⟩`: `prodPairing` for a finite
+family, and the pairing under which a product of sets has a separable support function. -/
 def piPairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : (ι → E) →ₗ[ℝ] (ι → F) →ₗ[ℝ] ℝ :=
   LinearMap.mk₂ ℝ (fun x y => ∑ i, B (x i) (y i))
     (fun _ _ _ => by simp [← Finset.sum_add_distrib])
@@ -112,9 +90,7 @@ instance instIsContinuousPairingPi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCont
     simp only [piPairing_apply]
     exact continuous_finsetSum _ fun i _ => (continuous_pairing B (y i)).comp (continuous_apply i)
 
-/-- A finite product of copies of a compatible pairing is compatible: a continuous linear
-functional on `ι → E` is the sum of its restrictions along the coordinate injections, and each
-of those is represented by a vector of `F`. -/
+/-- A finite product of copies of a compatible pairing is compatible. -/
 instance instIsCompatiblePairingPi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B] :
     IsCompatiblePairing (piPairing (ι := ι) B) where
   toIsContinuousPairing := instIsContinuousPairingPi B
@@ -134,8 +110,7 @@ section InnerInstances
 variable {ι E : Type*} [Fintype ι] [AddCommGroup E] [Module ℝ E] {B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ}
 
 /-- A finite product of copies of an inner pairing is an inner pairing. The product carries no
-inner-product structure of its own — `ι → E` has the supremum norm — but the pairing does not
-care. -/
+inner-product structure of its own, but the pairing does not care. -/
 instance isInnerPairing_piPairing [IsInnerPairing B] : IsInnerPairing (piPairing (ι := ι) B) where
   pairing_comm _ _ := Finset.sum_congr rfl fun i _ => pairing_comm B _ _
   self_nonneg _ := Finset.sum_nonneg fun i _ => self_pairing_nonneg B _
@@ -164,9 +139,7 @@ end Relint
 
 /-! ### The support function of a product set
 
-The supremum of a separable sum over a product of sets is the sum of the suprema. The proof is an
-induction over the index `Finset`: at each step one coordinate is decoupled from the others by
-`Function.update`, and `Tdaf.EReal.biSup_add_biSup` splits the resulting supremum of a sum. -/
+The supremum of a separable sum over a product of sets is the sum of the suprema. -/
 
 section Support
 
@@ -174,9 +147,8 @@ variable {ι E F : Type*} [Fintype ι] [AddCommGroup E] [Module ℝ E] [AddCommG
 
 omit [Fintype ι] [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F] in
 /-- The supremum over a product set of a sum indexed by a `Finset`, decoupled coordinate by
-coordinate. The values are only asked to avoid `⊥` *on the sets*, which is what
-`Tdaf.EReal.biSup_add_biSup` consumes; the nonemptiness hypothesis is needed only for the empty
-`Finset`, where the supremum of the constant `0` has to be `0` rather than `⊥`. -/
+coordinate. The values are only asked to avoid `⊥` *on the sets*; nonemptiness is needed only for
+the empty `Finset`, where the supremum of the constant `0` has to be `0` rather than `⊥`. -/
 private theorem biSup_sum_univ_pi {C : ι → Set E} (hne : ∀ i, (C i).Nonempty) (u : ι → E → EReal)
     (hu : ∀ i, ∀ z ∈ C i, u i z ≠ ⊥) (t : Finset ι) :
     (⨆ x ∈ univ.pi C, ∑ i ∈ t, u i (x i)) = ∑ i ∈ t, ⨆ z ∈ C i, u i z := by
@@ -206,10 +178,8 @@ private theorem biSup_sum_univ_pi {C : ι → Set E} (hne : ∀ i, (C i).Nonempt
     simp only [Finset.sum_cons]
     rw [key, ih]
 
-/-- **The support function of a product set is the sum of the support functions of its factors.**
-
-No hypothesis is needed. If some factor is empty both sides are `⊥`: the product set is empty on
-the left, and on the right the corresponding summand is `⊥` and absorbs. -/
+/-- **The support function of a product set is the sum of the support functions of its factors**,
+with no hypothesis. If some factor is empty both sides are `⊥`. -/
 theorem supportFn_univ_pi (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : ι → Set E) (y : ι → F) :
     supportFn (piPairing B) (univ.pi C) y = ∑ i, supportFn B (C i) (y i) := by
   classical
@@ -232,10 +202,8 @@ end Support
 
 /-! ### The conjugate of a separable sum
 
-The other half of the finite-product dictionary. The interchange is `biSup_sum_univ_pi` again, run
-over the product of the effective domains; what is new is arithmetic, because
-`⟨x, y⟩ - ∑ fᵢ (xᵢ)` splits as `∑ (⟨xᵢ, yᵢ⟩ - fᵢ (xᵢ))` only once the `⊤` case is disposed of, and
-that case is disposed of by `⊥` absorbing on both sides. -/
+The other half of the finite-product dictionary. `⟨x, y⟩ - ∑ fᵢ (xᵢ)` splits as
+`∑ (⟨xᵢ, yᵢ⟩ - fᵢ (xᵢ))` only once the `⊤` case is disposed of, which `⊥` absorbing does. -/
 
 section SeparableAux
 
@@ -295,11 +263,8 @@ variable {ι E F : Type*} [Fintype ι] [AddCommGroup E] [Module ℝ E] [AddCommG
 /-- **The conjugate of a separable sum is the separable sum of the conjugates.** For a finite
 family of proper functions, `(∑ i, fᵢ ∘ prᵢ)* = ∑ i, fᵢ* ∘ prᵢ` against `piPairing B`.
 
-Properness is what keeps the two sides from colliding at `∞ - ∞`. It gives `fᵢ z ≠ ⊥`, so the
-difference `⟨z, yᵢ⟩ - fᵢ z` is `⊥` exactly off `dom fᵢ` and the supremum defining `fᵢ*` may be taken
-over `dom fᵢ`; and it gives `dom fᵢ ≠ ∅`, so `fᵢ* yᵢ ≠ ⊥` and no summand on the right can absorb.
-Rockafellar uses the identity without comment (13704) in the separable specialisation of
-Corollary 31.4.2. -/
+Properness keeps the two sides from colliding at `∞ - ∞`: it lets the supremum defining `fᵢ*` be
+taken over `dom fᵢ`, and it keeps `fᵢ* yᵢ` off `⊥`, so no summand on the right can absorb. -/
 theorem conj_piFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : ι → E → EReal) (hf : ∀ i, Proper (f i))
     (y : ι → F) :
     conj (piPairing B) (fun x => ∑ i, f i (x i)) y = ∑ i, conj B (f i) (y i) := by
@@ -340,9 +305,7 @@ end Separable
 /-! ### A common relative interior point of a finite family
 
 The diagonal `{x | x₁ = ⋯ = xₘ}` is a subspace of `ι → E` whose annihilator, under the product
-pairing, is the family of `y` summing to zero. So the criterion for a subspace to meet the relative
-interior of a convex set, read in `ι → E` at a product set, becomes a criterion for a finite family
-of convex sets to have a common relative interior point. -/
+pairing, is the family of `y` summing to zero. -/
 
 section Diagonal
 
@@ -353,10 +316,9 @@ variable {ι E F : Type*} [Fintype ι] [NormedAddCommGroup E] [NormedSpace ℝ E
 /-- **A finite family of convex sets has a common relative interior point** exactly when there is
 no family `y` of dual vectors summing to zero with `∑ i, δ*(yᵢ | Cᵢ) ≤ 0 < ∑ i, δ*(-yᵢ | Cᵢ)`.
 
-This is `submodule_inter_relint_nonempty_iff_supportFn` in `ι → E`, applied to the diagonal
-subspace and the product set `∏ Cᵢ`, whose relative interior and support function are computed
-coordinatewise by `Convex.relint_univ_pi` and `supportFn_univ_pi`. Separation on the right of the
-pairing is what turns the annihilator of the diagonal into `∑ i, yᵢ = 0`. -/
+This is `submodule_inter_relint_nonempty_iff_supportFn` in `ι → E` at the diagonal subspace and the
+product set `∏ Cᵢ`. Separation on the right of the pairing is what turns the annihilator of the
+diagonal into `∑ i, yᵢ = 0`. -/
 theorem iInter_relint_nonempty_iff_supportFn (hB : B.SeparatingRight) (C : ι → Set E)
     (hC : ∀ i, Convex ℝ (C i)) (hne : ∀ i, (C i).Nonempty) :
     (⋂ i, ri (C i)).Nonempty ↔
@@ -404,12 +366,8 @@ theorem iInter_relint_nonempty_iff_supportFn (hB : B.SeparatingRight) (C : ι �
 
 /-- **A finite family of proper convex functions has a common relative interior point of their
 effective domains** exactly when there is no family `y` summing to zero with
-`∑ i, (fᵢ* 0⁺)(yᵢ) ≤ 0 < ∑ i, (fᵢ* 0⁺)(-yᵢ)`.
-
-`iInter_relint_nonempty_iff_supportFn` at `Cᵢ = dom fᵢ`, whose support function is the recession
-function of `fᵢ*` (`recessionFn_conj`). As in `submodule_inter_relint_dom_nonempty_iff`, properness
-of each conjugate is a hypothesis rather than a conclusion; in finite dimensions
-`proper_conj_of_proper` supplies it. -/
+`∑ i, (fᵢ* 0⁺)(yᵢ) ≤ 0 < ∑ i, (fᵢ* 0⁺)(-yᵢ)`: the previous statement at `Cᵢ = dom fᵢ`, whose
+support function is the recession function of `fᵢ*`. -/
 theorem iInter_relint_dom_nonempty_iff (hB : B.SeparatingRight) (f : ι → E → EReal)
     (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i)) (hc : ∀ i, Proper (conj B (f i))) :
     (⋂ i, ri (dom (f i))).Nonempty ↔

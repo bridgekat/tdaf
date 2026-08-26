@@ -12,76 +12,68 @@ import Tdaf.Analysis.Convex.Operations.Closed
 /-!
 # Monotone conjugacy on the half-line, and the convex functions built from a gauge
 
-Two correspondences that fit together. The first is conjugacy for nondecreasing convex functions
-of one nonnegative variable: on that class the ordinary conjugate, cut back to the half-line, is
-again such a function, and the operation is an involution. The second composes such a function
-with a closed gauge on a vector space; the result is a convex function all of whose sublevel sets
-are dilates of one another, and conjugacy on those functions is the first correspondence applied
-level by level, with the gauge replaced by its polar.
-
-Specialising the half-line factor to `ζ ↦ ζ^p / p` gives the functions positively homogeneous of
-degree `p`, whose conjugates are positively homogeneous of the Hölder conjugate degree `q`. That
-the two powers are exchanged is Young's inequality, read as a conjugacy.
+Two correspondences that fit together. The first is conjugacy for nondecreasing convex functions of
+one nonnegative variable: on that class the ordinary conjugate, cut back to the half-line, is again
+such a function, and the operation is an involution. The second composes such a function with a
+closed gauge on a vector space; the result is a convex function all of whose sublevel sets are
+dilates of one another, and conjugacy on those functions is the first correspondence applied level
+by level, with the gauge replaced by its polar. Specialising the half-line factor to `ζ ↦ ζ^p / p`
+gives the functions positively homogeneous of degree `p`, whose conjugates are positively
+homogeneous of the Hölder conjugate degree `q`; that the two powers are exchanged is Young's
+inequality, read as a conjugacy.
 
 ## Main definitions
 
 * `MonotoneHalfLineFn g` — `g : ℝ → EReal` is `+∞` on the negative axis, nondecreasing on the
   half-line, convex, closed, and finite at the origin.
+* `IsGaugeLike f` — `f 0 = inf f`, and the sublevel sets above that infimum are all positive
+  multiples of one another.
 * `monotoneConj g` — the **monotone conjugate** `g⁺(s) = sup {t s - g t ∣ t ≥ 0}`, itself taken to
   be `+∞` for `s < 0`.
 * `monotoneComp g k` — the composite `g ∘ k` of such a `g` with a `[0, +∞]`-valued `k`, under the
   convention `g (+∞) = +∞`.
 * `levelSup g α` — the crossing level `sup {ζ ≥ 0 ∣ g ζ ≤ α}`, the dilation factor of the sublevel
   set `{g ∘ k ≤ α}`.
-* `powHalfLine p` — the function `ζ ↦ ζ^p / p` of the half-line.
-* `PosHomogeneousDeg p f` — `f (λ x) = λ^p f x` for `λ > 0`.
-* `degGauge p f` — the gauge `(p f)^{1/p}` attached to such an `f`.
+* `powHalfLine p`, `PosHomogeneousDeg p f`, `degGauge p f` — the function `ζ ↦ ζ^p / p` of the
+  half-line; the condition `f (λ x) = λ^p f x` for `λ > 0`; and the gauge `(p f)^{1/p}` attached to
+  such an `f`.
 
 ## Main results
 
 * `monotoneHalfLineFn_monotoneConj`, `monotoneConj_monotoneConj` — the class is stable under
   `monotoneConj`, and `g⁺⁺ = g`.
-* `closedProperConvexFn_monotoneComp` — `g ∘ k` is a closed proper convex function, for a
-  non-constant `g`.
-* `setOf_monotoneComp_le_eq_smul` — its sublevel sets are all dilates of `{k ≤ 1}`.
+* `closedProperConvexFn_monotoneComp`, `setOf_monotoneComp_le_eq_smul` — for a non-constant `g`,
+  `g ∘ k` is closed proper convex, and its sublevel sets are all dilates of `{k ≤ 1}`.
 * `conj_monotoneComp` — `(g ∘ k)* = g⁺ ∘ k°` for a closed gauge `k`.
 * `monotoneConj_powHalfLine` — `(ζ ↦ ζ^p / p)⁺ = (σ ↦ σ^q / q)`.
 * `posHomogeneousDeg_iff_exists_isGauge` — a closed proper convex function is positively
   homogeneous of degree `p` exactly when it is `(1/p) k^p` for a closed gauge `k`.
 * `conj_monotoneComp_powHalfLine`, `polarGauge_degGauge`, `pairing_le_rpow_mul_rpow`,
-  `polarSet_setOf_le_inv` — the conjugate of `(1/p) k^p` is `(1/q) (k°)^q`, the gauges
-  `(p f)^{1/p}` and `(q f*)^{1/q}` are polar, and the level sets `{f ≤ 1/p}` and `{f* ≤ 1/q}` are
-  polar sets.
+  `polarSet_setOf_le_inv` — **Corollaries 15.3.1 and 15.3.2**: the conjugate of `(1/p) k^p` is
+  `(1/q) (k°)^q`, the gauges `(p f)^{1/p}` and `(q f*)^{1/q}` are polar, and the level sets
+  `{f ≤ 1/p}` and `{f* ≤ 1/q}` are polar sets.
+* `closedProperConvexFn_and_isGaugeLike_iff` — **Theorem 15.3**: a function is closed proper convex
+  and gauge-like exactly when it is `g ∘ k` for a closed gauge `k` and a non-constant
+  `MonotoneHalfLineFn g`. `IsGaugeLike.exists_eq_monotoneComp` is the reconstruction half.
 
-## What is not here
+## Implementation notes
 
-The **converse** half of Rockafellar's Theorem 15.3 — that every gauge-like closed proper convex
-function is of the form `g ∘ k`, and with it a predicate `IsGaugeLike` — is absent. What is proved
-of that theorem is the forward half: `g ∘ k` is closed proper convex
-(`closedProperConvexFn_monotoneComp`), its sublevel sets are dilates of a single set
-(`setOf_monotoneComp_le_eq_smul`), and the conjugacy formula. Corollary 15.3.1 does not depend on
-the converse: the gauge is exhibited directly as `degGauge p f`, whose unit level set is
-`{f ≤ 1/p}`.
-
-Note that a `MonotoneHalfLineFn` may be constant, and then `g ∘ k` need **not** be closed: its
-sublevel sets are `dom k`, which for a closed gauge can fail to be closed. That is what
-Rockafellar's "non-constant" hypothesis buys, and it is used here only through
-`MonotoneHalfLineFn.exists_monotoneConj_ne_top`. The conjugacy formula itself does not need it.
+A `MonotoneHalfLineFn` may be constant, and then `g ∘ k` need **not** be closed: its sublevel sets
+are `dom k`, which for a closed gauge can fail to be closed. That is what the "non-constant"
+hypothesis buys, and it enters only through `MonotoneHalfLineFn.exists_monotoneConj_ne_top`; the
+conjugacy formula itself does not need it.
 
 ## References
 
-Rockafellar, *Convex Analysis*, Theorem 12.4, and Theorem 15.3 with Corollaries 15.3.1 and
-15.3.2.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, Theorem 12.4 and
+  Theorem 15.3 with Corollaries 15.3.1 and 15.3.2.
 -/
 
 open scoped Pointwise
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Restriction to a closed set
-
-`ConvexFn.restrict` has no closedness companion yet; this is it. Both belong together in
-`Operations/Basic.lean`. -/
+/-! ### Restriction to a closed set -/
 
 section RestrictClosed
 
@@ -103,9 +95,8 @@ end RestrictClosed
 
 /-! ### The self-pairing of the line, flipped
 
-`mulPairing` is its own flip, but only propositionally, so the instances of `Duality/Conjugate.lean`
-that mention `B.flip` — closedness of the conjugate, and the whole of Fenchel–Moreau — need the
-flipped copy to be found by instance search as well. Both instances belong beside `mulPairing`. -/
+`mulPairing` is its own flip, but only propositionally, so the results stated against `B.flip` need
+the flipped copy to be visible to instance search as well. -/
 
 instance : IsContinuousPairing mulPairing.flip := by rw [mulPairing_flip]; infer_instance
 
@@ -636,10 +627,7 @@ The composite `g ∘ k` of a closed gauge with a nondecreasing closed convex fun
 half-line is conjugate to the composite of the polar gauge with the monotone conjugate. The proof
 regroups the supremum defining the conjugate by the level `ζ = k x`: on the dilate `ζ • {k ≤ 1}`
 the composite is at most `g ζ`, and the supremum of the pairing over that dilate is `ζ k°(y)`.
-
-The lower bound needs no topology at all — only the trivial half `x ∈ ζ • C → k x ≤ ζ` of the
-level-set description of a gauge. Closedness of `k` enters solely through the converse half, in
-`conj_monotoneComp_le`. -/
+Closedness of `k` enters only through `conj_monotoneComp_le`. -/
 
 section GaugeCompLower
 
@@ -1353,21 +1341,16 @@ end PowConj
 
 /-! ### Gauge-like functions, and the converse half of Theorem 15.3
 
-Rockafellar calls `f` **gauge-like** when `f 0 = inf f` and the sublevel sets `{f ≤ α}` above that
-infimum are all positive multiples of one set. `setOf_monotoneComp_le_eq_smul` says that `g ∘ k` is
-gauge-like; this section proves the converse — a gauge-like closed proper convex function *is* such
-a composite — and assembles the two halves into Theorem 15.3.
+`f` is **gauge-like** when `f 0 = inf f` and the sublevel sets `{f ≤ α}` above that infimum are all
+positive multiples of one set. `setOf_monotoneComp_le_eq_smul` says that `g ∘ k` is gauge-like;
+here is the converse, that a gauge-like closed proper convex function *is* such a composite.
 
-The reconstruction is Rockafellar's. The gauge is the gauge of one sublevel set,
-`k = γ(· | {f ≤ f 0 + 1})`, and then *every* sublevel set of `f` is a sublevel set of `k`
-(`IsGaugeLike.exists_isGauge_setOf_le_eq`). That one fact carries the whole proof: it makes `f` a
-nondecreasing function of `k` (`le_of_forall_setOf_le_eq`, `eq_top_of_forall_setOf_le_eq`), so
-`f x` depends on
-`x` only through `k x`. The half-line factor is then read off along a ray, `g ζ = f (ζ • x₁)` with
-`k x₁ = 1` — Rockafellar's own device, and what makes `g` convex and closed for free. Such a ray
-exists unless `k` takes only the values `0` and `+∞`, that is, unless the sublevel sets are a
-single cone; in that degenerate case `f` is `f 0` on that cone and `+∞` off it, and the half-line
-factor is the two-valued step function `f 0 + δ(· | [0, 1])`. -/
+The gauge is the gauge of one sublevel set, `k = γ(· | {f ≤ f 0 + 1})`, and then *every* sublevel
+set of `f` is a sublevel set of `k` (`IsGaugeLike.exists_isGauge_setOf_le_eq`); so `f x` depends on
+`x` only through `k x`. The half-line factor is read off along a ray, `g ζ = f (ζ • x₁)` with
+`k x₁ = 1`, which makes `g` convex and closed for free. Such a ray exists unless `k` takes only the
+values `0` and `+∞` — unless the sublevel sets are a single cone — in which case `f` is `f 0` on
+that cone and `+∞` off it, and the half-line factor is the step function `f 0 + δ(· | [0, 1])`. -/
 
 section IsGaugeLike
 
