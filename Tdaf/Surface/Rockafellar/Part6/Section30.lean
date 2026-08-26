@@ -113,7 +113,8 @@ theorem theorem_30_1_biadjoint_closed (hF : ConvexBifun F) (hcl : ClosedBifun F)
   concaveAdjointBifun_adjointBifun_eq_self hF hcl
 
 /-- **Theorem 30.1**, the injectivity half of "the adjoint operation establishes a one-to-one
-correspondence": two closed convex bifunctions with the same adjoint are equal. -/
+correspondence": two closed convex bifunctions with the same adjoint are equal. The
+surjectivity half is `theorem_30_1_surjective`. -/
 theorem theorem_30_1_injective {F₁ F₂ : Bifun (Rn m) (Rn n)} (hF₁ : ConvexBifun F₁)
     (hcl₁ : ClosedBifun F₁) (hF₂ : ConvexBifun F₂) (hcl₂ : ClosedBifun F₂)
     (h : dualProgram F₁ = dualProgram F₂) : F₁ = F₂ := by
