@@ -483,7 +483,12 @@ Thm 30.1 (12303) G · Thm 30.2 (12487) G · Cors 30.2.1–30.2.3 (12557, 12569, 
 **Thm 30.4 (12643) — 10 clauses**: (a) 12645 G · (b) 12647 G · (c) 12649 G · (d) 12651 G ·
 (e) 12653 C · (f) 12655 C · (g) 12657 C · (h) 12659 C · (i) 12661 C · (j) 12663 C ·
 Thm 30.5 (12693) G · **Cor 30.5.1 (12703) — 3 clauses** (a)(b)(c) 12705–12709 G ·
-Cor 30.5.2 (12729) G. **9 G, 1 C.**
+Cor 30.5.2 (12729) G. **7 G, 3 C** — corrected, and two clause marks below are backwards. Measured from the
+`variable` blocks of the backbone declarations each result specialises: **Cor 30.2.1 is C**
+(`ConjTop`, `Cor3021Primal`, `Cor3021Dual` all carry `[FiniteDimensional]`), **Cor 30.5.2 is C**
+(both assertions run on Cor 29.1.4, in a `[FiniteDimensional ℝ U]` section), and within **Thm 30.4
+only (c) and (d) are G** — (a) is in a `[FiniteDimensional ℝ U]` section and (b) in a
+`[FiniteDimensional ℝ Y]` one, so the `(a) G · (b) G` marks below should read C.
 
 Thm 30.4's printed proof covers only (a), (c), (e) and dualises. Two load-bearing unnumbered
 counterexamples: 12671 (an *abnormal* closed proper program with a genuine duality gap:

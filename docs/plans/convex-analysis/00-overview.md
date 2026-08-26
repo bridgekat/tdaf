@@ -1168,7 +1168,13 @@ to carry Rockafellar's sign flip; reading `⟨u, -v⟩ + ⟨x, y⟩` as the pair
 `convexFn_conj` plus `convexFn_compLin` prove Theorem 30.1's concavity clause in three lines. What
 both files really needed was `Tdaf.EReal.iInf_add_coe` — a *real* constant passes through an
 infimum on `EReal` — which is what makes `⨅ x L(v, x) = ⨅ u {⟨u, v⟩ + inf F u}` and Theorem 30.2
-rewrites rather than proofs. Closedness of `F*` is the one clause left half-done: it is
+rewrites rather than proofs. ~~Closedness of `F*` is the one clause left half-done~~ — **it is complete**, as
+`closedBifun_neg_adjointBifun` (`Optimization/Adjoint.lean:448`), derived from
+`closedConcaveFn_graphFn_adjointBifun` through `closedConcaveFn_iff`, with **no hypothesis on `F`**;
+the surface's `theorem_30_1_closed` is a one-line specialisation. What does remain at Theorem 30.1
+is the *properness* clause as a biconditional and the surjectivity half of the one-to-one
+correspondence, which needs a concave-side biadjoint the backbone lacks. The stale text read: it
+is
 `closedFn_conj` transported along a linear reflection, but `Operations/Image.lean` has
 `convexFn_compLin` and no `ClosedFn` counterpart, so it is recorded as missing rather than faked.
 

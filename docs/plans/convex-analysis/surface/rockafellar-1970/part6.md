@@ -10,7 +10,7 @@ the book (Thm 27.1 has 9, Thm 30.4 has 10).
 | 27 | `Section27.lean` | 9 (+9 clauses) | 1/8 | medium | `Optimization/Minimum.lean` |
 | 28 | `Section28.lean` | 9 (+3 clauses) | 0/9 | **thickest file in the surface** | `Optimization/{Program,Lagrangian,Perturbation}.lean` |
 | 29 | `Section29.lean` | 12 | 5/6/1X | **thin** | `Optimization/{Perturbation,Adjoint}.lean`, `Saddle/Minimax.lean`, `Subgradient/Uniqueness.lean`, `Bifunction/{Process,LinearProcess}.lean` |
-| 30 | `Section30.lean` | 10 (+16 clauses) | 9/1 | thin | `Optimization/{Adjoint,Normal}.lean` |
+| 30 | `Section30.lean` | 10 (+16 clauses) | **7/3** | thin | `Optimization/{Adjoint,Normal}.lean`, `Saddle/{Minimax,Correspondence}.lean` |
 | 31 | `Section31.lean` | 12 (+6 clauses) | 10/2 | thin | `Optimization/{Fenchel,Moreau,Prox,ConeDuality}.lean` |
 | 32 | `Section32.lean` | 11 | **4/7** | thin | `Optimization/Maximum.lean` |
 
@@ -19,10 +19,15 @@ the book (Thm 27.1 has 9, Thm 30.4 has 10).
 * **§27 needs Thm 27.1(e)** (remediation §4.6). The backbone excluded it as "unstatable without a
   reflexive pairing" because `∂f*(0)` lives in `E**` — but `ℝⁿ` *is* reflexive, so the surface
   demands it and cannot get it. Restate under `[IsCompatiblePairing B] [IsCompatiblePairing B.flip]`.
-* ~~**§29–§30 need the `negFst (prodPairing Bu Bx)` instances** (§4.2)~~ — **closed, and it is a
-  §30 item only.** §30's adjoint bifunctions conjugate against `negFst`; §29 uses no `negFst`, no
-  `pairingAdjoint` and no sign-flipped pairing at all, because the backbone states the whole
-  bifunction theory on the plain product `U × X` and the sign flip belongs to the *adjoint*.
+* ~~**§29–§30 need the `negFst (prodPairing Bu Bx)` instances** (§4.2)~~ — **neither section needs
+  them, and the premise was wrong.** The claim was that "§30's adjoint bifunctions conjugate against
+  `negFst`". They do not: the backbone reads Rockafellar's sign flip on the **argument**, not on the
+  pairing. `⟨u, -v⟩ + ⟨x, y⟩` is the plain `prodPairing` of `(u, x)` with `(-v, y)`, the reflection
+  is the linear map `adjointSwap`, and `conj` keeps all its own lemmas verbatim.
+  `Optimization/Adjoint.lean`'s own docstring says exactly this, and the word `negFst` occurs in
+  that file only in that sentence. Neither `Section29.lean` nor `Section30.lean` contains a
+  `negFst`, a `pairingAdjoint`, or any sign-flipped pairing. §4.2 was built and is fine; it was
+  never this Part's blocker.
 * ~~**§29–§30 also need `Rn m × Rn n ≃ₗᵢ Rn (m+n)`** (§4.8)~~ — **closed, and likewise §30 only.**
   `Section29.lean` contains no `euclideanProdEquiv` and no `Rn (m + n)`. The transport is
   `Analysis/Convex/EuclideanProd.lean`; note the usable object is `euclideanProdEquiv` on the
@@ -98,8 +103,23 @@ Two unnumbered counterexamples justify the constraint qualification and must be 
 
 * **Thm 27.1 is a nine-clause omnibus** whose proof (10449) is a one-line pointer list to §§8, 13,
   14, 23, 25. The clauses sit at three different backbone layers — split them.
-* **Thm 30.4 is a ten-clause disjunction** of sufficient conditions whose printed proof covers only
-  (a), (c), (e) and dualises.
+* **Thm 30.4 is a ten-clause disjunction** of sufficient conditions, and the printed proof argues
+  **(a), (c), (e)**; says "Dually, (b), (d) and (f) imply that normality holds" with **no argument**;
+  gives **(g)** one compressed sentence via Thm 27.1(d); disposes of **(h)** as "similarly … a
+  special case of (a)"; and of **(i), (j)** as "Of course, (i) and (j) are contained in (g) and
+  (h)". All ten are proved in `Section30.lean`, each docstring recording what the book supplied.
+* **Thm 30.4's clauses (i) and (j) are false as stated** (12665): the containment in (g) and (h)
+  needs the objective to be proper. Over a zero-dimensional `X` with `F0 ≡ +∞`, every point is an
+  optimal solution, so `argmin (F0)` is non-empty and bounded, while no sublevel set of `F0` is
+  non-empty at any finite `α`. With properness, `argmin (F0)` *is* a level set at its own finite
+  minimum and the book's one-word containment is right. This is the only place in §30 where a
+  hypothesis had to be added; four others could be dropped, because the adjoint cannot distinguish
+  `F` from `cl F`.
+* **Within Thm 30.4 only clauses (c) and (d) are G**, and `inventory.md`'s marks for (a) and (b)
+  are exactly backwards: (a) sits in a `[FiniteDimensional ℝ U]` section and (b) in a
+  `[FiniteDimensional ℝ Y]` one. Cors 30.2.1 and 30.5.2 are C as well — the latter runs on
+  Cor 29.1.4. Hence `7/3` in the table above, measured from the backbone's `variable` blocks rather
+  than from the shape of the statements. Same failure mode as §25's `0/11`, which was really `3/8`.
 * **The `X` in §29's G/C column is `inventory.md`'s "stated without proof" mark**, not a scope
   deferral — the legend lives in `inventory.md` and there are exactly two `X`s in the book. §29's is
   Corollary 29.4.1, and it is dealt with in full rather than deferred.

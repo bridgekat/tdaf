@@ -433,7 +433,7 @@ below are the ones actually used; each plan entry above split into several state
 | `mem_argmin_iff_exists_isSaddlePoint_lagrangian`, `isSaddlePoint_lagrangian_iff_mem_kuhnTucker`, `…_of_stronglyConsistent` | **Thm 36.6** (= Cor 29.3.1) | done |
 | `zero_mem_saddleSubgradient_saddleLagrangian_iff` | **Thm 36.6**, subgradient form `(0, 0) ∈ ∂L (v̄, x̄)` | done (`Saddle/Subgradient.lean`) — Thm 37.4 at the tilt by the origin, on top of Thm 29.3 |
 | `isSaddlePoint_lagrangian_iff`, `iSup_lagrangian`, `iSup_lagrangian_eq`, `iInf_lagrangian_ne_top` | **Thm 29.3** | done — `Optimization/Lagrangian.lean` lists it as missing |
-| `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | **Cor 30.5.1** | done — `Optimization/Normal.lean` lists it as "needs §36" |
+| `isSaddlePoint_lagrangian_iff_normal_and_optimal`, `isSaddlePoint_lagrangian_iff_le_adjointBifun`, `iInf_lagrangian_eq_adjointBifun_zero` | **Cor 30.5.1** | done — and the note this row cited is gone: `Optimization/Normal.lean` no longer mentions §36 anywhere. §30 specialises `isSaddlePoint_lagrangian_iff_normal_and_optimal` and `isSaddlePoint_lagrangian_iff_le_adjointBifun` directly |
 | `inverseBifun`, `inverseBifun_inverseBifun`, `convexBifun_inverseBifun`, `closedBifun_inverseBifun` | `F_*` and its involution | done |
 | `lowerConjSaddle`, `upperConjSaddle`, `bifunSaddleClass`, `lowerConjSaddle_le_upperConjSaddle` | the §37 vocabulary, and `K̲* ≤ K̄*` by Lemma 36.1 | done |
 | `minimax_eq_neg_lowerConjSaddle_zero`, `maximin_eq_neg_upperConjSaddle_zero`, `hasSaddleValue_iff_conjSaddle_zero_eq` | §37, the displays before Cor 37.1.3 | done |
