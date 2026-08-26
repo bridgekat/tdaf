@@ -21,6 +21,8 @@ scaffolding the surface library will otherwise pay for per-statement.
 | §1.5 `Eponyms.lean` | **done** — nine aliases |
 | §1.6 delete `partialConj₂` | **not done, deliberately** — D8 amended instead |
 | §2.1 `saddleSwap` transport | **done** — 58 duplicated proof lines → 17; see the correction below |
+| §2.2 de-leak `reflect`'s mirrors | **done, and the prescription was wrong** — see below |
+| §2.3 bundle the involutions | **done** — `reflectAut`, `saddleSwapOrderIso` |
 | §3 `closedsOrderIso` | **done** — plus three instantiations; D12 amended |
 | §4.2 `negFst` pairing instances | **done** — this was the `Setup.lean` blocker, and it is closed |
 | §4.9 the reduction to lines | **done** — `Analysis/Convex/Line.lean`, with the converse too (§8.2) |
@@ -129,8 +131,22 @@ But **eight public theorems carry `.reflect` in their hypotheses** — `coadjoin
 `graph_adjointProcess_comp_eq_closure` (`:1934`). The docstring of the first claims that
 `eval_reflect` translates the hypothesis into a statement about `A₁` and `A₂` themselves; it does
 not — three lines below, the hypothesis still reads `A₁.reflect.eval u` — and a caller of the
-infimum-oriented Theorem 39.5 must reason about the reflection to discharge it. Push `eval_reflect` through
-the hypotheses. Until this is done `reflect` is not a template anyone should copy.
+infimum-oriented Theorem 39.5 must reason about the reflection to discharge it.
+
+**Done — and `eval_reflect` was the wrong tool.** All eight really did leak. But pushing
+`eval_reflect` through gives `-(supportFn Bx (A₁.eval (-u)) (-y))`: it trades one involution for
+two sign flips, and the caller is no better off. **The leak was in the proofs, not in the
+statements.** Both mirrors reflected the *argument* —
+`adjointProcess_reflect : adjointProcess Bu Bx A.reflect = coadjointProcess Bu Bx A` — which
+forces the hypothesis to be read at `A.reflect`. The dictionary also carries the other
+orientation, `coadjointProcess_eq_reflect_adjointProcess :
+coadjointProcess Bu Bx A = (adjointProcess Bu Bx A).reflect`, which puts the involution on the
+*conclusion*, where `reflect_add` and `reflect_comp` cancel it. With that,
+`coadjointProcess_add` and `coadjointProcess_comp` carry Theorems 39.5 and 39.8's own hypotheses
+**verbatim**, and the six closed halves each simply lose one `.reflect` per summand. No proof
+grew: both mirrors are still four-line `rw` chains, and no call site outside the file changed
+(there are none). The rule is now `gotchas.md` LIB4: *a mirror that leaks is a wrong proof, not a
+wrong statement — look for the intertwining lemma that rewrites the conclusion.*
 
 ### 2.3 Bundle the involutions
 
@@ -140,6 +156,17 @@ the hypotheses. Until this is done `reflect` is not a template anyone should cop
   `Function.Involutive`, giving `.injective`/`.eq_iff`/`.toPerm` free.
 * `saddleSwap` — involutive (`Closure.lean:135`) **and antitone** (`Existence.lean:119`) ⇒
   `OrderIso … ᵒᵈ`. Then `saddleSwap_injective` (`:138`, hand-proved) is `Equiv.injective`.
+
+**Done, and both claims held.** `ConvexProcess.reflectAut : AddAut (ConvexProcess U X)` — `AddAut`
+needs only `[Add]`, which the processes have, so no group structure is required — built on
+`reflect_involutive` and `reflect_add`; and
+`saddleSwapOrderIso : (U × X → EReal) ≃o (X × U → EReal)ᵒᵈ`, after which `saddleSwap_injective` is
+`Equiv.injective`. Note `saddleSwap` is *not* `Function.Involutive` — it is not an endomorphism,
+the two factors being exchanged — so the two-sided inverse has to be recorded as an `Equiv`, which
+is what the `OrderIso` does. Bundling cost nothing at the use sites: the bare `def` stays and the
+bundle is built from it, so none of the 106 `saddleSwap` uses in `Kernel.lean` changed.
+`saddleSwap_le_saddleSwap` moved from `Saddle/Existence.lean` up to `Saddle/Closure.lean`, so that
+the bundle can sit beside the definition; it needed no hypotheses at all, so the move is free.
 
 ### 2.4 Sign symmetry (D2)
 

@@ -16,10 +16,13 @@ in the *gates* below, not in the sections.
 
 ## Gated on [remediation](../../backbone/08-remediation.md)
 
-* **§2.2 — de-leak `reflect`'s mirror statements.** Part VIII specialises `Bifunction/Process.lean`,
-  where eight statements mention the involution in their own hypotheses. A surface theorem
-  numbered `theorem_39_2` must read like the book's Theorem 39.2 and not like a transport lemma, so
-  the leak has to be plugged before `Section39.lean`, not after.
+* **§2.2 — de-leak `reflect`'s mirror statements — CLOSED.** Part VIII specialises
+  `Bifunction/Process.lean`, where eight statements mentioned the involution in their own
+  hypotheses. A surface theorem numbered `theorem_39_2` must read like the book's Theorem 39.2 and
+  not like a transport lemma, so the leak had to be plugged before `Section39.lean`. It is:
+  `coadjointProcess_add` and `coadjointProcess_comp` now carry Theorems 39.5's and 39.8's own
+  hypotheses verbatim, and the six closed halves are stated about the adjoints themselves.
+  `reflect` occurs in no hypothesis in the file.
 * **§4.1 bundled adjoint.** §38's `F*` and §39's `A*` are the densest adjoint users in the book —
   every one of the 21 results touches one. Carrying `A*` as a loose argument plus an
   `IsAdjointPair` hypothesis would double the length of both files.

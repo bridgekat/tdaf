@@ -982,11 +982,28 @@ statements it transports.** `reflect` and `saddleSwap` are bare `def`s, so `Func
 `Equiv`, `AddEquiv` and `OrderIso` never apply to them — `saddleSwap_injective` is hand-proved where
 `Function.LeftInverse.injective` would do, and `saddleSwap` is antitone so it wants to be an
 `OrderIso _ _ᵒᵈ` and instead is nothing. Bundling after the fact means touching every use site;
-bundling at definition costs one line. Separately, eight public theorems in
-`Bifunction/Process.lean` carry `.reflect` in their *hypotheses*, so a caller has to reason about
-the reflection to discharge them — the transport stopped one lemma short of being invisible. A
-prototype confirmed the goal is reachable: transporting a whole block through `saddleSwap`
-produced hypotheses **identical** to the re-proved versions. Note that the double negation of a real-valued companion is
+bundling at definition costs one line. Both are now bundled —
+`ConvexProcess.reflectAut : AddAut (ConvexProcess U X)` and
+`saddleSwapOrderIso : (U × X → EReal) ≃o (X × U → EReal)ᵒᵈ` — and it cost nothing at the use sites,
+because the bare `def` stays and the bundle is built *from* it. Two things to know before copying
+that: **`AddAut` needs only `[Add]`**, not a group, so a mere semigroup of objects qualifies; and a
+swap between two *different* products is **not** `Function.Involutive` at all — it is not an
+endomorphism — so its two-sided inverse has to be recorded as an `Equiv`, which is what the
+`OrderIso` does.
+
+**A mirror that leaks is a wrong *proof*, not a wrong statement, and the fix is the other
+intertwining lemma.** Eight public theorems in `Bifunction/Process.lean` carried `.reflect` in
+their *hypotheses*. Pushing the value lemma `eval_reflect` through does **not** fix it: it trades
+the involution for two sign flips (`A₁.eval (-u)` read at `-y`) and the caller is no better off.
+The cause was that both mirrors reflected the *argument* —
+`adjointProcess Bu Bx A.reflect = coadjointProcess Bu Bx A` — which forces the hypothesis to be
+taken at `A.reflect`. The same dictionary carries the other orientation,
+`coadjointProcess Bu Bx A = (adjointProcess Bu Bx A).reflect`, which puts the involution on the
+*conclusion*, where the homomorphism laws (`reflect_add`, `reflect_comp`) cancel it; with that the
+hypotheses are the originals, verbatim, and no proof grew. **Symptom**: a mirror whose hypothesis
+mentions the involution and whose proof opens `rw [← intertwining_lemma …]`. Look for the entry
+that rewrites the conclusion instead. A prototype confirmed the goal is reachable: transporting a
+whole block through `saddleSwap` produced hypotheses **identical** to the re-proved versions. Note that the double negation of a real-valued companion is
 *not* `rfl`: `swapReal (swapReal K) = K` needs `neg_neg` and a `funext`, even though the pair-swap
 half is `rfl`.
 

@@ -1561,9 +1561,11 @@ namespace ConvexProcess
 Reflection is what exchanges the two orientations. Rockafellar defines the adjoint of an
 infimum-oriented process by reversing the inequality; reversing the inequality is the same as
 reflecting the graph, so `adjointProcess Bu Bx A.reflect = coadjointProcess Bu Bx A`
-(`adjointProcess_reflect`). Every infimum-oriented statement about `A` is therefore a
-supremum-oriented statement about `A.reflect`, which is how the mirrors of Theorems 39.5 and 39.8
-are obtained. -/
+(`adjointProcess_reflect`). The same fact read the other way round,
+`coadjointProcess Bu Bx A = (adjointProcess Bu Bx A).reflect`
+(`coadjointProcess_eq_reflect_adjointProcess`), is the one the mirrors of Theorems 39.5 and
+39.8 use: it puts the reflection on the *conclusion*, where `reflect_add` and `reflect_comp`
+cancel it, so those mirrors carry the supremum-oriented hypotheses unchanged. -/
 def reflect (A : ConvexProcess U X) : ConvexProcess U X where
   graph :=
     { carrier := {p : U × X | -p ∈ A.graph}

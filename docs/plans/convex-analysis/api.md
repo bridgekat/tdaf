@@ -3284,6 +3284,8 @@ def LowerClosedFn (K) : Prop := lowerCl K = K
 def UpperClosedFn (K) : Prop := upperCl K = K
 def FullyClosedFn (K) : Prop := ConvexClosedFn K ∧ ConcaveClosedFn K
 noncomputable def saddleSwap (K : U × X → EReal) : X × U → EReal := fun q => -(K (q.2, q.1))
+noncomputable def saddleSwapOrderIso : (U × X → EReal) ≃o (X × U → EReal)ᵒᵈ
+theorem saddleSwap_le_saddleSwap (h : K ≤ L) : saddleSwap L ≤ saddleSwap K
 theorem fullyClosedFn_iff : FullyClosedFn K ↔ LowerClosedFn K ∧ UpperClosedFn K
 theorem partialCl₁_saddleSwap (K) : partialCl₁ (saddleSwap K) = saddleSwap (partialCl₂ K)
 theorem upperClosedFn_upperCl (Bu) [IsCompatiblePairing Bu] (Bx) [IsCompatiblePairing Bx]
@@ -4645,7 +4647,7 @@ structure ConvexProcess (U X : Type*) … where graph : PointedCone ℝ (U × X)
 def eval … ; def dom … ; def range … ; def image … ; def inv …
 def ofLinearMap … ; def comp … ; instance : Add …
 noncomputable def indicatorBifun … ; def adjointProcess … ; def coadjointProcess …
-def reflect … ; noncomputable def coBracket …
+def reflect … ; def reflectAut : AddAut (ConvexProcess U X) … ; noncomputable def coBracket …
 theorem exists_linearMap_of_isBounded …                    -- Thm 39.1
 theorem coadjointProcess_adjointProcess_eq_self_iff …       -- Thm 39.2, `A** = cl A`
 theorem adjointProcess_coadjointProcess_eq_self_iff …       -- Thm 39.2, other orientation
@@ -4679,8 +4681,11 @@ orientation field would double every statement.
 
 **Every infimum-oriented statement is a reflection.** `reflect` sends `graph A` to `-graph A`; it
 exchanges `adjointProcess` and `coadjointProcess`, commutes with sums and products, and preserves
-closedness, so the mirrors of Theorems 39.2, 39.5 and 39.8 are the supremum-oriented theorems
-applied to `A.reflect`. Theorem 39.3 is the exception: reflection flips only the *dual* variable of
+closedness, so the mirrors of Theorems 39.2, 39.5 and 39.8 are the supremum-oriented theorems read
+back through it. It is the *adjoint* that is reflected, not the process:
+`coadjointProcess_eq_reflect_adjointProcess` puts the involution on the conclusion, where
+`reflect_add` and `reflect_comp` cancel it, so the infimum-oriented statements carry Theorems
+39.5's and 39.8's own hypotheses and mention `reflect` nowhere. Theorem 39.3 is the exception: reflection flips only the *dual* variable of
 the inner product, so `coBracket Bx A u y = -(bracket Bx A.indicatorBifun u (-y))` — same `u`,
 negated `y` — and that single equation (`coBracket_eq_neg_bracket`) carries every clause of the
 mirror, including the third assertion, which comes out with an honest `clFn` in `u` where the

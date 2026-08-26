@@ -106,12 +106,6 @@ private theorem coe_neg_sub_neg (r : ℝ) (z : EReal) :
   | coe s => norm_cast; ring
   | top => simp
 
-omit [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X] in
-/-- `saddleSwap` negates, so it reverses the pointwise order. -/
-theorem saddleSwap_le_saddleSwap {K L : U × X → EReal} (h : K ≤ L) :
-    saddleSwap L ≤ saddleSwap K :=
-  fun q => EReal.neg_le_neg_iff.2 (h (q.2, q.1))
-
 /-- **The adjoint commutes with `flipBifun` once both pairings are negated and exchanged.**
 
 This is the identity of definitions behind the whole swap dictionary: `adjointBifun` is an
