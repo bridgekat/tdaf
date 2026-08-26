@@ -41,10 +41,15 @@ want it.
 are not:
 
 * **Theorem 25.1, forward half.** `∇f(x)` is the unique subgradient at a point of
-  differentiability, for a convex `f` on *any* normed space: `theorem_25_1_forward` and
-  `theorem_25_1_le` specialise `Gradient.lean`'s `HasGradientAt.subgradient_eq` and
-  `HasGradientAt.le`, neither of which sees a dimension. The uniqueness half of that argument does
-  not even use convexity. **The converse is genuinely finite-dimensional**
+  differentiability, for a convex `f` on *any* normed space. That is `Gradient.lean`'s
+  `HasGradientAt.subgradient_eq` and `HasGradientAt.le`, neither of which sees a dimension;
+  `theorem_25_1_le` specialises the second directly, and `theorem_25_1_forward` specialises the
+  first carried across the Riesz isomorphism (`Rademacher.lean`'s
+  `subgradient_innerL_eq_singleton`) so that the subgradient reads as a vector. That carrying wants
+  `E` complete, because `InnerProductSpace.toDual` does; `Rademacher.lean` supplies completeness by
+  sitting in a `[FiniteDimensional ℝ E]` section, so its *binder* mentions a dimension even though
+  the argument does not. The uniqueness half does not even use convexity.
+  **The converse is genuinely finite-dimensional**
   (`theorem_25_1_converse`): it goes through `Uniqueness.lean`'s interior step, where a convex set
   whose normal cone at `x` is trivial is shown to be a neighbourhood of `x` — Corollary 11.6.1, and
   false in infinite dimensions.
@@ -68,7 +73,7 @@ forms (`mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff`) are
 | Theorem 25.1 | `theorem_25_1_forward`, `theorem_25_1_le`, `theorem_25_1_converse`,
   `theorem_25_1`, `theorem_25_1_differentiableAtFn` |
 | Corollary 25.1.1 | `corollary_25_1_1_proper`, `corollary_25_1_1_mem_interior` |
-| Corollary 25.1.2 | `corollary_25_1_2` |
+| Corollary 25.1.2 | `corollary_25_1_2`, `corollary_25_1_2_clFn` |
 | Corollary 25.1.3 | `corollary_25_1_3` |
 | Theorem 25.2 | `theorem_25_2_dirDeriv`, `theorem_25_2`, `theorem_25_2_partial` |
 | Theorem 25.3 | `theorem_25_3_differentiableAtFn_iff`, `theorem_25_3_countable`,
@@ -104,6 +109,9 @@ it. Nothing in §25 does — no statement here mixes the two readings.
   proof opens by replacing `f` with `cl f`, justified by the remark after Corollary 25.1.1 that
   `∇(cl f) = ∇f`. That remark is asserted, not proved, and the backbone does not have it, so both
   corollaries are stated here with `ClosedFn f` — see `## Backbone gaps`.
+  `corollary_25_1_2_clFn` shows how far the book's own reduction gets without the remark: under
+  the book's hypotheses exactly, with `∇(cl f)` in place of `∇f`. Corollary 25.1.3 has no such
+  companion, because `PosHomogeneous (clFn g)` is not in the library either.
 * **Theorem 25.6's proof does not, here, verify the exercise of line 8477.** The book leaves
   `rec (∂f(x)) = N_{dom f}(x)` as an exercise in §23 and says the verification "will be given later
   as part of the proof of Theorem 25.6". The backbone's proof never computes that recession cone —
@@ -143,6 +151,12 @@ it. Nothing in §25 does — no statement here mixes the two readings.
   *interiors* rather than relative interiors and is not in the library. It belongs in
   `Tdaf/Analysis/Convex/Subgradient/Uniqueness.lean`, next to the other two consumers of
   Theorem 25.1's converse.
+
+**Friction, not a gap:** `linFn_eq_toDual` says the surface's vector-to-functional map and the one
+`Subgradient/{Rademacher,Reconstruction}.lean` use are the same map, and every §25 statement pays
+one rewrite by it. It belongs in `Tdaf/Surface/Common/Euclidean.lean` alongside the
+`*_flip_pairing` rewrites, for the same reason those are there: a second `ℝⁿ` surface, and §26,
+will want it too.
 
 ## References
 
@@ -247,11 +261,13 @@ variable {f : Rn n → EReal} {b x : Rn n}
 convex function and `x` a point where `f` is finite. If `f` is differentiable at `x`, then
 `∇f(x)` is the *unique* subgradient of `f` at `x`.
 
-Nothing here is finite-dimensional: `Gradient.lean` proves it for a convex function on an arbitrary
-normed space, and the uniqueness half of the argument
+Nothing in the *argument* is finite-dimensional: `Gradient.lean` proves `∂f(x) = {∇f(x)}` for a
+convex function on an arbitrary normed space, and the uniqueness half
 (`eq_of_mem_subgradient_of_hasFDerivAt`) uses neither convexity nor properness — only that the
-difference quotient along the rays `±v` has a common limit. The converse, `theorem_25_1_converse`,
-is where the finite dimension enters. Rockafellar's "let `f` be finite at `x`" is weaker only in
+difference quotient along the rays `±v` has a common limit. The Riesz step that turns the
+subgradient into a *vector* is stated in `Rademacher.lean` inside a `[FiniteDimensional ℝ E]`
+section, but what it consumes of that is completeness. The converse, `theorem_25_1_converse`, is
+where the dimension is genuinely used. Rockafellar's "let `f` be finite at `x`" is weaker only in
 appearance: a gradient at `x` forces `f` to be finite near `x`, which is Corollary 25.1.1. -/
 theorem theorem_25_1_forward (hf : ConvexFn f) (h : HasGradientVecAt f b x) :
     subgradient (pairing n) f x = {b} := by
@@ -323,6 +339,19 @@ theorem corollary_25_1_2 (hf : ConvexFn f) (hp : Proper f) (hc : ClosedFn f) {y 
       conj (pairing n) f y = (μ : EReal) ∧ ∃ x : Rn n, HasGradientVecAt f y x := by
   rw [mem_exposedPoints_epi_conj_iff (B := pairing n) hf hp hc]
   exact and_congr_right fun _ => exists_congr fun _ => (theorem_25_1 hf hp).symm
+
+/-- **Rockafellar, Corollary 25.1.2** under the book's own hypotheses — `f` merely proper convex —
+at the price of naming `cl f` where the book names `f`.
+
+This is exactly what the book's proof produces: `(cl f)* = f*`, so the exposed points of `epi f*`
+are read off `cl f`, which *is* closed. Rockafellar then renames `∇(cl f)` to `∇f` on the strength
+of the remark after Corollary 25.1.1, which is the unproved step; everything before it is here.
+The two statements are therefore equivalent modulo the one backbone gap this section records. -/
+theorem corollary_25_1_2_clFn (hf : ConvexFn f) (hp : Proper f) {y : Rn n} {μ : ℝ} :
+    (y, μ) ∈ (epi (conj (pairing n) f)).exposedPoints ℝ ↔
+      conj (pairing n) f y = (μ : EReal) ∧ ∃ x : Rn n, HasGradientVecAt (clFn f) y x := by
+  rw [← conj_clFn (B := pairing n) f]
+  exact corollary_25_1_2 (convexFn_clFn hf) (hf.proper_clFn hp) (closedFn_clFn f)
 
 /-- **Rockafellar, Corollary 25.1.3**: let `C` be a non-empty closed convex set and `g` any
 positively homogeneous proper convex function with `C = {z | ⟨y, z⟩ ≤ g(y) for all y}` — the
@@ -513,9 +542,10 @@ theorem theorem_25_5_continuousOn (hf : ConvexFn f) (hp : Proper f) :
 set `C` is *continuously* differentiable on `C`.
 
 **The book states this with no proof at all.** The proof here extends `g` by `+∞` off `C`, which
-changes no gradient because `C` is open, and applies Theorem 25.5's continuity clause. The book's
-`C` is non-empty by its convention that a convex function has non-empty effective domain; the
-statement is true and proved for `C = ∅` as well, so no such hypothesis appears. -/
+changes no gradient because `C` is open, and applies Theorem 25.5's continuity clause. The
+backbone's `continuousOn_fderiv_of_convexOn` carries `C.Nonempty`, because the extension has to be
+proper; the statement is vacuously true at `C = ∅`, so the hypothesis is discharged here rather
+than passed on. -/
 theorem corollary_25_5_1 {C : Set (Rn n)} {g : Rn n → ℝ} (hC : IsOpen C) (hg : ConvexOn ℝ C g)
     (hd : DifferentiableOn ℝ g C) : ContinuousOn (fderiv ℝ g) C := by
   rcases C.eq_empty_or_nonempty with rfl | hne
