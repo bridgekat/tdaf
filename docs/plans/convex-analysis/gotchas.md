@@ -354,6 +354,58 @@ the right way to write a piecewise `EReal` function — it keeps `Decidable` out
 **EL34. `field_simp` normalises `A / c = 0` to `A = c * 0`, not `A = 0`.** Symptom is a leftover
 goal naming `x.ofLp 1 * 4 * 0`. Follow with `simpa using`.
 
+**EL35. Four explicit-argument and slot traps from the Part VI round.**
+
+* **`Filter.limsup_le_of_le`'s first explicit argument is the `isBoundedDefault` autoParam.**
+  `limsup_le_of_le ?_` feeds the `∀ᶠ … ≤ a` proof into the *cobounded* slot, and the error reports
+  `(∀ᶠ n in ?f, ?u n ≤ ?a) → limsup ?u ?f ≤ ?a` "but is expected to have type `limsup … ≤ ?a`",
+  which reads as a broken lemma rather than a slot mix-up. Write `limsup_le_of_le (h := hev)`.
+* **`add_le_add_left h _` picks its orientation from the goal, and picks wrong under `EReal`
+  coercions.** It unified the wrong summand and reported a mismatch naming two different sides. Use
+  `add_le_add le_rfl h`, which fixes both arguments explicitly.
+* **`rw [f_of_mem h] at k` rewrites the *first* occurrence, which is usually not the one you meant.**
+  For a piecewise definition, declare explicit value lemmas at the points you care about
+  (`foo_zero_zero`, `foo_zero_of_ne`) instead of rewriting with a hypothesis-carrying general lemma.
+* **An implicit section variable that is a *function* will not unify against a caller's lambda.**
+  With `variable {h : Rn n → EReal}`, `refine thm ?_ ?_ hz` fails with a type mismatch on `hz` —
+  which is obviously fine — because `h`'s metavariable was never assigned and the later arguments
+  were elaborated against garbage. Pass it by name: `(h := fun u => quadFn (pairing n) (a - u))`.
+
+**EL36. `rw` cannot key on a two-function product pattern.** A lemma concluding
+`⨅ p : α × β, (ψ p.1 + φ p.2) = (⨅ ψ) + ⨅ φ` is unusable by `rw`: the left side is
+`?ψ p.1 + ?φ p.2`, which is not a higher-order pattern, and `rw` reports "did not find an
+occurrence" against the very goal it was written for. Instantiate both functions first —
+`have h := lemma (fun w => …) (fun x => …) h₁ h₂` — then `rw [h]`. Metavariable instantiation
+beta-reduces, so `h` comes out in exactly the form the goal is in. EL24 is the sibling for pairs
+supplied to `refine`.
+
+**EL37. A `whnf` timeout is not always a layer mismatch — sometimes the term is just large.**
+`Convex.relint_image` timed out at 200 000 heartbeats when its two sets were
+`dom (conj (pairing n) f)` and `domConcave (concaveConj (pairing m) g)`, while the identical call
+over `dom f` and `domConcave g` elaborated instantly. Neither raising heartbeats nor EL13's import
+check helps. State the computation once as a private lemma with the sets as opaque
+`{S : Set _} {T : Set _}` and apply that, so the elaborator never sees the conjugates. Worth doing
+prophylactically for any `ri`/`Convex.*` computation whose arguments are conjugates or bifunction
+domains.
+
+**EL38. Ascribing an unfolded membership inside `obtain … : … := …` makes the elaborator solve the
+ascription before it knows the set.** `obtain ⟨x, hx⟩ : ∃ x, F 0 x ≠ ⊤ := intrinsicInterior_subset hs`
+reports *two* errors, neither mentioning the ascription: a mismatch claiming `hs` is expected to have
+type `(fun x => F 0 x ≠ ⊤) ∈ intrinsicInterior ?m Exists`, and a failure to synthesize
+`AddTorsor ?m (Rn n → Prop)`. Bind the membership at its own type first, then `obtain` from it.
+
+**EL39. Never add an instance binder a section already derives.** Adding `[TopologicalSpace E]` to a
+section that has `[NormedAddCommGroup E]` produces an application type mismatch between two copies of
+the same `def`'s instance argument — `Proper (@clFn E PseudoMetricSpace.toUniformSpace.toTopologicalSpace f)`
+against `Proper (@clFn E inst✝⁶ f)` — which reads as a broken lemma about `clFn`. **The tell is two
+different instance expressions in one message.** `LocallyConvexSpace ℝ E`, `IsTopologicalAddGroup E`
+and `ContinuousSMul ℝ E` are all derivable from `NormedSpace ℝ E`; add none of them.
+
+**EL40. `fun_prop` inside a `.comp` argument cannot infer the function it is asked about.**
+`hgc.comp (by fun_prop)` fails with *"`fun_prop` was unable to prove `Continuous ?m.35`"* and an
+empty `Issues:` list, because `Continuous.comp` leaves the inner function a metavariable. Name it
+first with a typed `have`, then compose.
+
 ---
 
 ## LINT — Linters and the zero-warning bar
@@ -746,6 +798,17 @@ way. Worth knowing before reaching for a filter argument.
 `EReal.add_top_of_ne_bot` and `EReal.top_add_of_ne_bot` all need the `_root_.` prefix from inside
 `Tdaf.EReal`. DEP3, again.
 
+**ER17. `neg_eq_zero` does not apply on `EReal`.** `rw [neg_eq_zero]` on `-a = 0` fails with
+"did not find an occurrence" naming `SubtractionMonoid.toSubNegZeroMonoid`, because the lemma needs a
+`SubtractionMonoid` and `EReal` is not one (ER1: `EReal` subtraction is not a group operation).
+Instead: `rw [← neg_neg a, h, neg_zero]`. Same shape for `neg_ne_zero`, `neg_le_neg_iff`, and
+anything else routed through `SubtractionMonoid`.
+
+**ER18. `EReal` is `DenselyOrdered`, and `eq_top_iff_forall_lt` takes its argument explicitly.**
+`EReal.eq_top_iff_forall_lt : x = ⊤ ↔ ∀ y : ℝ, (y : EReal) < x`, like `eq_bot_iff_forall_lt`, is the
+clean way to prove a supremum is `⊤`: `rw [_root_.EReal.eq_top_iff_forall_lt]; intro c`, then exhibit
+a point beating `c`, with no `⊥`/`⊤` case split.
+
 ---
 
 ## SET — Sets, products, cones
@@ -881,6 +944,17 @@ subgradient by hand and finish with `hasGradientAt_toDual_of_subgradient_eq_sing
 parabola, testing the subgradient inequality at just `s = ξ₂`, `ξ₂ + 1` and `ξ₂/2` on the ray
 `(2su₀, s)` forces `u₀² + u₁ = 0` *and* the completed square to vanish, with no case split at all.
 Pick the test points before writing the proof, not during it.
+
+**SET15. `nlinarith` on a Jensen-style two-point inequality: supply the algebraic identity.**
+`a·x² + b·y² ≥ (a·x + b·y)²` under `a + b = 1` defeats `nlinarith` even with the obvious hints,
+because the identity `a x² + b y² − (a x + b y)² = a b (x − y)²` holds only *modulo* `a + b = 1` and
+`nlinarith` will not find that use of the hypothesis. Prove the identity first with
+`linear_combination (-(a * x ^ 2 + b * y ^ 2)) * hab`, then finish with `linarith`. The `t ↦ t⁴` case
+is this one squared (`pow_le_pow_left₀`), not a second `nlinarith`.
+
+**SET16. `Mathlib.Analysis.Convex.Mul` is not in this project's import closure**, so
+`Even.convexOn_pow` is an "unknown constant" although it is in Mathlib. Rather than widening a
+surface file's imports for one lemma, state the two-point inequality directly, as in SET15.
 
 ---
 
@@ -1260,6 +1334,46 @@ constructors and marked the item done. `Subgradient/Calculus.lean` still had onl
 consequence, which is what the section actually needed. When closing an item, name the consumer and
 check that the consumer can now be written — not that the definition exists.
 
+**LIB25. `SeparatingDual ℝ E` is automatic for any `[NormedAddCommGroup E] [NormedSpace ℝ E]`**,
+so in every normed section `[IsCompatiblePairing B]` alone already gives `Function.Injective B`, via
+`separatingRight_flip_of_separatingDual` (`Duality/Level.lean`). **Symptom**: you are about to add an
+injectivity or separation hypothesis to a normed-space theorem, or to record a clause as needing "a
+reflexive pairing". Check first — this is what made remediation §4.6 free after five rounds of being
+recorded as blocked.
+
+**LIB26. Search for the *statement*, not for the name you would have given it.**
+`mem_subgradient_clFn_iff` is exactly "`∂(cl f) x = ∂f x` wherever `(cl f) x = f x`", and it is filed
+in `Subgradient/Defs.lean` as Theorem 23.5 `(a) ⟺ (a**)`, with nothing in its name about closures. An
+agent drafted `subgradient_clFn_eq_of_mem_relint_dom` before grepping. Grep for two of the
+statement's head symbols on one line (`clFn` and `subgradient`), not for a hoped-for name.
+
+**LIB27. A surface lemma specialised to `Rn` on *both* sides will not fit a map out of a product.**
+`Rockafellar.theorem_6_6_ri` is stated for `Rn n →ₗ[ℝ] Rn m`, so the `(w, x) ↦ w - A x` that writes
+`dom g - A (dom f)` as one image does not match, and `rw` reports "did not find an occurrence of
+`ri (⇑?m '' ?s)`" against a goal that visibly has that shape. Use the backbone `Convex.relint_image`,
+which is stated over arbitrary `E F`; likewise `intrinsicInterior_prod_eq` rather than
+`Rockafellar.relint_prod`. The general rule: when a surface rewrite mysteriously fails to match, check
+whether the surface statement fixed a type the goal has not.
+
+**LIB28. Check the target module's *import closure*, not just that the prerequisite exists.**
+Remediation §12.4 placed a lemma in `Polyhedral/Duality.lean` whose prerequisite lives in
+`Optimization/Perturbation.lean`, a §29 module *above* it — so the item as written was unbuildable.
+`grep -rn "theorem <name>"` finds the lemma and tells you nothing about whether you can cite it from
+where you are going. Compute the closure (thirty lines of Python over the `import` lines) before
+planning a move. **The usual answer is that the *prerequisite* is misfiled, not the new lemma.**
+
+**LIB29. A scope deferral is a claim, and LIB17 applies to it.** `part5.md` recorded Corollary 24.2.1
+as deferred by scope — "one-dimensional Lebesgue theory, not convex analysis" — while
+`Subgradient/Integral.lean` proved it in full, *and that module's own docstring said the stated
+reason does not apply*. An item that says why something is out of scope is asserting something about
+the library.
+
+**LIB30. A gate is not closed because the interface it asked for exists.** Remediation §4.4 asked for
+an `m`-ary `IsExactSum`; the round that closed it built `IsExactFinsetSum` with both constructors and
+marked the item done, while `Subgradient/Calculus.lean` still had only the *binary* consequence,
+which is what the section actually needed. When closing an item, name the consumer and check that the
+consumer can now be written.
+
 ---
 
 ## BLD — Toolchain, build, worktrees
@@ -1407,3 +1521,48 @@ the output.
 The build accepted both, because one was `private`; only the pre-commit grep caught it. LIB1's
 duplicate-name sweep catches public collisions after the fact — this is the check that stops a
 `private` shadow being written in the first place.
+
+**BLD18. `autoImplicit` is still on in this repository.** `lakefile.toml` sets
+`relaxedAutoImplicit = false` and never `autoImplicit = false`, where Mathlib sets both. A
+single-letter identifier in a theorem statement is therefore silently auto-bound as an implicit, with
+its type inferred from the surrounding applications, and **the file builds with zero warnings**. The
+symptom is the absence of one. Declare every variable in a `variable` line, and grep new files for
+statement-level identifiers the enclosing section does not bind. Tracked as remediation §12.19.
+
+**BLD19. Never trust an exit code through a pipe.** `lake build | tail -30` reports `tail`'s status,
+so a failed build exits 0 — and `tail` is worse than `head` here, because the failure line
+*is* in the tail and reads like ordinary output. `lake env lean FILE | head -N` has the same problem
+in the other direction: empty output is not proof of a clean file. **Grep the output for
+`Build completed successfully`**, and echo a marker after any pipeline whose silence you intend to
+trust.
+
+**BLD20. `lake env lean` does not run the style linters that `lake build` runs.** A 1087-line file
+was silent under `lake env lean` and then produced `unclosed sections or namespaces; expected: 'end
+Rockafellar'` on the first real build. `linter.style.missingEnd` and its neighbours fire only on the
+`lake build` path. BLD15's fast-iteration advice is for *errors* only; the last check before a commit
+is always a full `lake build`.
+
+**BLD21. `lake env lean <dependent>` reads the dependency's olean, not its source.** A declaration
+you have just added to a dependency is reported as `Unknown identifier`, followed by a cascade of
+unsolved goals. BLD15's "adding declarations does not invalidate a dependent's olean" cuts both ways:
+it also does not put the new declaration *into* the dependency's olean. `lake build <the dependency
+module>` first — seconds, not a full rebuild.
+
+**BLD22. Two traps in the `#print axioms` sweep, both of which silently under-count.** A declaration
+name ending in `'` truncates under the obvious `'([^']+)'` pattern, so a 83-declaration probe reported
+80 records and the three missing were exactly the primed names; match
+`'(\S+?)' depends on axioms: \[(.*?)\]` instead. And a name-extraction regex anchored at
+`^(theorem|def|…)` misses `@[simp] theorem foo`, because the line starts with the attribute — use
+`^(?:@\[[^\]]*\]\s*)?((?:private\s+|protected\s+|noncomputable\s+)*)(theorem|lemma|def|abbrev|instance)\s+(\S+)`.
+Always cross-check the record count against the number of names fed in; BLD8's whitespace collapse
+alone is not enough. The same anchoring trap applies to BLD17's duplicate-name grep, and to any sweep
+that scans a module docstring — fenced ```lean blocks and prose beginning with the word *lemma*
+produce phantom names that only surface when the generated file is run.
+
+**BLD23. Contention across many worktrees fails a *different* random handful of modules each run.**
+With eight worktrees building against one junctioned Mathlib tree, a full `lake build` failed six
+modules on one run, seven different ones on the next, and was clean on the third — always at an
+`import` line, with `failed to read file '….olean'`, `'….olean.private'`, or
+`Lean exited with code 3221226505`. None was ever a real diagnostic. `'….olean.private'` in this
+shape is **not** BLD2's scratch-file case; it happens for ordinary project modules, and for toolchain
+files too. Re-run before investigating.
