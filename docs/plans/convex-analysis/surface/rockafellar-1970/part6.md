@@ -11,7 +11,7 @@ the book (Thm 27.1 has 9, Thm 30.4 has 10).
 | 28 | `Section28.lean` | 9 (+3 clauses) | 0/9 | **thickest file in the surface** | `Optimization/{Program,Lagrangian,Perturbation}.lean` |
 | 29 | `Section29.lean` | 12 | 5/6/1X | **thin** | `Optimization/{Perturbation,Adjoint}.lean`, `Saddle/Minimax.lean`, `Subgradient/Uniqueness.lean`, `Bifunction/{Process,LinearProcess}.lean` |
 | 30 | `Section30.lean` | 10 (+16 clauses) | **7/3** | thin | `Optimization/{Adjoint,Normal}.lean`, `Saddle/{Minimax,Correspondence}.lean` |
-| 31 | `Section31.lean` | 12 (+6 clauses) | 10/2 | thin | `Optimization/{Fenchel,Moreau,Prox,ConeDuality}.lean` |
+| 31 | `Section31.lean` | 12 (+6 clauses) | **7/2/3 mixed** | **thickest of the Part after §28** | `Optimization/{Fenchel,Moreau,Prox,ConeDuality,Normal}.lean` |
 | 32 | `Section32.lean` | 11 | **4/7** | thin | `Optimization/Maximum.lean` |
 
 ## Gated on remediation
@@ -89,7 +89,16 @@ Two unnumbered counterexamples justify the constraint qualification and must be 
   route through `clFn_of_exists_eq_bot`. `api.md`'s `Adjoint.lean` record had the convention right
   all along. (The cited line 12139 is also a display-math delimiter; the sentence is at 12137.)
 * **Corollary 31.2.1's polyhedral strengthening (13379) is asserted with the proof explicitly
-  omitted.**
+  omitted** — "However, the proof will not be given here". Both halves are proved in
+  `Section31.lean`. What the omitted proof costs, and very likely why it was skipped: in the
+  *composed* setting condition (a) does two jobs, an exact sum on `ℝⁿ` and an exact image along `A`,
+  and the polyhedral form must replace both. The sum is `IsExactSum.of_polyhedral`; **the image had
+  no backbone constructor at all** until this round's §12.4.
+* **Corollary 31.5.1 (13889) has no printed proof either**, and the inventory's "stated without
+  proof" list did not have it. It is a genuine `Homeomorph` in `Section31.lean`: bijectivity is
+  Theorem 31.5, and continuity of the inverse is the **unnumbered contraction property of the
+  proximation** at 13851–13885 — now named `prox_contraction`, with `prox_lipschitzWith_one`
+  beside it. Theorem 24.4's closedness of the graph is *not* needed.
 * **Corollary 32.3.2's finiteness clause (13999) is false as stated** — it omits properness. For the
   improper `f ≡ −∞`, `ri (dom f) = ℝⁿ`, so every non-empty compact convex `C` satisfies the
   hypotheses and the supremum is `⊥`. Rockafellar's proof cites Theorem 10.1 for continuity and then
@@ -148,7 +157,23 @@ Two unnumbered counterexamples justify the constraint qualification and must be 
 * Line 12667 names Thm 30.4(e)/(f) applied to linear programs the **Gale–Kuhn–Tucker Duality
   Theorem** with no separate numbered statement.
 * The contraction property of `prox` (13851–13885) is unnumbered running text and is what makes
-  Cor 31.5.2 work — it should be a named lemma. The backbone has it in `Optimization/Prox.lean`.
+  Cor 31.5.2 work — it is now named, as `prox_contraction` in `Section31.lean`, and it is also what
+  gives Cor 31.5.1 its continuous inverse.
+* **§31's `Optimization/Prox.lean` results are the *source* of §37's Cors 37.5.1/37.5.2, not the
+  other way round.** `Saddle/Monotone.lean` imports `Optimization/Prox.lean` and instantiates §31's
+  `subgradientRelHomeomorph` and `isMaximalMonotoneRel_subgradientRel` at
+  `prodPairing (innerₗ U) (innerₗ X)`. Nothing in `Section31.lean` imports a `Saddle/` module and
+  nothing should.
+* **§31's `10/2` was wrong, and the shape of the error is new.** Measured: **7 G** (31.1, 31.3,
+  31.3.1, 31.4, 31.4.2 — all over bare `AddCommGroup`/`Module`), **2 C** (31.4.1, 31.4.3, both
+  marked correctly), and **3 mixed**, which the two-column scheme cannot express: Thm 31.2 is G in
+  its adjoint formula, properness, convexity, closedness, `inf F 0` and `dom F`, and C in
+  `ri (dom F)` and both strong-consistency characterisations, which go through
+  `Convex.relint_image`; Cor 31.2.1's condition (a) is G and its condition (b) is C. Separately,
+  **31.5, 31.5.1 and 31.5.2 are marked G and are C *in the formalisation only*** — Moreau's theorem
+  is a Hilbert-space theorem and the G mark is mathematically right; finite-dimensionality enters
+  only through Theorem 27.2's attainment argument. That is a backbone limitation rather than an
+  inventory error, and it is the first time the two have had to be distinguished.
 * §32's two examples at 14017–14043 show `C ⊆ ri(dom f)` in Cor 32.3.2 cannot be weakened to
   `C ⊆ dom f` even for closed `f`. Keep both. Cor 32.3.4 is the theoretical basis of the simplex
   method (a remark at 14013).
