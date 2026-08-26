@@ -8,7 +8,7 @@ the book (Thm 27.1 has 9, Thm 30.4 has 10).
 | § | module | results | G/C | thickness | backbone it specialises |
 |---|---|---|---|---|---|
 | 27 | `Section27.lean` | 9 (+9 clauses) | 1/8 | medium | `Optimization/Minimum.lean` |
-| 28 | `Section28.lean` | 9 (+3 clauses) | 0/9 | **thickest file in the surface** | `Optimization/{Program,Lagrangian,Perturbation}.lean` |
+| 28 | `Section28.lean` | 9 (+3 clauses) | **5/4** | **thickest file in the surface** — 2432 lines, twice the next | `Optimization/{Program,Lagrangian}.lean`, **`Saddle/Minimax.lean`** |
 | 29 | `Section29.lean` | 12 | 5/6/1X | **thin** | `Optimization/{Perturbation,Adjoint}.lean`, `Saddle/Minimax.lean`, `Subgradient/Uniqueness.lean`, `Bifunction/{Process,LinearProcess}.lean` |
 | 30 | `Section30.lean` | 10 (+16 clauses) | **7/3** | thin | `Optimization/{Adjoint,Normal}.lean`, `Saddle/{Minimax,Correspondence}.lean` |
 | 31 | `Section31.lean` | 12 (+6 clauses) | **7/2/3 mixed** | **thickest of the Part after §28** | `Optimization/{Fenchel,Moreau,Prox,ConeDuality,Normal}.lean` |
@@ -46,6 +46,11 @@ clause. Only the *last* of those cost any Lean work, and it cost five new declar
 
 ## Receives from the backbone
 
+**Naming hazard, recorded by §28 before anyone does this.** The backbone's `programLagrangian` is
+**not** the Lagrangian: it is Rockafellar's `h = f₀ + Σ λᵢfᵢ`, which the surface calls `lagrangeFn`.
+The surface's `programLagrangian` is the actual `L` on `ℝᵐ × ℝⁿ`. Deleting by name alone will
+mismatch the two.
+
 Per remediation §6: `programLagrangian`, `IsKuhnTuckerVector`, `feasibleSet`, `optimalValue` move
 here from `Optimization/Program.lean` (§28). They duplicate `lagrangian` and `KuhnTucker` and their
 own docstrings say so — which is exactly the README's recipe for a surface definition. Keep the
@@ -60,8 +65,16 @@ must be got right:
    programs with the same objective can have different Lagrangians and different Kuhn–Tucker
    vectors. Carry `(C, f₀, …, f_m, r)` as the primitive, and the program ↔ Lagrangian correspondence
    (11047–11057) as a theorem.
-2. **Build `ineqBifun`** and derive Thms 28.1–28.4 from §29–§30, with a lemma tying its `lagrangian`
-   to the surface `programLagrangian`.
+2. **Build `ineqBifun`** and tie its `lagrangian` to the surface `programLagrangian` — done, as
+   `lagrangian_ineqBifun`, the book's line 11041 formula proved in full including the `-∞` case
+   where `u* ∉ E_r`. **But "derive Thms 28.1–28.4 from §29–§30" is achievable only for 28.2.** The
+   backbone's route to 28.3 is `isSaddlePoint_lagrangian_iff_mem_kuhnTucker`, which needs
+   `ConvexBifun F` **and `ClosedBifun F`** — and an ordinary convex program's bifunction is *not*
+   closed under Rockafellar's blanket assumptions, since he never assumes the `fᵢ` closed. That is
+   exactly why Corollary 28.1.1 has to *add* closedness as a hypothesis. Deriving 28.3 from §29
+   would have meant silently strengthening the book's theorem, so 28.1, 28.3 and 28.4 follow the
+   book directly and the bridge is used only for what it genuinely buys: concavity of `L(·,x)`,
+   concavity of `g`, and `g(u*) = -p*(-u*)` (line 11303).
 
 Two unnumbered counterexamples justify the constraint qualification and must be kept: 10989
 (`f₁ = ξ₂`, `f₂ = ξ₁² − ξ₂` — a unique optimal solution with no Kuhn–Tucker vector) and 11007
@@ -192,5 +205,21 @@ Two unnumbered counterexamples justify the constraint qualification and must be 
   general results left are also the section's most general: Thm 32.2 and Thm 32.4 both live over a
   bare `Module ℝ E`, with no topology at all.
 * Mixed-case labels: `Corollary 27.2.2`, `28.3.1`, `29.1.5`, `31.5.1`.
+* **`r` counts the *inequality* constraints.** In Rockafellar `f₁, …, f_r` are the inequalities
+  (`fᵢ ≤ 0`) and `f_{r+1}, …, f_m` the equalities. Stating it the other way round is an easy slip —
+  this round's brief made it — and `Section28.lean`'s docstring says so explicitly.
+* **§28's `0/9` was wrong; the real split is 5 G / 4 C.** G: 28.1, 28.3, 28.3.1, 28.4, 28.4.1 —
+  none of their proofs uses finite dimension, 28.3's saddle-point half being `iSup`/`iInf` of the
+  Lagrangian plus `isSaddlePoint_iff_iSup_eq_iInf`, and 28.4 with its corollary pure minimax
+  bookkeeping. C: 28.1.1 (Heine–Borel through recession cones) and 28.2 with both its corollaries
+  (`ri`). Caveat: Theorem 28.3's *clause (c)* row and `corollary_28_3_1_kuhnTucker` are C, routing
+  through Theorem 23.8. This is the **third consecutive round** in which a Part plan's G/C column
+  has been found wrong.
+* **Corollary 28.3.1's book hypothesis is stronger than its proof.** Rockafellar states it for "a
+  program satisfying the hypothesis of Theorem 28.2"; the proof uses only the *conclusion*. Carried
+  with `∃ u, IsKuhnTuckerVector u`, which is how the book itself states the parallel Cor 28.4.1.
+* **The preface note at line 277 is half right.** Corollary 28.2.1 does have an easier proof than
+  Theorem 28.2, but it cannot replace it in a formalization: Corollary 28.2.2 — purely linear
+  constraints with a feasible point in `ri C` — is *not* an instance of 28.2.1. Both are carried.
 * Unnumbered example deposits: 11309–11596 (the decomposition principle), 12731–13136 (duals of
   ordinary convex programs), 13381–13465 (linear programming), 13691–13733 (Problems I and II).

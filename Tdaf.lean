@@ -154,6 +154,7 @@ import Tdaf.Surface.Rockafellar.Part5.Section23
 import Tdaf.Surface.Rockafellar.Part5.Section24
 import Tdaf.Surface.Rockafellar.Part5.Section25
 import Tdaf.Surface.Rockafellar.Part5.Section26
+import Tdaf.Surface.Rockafellar.Part6
 import Tdaf.Surface.Rockafellar.Part6.Section27
 import Tdaf.Surface.Rockafellar.Part6.Section28
 import Tdaf.Surface.Rockafellar.Part6.Section29
