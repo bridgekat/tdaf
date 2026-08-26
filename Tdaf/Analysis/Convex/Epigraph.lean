@@ -10,8 +10,8 @@ import Tdaf.Order.EReal
 /-!
 # Extended-real-valued convex functions
 
-The basic theory of convex functions `f : E → EReal` on a real vector space. Following Rockafellar
-§4, convexity is *defined* geometrically, as convexity of the epigraph, rather than by the
+The basic theory of convex functions `f : E → EReal` on a real vector space. Convexity is *defined*
+geometrically, as convexity of the epigraph, rather than by the
 inequality `f (a • x + b • y) ≤ a * f x + b * f y`: the right-hand side can be the undefined
 `∞ - ∞` when `f` takes both infinite values, and improper functions are admitted throughout. The
 epigraph lives in `E × ℝ`, not `E × EReal` — the second coordinate ranges over the *reals*, unlike
@@ -29,12 +29,13 @@ Mathlib's `ConvexOn.convex_epigraph`, which uses the codomain of the function.
 
 ## Main results
 
-* `convexFn_iff_forall_lt` — **Theorem 4.2**, convexity by strict inequalities: the form that
-  avoids `∞ - ∞` entirely.
-* `convexFn_iff_le` — **Theorem 4.1**, the familiar inequality, valid when `f` never takes `⊥`.
+* `convexFn_iff_forall_lt` — convexity by strict inequalities: the form that avoids `∞ - ∞`
+  entirely.
+* `convexFn_iff_le` — the familiar inequality, valid when `f` never takes `⊥`.
 * `convexFn_add_coe`, `ConvexFn.comp_add_left` — adding a real-valued affine coordinate, and
   translating the argument, preserve convexity.
-* `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — **Theorem 4.6**.
+* `ConvexFn.convex_lt`, `ConvexFn.convex_le`, `ConvexFn.convex_dom` — sublevel sets and the
+  effective domain of a convex function are convex.
 * `convexFn_coe_mul`, `dom_coe_mul`, `proper_coe_mul` — a non-negative multiple `cf`.
 * `convexOn_iff_convexFn` — the bridge to Mathlib's `ConvexOn`.
 * `ConvexFn.sum_le` — Jensen's inequality for a finite convex combination.
@@ -74,14 +75,14 @@ theorem le_iff_epi_subset {f g : E → EReal} : f ≤ g ↔ epi g ⊆ epi f := b
   exact absurd (h (show (x, q) ∈ epi g from hgq.le)) (not_le.2 hqf)
 
 /-- The effective domain of `f`: the set where `f < ⊤`. Equivalently the projection of `epi f` on
-`E` (Rockafellar §4). -/
+`E`. -/
 def dom (f : E → EReal) : Set E := {x | f x < ⊤}
 
 @[simp] theorem mem_dom {f : E → EReal} {x : E} : x ∈ dom f ↔ f x < ⊤ := Iff.rfl
 
-/-- Rockafellar defines `dom f` as the projection of `epi f`. That holds with no hypothesis on `f`,
-improper functions included, which is why `dom` must not be restricted to functions avoiding `⊥`:
-Theorem 7.2 is a statement about `ri (dom f)` for *improper* `f`. -/
+/-- `dom f` is the projection of `epi f`, with no hypothesis on `f` and improper functions
+included. That is why `dom` must not be restricted to functions avoiding `⊥`: the relative interior
+`ri (dom f)` carries statements about *improper* `f` too. -/
 theorem dom_eq_fst_image_epi (f : E → EReal) : dom f = Prod.fst '' epi f := by
   ext x
   constructor
@@ -105,7 +106,7 @@ theorem epi_eq_empty_iff (f : E → EReal) : epi f = ∅ ↔ dom f = ∅ := by
   simp [epi, Pi.top_apply]
 
 /-- `f` is *proper* when it is finite somewhere and never takes the value `⊥`; equivalently, `epi f`
-is nonempty and contains no vertical lines (Rockafellar §4). -/
+is nonempty and contains no vertical lines. -/
 structure Proper (f : E → EReal) : Prop where
   /-- `f` is not identically `⊤`. -/
   dom_nonempty : (dom f).Nonempty
@@ -113,7 +114,7 @@ structure Proper (f : E → EReal) : Prop where
   ne_bot : ∀ x, f x ≠ ⊥
 
 /-- `f` restricted to `s` and extended by `⊤` off `s` — the standing encoding of "a convex function
-given on a convex set" (Rockafellar §4). The `⨅` formulation avoids a decidability hypothesis;
+given on a convex set". The `⨅` formulation avoids a decidability hypothesis;
 `restrict_of_mem` and `restrict_of_notMem` are the defining equations. -/
 noncomputable def restrict (s : Set E) (f : E → EReal) : E → EReal := fun x => ⨅ _ : x ∈ s, f x
 
@@ -158,8 +159,8 @@ section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
-/-- A function `f : E → EReal` is convex when its epigraph is a convex subset of `E × ℝ`
-(Rockafellar §4). See `convexFn_iff_forall_lt` and `convexFn_iff_le` for the analytic forms. -/
+/-- A function `f : E → EReal` is convex when its epigraph is a convex subset of `E × ℝ`.
+See `convexFn_iff_forall_lt` and `convexFn_iff_le` for the analytic forms. -/
 structure ConvexFn (f : E → EReal) : Prop where
   /-- The epigraph of a convex function is convex. -/
   convex_epi : Convex ℝ (epi f)
@@ -254,9 +255,9 @@ theorem convexFn_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : E → EReal} (hf : Convex
     rw [epi_coe_mul h f]
     exact hf.convex_epi.linear_preimage _
 
-/-! ### Theorem 4.2 -/
+/-! ### Convexity as a strict inequality on values -/
 
-/-- **Rockafellar, Theorem 4.2.** A function `f : E → EReal` is convex if and only if
+/-- **Convexity in strict inequalities.** A function `f : E → EReal` is convex if and only if
 `f ((1 - λ) x + λ y) < (1 - λ) α + λ β` whenever `f x < α`, `f y < β` and `0 < λ < 1`. The strict
 inequalities keep `α` and `β` real, so the forbidden `∞ - ∞` never arises. -/
 theorem convexFn_iff_forall_lt (f : E → EReal) :
@@ -287,10 +288,10 @@ theorem convexFn_iff_forall_lt (f : E → EReal) :
         linear_combination (q - (a * μ + b * ν)) * hab
       rwa [harith] at key
 
-/-! ### Theorem 4.1 -/
+/-! ### Convexity as an inequality on values -/
 
-/-- **Rockafellar, Theorem 4.1.** For a function `f` that never takes the value `⊥` — equivalently,
-a function into `(-∞, +∞]` — convexity is the familiar inequality. -/
+/-- For a function `f` that never takes the value `⊥` — equivalently, a function into `(-∞, +∞]` —
+**convexity is the familiar inequality**. -/
 theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     ConvexFn f ↔ ∀ (x y : E) (a b : ℝ), 0 < a → 0 < b → a + b = 1 →
       f (a • x + b • y) ≤ (a : EReal) * f x + (b : EReal) * f y := by
@@ -331,10 +332,9 @@ theorem convexFn_iff_le {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     have hqβ : q < β := by exact_mod_cast hy
     exact_mod_cast (by nlinarith : a * p + b * q < a * α + b * β)
 
-/-! ### Level sets and the effective domain: Theorem 4.6 -/
+/-! ### Level sets and the effective domain -/
 
-/-- **Rockafellar, Theorem 4.6** (strict form). Strict sublevel sets of a convex function are
-convex. -/
+/-- **Strict sublevel sets of a convex function are convex.** -/
 theorem ConvexFn.convex_lt {f : E → EReal} (hf : ConvexFn f) (α : EReal) :
     Convex ℝ {x | f x < α} := by
   intro x hx y hy a b ha hb hab
@@ -356,8 +356,7 @@ theorem ConvexFn.convex_lt {f : E → EReal} (hf : ConvexFn f) (α : EReal) :
     have h3 : a * r + b * r = r := by linear_combination r * hab
     exact_mod_cast (by linarith : a * p + b * q < r)
 
-/-- **Rockafellar, Theorem 4.6** (non-strict form). Sublevel sets of a convex function are
-convex. -/
+/-- **Sublevel sets of a convex function are convex.** -/
 theorem ConvexFn.convex_le {f : E → EReal} (hf : ConvexFn f) (α : EReal) :
     Convex ℝ {x | f x ≤ α} := by
   intro x hx y hy a b ha hb hab
@@ -377,7 +376,7 @@ theorem ConvexFn.convex_le {f : E → EReal} (hf : ConvexFn f) (α : EReal) :
     refine this.trans (le_of_eq ?_)
     exact_mod_cast (by linear_combination r * hab : a * r + b * r = r)
 
-/-- The effective domain of a convex function is convex (Rockafellar §4). -/
+/-- The effective domain of a convex function is convex. -/
 theorem ConvexFn.convex_dom {f : E → EReal} (hf : ConvexFn f) : Convex ℝ (dom f) :=
   hf.convex_lt ⊤
 

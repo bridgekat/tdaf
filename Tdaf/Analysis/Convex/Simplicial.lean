@@ -13,29 +13,28 @@ import Tdaf.Analysis.Convex.RelativeInterior
 # Simplices, locally simplicial sets, and upper semicontinuity
 
 A convex function is upper semicontinuous relative to any *locally simplicial* subset of its
-effective domain, so a closed convex function is continuous relative to such a set: Rockafellar's
-**Theorem 10.2**. This is the sharp form of "a convex function is continuous on a simplex in its
-domain"; the parabolic example of §10 shows that the phenomenon is genuinely about simplices and
-not about arbitrary subsets of `dom f`. **Theorem 10.3** is the application: a finite convex
-function on `ri C`, bounded above on bounded subsets, extends uniquely to a continuous finite
-convex function on a locally simplicial convex `C`.
+effective domain, so a closed convex function is continuous relative to such a set. This is the
+sharp form of "a convex function is continuous on a simplex in its domain": the phenomenon is
+genuinely about simplices and fails for arbitrary convex subsets of `dom f`. The application is an
+extension theorem: a finite convex function on `ri C`, bounded above on bounded subsets, extends
+uniquely to a continuous finite convex function on a locally simplicial convex `C`.
 
 ## Main definitions
 
 * `IsSimplex S` — `S` is the convex hull of a finite affinely independent family.
 * `LocallySimplicial S` — every point of `S` has a neighbourhood in which `S` coincides with a
-  finite union of simplices contained in `S` (Rockafellar §10). Theorem 20.5 will say that every
-  polyhedral convex set is locally simplicial.
+  finite union of simplices contained in `S`; every polyhedral convex set is one.
 
 ## Main results
 
 * `ConvexFn.upperSemicontinuousWithinAt_convexHull_range` — the analytic core: a convex function
   finite on the vertices of a simplex is upper semicontinuous relative to that simplex, at *every*
   one of its points.
-* `ConvexFn.upperSemicontinuousOn_of_locallySimplicial` — **Theorem 10.2**.
-* `ConvexFn.continuousOn_of_locallySimplicial` — Theorem 10.2 for a closed `f`.
+* `ConvexFn.upperSemicontinuousOn_of_locallySimplicial` — the same, relative to any locally
+  simplicial subset of `dom f`.
+* `ConvexFn.continuousOn_of_locallySimplicial` — continuity there, for a closed `f`.
 * `exists_closedFn_continuousOn_of_locallySimplicial`, `eqOn_of_continuousOn_of_eqOn_relint` —
-  **Theorem 10.3**, existence and uniqueness.
+  the extension theorem, existence and uniqueness.
 
 ## Implementation notes
 
@@ -49,8 +48,7 @@ affine independence, and the only use of a topology: no metric, no finite dimens
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10
-  (Theorems 10.2, 10.3).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10.
 -/
 
 open Set Filter
@@ -110,8 +108,8 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
 def IsSimplex (S : Set E) : Prop :=
   ∃ (ι : Type) (_ : Fintype ι) (v : ι → E), AffineIndependent ℝ v ∧ S = convexHull ℝ (Set.range v)
 
-/-- Rockafellar's **locally simplicial** sets (§10): near each of its points, `S` agrees with a
-finite union of simplices contained in `S`. Such a set need be neither convex nor closed. -/
+/-- Rockafellar's **locally simplicial** sets: near each of its points, `S` agrees with a finite
+union of simplices contained in `S`. Such a set need be neither convex nor closed. -/
 def LocallySimplicial (S : Set E) : Prop :=
   ∀ x ∈ S, ∃ (n : ℕ) (P : Fin n → Set E), (∀ i, IsSimplex (P i)) ∧ (∀ i, P i ⊆ S) ∧
     ∃ U ∈ 𝓝 x, U ∩ (⋃ i, P i) = U ∩ S
@@ -131,8 +129,8 @@ section Core
 variable {ι : Type*} [Finite ι] {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [T2Space E] {f : E → EReal}
 
-/-- **The heart of Rockafellar's Theorem 10.2.** A convex function whose value at each vertex of a
-simplex is `< ⊤` is upper semicontinuous relative to that simplex, at every point of it. -/
+/-- **A convex function whose value at each vertex of a simplex is `< ⊤` is upper semicontinuous
+relative to that simplex**, at every point of it. -/
 theorem ConvexFn.upperSemicontinuousWithinAt_convexHull_range (hf : ConvexFn f) {v : ι → E}
     (hv : AffineIndependent ℝ v) (hdom : ∀ i, v i ∈ dom f) {x : E}
     (hx : x ∈ convexHull ℝ (Set.range v)) :
@@ -228,15 +226,15 @@ theorem ConvexFn.upperSemicontinuousWithinAt_convexHull_range (hf : ConvexFn f) 
 
 end Core
 
-/-! ### Theorem 10.2 -/
+/-! ### Upper semicontinuity on a locally simplicial set -/
 
 section Thm102
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [T2Space E] {f : E → EReal} {S : Set E}
 
-/-- **Rockafellar, Theorem 10.2**: a convex function is upper semicontinuous relative to any
-locally simplicial subset of its effective domain. -/
+/-- **A convex function is upper semicontinuous relative to any locally simplicial subset of its
+effective domain.** -/
 theorem ConvexFn.upperSemicontinuousOn_of_locallySimplicial (hf : ConvexFn f)
     (hS : LocallySimplicial S) (hSdom : S ⊆ dom f) : UpperSemicontinuousOn f S := by
   intro x hxS b hb
@@ -269,9 +267,9 @@ theorem ConvexFn.upperSemicontinuousOn_of_locallySimplicial (hf : ConvexFn f)
   · exact hWlt ⟨i, hi⟩ z (Set.mem_iInter.1 hzW ⟨i, hi⟩) hzi
   · exact absurd hzi (Set.mem_iInter.1 hzF ⟨i, hi⟩)
 
-/-- **Rockafellar, Theorem 10.2**, second assertion: a *closed* convex function is continuous
-relative to any locally simplicial subset of its effective domain. Lower semicontinuity supplies
-one half of `tendsto_order` and Theorem 10.2 the other. -/
+/-- **A closed convex function is continuous relative to any locally simplicial subset of its
+effective domain.** Lower semicontinuity supplies one half of `tendsto_order` and upper
+semicontinuity the other. -/
 theorem ConvexFn.continuousOn_of_locallySimplicial (hf : ConvexFn f)
     (hlsc : LowerSemicontinuous f) (hS : LocallySimplicial S) (hSdom : S ⊆ dom f) :
     ContinuousOn f S := by
@@ -282,7 +280,7 @@ theorem ConvexFn.continuousOn_of_locallySimplicial (hf : ConvexFn f)
 
 end Thm102
 
-/-! ### Theorem 10.3: extension from the relative interior -/
+/-! ### Extension from the relative interior -/
 
 section Thm103
 
@@ -290,8 +288,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C : Set E} {f : E → EReal}
 
 /-- `ri C` is dense in `C`, so two functions continuous relative to `C` that agree on `ri C` agree
-on all of `C`. This is the uniqueness half of **Theorem 10.3**, and it needs neither convexity of
-the functions nor local simpliciality of `C`. -/
+on all of `C`. This is the uniqueness half of the extension theorem, and it needs neither convexity
+of the functions nor local simpliciality of `C`. -/
 theorem eqOn_of_continuousOn_of_eqOn_relint (hC : Convex ℝ C) {g₁ g₂ : E → EReal}
     (h₁ : ContinuousOn g₁ C) (h₂ : ContinuousOn g₂ C) (h : Set.EqOn g₁ g₂ (ri C)) :
     Set.EqOn g₁ g₂ C := by
@@ -304,8 +302,8 @@ theorem eqOn_of_continuousOn_of_eqOn_relint (hC : Convex ℝ C) {g₁ g₂ : E �
   exact tendsto_nhds_unique
     (t₁.congr' (eventually_nhdsWithin_of_forall fun y hy => h hy)) t₂
 
-/-- **Rockafellar, Theorem 10.3**, existence. A convex function finite exactly on `ri C` and
-bounded above on every bounded subset of `ri C` has a closure that is finite and continuous on the
+/-- **The extension theorem, existence.** A convex function finite exactly on `ri C` and bounded
+above on every bounded subset of `ri C` has a closure that is finite and continuous on the
 whole of a locally simplicial convex `C`, and still agrees with `f` on `ri C`. Uniqueness is
 `eqOn_of_continuousOn_of_eqOn_relint`. -/
 theorem exists_closedFn_continuousOn_of_locallySimplicial (hC : Convex ℝ C)

@@ -10,7 +10,7 @@ import Tdaf.Analysis.Convex.Epigraph
 
 The indicator function `δ(· | s)` of a set, which is `0` on `s` and `+∞` off it. It is the device by
 which every statement about convex *sets* becomes an instance of a statement about convex
-*functions*; Rockafellar introduces it in §4 for exactly that purpose and uses it throughout.
+*functions*, and it is used that way throughout the library.
 
 ## Main results
 
@@ -55,8 +55,8 @@ theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥ := by
     fun h => ⟨by simpa using h, indicatorFn_ne_bot s⟩⟩
 
 /-- **Adding indicators intersects the sets.** `0 + 0 = 0`, and `⊤` absorbs everything an indicator
-can be, so there is no side condition. This is why the book's "intersection" corollaries are the
-indicator instances of statements about sums. -/
+can be, so there is no side condition. This is why the intersection forms of results about convex
+sets are the indicator instances of statements about sums. -/
 @[simp] theorem indicatorFn_add (s t : Set E) :
     indicatorFn s + indicatorFn t = indicatorFn (s ∩ t) := by
   funext x
@@ -76,8 +76,7 @@ theorem indicatorFn_finsetSum {ι : Type*} (C : ι → Set E) (s : Finset ι) :
     ext z
     simp [Finset.mem_cons]
 
-/-- The epigraph of an indicator function is a "half-cylinder with cross-section `s`"
-(Rockafellar §4). -/
+/-- The epigraph of an indicator function is a half-cylinder with cross-section `s`. -/
 theorem epi_indicatorFn (s : Set E) : epi (indicatorFn s) = s ×ˢ Ici (0 : ℝ) := by
   ext p
   by_cases hp : p.1 ∈ s <;> simp [epi, hp, EReal.coe_nonneg]
@@ -88,7 +87,7 @@ section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
-/-- `δ(· | s)` is a convex function exactly when `s` is a convex set (Rockafellar §4). -/
+/-- `δ(· | s)` is a convex function exactly when `s` is a convex set. -/
 @[simp] theorem convexFn_indicatorFn {s : Set E} : ConvexFn (indicatorFn s) ↔ Convex ℝ s := by
   constructor
   · intro h
@@ -109,7 +108,7 @@ omit [Module ℝ E] in
   · rw [indicatorFn_of_notMem fun h => hx (hmem.1 h), indicatorFn_of_notMem hx]
 
 omit [AddCommGroup E] [Module ℝ E] in
-/-- Adding an indicator function restricts the effective domain (Rockafellar §5). -/
+/-- Adding an indicator function restricts the effective domain. -/
 theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f x ≠ ⊥) :
     restrict s f = f + indicatorFn s := by
   funext x

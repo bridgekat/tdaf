@@ -9,14 +9,13 @@ import Tdaf.Analysis.Convex.Operations.Hull
 /-!
 # The complete lattice of convex functions
 
-The convex functions on `E`, pointwise ordered, form a complete lattice (Rockafellar §5, after
-Theorem 5.6). The least upper bound of a family is the pointwise supremum, since a pointwise
-supremum of convex functions is convex (Theorem 5.5). The greatest lower bound is *not* the
-pointwise infimum, which need not be convex; it is the convex hull `conv {f i}`, the greatest convex
-minorant of the family. `ConvexFns.exists_coe_inf_lt_inf` makes the difference concrete on `ℝ`: the
-indicators of `{0}` and `{1}` have pointwise minimum `⊤` at `1/2`, while their meet, the indicator
-of `[0, 1]`, is `0` there. So the coercion to `E → EReal` is an `sSupHom` but cannot be an
-`sInfHom`.
+The convex functions on `E`, pointwise ordered, form a complete lattice. The least upper bound of a
+family is the pointwise supremum, since a pointwise supremum of convex functions is convex. The
+greatest lower bound is *not* the pointwise infimum, which need not be convex; it is the convex hull
+`conv {f i}`, the greatest convex minorant of the family. `ConvexFns.exists_coe_inf_lt_inf` makes
+the difference concrete on `ℝ`: the indicators of `{0}` and `{1}` have pointwise minimum `⊤` at
+`1/2`, while their meet, the indicator of `[0, 1]`, is `0` there. So the coercion to `E → EReal` is
+an `sSupHom` but cannot be an `sInfHom`.
 
 ## Main definitions
 
@@ -57,8 +56,8 @@ section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
-/-- **Rockafellar §5, after Theorem 5.6.** The convex functions on `E`, pointwise ordered, form a
-complete lattice. The instance is the coreflection `gci_val_convHullFn` transported by
+/-- The convex functions on `E`, pointwise ordered, form a **complete lattice**. The instance is
+the coreflection `gci_val_convHullFn` transported by
 `GaloisCoinsertion.liftCompleteLattice`, so every field is the corresponding operation on
 `E → EReal` followed by `convHullFn`; the lemmas below evaluate that hull. -/
 noncomputable instance instCompleteLattice : CompleteLattice (ConvexFns E) :=

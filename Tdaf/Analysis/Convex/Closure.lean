@@ -24,27 +24,27 @@ takes the value `⊥` anywhere.
 * `lscHull f` — the lower semicontinuous hull, `ofEpi (closure (epi f))`.
 * `clFn f` — the closure of a convex function.
 * `ClosedFn f` — `f` is closed, i.e. `clFn f = f`.
-* `ClosedProperConvexFn f` — closed, proper *and* convex, bundled; the standing hypothesis from
-  §12 onwards, and the class `conjEquiv` and `supportEquiv` are bijections between.
+* `ClosedProperConvexFn f` — closed, proper *and* convex, bundled; the standing hypothesis of the
+  duality theory, and the class `conjEquiv` and `supportEquiv` are bijections between.
 * `lscHullClosure`, `clFnClosure` — both operations as `ClosureOperator`s on `(E → EReal)ᵒᵈ`.
 
 ## Main results
 
 * `lowerSemicontinuous_iff_isClosed_epi`, `lowerSemicontinuous_iff_isClosed_le` —
-  **Theorem 7.1**: lower semicontinuity, closed sublevel sets and a closed epigraph coincide.
+  lower semicontinuity, closed sublevel sets and a closed epigraph coincide.
 * `epi_lscHull` — `epi (lscHull f) = closure (epi f)`, unconditionally; the workhorse of the file.
 * `isGreatest_lscHull` — `lscHull f` is the greatest lower semicontinuous minorant of `f`.
 * `closedFn_iff` — `f` is closed exactly when it is the constant `⊥`, or lower semicontinuous and
   never `⊥`.
 * `iInf_clFn_eq_iInf` — `f` and `cl f` have the same infimum.
-* `ConvexFn.eq_bot_or_eq_top` — **Corollary 7.2.1**: a lower semicontinuous improper convex
-  function has no finite values. This replaces Theorem 7.2 outside finite dimensions.
+* `ConvexFn.eq_bot_or_eq_top` — a lower semicontinuous improper convex function has no finite
+  values. This replaces the relative-interior dichotomy outside finite dimensions.
 * `exists_affine_le_of_closed_proper` — a closed proper convex function on a locally convex space
   has a continuous affine minorant; the keystone of Fenchel–Moreau.
-* `tendsto_lscHull_along_segment`, `tendsto_along_segment_of_closed_proper` — **Theorem 7.5** and
-  **Corollary 7.5.1**, with `interior (epi f)` in place of `ri (epi f)`.
-* `lscHull_le_setOf` — `{x | (cl f) x ≤ α} = ⋂_{μ > α} cl {f ≤ μ}`, the part of **Theorem 7.6**
-  that does not need relative interiors.
+* `tendsto_lscHull_along_segment`, `tendsto_along_segment_of_closed_proper` — the closure as a
+  limit along a segment, with `interior (epi f)` in place of `ri (epi f)`.
+* `lscHull_le_setOf` — `{x | (cl f) x ≤ α} = ⋂_{μ > α} cl {f ≤ μ}`, the level sets of the closure,
+  in the part that does not need relative interiors.
 * `lscHull_eq_liminf`, `clFn_eq_liminf_or` — the hull and the closure as `liminf f (𝓝 x)`.
 * `posHomogeneous_lscHull`, `posHomogeneous_clFn` — both hulls preserve positive homogeneity.
 * `closedProperConvexFn_coe_affineMap` — a *continuous* affine function is closed proper convex.
@@ -52,13 +52,13 @@ takes the value `⊥` anywhere.
 ## Implementation notes
 
 `clFn` branches on `lscHull f`, not on `f` as Rockafellar does. The two agree for convex `f` on
-`ℝⁿ` (Theorems 7.2 and 7.4) but not in general, and branching on `f` would make Fenchel–Moreau
+`ℝⁿ` but not in general, and branching on `f` would make Fenchel–Moreau
 false: a discontinuous linear functional `g` on an infinite-dimensional space is convex, finite and
 proper, yet its kernel is dense, so `lscHull g ≡ ⊥` and `g` has no continuous affine minorant at
 all. Branching on the hull is the standard Γ-regularization and makes `f** = clFn f`
-unconditional; the price is that Theorem 7.4, `Proper f → Proper (clFn f)`, is finite-dimensional
-and appears as `ConvexFn.proper_clFn` in `Tdaf/Analysis/Convex/RelativeInterior.lean`, together
-with Lemma 7.3 and Theorem 7.2 themselves.
+unconditional; the price is that `Proper f → Proper (clFn f)` is finite-dimensional and appears as
+`ConvexFn.proper_clFn` in `Tdaf/Analysis/Convex/RelativeInterior.lean`, together with the
+relative-interior dichotomy itself.
 
 ## References
 
@@ -69,13 +69,13 @@ open Set Filter Topology
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Lower semicontinuity: Theorem 7.1 -/
+/-! ### Lower semicontinuity -/
 
 section Semicontinuity
 
 variable {E : Type*} [TopologicalSpace E] {f g : E → EReal}
 
-/-- **Rockafellar, Theorem 7.1**, (a) ↔ (c). -/
+/-- **A function is lower semicontinuous exactly when its epigraph is closed.** -/
 theorem lowerSemicontinuous_iff_isClosed_epi : LowerSemicontinuous f ↔ IsClosed (epi f) := by
   constructor
   · intro hf
@@ -97,7 +97,8 @@ theorem lowerSemicontinuous_iff_isClosed_epi : LowerSemicontinuous f ↔ IsClose
     filter_upwards [hclosed.isOpen_compl.mem_nhds (not_le.2 hrf)] with z hz
     exact hyr.trans (not_le.1 hz)
 
-/-- **Rockafellar, Theorem 7.1**, (a) ↔ (b). -/
+/-- **A function is lower semicontinuous exactly when every sublevel set `{x | f x ≤ α}` with `α`
+real is closed.** -/
 theorem lowerSemicontinuous_iff_isClosed_le :
     LowerSemicontinuous f ↔ ∀ α : ℝ, IsClosed {x | f x ≤ (α : EReal)} := by
   constructor
@@ -119,18 +120,18 @@ section Defs
 variable {E : Type*} [TopologicalSpace E] {f g : E → EReal}
 
 /-- The **lower semicontinuous hull** of `f`, the function whose epigraph is the closure of the
-epigraph of `f`: the greatest lower semicontinuous minorant of `f` (Rockafellar §7). -/
+epigraph of `f`: the greatest lower semicontinuous minorant of `f`. -/
 noncomputable def lscHull (f : E → EReal) : E → EReal := ofEpi (closure (epi f))
 
 open Classical in
 /-- The **closure** of a convex function: its lower semicontinuous hull, except that if the hull
-takes the value `⊥` anywhere then the closure is the constant function `⊥` (Rockafellar §7).
-Rockafellar branches on whether `f` itself takes `⊥`, which is equivalent for convex `f` on `ℝⁿ`
-but not in general; see the module docstring. -/
+takes the value `⊥` anywhere then the closure is the constant function `⊥`. Rockafellar branches
+on whether `f` itself takes `⊥`, which is equivalent for convex `f` on `ℝⁿ` but not in general; see
+the module docstring. -/
 noncomputable def clFn (f : E → EReal) : E → EReal :=
   if ∃ x, lscHull f x = ⊥ then (fun _ => ⊥) else lscHull f
 
-/-- A function is **closed** when it equals its own closure (Rockafellar §7). -/
+/-- A function is **closed** when it equals its own closure. -/
 def ClosedFn (f : E → EReal) : Prop := clFn f = f
 
 /-- The defining equation of `clFn` in the regular branch. -/
@@ -181,7 +182,7 @@ theorem clFn_mono (h : f ≤ g) : clFn f ≤ clFn g := by
 
 end Defs
 
-/-! ### The hull is a hull: Theorem 7.1 applied to `closure (epi f)` -/
+/-! ### The hull is a hull -/
 
 section Hull
 
@@ -196,8 +197,8 @@ the epigraph, with no hypothesis on `f`: the closure of an epigraph is again an 
 theorem lowerSemicontinuous_lscHull (f : E → EReal) : LowerSemicontinuous (lscHull f) :=
   lowerSemicontinuous_iff_isClosed_epi.2 (by rw [epi_lscHull]; exact isClosed_closure)
 
-/-- **The universal property.** `lscHull f` is the greatest lower semicontinuous minorant of `f`
-(Rockafellar §7, the sentence defining the lower semicontinuous hull). -/
+/-- **The universal property.** `lscHull f` is the greatest lower semicontinuous minorant of
+`f`. -/
 theorem isGreatest_lscHull (f : E → EReal) :
     IsGreatest {g : E → EReal | LowerSemicontinuous g ∧ g ≤ f} (lscHull f) :=
   ⟨⟨lowerSemicontinuous_lscHull f, lscHull_le f⟩, fun _ hg => le_lscHull_of_le hg.1 hg.2⟩
@@ -249,8 +250,8 @@ theorem closedFn_iff :
       have h' : ∀ x, lscHull f x ≠ ⊥ := fun x => by rw [hs]; exact hne x
       exact (clFn_of_forall_ne_bot h').trans hs
 
-/-- **Rockafellar §7**: for a function that never takes the value `⊥` — in particular for a proper
-convex function — closedness is exactly lower semicontinuity. -/
+/-- For a function that never takes the value `⊥` — in particular for a proper convex function —
+**closedness is exactly lower semicontinuity**. -/
 theorem closedFn_iff_lowerSemicontinuous (h : ∀ x, f x ≠ ⊥) :
     ClosedFn f ↔ LowerSemicontinuous f := by
   rw [closedFn_iff]
@@ -264,8 +265,8 @@ theorem ClosedFn.lowerSemicontinuous (hc : ClosedFn f) : LowerSemicontinuous f :
   · exact lowerSemicontinuous_const
   · exact hl
 
-/-- **Rockafellar §7**: "the only closed improper convex functions are the constant functions `+∞`
-and `−∞`". Convexity is not needed for this direction. -/
+/-- **The only closed improper convex functions are the constant functions `+∞` and `−∞`.**
+Convexity is not needed for this direction. -/
 theorem eq_const_of_closedFn_of_not_proper (hc : ClosedFn f) (hp : ¬ Proper f) :
     f = (fun _ => ⊥) ∨ f = fun _ => ⊤ := by
   rcases closedFn_iff.1 hc with h | ⟨-, hne⟩
@@ -281,7 +282,7 @@ theorem closedFn_const_bot : ClosedFn (fun _ : E => (⊥ : EReal)) := clFn_const
 /-! ### Infima, effective domains and level sets -/
 
 omit [AddCommGroup E] [IsTopologicalAddGroup E] in
-/-- **Rockafellar §7**: "`f` and `cl f` plainly have the same infimum". A constant function is
+/-- **`f` and its lower semicontinuous hull have the same infimum.** A constant function is
 lower semicontinuous, so `⨅ x, f x` is already a minorant of `lscHull f`. -/
 theorem iInf_lscHull_eq_iInf (f : E → EReal) : ⨅ x, lscHull f x = ⨅ x, f x :=
   le_antisymm (iInf_mono fun x => lscHull_le f x)
@@ -289,7 +290,7 @@ theorem iInf_lscHull_eq_iInf (f : E → EReal) : ⨅ x, lscHull f x = ⨅ x, f x
       le_lscHull_of_le (g := fun _ => ⨅ y, f y) lowerSemicontinuous_const (fun y => iInf_le f y) x)
 
 omit [IsTopologicalAddGroup E] in
-/-- **Rockafellar §7**: `f` and `cl f` have the same infimum. -/
+/-- **`f` and `cl f` have the same infimum.** -/
 theorem iInf_clFn_eq_iInf (f : E → EReal) : ⨅ x, clFn f x = ⨅ x, f x := by
   have : Nonempty E := ⟨0⟩
   by_cases h : ∃ x, lscHull f x = ⊥
@@ -307,7 +308,7 @@ theorem dom_subset_dom_lscHull (f : E → EReal) : dom f ⊆ dom (lscHull f) :=
   fun _ hx => lt_of_le_of_lt (lscHull_le f _) hx
 
 omit [AddCommGroup E] [IsTopologicalAddGroup E] in
-/-- **Rockafellar §7**: `dom f ⊆ dom (cl f) ⊆ cl (dom f)`; this is the second inclusion, which
+/-- `dom f ⊆ dom (cl f) ⊆ cl (dom f)`; this is the second inclusion, which
 holds for the hull with no hypothesis on `f`. It is `dom_eq_fst_image_epi` pushed through the
 continuous projection `Prod.fst`. -/
 theorem dom_lscHull_subset_closure_dom (f : E → EReal) : dom (lscHull f) ⊆ closure (dom f) := by
@@ -361,9 +362,9 @@ theorem closure_le_subset_lscHull_le (f : E → EReal) (α : ℝ) :
   rw [← epi_lscHull] at h2
   exact h2
 
-/-- **Rockafellar §7**, the level sets of the closure:
-`{x | (cl f) x ≤ α} = ⋂_{μ > α} cl {x | f x ≤ μ}`. Stated for the hull, which is where the content
-is; the `ri`-flavoured half of Theorem 7.6 is finite-dimensional and is not proved here. -/
+/-- **The level sets of the closure**: `{x | (cl f) x ≤ α} = ⋂_{μ > α} cl {x | f x ≤ μ}`. Stated
+for the hull, which is where the content is; the `ri`-flavoured half is finite-dimensional and is
+not proved here. -/
 theorem lscHull_le_setOf (f : E → EReal) (α : ℝ) :
     {x | lscHull f x ≤ (α : EReal)} = ⋂ μ ∈ Ioi α, closure {x | f x ≤ (μ : EReal)} := by
   refine subset_antisymm (fun x hx => mem_iInter₂.2 fun μ hμ => ?_) fun x hx => ?_
@@ -434,8 +435,7 @@ omit [AddCommGroup E] [IsTopologicalAddGroup E] in
   rw [lscHull, h, ofEpi_epi]
 
 omit [AddCommGroup E] [IsTopologicalAddGroup E] in
-/-- **`cl δ(· | s) = δ(· | cl s)`** (Rockafellar §7): closing an indicator function closes its
-set. -/
+/-- **`cl δ(· | s) = δ(· | cl s)`**: closing an indicator function closes its set. -/
 @[simp] theorem clFn_indicatorFn (s : Set E) :
     clFn (indicatorFn s) = indicatorFn (closure s) := by
   rw [clFn_of_forall_ne_bot fun x => by
@@ -451,7 +451,7 @@ end Hull
 /-! ### Approaching the endpoint of a segment
 
 The three lemmas below package the filter `𝓝[<] (1 : ℝ)` bookkeeping shared by the dichotomy
-(Corollary 7.2.1) and by the limit formulas of Theorem 7.5. -/
+for improper functions and by the limit formulas for the closure. -/
 
 section Segment
 
@@ -490,11 +490,11 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] {f g : E → EReal}
 
 /-- The lower semicontinuous hull of a convex function is convex: the closure of a convex set is
-convex (`Convex.closure`), and `convexFn_ofEpi` is Rockafellar's Theorem 5.3. -/
+convex (`Convex.closure`), and `convexFn_ofEpi` turns that back into a convex function. -/
 theorem convexFn_lscHull (hf : ConvexFn f) : ConvexFn (lscHull f) :=
   convexFn_ofEpi hf.convex_epi.closure
 
-/-- **Rockafellar §7**: "Either way, the closure of `f` is another convex function." -/
+/-- **The closure of a convex function is again convex**, in either branch. -/
 theorem convexFn_clFn (hf : ConvexFn f) : ConvexFn (clFn f) := by
   by_cases h : ∃ x, lscHull f x = ⊥
   · rw [clFn_of_exists_eq_bot h]
@@ -504,13 +504,13 @@ theorem convexFn_clFn (hf : ConvexFn f) : ConvexFn (clFn f) := by
 
 /-! ### The dichotomy for improper convex functions
 
-Theorem 7.2 ("an improper convex function is `−∞` on `ri (dom f)`") is finite-dimensional. Its
-lower-semicontinuous consequence, Corollary 7.2.1, is not, and holds in any topological vector
-space. It is also the sharp form: the stronger-sounding "a lower semicontinuous convex function
-taking `⊥` anywhere is identically `⊥`" is **false**; see `eq_bot_of_lsc_of_eq_bot`. -/
+"An improper convex function is `−∞` on `ri (dom f)`" is finite-dimensional. Its
+lower-semicontinuous consequence below is not, and holds in any topological vector space. It is
+also the sharp form: the stronger-sounding "a lower semicontinuous convex function taking `⊥`
+anywhere is identically `⊥`" is **false**; see `eq_bot_of_lsc_of_eq_bot`. -/
 
 omit [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] in
-/-- The algebraic engine of Theorem 7.2, valid in any real vector space: if `f` is convex,
+/-- The algebraic engine of the dichotomy, valid in any real vector space: if `f` is convex,
 `f x₀ = ⊥` and `y` is in the effective domain, then `f` is `⊥` on the half-open segment `[x₀, y)`.
 The hypothesis `y ∈ dom f` is needed: for `f = restrict {x₀} (fun _ => ⊥)` the segment meets
 `dom f` only at `x₀`. -/
@@ -530,8 +530,8 @@ theorem ConvexFn.eq_bot_of_lt_one (hf : ConvexFn f) {x₀ y : E} (h₀ : f x₀ 
     rw [harith] at hkey
     exact hkey.le
 
-/-- **Rockafellar, Corollary 7.2.1**, pointwise form: a lower semicontinuous convex function that
-takes the value `⊥` somewhere takes it at every point of its effective domain. Only lower
+/-- **A lower semicontinuous convex function that takes the value `⊥` somewhere takes it at every
+point of its effective domain.** Only lower
 semicontinuity at `y` is used, through the limit `λ ↑ 1` along the segment from `x₀` to `y`. -/
 theorem ConvexFn.eq_bot_of_mem_dom (hf : ConvexFn f) (hl : LowerSemicontinuous f) {x₀ : E}
     (h₀ : f x₀ = ⊥) {y : E} (hy : y ∈ dom f) : f y = ⊥ := by
@@ -545,8 +545,8 @@ theorem ConvexFn.eq_bot_of_mem_dom (hf : ConvexFn f) (hl : LowerSemicontinuous f
   rw [heq] at hlt
   exact absurd hlt (lt_irrefl ⊥)
 
-/-- **Rockafellar, Corollary 7.2.1.** A lower semicontinuous improper convex function has no finite
-values: it is `⊥` on its effective domain and `⊤` off it. -/
+/-- **A lower semicontinuous improper convex function has no finite values**: it is `⊥` on its
+effective domain and `⊤` off it. -/
 theorem ConvexFn.eq_bot_or_eq_top (hf : ConvexFn f) (hl : LowerSemicontinuous f)
     (h : ∃ x₀, f x₀ = ⊥) (x : E) : f x = ⊥ ∨ f x = ⊤ := by
   obtain ⟨x₀, h₀⟩ := h
@@ -568,7 +568,7 @@ theorem ConvexFn.dom_eq_setOf_eq_bot (hf : ConvexFn f) (hl : LowerSemicontinuous
 /-- **The dichotomy, in the form that is actually true.** A lower semicontinuous convex function
 that takes the value `⊥` somewhere and is nowhere `⊤` is identically `⊥`. The hypothesis `hdom` is
 not removable — see the `example` at the end of this file — and the sharp unconditional form is
-`ConvexFn.eq_bot_or_eq_top`, Corollary 7.2.1. -/
+`ConvexFn.eq_bot_or_eq_top`. -/
 theorem eq_bot_of_lsc_of_eq_bot (hf : ConvexFn f) (hl : LowerSemicontinuous f)
     (hdom : ∀ x, f x < ⊤) (h : ∃ x₀, f x₀ = ⊥) : f = fun _ => ⊥ := by
   obtain ⟨x₀, h₀⟩ := h
@@ -594,8 +594,8 @@ theorem posHomogeneous_lscHull (hf : PosHomogeneous f) : PosHomogeneous (lscHull
 
 /-- **The closure of a positively homogeneous function is positively homogeneous.** The improper
 branch is a case rather than an exclusion: there `cl f` is the constant `⊥`, and `a * ⊥ = ⊥` for
-`a > 0`. Corollary 13.2.1 gives the same conclusion for *convex* `f` by writing `cl f` as a support
-function; neither the pairing that needs, nor convexity, is required here. -/
+`a > 0`. The same conclusion for *convex* `f` follows from writing `cl f` as a support function;
+neither the pairing that needs, nor convexity, is required here. -/
 theorem posHomogeneous_clFn (hf : PosHomogeneous f) : PosHomogeneous (clFn f) := by
   by_cases h : ∃ x, lscHull f x = ⊥
   · rw [clFn_of_exists_eq_bot h]
@@ -647,8 +647,8 @@ section ClosedProperConvex
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] {f : E → EReal}
 
-/-- A **closed proper convex function**: Rockafellar's standing hypothesis from §12 onwards, and
-the class `conjEquiv` and `supportEquiv` are bijections between. The three conditions travel
+/-- A **closed proper convex function**: the standing hypothesis of the duality theory, and the
+class `conjEquiv` and `supportEquiv` are bijections between. The three conditions travel
 together throughout the duality theory, so they are bundled rather than repeated. -/
 structure ClosedProperConvexFn (f : E → EReal) : Prop where
   /-- The epigraph is convex. -/
@@ -666,7 +666,7 @@ theorem ClosedProperConvexFn.isClosed_epi (hf : ClosedProperConvexFn f) : IsClos
   lowerSemicontinuous_iff_isClosed_epi.1 hf.lowerSemicontinuous
 
 /-- For a proper function, closedness of the epigraph is closedness of the function, so this is the
-form of the constructor that §8 uses. -/
+form of the constructor the recession theory uses. -/
 theorem ClosedProperConvexFn.of_isClosed_epi (hconv : ConvexFn f) (hc : IsClosed (epi f))
     (hp : Proper f) : ClosedProperConvexFn f :=
   ⟨hconv, (closedFn_iff_lowerSemicontinuous hp.ne_bot).2
@@ -746,18 +746,18 @@ theorem exists_affine_le_of_closed_proper (hf : ClosedProperConvexFn f) :
 
 end LocallyConvex
 
-/-! ### Limits along a segment: Theorem 7.5 and Corollary 7.5.1 -/
+/-! ### Limits along a segment -/
 
 section SegmentLimit
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] {f : E → EReal}
 
-/-- **Rockafellar, Theorem 7.5**: the lower semicontinuous hull of `f` at `y` is the limit of `f`
-along the segment running from `x` to `y`, provided the segment starts at an *interior* point of
-`epi f`. Rockafellar's hypothesis is `x ∈ ri (dom f)`, which by his Lemma 7.3 says that the
-vertical line over `x` meets `ri (epi f)`; relative interiors are finite-dimensional, so the
-general statement uses `interior (epi f)` instead. In finite dimensions `interior (epi f)` may be
+/-- **The lower semicontinuous hull of `f` at `y` is the limit of `f` along the segment running
+from `x` to `y`**, provided the segment starts at an *interior* point of `epi f`. The classical
+hypothesis is `x ∈ ri (dom f)`, which says that the vertical line over `x` meets `ri (epi f)`;
+relative interiors are finite-dimensional, so the general statement uses `interior (epi f)`
+instead. In finite dimensions `interior (epi f)` may be
 empty when `ri (epi f)` is not, so this is a restriction as well as a generalisation. -/
 theorem tendsto_lscHull_along_segment (hf : ConvexFn f) {x : E} {α : ℝ}
     (hx : (x, α) ∈ interior (epi f)) (y : E) :
@@ -786,18 +786,18 @@ theorem tendsto_lscHull_along_segment (hf : ConvexFn f) {x : E} {α : ℝ}
       mk_mem_epi.1 (interior_subset hcombo)
     exact lt_of_le_of_lt hle (lt_trans (by exact_mod_cast hlt) hγ2)
 
-/-- **Rockafellar, Theorem 7.5** stated for `clFn`. The exceptional branch has to be ruled out by
-hand, and it genuinely can occur: for the function that is `⊥` on a closed ball and `⊤` outside it,
-`clFn f ≡ ⊥` while the limit along a segment ending outside the ball is `⊤`. Rockafellar's own
-statement carries the matching restriction `y ∈ cl (dom f)` in the improper case. -/
+/-- The same limit formula for `clFn`. The exceptional branch has to be ruled out by hand, and it
+genuinely can occur: for the function that is `⊥` on a closed ball and `⊤` outside it, `clFn f ≡ ⊥`
+while the limit along a segment ending outside the ball is `⊤`. The classical statement carries the
+matching restriction `y ∈ cl (dom f)` in the improper case. -/
 theorem clFn_eq_limit_along_segment (hf : ConvexFn f) (hne : ∀ z, lscHull f z ≠ ⊥) {x : E} {α : ℝ}
     (hx : (x, α) ∈ interior (epi f)) (y : E) :
     Tendsto (fun a : ℝ => f ((1 - a) • x + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y)) := by
   rw [clFn_of_forall_ne_bot hne]
   exact tendsto_lscHull_along_segment hf hx y
 
-/-- **Rockafellar, Corollary 7.5.1**: for a closed proper convex `f`, every `x ∈ dom f` and every
-`y`, `f y = lim_{a ↑ 1} f ((1 - a) • x + a • y)`. No relative interiors are involved: lower
+/-- **For a closed proper convex `f`, every `x ∈ dom f` and every `y`,
+`f y = lim_{a ↑ 1} f ((1 - a) • x + a • y)`.** No relative interiors are involved: lower
 semicontinuity gives the `liminf` half for every `y`, including `f y = ⊤`, and convexity applied to
 the finite values `f x` and `f y` gives the `limsup` half. -/
 theorem tendsto_along_segment_of_closed_proper (hf : ClosedProperConvexFn f)
@@ -882,8 +882,8 @@ variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
 
 /-- **Rockafellar's `cl f = liminf f`, in full.** For a *convex* `f` the closure at `x` is the
 `liminf` of `f` at `x`, except in the single degenerate case where the left side is `-∞` and the
-right side is `+∞`; that case can only arise in the exceptional branch of `clFn`, where
-Corollary 7.2.1 leaves `lscHull f` with only the values `-∞` and `+∞`. -/
+right side is `+∞`; that case can only arise in the exceptional branch of `clFn`, where the
+dichotomy leaves `lscHull f` with only the values `-∞` and `+∞`. -/
 theorem clFn_eq_liminf_or (hf : ConvexFn f) (x : E) :
     clFn f x = liminf f (𝓝 x) ∨ (clFn f x = ⊥ ∧ liminf f (𝓝 x) = ⊤) := by
   by_cases h : ∃ z, lscHull f z = ⊥

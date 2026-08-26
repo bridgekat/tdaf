@@ -10,12 +10,13 @@ import Tdaf.Analysis.Convex.Recession.Function
 /-!
 # Continuity of a convex function on the relative interior of its domain
 
-**Rockafellar's Theorem 10.1**: a proper convex function on a finite-dimensional space is
-continuous, relative to the affine hull of its effective domain, at every relative interior point
-of that domain. Mathlib proves the *interior* statement (`ConvexOn.continuousOn_interior`) and
-leaves the relative version open, because `intrinsicInterior` lives in a file that does not meet
+A proper convex function on a finite-dimensional space is continuous, relative to the affine hull
+of its effective domain, at every relative interior point of that domain. Mathlib proves the
+*interior* statement (`ConvexOn.continuousOn_interior`) and leaves the relative version open,
+because `intrinsicInterior` lives in a file that does not meet
 `Mathlib/Analysis/Convex/Continuous.lean`. This file supplies it, and with it the quantitative
-Theorems 10.4 and 10.5.
+refinements: Lipschitz continuity on compact subsets of `ri (dom f)`, and uniform continuity on the
+whole space.
 
 ## Main results
 
@@ -25,18 +26,18 @@ Theorems 10.4 and 10.5.
   `Convex` and `ConvexOn` — which need a module, not a torsor — still apply.
 * `exists_chart_retraction` — the chart packaged with a *continuous linear* retraction, which is
   what carries continuity and Lipschitz constants back from the chart to `E`.
-* `ConvexFn.continuousOn_toReal_relint_dom`, `ConvexFn.continuousOn_relint_dom` —
-  **Theorem 10.1**, in the real-valued and the `EReal`-valued form;
-  `ConvexFn.continuous_of_dom_eq_univ` is **Corollary 10.1.1**.
+* `ConvexFn.continuousOn_toReal_relint_dom`, `ConvexFn.continuousOn_relint_dom` — continuity on
+  `ri (dom f)`, in the real-valued and the `EReal`-valued form;
+  `ConvexFn.continuous_of_dom_eq_univ` is the everywhere-finite case.
 * `ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset`,
   `ConvexOn.exists_lipschitzOnWith_of_isCompact`, `ConvexFn.exists_lipschitzOnWith_of_isCompact` —
-  **Theorem 10.4**: the quantitative form with the constant `2M/ε` exhibited (which is what
-  Theorem 10.6 needs, and which needs no finite-dimensionality), then the `interior` and the `ri`
-  form.
-* `ConvexFn.uniformContinuous_toReal_iff` — **Theorem 10.5**, with
+  Lipschitz continuity on compact subsets: the quantitative form with the constant `2M/ε`
+  exhibited (which is what equi-Lipschitz statements need, and which needs no
+  finite-dimensionality), then the `interior` and the `ri` form.
+* `ConvexFn.uniformContinuous_toReal_iff` — uniform continuity on the whole space, with
   `ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top` as its quantitative half and
   `ConvexFn.exists_lipschitzWith_of_frequently_le`, `ConvexFn.exists_lipschitzWith_of_le_lipschitz`
-  as **Corollaries 10.5.1** and **10.5.2**.
+  as two easily checked sufficient conditions.
 * `intrinsicInterior_vadd` — translation invariance of `ri`, which the chart needs and which
   Mathlib does not state.
 
@@ -54,8 +55,7 @@ rather than the embedding, which finite-dimensionality supplies through
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10 (Theorems 10.1, 10.4,
-  10.5).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §10.
 -/
 
 open Pointwise Set
@@ -193,8 +193,8 @@ theorem ConvexFn.convexOn_toReal_dom (hf : ConvexFn f) (hp : Proper f) :
       exact (top_le_iff.1 (not_lt.1 hx)).symm
   rwa [hrestrict]
 
-/-- **Rockafellar, Theorem 10.1**, real-valued form: a proper convex function is continuous,
-relative to the affine hull of its domain, at every relative interior point. -/
+/-- **A proper convex function is continuous, relative to the affine hull of its domain, at every
+relative interior point** — real-valued form. -/
 theorem ConvexFn.continuousOn_toReal_relint_dom (hf : ConvexFn f) (hp : Proper f) :
     ContinuousOn (fun x => (f x).toReal) (ri (dom f)) := by
   obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
@@ -211,8 +211,8 @@ theorem ConvexFn.continuousOn_toReal_relint_dom (hf : ConvexFn f) (hp : Proper f
   refine ContinuousOn.congr (hcont.comp hρcont.continuousOn hmaps) fun x hx => ?_
   rw [Function.comp_apply, hid x hx]
 
-/-- **Rockafellar, Theorem 10.1**: a proper convex function on a finite-dimensional space is
-continuous, relative to the affine hull of its effective domain, on `ri (dom f)`. -/
+/-- **A proper convex function on a finite-dimensional space is continuous on `ri (dom f)`**,
+relative to the affine hull of its effective domain. -/
 theorem ConvexFn.continuousOn_relint_dom (hf : ConvexFn f) (hp : Proper f) :
     ContinuousOn f (ri (dom f)) := by
   have hcoe : Set.EqOn f (fun x => (((f x).toReal : ℝ) : EReal)) (ri (dom f)) := by
@@ -224,22 +224,22 @@ theorem ConvexFn.continuousOn_relint_dom (hf : ConvexFn f) (hp : Proper f) :
 
 end Thm101
 
-/-! ### Corollary 10.1.1 -/
+/-! ### Functions finite everywhere -/
 
 section Cor1011
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- **Rockafellar, Corollary 10.1.1**: a convex function that is finite everywhere is continuous.
-`dom f = univ` is Rockafellar's "finite on all of `Rⁿ`", properness supplying the other half. -/
+/-- **A convex function that is finite everywhere is continuous.** `dom f = univ` is "finite on
+all of `Rⁿ`", properness supplying the other half. -/
 theorem ConvexFn.continuous_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) : Continuous f := by
   have hri : ri (dom f) = Set.univ := by rw [hdom, intrinsicInterior_univ]
   rw [← continuousOn_univ, ← hri]
   exact hf.continuousOn_relint_dom hp
 
-/-- **Rockafellar, Corollary 10.1.1**, real-valued form. -/
+/-- A convex function finite everywhere is continuous, real-valued form. -/
 theorem ConvexFn.continuous_toReal_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) : Continuous fun x => (f x).toReal := by
   have hri : ri (dom f) = Set.univ := by rw [hdom, intrinsicInterior_univ]
@@ -248,7 +248,7 @@ theorem ConvexFn.continuous_toReal_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper
 
 end Cor1011
 
-/-! ### Theorem 10.4: Lipschitz continuity on compact subsets of the relative interior -/
+/-! ### Lipschitz continuity on compact subsets of the relative interior -/
 
 section Thm104
 
@@ -256,15 +256,15 @@ variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W] [FiniteDimension
   {D : Set W} {ψ : W → ℝ}
 
 omit [FiniteDimensional ℝ W] in
-/-- **The quantitative core of Rockafellar's Theorem 10.4**: if `ψ` is convex on `D` and bounded by
-`M` in absolute value on the closed `ε`-collar of `S`, and that collar lies inside `D`, then `ψ` is
-Lipschitz on `S` with constant `2M/ε`. For `x ≠ y` in `S` the point
+/-- **The quantitative core.** If `ψ` is convex on `D` and bounded by `M` in absolute value on the
+closed `ε`-collar of `S`, and that collar lies inside `D`, then `ψ` is Lipschitz on `S` with
+constant `2M/ε`. For `x ≠ y` in `S` the point
 `z = y + (ε / ‖y - x‖) • (y - x)` sits in the collar and expresses `y` as a convex combination of
 `x` and `z`, so convexity bounds the increment by the oscillation of `ψ` over the collar.
 
 The constant is *exhibited* rather than existentially quantified: a family of convex functions
-sharing one collar and one bound is therefore equi-Lipschitzian with a single constant, which is
-Theorem 10.6. Mathlib's `ConvexOn.lipschitzOnWith_of_abs_le` is the two-sided ball version, and
+sharing one collar and one bound is therefore equi-Lipschitzian with a single constant. Mathlib's
+`ConvexOn.lipschitzOnWith_of_abs_le` is the two-sided ball version, and
 the collar argument does not follow from it. -/
 theorem ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset (hψ : ConvexOn ℝ D ψ) {S : Set W}
     {ε M : ℝ} (hε : 0 < ε) (hM : 0 ≤ M) (hsub : Metric.cthickening ε S ⊆ D)
@@ -322,8 +322,8 @@ theorem ConvexOn.lipschitzOnWith_of_abs_le_of_cthickening_subset (hψ : ConvexOn
   · rw [h, norm_sub_rev]
     linarith [key x hx y hy]
 
-/-- **The interior form of Rockafellar's Theorem 10.4**: a function convex on `D` is Lipschitz on
-every compact subset of `interior D`. Compactness supplies an `ε`-collar of `S` still inside
+/-- **The interior form**: a function convex on `D` is Lipschitz on every compact subset of
+`interior D`. Compactness supplies an `ε`-collar of `S` still inside
 `interior D`, on which continuity bounds `ψ`. -/
 theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {S : Set W}
     (hS : IsCompact S) (hSD : S ⊆ interior D) : ∃ K : ℝ≥0, LipschitzOnWith K ψ S := by
@@ -339,9 +339,9 @@ theorem ConvexOn.exists_lipschitzOnWith_of_isCompact (hψ : ConvexOn ℝ D ψ) {
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- **Rockafellar, Theorem 10.4**: a proper convex function is Lipschitz on every compact subset of
-`ri (dom f)`. Rockafellar states it for closed bounded subsets of `ri (dom f)`, which in finite
-dimensions is compactness. The retraction of the chart is a continuous linear map, hence Lipschitz,
+/-- **A proper convex function is Lipschitz on every compact subset of `ri (dom f)`.** The usual
+statement is for closed bounded subsets, which in finite dimensions is the same thing. The
+retraction of the chart is a continuous linear map, hence Lipschitz,
 so it carries Lipschitz constants back as well as continuity. -/
 theorem ConvexFn.exists_lipschitzOnWith_of_isCompact (hf : ConvexFn f) (hp : Proper f) {S : Set E}
     (hS : IsCompact S) (hSD : S ⊆ ri (dom f)) :
@@ -377,7 +377,7 @@ theorem ConvexFn.exists_lipschitzOnWith_of_isCompact (hf : ConvexFn f) (hp : Pro
 
 end Thm104
 
-/-! ### Theorem 10.5: uniform continuity and Lipschitz continuity on the whole space -/
+/-! ### Uniform continuity and Lipschitz continuity on the whole space -/
 
 section Thm105
 
@@ -392,17 +392,17 @@ theorem coe_toReal_of_dom_eq_univ (hp : Proper f) (hdom : dom f = Set.univ) (x :
   have hx : x ∈ dom f := by rw [hdom]; exact Set.mem_univ x
   exact (mem_dom.1 hx).ne
 
-/-- A finite convex function on the whole space is closed: it is continuous by Corollary 10.1.1,
-hence lower semicontinuous, hence has a closed epigraph. -/
+/-- A finite convex function on the whole space is closed: it is continuous, hence lower
+semicontinuous, hence has a closed epigraph. -/
 theorem ConvexFn.isClosed_epi_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) : IsClosed (epi f) :=
   lowerSemicontinuous_iff_isClosed_epi.1
     (hf.continuous_of_dom_eq_univ hp hdom).lowerSemicontinuous
 
-/-- The quantitative half of **Theorem 10.5**: when `f0⁺` is finite everywhere it is bounded by a
-linear function of the norm. The constant is Rockafellar's `α = sup {(f0⁺) z | ‖z‖ = 1}`, finite
-because `f0⁺` is a finite convex function, hence continuous (Corollary 10.1.1), and the unit ball is
-compact; positive homogeneity spreads the bound over the whole space. -/
+/-- **When `f0⁺` is finite everywhere it is bounded by a linear function of the norm.** The
+constant is `α = sup {(f0⁺) z | ‖z‖ = 1}`, finite because `f0⁺` is a finite convex function, hence
+continuous, and the unit ball is compact; positive homogeneity spreads the bound over the whole
+space. -/
 theorem exists_recessionFn_le_of_forall_ne_top (hp : Proper f)
     (hrec : ∀ y, recessionFn f y ≠ ⊤) :
     ∃ M : ℝ, 0 ≤ M ∧ ∀ y, recessionFn f y ≤ ((M * ‖y‖ : ℝ) : EReal) := by
@@ -434,9 +434,8 @@ theorem exists_recessionFn_le_of_forall_ne_top (hp : Proper f)
           refine _root_.EReal.coe_le_coe_iff.2 ?_
           nlinarith [hyn.le]
 
-/-- **Rockafellar, Theorem 10.5**, sufficiency: if the recession function of a finite convex
-function on the whole space is finite everywhere, the function is Lipschitz, with Rockafellar's `α`
-as constant. -/
+/-- **Sufficiency**: if the recession function of a finite convex function on the whole space is
+finite everywhere, the function is Lipschitz, with `α` as constant. -/
 theorem ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) (hrec : ∀ y, recessionFn f y ≠ ⊤) :
     ∃ K : ℝ≥0, LipschitzWith K fun x => (f x).toReal := by
@@ -461,9 +460,9 @@ theorem ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top (hf : ConvexFn f) (h
     linarith [key x z]
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, Theorem 10.5**, necessity: a uniformly continuous finite convex function has a
-finite recession function. Uniform continuity at `ε = 1` bounds `f (x + z) - f x` by `1` uniformly
-in `x` for short `z`, which by Theorem 8.5 says `(f0⁺) z ≤ 1`. -/
+/-- **Necessity**: a uniformly continuous finite convex function has a finite recession function.
+Uniform continuity at `ε = 1` bounds `f (x + z) - f x` by `1` uniformly in `x` for short `z`, which
+says `(f0⁺) z ≤ 1`. -/
 theorem ConvexFn.recessionFn_ne_top_of_uniformContinuous (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) (hu : UniformContinuous fun x => (f x).toReal) (y : E) :
     recessionFn f y ≠ ⊤ := by
@@ -494,9 +493,9 @@ theorem ConvexFn.recessionFn_ne_top_of_uniformContinuous (hf : ConvexFn f) (hp :
     rw [htop, _root_.EReal.coe_mul_top_of_pos hcpos, top_le_iff] at hcy
     exact _root_.EReal.coe_ne_top 1 hcy
 
-/-- **Rockafellar, Theorem 10.5**: a finite convex function on the whole space is uniformly
-continuous exactly when its recession function is finite everywhere, and then it is in fact
-Lipschitz (`ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top`). -/
+/-- **A finite convex function on the whole space is uniformly continuous exactly when its
+recession function is finite everywhere**, and then it is in fact Lipschitz
+(`ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top`). -/
 theorem ConvexFn.uniformContinuous_toReal_iff (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) :
     (UniformContinuous fun x => (f x).toReal) ↔ ∀ y, recessionFn f y ≠ ⊤ := by
@@ -504,9 +503,9 @@ theorem ConvexFn.uniformContinuous_toReal_iff (hf : ConvexFn f) (hp : Proper f)
   obtain ⟨K, hK⟩ := hf.exists_lipschitzWith_of_recessionFn_ne_top hp hdom hrec
   exact hK.uniformContinuous
 
-/-- **Rockafellar, Corollary 10.5.1**: it is enough that `f (a • y) / a` stay bounded above along
-*some* sequence `a → ∞`, in every direction `y` — Rockafellar's `liminf`. By Theorem 8.5 the
-quotient is nondecreasing in `a`, so a bound reached infinitely often is a bound everywhere. -/
+/-- For Lipschitz continuity it is enough that `f (a • y) / a` stay bounded above along *some*
+sequence `a → ∞`, in every direction `y`. The quotient is nondecreasing in `a`, so a bound reached
+infinitely often is a bound everywhere. -/
 theorem ConvexFn.exists_lipschitzWith_of_frequently_le (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ)
     (h : ∀ y : E, ∃ c : ℝ, ∃ᶠ a : ℝ in Filter.atTop, f (a • y) ≤ ((c * a : ℝ) : EReal)) :
@@ -534,9 +533,9 @@ theorem ConvexFn.exists_lipschitzWith_of_frequently_le (hf : ConvexFn f) (hp : P
       (le_trans (le_max_left a 1) ha'ge)).trans hq'
   exact ne_top_of_le_ne_top (_root_.EReal.coe_ne_top _) hbound
 
-/-- **Rockafellar, Corollary 10.5.2**: a finite convex function dominated by a Lipschitz function is
-itself Lipschitz. Rockafellar assumes the dominating `g` convex; the proof does not use it, so `g`
-here is an arbitrary Lipschitz function. -/
+/-- **A finite convex function dominated by a Lipschitz function is itself Lipschitz.** The usual
+statement assumes the dominating `g` convex; the proof does not use it, so `g` here is an arbitrary
+Lipschitz function. -/
 theorem ConvexFn.exists_lipschitzWith_of_le_lipschitz (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) {g : E → ℝ} {K : ℝ≥0} (hg : LipschitzWith K g)
     (hle : ∀ x, f x ≤ ((g x : ℝ) : EReal)) :
