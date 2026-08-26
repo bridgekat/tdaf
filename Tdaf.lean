@@ -124,6 +124,7 @@ import Tdaf.LinearAlgebra.Subspace
 import Tdaf.Order.EReal
 import Tdaf.Order.GaloisConnection
 import Tdaf.Surface.Common.Euclidean
+import Tdaf.Surface.Rockafellar
 import Tdaf.Surface.Rockafellar.Part1
 import Tdaf.Surface.Rockafellar.Part1.Section01
 import Tdaf.Surface.Rockafellar.Part1.Section02
@@ -196,7 +197,8 @@ that supports it.
 `Tdaf.Surface.Rockafellar` is its surface for R. T. Rockafellar, *Convex Analysis* (Princeton,
 1970), covering all thirty-nine sections of the book. Every numbered result is formalized except
 the five making up §22's elementary-vector development, which is combinatorial matroid theory that
-the book itself presents as independent of convexity.
+the book itself presents as independent of convexity. That module is the project's index: it carries
+the section-by-section outline and the places where formalizing the book corrected it.
 
 **Surface declarations are named for the results they state**, so the name is the index:
 `theorem_33_1` is Theorem 33.1 and `corollary_37_5_2` is Corollary 37.5.2. Where one numbered
