@@ -9,19 +9,22 @@ import Tdaf.Analysis.Convex.Duality.Level
 import Tdaf.Analysis.Convex.Optimization.Fenchel
 
 /-!
-# Corollary 31.4.3: a co-finite function and a closed convex cone
+# Duality between a co-finite function and a closed convex cone
 
-Rockafellar's **Corollary 31.4.3**. Let `h` be convex, finite everywhere and *co-finite*, let `K`
-be a nonempty closed convex cone and let `K* = -K°`. Then for every `z` and `z*`
+Let `h` be convex, finite everywhere and *co-finite*, let `K` be a nonempty closed convex cone and
+let `K* = -K°`. Then for every `z` and `z*`
 
 ```
 inf_{x ∈ K} {h (z + x) - ⟨z*, x⟩} + inf_{x* ∈ K*} {h* (z* + x*) - ⟨z, x*⟩} = ⟨z, z*⟩,
 ```
 
-with both infima finite and attained. The pair `(z, z*)` ranges over `E × F`, so the identity is a
-duality between `h` and `h*` parametrised by a point of the primal space and a point of the dual
-space; Rockafellar states it only in the case where both functions are finite everywhere, which is
-what co-finiteness of `h` on top of finiteness of `h` buys.
+with both infima finite and attained: **Corollary 31.4.3**, a duality between `h` and `h*`
+parametrised by a point of each space.
+
+The proof is Theorem 12.3 followed by Theorem 31.4. The auxiliary function
+`f = h (z + ·) - ⟨·, z*⟩` has `dom f = E` because `h` is finite and `dom f* = F` because `h` is
+co-finite (Corollary 13.3.1); those are Theorem 31.4's conditions (a) and (b) in their strongest
+form. The constant `⟨z, z*⟩` is the shift by which `f*` differs from the dual objective.
 
 ## Main results
 
@@ -30,36 +33,17 @@ what co-finiteness of `h` on top of finiteness of `h` buys.
   are attained.
 * `exists_iInf_mem_eq_coe_of_cofinite`, `exists_iInf_mem_neg_polarCone_eq_coe_of_cofinite` — both
   infima are finite.
-* `convexFn_comp_add_sub_pairing`, `proper_comp_add_sub_pairing`,
-  `dom_comp_add_sub_pairing_eq_univ` — the elementary facts about `f = h (z + ·) - ⟨·, z*⟩` that
-  the proof consumes. Its conjugate is `conj_comp_add_sub_pairing` (Theorem 12.3).
 
-## Design notes
+## Implementation notes
 
-**The proof is Theorem 12.3 followed by Theorem 31.4, and nothing else.** `f = h (z + ·) - ⟨·, z*⟩`
-has `dom f = E` because `h` is finite, and `dom f* = F` because `h` is co-finite (Corollary 13.3.1,
-`cofinite_iff_dom_conj_eq_univ`); those are Rockafellar's conditions (a) and (b) for Theorem 31.4
-in their strongest form, so both infima are attained. The constant `⟨z, z*⟩` on the right-hand side
-is the `α*` of Theorem 12.3: `f*` is `h* (z* + ·) - ⟨z, ·⟩` shifted down by `⟨z, z*⟩`
-(`conj_comp_add_sub_pairing`), and Theorem 31.4 makes the two *unshifted* values sum to zero.
-
-**Why this is layer D while Theorem 31.4 is not.** Theorem 31.4 is stated against `IsExactSum`,
-which is layer A. What is finite-dimensional here is the *verification* of that interface:
-Corollary 10.1.1 (`ConvexFn.continuous_of_dom_eq_univ`) turns "finite everywhere" into
-"continuous", and `IsExactSum.of_continuousAt` then supplies exactness on each side. Corollary
-13.3.1 is finite-dimensional for its own reasons (a dense convex set in `Rⁿ` is everything). A
-statement of this corollary in a Banach space would ask for continuity of `h` as a hypothesis
-rather than deriving it; nothing else in the proof would change.
-
-**Closedness of `K` is used only for the primal attainment.** The identity, the finiteness of both
-infima and the attainment of the *dual* infimum need only that `K` is a nonempty convex cone; the
-primal infimum is attained by Theorem 31.4's condition (b), whose proof runs through the bipolar
-`K** = K` and therefore needs `K` closed.
+Closedness of `K` is used only for attainment of the *primal* infimum, whose proof runs through the
+bipolar `K** = K`; the identity, finiteness of both infima and attainment of the dual infimum need
+only that `K` is a nonempty convex cone. Finite-dimensionality enters only through Corollary 10.1.1
+(finite everywhere implies continuous) and Corollary 13.3.1.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31
-  (Corollary 31.4.3), §12 (Theorem 12.3), §13 (Corollary 13.3.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §§12, 13, 31.
 -/
 
 open Set Pointwise
@@ -73,15 +57,14 @@ section Shift
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {h : E → EReal}
 
-/-- Corollary 31.4.3's function `f = h (z + ·) - ⟨·, z*⟩`, rewritten as `h (z + ·)` plus a
-real-valued linear term. This is the form in which `convexFn_add_coe` applies. -/
+/-- `f = h (z + ·) - ⟨·, z*⟩` rewritten as `h (z + ·)` plus a real-valued linear term. -/
 theorem comp_add_sub_pairing_eq_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (z : E) (z' : F) :
     (fun x => h (z + x) - ((B x z' : ℝ) : EReal))
       = fun x => h (z + x) + ((-(B x z') : ℝ) : EReal) := by
   funext x
   rw [_root_.EReal.coe_neg, ← sub_eq_add_neg]
 
-/-- Corollary 31.4.3's function is convex: a translate of `h` plus a linear term. -/
+/-- `f` is convex: a translate of `h` plus a linear term. -/
 theorem convexFn_comp_add_sub_pairing (hh : ConvexFn h) (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (z : E) (z' : F) :
     ConvexFn (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) := by
   rw [comp_add_sub_pairing_eq_add_coe]
@@ -89,7 +72,7 @@ theorem convexFn_comp_add_sub_pairing (hh : ConvexFn h) (B : E →ₗ[ℝ] F →
   simp only [map_add, map_smul, LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul]
   ring
 
-/-- When `h` is finite everywhere so is `f = h (z + ·) - ⟨·, z*⟩`: the tilt is real. -/
+/-- When `h` is finite everywhere so is `f`: the tilt is real. -/
 theorem exists_comp_add_sub_pairing_eq_coe (hp : Proper h) (hdom : dom h = univ)
     (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (z : E) (z' : F) (x : E) :
     ∃ r : ℝ, h (z + x) - ((B x z' : ℝ) : EReal) = (r : EReal) := by
@@ -97,7 +80,7 @@ theorem exists_comp_add_sub_pairing_eq_coe (hp : Proper h) (hdom : dom h = univ)
     (by rw [← mem_dom, hdom]; trivial)
   exact ⟨p - B x z', by rw [hp', ← _root_.EReal.coe_sub]⟩
 
-/-- `f = h (z + ·) - ⟨·, z*⟩` is proper whenever `h` is finite everywhere. -/
+/-- `f` is proper whenever `h` is finite everywhere. -/
 theorem proper_comp_add_sub_pairing (hp : Proper h) (hdom : dom h = univ)
     (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (z : E) (z' : F) :
     Proper (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) := by
@@ -109,7 +92,7 @@ theorem proper_comp_add_sub_pairing (hp : Proper h) (hdom : dom h = univ)
     rw [hr]
     exact _root_.EReal.coe_ne_bot r
 
-/-- `f = h (z + ·) - ⟨·, z*⟩` is finite everywhere whenever `h` is. -/
+/-- `f` is finite everywhere whenever `h` is. -/
 theorem dom_comp_add_sub_pairing_eq_univ (hp : Proper h) (hdom : dom h = univ)
     (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (z : E) (z' : F) :
     dom (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) = univ := by
@@ -118,8 +101,7 @@ theorem dom_comp_add_sub_pairing_eq_univ (hp : Proper h) (hdom : dom h = univ)
   rw [mem_dom, hr]
   exact _root_.EReal.coe_lt_top r
 
-/-- The conjugate of `f = h (z + ·) - ⟨·, z*⟩` is Corollary 31.4.3's dual objective shifted down by
-the constant `⟨z, z*⟩`. This is `conj_comp_add_sub_pairing` (Theorem 12.3) with the two
+/-- `f*` is the dual objective shifted down by the constant `⟨z, z*⟩`: Theorem 12.3 with the two
 subtractions collected into one real summand. -/
 theorem conj_comp_add_sub_pairing_eq_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (z : E)
     (z' : F) (w : F) :
@@ -127,9 +109,8 @@ theorem conj_comp_add_sub_pairing_eq_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] �
       = (conj B h (z' + w) - ((B z w : ℝ) : EReal)) + ((-(B z z') : ℝ) : EReal) := by
   rw [conj_comp_add_sub_pairing, _root_.EReal.coe_neg, ← sub_eq_add_neg]
 
-/-- Theorem 31.4's dual infimum for `f = h (z + ·) - ⟨·, z*⟩` is Corollary 31.4.3's dual infimum
-shifted down by `⟨z, z*⟩`. The shift is a real constant, so it slides out of the infimum
-(`Tdaf.EReal.biInf_add_coe`). -/
+/-- Theorem 31.4's dual infimum for `f` is the dual infimum above shifted down by `⟨z, z*⟩`; the
+shift is a real constant, so it slides out of the infimum. -/
 theorem iInf_mem_neg_polarCone_conj_eq (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E → EReal) (K : Set E)
     (z : E) (z' : F) :
     (⨅ w ∈ -(polarCone B K), conj B (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) w)
@@ -151,14 +132,12 @@ variable {E F : Type*}
   {h : E → EReal} {K : Set E}
 
 omit [FiniteDimensional ℝ E] in
-/-- Corollary 13.3.1 as Rockafellar uses it in the proof of Corollary 31.4.3: a co-finite `h` has
-an everywhere-finite conjugate. -/
+/-- **Corollary 13.3.1**: a co-finite `h` has an everywhere-finite conjugate. -/
 theorem dom_conj_eq_univ_of_cofinite (hcof : Cofinite h) : dom (conj B h) = univ :=
   (cofinite_iff_dom_conj_eq_univ (B := B) hcof.toClosedProperConvexFn).1 hcof
 
 omit [FiniteDimensional ℝ E] in
-/-- The dual objective of Corollary 31.4.3 is finite at every point: `h*` is finite everywhere by
-Corollary 13.3.1, and the tilt is real. -/
+/-- The dual objective is finite at every point: `h*` is finite everywhere, and the tilt is real. -/
 theorem exists_conj_comp_add_sub_pairing_eq_coe (hcof : Cofinite h) (z : E) (z' : F) (w : F) :
     ∃ r : ℝ, conj B h (z' + w) - ((B z w : ℝ) : EReal) = (r : EReal) := by
   obtain ⟨s, hs⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top
@@ -167,7 +146,7 @@ theorem exists_conj_comp_add_sub_pairing_eq_coe (hcof : Cofinite h) (z : E) (z' 
   exact ⟨s - B z w, by rw [hs, ← _root_.EReal.coe_sub]⟩
 
 omit [FiniteDimensional ℝ E] in
-/-- The conjugate of `f = h (z + ·) - ⟨·, z*⟩` is finite everywhere, by Corollary 13.3.1. -/
+/-- `f*` is finite everywhere, by Corollary 13.3.1. -/
 theorem dom_conj_comp_add_sub_pairing_eq_univ (hcof : Cofinite h) (z : E) (z' : F) :
     dom (conj B (fun x => h (z + x) - ((B x z' : ℝ) : EReal))) = univ := by
   refine eq_univ_of_forall fun w => ?_
@@ -176,8 +155,8 @@ theorem dom_conj_comp_add_sub_pairing_eq_univ (hcof : Cofinite h) (z : E) (z' : 
   exact _root_.EReal.coe_lt_top _
 
 omit [FiniteDimensional ℝ F] [IsCompatiblePairing B.flip] in
-/-- `f = h (z + ·) - ⟨·, z*⟩` is finite everywhere, hence continuous (Corollary 10.1.1), so it
-adds exactly to `δ(·|K)`. This is Rockafellar's condition (a) for Theorem 31.4. -/
+/-- `f` is finite everywhere, hence continuous (Corollary 10.1.1), so it adds exactly to `δ(·|K)`:
+Theorem 31.4's condition (a). -/
 theorem isExactSum_comp_add_sub_pairing_indicatorFn (hcof : Cofinite h) (hdom : dom h = univ)
     (hconv : Convex ℝ K) (hne : K.Nonempty) (z : E) (z' : F) :
     IsExactSum B (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) (indicatorFn K) := by
@@ -191,9 +170,8 @@ theorem isExactSum_comp_add_sub_pairing_indicatorFn (hcof : Cofinite h) (hdom : 
   exact (hconvf.continuous_of_dom_eq_univ hpf hdomf).continuousAt
 
 omit [FiniteDimensional ℝ E] in
-/-- The conjugate of `f = h (z + ·) - ⟨·, z*⟩` is finite everywhere too, so it adds exactly to
-`δ(·|K*)`. This is Rockafellar's condition (b) for Theorem 31.4, and it is what co-finiteness of
-`h` supplies. -/
+/-- `f*` is finite everywhere too, so it adds exactly to `δ(·|K*)`: Theorem 31.4's condition (b),
+which is what co-finiteness of `h` supplies. -/
 theorem isExactSum_conj_comp_add_sub_pairing_indicatorFn (hcof : Cofinite h) (hdom : dom h = univ)
     (z : E) (z' : F) :
     IsExactSum B.flip (conj B (fun x => h (z + x) - ((B x z' : ℝ) : EReal)))
@@ -211,8 +189,7 @@ theorem isExactSum_conj_comp_add_sub_pairing_indicatorFn (hcof : Cofinite h) (hd
   exact ((convexFn_conj B _).continuous_of_dom_eq_univ hpc hdomc).continuousAt
 
 omit [FiniteDimensional ℝ E] in
-/-- Theorem 31.4's dual infimum for `f = h (z + ·) - ⟨·, z*⟩` is not `⊤`: the origin lies in `K*`,
-where the value is finite. -/
+/-- The dual infimum is not `⊤`: the origin lies in `K*`, where the value is finite. -/
 theorem iInf_mem_neg_polarCone_conj_ne_top (hcof : Cofinite h) (z : E) (z' : F) :
     (⨅ w ∈ -(polarCone B K),
       conj B (fun x => h (z + x) - ((B x z' : ℝ) : EReal)) w) ≠ ⊤ := by
@@ -226,8 +203,8 @@ theorem iInf_mem_neg_polarCone_conj_ne_top (hcof : Cofinite h) (z : E) (z' : F) 
   exact (lt_of_le_of_lt hge hlt).ne
 
 omit [FiniteDimensional ℝ F] [IsCompatiblePairing B.flip] in
-/-- Theorem 31.4's dual infimum for `f = h (z + ·) - ⟨·, z*⟩` is not `⊥`: its negative is the
-primal infimum, which is bounded above by a finite value. -/
+/-- The dual infimum is not `⊥`: its negative is the primal infimum, which is bounded above by a
+finite value. -/
 theorem iInf_mem_neg_polarCone_conj_ne_bot (hcof : Cofinite h) (hdom : dom h = univ)
     (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (z : E) (z' : F) :
     (⨅ w ∈ -(polarCone B K),
@@ -243,11 +220,9 @@ theorem iInf_mem_neg_polarCone_conj_ne_bot (hcof : Cofinite h) (hdom : dom h = u
   rw [hP, hr] at hle
   exact _root_.EReal.coe_ne_top r (top_le_iff.1 hle)
 
-/-- **Rockafellar, Corollary 31.4.3.** For `h` convex, finite everywhere and co-finite, and `K` a
-nonempty convex cone, the primal infimum over `K` and the dual infimum over `K* = -K°` add to
-`⟨z, z*⟩`.
-
-Closedness of `K` is *not* needed for the identity; see the module docstring. -/
+/-- **Corollary 31.4.3.** For `h` convex, finite everywhere and co-finite and `K` a nonempty convex
+cone, the primal infimum over `K` and the dual infimum over `K* = -K°` add to `⟨z, z*⟩`. Closedness
+of `K` is not needed for the identity. -/
 theorem iInf_mem_add_iInf_mem_neg_polarCone_eq_pairing (hcof : Cofinite h) (hdom : dom h = univ)
     (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (z : E) (z' : F) :
     (⨅ x ∈ K, (h (z + x) - ((B x z' : ℝ) : EReal)))
@@ -270,9 +245,8 @@ theorem iInf_mem_add_iInf_mem_neg_polarCone_eq_pairing (hcof : Cofinite h) (hdom
   rw [hback, hzero, zero_add]
 
 omit [FiniteDimensional ℝ F] [IsCompatiblePairing B.flip] in
-/-- **Rockafellar, Corollary 31.4.3**: the dual infimum is attained. This is Theorem 31.4's
-attainment clause under condition (a), which co-finiteness is not even needed for — only
-finiteness of `h`, through `isExactSum_comp_add_sub_pairing_indicatorFn`. -/
+/-- **Corollary 31.4.3**: the dual infimum is attained. Theorem 31.4's attainment clause under
+condition (a), which needs only finiteness of `h`, not co-finiteness. -/
 theorem exists_iInf_mem_neg_polarCone_eq_of_cofinite (hcof : Cofinite h) (hdom : dom h = univ)
     (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (z : E) (z' : F) :
     ∃ w ∈ -(polarCone B K), conj B h (z' + w) - ((B z w : ℝ) : EReal)
@@ -282,8 +256,7 @@ theorem exists_iInf_mem_neg_polarCone_eq_of_cofinite (hcof : Cofinite h) (hdom :
   rw [conj_comp_add_sub_pairing_eq_add_coe, iInf_mem_neg_polarCone_conj_eq] at hval
   exact ⟨w, hw, Tdaf.EReal.add_coe_right_cancel hval⟩
 
-/-- **Rockafellar, Corollary 31.4.3**: the dual infimum is finite. It is attained at a point where
-the objective is finite, by Corollary 13.3.1. -/
+/-- **Corollary 31.4.3**: the dual infimum is finite, being attained where the objective is. -/
 theorem exists_iInf_mem_neg_polarCone_eq_coe_of_cofinite (hcof : Cofinite h)
     (hdom : dom h = univ) (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K)
     (hne : K.Nonempty) (z : E) (z' : F) :
@@ -294,8 +267,8 @@ theorem exists_iInf_mem_neg_polarCone_eq_coe_of_cofinite (hcof : Cofinite h)
   obtain ⟨r, hr⟩ := exists_conj_comp_add_sub_pairing_eq_coe (B := B) hcof z z' w
   exact ⟨r, by rw [← hval, hr]⟩
 
-/-- **Rockafellar, Corollary 31.4.3**: the primal infimum is finite. It is the negative of the dual
-infimum, up to the constant `⟨z, z*⟩`. -/
+/-- **Corollary 31.4.3**: the primal infimum is finite, being the negative of the dual infimum up to
+the constant `⟨z, z*⟩`. -/
 theorem exists_iInf_mem_eq_coe_of_cofinite (hcof : Cofinite h) (hdom : dom h = univ)
     (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (z : E) (z' : F) :
     ∃ s : ℝ, (⨅ x ∈ K, (h (z + x) - ((B x z' : ℝ) : EReal))) = (s : EReal) := by
@@ -306,9 +279,8 @@ theorem exists_iInf_mem_eq_coe_of_cofinite (hcof : Cofinite h) (hdom : dom h = u
   rw [iInf_mem_neg_polarCone_conj_eq, hr, ← _root_.EReal.coe_add] at hP
   exact ⟨-(r + -(B z z')), by rw [hP, ← _root_.EReal.coe_neg]⟩
 
-/-- **Rockafellar, Corollary 31.4.3**: the primal infimum is attained. This is Theorem 31.4's
-attainment clause under condition (b), which is where co-finiteness of `h` and closedness of `K`
-are used. -/
+/-- **Corollary 31.4.3**: the primal infimum is attained. Theorem 31.4's attainment clause under
+condition (b), where co-finiteness of `h` and closedness of `K` are used. -/
 theorem exists_iInf_mem_eq_of_cofinite (hcof : Cofinite h) (hdom : dom h = univ)
     (hconv : Convex ℝ K) (hK : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (hcl : IsClosed K)
     (z : E) (z' : F) :

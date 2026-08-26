@@ -11,56 +11,37 @@ import Tdaf.Analysis.Convex.Optimization.Minimum
 /-!
 # Moreau's decomposition
 
-Rockafellar's Theorem 31.5. For a space paired with itself by a symmetric positive definite form
-`B` whose quadratic form is continuous, the quadratic `w z = ½ B z z` is its own conjugate, and
-infimal convolution with it splits `w` between a closed proper convex function and its conjugate:
+For a space paired with itself by a symmetric positive definite form `B` whose quadratic form is
+continuous, the quadratic `w z = ½ B z z` is its own conjugate, and infimal convolution with it
+splits `w` between a closed proper convex function and its conjugate:
 
 `(f □ w) + (f* □ w) = w`.
 
+This is the identity half of **Theorem 31.5**. Attainment, uniqueness and the `prox` operator are
+in `Optimization/Prox.lean`, which needs finite dimensions; the gradient formulas are in
+`Optimization/MoreauGradient.lean`.
+
+## Main definitions
+
+* `quadFn B` — `w z = ½ B z z`, as an `EReal`-valued function.
+
 ## Main results
 
-* `quadFn B` — Rockafellar's `w z = ½ B z z` as an `EReal`-valued function.
 * `conj_quadFn` — the quadratic is self-conjugate under its own pairing.
-* `conj_quadFn_sub` — `(w(z - ·))*(y) = B z y + w y`, the translate computation the theorem runs
-  on.
+* `conj_quadFn_sub` — `(w (z - ·))* y = B z y + w y`.
 * `moreau_add` — **Theorem 31.5 (Moreau)**: `(f □ w) z + (f* □ w) z = w z`.
 * `infConv_quadFn_ne_top`, `infConv_quadFn_ne_bot` — both Moreau envelopes are finite.
+* `mem_subgradient_iff_infConv_eq` — **Theorem 31.5**, the Kuhn–Tucker conditions attached to a
+  splitting `z = x + y`.
 
-## Design notes
+## Implementation notes
 
-**No concave conjugate appears.** Rockafellar proves Theorem 31.5 by applying Fenchel's duality
-theorem to `g x = -w(z - x)` and computing `g*`. Here the same computation is done one level down,
-on `conj` itself: `w(z - ·)` is an ordinary convex function, its conjugate is `⟨z, ·⟩ + w`, and the
-theorem is Theorem 27.1(a) applied to `f + w(z - ·)` with `IsExactSum.conj_add_apply` splitting the
-conjugate at the origin. That is the same route `Fenchel.lean` takes for Theorems 31.1 and 31.4.
-
-**The constraint qualification is continuity, not relative interiors.** `w(z - ·)` is finite and
-continuous everywhere, so `IsExactSum.of_continuousAt` applies at any point of `dom f` and the
-theorem holds in an arbitrary real Hilbert space — no finite-dimensionality, no `ri`.
-
-**The pairing is general, not an inner product.** Everything here goes through `B` and never
-through the norm, so the theorem applies verbatim on `U × X` with
-`prodPairing (innerₗ U) (innerₗ X)` — which is what §37 needs, and which has no
-`InnerProductSpace` instance because the product carries the supremum norm. `innerₗ E` on a real
-inner-product space is the motivating instance and is recovered by `quadFn_innerL`. See
-`Duality/InnerPairing.lean`.
-
-**Finiteness is extracted, not assumed.** The final step cancels `(f* □ w) z` from both sides, so
-that value has to be a real number. It is: bounded above by evaluating at any point of `dom f*`
-(which is nonempty by Theorem 12.2, `proper_conj`), and bounded below because the conjugate at the
-origin of `f + w(z - ·)` dominates `-(f x₀ + w(z - x₀))` for `x₀ ∈ dom f`.
-
-## What is not here
-
-**Attainment, uniqueness and the `prox` operator are in `Optimization/Prox.lean`.** Rockafellar's
-Theorem 31.5 also says that both infima are *uniquely attained*, that the minimisers `x` and `x*`
-are characterised by `z = x + x*` with `x* ∈ ∂f x`, and that they are the gradients of the two
-Moreau envelopes. The first two clauses, and Corollaries 31.5.1 and 31.5.2 with them, are proved
-in `Optimization/Prox.lean`; attainment is Theorem 27.2, so that file is finite-dimensional where
-this one is not.
-
-**The gradient formulas** `x = ∇(f* □ w) z` and `x* = ∇(f □ w) z` are in
-`Optimization/MoreauGradient.lean`.
+The theorem is Theorem 27.1(a) applied to `f + w (z - ·)`, with the conjugate of that sum split at
+the origin. The constraint qualification is continuity of `w (z - ·)` rather than a
+relative-interior condition, so no finite-dimensionality is needed. Everything goes through `B` and
+never through the norm, so the theorem applies verbatim on a product space carrying
+`prodPairing (innerₗ U) (innerₗ X)` and no `InnerProductSpace` instance; the inner-product case is
+recovered by `quadFn_innerL`.
 
 ## References
 
@@ -77,8 +58,8 @@ section Quadratic
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ}
 
-/-- **Rockafellar's `w`**: `w z = ½ B z z`, as an `EReal`-valued function so that it lives in the
-same world as `conj` and `infConv`. -/
+/-- The quadratic `w z = ½ B z z`, `EReal`-valued so that it lives alongside `conj` and
+`infConv`. -/
 noncomputable def quadFn (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) : E → EReal :=
   fun z => ((B z z / 2 : ℝ) : EReal)
 
@@ -98,7 +79,7 @@ theorem quadFn_zero_sub : (fun u : E => quadFn B (0 - u)) = quadFn B := by
 
 variable [IsInnerPairing B]
 
-/-- `x ↦ w(z - x)` is a convex function: the defect is `½ a b B (u - v) (u - v) ≥ 0`. -/
+/-- `x ↦ w (z - x)` is convex: the defect is `½ a b B (u - v) (u - v) ≥ 0`. -/
 theorem convexFn_quadFn_sub (z : E) : ConvexFn (fun x => quadFn B (z - x)) := by
   refine convexFn_of_epi_combo fun x y μ ν hx hy a b ha hb hab => ?_
   rw [quadFn_apply, _root_.EReal.coe_le_coe_iff] at hx hy
@@ -114,7 +95,7 @@ theorem convexFn_quadFn : ConvexFn (quadFn B) := by
   exact convexFn_quadFn_sub 0
 
 omit [IsInnerPairing B] in
-/-- `x ↦ w(z - x)` is proper: it is finite everywhere. -/
+/-- `x ↦ w (z - x)` is proper: it is finite everywhere. -/
 theorem proper_quadFn_sub (z : E) : Proper (fun x => quadFn B (z - x)) :=
   ⟨⟨z, mem_dom.2 (lt_top_iff_ne_top.2 (quadFn_ne_top _))⟩, fun _ => quadFn_ne_bot _⟩
 
@@ -130,8 +111,8 @@ theorem conj_quadFn (y : E) : conj B (quadFn B) y = quadFn B y := by
     rw [quadFn_apply, ← _root_.EReal.coe_sub, _root_.EReal.coe_eq_coe_iff]
     ring
 
-/-- **The conjugate of a translate of the quadratic**: `(w(z - ·))*(y) = B z y + w y`. The
-supremum has defect `½ B ((x - z) - y) ((x - z) - y)` and is attained at `x = z + y`. -/
+/-- **The conjugate of a translate of the quadratic**: `(w (z - ·))* y = B z y + w y`. The supremum
+has defect `½ B ((x - z) - y) ((x - z) - y)` and is attained at `x = z + y`. -/
 theorem conj_quadFn_sub (z y : E) :
     conj B (fun x => quadFn B (z - x)) y = ((B z y : ℝ) : EReal) + quadFn B y := by
   have hsub : ∀ u : E, B (u - z) y = B u y - B z y := fun u => by
@@ -159,7 +140,7 @@ section QuadraticTopology
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] {B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ} [IsContinuousInnerPairing B]
 
-/-- `x ↦ w(z - x)` is continuous, which is the constraint qualification the theorem uses. -/
+/-- `x ↦ w (z - x)` is continuous: the constraint qualification the theorem uses. -/
 theorem continuous_quadFn_sub (z : E) : Continuous (fun x => quadFn B (z - x)) := by
   have h : Continuous fun x : E => (B (z - x) (z - x) / 2 : ℝ) :=
     ((continuous_self_pairing' B).comp (continuous_const.sub continuous_id)).div_const 2
@@ -173,7 +154,7 @@ section Inner
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- On a real inner-product space the general quadratic is Rockafellar's `½|z|²`. -/
+/-- On a real inner-product space the quadratic is `½‖z‖²`. -/
 @[simp] theorem quadFn_innerL (z : E) : quadFn (innerₗ E) z = ((‖z‖ ^ 2 / 2 : ℝ) : EReal) := by
   rw [quadFn_apply, innerₗ_apply_apply, real_inner_self_eq_norm_sq]
 
@@ -186,7 +167,6 @@ section Moreau
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ} [IsContinuousInnerPairing B] [IsCompatiblePairing B] {f : E → EReal}
 
-/-- Reindexing an infimum over a group by `x ↦ z - x`. -/
 private theorem iInf_comp_sub {α : Type*} [AddCommGroup α] (φ : α → EReal) (z : α) :
     (⨅ x, φ (z - x)) = ⨅ y, φ y :=
   le_antisymm
@@ -194,27 +174,22 @@ private theorem iInf_comp_sub {α : Type*} [AddCommGroup α] (φ : α → EReal)
       (le_of_eq (by rw [sub_sub_cancel])))
     (le_iInf fun x => iInf_le φ (z - x))
 
-/-- Reindexing an infimum over a group by negation. -/
 private theorem iInf_comp_neg {α : Type*} [AddCommGroup α] (φ : α → EReal) :
     (⨅ y, φ y) = ⨅ y, φ (-y) :=
   le_antisymm (le_iInf fun y => iInf_le φ (-y))
     (le_iInf fun y => le_trans (iInf_le (fun w => φ (-w)) (-y)) (le_of_eq (by rw [neg_neg])))
 
 omit [IsContinuousInnerPairing B] [IsCompatiblePairing B] in
-/-- The **Moreau envelope** in Rockafellar's orientation: `(f □ w) z = inf_x {f x + w(z - x)}`. -/
+/-- The **Moreau envelope** written out: `(f □ w) z = inf_x {f x + w (z - x)}`. -/
 theorem infConv_quadFn_apply (hb : ∀ x, f x ≠ ⊥) (z : E) :
     infConv f (quadFn B) z = ⨅ x, (f x + quadFn B (z - x)) := by
   rw [infConv_apply hb (fun x => quadFn_ne_bot x) z,
     ← iInf_comp_sub (fun y => f (z - y) + quadFn B y) z]
   exact iInf_congr fun x => by rw [sub_sub_cancel]
 
-/-- **Rockafellar, Theorem 31.5 (Moreau)**: infimal convolution with the quadratic splits the
-quadratic between `f` and `f*`.
-
-The proof is Theorem 27.1(a) applied to `f + w(z - ·)`, with `IsExactSum.conj_add_apply` splitting
-the conjugate of that sum at the origin and `conj_quadFn_sub` evaluating the second factor. The
-sign flip `y ↦ -y` produced by the splitting is exactly what turns `⟨z, y⟩ + w y` into
-`w(z - y) - w z`. -/
+/-- **Theorem 31.5 (Moreau)**: infimal convolution with the quadratic splits the quadratic between
+`f` and `f*`. Theorem 27.1(a) applied to `f + w (z - ·)`, with the conjugate of that sum split at
+the origin; the sign flip `y ↦ -y` it produces turns `⟨z, y⟩ + w y` into `w (z - y) - w z`. -/
 theorem moreau_add (hf : ClosedProperConvexFn f) (z : E) :
     infConv f (quadFn B) z + infConv (conj B f) (quadFn B) z = quadFn B z := by
   obtain ⟨x₀, hx₀⟩ := hf.proper.dom_nonempty
@@ -273,7 +248,6 @@ theorem moreau_add (hf : ClosedProperConvexFn f) (z : E) :
     quadFn_apply, _root_.EReal.coe_eq_coe_iff]
   ring
 
-/-- `⊤ + u` is never a real number. -/
 private theorem top_add_ne_coe (u : EReal) (r : ℝ) : ⊤ + u ≠ (r : EReal) := by
   rcases eq_or_ne u ⊥ with rfl | hu
   · rw [_root_.EReal.add_bot]
@@ -281,13 +255,12 @@ private theorem top_add_ne_coe (u : EReal) (r : ℝ) : ⊤ + u ≠ (r : EReal) :
   · rw [_root_.EReal.top_add_of_ne_bot hu]
     exact (_root_.EReal.coe_ne_top r).symm
 
-/-- `⊥ + u` is never a real number. -/
 private theorem bot_add_ne_coe (u : EReal) (r : ℝ) : ⊥ + u ≠ (r : EReal) := by
   rw [_root_.EReal.bot_add]
   exact (_root_.EReal.coe_ne_bot r).symm
 
-/-- **Rockafellar, Theorem 31.5**: the Moreau envelope of a closed proper convex function is
-finite. Both infima in Moreau's identity are real numbers, since their sum is. -/
+/-- **Theorem 31.5**: the Moreau envelope of a closed proper convex function is never `+∞`. Both
+infima in Moreau's identity are real, since their sum is. -/
 theorem infConv_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
     infConv f (quadFn B) z ≠ ⊤ := by
   intro hc
@@ -295,7 +268,7 @@ theorem infConv_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
   rw [hc, quadFn_apply] at h
   exact top_add_ne_coe _ _ h
 
-/-- **Rockafellar, Theorem 31.5**: the Moreau envelope never takes `-∞`. -/
+/-- **Theorem 31.5**: the Moreau envelope never takes `-∞`. -/
 theorem infConv_quadFn_ne_bot (hf : ClosedProperConvexFn f) (z : E) :
     infConv f (quadFn B) z ≠ ⊥ := by
   intro hc
@@ -303,7 +276,7 @@ theorem infConv_quadFn_ne_bot (hf : ClosedProperConvexFn f) (z : E) :
   rw [hc, quadFn_apply] at h
   exact bot_add_ne_coe _ _ h
 
-/-- **Rockafellar, Theorem 31.5**: the dual Moreau envelope is finite too. -/
+/-- **Theorem 31.5**: the dual Moreau envelope is finite too. -/
 theorem infConv_conj_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
     infConv (conj B f) (quadFn B) z ≠ ⊤ := by
   intro hc
@@ -311,7 +284,7 @@ theorem infConv_conj_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
   rw [hc, _root_.EReal.add_top_of_ne_bot (infConv_quadFn_ne_bot (B := B) hf z), quadFn_apply] at h
   exact absurd h (_root_.EReal.coe_ne_top _).symm
 
-/-- **Rockafellar, Theorem 31.5**: the dual Moreau envelope never takes `-∞`. -/
+/-- **Theorem 31.5**: the dual Moreau envelope never takes `-∞`. -/
 theorem infConv_conj_quadFn_ne_bot (hf : ClosedProperConvexFn f) (z : E) :
     infConv (conj B f) (quadFn B) z ≠ ⊥ := by
   intro hc
@@ -319,7 +292,6 @@ theorem infConv_conj_quadFn_ne_bot (hf : ClosedProperConvexFn f) (z : E) :
   rw [hc, _root_.EReal.add_bot, quadFn_apply] at h
   exact absurd h (_root_.EReal.coe_ne_bot _).symm
 
-/-- A sum with a real constant that lands on a real number pins the other summand. -/
 private theorem eq_coe_of_add_coe_eq_coe {S : EReal} {k m : ℝ}
     (h : S + (k : EReal) = (m : EReal)) : S = ((m - k : ℝ) : EReal) := by
   induction S with
@@ -334,21 +306,16 @@ private theorem eq_coe_of_add_coe_eq_coe {S : EReal} {k m : ℝ}
       rw [_root_.EReal.top_add_of_ne_bot (_root_.EReal.coe_ne_bot k)] at h
       exact absurd h.symm (_root_.EReal.coe_ne_top m)
 
-/-- Two summands neither of which is `⊥` and whose sum is real are both real. -/
 private theorem finite_of_add_eq_coe {A C : EReal} (hA : A ≠ ⊥) (hC : C ≠ ⊥) {m : ℝ}
     (h : A + C = (m : EReal)) : A ≠ ⊤ ∧ C ≠ ⊤ := by
   induction A <;> induction C <;> simp_all
 
-/-- **Rockafellar, Theorem 31.5**, the Kuhn–Tucker conditions: for a splitting `z = x + y`, the
-pair `(x, y)` attains both infima exactly when `y` is a subgradient of `f` at `x`.
+/-- **Theorem 31.5**, the Kuhn–Tucker conditions: for a splitting `z = x + y`, the pair `(x, y)`
+attains both infima exactly when `y ∈ ∂f x`. It follows from `moreau_add`, because
+`(f x + w y) + (f* y + w x) = (f x + f* y) + (w x + w y)` while `⟨x, y⟩ + w x + w y = w z`, so
+Fenchel's inequality makes the left side at least `w z`, which is the sum of the two infima.
 
-Rockafellar reads this off Theorem 31.3. Here it comes straight from `moreau_add`, because
-`(f x + w y) + (f*(y) + w x) = (f x + f*(y)) + (w x + w y)` while `⟨x, y⟩ + w x + w y = w z`. So
-Fenchel's inequality makes the left-hand side at least `w z`, which is exactly the sum of the two
-infima; equality on the left therefore forces equality in each summand, and conversely.
-
-What is missing from Rockafellar's statement is that such a splitting *exists* and is unique.
-Existence is Theorem 27.2 in a Hilbert space, uniqueness is strict convexity of `w`. -/
+That such a splitting exists and is unique is `Optimization/Prox.lean`. -/
 theorem mem_subgradient_iff_infConv_eq (hf : ClosedProperConvexFn f) {x y z : E}
     (hz : x + y = z) :
     y ∈ subgradient (B) f x ↔

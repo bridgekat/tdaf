@@ -9,14 +9,12 @@ import Tdaf.Analysis.Convex.Optimization.Perturbation
 /-!
 # Lagrangians of generalized convex programs
 
-Rockafellar's §29, the Lagrangian half. The **Lagrangian** of the program associated with a
-bifunction `F` is
-
-`L(v, x) = ⨅ u (⟨u, v⟩ + F u x)`,
-
-the partial *concave* conjugate of `F` in the perturbation variable. Every fact about Lagrangians
-in §§28–29, §36 and §37 is a fact about partial conjugation, which is why this file proves the
-identification first and everything else through it.
+The **Lagrangian** of the program associated with a bifunction `F` is
+`L(v, x) = ⨅ u (⟨u, v⟩ + F u x)`, the partial *concave* conjugate of `F` in the perturbation
+variable. Identifying it as such is the design of this file: concavity of `L(·, x)`, its closedness
+and the biconjugation `L** = cl L` are concave-conjugate lemmas applied pointwise in `x`. The one
+step with content is the exchange `⨅ x L(v, x) = ⨅ u (⟨u, v⟩ + inf F u)`, which turns the
+definition of a Kuhn–Tucker vector into a statement about `L`.
 
 ## Main definitions
 
@@ -24,38 +22,10 @@ identification first and everything else through it.
 
 ## Main results
 
-* `lagrangian_eq_concaveConj` — `L(·, x)` *is* the concave conjugate of `-F(·)(x)`. This is the
-  whole design: no separate theory of Lagrangians is needed.
-* `iInf_lagrangian` — `⨅ x L(v, x) = ⨅ u (⟨u, v⟩ + inf F u)`, the identity Rockafellar states
-  right after the definition.
-* `mem_kuhnTucker_iff_iInf_lagrangian` — the Kuhn–Tucker vectors described through `L`: the `v`
-  for which `⨅ x L(v, x)` is finite and equal to the optimal value.
-
-## Design notes
-
-**The Lagrangian is a concave conjugate, not a new construction.** `concaveConj B g v` is
-`⨅ u (⟨u, v⟩ - g u)`, so `L(v, x) = concaveConj B (fun u => -(F u x)) v` on the nose — the only
-step is `a - (-b) = a + b`, which on `EReal` is `sub_eq_add_neg` plus `neg_neg`. Concavity of `L`
-in `v`, its closedness, and the biconjugation `L** = cl L` are then `Duality/ConcaveConj.lean`
-lemmas applied pointwise in `x`.
-
-**Swapping the two infima is where the real content sits.** `⨅ x L(v, x) = ⨅ u (⟨u, v⟩ + inf F u)`
-needs `iInf_comm` and the fact that a *real* constant moves through an infimum
-(`Tdaf.EReal.iInf_add_coe`). Once it is available, the Lagrangian description of Kuhn–Tucker
-vectors is a rewrite of `Perturbation.lean`'s definition.
-
-## What is not here
-
-**Theorem 28.2 (Slater) is in `Optimization/Program.lean`** —
-`exists_isKuhnTuckerVector_of_slater`, with Corollaries 28.2.1 and 28.2.2 and the affine-equality
-variant `exists_multipliers_of_slater_eq`. It needed no `ineqBifun`, and it was never blocked on
-§21: Theorem 21.2 as formalized keeps the affine constraints in a second index type, which is
-already the mixed inequality/equality form §28 asks for. `kuhnTucker_nonempty_of_stronglyConsistent`
-(`Perturbation.lean`) is the qualification-free half. The ordinary-convex-program bifunction
-`ineqBifun` still has no definition, but nothing in the backbone waits on it.
-
-**Theorem 29.3 (saddle-points) is in `Saddle/Minimax.lean`** (`isSaddlePoint_lagrangian_iff`), and
-Theorem 28.3 is surface material, as `Optimization/Program.lean` records.
+* `lagrangian_eq_concaveConj` — `L(·, x)` is the concave conjugate of `-F(·)(x)`.
+* `iInf_lagrangian` — `⨅ x L(v, x) = ⨅ u (⟨u, v⟩ + inf F u)`.
+* `mem_kuhnTucker_iff_iInf_lagrangian` — `v` is a Kuhn–Tucker vector exactly when `⨅ x L(v, x)` is
+  finite and equal to the optimal value.
 
 ## References
 
@@ -77,8 +47,7 @@ noncomputable def lagrangian (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U 
 theorem lagrangian_apply (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v : V) (x : X) :
     lagrangian B F v x = ⨅ u, ((B u v : ℝ) : EReal) + F u x := rfl
 
-/-- **The Lagrangian is a partial concave conjugate.** For each fixed `x`, `L(·, x)` is the concave
-conjugate of the concave function `u ↦ -(F u x)`. -/
+/-- For each fixed `x`, `L(·, x)` is the concave conjugate of `u ↦ -(F u x)`. -/
 theorem lagrangian_eq_concaveConj (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v : V) (x : X) :
     lagrangian B F v x = concaveConj B (fun u => -(F u x)) v := by
   rw [lagrangian_apply, concaveConj_apply]
@@ -90,9 +59,8 @@ theorem lagrangian_le (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v :
   refine le_trans (iInf_le _ 0) (le_of_eq ?_)
   rw [map_zero, LinearMap.zero_apply, _root_.EReal.coe_zero, zero_add]
 
-/-- **Rockafellar, §29**: minimising the Lagrangian over `x` is the same as pricing the
-perturbations. This is the identity that lets the definition of a Kuhn–Tucker vector be stated
-either through `inf F` or through `L`. -/
+/-- Minimising the Lagrangian over `x` is the same as pricing the perturbations:
+`⨅ x L(v, x) = ⨅ u (⟨u, v⟩ + inf F u)`. -/
 theorem iInf_lagrangian (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v : V) :
     (⨅ x, lagrangian B F v x) = ⨅ u, (((B u v : ℝ) : EReal) + infBifun F u) := by
   rw [show (⨅ x, lagrangian B F v x) = ⨅ x, ⨅ u, (((B u v : ℝ) : EReal) + F u x) from rfl,
@@ -101,15 +69,14 @@ theorem iInf_lagrangian (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v
   rw [infBifun_apply, add_comm, Tdaf.EReal.iInf_add_coe]
   exact iInf_congr fun x => add_comm _ _
 
-/-- **Rockafellar, §29**: the Lagrangian description of Kuhn–Tucker vectors. `v` is a Kuhn–Tucker
-vector exactly when the infimum of `L(v, ·)` is finite and equal to the optimal value. -/
+/-- The Lagrangian description of Kuhn–Tucker vectors: `v` is one exactly when `⨅ x L(v, x)` is
+finite and equal to the optimal value. -/
 theorem mem_kuhnTucker_iff_iInf_lagrangian :
     v ∈ KuhnTucker B F ↔ infBifun F 0 ≠ ⊤ ∧ infBifun F 0 ≠ ⊥ ∧
       (⨅ x, lagrangian B F v x) = infBifun F 0 := by
   rw [KuhnTucker, Set.mem_ofPred_eq, iInf_lagrangian]
 
-/-- The infimum of `L(v, ·)` is never above the optimal value, whatever the price `v`. This is weak
-duality for the Lagrangian. -/
+/-- Weak duality: `⨅ x L(v, x)` is never above the optimal value, whatever the price `v`. -/
 theorem iInf_lagrangian_le (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (v : V) :
     (⨅ x, lagrangian B F v x) ≤ infBifun F 0 := by
   rw [iInf_lagrangian]
@@ -122,8 +89,7 @@ section Concave
 variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {F : Bifun U X} {x : X}
 
-/-- **The Lagrangian is concave in the price variable**, with no hypothesis on `F` at all: it is a
-concave conjugate, and concave conjugates are concave. -/
+/-- The Lagrangian is concave in the price variable, with no hypothesis on `F`. -/
 theorem concaveFn_lagrangian (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) (x : X) :
     ConcaveFn (fun v => lagrangian B F v x) := by
   have h : (fun v => lagrangian B F v x) = concaveConj B (fun u => -(F u x)) :=
