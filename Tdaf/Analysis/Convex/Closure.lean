@@ -6,6 +6,7 @@ Authors: TDAF contributors
 import Mathlib.Analysis.LocallyConvex.Separation
 import Mathlib.Topology.Instances.EReal.Lemmas
 import Mathlib.Topology.Semicontinuity.Basic
+import Tdaf.Analysis.Convex.Homogeneous
 import Tdaf.Analysis.Convex.Indicator
 import Tdaf.Analysis.Convex.Operations.Epi
 import Tdaf.Analysis.Convex.Separation
@@ -49,6 +50,8 @@ when the hull takes the value `⊥` anywhere.
   **Theorem 7.5** and **Corollary 7.5.1**, with `interior (epi f)` in place of `ri (epi f)`.
 * `lscHull_le_setOf` — the level sets of the hull, `{x | (cl f) x ≤ α} = ⋂_{μ > α} cl {f ≤ μ}`;
   this is the part of **Theorem 7.6** that does not need relative interiors.
+* `posHomogeneous_lscHull`, `posHomogeneous_clFn` — both hulls preserve positive homogeneity,
+  because the epigraph of the hull is the closure of a cone. Neither needs convexity.
 * `closedFn_coe_mul` — a non-negative real multiple of a closed function is closed. The convexity,
   domain and properness halves of the same statement are in `Convex/Epigraph.lean`.
 * `closedProperConvexFn_coe_affineMap` — a *continuous* affine function, read into `EReal`, is
@@ -639,6 +642,40 @@ theorem eq_bot_of_lsc_of_eq_bot (hf : ConvexFn f) (hl : LowerSemicontinuous f)
   exact funext fun x => hf.eq_bot_of_mem_dom hl h₀ (hdom x)
 
 end Convex
+
+/-! ### Positively homogeneous functions -/
+
+section PosHomogeneous
+
+variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] {f : E → EReal}
+
+/-- **The lower semicontinuous hull of a positively homogeneous function is positively
+homogeneous.** Positive homogeneity is the epigraph being a cone
+(`posHomogeneous_iff_isCone_epi`); `epi (lscHull f)` is the closure of `epi f` (`epi_lscHull`);
+and the closure of a cone is a cone (`smul_closure_eq_of_isCone`).
+
+Convexity is not used anywhere in that chain. -/
+theorem posHomogeneous_lscHull (hf : PosHomogeneous f) : PosHomogeneous (lscHull f) := by
+  rw [posHomogeneous_iff_isCone_epi] at hf ⊢
+  intro a ha
+  rw [epi_lscHull]
+  exact smul_closure_eq_of_isCone hf a ha
+
+/-- **The closure of a positively homogeneous function is positively homogeneous.**
+
+The improper branch is not an exclusion but a case: there `cl f` is the constant `⊥`, and
+`a * ⊥ = ⊥` for `a > 0`. Rockafellar's Corollary 13.2.1 gives the same conclusion for a *convex*
+`f` by writing `cl f` as a support function; that route needs a pairing the statement does not
+mention, and convexity it does not need either. -/
+theorem posHomogeneous_clFn (hf : PosHomogeneous f) : PosHomogeneous (clFn f) := by
+  by_cases h : ∃ x, lscHull f x = ⊥
+  · rw [clFn_of_exists_eq_bot h]
+    exact fun a ha _ => (_root_.EReal.coe_mul_bot_of_pos ha).symm
+  · rw [clFn_of_forall_ne_bot (by push Not at h; exact h)]
+    exact posHomogeneous_lscHull hf
+
+end PosHomogeneous
 
 /-! ### Non-negative scalar multiples -/
 

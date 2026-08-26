@@ -584,10 +584,12 @@ theorem isCone_relint (hK : IsCone C) (hC : Convex ℝ C) : IsCone (ri C) := by
   intro a ha
   rw [← Convex.relint_smul hC a, hK a ha]
 
-/-- **Rockafellar, §6 (p. 50).** The closure of a convex cone is a convex cone. -/
+/-- **Rockafellar, §6 (p. 50).** The closure of a convex cone is a convex cone.
+
+Specialises the backbone's `smul_closure_eq_of_isCone` through the bridge
+`isCone_iff_smul_set_eq`; convexity is not used on either side. -/
 theorem isCone_closure (hK : IsCone C) : IsCone (closure C) := by
   rw [isCone_iff_smul_set_eq] at hK ⊢
-  intro a ha
-  rw [← closure_smul₀ a C, hK a ha]
+  exact smul_closure_eq_of_isCone hK
 
 end Rockafellar
