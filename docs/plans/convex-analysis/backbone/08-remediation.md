@@ -706,8 +706,8 @@ Three remediation items, and two of them by finding out that they were not what 
   it — Theorem 24.9’s proof cites Corollary 24.2.1, not the formula.
 * **Three of the four "backbone it specialises" columns were incomplete**, and in each case the
   missing modules were the ones that closed the section’s hardest items: §24 also needs
-  `Subgradient/{Primitive,Integral}.lean`, §25 six modules rather than three, §26 six rather than
-  two.
+  `Subgradient/{Primitive,Integral}.lean`, §25 six modules rather than three, §26 seven rather
+  than two.
 * **§25’s row said `0/11 G`** — no result of the section general. Three are: Theorem 25.1’s
   forward half, both halves of Corollary 25.1.1, and Theorem 25.4’s density clause.
 * **The advice on Theorem 23.8 was backwards.** `part5.md` recommended the book’s ALTERNATIVE PROOF
