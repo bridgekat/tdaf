@@ -24,9 +24,9 @@ of `C`, and the trivial cone.
 ## Why a module of its own
 
 The proof needs three facts that no single existing module carries: the recession cone of a polar
-set (`recessionCone_eq_polarCone_polarSet`, `Duality/Gauge.lean`), boundedness from a trivial
-recession cone (`isBounded_iff_recessionCone_eq_zero`, `Recession/Cone.lean`), and interiority from
-a trivial polar cone (`zero_mem_interior_iff_polarCone_eq_zero`, `Recession/Conjugate.lean`).
+set (`recessionCone_polarSet`, `Duality/Gauge.lean`), boundedness from a trivial recession cone
+(`isBounded_iff_recessionCone_eq_zero`, `Recession/Cone.lean`), and interiority from a trivial
+polar cone (`zero_mem_interior_iff_polarCone_eq_zero`, `Recession/Conjugate.lean`).
 `Duality/Gauge.lean` does not import `Recession/Conjugate.lean`, nor the other way round, so this is
 the first module sitting below both.
 
@@ -50,19 +50,6 @@ section PolarBounded
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {C : Set E}
-
-omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
-/-- **The recession cone of a polar set is the polar cone**: `0⁺(C°) = C°` read as a *cone* polar
-rather than a *set* polar, for a closed convex `C` containing the origin.
-
-Theorem 14.6 (`recessionCone_eq_polarCone_polarSet`) applied to `C°`, whose bipolar is `C`. This
-one needs no finite dimension; it belongs beside `recessionCone_eq_polarCone_polarSet` in
-`Duality/Gauge.lean` and is here only because the two theorems below consume it. -/
-theorem recessionCone_polarSet (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
-    recessionCone (polarSet B C) = polarCone B C := by
-  have h := recessionCone_eq_polarCone_polarSet (B := B.flip) (C := polarSet B C)
-    (convex_polarSet B C) isClosed_polarSet (zero_mem_polarSet B C)
-  rwa [LinearMap.flip_flip, polarSet_polarSet (B := B) hconv hcl h0] at h
 
 /-- **Rockafellar, Corollary 14.5.1.** For a closed convex set `C` containing the origin, the polar
 `C°` is bounded if and only if the origin is interior to `C`.
