@@ -155,29 +155,30 @@ pointwise infimum of an explicit family of affine functions, which is a restatem
 
 ## Backbone gaps
 
-Nine facts had to be proved `private` here because the backbone does not carry them. None is
-about ordinary convex programs; all are general convex analysis.
+One fact is still proved `private` here because the backbone does not carry it; the other eight
+have been hoisted.
 
-* `scaleSnd`, `epi_coe_mul`, `convexFn_coe_mul`, `closedFn_coe_mul`, `proper_coe_mul`,
-  `dom_coe_mul` — a non-negative multiple `cf` of an `EReal`-valued function: its epigraph, and
-  the preservation of convexity, closedness, properness and effective domain. `Convex/Epigraph.lean`
-  and `Convex/Closure.lean` are the natural homes.
-* `closedProperConvexFn_coe_affineMap` — an affine function read into `EReal` is closed proper
-  convex. Used four times here and by every section that has affine constraints.
 * `closedProperConvexFn_finsetSum` — a finite sum of closed proper convex functions with a common
-  domain point is closed proper convex. `properConvexFn_finsetSum` exists; the closed version does
-  not.
-* `subgradient_coe_mul` — `∂(cf)(x) = c ∂f(x)` for `c > 0`, and `subgradient_coe_mul_affineMap` —
-  the same for arbitrary real `c` when `f` is affine. Rockafellar uses both without comment at
-  line 11169. `Subgradient/Calculus.lean` has the sum rules but no scaling rule at all.
-* `subgradient_coe_affineMap` — `∂a(x)` is the singleton of the Riesz vector of `a.linear`, for
-  `a` affine. This is Theorem 23.2 for the affine case and is not in the backbone.
-* `subgradient_zero_mul` — `∂0(x) = {0}`.
+  domain point is closed proper convex; `properConvexFn_finsetSum` exists and the closed version
+  does not. It cannot go where the rest went: its proof needs `ClosedProperConvexFn.add`, which
+  lives in `Recession/Closedness.lean`, and neither `Convex/Closure.lean` nor `Convex/Epigraph.lean`
+  is below that. The home it wants is `Recession/Closedness.lean` itself, beside the binary rule.
+* ~~`scaleSnd`, `epi_coe_mul`, `convexFn_coe_mul`, `proper_coe_mul`, `dom_coe_mul`~~ — **closed**:
+  all five are public in `Convex/Epigraph.lean`, over an arbitrary real vector space.
+* ~~`closedFn_coe_mul`~~ — **closed**: public in `Convex/Closure.lean`, with `continuous_scaleSnd`
+  beside it.
+* ~~`closedProperConvexFn_coe_affineMap`~~ — **closed**: public in `Convex/Closure.lean`, over any
+  real topological vector space, with continuity of the affine map as an explicit hypothesis
+  (`AffineMap.continuous_of_finiteDimensional` discharges it here).
+* ~~`subgradient_coe_mul`, `subgradient_zero_mul`, `subgradient_coe_affineMap`,
+  `subgradient_coe_mul_affineMap`~~ — **closed**: all four are public in
+  `Subgradient/Calculus.lean`, stated for an arbitrary pairing. The two that name a single point
+  take `Function.Injective B.flip`, which `separatingRight_pairing` supplies here.
 * ~~`coe_mul_add_coe_le_coe_mul_iff`~~ — the `EReal` scaling step `cA + ct ≤ cB ↔ A + t ≤ B`
   for `c > 0`. **Closed**: it is now `Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff`, beside the
   `coe_mul_le_coe_mul_iff` it feeds and the `coe_mul_add_coe` that distributes for it.
 * ~~`isCompact_setOf_le` is `private`~~ — **closed**: it is public in
-  `Optimization/Minimum.lean`, so Corollary 28.1.1 no longer has to route through
+  `Optimization/Minimum.lean`, and Corollary 28.1.1 now cites it instead of routing through
   `isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le`.
 * The `s`-fold product decomposition needed by the decomposition principle, described above.
 
@@ -194,100 +195,12 @@ open Tdaf.ConvexAnalysis Tdaf.Surface
 
 variable {m n : ℕ}
 
-/-! ### Building blocks: scalar multiples, affine functions, and finite sums
+/-! ### Building blocks: finite sums of closed proper convex functions
 
-Three facts the backbone does not carry and every statement of this section needs: a non-negative
-multiple of a convex function is convex, an affine function read into `EReal` is closed proper
-convex, and a finite sum of closed proper convex functions with a common domain point is again
-one. They are `private` here and recorded in `## Backbone gaps`. -/
-
-/-- The linear map `(x, μ) ↦ (x, c μ)` of `ℝⁿ × ℝ`, which carries `epi f` to `epi (cf)`. -/
-private noncomputable def scaleSnd (c : ℝ) : (Rn n × ℝ) →ₗ[ℝ] (Rn n × ℝ) :=
-  LinearMap.prod (LinearMap.fst ℝ (Rn n) ℝ) (c • LinearMap.snd ℝ (Rn n) ℝ)
-
-private theorem scaleSnd_apply (c : ℝ) (p : Rn n × ℝ) : scaleSnd c p = (p.1, c * p.2) := rfl
-
-/-- `epi (cf)` is the preimage of `epi f` under `(x, μ) ↦ (x, μ / c)`, for `c > 0`. -/
-private theorem epi_coe_mul {c : ℝ} (hc : 0 < c) (f : Rn n → EReal) :
-    epi (fun x => (c : EReal) * f x) = scaleSnd c⁻¹ ⁻¹' epi f := by
-  ext p
-  rw [Set.mem_preimage, mem_epi, mem_epi, scaleSnd_apply]
-  change (c : EReal) * f p.1 ≤ (p.2 : EReal) ↔ f p.1 ≤ ((c⁻¹ * p.2 : ℝ) : EReal)
-  rw [show c⁻¹ * p.2 = p.2 / c from (div_eq_inv_mul p.2 c).symm]
-  exact Tdaf.EReal.coe_mul_le_coe_iff hc
-
-/-- A non-negative multiple of a convex function is convex. -/
-private theorem convexFn_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : Rn n → EReal} (hf : ConvexFn f) :
-    ConvexFn (fun x => (c : EReal) * f x) := by
-  rcases eq_or_lt_of_le hc with h | h
-  · have hz : (fun x => (c : EReal) * f x) = fun _ : Rn n => (0 : EReal) := by
-      funext x; rw [← h]; simp
-    rw [hz]; exact convexFn_const 0
-  · refine ⟨?_⟩
-    rw [epi_coe_mul h f]
-    exact hf.convex_epi.linear_preimage _
-
-/-- A non-negative multiple of a closed function that never takes `-∞` is closed. -/
-private theorem closedFn_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : Rn n → EReal} (hf : ClosedFn f)
-    (hb : ∀ x, f x ≠ ⊥) : ClosedFn (fun x => (c : EReal) * f x) := by
-  have hb' : ∀ x, (c : EReal) * f x ≠ ⊥ := fun x => Tdaf.EReal.coe_mul_ne_bot hc (hb x)
-  rw [closedFn_iff_lowerSemicontinuous hb', lowerSemicontinuous_iff_isClosed_epi]
-  rcases eq_or_lt_of_le hc with h | h
-  · have hz : (fun x => (c : EReal) * f x) = fun _ : Rn n => (0 : EReal) := by
-      funext x; rw [← h]; simp
-    rw [hz, ← lowerSemicontinuous_iff_isClosed_epi]
-    exact lowerSemicontinuous_const
-  · rw [epi_coe_mul h f]
-    refine IsClosed.preimage ?_ ?_
-    · exact (scaleSnd (n := n) c⁻¹).continuous_of_finiteDimensional
-    · rw [← lowerSemicontinuous_iff_isClosed_epi]
-      exact (closedFn_iff_lowerSemicontinuous hb).1 hf
-
-/-- A non-negative multiple of a proper function is proper: at `c = 0` it is the constant `0`. -/
-private theorem proper_coe_mul {c : ℝ} (hc : 0 ≤ c) {f : Rn n → EReal} (hp : Proper f) :
-    Proper (fun x => (c : EReal) * f x) := by
-  refine ⟨?_, fun x => Tdaf.EReal.coe_mul_ne_bot hc (hp.ne_bot x)⟩
-  obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
-  refine ⟨x₀, ?_⟩
-  rcases eq_or_lt_of_le hc with h | h
-  · rw [mem_dom, ← h]; simp
-  · exact mem_dom.2 (lt_of_le_of_ne le_top (Tdaf.EReal.coe_mul_ne_top h (mem_dom.1 hx₀).ne))
-
-/-- An affine function on `ℝⁿ`, read into `EReal`, is closed proper convex. -/
-private theorem closedProperConvexFn_coe_affineMap (g : Rn n →ᵃ[ℝ] ℝ) :
-    ClosedProperConvexFn (fun x => ((g x : ℝ) : EReal)) := by
-  have hcont : Continuous fun x : Rn n => ((g x : ℝ) : EReal) :=
-    EReal.continuous_coe_iff.2 g.continuous_of_finiteDimensional
-  have hepi : epi (fun x => ((g x : ℝ) : EReal))
-      = (g.comp (AffineMap.fst : (Rn n × ℝ) →ᵃ[ℝ] Rn n)
-          - (AffineMap.snd : (Rn n × ℝ) →ᵃ[ℝ] ℝ)) ⁻¹' Set.Iic (0 : ℝ) := by
-    ext p
-    rw [Set.mem_preimage, mem_epi, Set.mem_Iic, _root_.EReal.coe_le_coe_iff]
-    have h1 : (AffineMap.fst : (Rn n × ℝ) →ᵃ[ℝ] Rn n) p = p.1 := rfl
-    have h2 : (AffineMap.snd : (Rn n × ℝ) →ᵃ[ℝ] ℝ) p = p.2 := rfl
-    simp only [AffineMap.coe_sub, Pi.sub_apply, AffineMap.comp_apply, h1, h2]
-    constructor <;> intro h <;> linarith
-  refine ⟨⟨?_⟩, ?_, ⟨⟨0, by rw [mem_dom]; exact _root_.EReal.coe_lt_top _⟩,
-    fun _ => _root_.EReal.coe_ne_bot _⟩⟩
-  · rw [hepi]; exact (convex_Iic (0 : ℝ)).affine_preimage _
-  · exact (closedFn_iff_lowerSemicontinuous fun _ => _root_.EReal.coe_ne_bot _).2
-      hcont.lowerSemicontinuous
-
-/-- A positive multiple of `f` has the same effective domain as `f`. -/
-private theorem dom_coe_mul {c : ℝ} (hc : 0 < c) (f : Rn n → EReal) :
-    dom (fun x => (c : EReal) * f x) = dom f := by
-  ext x
-  rw [mem_dom, mem_dom]
-  constructor
-  · intro h
-    by_contra hcon
-    have htop : f x = ⊤ := by
-      rcases lt_or_eq_of_le (le_top : f x ≤ ⊤) with h' | h'
-      · exact absurd h' hcon
-      · exact h'
-    rw [htop, _root_.EReal.coe_mul_top_of_pos hc] at h
-    exact lt_irrefl _ h
-  · exact fun h => lt_of_le_of_ne le_top (Tdaf.EReal.coe_mul_ne_top hc h.ne)
+One fact the backbone does not carry: a finite sum of closed proper convex functions with a common
+domain point is again one. It is `private` here and recorded in `## Backbone gaps`. The scalar
+multiples and affine functions that used to be proved here are now in `Convex/Epigraph.lean`,
+`Convex/Closure.lean` and `Subgradient/Calculus.lean`. -/
 
 /-- A finite sum of closed proper convex functions sharing a domain point is closed proper convex.
 The `m`-ary form of `ClosedProperConvexFn.add`. -/
@@ -585,7 +498,8 @@ theorem convexFn_lagrangeSummand {u : Rn m} (hu : ∀ i : Fin m, (i : ℕ) < P.r
         simp only [lagrangeSummand_some]
         rw [hg x, Tdaf.EReal.coe_mul_coe, AffineMap.coe_smul, Pi.smul_apply, smul_eq_mul]
       rw [hrw]
-      exact (closedProperConvexFn_coe_affineMap _).convex
+      exact (closedProperConvexFn_coe_affineMap
+        (u j • g).continuous_of_finiteDimensional).convex
 
 theorem proper_lagrangeSummand {u : Rn m} (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i)
     (i : Option (Fin m)) : Proper (P.lagrangeSummand u i) := by
@@ -600,7 +514,8 @@ theorem proper_lagrangeSummand {u : Rn m} (hu : ∀ i : Fin m, (i : ℕ) < P.r �
         simp only [lagrangeSummand_some]
         rw [hg x, Tdaf.EReal.coe_mul_coe, AffineMap.coe_smul, Pi.smul_apply, smul_eq_mul]
       rw [hrw]
-      exact (closedProperConvexFn_coe_affineMap _).proper
+      exact (closedProperConvexFn_coe_affineMap
+        (u j • g).continuous_of_finiteDimensional).proper
 
 theorem closedFn_lagrangeSummand (hcl₀ : ClosedFn P.f₀)
     (hcl : ∀ i : Fin m, (i : ℕ) < P.r → ClosedFn (P.f i)) {u : Rn m}
@@ -617,7 +532,8 @@ theorem closedFn_lagrangeSummand (hcl₀ : ClosedFn P.f₀)
         simp only [lagrangeSummand_some]
         rw [hg x, Tdaf.EReal.coe_mul_coe, AffineMap.coe_smul, Pi.smul_apply, smul_eq_mul]
       rw [hrw]
-      exact (closedProperConvexFn_coe_affineMap _).closed
+      exact (closedProperConvexFn_coe_affineMap
+        (u j • g).continuous_of_finiteDimensional).closed
 
 theorem mem_dom_lagrangeSummand (u : Rn m) {x : Rn n} (hx : x ∈ P.C) (i : Option (Fin m)) :
     x ∈ dom (P.lagrangeSummand u i) := by
@@ -870,9 +786,7 @@ theorem corollary_28_1_1 (hcl₀ : ClosedFn P.f₀)
   have hclosedf : IsClosed {z : Rn n | P.objective z ≤ ((μ + 1 : ℝ) : EReal)} :=
     lowerSemicontinuous_iff_isClosed_le.1 hfobj.lowerSemicontinuous _
   have hcomph : IsCompact {z : Rn n | P.lagrangeFn u z ≤ ((μ + 1 : ℝ) : EReal)} :=
-    (isCompact_iff_recessionCone_eq_zero (hh.convex.convex_le _)
-      (lowerSemicontinuous_iff_isClosed_le.1 hh.lowerSemicontinuous _) hneβh).2
-      (by rw [recessionCone_setOf_le hh.convex hh.isClosed_epi hneβh]; exact hrec)
+    isCompact_setOf_le hh.convex hh.closed hh.proper hrec hneβh
   have hcompf : IsCompact {z : Rn n | P.objective z ≤ ((μ + 1 : ℝ) : EReal)} :=
     hcomph.of_isClosed_subset hclosedf
       fun z hz => (P.lagrangeFn_le_objective hu.nonneg z).trans hz
@@ -1514,123 +1428,6 @@ theorem concaveFn_programLagrangian (x : Rn n) :
 
 end OrdinaryConvexProgram
 
-/-! ### Subgradients of the summands of `h`
-
-Rockafellar, §28, line 11169, uses `∂(λᵢfᵢ)(x) = λᵢ∂fᵢ(x)` without comment. It is true for
-`λᵢ > 0` for any convex `fᵢ`, and for arbitrary `λᵢ` when `fᵢ` is affine — which is the case for
-the equality constraints, the only ones whose multipliers may be negative. Neither statement is
-in the backbone; both are recorded as gaps in the module docstring. -/
-
-private theorem eq_of_forall_pairing_eq {k : ℕ} {v v' : Rn k}
-    (h : ∀ w : Rn k, pairing k w v = pairing k w v') : v = v' := by
-  have h0 : pairing k (v - v') (v - v') = 0 := by
-    rw [map_sub, h (v - v')]
-    ring
-  rw [pairing_apply] at h0
-  exact sub_eq_zero.1 (inner_self_eq_zero.1 h0)
-
-/-- `∂(cf)(x) = c ∂f(x)` for `c > 0`. -/
-private theorem subgradient_coe_mul {c : ℝ} (hc : 0 < c) (f : Rn n → EReal) (x : Rn n) :
-    subgradient (pairing n) (fun y => (c : EReal) * f y) x
-      = c • subgradient (pairing n) f x := by
-  ext v
-  constructor
-  · intro hv
-    refine ⟨c⁻¹ • v, fun z => ?_, ?_⟩
-    swap
-    · change c • (c⁻¹ • v) = v
-      rw [smul_smul, mul_inv_cancel₀ (ne_of_gt hc), one_smul]
-    have h1 := hv z
-    have hp : pairing n (z - x) (c⁻¹ • v) = c⁻¹ * pairing n (z - x) v := by
-      rw [map_smul, smul_eq_mul]
-    rw [hp]
-    refine (Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).1 ?_
-    rw [show c * (c⁻¹ * pairing n (z - x) v) = pairing n (z - x) v from by
-      field_simp]
-    exact h1
-  · rintro ⟨w, hw, rfl⟩
-    intro z
-    have hp : pairing n (z - x) (c • w) = c * pairing n (z - x) w := by
-      rw [map_smul, smul_eq_mul]
-    rw [hp]
-    exact (Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).2 (hw z)
-
-/-- The subgradient of the zero function is `{0}`: this is what "omit terms with `λᵢ = 0`" means
-in Rockafellar's condition (c). -/
-private theorem subgradient_zero_mul (f : Rn n → EReal) (x : Rn n) :
-    subgradient (pairing n) (fun y => ((0 : ℝ) : EReal) * f y) x = {(0 : Rn n)} := by
-  have hz : (fun y => ((0 : ℝ) : EReal) * f y) = fun _ => (0 : EReal) := by
-    funext y; rw [_root_.EReal.coe_zero, zero_mul]
-  rw [hz]
-  ext v
-  rw [Set.mem_singleton_iff]
-  constructor
-  · intro hv
-    have h := hv (x + v)
-    simp only [zero_add, add_sub_cancel_left] at h
-    have h' : pairing n v v ≤ 0 := by exact_mod_cast h
-    rw [pairing_apply] at h'
-    exact inner_self_eq_zero.1 (le_antisymm h' (real_inner_self_nonneg))
-  · rintro rfl
-    intro z
-    rw [zero_add, map_zero]
-    exact le_of_eq (by norm_num)
-
-/-- The subgradient of an affine function is the singleton of its Riesz vector. -/
-private theorem subgradient_coe_affineMap (a : Rn n →ᵃ[ℝ] ℝ) (x : Rn n) :
-    ∃ b : Rn n, (∀ w : Rn n, pairing n w b = a.linear w) ∧
-      subgradient (pairing n) (fun y => ((a y : ℝ) : EReal)) x = {b} := by
-  obtain ⟨b, hb⟩ := exists_linFn (LinearMap.toContinuousLinearMap a.linear)
-  have hbw : ∀ w : Rn n, pairing n w b = a.linear w := by
-    intro w
-    rw [← linFn_apply b w, hb]
-    rfl
-  refine ⟨b, hbw, ?_⟩
-  have hdec : ∀ z : Rn n, a z - a x = a.linear (z - x) := by
-    intro z
-    have h1 : ∀ y : Rn n, a y = a.linear y + a 0 := fun y => congrFun (AffineMap.decomp a) y
-    rw [h1 z, h1 x, map_sub]
-    ring
-  ext v
-  rw [Set.mem_singleton_iff]
-  constructor
-  · intro hv
-    have hle : ∀ w : Rn n, pairing n w v ≤ a.linear w := by
-      intro w
-      have h := hv (w + x)
-      rw [add_sub_cancel_right, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff] at h
-      have := hdec (w + x)
-      rw [add_sub_cancel_right] at this
-      linarith
-    refine eq_of_forall_pairing_eq fun w => ?_
-    rw [hbw w]
-    refine le_antisymm (hle w) ?_
-    have hneg := hle (-w)
-    rw [map_neg, LinearMap.neg_apply, map_neg] at hneg
-    linarith
-  · rintro rfl
-    intro z
-    rw [← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff, hbw (z - x)]
-    have := hdec z
-    linarith
-
-/-- `∂(cf)(x) = c ∂f(x)` for arbitrary real `c`, when `f` is affine. -/
-private theorem subgradient_coe_mul_affineMap (c : ℝ) (a : Rn n →ᵃ[ℝ] ℝ) (x : Rn n) :
-    subgradient (pairing n) (fun y => (c : EReal) * ((a y : ℝ) : EReal)) x
-      = c • subgradient (pairing n) (fun y => ((a y : ℝ) : EReal)) x := by
-  obtain ⟨b, hb, hsb⟩ := subgradient_coe_affineMap a x
-  obtain ⟨b', hb', hsb'⟩ := subgradient_coe_affineMap (c • a) x
-  have hfun : (fun y => (c : EReal) * ((a y : ℝ) : EReal))
-      = fun y => (((c • a) y : ℝ) : EReal) := by
-    funext y
-    rw [Tdaf.EReal.coe_mul_coe]
-    rfl
-  rw [hfun, hsb', hsb, Set.smul_set_singleton]
-  congr 1
-  refine eq_of_forall_pairing_eq fun w => ?_
-  rw [hb' w, map_smul, hb w]
-  rfl
-
 /-! ### Theorem 28.3: saddle-points of the Lagrangian and the Kuhn–Tucker conditions -/
 
 /-- The indices `i` with `λᵢ ≠ 0`: Rockafellar's parenthesis "(Omit terms with `λᵢ = 0`.)" in
@@ -1810,6 +1607,9 @@ theorem subgradient_lagrangeFn {u : Rn m} (hu : u ∈ P.multiplierCone) (x : Rn 
       = subgradient (pairing n) P.f₀ x
         + ∑ i ∈ activeIndices u, u i • subgradient (pairing n) (P.f i) x := by
   obtain ⟨x₀, hx₀⟩ := P.relint_C_nonempty
+  have hsep : Function.Injective (pairing n).flip :=
+    LinearMap.ker_eq_bot.1
+      (LinearMap.separatingRight_iff_flip_ker_eq_bot.1 (separatingRight_pairing n))
   rw [P.lagrangeFn_eq_finsetSum u,
     theorem_23_8 ⟨none, Finset.mem_univ none⟩ (fun i _ => P.convexFn_lagrangeSummand hu i)
       (fun i _ => P.proper_lagrangeSummand hu i)
@@ -1823,7 +1623,7 @@ theorem subgradient_lagrangeFn {u : Rn m} (hu : u ∈ P.multiplierCone) (x : Rn 
       by_contra hc
       exact hj (mem_activeIndices.2 hc)
     simp only [lagrangeSummand_some, hj0]
-    rw [subgradient_zero_mul, Set.singleton_zero]
+    rw [subgradient_zero_mul hsep, Set.singleton_zero]
   rw [← Finset.sum_subset (Finset.subset_univ (activeIndices u)) hzero]
   refine Finset.sum_congr rfl fun j hj => ?_
   have hj0 : u j ≠ 0 := mem_activeIndices.1 hj
@@ -1832,9 +1632,12 @@ theorem subgradient_lagrangeFn {u : Rn m} (hu : u ∈ P.multiplierCone) (x : Rn 
       by_contra hc
       exact absurd (hu j (by omega)) (not_le.2 hneg)
     obtain ⟨a, ha⟩ := P.exists_affine j hjr
+    obtain ⟨b, hb⟩ := exists_linFn (LinearMap.toContinuousLinearMap a.linear)
+    have hbw : ∀ w : Rn n, pairing n w b = a.linear w := fun w => by
+      rw [← linFn_apply b w, hb]; rfl
     have hfj : P.f j = fun y => ((a y : ℝ) : EReal) := funext ha
     simp only [lagrangeSummand_some, hfj]
-    exact subgradient_coe_mul_affineMap (u j) a x
+    exact subgradient_coe_mul_affineMap hsep (u j) a hbw x
   · simp only [lagrangeSummand_some]
     exact subgradient_coe_mul hpos (P.f j) x
 
@@ -2143,13 +1946,16 @@ noncomputable def ex1 : OrdinaryConvexProgram 2 2 where
   f := ![ex1Constraint₁, ex1Constraint₂]
   r := 2
   r_le := le_refl 2
-  convexFn_f₀ := (closedProperConvexFn_coe_affineMap (coordAffine 2 0)).convex
+  convexFn_f₀ :=
+    (closedProperConvexFn_coe_affineMap
+      (coordAffine 2 0).continuous_of_finiteDimensional).convex
   proper_f₀ := proper_coe _
   dom_f₀ := dom_coe_eq_univ _
   convexFn_f := by
     intro i _
     rcases fin_two_cases i with rfl | rfl
-    · exact (closedProperConvexFn_coe_affineMap (coordAffine 2 1)).convex
+    · exact (closedProperConvexFn_coe_affineMap
+        (coordAffine 2 1).continuous_of_finiteDimensional).convex
     · exact convexFn_coe_of_convexOn_univ convexOn_sqSub
   proper_f := by
     intro i _

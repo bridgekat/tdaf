@@ -6,6 +6,7 @@ Authors: TDAF contributors
 import Tdaf.Analysis.Convex.Continuity
 import Tdaf.Analysis.Convex.Operations.Image
 import Tdaf.Analysis.Convex.Optimization.Minimum
+import Tdaf.Analysis.Convex.Polyhedral.Duality
 import Tdaf.Analysis.Convex.Subgradient.Existence
 import Tdaf.Analysis.Convex.Subgradient.Gradient
 
@@ -638,29 +639,6 @@ section PolyhedralImage
 
 variable {E G : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G] {f : E → EReal}
-
-/-- **Rockafellar, Corollary 19.3.1**: the image of a polyhedral convex function under a linear
-transformation is polyhedral, and the infimum defining it is attained wherever it is finite.
-
-The image of `epi f` under `(x, μ) ↦ (A x, μ)` is polyhedral (Theorem 19.3), hence *closed*, and a
-closed set with upward-closed vertical sections is an epigraph — which is exactly the hypothesis
-`epi_mapLin` needs. -/
-theorem polyhedralFn_mapLin (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
-    PolyhedralFn (mapLin A f) := by
-  have himg : Polyhedral (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f) :=
-    Polyhedral.image hf _
-  have hepi : IsEpiLike (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f) := by
-    refine IsEpiLike.of_isClosed ?_ himg.isClosed
-    rintro y μ ν ⟨⟨x, ρ⟩, hx, hxy⟩ hμν
-    have h1 : A x = y := congrArg Prod.fst hxy
-    have h2 : ρ = μ := congrArg Prod.snd hxy
-    refine ⟨(x, ν), mk_mem_epi.2 ?_, ?_⟩
-    · exact le_trans (h2 ▸ mk_mem_epi.1 hx) (by exact_mod_cast hμν)
-    · rw [LinearMap.prodMap_apply, h1]
-      rfl
-  change Polyhedral (epi (mapLin A f))
-  rw [epi_mapLin hepi]
-  exact himg
 
 /-- A polyhedral convex function agrees with its closure throughout its effective domain.
 
