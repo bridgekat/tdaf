@@ -12,202 +12,34 @@ import Tdaf.Surface.Rockafellar.Part5.Section23
 /-!
 # Rockafellar, §28: Ordinary Convex Programs and Lagrange Multipliers
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §28, pp. 273–290: the ordinary convex
-program, its Kuhn–Tucker coefficients, its Lagrangian, and the equivalence between solving the
-program and finding a saddle-point of the Lagrangian.
+The ordinary convex program `(P)`, its Kuhn–Tucker coefficients, its Lagrangian `L`, and the
+equivalence between solving `(P)` and finding a saddle-point of `L`.
 
-All nine numbered results of the section are here — Theorems 28.1, 28.2, 28.3, 28.4 and
-Corollaries 28.1.1, 28.2.1, 28.2.2, 28.3.1, 28.4.1 — together with the three Kuhn–Tucker clause
-rows (a), (b), (c) of Theorem 28.3 and both of the section's counterexamples.
+All nine numbered results of §28 are formalized: Theorems 28.1, 28.2, 28.3 and 28.4 and
+Corollaries 28.1.1, 28.2.1, 28.2.2, 28.3.1 and 28.4.1, together with the three Kuhn–Tucker
+conditions (a), (b), (c) of Theorem 28.3, the decomposition principle, and the section's two
+counterexamples `ex1` and `ex2`.
 
-**The program is the tuple, not the objective function.** `OrdinaryConvexProgram n m` carries the
-`(m + 3)`-tuple `(C, f₀, f₁, …, f_m, r)` of p. 273 and Rockafellar's two blanket assumptions on
-it. Two different programs can have the same objective function `f₀ + δ(· | C₀)` and different
-Kuhn–Tucker coefficients, which is exactly the point the book makes at line 11593 when it moves on
-to bifunctions; a formalisation that made the objective the primitive would lose it.
+## Implementation notes
 
-## Contents
+**A program is the tuple, not the objective function.** `OrdinaryConvexProgram n m` carries
+Rockafellar's `(m + 3)`-tuple `(C, f₀, f₁, …, f_m, r)` and his two blanket assumptions on it,
+because two programs with the same objective `f₀ + δ(· | C₀)` can have different Kuhn–Tucker
+coefficients. `eq_of_programLagrangian_eq` recovers the whole tuple from the Lagrangian alone.
 
-| label | declaration |
-|---|---|
-| §28 opening, p. 273 | `OrdinaryConvexProgram`, `feasibleSet`, `constraintSet`, `objective`,
-  `optimalValue`, `optimalSolutions` |
-| §28 definition, line 10799 | `lagrangeFn`, `IsKuhnTuckerVector` |
-| Theorem 28.1 | `theorem_28_1` |
-| Corollary 28.1.1 | `corollary_28_1_1` |
-| §28 definition, line 10861 | `ineqBifun`, `perturbFn`, `perturbFn_zero` |
-| Theorem 28.2 | `theorem_28_2` |
-| Corollary 28.2.1 | `corollary_28_2_1` |
-| Corollary 28.2.2 | `linConstraint`, `corollary_28_2_2` |
-| §28 counterexample, line 10989 | `ex1Constraint₁`, `ex1Constraint₂`, `ex1`, `ex1_feasibleSet`,
-  `ex1_optimalValue`, `ex1_optimalSolutions`, `ex1_not_exists_isKuhnTuckerVector` |
-| §28 counterexample, line 11007 | `ex2Set`, `convex_ex2Set`, `ex2`, `ex2_feasibleSet`,
-  `ex2_optimalValue`, `ex2_optimalSolutions`, `ex2_not_exists_isKuhnTuckerVector` |
-| §28 definition, line 11025 | `programLagrangian`, `saddleFn`, `multiplierCone`, `unitVec` |
-| §28 correspondence, lines 11047–11057 | `setOf_programLagrangian_finite`,
-  `f₀_eq_programLagrangian`, `f_eq_programLagrangian_sub`, `r_eq_of_multiplierCone_eq`,
-  `eq_of_programLagrangian_eq` |
-| §28 definition, line 11041 | `lagrangian_ineqBifun`, `saddleLagrangian_ineqBifun`,
-  `concaveFn_programLagrangian` |
-| §28 definition, line 11059 | `IsSaddlePoint` (backbone), `isSaddlePoint_programLagrangian_iff` |
-| Theorem 28.3 | `iSup_programLagrangian`, `iInf_programLagrangian_of_mem`,
-  `iInf_programLagrangian_of_notMem`, `theorem_28_3` |
-| Theorem 28.3 (a), (b), (c) | `subgradient_lagrangeFn`, `activeIndices`,
-  `theorem_28_3_kuhnTucker` |
-| Corollary 28.3.1 | `corollary_28_3_1`, `corollary_28_3_1_kuhnTucker` |
-| Theorem 28.4 | `minimax_saddleFn`, `maximin_saddleFn_le`, `theorem_28_4_saddleValue`,
-  `theorem_28_4`, `theorem_28_4_value` |
-| Corollary 28.4.1 | `dualFn`, `concaveFn_dualFn`, `corollary_28_4_1` |
-| §28 remark, line 11303 | `dualFn_eq_concaveConj`, `dualFn_eq_neg_conj_perturbFn` |
-| §28 decomposition principle, lines 11309–11385 | `dom_lagrangeFn`, `decomposition_C`,
-  `decomposition_argmin_lagrangeFn` |
+**`r` counts the inequality constraints**, not the equalities: `f₁ ≤ 0, …, f_r ≤ 0` and
+`f_{r+1} = 0, …, f_m = 0`.
 
-## The section's definitions
-
-* `Rockafellar.OrdinaryConvexProgram n m` — the `(m + 3)`-tuple `(C, f₀, f₁, …, f_m, r)` of
-  p. 273, with `f₁, …, f_r` the **inequality** constraints and `f_{r+1}, …, f_m` the **equality**
-  constraints (so `r` counts the inequalities, not the equalities). The structure bundles
-  Rockafellar's two blanket assumptions: (a) `f₀` is proper convex with `dom f₀ = C`, each `fᵢ`
-  with `i ≤ r` is proper convex and finite on `C`, and each `fᵢ` with `i > r` is affine; (b)
-  `ri C ⊆ ri (dom fᵢ)` for `i ≤ r`, which is the constraint qualification Theorem 23.8 needs and
-  which the book states as `⋂ᵢ ri (dom fᵢ) = ri C ≠ ∅`.
-* `P.feasibleSet` is `C₀`, `P.constraintSet` is `C₁ ∩ ⋯ ∩ C_m` alone, `P.objective` is
-  `f₀ + δ(· | C₀)`, `P.optimalValue` is `α`, `P.optimalSolutions` is the set where `α` is attained.
-* `P.lagrangeFn u` is Rockafellar's `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` (line 10799) and
-  `P.IsKuhnTuckerVector u` is his "vector of Kuhn–Tucker coefficients": `λᵢ ≥ 0` for `i ≤ r`, and
-  `inf h` finite and equal to `α`. Note that `h` is *not* the Lagrangian; `L` is
-  `P.programLagrangian`.
-* `P.ineqBifun` is the **bifunction of `(P)`** (line 10861): `F u x` is `f₀ x` when `x` satisfies
-  the constraints of the perturbed program `(P_u)` and `+∞` otherwise. `P.perturbFn` is its
-  `infBifun`, Rockafellar's `p`, and `perturbFn_zero` is his "of course, `p(0)` is the optimal
-  value in `(P)`".
-* `P.multiplierCone` is `E_r` (line 11031) and `P.programLagrangian` is `L` (line 11025), defined
-  by `⨅ _ : x ∈ C, ⨆ _ : u ∈ E_r, h u x` so that the book's three-case definition comes out as
-  three `rfl`-adjacent lemmas with no `Decidable` instance in the term. `P.saddleFn` is the same
-  function read on `ℝᵐ × ℝⁿ`, which is what `IsSaddlePoint`, `maximin` and `minimax` take.
-* `P.dualFn` is Rockafellar's `g = inf_x L(·, x)` of Corollary 28.4.1, and `Rockafellar.unitVec`
-  is his `eᵢ`, the `i`-th row of the `m × m` identity matrix (line 11055).
-* `Rockafellar.activeIndices u` is `{i | λᵢ ≠ 0}`, which is what the book's parenthesis "(Omit
-  terms with `λᵢ = 0`.)" in condition (c) of Theorem 28.3 means. The omission is not cosmetic:
-  `∂fᵢ(x̄)` can be empty at a boundary point of `dom fᵢ`, and `0 · ∅ = ∅ ≠ {0}`.
-* `Rockafellar.ex1`, `Rockafellar.ex2` — the section's two counterexamples (lines 10989 and 11007),
-  transcribed as `OrdinaryConvexProgram` instances on `ℝ²` with the decisive half proved.
-
-**Four of these duplicate `Tdaf/Analysis/Convex/Optimization/Program.lean`.** `feasibleSet`,
-`lagrangeFn`, `optimalValue` and `IsKuhnTuckerVector` exist there in a role-split form —
-constraints indexed by two families `ι` (convex, `≤ 0`) and `κ` (affine, `≤ 0`) rather than by one
-family split at `r`. The remediation move list assigns the definitions to the surface and the
-existence theorems to the backbone; the surface copies are here, the backbone copies are still in
-place because seven other branches depend on them, and `theorem_28_2` is the bridge: it translates
-the book's `(m, r)` indexing into the backbone's `(ι, κ)` indexing and applies
-`exists_isKuhnTuckerVector_of_slater` unchanged.
-
-## Where the book's hypotheses had to change
-
-* **Theorem 28.2's `I`.** The book says "let `I` be a subset of `{1, …, r}` such that `fᵢ` is
-  affine for `i ∉ I`". `theorem_28_2` takes `I : Finset (Fin m)` with two hypotheses — `I` misses
-  every equality index, and every inequality index outside `I` is affine — which is the same
-  condition with the two halves named.
-* **Theorem 28.3's condition (c) needs no separate `x̄ ∈ C`.** The book's (a), (b), (c) do not
-  mention `C`, and `theorem_28_3_kuhnTucker` does not either: `x̄ ∈ C` is recovered from (c),
-  because `0 ∈ ∂f₀(x̄) + ⋯` forces `∂f₀(x̄) ≠ ∅` and hence `x̄ ∈ dom f₀ = C`.
-* **Corollaries 28.3.1 and 28.4.1 assume a Kuhn–Tucker vector, not Theorem 28.2's hypothesis.**
-  Corollary 28.3.1 is stated in the book for "an ordinary convex program satisfying the hypothesis
-  of Theorem 28.2"; its proof uses only the *conclusion* of Theorem 28.2, and Corollary 28.4.1 is
-  already stated in that weaker form ("having at least one Kuhn–Tucker vector, e.g. …"). Both are
-  carried with the weaker hypothesis, from which the book's follows by `theorem_28_2`.
-* **Theorem 28.1's summary is very slightly too strong.** Rockafellar summarises the proof as
-  "`h ≤ f` everywhere, with equality if and only if `x` is a feasible solution such that
-  `λᵢfᵢ(x) = 0`". At a point outside `C` both functions are `+∞`, so equality holds there too
-  although the point is infeasible. Nothing is lost, because `inf h` is finite under the theorem's
-  hypothesis, so no such point lies in either minimum set; the docstring of `theorem_28_1` records
-  the correction.
-* **Theorem 28.2 is kept alongside Corollary 28.2.1.** Rockafellar's own preface (p. xi) says
-  Theorem 28.2 "may be replaced by its special case Corollary 28.2.1 (which has a much easier
-  proof)". Both are here: the corollary is not a substitute for the theorem in a formalisation,
-  because Corollary 28.2.2 — the case of purely linear constraints — is *not* a case of Corollary
-  28.2.1, and neither is the mixed case Theorem 28.2 was written for.
-
-## What is not here
-
-**Of the decomposition passage (lines 11309–11596) only the principle itself is carried.** Lines
-11309–11385 are `decomposition_C` and `decomposition_argmin_lagrangeFn`. Everything after line
-11395 is a worked numerical illustration (`q(x) = q₁(ξ₁) + ⋯ + q_n(ξ_n)` on the simplex) and a
-discussion of computing the dual objective `w` from conjugates by a subgradient method:
-exposition and algorithmics, with no statement in it that a later section cites.
-
-**The note that stood here was wrong twice over, and both errors pointed away from a statement
-that was three lines from the backbone.** It read: *"the cost is entirely in machinery this
-section does not otherwise need: an `s`-fold isometric decomposition
-`ℝ^{n₁} × ⋯ × ℝ^{n_s} ≃ ℝⁿ` with transport of `dom`, `argmin` and `ri` across it. The surface has
-only the binary `euclideanProdEquiv` (`Surface/Common/Euclidean.lean`), and remediation §4.8
-lists even the binary transport as open."* `euclideanProdEquiv` is **backbone**, at
-`Analysis/Convex/EuclideanProd.lean`; `Surface/Common/Euclidean.lean` holds only the bridge
-`pairingProd_euclideanProdEquiv` and says as much in its own docstring. And remediation §4.8 is
-**done**: `conj_comp_euclideanProdEquiv`, `subgradient_comp_euclideanProdEquiv` and
-`relint_image_euclideanProdEquiv` have all been in place since it closed.
-
-More to the point, the isometry is the wrong object. The passage uses none and mentions `ri`
-nowhere; the identification of `ℝ^{n₁} × ⋯ × ℝ^{n_s}` with `ℝⁿ` is coordinate bookkeeping, and
-the content is `argmin_sepSum` and `dom_sepSum` on the *dependent product itself*.
-
-A third error in the same note, less consequential but the same shape: the backbone form it
-proposed spelled the conclusion `⋂ k, {x | x k ∈ argmin (h k)}`. That is `Set.univ.pi` written out
-longhand, and it discards that entire API — `Set.mem_pi`, `Convex.relint_univ_pi`, LINT12's porting
-notes — for nothing.
-
-Two design points in what was actually built. The coordinate splitting is hypothesised as a
-`≃ₗ[ℝ]` and not a bare `≃`, because a bijection `∀ k, Rn (nk k) ≃ Rn n` exists for *any* `nk` —
-both sides have cardinality continuum — so an `≃` would carry none of `n₁ + ⋯ + n_s = n`. And
-separability of `h` is hypothesised rather than derived from separability of each `fᵢ`, because
-**`EReal` is not a semiring**: `Finset.mul_sum` does not apply, so `λᵢ · ∑ₖ fᵢₖ(xₖ)` cannot be
-distributed. The book asserts that step without proof, so the hypothesis is the book's own move.
-
-Also not carried: the remark at line 11045 that `L` is convex in `x` for each `u*`
-(`concaveFn_programLagrangian` carries the concavity in `u*`, which Corollary 28.4.1 needs; the
-convexity in `x` is used nowhere in §28), and the observation at line 11291 that `g` is the
-pointwise infimum of an explicit family of affine functions, which is a restatement of
-`dualFn_eq_concaveConj`.
-
-## Backbone gaps
-
-All nine have been hoisted; this section proves nothing `private`.
-
-* ~~`closedProperConvexFn_finsetSum`~~ — **closed**: public in `Recession/Closedness.lean`, beside
-  the binary `ClosedProperConvexFn.add`, exactly where this note said it wanted to go. Two things
-  the note got wrong are worth keeping. It said the obstacle was that `Convex/Closure.lean` and
-  `Convex/Epigraph.lean` are not below `Recession/Closedness.lean` — true, but the *binding*
-  obstacle was in the other direction: the private proof cites `properConvexFn_finsetSum`, which
-  lives in `Duality/Relint.lean`, a module that **imports** the home this note proposes. Checking
-  only the prerequisites the note names would have hit that at the first `exact`. The fix was to
-  ask what the unreachable citation was doing — it placed `x₀` in `dom (∑ …)` — and strengthen the
-  induction to carry that point in its conclusion, which removes the dependency altogether.
-* ~~`scaleSnd`, `epi_coe_mul`, `convexFn_coe_mul`, `proper_coe_mul`, `dom_coe_mul`~~ — **closed**:
-  all five are public in `Convex/Epigraph.lean`, over an arbitrary real vector space.
-* ~~`closedFn_coe_mul`~~ — **closed**: public in `Convex/Closure.lean`, with `continuous_scaleSnd`
-  beside it.
-* ~~`closedProperConvexFn_coe_affineMap`~~ — **closed**: public in `Convex/Closure.lean`, over any
-  real topological vector space, with continuity of the affine map as an explicit hypothesis
-  (`AffineMap.continuous_of_finiteDimensional` discharges it here).
-* ~~`subgradient_coe_mul`, `subgradient_zero_mul`, `subgradient_coe_affineMap`,
-  `subgradient_coe_mul_affineMap`~~ — **closed**: all four are public in
-  `Subgradient/Calculus.lean`, stated for an arbitrary pairing. The two that name a single point
-  take `Function.Injective B.flip`, which `separatingRight_pairing` supplies here.
-* ~~`coe_mul_add_coe_le_coe_mul_iff`~~ — the `EReal` scaling step `cA + ct ≤ cB ↔ A + t ≤ B`
-  for `c > 0`. **Closed**: it is now `Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff`, beside the
-  `coe_mul_le_coe_mul_iff` it feeds and the `coe_mul_add_coe` that distributes for it.
-* ~~`isCompact_setOf_le` is `private`~~ — **closed**: it is public in
-  `Optimization/Minimum.lean`, and Corollary 28.1.1 now cites it instead of routing through
-  `isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le`.
-* ~~The `s`-fold product decomposition needed by the decomposition principle~~ — **closed**,
-  and the object the gap asked for was the wrong one: `dom_sepSum` and `argmin_sepSum` are
-  public in `Optimization/Minimum.lean` over a dependent finite product, and
-  `argmin_comp_of_surjective` beside them reads the minimum set in any other coordinates. No
-  isometry, and no `ri`, was involved.
+`lagrangeFn u` is Rockafellar's `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m`, which is *not* the Lagrangian: that
+is `programLagrangian`, and `saddleFn` is the same function read on `ℝᵐ × ℝⁿ`, the shape
+`IsSaddlePoint`, `maximin` and `minimax` take. `activeIndices u` is `{i | λᵢ ≠ 0}`, the book's
+"(Omit terms with `λᵢ = 0`.)" — an omission that is not cosmetic, since `∂fᵢ(x̄)` can be empty at a
+boundary point of `dom fᵢ` and `0 · ∅ = ∅ ≠ {0}`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §28.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §28 (pp. 273–290).
+  Corollaries 28.2.2, 28.3.1 and 28.4.1 are stated there with no printed proof.
 -/
 
 open Set Pointwise
@@ -218,17 +50,10 @@ open Tdaf.ConvexAnalysis Tdaf.Surface
 
 variable {m n : ℕ}
 
-/-! ### Building blocks: finite sums of closed proper convex functions
-
-Nothing is proved `private` here any more. The scalar multiples and affine functions that used to
-be are in `Convex/Epigraph.lean`, `Convex/Closure.lean` and `Subgradient/Calculus.lean`, and the
-`m`-ary Theorem 9.3 that was the last holdout is `closedProperConvexFn_finsetSum` in
-`Recession/Closedness.lean`, beside the binary rule. -/
-
 /-! ### The ordinary convex program -/
 
-/-- **Rockafellar's ordinary convex program** (§28, line 10761): the `(m + 3)`-tuple
-`(C, f₀, f₁, …, f_m, r)`. -/
+/-- **Rockafellar's ordinary convex program** (§28): the `(m + 3)`-tuple `(C, f₀, f₁, …, f_m,
+r)`. -/
 structure OrdinaryConvexProgram (n m : ℕ) where
   /-- The non-empty convex set `C` over which the objective is minimised. -/
   C : Set (Rn n)
@@ -236,8 +61,7 @@ structure OrdinaryConvexProgram (n m : ℕ) where
   f₀ : Rn n → EReal
   /-- The constraint functions `f₁, …, f_m`. -/
   f : Fin m → Rn n → EReal
-  /-- The number of *inequality* constraints: `f₁ ≤ 0, …, f_r ≤ 0` and
-  `f_{r+1} = 0, …, f_m = 0`. -/
+  /-- The number of *inequality* constraints: `f₁ ≤ 0, …, f_r ≤ 0` and `f_{r+1} = 0, …, f_m = 0`. -/
   r : ℕ
   /-- `0 ≤ r ≤ m`. -/
   r_le : r ≤ m
@@ -255,8 +79,7 @@ structure OrdinaryConvexProgram (n m : ℕ) where
   subset_dom_f : ∀ i : Fin m, (i : ℕ) < r → C ⊆ dom (f i)
   /-- Rockafellar's extension convention (b), second half: `ri (dom fᵢ) ⊇ ri C`. -/
   relint_subset : ∀ i : Fin m, (i : ℕ) < r → ri C ⊆ ri (dom (f i))
-  /-- Rockafellar's extension convention (c): the equality constraints are affine on all of
-  `ℝⁿ`. -/
+  /-- Rockafellar's extension convention (c): the equality constraints are affine on all of `ℝⁿ`. -/
   exists_affine :
     ∀ i : Fin m, r ≤ (i : ℕ) → ∃ a : Rn n →ᵃ[ℝ] ℝ, ∀ x, f i x = ((a x : ℝ) : EReal)
 
@@ -283,16 +106,16 @@ theorem f₀_eq_top_of_notMem {x : Rn n} (hx : x ∉ P.C) : P.f₀ x = ⊤ := by
   by_contra hc
   exact hx (P.mem_C_iff.2 (lt_of_le_of_ne le_top hc))
 
-/-- No constraint function ever takes the value `-∞`: those with `i ≤ r` are proper and those
-with `i > r` are real-valued. -/
+/-- No constraint function ever takes the value `-∞`: those with `i ≤ r` are proper and those with
+`i > r` are real-valued. -/
 theorem f_ne_bot (i : Fin m) (x : Rn n) : P.f i x ≠ ⊥ := by
   rcases lt_or_ge (i : ℕ) P.r with hi | hi
   · exact (P.proper_f i hi).ne_bot x
   · obtain ⟨a, ha⟩ := P.exists_affine i hi
     rw [ha x]; exact _root_.EReal.coe_ne_bot _
 
-/-- Every constraint function is finite on `C`: Rockafellar's convention (b) is exactly what
-makes the Lagrangian an inequality between real numbers. -/
+/-- Every constraint function is finite on `C`: Rockafellar's convention (b) is exactly what makes
+the Lagrangian an inequality between real numbers. -/
 theorem exists_coe_f {x : Rn n} (hx : x ∈ P.C) (i : Fin m) : ∃ c : ℝ, P.f i x = (c : EReal) := by
   rcases lt_or_ge (i : ℕ) P.r with hi | hi
   · exact Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top ((P.proper_f i hi).ne_bot x)
@@ -302,7 +125,7 @@ theorem exists_coe_f {x : Rn n} (hx : x ∈ P.C) (i : Fin m) : ∃ c : ℝ, P.f 
 
 /-! ### Feasible solutions, the objective function and the optimal value -/
 
-/-- **Rockafellar, §28, line 10771**: the set `C₀` of **feasible solutions** to `(P)`. -/
+/-- **§28**: the set `C₀` of **feasible solutions** to `(P)`. -/
 def feasibleSet : Set (Rn n) :=
   {x | x ∈ P.C ∧ (∀ i : Fin m, (i : ℕ) < P.r → P.f i x ≤ 0) ∧
     ∀ i : Fin m, P.r ≤ (i : ℕ) → P.f i x = 0}
@@ -313,16 +136,16 @@ def feasibleSet : Set (Rn n) :=
 
 theorem feasibleSet_subset_C : P.feasibleSet ⊆ P.C := fun _ hx => hx.1
 
-/-- **Rockafellar, §28, lines 10775–10783**: the intersection `C₁ ∩ ⋯ ∩ C_m` of the sets cut out
-by the `m` constraints, with `Cᵢ = {x | fᵢ x ≤ 0}` for `i ≤ r` and `Cᵢ = {x | fᵢ x = 0}` for
-`i > r`. The feasible set is `C ∩ C₁ ∩ ⋯ ∩ C_m`. -/
+/-- **§28**: the intersection `C₁ ∩ ⋯ ∩ C_m` of the sets cut out by the `m` constraints, with
+`Cᵢ = {x | fᵢ x ≤ 0}` for `i ≤ r` and `Cᵢ = {x | fᵢ x = 0}` for `i > r`. The feasible set is
+`C ∩ C₁ ∩ ⋯ ∩ C_m`. -/
 def constraintSet : Set (Rn n) :=
   {x | (∀ i : Fin m, (i : ℕ) < P.r → P.f i x ≤ 0) ∧ ∀ i : Fin m, P.r ≤ (i : ℕ) → P.f i x = 0}
 
 theorem feasibleSet_eq_inter : P.feasibleSet = P.C ∩ P.constraintSet := rfl
 
-/-- `C₁ ∩ ⋯ ∩ C_m` is convex: the inequality constraints are convex and the equality constraints
-are affine. -/
+/-- `C₁ ∩ ⋯ ∩ C_m` is convex: the inequality constraints are convex and the equality constraints are
+affine. -/
 theorem convex_constraintSet : Convex ℝ P.constraintSet := by
   rintro x ⟨hx₁, hx₂⟩ y ⟨hy₁, hy₂⟩ a b ha hb hab
   refine ⟨fun i hi => (P.convexFn_f i hi).convex_le 0 (hx₁ i hi) (hy₁ i hi) ha hb hab,
@@ -336,7 +159,7 @@ theorem convex_constraintSet : Convex ℝ P.constraintSet := by
   rw [hg, hab', affineMap_segment g x y b, hxg, hyg]
   norm_num
 
-/-- **Rockafellar, §28, line 10787**: the **objective function** `f = f₀ + δ(· ∣ C₀)`. -/
+/-- **§28**: the **objective function** `f = f₀ + δ(· ∣ C₀)`. -/
 noncomputable def objective : Rn n → EReal := fun x => P.f₀ x + indicatorFn P.feasibleSet x
 
 @[simp] theorem objective_of_mem {x : Rn n} (hx : x ∈ P.feasibleSet) :
@@ -348,8 +171,8 @@ noncomputable def objective : Rn n → EReal := fun x => P.f₀ x + indicatorFn 
     _root_.EReal.add_top_of_ne_bot (P.proper_f₀.ne_bot x)]
 
 /-- The objective function is `f₀` restricted to `C₁ ∩ ⋯ ∩ C_m`: the constraint `x ∈ C` is
-automatic, because `f₀` is already `+∞` off `C`. This is the form in which convexity and
-closedness of the objective are read off. -/
+automatic, because `f₀` is already `+∞` off `C`. This is the form in which convexity and closedness
+of the objective are read off. -/
 theorem objective_eq_restrict :
     P.objective = Tdaf.ConvexAnalysis.restrict P.constraintSet P.f₀ := by
   funext x
@@ -364,8 +187,7 @@ theorem convexFn_objective : ConvexFn P.objective := by
   rw [P.objective_eq_restrict]
   exact P.convexFn_f₀.restrict P.convex_constraintSet
 
-/-- **Rockafellar, §28, line 10793**: the objective function is closed when `f₀, f₁, …, f_r`
-are. -/
+/-- **§28**: the objective function is closed when `f₀, f₁, …, f_r` are. -/
 theorem closedFn_objective (hcl₀ : ClosedFn P.f₀)
     (hcl : ∀ i : Fin m, (i : ℕ) < P.r → ClosedFn (P.f i)) : ClosedFn P.objective := by
   have hclosed : IsClosed P.constraintSet := by
@@ -392,8 +214,7 @@ theorem objective_ne_bot (x : Rn n) : P.objective x ≠ ⊥ := by
   · rw [P.objective_of_mem hx]; exact P.proper_f₀.ne_bot x
   · rw [P.objective_of_notMem hx]; exact top_ne_bot
 
-/-- **Rockafellar, §28, line 10793**: the **optimal value** in `(P)` is the infimum of the
-objective function. -/
+/-- **§28**: the **optimal value** in `(P)` is the infimum of the objective function. -/
 noncomputable def optimalValue : EReal := ⨅ x, P.objective x
 
 /-- The optimal value is the infimum of `f₀` over the feasible solutions. -/
@@ -407,13 +228,10 @@ theorem optimalValue_eq_biInf : P.optimalValue = ⨅ x ∈ P.feasibleSet, P.f₀
 theorem optimalValue_le {x : Rn n} (hx : x ∈ P.feasibleSet) : P.optimalValue ≤ P.f₀ x := by
   rw [P.optimalValue_eq_biInf]; exact iInf₂_le x hx
 
-/-- **Rockafellar, §28, line 10793**: the **optimal solutions** are the points at which the
-objective function attains its infimum.
-
-The book adds the proviso "provided that `f` is not identically `+∞`". Where that proviso fails —
-no feasible solution at all — `argmin` is all of `ℝⁿ` rather than empty; every theorem below that
-speaks of optimal solutions carries a hypothesis (a Kuhn–Tucker vector, or a finite optimal value)
-which rules the degenerate case out. -/
+/-- **§28**: the **optimal solutions** are the points at which the objective function attains its
+infimum. The book adds the proviso "provided that `f` is not identically `+∞`"; where that fails —
+no feasible solution at all — `argmin` is all of `ℝⁿ` rather than empty, and every theorem below
+that speaks of optimal solutions carries a hypothesis ruling the degenerate case out. -/
 def optimalSolutions : Set (Rn n) := argmin P.objective
 
 theorem mem_optimalSolutions_iff {x : Rn n} :
@@ -434,20 +252,18 @@ theorem mem_optimalSolutions_iff_of_ne_top (h : P.optimalValue ≠ ⊤) {x : Rn 
 
 /-! ### Kuhn–Tucker vectors -/
 
-/-- Rockafellar's `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` (§28, line 10799), the function whose infimum a
-vector of Kuhn–Tucker coefficients is required to bring down to the optimal value. -/
+/-- Rockafellar's `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` (§28), the function whose infimum a vector of
+Kuhn–Tucker coefficients is required to bring down to the optimal value. -/
 noncomputable def lagrangeFn (u : Rn m) : Rn n → EReal :=
   fun x => P.f₀ x + ∑ i, (u i : EReal) * P.f i x
 
 theorem lagrangeFn_apply (u : Rn m) (x : Rn n) :
     P.lagrangeFn u x = P.f₀ x + ∑ i, (u i : EReal) * P.f i x := rfl
 
-/-- **Rockafellar, §28, line 10799**: `(λ₁, …, λ_m)` is a vector of **Kuhn–Tucker coefficients**
-for `(P)` — a **Kuhn–Tucker vector** — when `λᵢ ≥ 0` for `i = 1, …, r` and the infimum of
-`f₀ + λ₁f₁ + ⋯ + λ_m f_m` is finite and equal to the optimal value in `(P)`.
-
-This is the book's own definition, not the perturbational inequality of §29 that it is equivalent
-to; `mem_kuhnTucker_ineqBifun_iff` below is the bridge to the backbone's `KuhnTucker`. -/
+/-- **§28**: `(λ₁, …, λ_m)` is a vector of **Kuhn–Tucker coefficients** for `(P)` — a **Kuhn–Tucker
+vector** — when `λᵢ ≥ 0` for `i = 1, …, r` and the infimum of `f₀ + λ₁f₁ + ⋯ + λ_m f_m` is finite
+and equal to the optimal value in `(P)`. This is the book's own definition, not the perturbational
+inequality of §29 it is equivalent to; `mem_kuhnTucker_ineqBifun_iff` is the bridge. -/
 structure IsKuhnTuckerVector (P : OrdinaryConvexProgram n m) (u : Rn m) : Prop where
   /-- The multipliers of the inequality constraints are non-negative. -/
   nonneg : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i
@@ -540,7 +356,7 @@ theorem mem_dom_lagrangeSummand (u : Rn m) {x : Rn n} (hx : x ∈ P.C) (i : Opti
 
 /-- A relative interior point of `C` is a relative interior point of the effective domain of every
 summand of `h` — which is the constraint qualification Theorem 23.8 asks for. This is exactly
-Rockafellar's blanket assumption (b), used at line 11151. -/
+Rockafellar's blanket assumption (b), used. -/
 theorem relint_mem_dom_lagrangeSummand {u : Rn m}
     (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i) {x₀ : Rn n} (hx₀ : x₀ ∈ ri P.C)
     (i : Option (Fin m)) : x₀ ∈ ri (dom (P.lagrangeSummand u i)) := by
@@ -584,7 +400,7 @@ theorem proper_lagrangeFn {u : Rn m} (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 
     (fun i _ => P.proper_lagrangeSummand hu i)
     (fun i _ => P.mem_dom_lagrangeSummand u hx₀ i)).2.1
 
-/-- **Rockafellar, Corollary 28.1.1**, first step: `h` is closed when `f₀, f₁, …, f_r` are. -/
+/-- **Corollary 28.1.1**, first step: `h` is closed when `f₀, f₁, …, f_r` are. -/
 theorem closedProperConvexFn_lagrangeFn (hcl₀ : ClosedFn P.f₀)
     (hcl : ∀ i : Fin m, (i : ℕ) < P.r → ClosedFn (P.f i)) {u : Rn m}
     (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i) : ClosedProperConvexFn (P.lagrangeFn u) := by
@@ -629,8 +445,8 @@ theorem lagrangeFn_eq_f₀ {u : Rn m} {x : Rn n} (h : ∀ i : Fin m, (u i : ERea
   rw [lagrangeFn_apply, Finset.sum_congr rfl (fun i (_ : i ∈ Finset.univ) => h i),
     Finset.sum_const_zero, add_zero]
 
-/-- **Rockafellar, Theorem 28.1**, the inequality the proof rests on: on the feasible set every
-constraint term is non-positive, so `h ≤ f₀`. -/
+/-- **Theorem 28.1**, the inequality the proof rests on: on the feasible set every constraint term
+is non-positive, so `h ≤ f₀`. -/
 theorem lagrangeFn_le_f₀ {u : Rn m} (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i) {x : Rn n}
     (hx : x ∈ P.feasibleSet) : P.lagrangeFn u x ≤ P.f₀ x := by
   have hsum : (∑ i, (u i : EReal) * P.f i x) ≤ 0 := by
@@ -665,16 +481,15 @@ variable (P : OrdinaryConvexProgram n m)
 
 /-! ### Theorem 28.1: solving `(P)` by minimising `h` -/
 
-/-- **Rockafellar, Theorem 28.1** (line 10809). Let `(λ₁, …, λ_m)` be a Kuhn–Tucker vector for
-`(P)` and let `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m`. Let `D` be the set of points where `h` attains its
-infimum over `ℝⁿ`, let `I` be the set of indices `i` with `1 ≤ i ≤ r` and `λᵢ = 0`, and let `J` be
-the complement of `I` in `{1, …, m}`. Let `D₀` be the set of `x̄ ∈ D` with `fᵢ(x̄) = 0` for `i ∈ J`
-and `fᵢ(x̄) ≤ 0` for `i ∈ I`. **Then `D₀` is the set of all optimal solutions to `(P)`.**
+/-- **Theorem 28.1**. Let `(λ₁, …, λ_m)` be a Kuhn–Tucker vector for `(P)`, let `D` be the set of
+minimisers of `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` over `ℝⁿ`, let `I` be the set of `i ≤ r` with `λᵢ = 0`
+and `J` its complement in `{1, …, m}`. Then the optimal solutions of `(P)` are exactly the `x̄ ∈ D`
+with `fᵢ(x̄) = 0` for `i ∈ J` and `fᵢ(x̄) ≤ 0` for `i ∈ I`.
 
-Rockafellar's own summary of the proof — "`h ≤ f` everywhere, with equality if and only if `x` is
-a feasible solution such that `λᵢfᵢ(x) = 0`" — is very slightly too strong: at a point outside `C`
-both functions are `+∞`, so equality holds there too although the point is infeasible. Nothing is
-lost, because `inf h` is finite, so no such point can be in either minimum set. -/
+Rockafellar's summary "`h ≤ f` everywhere, with equality if and only if `x` is a feasible solution
+such that `λᵢfᵢ(x) = 0`" is very slightly too strong: outside `C` both functions are `+∞`, so
+equality holds there too although the point is infeasible. Nothing is lost, because `inf h` is
+finite and so no such point lies in either minimum set. -/
 theorem theorem_28_1 {u : Rn m} (hu : P.IsKuhnTuckerVector u) :
     {x : Rn n | x ∈ argmin (P.lagrangeFn u) ∧
         (∀ i : Fin m, ((i : ℕ) < P.r ∧ u i = 0) → P.f i x ≤ 0) ∧
@@ -741,13 +556,10 @@ theorem theorem_28_1 {u : Rn m} (hu : P.IsKuhnTuckerVector u) :
       exact_mod_cast (mul_eq_zero.1 this).resolve_left h0
     · exact hfeas.2.2 i h
 
-/-- **Rockafellar, Corollary 28.1.1** (line 10849). If the functions `fᵢ` are all closed and the
-infimum of `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` is attained at a unique point `w`, then `w` is the unique
-optimal solution to `(P)`.
-
-Uniqueness is Theorem 28.1; the content is *existence*. Rockafellar's argument is that `h` has no
-directions of recession, hence — since `epi f ⊆ epi h` — neither has the objective function, so
-Theorem 27.2 attains its infimum. -/
+/-- **Corollary 28.1.1**. If the `fᵢ` are all closed and the infimum of `h` is attained at a unique
+point `w`, then `w` is the unique optimal solution to `(P)`. Uniqueness is Theorem 28.1; the content
+is *existence*, which follows because `epi f ⊆ epi h` gives the objective no direction of recession
+either, so Theorem 27.2 applies. -/
 theorem corollary_28_1_1 (hcl₀ : ClosedFn P.f₀)
     (hcl : ∀ i : Fin m, (i : ℕ) < P.r → ClosedFn (P.f i)) {u : Rn m}
     (hu : P.IsKuhnTuckerVector u) {w : Rn n} (hmin : argmin (P.lagrangeFn u) = {w}) :
@@ -800,9 +612,7 @@ namespace OrdinaryConvexProgram
 /-- The **bifunction of an ordinary convex program**, which is what makes `(P)` a *generalized*
 convex program in the sense of §29: `F u x` is `f₀ x` when `x` satisfies the constraints of the
 perturbed program `(P_u)` — `fᵢ x ≤ vᵢ` for `i ≤ r` and `fᵢ x = vᵢ` for `i > r` — and `+∞`
-otherwise (Rockafellar, line 10861).
-
-The constraint `x ∈ C` is not imposed: `f₀` is already `+∞` off `C`. -/
+otherwise. The constraint `x ∈ C` is not imposed: `f₀` is already `+∞` off `C`. -/
 noncomputable def ineqBifun : Bifun (Rn m) (Rn n) := fun u =>
   Tdaf.ConvexAnalysis.restrict
     {y | (∀ i : Fin m, (i : ℕ) < P.r → P.f i y ≤ (u i : EReal)) ∧
@@ -838,13 +648,13 @@ theorem ineqBifun_eq_top_of_notMem_C {x : Rn n} (hx : x ∉ P.C) (u : Rn m) :
     · have := hc.1 i hi; rwa [hz i] at this
     · have := hc.2 i hi; rwa [hz i] at this
 
-/-- **Rockafellar, §28, line 10861**: the **perturbation function** `p` of `(P)`. `p u` is the
-optimal value of the perturbed program `(P_u)`, and `p 0` is the optimal value of `(P)`. -/
+/-- **§28**: the **perturbation function** `p` of `(P)`. `p u` is the optimal value of the perturbed
+program `(P_u)`, and `p 0` is the optimal value of `(P)`. -/
 noncomputable def perturbFn : Rn m → EReal := infBifun P.ineqBifun
 
 theorem perturbFn_apply (u : Rn m) : P.perturbFn u = ⨅ x, P.ineqBifun u x := rfl
 
-/-- **Rockafellar, §28, line 10861**: "of course, `p(0)` is the optimal value in `(P)`". -/
+/-- **§28**: "of course, `p(0)` is the optimal value in `(P)`". -/
 @[simp] theorem perturbFn_zero : P.perturbFn 0 = P.optimalValue := by
   rw [perturbFn_apply, P.ineqBifun_zero]; rfl
 
@@ -854,8 +664,8 @@ end OrdinaryConvexProgram
 
 namespace OrdinaryConvexProgram
 
-/-- The optimal value read as an infimum over `C₁ ∩ ⋯ ∩ C_m` rather than over `C₀`: `f₀` is `+∞`
-off `C`, so the two infima agree. This is the form the backbone's `optimalValue` takes. -/
+/-- The optimal value read as an infimum over `C₁ ∩ ⋯ ∩ C_m` rather than over `C₀`: `f₀` is `+∞` off
+`C`, so the two infima agree. This is the form the backbone's `optimalValue` takes. -/
 theorem optimalValue_eq_biInf_constraintSet :
     P.optimalValue = ⨅ x ∈ P.constraintSet, P.f₀ x := by
   have h : P.optimalValue = ⨅ x, P.objective x := rfl
@@ -864,23 +674,15 @@ theorem optimalValue_eq_biInf_constraintSet :
 
 end OrdinaryConvexProgram
 
-/-- **Rockafellar, Theorem 28.2** (line 10915). Let `I` be a set of indices containing every `i`
-at which `fᵢ` fails to be affine — so `I` contains no equality constraint. Assume that the optimal
-value in `(P)` is not `-∞`, and that `(P)` has at least one feasible solution in `ri C` which
-satisfies with strict inequality all the inequality constraints for `i ∈ I`. Then a Kuhn–Tucker
-vector (not necessarily unique) exists for `(P)`.
+/-- **Theorem 28.2**. Let `I` be a set of indices containing every `i` at which `fᵢ` fails to be
+affine — so `I` contains no equality constraint. If the optimal value in `(P)` is not `-∞` and
+`(P)` has a feasible solution in `ri C` satisfying with strict inequality all the inequality
+constraints for `i ∈ I`, then `(P)` has a Kuhn–Tucker vector.
 
-Specialises `exists_isKuhnTuckerVector_of_slater`, the backbone's form of the theorem. There the
-constraints are separated by *role* — one family strict and convex, one affine and weak — while
-`(P)` carries the book's single family `f₁, …, f_m` split at `r`. The translation between the two
-is the whole of the proof: an affine constraint of `(P)` with `i ∉ I` becomes one weak inequality,
-an equality constraint becomes two, and the multiplier of an equality constraint is recovered as
-the difference `μ' - μ''` of the two — Rockafellar's own reduction.
-
-Rockafellar's own note in the preface (line 277) offers Corollary 28.2.1 as a replacement "which
-has a much easier proof". It is a special case, not a substitute: it needs `r = m`, so it says
-nothing about equality constraints, and its Slater point must satisfy *every* constraint
-strictly. -/
+`I` is taken as a `Finset (Fin m)` with the book's condition split into its two halves. The proof
+translates the book's single family split at `r` into the backbone's role-split families of
+`exists_isKuhnTuckerVector_of_slater`: an equality constraint becomes two weak inequalities, and
+its multiplier is recovered as their difference — Rockafellar's own reduction. -/
 theorem theorem_28_2 {I : Finset (Fin m)}
     (hIr : ∀ i : Fin m, P.r ≤ (i : ℕ) → i ∉ I)
     (hIaff : ∀ i : Fin m, (i : ℕ) < P.r → i ∉ I →
@@ -1040,14 +842,10 @@ theorem theorem_28_2 {I : Finset (Fin m)}
   exact ⟨WithLp.toLp 2 uv, hnn, by rw [hlag]; exact hkt.ne_bot, by rw [hlag]; exact hkt.ne_top,
     by rw [hlag, hkt.iInf_eq, hoval]⟩
 
-/-- **Rockafellar, Corollary 28.2.1** (line 10961). For a program with only inequality
-constraints, the Slater point need not lie in `ri C`: it is enough that some `x ∈ C` satisfies
-`f₁(x) < 0, …, f_m(x) < 0`.
-
-Specialises `exists_isKuhnTuckerVector_of_mem_dom`, which prolongs the point towards `ri C` along
-a segment (Theorems 6.1 and 7.5). Rockafellar notes at line 10977 that this corollary also has a
-direct proof through Theorem 21.1 alone, using no polyhedral convexity; the backbone's route is
-the first one. -/
+/-- **Corollary 28.2.1**. For a program with only inequality constraints the Slater point need not
+lie in `ri C`: some `x ∈ C` with `f₁(x) < 0, …, f_m(x) < 0` is enough. It is a special case of
+Theorem 28.2 and not a substitute for it, since it needs `r = m` and a point satisfying *every*
+constraint strictly. -/
 theorem corollary_28_2_1 (hrm : P.r = m) (hbot : P.optimalValue ≠ ⊥)
     (hslater : ∃ x ∈ P.C, ∀ i : Fin m, P.f i x < 0) :
     ∃ u : Rn m, P.IsKuhnTuckerVector u := by
@@ -1084,12 +882,9 @@ noncomputable def linConstraint (v : Rn n) (α : ℝ) : Rn n →ᵃ[ℝ] ℝ :=
     linConstraint v α x = pairing n x v - α := by
   simp [linConstraint]
 
-/-- **Rockafellar, Corollary 28.2.2** (line 10981), stated in the book with **no proof**. A
-program whose constraints are all *linear*, `fᵢ(x) = ⟨aᵢ, x⟩ - αᵢ`, needs nothing beyond a feasible
-solution in `ri C`.
-
-It is Theorem 28.2 at `I = ∅`: with no non-affine constraint there is nothing to satisfy
-strictly. -/
+/-- **Corollary 28.2.2**, stated in the book with **no proof**. A program whose constraints are all
+*linear*, `fᵢ(x) = ⟨aᵢ, x⟩ - αᵢ`, needs nothing beyond a feasible solution in `ri C`. It is Theorem
+28.2 at `I = ∅`: with no non-affine constraint there is nothing to satisfy strictly. -/
 theorem corollary_28_2_2
     (hlin : ∀ i : Fin m, ∃ (v : Rn n) (α : ℝ), ∀ x, P.f i x = ((pairing n x v - α : ℝ) : EReal))
     (hbot : P.optimalValue ≠ ⊥) (hfeas : ∃ x ∈ ri P.C, x ∈ P.constraintSet) :
@@ -1104,9 +899,9 @@ theorem corollary_28_2_2
 
 namespace OrdinaryConvexProgram
 
-/-- **Rockafellar, §28, line 11031**: the cone
-`E_r = {u* = (v₁*, …, v_m*) ∈ ℝᵐ | vᵢ* ≥ 0, i = 1, …, r}` of admissible Lagrange multiplier
-vectors. `vᵢ*` is the **Lagrange multiplier** associated with the `i`-th constraint of `(P)`. -/
+/-- **§28**: the cone `E_r = {u* = (v₁*, …, v_m*) ∈ ℝᵐ | vᵢ* ≥ 0, i = 1, …, r}` of admissible
+Lagrange multiplier vectors. `vᵢ*` is the **Lagrange multiplier** associated with the `i`-th
+constraint of `(P)`. -/
 def multiplierCone : Set (Rn m) := {u | ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤ u i}
 
 @[simp] theorem mem_multiplierCone {u : Rn m} :
@@ -1114,7 +909,7 @@ def multiplierCone : Set (Rn m) := {u | ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤
 
 theorem zero_mem_multiplierCone : (0 : Rn m) ∈ P.multiplierCone := by intro i _; simp
 
-/-- `eᵢ`, the `i`-th row of the `m × m` identity matrix (Rockafellar, §28, line 11055). -/
+/-- `eᵢ`, the `i`-th row of the `m × m` identity matrix (§28). -/
 noncomputable def unitVec (m : ℕ) (i : Fin m) : Rn m := EuclideanSpace.single i (1 : ℝ)
 
 @[simp] theorem unitVec_apply (m : ℕ) (i j : Fin m) :
@@ -1155,8 +950,8 @@ theorem lagrangeFn_unitVec (i : Fin m) (x : Rn n) :
   have h1 : ((unitVec m i i : ℝ) : EReal) = 1 := by rw [unitVec_apply]; simp
   rw [h1, one_mul]
 
-/-- **Rockafellar, §28, line 11025**: the **Lagrangian** `L` of `(P)`, a function on `ℝᵐ × ℝⁿ`:
-`h(x)` when `u* ∈ E_r` and `x ∈ C`, `-∞` when `u* ∉ E_r` and `x ∈ C`, `+∞` when `x ∉ C`. -/
+/-- **§28**: the **Lagrangian** `L` of `(P)`, a function on `ℝᵐ × ℝⁿ`: `h(x)` when `u* ∈ E_r` and
+`x ∈ C`, `-∞` when `u* ∉ E_r` and `x ∈ C`, `+∞` when `x ∉ C`. -/
 noncomputable def programLagrangian (u : Rn m) (x : Rn n) : EReal :=
   ⨅ _ : x ∈ P.C, ⨆ _ : u ∈ P.multiplierCone, P.lagrangeFn u x
 
@@ -1172,17 +967,16 @@ theorem programLagrangian_eq_top {x : Rn n} (hx : x ∉ P.C) (u : Rn m) :
     P.programLagrangian u x = ⊤ := by
   rw [programLagrangian, iInf_neg hx]
 
-/-- The Lagrangian read as a saddle-function on `ℝᵐ × ℝⁿ`, which is the shape §36's minimax
-theory and the backbone's `IsSaddlePoint`, `maximin` and `minimax` are stated in. -/
+/-- The Lagrangian read as a saddle-function on `ℝᵐ × ℝⁿ`, which is the shape §36's minimax theory
+and the backbone's `IsSaddlePoint`, `maximin` and `minimax` are stated in. -/
 noncomputable def saddleFn : Rn m × Rn n → EReal := fun q => P.programLagrangian q.1 q.2
 
 theorem saddleFn_apply (q : Rn m × Rn n) : P.saddleFn q = P.programLagrangian q.1 q.2 := rfl
 
 /-! #### The program is recovered from its Lagrangian
 
-Rockafellar, §28, lines 11047–11057: "`L` reflects all the structure of `(P)`, because the
-`(m + 3)`-tuple `(C, f₀, …, f_m, r)` can be recovered completely from `L`." That claim is stated
-here as three theorems and one consequence, not as a definition. -/
+"`L` reflects all the structure of `(P)`, because the `(m + 3)`-tuple `(C, f₀, …, f_m, r)` can be
+recovered completely from `L`" — stated here as three theorems and one consequence. -/
 
 /-- `C` is where `L` is not `+∞`. -/
 theorem mem_C_iff_programLagrangian_ne_top {x : Rn n} :
@@ -1207,7 +1001,7 @@ theorem mem_multiplierCone_iff_programLagrangian_ne_bot {u : Rn m} {x : Rn n} (h
     by_contra hu
     exact hne (P.programLagrangian_eq_bot hx hu)
 
-/-- **Rockafellar, §28, line 11049**: "the set of points where `L` is finite is `E_r × C`". -/
+/-- **§28**: "the set of points where `L` is finite is `E_r × C`". -/
 theorem setOf_programLagrangian_finite :
     {q : Rn m × Rn n | P.programLagrangian q.1 q.2 ≠ ⊥ ∧ P.programLagrangian q.1 q.2 ≠ ⊤}
       = P.multiplierCone ×ˢ P.C := by
@@ -1224,11 +1018,11 @@ theorem setOf_programLagrangian_finite :
     rw [P.programLagrangian_eq_lagrangeFn hC hu, hc]
     exact ⟨_root_.EReal.coe_ne_bot c, _root_.EReal.coe_ne_top c⟩
 
-/-- **Rockafellar, §28, line 11053**: `f₀(x) = L(0, x)` for `x ∈ C`. -/
+/-- **§28**: `f₀(x) = L(0, x)` for `x ∈ C`. -/
 theorem f₀_eq_programLagrangian {x : Rn n} (hx : x ∈ P.C) : P.f₀ x = P.programLagrangian 0 x := by
   rw [P.programLagrangian_eq_lagrangeFn hx P.zero_mem_multiplierCone, P.lagrangeFn_zero]
 
-/-- **Rockafellar, §28, line 11055**: `fᵢ(x) = L(eᵢ, x) - L(0, x)` for `x ∈ C`. -/
+/-- **§28**: `fᵢ(x) = L(eᵢ, x) - L(0, x)` for `x ∈ C`. -/
 theorem f_eq_programLagrangian_sub {x : Rn n} (hx : x ∈ P.C) (i : Fin m) :
     P.f i x = P.programLagrangian (unitVec m i) x - P.programLagrangian 0 x := by
   obtain ⟨c₀, h₀⟩ := P.exists_coe_f₀ hx
@@ -1263,10 +1057,10 @@ theorem r_eq_of_multiplierCone_eq {P₁ P₂ : OrdinaryConvexProgram n m}
   le_antisymm (r_le_of_multiplierCone_subset h.symm.subset)
     (r_le_of_multiplierCone_subset h.subset)
 
-/-- **Rockafellar, §28, line 11057**: "There is thus a one-to-one correspondence between ordinary
-convex programs and their Lagrangians." Two ordinary convex programs with the same Lagrangian
-have the same `C`, the same `r`, and the same `f₀, f₁, …, f_m` **on `C`** — which is all the data
-the tuple carries, the values of `fᵢ` off `C` being irrelevant to `(P)`. -/
+/-- **§28**: "There is thus a one-to-one correspondence between ordinary convex programs and their
+Lagrangians." Two ordinary convex programs with the same Lagrangian have the same `C`, the same `r`,
+and the same `f₀, f₁, …, f_m` **on `C`** — which is all the data the tuple carries, the values of
+`fᵢ` off `C` being irrelevant to `(P)`. -/
 theorem eq_of_programLagrangian_eq {P₁ P₂ : OrdinaryConvexProgram n m}
     (h : P₁.programLagrangian = P₂.programLagrangian) :
     P₁.C = P₂.C ∧ P₁.r = P₂.r ∧ (∀ x ∈ P₁.C, P₁.f₀ x = P₂.f₀ x) ∧
@@ -1289,10 +1083,9 @@ end OrdinaryConvexProgram
 
 /-! #### The Lagrangian is the §29 Lagrangian of `ineqBifun`
 
-Rockafellar, §28, line 11041: `L(u*, x) = inf {f₀(x) + v₁*v₁ + ⋯ + v_m*v_m | u ∈ U_x}`, where
-`U_x` is the set of perturbations for which `x` is feasible in `(P_u)`. That formula *is* the
-§29 definition of the Lagrangian of the bifunction of `(P)`, so the surface's `programLagrangian`
-and the backbone's `lagrangian` agree, and everything §29 proves about the latter applies. -/
+Rockafellar's `L(u*, x) = inf {f₀(x) + v₁*v₁ + ⋯ + v_m*v_m | u ∈ U_x}` *is* the §29 definition of
+the Lagrangian of the bifunction of `(P)`, so `programLagrangian` agrees with the backbone's
+`lagrangian` and everything §29 proves about the latter applies. -/
 
 namespace OrdinaryConvexProgram
 
@@ -1304,8 +1097,8 @@ private theorem pairing_unitVec {k : ℕ} (i : Fin k) (u : Rn k) :
   · rw [unitVec_apply]; simp [hj]
   · rw [unitVec_apply]; simp
 
-/-- **Rockafellar, §28, line 11025 = line 11041**: the Lagrangian of `(P)` is the §29 Lagrangian
-of the bifunction of `(P)`, taken with the Euclidean pairing on `ℝᵐ`. -/
+/-- **§28**: the Lagrangian of `(P)` is the §29 Lagrangian of the bifunction of `(P)`, taken with
+the Euclidean pairing on `ℝᵐ`. -/
 theorem lagrangian_ineqBifun :
     Tdaf.ConvexAnalysis.lagrangian (pairing m) P.ineqBifun = P.programLagrangian := by
   funext u x
@@ -1405,8 +1198,8 @@ theorem saddleLagrangian_ineqBifun :
   rw [saddleLagrangian_apply, show Tdaf.ConvexAnalysis.lagrangian (pairing m) P.ineqBifun q.1 q.2
     = P.programLagrangian q.1 q.2 from by rw [P.lagrangian_ineqBifun]]
 
-/-- **Rockafellar, §28, line 11045**: "`L` is concave in `u*` for each `x`". Free from §29: the
-Lagrangian of a bifunction is a concave conjugate in the price variable. -/
+/-- **§28**: "`L` is concave in `u*` for each `x`". Free from §29: the Lagrangian of a bifunction is
+a concave conjugate in the price variable. -/
 theorem concaveFn_programLagrangian (x : Rn n) :
     ConcaveFn fun u : Rn m => P.programLagrangian u x := by
   rw [show (fun u : Rn m => P.programLagrangian u x)
@@ -1430,8 +1223,8 @@ theorem mem_activeIndices {m : ℕ} {u : Rn m} {i : Fin m} :
 
 namespace OrdinaryConvexProgram
 
-/-- **Rockafellar, §28, line 11085**: `sup_{u*} L(u*, x) = f₀(x) + δ(x | C₀)`, the objective
-function of `(P)`, whatever `x` is. -/
+/-- **§28**: `sup_{u*} L(u*, x) = f₀(x) + δ(x | C₀)`, the objective function of `(P)`, whatever `x`
+is. -/
 theorem iSup_programLagrangian (x : Rn n) :
     (⨆ u : Rn m, P.programLagrangian u x) = P.objective x := by
   by_cases hC : x ∈ P.C
@@ -1514,8 +1307,7 @@ theorem iSup_programLagrangian (x : Rn n) :
     refine le_antisymm le_top (le_trans (le_of_eq (P.programLagrangian_eq_top hC 0).symm)
       (le_iSup (fun u => P.programLagrangian u x) (0 : Rn m)))
 
-/-- **Rockafellar, §28, line 11095**, the case `ū* ∈ E_r`: the infimum of `L(ū*, ·)` is the
-infimum of `h`. -/
+/-- **§28**, the case `ū* ∈ E_r`: the infimum of `L(ū*, ·)` is the infimum of `h`. -/
 theorem iInf_programLagrangian_of_mem {u : Rn m} (hu : u ∈ P.multiplierCone) :
     (⨅ x, P.programLagrangian u x) = ⨅ x, P.lagrangeFn u x := by
   refine iInf_congr fun x => ?_
@@ -1523,7 +1315,7 @@ theorem iInf_programLagrangian_of_mem {u : Rn m} (hu : u ∈ P.multiplierCone) :
   · exact P.programLagrangian_eq_lagrangeFn hC hu
   · rw [P.programLagrangian_eq_top hC u, P.lagrangeFn_eq_top_of_notMem_C hu hC]
 
-/-- **Rockafellar, §28, line 11095**, the case `ū* ∉ E_r`: the infimum of `L(ū*, ·)` is `-∞`. -/
+/-- **§28**, the case `ū* ∉ E_r`: the infimum of `L(ū*, ·)` is `-∞`. -/
 theorem iInf_programLagrangian_of_notMem {u : Rn m} (hu : u ∉ P.multiplierCone) :
     (⨅ x, P.programLagrangian u x) = ⊥ := by
   obtain ⟨x₀, hx₀⟩ := P.nonempty_C
@@ -1538,8 +1330,8 @@ theorem iInf_lagrangeFn_ne_top (u : Rn m) : (⨅ z, P.lagrangeFn u z) ≠ ⊤ :=
   rw [hcc]
   exact _root_.EReal.coe_lt_top c
 
-/-- **Rockafellar, §28, line 11113**, condition (d): `(ū*, x̄)` is a saddle-point of `L` exactly
-when `ū* ∈ E_r`, `x̄` is a feasible solution, and `inf h = f₀(x̄)`. -/
+/-- **§28**, condition (d): `(ū*, x̄)` is a saddle-point of `L` exactly when `ū* ∈ E_r`, `x̄` is a
+feasible solution, and `inf h = f₀(x̄)`. -/
 theorem isSaddlePoint_programLagrangian_iff {u : Rn m} {x : Rn n} :
     IsSaddlePoint P.saddleFn (u, x) ↔
       u ∈ P.multiplierCone ∧ x ∈ P.feasibleSet ∧ (⨅ z, P.lagrangeFn u z) = P.f₀ x := by
@@ -1561,9 +1353,9 @@ theorem isSaddlePoint_programLagrangian_iff {u : Rn m} {x : Rn n} :
     change (⨆ u' : Rn m, P.programLagrangian u' x) = ⨅ z, P.programLagrangian u z
     rw [hsup, P.iInf_programLagrangian_of_mem hu, heq, P.objective_of_mem hF]
 
-/-- **Rockafellar, Theorem 28.3** (line 11065). In order that `ū*` be a Kuhn–Tucker vector for
-`(P)` and `x̄` be an optimal solution to `(P)`, it is necessary and sufficient that `(ū*, x̄)` be a
-saddle-point of the Lagrangian `L` of `(P)`. -/
+/-- **Theorem 28.3**. In order that `ū*` be a Kuhn–Tucker vector for `(P)` and `x̄` be an optimal
+solution to `(P)`, it is necessary and sufficient that `(ū*, x̄)` be a saddle-point of the
+Lagrangian `L` of `(P)`. -/
 theorem theorem_28_3 {u : Rn m} {x : Rn n} :
     (P.IsKuhnTuckerVector u ∧ x ∈ P.optimalSolutions) ↔
       IsSaddlePoint P.saddleFn (u, x) := by
@@ -1587,9 +1379,8 @@ theorem theorem_28_3 {u : Rn m} {x : Rn n} :
 
 /-! #### The Kuhn–Tucker conditions (a), (b), (c) -/
 
-/-- **Rockafellar, §28, line 11169**, the subgradient of `h` decomposed by Theorem 23.8. The
-multiplier terms with `λᵢ = 0` contribute `{0}` and are omitted, exactly as the book's
-parenthesis in condition (c) says. -/
+/-- **§28**, the subgradient of `h` decomposed by Theorem 23.8. The multiplier terms with `λᵢ = 0`
+contribute `{0}` and are omitted, exactly as the book's parenthesis in condition (c) says. -/
 theorem subgradient_lagrangeFn {u : Rn m} (hu : u ∈ P.multiplierCone) (x : Rn n) :
     subgradient (pairing n) (P.lagrangeFn u) x
       = subgradient (pairing n) P.f₀ x
@@ -1629,7 +1420,7 @@ theorem subgradient_lagrangeFn {u : Rn m} (hu : u ∈ P.multiplierCone) (x : Rn 
   · simp only [lagrangeSummand_some]
     exact subgradient_coe_mul hpos (P.f j) x
 
-/-- **Rockafellar, Theorem 28.3**, second half (line 11067): the saddle-point condition holds if
+/-- **Theorem 28.3**, second half: the saddle-point condition holds if
 and only if `x̄` and the multipliers `λᵢ` satisfy the **Kuhn–Tucker conditions**
 
 * (a) `λᵢ ≥ 0`, `fᵢ(x̄) ≤ 0` and `λᵢfᵢ(x̄) = 0` for `i = 1, …, r`;
@@ -1694,15 +1485,10 @@ theorem theorem_28_3_kuhnTucker {u : Rn m} {x : Rn n} :
       exact hcond
     exact ⟨hu, hF, by rw [← hhx]; exact iInf_eq_of_mem_argmin hmin⟩
 
-/-- **Rockafellar, Corollary 28.3.1** (the Kuhn–Tucker Theorem, line 11175). For a program with
-at least one Kuhn–Tucker vector — for instance one satisfying the hypothesis of Theorem 28.2 —
-`x̄` is an optimal solution if and only if some `ū*` makes `(ū*, x̄)` a saddle-point of `L`,
-equivalently if and only if some multipliers satisfy the Kuhn–Tucker conditions with `x̄`.
-
-**No proof is printed in the book**; the one here is the two directions of Theorem 28.3, the
-forward one using the assumed Kuhn–Tucker vector. The book states the hypothesis as "satisfying
-the hypothesis of Theorem 28.2"; what the proof uses is only its conclusion, so that is the
-hypothesis carried here. -/
+/-- **Corollary 28.3.1**, the Kuhn–Tucker Theorem. For a program with at least one Kuhn–Tucker
+vector, `x̄` is an optimal solution if and only if some `ū*` makes `(ū*, x̄)` a saddle-point of `L`.
+**No proof is printed in the book.** The book's hypothesis is "satisfying the hypothesis of Theorem
+28.2"; only its *conclusion* is used, so that is the hypothesis carried here. -/
 theorem corollary_28_3_1 (hkt : ∃ u : Rn m, P.IsKuhnTuckerVector u) {x : Rn n} :
     x ∈ P.optimalSolutions ↔
       ∃ u : Rn m, IsSaddlePoint P.saddleFn (u, x) := by
@@ -1713,8 +1499,8 @@ theorem corollary_28_3_1 (hkt : ∃ u : Rn m, P.IsKuhnTuckerVector u) {x : Rn n}
   · rintro ⟨u, hs⟩
     exact ((P.theorem_28_3).2 hs).2
 
-/-- **Rockafellar, Corollary 28.3.1**, second form: optimality is equivalent to the existence of
-Lagrange multiplier values satisfying the Kuhn–Tucker conditions. -/
+/-- **Corollary 28.3.1**, second form: optimality is equivalent to the existence of Lagrange
+multiplier values satisfying the Kuhn–Tucker conditions. -/
 theorem corollary_28_3_1_kuhnTucker (hkt : ∃ u : Rn m, P.IsKuhnTuckerVector u) {x : Rn n} :
     x ∈ P.optimalSolutions ↔
       ∃ u : Rn m,
@@ -1735,13 +1521,13 @@ end OrdinaryConvexProgram
 
 namespace OrdinaryConvexProgram
 
-/-- **Rockafellar, §28, line 11255**: `g(u*) = inf_x L(u*, x)`, the concave function whose
-maximisation over `ℝᵐ` is dual to `(P)`. -/
+/-- **§28**: `g(u*) = inf_x L(u*, x)`, the concave function whose maximisation over `ℝᵐ` is dual to
+`(P)`. -/
 noncomputable def dualFn : Rn m → EReal := fun u => ⨅ x, P.programLagrangian u x
 
 theorem dualFn_apply (u : Rn m) : P.dualFn u = ⨅ x, P.programLagrangian u x := rfl
 
-/-- **Rockafellar, §28, line 11233**: `inf_x sup_{u*} L(u*, x)` is the optimal value in `(P)`. -/
+/-- **§28**: `inf_x sup_{u*} L(u*, x)` is the optimal value in `(P)`. -/
 theorem minimax_saddleFn : minimax P.saddleFn = P.optimalValue := by
   rw [minimax_apply]
   refine iInf_congr fun x => ?_
@@ -1753,17 +1539,17 @@ theorem maximin_saddleFn_eq_iSup_dualFn : maximin P.saddleFn = ⨆ u, P.dualFn u
 theorem maximin_saddleFn_le : maximin P.saddleFn ≤ P.optimalValue :=
   le_of_le_of_eq (maximin_le_minimax P.saddleFn) P.minimax_saddleFn
 
-/-- **Rockafellar, Theorem 28.4**, first sentence (line 11229): at a Kuhn–Tucker vector and an
-optimal solution the saddle-value `L(ū*, x̄)` is the optimal value in `(P)`. -/
+/-- **Theorem 28.4**, first sentence: at a Kuhn–Tucker vector and an optimal solution the
+saddle-value `L(ū*, x̄)` is the optimal value in `(P)`. -/
 theorem theorem_28_4_saddleValue {u : Rn m} {x : Rn n} (hu : P.IsKuhnTuckerVector u)
     (hx : x ∈ P.optimalSolutions) : P.programLagrangian u x = P.optimalValue := by
   have hs := (P.theorem_28_3).1 ⟨hu, hx⟩
   have h1 : (⨅ x' : Rn n, P.programLagrangian u x') = P.programLagrangian u x := hs.iInf_eq
   rw [← h1, P.iInf_programLagrangian_of_mem hu.nonneg, hu.iInf_eq]
 
-/-- **Rockafellar, Theorem 28.4** (line 11229). `ū*` is a Kuhn–Tucker vector for `(P)` if and only
-if `-∞ < inf_x L(ū*, x) = sup_{u*} inf_x L(u*, x) = inf_x sup_{u*} L(u*, x)`, and the common
-extremum value is then the optimal value in `(P)`. -/
+/-- **Theorem 28.4**. `ū*` is a Kuhn–Tucker vector for `(P)` if and only if
+`-∞ < inf_x L(ū*, x) = sup_{u*} inf_x L(u*, x) = inf_x sup_{u*} L(u*, x)`, and the common extremum
+value is then the optimal value in `(P)`. -/
 theorem theorem_28_4 {u : Rn m} :
     P.IsKuhnTuckerVector u ↔
       (⊥ < ⨅ x, P.programLagrangian u x) ∧
@@ -1798,8 +1584,8 @@ theorem theorem_28_4_value {u : Rn m} (hu : P.IsKuhnTuckerVector u) :
     rw [P.iInf_programLagrangian_of_mem hu.nonneg, hu.iInf_eq]
   exact ⟨by rw [← h1, hi], P.minimax_saddleFn⟩
 
-/-- `g` is the concave conjugate of `-p`, which is Rockafellar's remark at line 11307 in the form
-the backbone states it. -/
+/-- `g` is the concave conjugate of `-p`, which is Rockafellar's remark in the form the backbone
+states it. -/
 theorem dualFn_eq_concaveConj :
     P.dualFn = concaveConj (pairing m) fun w => -(P.perturbFn w) := by
   funext u
@@ -1811,28 +1597,23 @@ theorem dualFn_eq_concaveConj :
   rw [sub_eq_add_neg, neg_neg]
   rfl
 
-/-- **Rockafellar, §28, line 11279**: "The concavity of `g` … is immediate." Here it is immediate
-from §29 instead: `g` is a concave conjugate. -/
+/-- **§28**: "The concavity of `g` … is immediate." Here it is immediate from §29 instead: `g` is a
+concave conjugate. -/
 theorem concaveFn_dualFn : ConcaveFn P.dualFn := by
   rw [P.dualFn_eq_concaveConj]
   exact concaveFn_concaveConj (pairing m) _
 
-/-- **Rockafellar, §28, line 11303**: `g(u*) = -p*(-u*)`, where `p` is the perturbation function
-of `(P)`. -/
+/-- **§28**: `g(u*) = -p*(-u*)`, where `p` is the perturbation function of `(P)`. -/
 theorem dualFn_eq_neg_conj_perturbFn (u : Rn m) :
     P.dualFn u = -(conj (pairing m) P.perturbFn (-u)) := by
   rw [P.dualFn_eq_concaveConj, concaveConj_eq_neg_conj_neg]
   simp only [neg_neg]
 
-/-- **Rockafellar, Corollary 28.4.1** (line 11281). For a program with at least one Kuhn–Tucker
-vector, the Kuhn–Tucker vectors are precisely the points where the concave function
-`g(u*) = inf_x L(u*, x)` attains its supremum over `ℝᵐ`.
-
-**No proof is printed in the book.** The one here reads Theorem 28.4 off `g`: weak duality gives
-`g ≤ α` everywhere, the assumed Kuhn–Tucker vector gives a point where `g = α`, and `g(ū*) = α`
-with `α` finite is exactly the definition of a Kuhn–Tucker vector. The book states the hypothesis
-as "having at least one Kuhn–Tucker vector, e.g. … satisfying the hypothesis of Theorem 28.2";
-the first form is the one carried here. -/
+/-- **Corollary 28.4.1**. For a program with at least one Kuhn–Tucker vector, the Kuhn–Tucker
+vectors are precisely the points where the concave function `g(u*) = inf_x L(u*, x)` attains its
+supremum over `ℝᵐ`. **No proof is printed in the book**: weak duality gives `g ≤ α` everywhere, the
+assumed Kuhn–Tucker vector gives a point where `g = α`, and `g(ū*) = α` with `α` finite is the
+definition of a Kuhn–Tucker vector. -/
 theorem corollary_28_4_1 (hkt : ∃ u : Rn m, P.IsKuhnTuckerVector u) {u : Rn m} :
     P.IsKuhnTuckerVector u ↔ u ∈ argmax P.dualFn := by
   have hweak : ∀ v : Rn m, P.dualFn v ≤ P.optimalValue := by
@@ -1868,30 +1649,16 @@ end OrdinaryConvexProgram
 
 /-! ### The decomposition principle
 
-**Rockafellar, §28, lines 11309–11385.** Suppose the coordinates of `ℝⁿ` split as
-`x = (x₁, …, x_s)` with `x_k ∈ ℝ^{n_k}` and `n₁ + ⋯ + n_s = n`, and suppose every `fᵢ` is
-separable in that splitting, `fᵢ(x) = fᵢ₁(x₁) + ⋯ + f_{is}(x_s)`. Once a Kuhn–Tucker vector `u`
-has reduced `(P)` to minimising `h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` over `C` (Theorem 28.1), `h` is
-separable too — `h(x) = h₁(x₁) + ⋯ + h_s(x_s)` with `h_k = f_{0k} + λ₁f_{1k} + ⋯ + λ_m f_{mk}` —
-and the book's assertion is that the problem splits into the `s` independent problems "minimise
-`h_k` over `C^k`", where `C^k = dom h_k`.
+Suppose the coordinates of `ℝⁿ` split as `x = (x₁, …, x_s)` with `x_k ∈ ℝ^{n_k}` and every `fᵢ`
+separable in that splitting. Once a Kuhn–Tucker vector has reduced `(P)` to minimising
+`h = f₀ + λ₁f₁ + ⋯ + λ_m f_m` over `C` (Theorem 28.1), `h` is separable too, and the problem splits
+into the `s` independent problems "minimise `h_k` over `C^k`", `C^k = dom h_k`.
 
-The splitting is a hypothesis, as a linear equivalence `e` from the dependent product
-`ℝ^{n₁} × ⋯ × ℝ^{n_s}` to `ℝⁿ`. Linearity is what carries the book's `n₁ + ⋯ + n_s = n`: a
-bare bijection between these two types exists whatever the `n_k` are, and would leave the
-separability hypothesis doing all the work. Nothing else about `e` is used — no norm, no
-isometry, and no relative interior appears anywhere in the passage. Such an `e` is available from
-Mathlib whenever the dimensions add up (`LinearIsometryEquiv.piLpCurry`,
-`LinearIsometryEquiv.piLpCongrLeft`, `finSigmaFinEquiv`); the principle needs only that one
-exists, not which one.
-
-Separability of `h` is hypothesised in the form the book asserts it ("in view of the given
-expressions for `f₀, …, f_m`, however, we have …") rather than derived from separability of each
-`fᵢ`: deriving it means distributing `λᵢ · ∑ₖ fᵢₖ(xₖ)` over the sum, and `EReal` is not a
-semiring.
-
-The two statements are `Tdaf.ConvexAnalysis.dom_sepSum` and `argmin_sepSum` read through `e` by
-`argmin_comp_of_surjective`. -/
+The splitting is hypothesised as a linear equivalence `e` from `ℝ^{n₁} × ⋯ × ℝ^{n_s}` to `ℝⁿ`:
+linearity is what carries `n₁ + ⋯ + n_s = n`, since a bare bijection between these two types exists
+whatever the `n_k` are. Separability of `h` is hypothesised in the form the book asserts it rather
+than derived from separability of each `fᵢ`, because distributing `λᵢ · ∑ₖ fᵢₖ(xₖ)` over the sum
+would need `EReal` to be a semiring. -/
 
 namespace OrdinaryConvexProgram
 
@@ -1914,7 +1681,7 @@ theorem dom_lagrangeFn {u : Rn m} (hu : ∀ i : Fin m, (i : ℕ) < P.r → 0 ≤
     rw [P.lagrangeFn_eq_coe hc₀ hc]
     exact _root_.EReal.coe_lt_top _
 
-/-- **Rockafellar, §28, line 11331**: in the coordinates `x = (x₁, …, x_s)` the set `C` is the
+/-- **§28**: in the coordinates `x = (x₁, …, x_s)` the set `C` is the
 product of the sets `C^k = dom h_k`.
 
 This is `dom_sepSum` read through `e`, on the strength of `dom_lagrangeFn`. Properness of the
@@ -1928,7 +1695,7 @@ theorem decomposition_C (e : (∀ k, Rn (nk k)) ≃ₗ[ℝ] Rn n) {u : Rn m}
   rw [← P.dom_lagrangeFn hu, ← dom_sepSum hb]
   exact congrArg dom (funext hsep)
 
-/-- **Rockafellar, §28, line 11381**, the decomposition principle itself: minimising `h` over `C`
+/-- **§28**, the decomposition principle itself: minimising `h` over `C`
 is the `s` independent problems "minimise `h_k` over `C^k`".
 
 With `theorem_28_1` this is the assertion about `(P)`: the optimal solutions of `(P)` are the
@@ -1946,11 +1713,10 @@ end OrdinaryConvexProgram
 
 /-! ### Two programs with no Kuhn-Tucker vector
 
-Rockafellar gives two unnumbered counterexamples in §28, and both justify the constraint
-qualification in Theorem 28.2. The first (line 10989) has a unique optimal solution, a finite
-optimal value, and no Kuhn–Tucker vector; the second (line 11007) has only *linear* constraints,
-so it satisfies every hypothesis of Corollary 28.2.2 except the one asking for a feasible point in
-`ri C`, and it too has no Kuhn–Tucker vector. -/
+Two unnumbered counterexamples of §28, both justifying the constraint qualification in
+Theorem 28.2. The first has a unique optimal solution, a finite optimal value and no Kuhn–Tucker
+vector; the second has only *linear* constraints, so it satisfies every hypothesis of
+Corollary 28.2.2 except the feasible point in `ri C`, and it too has none. -/
 
 /-- The `j`-th coordinate of `ℝⁿ`, as an affine function. -/
 noncomputable def coordAffine (n : ℕ) (j : Fin n) : Rn n →ᵃ[ℝ] ℝ :=
@@ -1988,10 +1754,10 @@ private theorem convexOn_sqSub : ConvexOn ℝ Set.univ fun x : Rn 2 => x 0 ^ 2 -
 
 /-! #### A program with a unique optimal solution and no Kuhn–Tucker vector -/
 
-/-- The constraint `f₁(ξ₁, ξ₂) = ξ₂` of the counterexample at line 10989. -/
+/-- The constraint `f₁(ξ₁, ξ₂) = ξ₂` of the counterexample. -/
 noncomputable def ex1Constraint₁ : Rn 2 → EReal := fun x => ((x 1 : ℝ) : EReal)
 
-/-- The constraint `f₂(ξ₁, ξ₂) = ξ₁² - ξ₂` of the counterexample at line 10989. -/
+/-- The constraint `f₂(ξ₁, ξ₂) = ξ₁² - ξ₂` of the counterexample. -/
 noncomputable def ex1Constraint₂ : Rn 2 → EReal := fun x => ((x 0 ^ 2 - x 1 : ℝ) : EReal)
 
 private theorem ex1_dom_f (i : Fin 2) :
@@ -2000,12 +1766,10 @@ private theorem ex1_dom_f (i : Fin 2) :
   · exact dom_coe_eq_univ (fun x : Rn 2 => x 1)
   · exact dom_coe_eq_univ (fun x : Rn 2 => x 0 ^ 2 - x 1)
 
-/-- **Rockafellar, §28, line 10989**: the ordinary convex program with `C = ℝ²`,
-`f₀(ξ₁, ξ₂) = ξ₁`, `f₁(ξ₁, ξ₂) = ξ₂`, `f₂(ξ₁, ξ₂) = ξ₁² - ξ₂` and `r = 2`.
-
-Its only feasible solution — hence its unique optimal solution — is the origin, and its optimal
-value is `0`; but it has **no Kuhn–Tucker vector** (`ex1_not_exists_isKuhnTuckerVector`). The
-hypothesis of Theorem 28.2 fails for it: there is no point with `f₁ ≤ 0` and `f₂ < 0`. -/
+/-- **§28**, first counterexample: the program with `C = ℝ²`, `f₀(ξ₁, ξ₂) = ξ₁`, `f₁(ξ₁, ξ₂) = ξ₂`,
+`f₂(ξ₁, ξ₂) = ξ₁² - ξ₂` and `r = 2`. Its only feasible solution, hence its unique optimal solution,
+is the origin and its optimal value is `0`; but it has **no Kuhn–Tucker vector**
+(`ex1_not_exists_isKuhnTuckerVector`), because no point has `f₁ ≤ 0` and `f₂ < 0`. -/
 noncomputable def ex1 : OrdinaryConvexProgram 2 2 where
   C := Set.univ
   f₀ := fun x => ((x 0 : ℝ) : EReal)
@@ -2079,7 +1843,7 @@ theorem ex1_optimalValue : ex1.optimalValue = 0 := by
     rw [hx, ex1_f₀]
     norm_num
 
-/-- **Rockafellar, §28, line 10989**: the program has `(0, 0)` as its unique optimal solution. -/
+/-- **§28**: the program has `(0, 0)` as its unique optimal solution. -/
 theorem ex1_optimalSolutions : ex1.optimalSolutions = {0} := by
   have hne : ex1.optimalValue ≠ ⊤ := by rw [ex1_optimalValue]; exact (EReal.zero_lt_top).ne
   rw [← ex1_feasibleSet]
@@ -2098,7 +1862,7 @@ private theorem ex1_lagrangeFn (u : Rn 2) (x : Rn 2) :
   congr 1
   ring
 
-/-- **Rockafellar, §28, line 10989**: the program has **no Kuhn–Tucker vector**, although its
+/-- **§28**: the program has **no Kuhn–Tucker vector**, although its
 optimal value is finite and its optimal solution is unique.
 
 If `(λ₁, λ₂)` were one, then `ξ₁ + λ₁ξ₂ + λ₂(ξ₁² - ξ₂) ≥ 0` for every `(ξ₁, ξ₂)`. Taking
@@ -2155,8 +1919,8 @@ private theorem proper_restrict_coe {s : Set (Rn n)} (hs : s.Nonempty) (g : Rn n
     · rw [restrict_of_mem hx]; exact _root_.EReal.coe_ne_bot _
     · rw [restrict_of_notMem hx]; exact top_ne_bot
 
-/-- The set `C = {(ξ₁, ξ₂) | ξ₁² - ξ₂ ≤ 0}` of the counterexample at line 11007: a parabolic
-region whose relative interior misses the whole feasible set `{ξ₂ = 0}`. -/
+/-- The set `C = {(ξ₁, ξ₂) | ξ₁² - ξ₂ ≤ 0}` of the counterexample: a parabolic region whose relative
+interior misses the whole feasible set `{ξ₂ = 0}`. -/
 def ex2Set : Set (Rn 2) := {x | x 0 ^ 2 - x 1 ≤ 0}
 
 theorem mem_ex2Set {x : Rn 2} : x ∈ ex2Set ↔ x 0 ^ 2 - x 1 ≤ 0 := Iff.rfl
@@ -2167,15 +1931,13 @@ theorem convex_ex2Set : Convex ℝ ex2Set := by
     ext x; simp only [Set.mem_univ, true_and, mem_ex2Set, Set.mem_ofPred_eq]
   rwa [he] at h
 
-/-- **Rockafellar, §28, line 11007**: the ordinary convex program with
-`C = {(ξ₁, ξ₂) | ξ₁² - ξ₂ ≤ 0}`, `f₀(ξ₁, ξ₂) = ξ₁`, `f₁(ξ₁, ξ₂) = ξ₂` and `r = 0`.
-
-`f₀` is linear on `C` and the single constraint is the *linear equation* `ξ₂ = 0`, so every
-hypothesis of Corollary 28.2.2 holds except the relative-interior one: the feasible set is `{0}`
-and `0 ∉ ri C`. Again `(0, 0)` is the unique optimal solution and `0` is the optimal value, and
-again there is no Kuhn–Tucker vector (`ex2_not_exists_isKuhnTuckerVector`). This is the example
-that shows the relative-interior condition in Theorem 28.2 and Corollary 28.2.2 cannot be
-dropped. -/
+/-- **§28**, second counterexample: the program with `C = {(ξ₁, ξ₂) | ξ₁² - ξ₂ ≤ 0}`,
+`f₀(ξ₁, ξ₂) = ξ₁`, `f₁(ξ₁, ξ₂) = ξ₂` and `r = 0`. `f₀` is linear on `C` and the single constraint is
+the linear equation `ξ₂ = 0`, so every hypothesis of Corollary 28.2.2 holds except the
+relative-interior one: the feasible set is `{0}` and `0 ∉ ri C`. Again `(0, 0)` is the unique
+optimal solution, `0` is the optimal value, and there is **no Kuhn–Tucker vector**
+(`ex2_not_exists_isKuhnTuckerVector`). This is what shows the relative-interior condition in Theorem
+28.2 and Corollary 28.2.2 cannot be dropped. -/
 noncomputable def ex2 : OrdinaryConvexProgram 2 1 where
   C := ex2Set
   f₀ := Tdaf.ConvexAnalysis.restrict ex2Set fun x => ((x 0 : ℝ) : EReal)
@@ -2234,7 +1996,7 @@ theorem ex2_optimalValue : ex2.optimalValue = 0 := by
     rw [hx, ex2_f₀_of_mem hC]
     norm_num
 
-/-- **Rockafellar, §28, line 11007**: `(0, 0)` is again the unique optimal solution. -/
+/-- **§28**: `(0, 0)` is again the unique optimal solution. -/
 theorem ex2_optimalSolutions : ex2.optimalSolutions = {0} := by
   have hne : ex2.optimalValue ≠ ⊤ := by rw [ex2_optimalValue]; exact (EReal.zero_lt_top).ne
   have hC : (0 : Rn 2) ∈ ex2Set := by rw [mem_ex2Set]; norm_num
@@ -2251,7 +2013,7 @@ private theorem ex2_lagrangeFn_of_mem (u : Rn 1) {x : Rn 2} (hx : x ∈ ex2Set) 
   rw [OrdinaryConvexProgram.lagrangeFn_apply, Fin.sum_univ_one, ex2_f₀_of_mem hx, ex2_f,
     Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add]
 
-/-- **Rockafellar, §28, line 11007**: the program has **no Kuhn–Tucker vector**, even though its
+/-- **§28**: the program has **no Kuhn–Tucker vector**, even though its
 objective is linear on `C` and its only constraint is a linear equation.
 
 A Kuhn–Tucker vector would be a single `λ₁` with `0 ≤ ξ₁ + λ₁ξ₂` for every `(ξ₁, ξ₂) ∈ C`. The

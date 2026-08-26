@@ -14,233 +14,45 @@ import Tdaf.Surface.Rockafellar.Part4.Section19
 /-!
 # Rockafellar, §31: Fenchel's Duality Theorem
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §31, pp. 327–341 (book lines
-13137–13916): Fenchel's Duality Theorem and the version of it a linear transformation `A` allows,
-the same pair of extremum problems read as a convex program and its dual in the sense of §§29–30,
-the two dual-cone corollaries, and Moreau's decomposition theorem.
+Fenchel's Duality Theorem and the version of it that a linear transformation `A` allows, the same
+pair of extremum problems read as a convex program and its dual in the sense of §§29–30, the two
+dual-cone corollaries, and Moreau's decomposition theorem. This is where Part III's conjugacy and
+Part VI's programs meet.
 
-This is where Part III's conjugacy and Part V's programs meet. Almost every declaration below is a
-one-line specialisation of a backbone theorem from
-`Tdaf/Analysis/Convex/Optimization/{Fenchel, Moreau, MoreauGradient, Prox, ConeDuality}.lean`; the
-exceptions are the two places where the book leaves work undone, listed under **What the book
-leaves undone** below.
+All 12 numbered results of §31 are formalized: Theorems 31.1, 31.2, 31.3, 31.4 and 31.5 and
+Corollaries 31.2.1, 31.3.1, 31.4.1, 31.4.2, 31.4.3, 31.5.1 and 31.5.2, together with the polyhedral
+strengthenings of Theorem 31.1, Theorem 31.4 and Corollary 31.2.1, and the unnumbered contraction
+property of the proximation, `prox_contraction`.
 
-## Contents
+## Main definitions
 
-| label | declaration |
-|---|---|
-| Theorem 31.1 | `theorem_31_1_weak`, `theorem_31_1_a`, `theorem_31_1_a_attained`,
-  `theorem_31_1_a_isGreatest`, `theorem_31_1_b`, `theorem_31_1_b_attained`,
-  `theorem_31_1_finite` |
-| Theorem 31.1, polyhedral (13167) | `theorem_31_1_a_polyhedral_left`,
-  `theorem_31_1_a_polyhedral_left_attained`, `theorem_31_1_a_polyhedral_right`,
-  `theorem_31_1_a_polyhedral_right_attained`, `theorem_31_1_b_polyhedral_left`,
-  `theorem_31_1_b_polyhedral_right` |
-| Theorem 31.2 | `fenchelBifun`, `fenchelBifun_apply`, `theorem_31_2_convex`,
-  `theorem_31_2_proper`, `theorem_31_2_closed`, `theorem_31_2_infBifun`,
-  `theorem_31_2_domBifun`, `theorem_31_2_relint_domBifun`,
-  `theorem_31_2_stronglyConsistent_iff`, `theorem_31_2_adjoint`,
-  `theorem_31_2_supBifun_adjoint`, `theorem_31_2_domConcaveBifun_adjoint`,
-  `theorem_31_2_concaveStronglyConsistent_iff` |
-| Corollary 31.2.1 | `corollary_31_2_1_a`, `corollary_31_2_1_a_attained`, `corollary_31_2_1_b`,
-  `corollary_31_2_1_b_attained` |
-| Corollary 31.2.1, polyhedral (13379) | `corollary_31_2_1_a_polyhedral_left`,
-  `corollary_31_2_1_a_polyhedral_right` |
-| Theorem 31.3 | `theorem_31_3_weak`, `theorem_31_3`, `theorem_31_3_kuhnTucker_concave`,
-  `theorem_31_3_iInf`, `theorem_31_3_iSup`, `theorem_31_3_id` |
-| Corollary 31.3.1 | `corollary_31_3_1`, `corollary_31_3_1_id` |
-| Theorem 31.4 | `theorem_31_4_dualCone`, `theorem_31_4_weak`, `theorem_31_4_a`,
-  `theorem_31_4_a_attained`, `theorem_31_4_b`, `theorem_31_4_b_attained`,
-  `theorem_31_4_optimality`, `theorem_31_4_optimality_primal`,
-  `theorem_31_4_optimality_dual` |
-| Theorem 31.4, polyhedral (13595) | `theorem_31_4_a_polyhedral`,
-  `theorem_31_4_a_polyhedral_attained`, `theorem_31_4_b_polyhedral`,
-  `theorem_31_4_b_polyhedral_attained` |
-| Corollary 31.4.1 | `neg_polarCone_nonnegOrthant`, `corollary_31_4_1_a`,
-  `corollary_31_4_1_a_attained`, `corollary_31_4_1_b`, `corollary_31_4_1_b_attained`,
-  `corollary_31_4_1_optimality` |
-| Corollary 31.4.2 | `polarCone_coe_submodule_eq_orthogonal`, `corollary_31_4_2_a`,
-  `corollary_31_4_2_a_attained`, `corollary_31_4_2_b_attained`,
-  `corollary_31_4_2_optimality` |
-| Corollary 31.4.3 | `corollary_31_4_3`, `corollary_31_4_3_iInf_eq_coe`,
-  `corollary_31_4_3_iInf_dual_eq_coe`, `corollary_31_4_3_attained`,
-  `corollary_31_4_3_dual_attained` |
-| Theorem 31.5 | `theorem_31_5_quadFn`, `theorem_31_5`, `theorem_31_5_apply`,
-  `theorem_31_5_finite`, `theorem_31_5_finite_conj`, `theorem_31_5_existsUnique`,
-  `theorem_31_5_argmin_iff`, `theorem_31_5_argmin_eq`, `theorem_31_5_gradient`,
-  `theorem_31_5_gradient_conj` |
-| §31, the proximation (13820–13849) | `prox_eq_iff_sub_mem_subgradient`,
-  `prox_add_prox_conj_eq`, `prox_conj_eq_sub`, `prox_continuous`, `prox_contraction`,
-  `prox_lipschitzWith_one`, `range_prox` |
-| Corollary 31.5.1 | `corollary_31_5_1`, `corollary_31_5_1_apply`,
-  `corollary_31_5_1_symm_apply` |
-| Corollary 31.5.2 | `corollary_31_5_2` |
+* `ClosedProperConcaveFn g` — the concave mirror of `ClosedProperConvexFn`, the standing hypothesis
+  on `g` from Corollary 31.2.1 onwards; `closedProperConcaveFn_iff_neg` is the bridge to the
+  backbone's `ClosedProperConvexFn fun x => -(g x)`.
+* `fenchelBifun A f g` — the bifunction `(F u)(x) = f x - g (A x + u)` of Theorem 31.2: the Fenchel
+  problem perturbed by translating the concave function.
 
-## The section's definitions
+Everything else is a backbone object used without a surface copy. Rockafellar's dual cone `K*` is
+`-(polarCone (pairing n) K)`, whose useful unfolded form is `theorem_31_4_dualCone`; his `A*` is
+`LinearMap.adjoint A`, and **no adjointness hypothesis is carried anywhere in this file**, because
+on `ℝⁿ` the transpose is canonical and `isAdjointPair_adjoint` supplies the datum that the
+pairing-parametrised backbone asks for.
 
-Two objects are introduced here; both come with a bridge lemma back to the book's formula.
+Two assertions the book leaves unproved are proved here. **Corollary 31.2.1's polyhedral
+strengthening** is announced with "the proof will not be given here"; both halves are
+`corollary_31_2_1_a_polyhedral_right` and `corollary_31_2_1_a_polyhedral_left`. **Corollary 31.5.1**
+is stated with no proof; `corollary_31_5_1` is a genuine `Homeomorph`, its inverse continuous by the
+contraction property of the proximation.
 
-* `Rockafellar.ClosedProperConcaveFn g` is Rockafellar's "closed proper concave function", the
-  standing hypothesis on `g` from Corollary 31.2.1 onwards. The backbone spells the same condition
-  as `ClosedProperConvexFn fun x => -(g x)`; `closedProperConcaveFn_iff_neg` is the bridge and
-  `ClosedProperConcaveFn.neg` the projection used at every call site.
-* `Rockafellar.fenchelBifun A f g` is the bifunction `(F u)(x) = f x - g (A x + u)` of
-  Theorem 31.2 (13260) — the Fenchel problem perturbed by translating the concave function.
-  `fenchelBifun_apply` is the bridge, and `theorem_31_2_infBifun` is the statement that its convex
-  program really is the Fenchel problem.
-
-Everything else is a backbone object used without a surface copy: `conj`, `concaveConj`,
-`subgradient`, `subgradientRel`, `polarCone` (the book's `K°`; `K* = -K°` is
-`theorem_31_4_dualCone`), `quadFn`, `infConv`, `moreauObj`, `prox`, `argmin`,
-`IsMaximalMonotoneRel`, and, for Theorem 31.2, the §29–§30 vocabulary `Bifun`, `graphFn`,
-`infBifun`, `domBifun`, `ConvexBifun`, `ClosedBifun`, `StronglyConsistent`, `adjointBifun`,
-`supBifun`, `domConcaveBifun`, `ConcaveStronglyConsistent`, `Normal`.
-
-Rockafellar's `A*` is written `LinearMap.adjoint A` throughout and **no adjointness hypothesis is
-carried anywhere in this file**: on `ℝⁿ` the transpose is canonical, and
-`Tdaf.ConvexAnalysis.isAdjointPair_adjoint A` supplies the `IsAdjointPair` datum that the
-pairing-parametrised backbone asks for. This is design decision **D3**, and it is what makes a
-bundled adjoint unnecessary here.
-
-## Where the book's hypotheses had to change
-
-**Theorem 31.1's finiteness clause needs only the domains, not their relative interiors.**
-The book says "if (a) and (b) both hold, the infimum and supremum are necessarily finite"
-(13167). Only a point of `dom f ∩ dom g` and a point of `dom g* ∩ dom f*` are used —
-`theorem_31_1_finite` asks for exactly those, and conditions (a) and (b) supply them by
-`intrinsicInterior_subset`.
-
-**Closedness is not needed under condition (a).** Corollary 31.2.1 is stated for closed proper `f`
-and `g`; `corollary_31_2_1_a` and `corollary_31_2_1_a_attained` assume `f` only convex and proper.
-The same happens in Theorem 31.3 and Corollary 31.3.1, where the book assumes both functions
-closed and the proof is Theorem 23.5 twice plus a squeeze between two Fenchel inequalities.
-
-**Theorem 31.2's properness clause needs no relative-interior hypothesis at all.**
-`theorem_31_2_proper` holds for any proper convex `f` and proper concave `g`: one point of `dom f`
-and one point of `dom g` suffice, because the perturbation `u` is free to move `A x` onto `dom g`.
-
-**Corollary 31.4.1 goes through the polyhedral form of Theorem 31.4.** The book's conditions for
-the non-negative orthant are `x ∈ ri (dom f)` with `x ≥ 0`, and `x* ∈ ri (dom f*)` with `x* ≥ 0` —
-no relative interior of the orthant appears. That is Theorem 31.4's polyhedral strengthening
-(13595) rather than its plain form, so `corollary_31_4_1_*` is derived from
-`theorem_31_4_*_polyhedral` together with the private `polyhedral_nonnegOrthant`.
-
-**Corollary 31.4.3 does not need `K` closed for most of what it says.** The book assumes `K` is a
-closed convex cone; closedness is used only for the attainment of the *first* infimum
-(`corollary_31_4_3_attained`). The identity and both finiteness clauses hold for any non-empty
-convex cone.
-
-**Theorem 6.6 is taken in its backbone form.** Surface §6's `theorem_6_6_ri` is stated only for
-maps `Rn n →ₗ[ℝ] Rn m`. The map `(w, x) ↦ w - A x` that turns Rockafellar's `dom g - A (dom f)`
-into a single linear image goes out of a *product*, so `relint_sub_image` uses
-`Convex.relint_image` and `intrinsicInterior_prod_eq` directly.
-
-## What the book leaves undone
-
-**Corollary 31.2.1's polyhedral strengthening is asserted with the proof withheld.** The book
-(13379) says: "It can be shown that in Corollary 31.2.1, just as in Theorem 31.1, `ri` can be
-omitted whenever the corresponding function `f` or `g` is actually polyhedral. However, the proof
-will not be given here." Both halves are proved here, as `corollary_31_2_1_a_polyhedral_right`
-(`g` polyhedral) and `corollary_31_2_1_a_polyhedral_left` (`f` polyhedral). Condition (a) has two
-jobs in the composed setting — an exact *sum* on `ℝⁿ` and an exact *image* along `A` — and the
-polyhedral form has to replace both, and the backbone now has a constructor for each:
-`IsExactSum.of_polyhedral` for the sum, once `polyhedralFn_compLin` says that `-(g ∘ A)` is
-polyhedral, and `IsExactImage.of_polyhedral` for the image. **Both were re-derived here when this
-section was written** — the first because `polyhedralFn_compLin` was stranded in a §37 module §31
-must not import, the second because its `## Backbone gaps` note said no image constructor existed.
-The note was wrong: `IsExactImage.of_polyhedral` had landed a round earlier (remediation §12.4),
-and §31 was the one file still carrying its own copy.
-
-**Corollary 31.5.1 is stated with no proof.** Rockafellar gives the statement (13889) and moves on,
-exactly as with Corollary 23.5.1. `corollary_31_5_1` proves it: bijectivity is Theorem 31.5, and
-continuity of the inverse `z ↦ (prox (z ∣ f), z - prox (z ∣ f))` is the unnumbered contraction
-property of the proximation (13851–13885), which is named here as `prox_contraction`. Theorem 24.4
-— closedness of the graph of `∂f` — is not needed.
-
-## What is not here
-
-* **The linear-programming example (13381–13411)** — *an instance, not a statement*. Rockafellar
-  substitutes `f = ⟨a*, ·⟩ + δ(· ∣ x ≥ 0)` and `g = -δ(· ∣ u ≥ a)` into Theorem 31.2 and reads off
-  the dual linear program. Nothing is asserted that Theorem 31.2 does not already give; the
-  orthant instance that *is* a numbered statement is Corollary 31.4.1, and it is here. Formalising
-  the substitution would be an exercise in the `δ` calculus of §12 with no new content.
-* **The positively-homogeneous example (13413–13419)** — same reason: `f` positively homogeneous
-  with `g* = -δ*(· ∣ D)` is another substitution into Theorem 31.2.
-* **The subgradient preview of Theorem 31.3 (13421–13463)** — *superseded by what is here*. The
-  book's `0 ∈ ∂(f - gA)(x)` discussion, its inclusion `∂(f - gA)(x) ⊇ ∂f(x) - A*∂g(Ax)` and the
-  "usually necessary" hedging are Theorems 23.8 and 23.9, which live in §23; line 13465 says the
-  Kuhn–Tucker conditions "can also be stated and proved more directly, as follows" and then states
-  Theorem 31.3, which is `theorem_31_3` and `corollary_31_3_1` below.
-* **The §29–§30 commentary on the perturbation function `p` (13325–13363)** — *deferred by
-  scope*: it is a reading of Corollaries 29.1.2, 29.1.3 and 30.2.3 and of Theorem 30.5 for this
-  particular `F`, and those belong to the surface §§29–30 files. Its one operative consequence,
-  "Theorem 30.4 and Corollary 30.5.2 yield a generalization of Fenchel's Duality Theorem" (13363),
-  *is* here: it is exactly how `corollary_31_2_1_b` and `corollary_31_2_1_b_attained` are proved.
-* **The Gale–Kuhn–Tucker remark (13691) and Tucker representations (13693)** — *omitted with a
-  reason*: both are forward references with no proof and no statement of their own.
-* **The separable case and Problems (I) and (II) (13695–13733)** — *deferred by scope*. Problems
-  (I) and (II) are Corollary 31.4.2 with `f (ξ₁, …, ξₙ) = f₁ ξ₁ + ⋯ + fₙ ξₙ`, so the only content
-  is the two separability facts the book recalls in passing: `f* = f₁* + ⋯ + fₙ*` (13704) and
-  `x* ∈ ∂f(x) ⟺ ξⱼ* ∈ ∂fⱼ(ξⱼ) for every j` (13726, which the book itself sets "as an exercise").
-  Both are §16/§23 statements about a finite direct sum, and the backbone has no separable
-  conjugate at all — `Duality/FiniteProduct.lean` carries the product *pairing* and the relative
-  interior of a product, not a `conj` of a sum. Recorded under **Backbone gaps**.
-* **The proximation of an indicator function and Moreau's cone decomposition (13841–13847)** —
-  *deferred by scope*: `prox (z ∣ δ(· ∣ C))` is the projection on `C`, and for a cone `K` the
-  decomposition `z = x + x*` with `x ∈ K`, `x* ∈ K°` and `⟨x, x*⟩ = 0` follows. The backbone's
-  `Prox.lean` has no projection-on-a-convex-set operator, so this needs a definition first; the
-  §31 content it rests on (`prox_add_prox_conj_eq`, `prox_conj_eq_sub`) is here.
-
-## Backbone gaps
-
-Three of the six private declarations this file once carried are now in the backbone, and the
-lemma the sixth item asked for exists there too. Items 4 and 5 are still open. The numbering is
-unchanged.
-
-1. **Corollary 30.5.2** — **done**. `exists_infBifun_eq_of_concaveStronglyConsistent` is public in
-   `Tdaf/Analysis/Convex/Optimization/Normal.lean`, and `corollary_31_2_1_b_attained` cites it.
-2. **Theorem 30.5, concave side** — **done**. The mirror
-   `mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq` is public in the same module, with `Bu`
-   and `Bx` explicit, and the dual assertion of Theorem 30.5
-   itself (`mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin`) is beside it.
-3. **An `EReal` infimum over a product splits** — **done**. `Tdaf.EReal.iInf_prod_add` is public in
-   `Tdaf/Order/EReal.lean`, together with `coe_add_iInf`, `add_iInf_of_ne_bot` and
-   `iInf_add_of_ne_bot`. It is stated under `⨅ ψ ≠ ⊤` and `⨅ φ ≠ ⊤` rather than under the
-   witness-value hypotheses proposed here — strictly more general, since it *handles* the `⊥`
-   corners instead of excluding them — so the call site derives the two hypotheses from one finite
-   value on each side.
-4. **A polyhedral constructor for `IsExactImage`** — **done, and it was done before this note was
-   written.** `IsExactImage.of_polyhedral` is in
-   `Tdaf/Analysis/Convex/Polyhedral/Duality.lean`, beside `IsExactSum.of_polyhedral` and
-   `IsExactFinsetSum.of_polyhedral`, exactly as this item asked (remediation §12.4). This section
-   carried a private copy for a whole round because the item was never re-checked; §12.4's closing
-   note counted the §16 and §23 duplicates and missed this one.
-5. **A polyhedral function composed with a linear map is polyhedral** — **done.**
-   `polyhedralFn_compLin` is in `Tdaf/Analysis/Convex/Polyhedral/Duality.lean` (remediation
-   §12.14b), which this file imports. It was stranded in `Saddle/Correspondence.lean` (§37), which
-   §31 must not import, and the row that moved it named `Optimization/Perturbation.lean` — the home
-   its docstring pointed at, which by then was the wrong one, because §12.14 had moved
-   `polyhedralFn_mapLin` out of that file in the same batch.
-6. **A separable conjugate** — the backbone half is **done**. `conj_piFn` is public in
-   `Tdaf/Analysis/Convex/Duality/FiniteProduct.lean` (which is already in this file's import
-   closure), as
-
-       theorem conj_piFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : ι → E → EReal) (hf : ∀ i, Proper (f i))
-           (y : ι → F) :
-           conj (piPairing B) (fun x => ∑ i, f i (x i)) y = ∑ i, conj B (f i) (y i)
-
-   What is still not carried is the *surface* statement: Problems (I) and (II) of 13695–13733 also
-   need the separable subgradient rule `x* ∈ ∂f(x) ⟺ ξⱼ* ∈ ∂fⱼ(ξⱼ) for every j` (13726), which the
-   book itself sets as an exercise, and a `Rn n ≃ (Fin s → Rn nⱼ)` decomposition — remediation
-   §12.31's `s`-fold product, still open.
-
-Two smaller local proofs are surface-level rather than backbone gaps: `polyhedral_nonnegOrthant`
-and `smul_nonnegOrthant` describe `Rockafellar.nonnegOrthant` from §12 and belong with it, and
-`relint_sub_image` is Theorem 6.6 for a map out of a product (see above).
+Several statements carry weaker hypotheses than the book's. Theorem 31.1's finiteness clause needs
+only a point of `dom f ∩ dom g` and one of `dom g* ∩ dom f*`, not their relative interiors;
+closedness is unused under condition (a) in Corollary 31.2.1, Theorem 31.3 and Corollary 31.3.1;
+Theorem 31.2's properness clause needs no relative-interior hypothesis; and Corollary 31.4.3 needs
+`K` closed only for the attainment of its first infimum.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31 (pp. 327–341).
 * J.-J. Moreau, *Proximité et dualité dans un espace hilbertien*, Bull. Soc. Math. France **93**
   (1965), 273–299 — Theorem 31.5 and Corollary 31.5.2.
 -/
@@ -255,11 +67,9 @@ variable {m n : ℕ}
 
 /-! ### Concave functions in the book's vocabulary -/
 
-/-- Rockafellar's **closed proper concave function** on `ℝⁿ`: the concave mirror of
-`ClosedProperConvexFn`, which is the standing hypothesis on `g` from Corollary 31.2.1 onwards.
-
-The backbone spells this as `ClosedProperConvexFn fun x => -(g x)`; the bridge is
-`closedProperConcaveFn_iff_neg`, and every theorem below is derived through it. -/
+/-- Rockafellar's **closed proper concave function** on `ℝⁿ`, the standing hypothesis on `g` from
+Corollary 31.2.1 onwards. The backbone spells this as `ClosedProperConvexFn fun x => -(g x)`; the
+bridge is `closedProperConcaveFn_iff_neg`. -/
 structure ClosedProperConcaveFn (g : Rn n → EReal) : Prop where
   /-- The hypograph is convex. -/
   concave : ConcaveFn g
@@ -269,8 +79,7 @@ structure ClosedProperConcaveFn (g : Rn n → EReal) : Prop where
   proper : ProperConcave g
 
 /-- **The bridge to the backbone**: `g` is closed proper concave exactly when `-g` is closed proper
-convex. This is Rockafellar's own definition of the concave notions (§30, and §12's sign
-dictionary), taken clause by clause. -/
+convex, clause by clause. -/
 theorem closedProperConcaveFn_iff_neg {g : Rn n → EReal} :
     ClosedProperConcaveFn g ↔ ClosedProperConvexFn fun x => -(g x) :=
   ⟨fun h => ⟨concaveFn_iff_convexFn_neg.1 h.concave, closedConcaveFn_iff.1 h.closed,
@@ -313,39 +122,32 @@ private theorem isExactSum_conj_of_relint {f g : Rn n → EReal} (hf : ClosedPro
     hyf ?_
   rwa [← domConcave_eq_dom_neg]
 
-/-- **Rockafellar, Theorem 31.1** (13153), the inequality the proof opens with: every dual value
-`g*(x*) - f*(x*)` is below every primal value `f(x) - g(x)`.
-
-It is Fenchel's inequality used twice, and Rockafellar states it in the proof rather than in the
-theorem. Specialises `concaveConj_sub_conj_le_sub`, which carries **no hypothesis at all**: both
-`∞ - ∞` collisions are absorbed on the correct side. -/
+/-- **Theorem 31.1**, the inequality the proof opens with: every dual value `g*(x*) - f*(x*)` is
+below every primal value `f(x) - g(x)`. Fenchel's inequality used twice, and carrying **no
+hypothesis at all** — both `∞ - ∞` collisions are absorbed on the correct side. -/
 theorem theorem_31_1_weak (f g : Rn n → EReal) (x y : Rn n) :
     concaveConj (pairing n) g y - conj (pairing n) f y ≤ f x - g x :=
   concaveConj_sub_conj_le_sub (pairing n) f g x y
 
-/-- **Rockafellar, Theorem 31.1** (13153) under condition **(a)** (13161): for a proper convex `f`
-and a proper concave `g` whose effective domains have relative interiors meeting,
-
-`inf {f(x) - g(x)} = sup {g*(x*) - f*(x*)}`.
-
-Specialises `fenchel_duality`; condition (a) enters only through Theorem 16.4
-(`IsExactSum.of_relint`). -/
+/-- **Theorem 31.1** under condition **(a)**: for a proper convex `f` and a proper concave `g` whose
+effective domains have relative interiors meeting, `inf {f(x) - g(x)} = sup {g*(x*) - f*(x*)}`.
+Condition (a) enters only through Theorem 16.4. -/
 theorem theorem_31_1_a {f g : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper f)
     (hg : ConcaveFn g) (hpg : ProperConcave g) {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f))
     (hxg : x₀ ∈ ri (domConcave g)) :
     (⨅ x, f x - g x) = ⨆ y : Rn n, concaveConj (pairing n) g y - conj (pairing n) f y :=
   fenchel_duality (isExactSum_neg_of_relint hf hpf hg hpg hxf hxg)
 
-/-- **Rockafellar, Theorem 31.1** (13165): under condition (a) the supremum is attained at some
-`x*`. Specialises `exists_concaveConj_sub_conj_eq`. -/
+/-- **Theorem 31.1**: under condition (a) the supremum is attained at some `x*`. Specialises
+`exists_concaveConj_sub_conj_eq`. -/
 theorem theorem_31_1_a_attained {f g : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper f)
     (hg : ConcaveFn g) (hpg : ProperConcave g) {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f))
     (hxg : x₀ ∈ ri (domConcave g)) :
     ∃ y : Rn n, concaveConj (pairing n) g y - conj (pairing n) f y = ⨅ x, f x - g x :=
   exists_concaveConj_sub_conj_eq (isExactSum_neg_of_relint hf hpf hg hpg hxf hxg)
 
-/-- **Rockafellar, Theorem 31.1** (13165), the attainment clause packaged: under condition (a) the
-common value is the *greatest* dual value. Specialises `isGreatest_concaveConj_sub_conj`. -/
+/-- **Theorem 31.1**, the attainment clause packaged: under condition (a) the common value is the
+*greatest* dual value. Specialises `isGreatest_concaveConj_sub_conj`. -/
 theorem theorem_31_1_a_isGreatest {f g : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper f)
     (hg : ConcaveFn g) (hpg : ProperConcave g) {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f))
     (hxg : x₀ ∈ ri (domConcave g)) :
@@ -353,10 +155,8 @@ theorem theorem_31_1_a_isGreatest {f g : Rn n → EReal} (hf : ConvexFn f) (hpf 
       concaveConj (pairing n) g y - conj (pairing n) f y) (⨅ x, f x - g x) :=
   isGreatest_concaveConj_sub_conj (isExactSum_neg_of_relint hf hpf hg hpg hxf hxg)
 
-/-- **Rockafellar, Theorem 31.1** (13153) under condition **(b)** (13163): `f` and `g` closed, with
-`ri (dom g*)` meeting `ri (dom f*)`. The equality is the same one.
-
-Specialises `fenchel_duality_of_closed`, which is condition (a) read on the dual pair together with
+/-- **Theorem 31.1** under condition **(b)**: `f` and `g` closed, with `ri (dom g*)` meeting
+`ri (dom f*)`. The equality is the same one — condition (a) read on the dual pair together with
 Fenchel–Moreau. -/
 theorem theorem_31_1_b {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConcaveFn g) {y₀ : Rn n} (hyf : y₀ ∈ ri (dom (conj (pairing n) f)))
@@ -364,8 +164,12 @@ theorem theorem_31_1_b {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (⨅ x, f x - g x) = ⨆ y : Rn n, concaveConj (pairing n) g y - conj (pairing n) f y :=
   fenchel_duality_of_closed hf hg.neg (isExactSum_conj_of_relint hf hg hyf hyg)
 
-/-- **Rockafellar, Theorem 31.1** (13165): under condition (b) the *infimum* is attained at some
-`x`. Specialises `exists_sub_eq_iInf`. -/
+/-! ### Theorem 31.1: the polyhedral strengthening
+
+"If `g` is actually polyhedral, `ri (dom g)` and `ri (dom g*)` can be replaced by `dom g` and
+`dom g*` in (a) and (b), respectively (and the closure assumption in (b) is superfluous). Similarly
+if `f` is polyhedral." All four readings are Theorem 20.1 in place of Theorem 16.4, and the closure
+assumption really is superfluous: a proper polyhedral convex function is closed. -/
 theorem theorem_31_1_b_attained {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConcaveFn g) {y₀ : Rn n} (hyf : y₀ ∈ ri (dom (conj (pairing n) f)))
     (hyg : y₀ ∈ ri (domConcave (concaveConj (pairing n) g))) :
@@ -376,7 +180,7 @@ theorem theorem_31_1_b_attained {f g : Rn n → EReal} (hf : ClosedProperConvexF
 
 "If `g` is actually polyhedral, `ri (dom g)` and `ri (dom g*)` can be replaced by `dom g` and
 `dom g*` in (a) and (b), respectively (and the closure assumption in (b) is superfluous). Similarly
-if `f` is polyhedral" (13167). All four readings are Theorem 20.1 (`IsExactSum.of_polyhedral`) in
+if `f` is polyhedral". All four readings are Theorem 20.1 (`IsExactSum.of_polyhedral`) in
 place of Theorem 16.4, and the closure assumption really is superfluous, because a proper polyhedral
 convex function is closed (Corollary 19.1.2). -/
 
@@ -395,10 +199,10 @@ private theorem isExactSum_neg_of_polyhedral_right {f g : Rn n → EReal} (hf : 
   (IsExactSum.of_polyhedral hg (properConcave_iff_proper_neg.1 hpg) hf hpf
     (by rwa [← domConcave_eq_dom_neg]) hxf).symm
 
-/-- **`-g*` is polyhedral when `-g` is.** The concave conjugate is the convex conjugate of `-g`
-read at `-y` (`neg_concaveConj`), the conjugate of a polyhedral function is polyhedral
-(**Theorem 19.2**), and precomposing with `-id` is a linear substitution, which `Polyhedral.comap`
-carries through the epigraph. -/
+/-- **`-g*` is polyhedral when `-g` is.** The concave conjugate is the convex conjugate of `-g` read
+at `-y` (`neg_concaveConj`), the conjugate of a polyhedral function is polyhedral (**Theorem
+19.2**), and precomposing with `-id` is a linear substitution, which `Polyhedral.comap` carries
+through the epigraph. -/
 private theorem polyhedralFn_neg_concaveConj {g : Rn n → EReal}
     (hg : PolyhedralFn fun x => -(g x)) :
     PolyhedralFn fun y : Rn n => -(concaveConj (pairing n) g y) := by
@@ -419,41 +223,41 @@ private theorem closedProperConcaveFn_of_polyhedral {g : Rn n → EReal}
   have hp : Proper fun x => -(g x) := properConcave_iff_proper_neg.1 hpg
   exact closedProperConcaveFn_iff_neg.2 ⟨hg.convexFn, hg.closedFn hp.ne_bot, hp⟩
 
-/-- **Rockafellar, Theorem 31.1** (13167), the polyhedral strengthening of condition (a) with `f`
-polyhedral: `ri (dom f)` may be replaced by `dom f`. -/
+/-- **Theorem 31.1**, the polyhedral strengthening of condition (a) with `f` polyhedral:
+`ri (dom f)` may be replaced by `dom f`. -/
 theorem theorem_31_1_a_polyhedral_left {f g : Rn n → EReal} (hf : PolyhedralFn f) (hpf : Proper f)
     (hg : ConcaveFn g) (hpg : ProperConcave g) {x₀ : Rn n} (hxf : x₀ ∈ dom f)
     (hxg : x₀ ∈ ri (domConcave g)) :
     (⨅ x, f x - g x) = ⨆ y : Rn n, concaveConj (pairing n) g y - conj (pairing n) f y :=
   fenchel_duality (isExactSum_neg_of_polyhedral_left hf hpf hg hpg hxf hxg)
 
-/-- **Rockafellar, Theorem 31.1** (13167): under the polyhedral form of (a) with `f` polyhedral,
-the supremum is still attained. -/
+/-- **Theorem 31.1**: under the polyhedral form of (a) with `f` polyhedral, the supremum is still
+attained. -/
 theorem theorem_31_1_a_polyhedral_left_attained {f g : Rn n → EReal} (hf : PolyhedralFn f)
     (hpf : Proper f) (hg : ConcaveFn g) (hpg : ProperConcave g) {x₀ : Rn n} (hxf : x₀ ∈ dom f)
     (hxg : x₀ ∈ ri (domConcave g)) :
     ∃ y : Rn n, concaveConj (pairing n) g y - conj (pairing n) f y = ⨅ x, f x - g x :=
   exists_concaveConj_sub_conj_eq (isExactSum_neg_of_polyhedral_left hf hpf hg hpg hxf hxg)
 
-/-- **Rockafellar, Theorem 31.1** (13167), the polyhedral strengthening of condition (a) with `g`
-polyhedral: `ri (dom g)` may be replaced by `dom g`. -/
+/-- **Theorem 31.1**, the polyhedral strengthening of condition (a) with `g` polyhedral:
+`ri (dom g)` may be replaced by `dom g`. -/
 theorem theorem_31_1_a_polyhedral_right {f g : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper f)
     (hg : PolyhedralFn fun x => -(g x)) (hpg : ProperConcave g) {x₀ : Rn n}
     (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ domConcave g) :
     (⨅ x, f x - g x) = ⨆ y : Rn n, concaveConj (pairing n) g y - conj (pairing n) f y :=
   fenchel_duality (isExactSum_neg_of_polyhedral_right hf hpf hg hpg hxf hxg)
 
-/-- **Rockafellar, Theorem 31.1** (13167): under the polyhedral form of (a) with `g` polyhedral,
-the supremum is still attained. -/
+/-- **Theorem 31.1**: under the polyhedral form of (a) with `g` polyhedral, the supremum is still
+attained. -/
 theorem theorem_31_1_a_polyhedral_right_attained {f g : Rn n → EReal} (hf : ConvexFn f)
     (hpf : Proper f) (hg : PolyhedralFn fun x => -(g x)) (hpg : ProperConcave g) {x₀ : Rn n}
     (hxf : x₀ ∈ ri (dom f)) (hxg : x₀ ∈ domConcave g) :
     ∃ y : Rn n, concaveConj (pairing n) g y - conj (pairing n) f y = ⨅ x, f x - g x :=
   exists_concaveConj_sub_conj_eq (isExactSum_neg_of_polyhedral_right hf hpf hg hpg hxf hxg)
 
-/-- **Rockafellar, Theorem 31.1** (13167), the polyhedral strengthening of condition (b) with `f`
-polyhedral: `ri (dom f*)` may be replaced by `dom f*`, and `f` is not assumed closed — a proper
-polyhedral convex function is closed automatically. -/
+/-- **Theorem 31.1**, the polyhedral strengthening of condition (b) with `f` polyhedral:
+`ri (dom f*)` may be replaced by `dom f*`, and `f` is not assumed closed — a proper polyhedral
+convex function is closed automatically. -/
 theorem theorem_31_1_b_polyhedral_left {f g : Rn n → EReal} (hf : PolyhedralFn f) (hpf : Proper f)
     (hg : ClosedProperConcaveFn g) {y₀ : Rn n} (hyf : y₀ ∈ dom (conj (pairing n) f))
     (hyg : y₀ ∈ ri (domConcave (concaveConj (pairing n) g))) :
@@ -467,8 +271,8 @@ theorem theorem_31_1_b_polyhedral_left {f g : Rn n → EReal} (hf : PolyhedralFn
   change y₀ ∈ ri (dom fun y => -(concaveConj (pairing n) g y))
   rwa [← domConcave_eq_dom_neg]
 
-/-- **Rockafellar, Theorem 31.1** (13167), the polyhedral strengthening of condition (b) with `g`
-polyhedral: `ri (dom g*)` may be replaced by `dom g*`, and `g` is not assumed closed. -/
+/-- **Theorem 31.1**, the polyhedral strengthening of condition (b) with `g` polyhedral:
+`ri (dom g*)` may be replaced by `dom g*`, and `g` is not assumed closed. -/
 theorem theorem_31_1_b_polyhedral_right {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : PolyhedralFn fun x => -(g x)) (hpg : ProperConcave g) {y₀ : Rn n}
     (hyf : y₀ ∈ ri (dom (conj (pairing n) f)))
@@ -481,13 +285,10 @@ theorem theorem_31_1_b_polyhedral_right {f g : Rn n → EReal} (hf : ClosedPrope
       (convexFn_conj (pairing n) f) (proper_conj (B := pairing n) hf) ?_ hyf).symm
   rwa [← domConcave_eq_dom_neg]
 
-/-- **Rockafellar, Theorem 31.1** (13167): "if (a) and (b) both hold, the infimum and supremum are
-necessarily finite".
-
-Only the *closures* of the two conditions are used: a point of `dom f ∩ dom g` bounds the infimum
-above, and a point of `dom g* ∩ dom f*` bounds it below through weak duality
-(`theorem_31_1_weak`). Neither relative interior is needed, so the hypotheses below are weaker than
-the book's; (a) and (b) imply them by `intrinsicInterior_subset`. -/
+/-- **Theorem 31.1**: "if (a) and (b) both hold, the infimum and supremum are necessarily finite".
+Only the *closures* of the two conditions are used — a point of `dom f ∩ dom g` bounds the infimum
+above, and one of `dom g* ∩ dom f*` bounds it below through weak duality — so the hypotheses here
+are weaker than the book's, and (a) and (b) imply them. -/
 theorem theorem_31_1_finite {f g : Rn n → EReal} (hpf : Proper f) (hpg : ProperConcave g)
     {x₀ : Rn n} (hxf : x₀ ∈ dom f) (hxg : x₀ ∈ domConcave g) {y₀ : Rn n}
     (hyf : y₀ ∈ dom (conj (pairing n) f))
@@ -520,9 +321,7 @@ theorem theorem_31_1_finite {f g : Rn n → EReal} (hpf : Proper f) (hpg : Prope
 
 Rockafellar's condition (a) — some `x ∈ ri (dom f)` with `A x ∈ ri (dom g)` — does two jobs at
 once, and the backbone separates them: it makes `f` and `-(g A)` add exactly (Theorem 16.4,
-`IsExactSum`) and it makes `-g` pull back exactly along `A` (Theorem 16.3, `IsExactImage`). The
-two private constructors below are those two jobs; the polyhedral versions further down are the
-strengthening whose proof the book declines to give. -/
+`IsExactSum`) and it makes `-g` pull back exactly along `A` (Theorem 16.3, `IsExactImage`). -/
 
 /-- Condition (a) of Corollary 31.2.1, the exact-pullback half: **Theorem 16.3**. -/
 private theorem isExactImage_neg_of_relint {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
@@ -549,17 +348,10 @@ private theorem isExactSum_neg_comp_of_relint {f : Rn n → EReal} {g : Rn m →
     exact hxg'
   exact IsExactSum.of_relint hf hpf hcomp hpcomp hxf hri
 
-/-- **Rockafellar, Corollary 31.2.1** (13365) under condition **(a)** (13373): for a proper convex
-`f` on `ℝⁿ`, a closed proper concave `g` on `ℝᵐ` and a linear `A : ℝⁿ → ℝᵐ`,
-
-`inf {f(x) - g(Ax)} = sup {g*(u*) - f*(A*u*)}`
-
-as soon as some `x ∈ ri (dom f)` has `Ax ∈ ri (dom g)`.
-
-Rockafellar's `A*` is `LinearMap.adjoint A`, and no adjointness hypothesis is carried: on `ℝⁿ` the
-transpose is canonical and `isAdjointPair_adjoint` supplies the datum (design decision **D3**).
-Closedness of `f` is assumed in the book but is not used under (a). Specialises
-`fenchel_duality_comp`. -/
+/-- **Corollary 31.2.1** under condition **(a)**: for a proper convex `f` on `ℝⁿ`, a closed proper
+concave `g` on `ℝᵐ` and a linear `A : ℝⁿ → ℝᵐ`, `inf {f(x) - g(Ax)} = sup {g*(u*) - f*(A*u*)}` as
+soon as some `x ∈ ri (dom f)` has `Ax ∈ ri (dom g)`. Closedness of `f`, which the book assumes, is
+not used under (a). -/
 theorem corollary_31_2_1_a {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
     (hf : ConvexFn f) (hpf : Proper f) (hg : ClosedProperConcaveFn g) {x₀ : Rn n}
     (hxf : x₀ ∈ ri (dom f)) (hxg : A x₀ ∈ ri (domConcave g)) :
@@ -570,8 +362,8 @@ theorem corollary_31_2_1_a {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n �
     (isExactSum_neg_comp_of_relint A hf hpf hg.concave hg.proper hxf hxg)
     (isExactImage_neg_of_relint A hg hxg)
 
-/-- **Rockafellar, Corollary 31.2.1** (13377): under (a) the supremum is attained at some `u*`.
-Specialises `exists_concaveConj_sub_conj_comp_eq`. -/
+/-- **Corollary 31.2.1**: under (a) the supremum is attained at some `u*`. Specialises
+`exists_concaveConj_sub_conj_comp_eq`. -/
 theorem corollary_31_2_1_a_attained {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
     (hf : ConvexFn f) (hpf : Proper f) (hg : ClosedProperConcaveFn g) {x₀ : Rn n}
     (hxf : x₀ ∈ ri (dom f)) (hxg : A x₀ ∈ ri (domConcave g)) :
@@ -581,16 +373,15 @@ theorem corollary_31_2_1_a_attained {f : Rn n → EReal} {g : Rn m → EReal} (A
     (isExactSum_neg_comp_of_relint A hf hpf hg.concave hg.proper hxf hxg)
     (isExactImage_neg_of_relint A hg hxg)
 
-/-- **Rockafellar, Corollary 31.2.1** (13379), the polyhedral strengthening with `g` polyhedral —
-*the clause whose proof the book explicitly declines to give*: "It can be shown that in Corollary
-31.2.1, just as in Theorem 31.1, `ri` can be omitted whenever the corresponding function `f` or `g`
-is actually polyhedral. However, the proof will not be given here."
+/-- **Corollary 31.2.1**, the polyhedral strengthening with `g` polyhedral — *the clause whose proof
+the book declines to give*: "It can be shown that in Corollary 31.2.1, just as in Theorem 31.1, `ri`
+can be omitted whenever the corresponding function `f` or `g` is actually polyhedral. However, the
+proof will not be given here."
 
-Here is the proof for `g`. Both of condition (a)'s jobs have polyhedral constructors: `-(g A)` is
-polyhedral (`polyhedralFn_compLin`), so **Theorem 20.1** replaces Theorem 16.4 in the sum, and
-`IsExactImage.of_polyhedral` — Corollary 19.3.1 in place of Theorem 16.3 — replaces the pullback.
-Neither needs a relative interior on the `g` side, and closedness of `g` is automatic
-(Corollary 19.1.2). -/
+Both of condition (a)'s jobs have polyhedral constructors: `-(g A)` is polyhedral, so **Theorem
+20.1** replaces Theorem 16.4 in the sum, and `IsExactImage.of_polyhedral` — Corollary 19.3.1 in
+place of Theorem 16.3 — replaces the pullback. Neither needs a relative interior on the `g` side,
+and closedness of `g` is automatic. -/
 theorem corollary_31_2_1_a_polyhedral_right {f : Rn n → EReal} {g : Rn m → EReal}
     (A : Rn n →ₗ[ℝ] Rn m) (hf : ConvexFn f) (hpf : Proper f)
     (hg : PolyhedralFn fun w => -(g w)) (hpg : ProperConcave g) {x₀ : Rn n}
@@ -605,11 +396,9 @@ theorem corollary_31_2_1_a_polyhedral_right {f : Rn n → EReal} {g : Rn m → E
       ⟨⟨x₀, hxg'⟩, fun x => hpgn.ne_bot (A x)⟩ hf hpf hxg' hxf).symm)
     (IsExactImage.of_polyhedral (isAdjointPair_adjoint A) hg hpgn hxg')
 
-/-- **Rockafellar, Corollary 31.2.1** (13379), the polyhedral strengthening with `f` polyhedral,
-the other half of the clause the book leaves unproved: `ri (dom f)` may be replaced by `dom f`.
-
-Only the sum half changes here — **Theorem 20.1** with the polyhedral summand on the left — because
-the pullback is a statement about `g` alone and keeps its relative interior. -/
+/-- **Corollary 31.2.1**, the polyhedral strengthening with `f` polyhedral, the other half of the
+clause the book leaves unproved: `ri (dom f)` may be replaced by `dom f`. Only the sum half changes,
+because the pullback is a statement about `g` alone. -/
 theorem corollary_31_2_1_a_polyhedral_left {f : Rn n → EReal} {g : Rn m → EReal}
     (A : Rn n →ₗ[ℝ] Rn m) (hf : PolyhedralFn f) (hpf : Proper f)
     (hg : ClosedProperConcaveFn g) {x₀ : Rn n} (hxf : x₀ ∈ dom f)
@@ -632,25 +421,20 @@ theorem corollary_31_2_1_a_polyhedral_left {f : Rn n → EReal} {g : Rn m → ER
 
 /-! ### Theorem 31.3: the Kuhn–Tucker conditions -/
 
-/-- **Rockafellar, Theorem 31.3** (13467), weak duality for the transformed pair, which the proof
-uses as its "general inequality" (13496): every value of `g* - f*A*` is below every value of
-`f - gA`. No hypothesis at all. -/
+/-- **Theorem 31.3**, weak duality for the transformed pair, which the proof uses as its "general
+inequality": every value of `g* - f*A*` is below every value of `f - gA`. No hypothesis at all. -/
 theorem theorem_31_3_weak {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
     (x : Rn n) (z : Rn m) :
     concaveConj (pairing m) g z - conj (pairing n) f (LinearMap.adjoint A z) ≤ f x - g (A x) :=
   concaveConj_sub_conj_comp_le_sub (isAdjointPair_adjoint A) x z
 
-/-- **Rockafellar, Theorem 31.3** (13467). For `f` proper convex on `ℝⁿ`, `g` proper concave on
-`ℝᵐ` and `A` linear, the primal and dual values agree at `(x, u*)` if and only if `x` and `u*`
-satisfy the **Kuhn–Tucker conditions** `A*u* ∈ ∂f(x)` and `Ax ∈ ∂g*(u*)`.
+/-- **Theorem 31.3**. For `f` proper convex on `ℝⁿ`, `g` proper concave on `ℝᵐ` and `A` linear, the
+primal and dual values agree at `(x, u*)` if and only if `x` and `u*` satisfy the **Kuhn–Tucker
+conditions** `A*u* ∈ ∂f(x)` and `Ax ∈ ∂g*(u*)`.
 
-The book's second condition uses the *super*differential of the concave `g*`. That
-superdifferential is `-∂(-g)`, so it is spelled `-u* ∈ ∂(-g)(Ax)` here and no new notion is needed;
-`theorem_31_3_kuhnTucker_concave` is the dictionary back to the book's Fenchel-equality form.
-
-Closedness of `f` and `g` is assumed by the book and is not used: the theorem is Theorem 23.5 twice
-plus the squeeze between the two Fenchel inequalities. Specialises
-`sub_comp_eq_concaveConj_sub_conj_iff`. -/
+The book's second condition uses the *super*differential of the concave `g*`, which is `-∂(-g)`, so
+it is spelled `-u* ∈ ∂(-g)(Ax)` here; `theorem_31_3_kuhnTucker_concave` is the dictionary back to
+the book's Fenchel-equality form. Closedness of `f` and `g` is assumed by the book and not used. -/
 theorem theorem_31_3 {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
     (hpf : Proper f) (hpg : ProperConcave g) {x : Rn n} {z : Rn m} :
     f x - g (A x)
@@ -660,7 +444,7 @@ theorem theorem_31_3 {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[
   sub_comp_eq_concaveConj_sub_conj_iff (isAdjointPair_adjoint A) hpf
     (properConcave_iff_proper_neg.1 hpg)
 
-/-- **Rockafellar, Theorem 31.3** (13486), the book's own reading of the second Kuhn–Tucker
+/-- **Theorem 31.3**, the book's own reading of the second Kuhn–Tucker
 condition: `Ax ∈ ∂g*(u*)` says that Fenchel's inequality for the concave pair holds with equality,
 `g(Ax) + g*(u*) = ⟨Ax, u*⟩` (**Theorem 23.5** on the concave side).
 
@@ -670,8 +454,8 @@ theorem theorem_31_3_kuhnTucker_concave {g : Rn m → EReal} (hpg : ProperConcav
       g w + concaveConj (pairing m) g z = ((pairing m w z : ℝ) : EReal) :=
   neg_mem_subgradient_neg_iff_add_concaveConj_eq (properConcave_iff_proper_neg.1 hpg)
 
-/-- **Rockafellar, Theorem 31.3** (13467), first consequence: a pair at which the two values agree
-already minimises `f - gA`. Only weak duality is used. -/
+/-- **Theorem 31.3**, first consequence: a pair at which the two values agree already minimises
+`f - gA`. Only weak duality is used. -/
 theorem theorem_31_3_iInf {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
     {x : Rn n} {z : Rn m}
     (h : f x - g (A x)
@@ -679,8 +463,7 @@ theorem theorem_31_3_iInf {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n �
     (⨅ w, f w - g (A w)) = f x - g (A x) :=
   iInf_sub_comp_eq_of_sub_eq (isAdjointPair_adjoint A) h
 
-/-- **Rockafellar, Theorem 31.3** (13467), second consequence: the same pair maximises
-`g* - f*A*`. -/
+/-- **Theorem 31.3**, second consequence: the same pair maximises `g* - f*A*`. -/
 theorem theorem_31_3_iSup {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
     {x : Rn n} {z : Rn m}
     (h : f x - g (A x)
@@ -689,7 +472,7 @@ theorem theorem_31_3_iSup {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n �
       = concaveConj (pairing m) g z - conj (pairing n) f (LinearMap.adjoint A z) :=
   iSup_sub_comp_eq_of_sub_eq (isAdjointPair_adjoint A) h
 
-/-- **Rockafellar, Theorem 31.3** (13567), the case of Fenchel's duality theorem itself: with `A`
+/-- **Theorem 31.3**, the case of Fenchel's duality theorem itself: with `A`
 the identity the Kuhn–Tucker conditions reduce to `x* ∈ ∂f(x)` and `x ∈ ∂g*(x*)`.
 
 Specialises `sub_eq_concaveConj_sub_conj_iff`. -/
@@ -699,13 +482,10 @@ theorem theorem_31_3_id {f g : Rn n → EReal} (hpf : Proper f) (hpg : ProperCon
       y ∈ subgradient (pairing n) f x ∧ -y ∈ subgradient (pairing n) (fun z => -(g z)) x :=
   sub_eq_concaveConj_sub_conj_iff hpf (properConcave_iff_proper_neg.1 hpg)
 
-/-- **Rockafellar, Corollary 31.3.1** (13517): assume the notation of Theorem 31.3 and that the
-image of `ri (dom f)` under `A` meets `ri (dom g)`. Then `x` minimises `f - gA` if and only if some
-`u*` makes `(x, u*)` a Kuhn–Tucker pair.
-
-The book's one-line proof is "Apply Corollary 31.2.1", and that is literally what happens: the
-forward direction consumes the *attainment* clause of Corollary 31.2.1(a), the backward direction
-only weak duality. Specialises `iInf_sub_comp_eq_iff_exists_kuhnTucker`. -/
+/-- **Corollary 31.3.1**: in the notation of Theorem 31.3, and with `A (ri (dom f))` meeting
+`ri (dom g)`, `x` minimises `f - gA` if and only if some `u*` makes `(x, u*)` a Kuhn–Tucker pair.
+The book's one-line proof is "Apply Corollary 31.2.1", and that is what happens: the forward
+direction consumes its attainment clause, the backward direction only weak duality. -/
 theorem corollary_31_3_1 {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →ₗ[ℝ] Rn m)
     (hf : ConvexFn f) (hpf : Proper f) (hg : ClosedProperConcaveFn g) {x₀ : Rn n}
     (hxf : x₀ ∈ ri (dom f)) (hxg : A x₀ ∈ ri (domConcave g)) (x : Rn n) :
@@ -716,7 +496,7 @@ theorem corollary_31_3_1 {f : Rn n → EReal} {g : Rn m → EReal} (A : Rn n →
     (isExactSum_neg_comp_of_relint A hf hpf hg.concave hg.proper hxf hxg)
     (isExactImage_neg_of_relint A hg hxg) x
 
-/-- **Rockafellar, Corollary 31.3.1** (13517) at the identity, which is the statement Fenchel's
+/-- **Corollary 31.3.1** at the identity, which is the statement Fenchel's
 duality theorem itself carries: `x` minimises `f - g` exactly when it carries a Kuhn–Tucker pair.
 
 Specialises `iInf_sub_eq_iff_exists_kuhnTucker`. -/
@@ -731,15 +511,10 @@ theorem corollary_31_3_1_id {f g : Rn n → EReal} (hf : ConvexFn f) (hpf : Prop
 /-! ### Theorem 31.4: minimising a convex function over a convex cone
 
 Rockafellar's `K*` is `-(polarCone (pairing n) K)`. `Set` negation is a preimage, so `y ∈ -K°`
-unfolds to `-y ∈ K°`; `theorem_31_4_dualCone` states the useful form. There is no separate name for
-`K*` here: the backbone writes it out, and inventing one would put a surface definition between
-every statement and the lemma that proves it. -/
+unfolds to `-y ∈ K°`; `theorem_31_4_dualCone` states the useful form. -/
 
-/-- **Rockafellar, Theorem 31.4** (13578), the definition of the dual cone:
-`K* = {x* | ⟨x*, x⟩ ≥ 0 for all x ∈ K}` is the negative of the polar cone `K°`.
-
-Specialises `mem_neg_polarCone`; the arguments are in the backbone's orientation, and
-`pairing_comm` turns them round. -/
+/-- **Theorem 31.4**, the definition of the dual cone: `K* = {x* | ⟨x*, x⟩ ≥ 0 for all x ∈ K}` is
+the negative of the polar cone `K°`. -/
 theorem theorem_31_4_dualCone {K : Set (Rn n)} {y : Rn n} :
     y ∈ -(polarCone (pairing n) K) ↔ ∀ z ∈ K, (0 : ℝ) ≤ pairing n z y :=
   mem_neg_polarCone
@@ -776,7 +551,7 @@ private theorem polyhedral_neg_polarCone {K : Set (Rn n)} (hK : Polyhedral K)
   rw [polarCone_eq_polarSet_of_isCone hcone]
   exact polyhedral_neg_set (corollary_19_2_2 hK)
 
-/-- **Rockafellar, Theorem 31.4** (13575) under condition **(a)** (13589): for a closed proper
+/-- **Theorem 31.4** under condition **(a)**: for a closed proper
 convex `f` and a nonempty convex cone `K` whose relative interior meets `ri (dom f)`,
 
 `inf {f(x) | x ∈ K} = -inf {f*(x*) | x* ∈ K*}`.
@@ -790,8 +565,8 @@ theorem theorem_31_4_a {f : Rn n → EReal} {K : Set (Rn n)} (hf : ConvexFn f) (
   iInf_mem_eq_neg_iInf_mem_neg_polarCone
     (isExactSum_indicatorFn_of_relint (B := pairing n) hf hpf hK hxf hxK) hcone hne
 
-/-- **Rockafellar, Theorem 31.4** (13595): under (a) the infimum of `f*` over `K*` is attained.
-Specialises `exists_mem_neg_polarCone_conj_eq_iInf`. -/
+/-- **Theorem 31.4**: under (a) the infimum of `f*` over `K*` is attained. Specialises
+`exists_mem_neg_polarCone_conj_eq_iInf`. -/
 theorem theorem_31_4_a_attained {f : Rn n → EReal} {K : Set (Rn n)} (hf : ConvexFn f)
     (hpf : Proper f) (hK : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
     {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f)) (hxK : x₀ ∈ ri K) :
@@ -800,8 +575,8 @@ theorem theorem_31_4_a_attained {f : Rn n → EReal} {K : Set (Rn n)} (hf : Conv
   exists_mem_neg_polarCone_conj_eq_iInf
     (isExactSum_indicatorFn_of_relint (B := pairing n) hf hpf hK hxf hxK) hcone hne
 
-/-- **Rockafellar, Theorem 31.4** (13595), the polyhedral strengthening of (a): "if `K` is
-polyhedral, `ri K` and `ri K*` can be replaced by `K` and `K*` in (a) and (b)". -/
+/-- **Theorem 31.4**, the polyhedral strengthening of (a): "if `K` is polyhedral, `ri K` and `ri K*`
+can be replaced by `K` and `K*` in (a) and (b)". -/
 theorem theorem_31_4_a_polyhedral {f : Rn n → EReal} {K : Set (Rn n)} (hf : ConvexFn f)
     (hpf : Proper f) (hK : Polyhedral K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
     {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f)) (hxK : x₀ ∈ K) :
@@ -809,8 +584,7 @@ theorem theorem_31_4_a_polyhedral {f : Rn n → EReal} {K : Set (Rn n)} (hf : Co
   iInf_mem_eq_neg_iInf_mem_neg_polarCone
     (isExactSum_indicatorFn_of_polyhedral (B := pairing n) hf hpf hK hxf hxK) hcone hne
 
-/-- **Rockafellar, Theorem 31.4** (13595): under the polyhedral form of (a) the dual infimum is
-still attained. -/
+/-- **Theorem 31.4**: under the polyhedral form of (a) the dual infimum is still attained. -/
 theorem theorem_31_4_a_polyhedral_attained {f : Rn n → EReal} {K : Set (Rn n)} (hf : ConvexFn f)
     (hpf : Proper f) (hK : Polyhedral K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
     {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f)) (hxK : x₀ ∈ K) :
@@ -819,7 +593,7 @@ theorem theorem_31_4_a_polyhedral_attained {f : Rn n → EReal} {K : Set (Rn n)}
   exists_mem_neg_polarCone_conj_eq_iInf
     (isExactSum_indicatorFn_of_polyhedral (B := pairing n) hf hpf hK hxf hxK) hcone hne
 
-/-- **Rockafellar, Theorem 31.4** (13575) under condition **(b)** (13591): the same equality, with
+/-- **Theorem 31.4** under condition **(b)**: the same equality, with
 `ri (dom f*)` meeting `ri K*`.
 
 This is condition (a) read on the dual pair: Theorem 31.4 applied to `f*` and `K*`, closed up by
@@ -841,8 +615,8 @@ theorem theorem_31_4_b {f : Rn n → EReal} {K : Set (Rn n)} (hf : ClosedProperC
     at h
   rw [h, neg_neg]
 
-/-- **Rockafellar, Theorem 31.4** (13595): under (b) the infimum of `f` over `K` is attained.
-Specialises `exists_mem_eq_iInf_of_isExactSum_conj`. -/
+/-- **Theorem 31.4**: under (b) the infimum of `f` over `K` is attained. Specialises
+`exists_mem_eq_iInf_of_isExactSum_conj`. -/
 theorem theorem_31_4_b_attained {f : Rn n → EReal} {K : Set (Rn n)} (hf : ClosedProperConvexFn f)
     (hK : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (hcl : IsClosed K)
     {y₀ : Rn n} (hyf : y₀ ∈ ri (dom (conj (pairing n) f)))
@@ -853,9 +627,9 @@ theorem theorem_31_4_b_attained {f : Rn n → EReal} {K : Set (Rn n)} (hf : Clos
       (proper_conj (B := pairing n) hf) (convex_neg_polarCone (pairing n) K) hyf hyK)
     hK hcone hne hcl
 
-/-- **Rockafellar, Theorem 31.4** (13595), the polyhedral strengthening of (b): `ri K*` becomes
-`K*`. Polyhedrality of `K` is what makes `K*` polyhedral (`polyhedral_neg_polarCone`), and a
-polyhedral set is closed, so the closedness hypothesis is free. -/
+/-- **Theorem 31.4**, the polyhedral strengthening of (b): `ri K*` becomes `K*`. Polyhedrality of
+`K` is what makes `K*` polyhedral (`polyhedral_neg_polarCone`), and a polyhedral set is closed, so
+the closedness hypothesis is free. -/
 theorem theorem_31_4_b_polyhedral {f : Rn n → EReal} {K : Set (Rn n)} (hf : ClosedProperConvexFn f)
     (hK : Polyhedral K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) {y₀ : Rn n}
     (hyf : y₀ ∈ ri (dom (conj (pairing n) f))) (hyK : y₀ ∈ -(polarCone (pairing n) K)) :
@@ -871,8 +645,7 @@ theorem theorem_31_4_b_polyhedral {f : Rn n → EReal} {K : Set (Rn n)} (hf : Cl
     at h
   rw [h, neg_neg]
 
-/-- **Rockafellar, Theorem 31.4** (13595): under the polyhedral form of (b) the primal infimum is
-still attained. -/
+/-- **Theorem 31.4**: under the polyhedral form of (b) the primal infimum is still attained. -/
 theorem theorem_31_4_b_polyhedral_attained {f : Rn n → EReal} {K : Set (Rn n)}
     (hf : ClosedProperConvexFn f) (hK : Polyhedral K) (hcone : ∀ a : ℝ, 0 < a → a • K = K)
     (hne : K.Nonempty) {y₀ : Rn n} (hyf : y₀ ∈ ri (dom (conj (pairing n) f)))
@@ -883,7 +656,7 @@ theorem theorem_31_4_b_polyhedral_attained {f : Rn n → EReal} {K : Set (Rn n)}
       (proper_conj (B := pairing n) hf) (polyhedral_neg_polarCone hK hcone) hyf hyK)
     hK.convex hcone hne (Polyhedral.isClosed hK)
 
-/-- **Rockafellar, Theorem 31.4** (13603), the optimality conditions: for `x ∈ K` and `x* ∈ K*`,
+/-- **Theorem 31.4**, the optimality conditions: for `x ∈ K` and `x* ∈ K*`,
 the primal and dual values agree — `f(x) = -f*(x*)` — exactly when `x* ∈ ∂f(x)` and
 `⟨x, x*⟩ = 0`.
 
@@ -896,23 +669,21 @@ theorem theorem_31_4_optimality {f : Rn n → EReal} {K : Set (Rn n)} (hpf : Pro
       y ∈ subgradient (pairing n) f x ∧ (pairing n x y : ℝ) = 0 :=
   add_conj_eq_zero_iff_mem_subgradient_and_pairing_eq_zero hpf hxK hyK
 
-/-- **Rockafellar, Theorem 31.4** (13603): the optimality conditions make `x` optimal for the
-primal cone program. -/
+/-- **Theorem 31.4**: the optimality conditions make `x` optimal for the primal cone program. -/
 theorem theorem_31_4_optimality_primal {f : Rn n → EReal} {K : Set (Rn n)} {x y : Rn n}
     (hyK : y ∈ -(polarCone (pairing n) K)) (hy : y ∈ subgradient (pairing n) f x)
     (hxy : (pairing n x y : ℝ) = 0) {z : Rn n} (hz : z ∈ K) : f x ≤ f z :=
   forall_le_of_mem_subgradient_of_pairing_eq_zero hyK hy hxy hz
 
-/-- **Rockafellar, Theorem 31.4** (13603): the optimality conditions make `x*` optimal for the dual
-cone program. -/
+/-- **Theorem 31.4**: the optimality conditions make `x*` optimal for the dual cone program. -/
 theorem theorem_31_4_optimality_dual {f : Rn n → EReal} {K : Set (Rn n)} (hpf : Proper f)
     {x y : Rn n} (hxK : x ∈ K) (hy : y ∈ subgradient (pairing n) f x)
     (hxy : (pairing n x y : ℝ) = 0) {w : Rn n} (hwK : w ∈ -(polarCone (pairing n) K)) :
     conj (pairing n) f y ≤ conj (pairing n) f w :=
   conj_le_conj_of_mem_subgradient_of_pairing_eq_zero hpf hxK hy hxy hwK
 
-/-- **Rockafellar, Theorem 31.4**, weak duality: every dual value is below every primal value.
-No hypothesis beyond `x ∈ K` and `x* ∈ K*`. -/
+/-- **Theorem 31.4**, weak duality: every dual value is below every primal value. No hypothesis
+beyond `x ∈ K` and `x* ∈ K*`. -/
 theorem theorem_31_4_weak {f : Rn n → EReal} {K : Set (Rn n)} {x : Rn n} (hxK : x ∈ K) {w : Rn n}
     (hwK : w ∈ -(polarCone (pairing n) K)) : -(conj (pairing n) f w) ≤ f x :=
   neg_conj_le_of_mem_neg_polarCone hxK hwK
@@ -923,8 +694,8 @@ theorem theorem_31_4_weak {f : Rn n → EReal} {K : Set (Rn n)} {x : Rn n} (hxK 
 conditions without a relative interior on the orthant side, which is the *polyhedral* form of
 Theorem 31.4; `polyhedral_nonnegOrthant` is what licenses it. -/
 
-/-- The non-negative orthant is polyhedral: it is cut out by the `n` inequalities `-ξⱼ ≤ 0`.
-The coordinate functionals are produced inside the proof, so that no new name for them reaches the
+/-- The non-negative orthant is polyhedral: it is cut out by the `n` inequalities `-ξⱼ ≤ 0`. The
+coordinate functionals are produced inside the proof, so that no new name for them reaches the
 statement. -/
 private theorem polyhedral_nonnegOrthant (n : ℕ) : Polyhedral (nonnegOrthant n) := by
   classical
@@ -976,7 +747,7 @@ private theorem pairing_eq_zero_iff_of_mem_nonnegOrthant {x y : Rn n} (hx : x �
     Finset.sum_eq_zero_iff_of_nonneg fun j _ => mul_nonneg (hx j) (hy j)]
   exact ⟨fun h j => h j (Finset.mem_univ j), fun h j _ => h j⟩
 
-/-- **Rockafellar, Corollary 31.4.1** (13623) under condition **(a)** (13633): for a closed proper
+/-- **Corollary 31.4.1** under condition **(a)**: for a closed proper
 convex `f` on `ℝⁿ` with some `x ∈ ri (dom f)` satisfying `x ≥ 0`,
 
 `inf {f(x) | x ≥ 0} = -inf {f*(x*) | x* ≥ 0}`.
@@ -992,7 +763,7 @@ theorem corollary_31_4_1_a {f : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper 
     (fun a ha => smul_nonnegOrthant n ha) ⟨0, zero_mem_nonnegOrthant n⟩ hxf hx₀
   rwa [neg_polarCone_nonnegOrthant] at h
 
-/-- **Rockafellar, Corollary 31.4.1** (13635): under (a) the second infimum is attained. -/
+/-- **Corollary 31.4.1**: under (a) the second infimum is attained. -/
 theorem corollary_31_4_1_a_attained {f : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper f)
     {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f)) (hx₀ : x₀ ∈ nonnegOrthant n) :
     ∃ y ∈ nonnegOrthant n, conj (pairing n) f y
@@ -1001,8 +772,8 @@ theorem corollary_31_4_1_a_attained {f : Rn n → EReal} (hf : ConvexFn f) (hpf 
     (fun a ha => smul_nonnegOrthant n ha) ⟨0, zero_mem_nonnegOrthant n⟩ hxf hx₀
   rwa [neg_polarCone_nonnegOrthant] at h
 
-/-- **Rockafellar, Corollary 31.4.1** (13623) under condition **(b)** (13635): the same equality
-from a point `x* ∈ ri (dom f*)` with `x* ≥ 0`. -/
+/-- **Corollary 31.4.1** under condition **(b)**: the same equality from a point `x* ∈ ri (dom f*)`
+with `x* ≥ 0`. -/
 theorem corollary_31_4_1_b {f : Rn n → EReal} (hf : ClosedProperConvexFn f) {y₀ : Rn n}
     (hyf : y₀ ∈ ri (dom (conj (pairing n) f))) (hy₀ : y₀ ∈ nonnegOrthant n) :
     (⨅ z ∈ nonnegOrthant n, f z)
@@ -1012,7 +783,7 @@ theorem corollary_31_4_1_b {f : Rn n → EReal} (hf : ClosedProperConvexFn f) {y
     (by rw [neg_polarCone_nonnegOrthant]; exact hy₀)
   rwa [neg_polarCone_nonnegOrthant] at h
 
-/-- **Rockafellar, Corollary 31.4.1** (13635): under (b) the *first* infimum is attained. -/
+/-- **Corollary 31.4.1**: under (b) the *first* infimum is attained. -/
 theorem corollary_31_4_1_b_attained {f : Rn n → EReal} (hf : ClosedProperConvexFn f) {y₀ : Rn n}
     (hyf : y₀ ∈ ri (dom (conj (pairing n) f))) (hy₀ : y₀ ∈ nonnegOrthant n) :
     ∃ x ∈ nonnegOrthant n, f x = ⨅ z ∈ nonnegOrthant n, f z := by
@@ -1021,7 +792,7 @@ theorem corollary_31_4_1_b_attained {f : Rn n → EReal} (hf : ClosedProperConve
   rw [neg_polarCone_nonnegOrthant]
   exact hy₀
 
-/-- **Rockafellar, Corollary 31.4.1** (13641), the complementary-slackness conditions: the two
+/-- **Corollary 31.4.1**, the complementary-slackness conditions: the two
 infima are the negatives of each other and attained at `x` and `x*` exactly when `x* ∈ ∂f(x)` and
 `ξⱼ ≥ 0`, `ξⱼ* ≥ 0`, `ξⱼ ξⱼ* = 0` for every `j`.
 
@@ -1053,7 +824,7 @@ theorem polarCone_coe_submodule_eq_orthogonal (M : Submodule ℝ (Rn n)) :
     have h' := (Submodule.mem_orthogonal M y).1 h u hu
     rwa [← pairing_apply] at h'
 
-/-- **Rockafellar, Corollary 31.4.2** (13643) under condition **(a)** (13653): for a closed proper
+/-- **Corollary 31.4.2** under condition **(a)**: for a closed proper
 convex `f` and a subspace `L` meeting `ri (dom f)`,
 
 `inf {f(x) | x ∈ L} = -inf {f*(x*) | x* ∈ L⊥}`.
@@ -1069,8 +840,7 @@ theorem corollary_31_4_2_a {f : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper 
   have h := iInf_mem_submodule_eq_neg_iInf_mem_polarCone hex
   rwa [polarCone_coe_submodule_eq_orthogonal] at h
 
-/-- **Rockafellar, Corollary 31.4.2** (13655): under (a) the infimum of `f*` on `L⊥` is
-attained. -/
+/-- **Corollary 31.4.2**: under (a) the infimum of `f*` on `L⊥` is attained. -/
 theorem corollary_31_4_2_a_attained {f : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper f)
     {M : Submodule ℝ (Rn n)} {x₀ : Rn n} (hxf : x₀ ∈ ri (dom f)) (hxM : x₀ ∈ M) :
     ∃ y ∈ ((Mᗮ : Submodule ℝ (Rn n)) : Set (Rn n)), conj (pairing n) f y
@@ -1079,8 +849,7 @@ theorem corollary_31_4_2_a_attained {f : Rn n → EReal} (hf : ConvexFn f) (hpf 
     (fun a ha => smul_coe_submodule M ha) ⟨0, M.zero_mem⟩ hxf hxM
   rwa [neg_polarCone_coe_submodule, polarCone_coe_submodule_eq_orthogonal] at h
 
-/-- **Rockafellar, Corollary 31.4.2** (13655): under condition **(b)** (13655) the infimum of `f`
-on `L` is attained. -/
+/-- **Corollary 31.4.2**: under condition **(b)** the infimum of `f` on `L` is attained. -/
 theorem corollary_31_4_2_b_attained {f : Rn n → EReal} (hf : ClosedProperConvexFn f)
     {M : Submodule ℝ (Rn n)} {y₀ : Rn n} (hyf : y₀ ∈ ri (dom (conj (pairing n) f)))
     (hyM : y₀ ∈ Mᗮ) :
@@ -1090,9 +859,9 @@ theorem corollary_31_4_2_b_attained {f : Rn n → EReal} (hf : ClosedProperConve
   rw [neg_polarCone_coe_submodule, polarCone_coe_submodule_eq_orthogonal]
   exact hyM
 
-/-- **Rockafellar, Corollary 31.4.2** (13658), the optimality conditions: over a subspace the
-orthogonality `⟨x, x*⟩ = 0` of Theorem 31.4 is automatic, so `x` and `x*` are jointly optimal
-exactly when `x ∈ L`, `x* ∈ L⊥` and `x* ∈ ∂f(x)`. -/
+/-- **Corollary 31.4.2**, the optimality conditions: over a subspace the orthogonality `⟨x, x*⟩ = 0`
+of Theorem 31.4 is automatic, so `x` and `x*` are jointly optimal exactly when `x ∈ L`, `x* ∈ L⊥`
+and `x* ∈ ∂f(x)`. -/
 theorem corollary_31_4_2_optimality {f : Rn n → EReal} (hpf : Proper f)
     {M : Submodule ℝ (Rn n)} {x y : Rn n} (hxM : x ∈ M) (hyM : y ∈ Mᗮ) :
     f x + conj (pairing n) f y = 0 ↔ y ∈ subgradient (pairing n) f x := by
@@ -1102,18 +871,14 @@ theorem corollary_31_4_2_optimality {f : Rn n → EReal} (hpf : Proper f)
 
 /-! ### Corollary 31.4.3: the duality between a co-finite `h` and `h*` -/
 
-/-- **Rockafellar, Corollary 31.4.3** (13673): for `h` convex on `ℝⁿ`, finite everywhere and
-co-finite, and `K` a nonempty convex cone,
-
+/-- **Corollary 31.4.3**: for `h` convex on `ℝⁿ`, finite everywhere and co-finite, and `K` a
+nonempty convex cone,
 `inf_{x ∈ K} {h(z + x) - ⟨z*, x⟩} + inf_{x* ∈ K*} {h*(z* + x*) - ⟨z, x*⟩} = ⟨z, z*⟩`.
 
-The whole proof is **Theorem 12.3** followed by Theorem 31.4: `f = h(z + ·) - ⟨·, z*⟩` has
-`dom f = ℝⁿ` and `dom f* = ℝⁿ`, so both of Rockafellar's conditions hold in their strongest form.
-Specialises `iInf_mem_add_iInf_mem_neg_polarCone_eq_pairing`.
-
-Closedness of `K` — which the book assumes for the whole corollary — is needed only for the
-attainment of the *first* infimum; the identity and both finiteness clauses hold for any nonempty
-convex cone. -/
+The proof is **Theorem 12.3** followed by Theorem 31.4: `f = h(z + ·) - ⟨·, z*⟩` has `dom f = ℝⁿ`
+and `dom f* = ℝⁿ`, so both of Rockafellar's conditions hold in their strongest form. Closedness of
+`K`, which the book assumes throughout the corollary, is needed only for the attainment of the
+*first* infimum. -/
 theorem corollary_31_4_3 {h : Rn n → EReal} (hcof : Cofinite h) (hdom : dom h = univ)
     {K : Set (Rn n)} (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
     (z z' : Rn n) :
@@ -1123,14 +888,14 @@ theorem corollary_31_4_3 {h : Rn n → EReal} (hcof : Cofinite h) (hdom : dom h 
       = ((pairing n z z' : ℝ) : EReal) :=
   iInf_mem_add_iInf_mem_neg_polarCone_eq_pairing hcof hdom hconv hcone hne z z'
 
-/-- **Rockafellar, Corollary 31.4.3** (13673): the first infimum is finite. -/
+/-- **Corollary 31.4.3**: the first infimum is finite. -/
 theorem corollary_31_4_3_iInf_eq_coe {h : Rn n → EReal} (hcof : Cofinite h) (hdom : dom h = univ)
     {K : Set (Rn n)} (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
     (z z' : Rn n) :
     ∃ s : ℝ, (⨅ x ∈ K, (h (z + x) - ((pairing n x z' : ℝ) : EReal))) = (s : EReal) :=
   exists_iInf_mem_eq_coe_of_cofinite hcof hdom hconv hcone hne z z'
 
-/-- **Rockafellar, Corollary 31.4.3** (13673): the second infimum is finite. -/
+/-- **Corollary 31.4.3**: the second infimum is finite. -/
 theorem corollary_31_4_3_iInf_dual_eq_coe {h : Rn n → EReal} (hcof : Cofinite h)
     (hdom : dom h = univ) {K : Set (Rn n)} (hconv : Convex ℝ K)
     (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (z z' : Rn n) :
@@ -1138,8 +903,8 @@ theorem corollary_31_4_3_iInf_dual_eq_coe {h : Rn n → EReal} (hcof : Cofinite 
       (conj (pairing n) h (z' + w) - ((pairing n z w : ℝ) : EReal))) = (r : EReal) :=
   exists_iInf_mem_neg_polarCone_eq_coe_of_cofinite hcof hdom hconv hcone hne z z'
 
-/-- **Rockafellar, Corollary 31.4.3** (13673): the first infimum is attained. This is the clause
-that needs `K` closed. -/
+/-- **Corollary 31.4.3**: the first infimum is attained. This is the clause that needs `K`
+closed. -/
 theorem corollary_31_4_3_attained {h : Rn n → EReal} (hcof : Cofinite h) (hdom : dom h = univ)
     {K : Set (Rn n)} (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty)
     (hcl : IsClosed K) (z z' : Rn n) :
@@ -1147,8 +912,8 @@ theorem corollary_31_4_3_attained {h : Rn n → EReal} (hcof : Cofinite h) (hdom
       = ⨅ u ∈ K, (h (z + u) - ((pairing n u z' : ℝ) : EReal)) :=
   exists_iInf_mem_eq_of_cofinite hcof hdom hconv hcone hne hcl z z'
 
-/-- **Rockafellar, Corollary 31.4.3** (13673): the second infimum is attained. Co-finiteness is not
-needed for this half, nor is closedness of `K`. -/
+/-- **Corollary 31.4.3**: the second infimum is attained. Co-finiteness is not needed for this half,
+nor is closedness of `K`. -/
 theorem corollary_31_4_3_dual_attained {h : Rn n → EReal} (hcof : Cofinite h)
     (hdom : dom h = univ) {K : Set (Rn n)} (hconv : Convex ℝ K)
     (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (z z' : Rn n) :
@@ -1165,23 +930,20 @@ Rockafellar's `w(z) = ½|z|²`. `□` is `infConv`, `prox (z ∣ f)` is `prox (p
 `moreauObj (pairing n) f z` is the objective `x ↦ f(x) + w(z - x)` whose infimum defines
 `(f □ w)(z)`. -/
 
-/-- **Rockafellar, Theorem 31.5** (13735): `w(z) = ½|z|²`, in the book's own notation. Specialises
-`quadFn_innerL`. -/
+/-- **Theorem 31.5**: `w(z) = ½|z|²`, in the book's own notation. Specialises `quadFn_innerL`. -/
 theorem theorem_31_5_quadFn (z : Rn n) : quadFn (pairing n) z = ((‖z‖ ^ 2 / 2 : ℝ) : EReal) :=
   quadFn_innerL z
 
-/-- **Rockafellar, Theorem 31.5 (Moreau)** (13735), the identity `(f □ w) + (f* □ w) = w` as an
-equation between functions.
-
-The backbone's proof is Theorem 27.1(a) applied to `f + w(z - ·)`, with `IsExactSum.conj_add_apply`
-splitting the conjugate of that sum at the origin — no separation and no `ri`. Specialises
-`moreau_add`. -/
+/-- **Theorem 31.5 (Moreau)**, the identity `(f □ w) + (f* □ w) = w` as an equation between
+functions. The backbone's proof is Theorem 27.1(a) applied to `f + w(z - ·)`, with
+`IsExactSum.conj_add_apply` splitting the conjugate of that sum at the origin — no separation and no
+`ri`. -/
 theorem theorem_31_5 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     infConv f (quadFn (pairing n)) + infConv (conj (pairing n) f) (quadFn (pairing n))
       = quadFn (pairing n) :=
   funext fun z => moreau_add hf z
 
-/-- **Rockafellar, Theorem 31.5** (13741), the identity written out at a point:
+/-- **Theorem 31.5**, the identity written out at a point:
 `inf_x {f(x) + w(z - x)} + inf_{x*} {f*(x*) + w(z - x*)} = w(z)`. -/
 theorem theorem_31_5_apply {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     (⨅ x, (f x + quadFn (pairing n) (z - x)))
@@ -1191,20 +953,20 @@ theorem theorem_31_5_apply {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z
     ← infConv_quadFn_apply (conj_ne_bot hf.proper.dom_nonempty) z]
   exact moreau_add hf z
 
-/-- **Rockafellar, Theorem 31.5** (13741): "both infima are finite". Specialises
-`infConv_quadFn_ne_bot` and `infConv_quadFn_ne_top`. -/
+/-- **Theorem 31.5**: "both infima are finite". Specialises `infConv_quadFn_ne_bot` and
+`infConv_quadFn_ne_top`. -/
 theorem theorem_31_5_finite {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     ∃ r : ℝ, infConv f (quadFn (pairing n)) z = (r : EReal) :=
   Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (infConv_quadFn_ne_bot hf z)
     (lt_top_iff_ne_top.2 (infConv_quadFn_ne_top hf z))
 
-/-- **Rockafellar, Theorem 31.5** (13741): the dual infimum is finite too. -/
+/-- **Theorem 31.5**: the dual infimum is finite too. -/
 theorem theorem_31_5_finite_conj {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     ∃ r : ℝ, infConv (conj (pairing n) f) (quadFn (pairing n)) z = (r : EReal) :=
   Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (infConv_conj_quadFn_ne_bot hf z)
     (lt_top_iff_ne_top.2 (infConv_conj_quadFn_ne_top hf z))
 
-/-- **Rockafellar, Theorem 31.5** (13747): the two infima are *uniquely* attained, and the unique
+/-- **Theorem 31.5**: the two infima are *uniquely* attained, and the unique
 minimisers are the unique pair with `z = x + x*` and `x* ∈ ∂f(x)`.
 
 The backbone's uniqueness is monotonicity of `∂f` (Theorem 24.8) at the two pairs, not strict
@@ -1222,80 +984,72 @@ theorem theorem_31_5_existsUnique {f : Rn n → EReal} (hf : ClosedProperConvexF
   subst hu
   rfl
 
-/-- **Rockafellar, Theorem 31.5** (13750), the characterisation of the minimiser: `x` attains
-`inf_x {f(x) + w(z - x)}` exactly when `z - x ∈ ∂f(x)`. Specialises
-`mem_argmin_moreauObj_iff`. -/
+/-- **Theorem 31.5**, the characterisation of the minimiser: `x` attains `inf_x {f(x) + w(z - x)}`
+exactly when `z - x ∈ ∂f(x)`. Specialises `mem_argmin_moreauObj_iff`. -/
 theorem theorem_31_5_argmin_iff {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z x : Rn n) :
     x ∈ argmin (moreauObj (pairing n) f z) ↔ z - x ∈ subgradient (pairing n) f x :=
   mem_argmin_moreauObj_iff hf z x
 
-/-- **Rockafellar, Theorem 31.5** (13823): `prox (z ∣ f)` is the unique minimiser, so the minimum
-set is a singleton. Specialises `argmin_moreauObj_eq_singleton`. -/
+/-- **Theorem 31.5**: `prox (z ∣ f)` is the unique minimiser, so the minimum set is a singleton.
+Specialises `argmin_moreauObj_eq_singleton`. -/
 theorem theorem_31_5_argmin_eq {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     argmin (moreauObj (pairing n) f z) = {prox (pairing n) f z} :=
   argmin_moreauObj_eq_singleton hf z
 
-/-- **Rockafellar, §31** (13823), the defining property of the **proximation**: `prox (z ∣ f)` is
-the unique `x` with `z - x ∈ ∂f(x)`. Specialises `prox_eq_iff`. -/
+/-- **§31**, the defining property of the **proximation**: `prox (z ∣ f)` is the unique `x` with
+`z - x ∈ ∂f(x)`. Specialises `prox_eq_iff`. -/
 theorem prox_eq_iff_sub_mem_subgradient {f : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (z x : Rn n) : prox (pairing n) f z = x ↔ z - x ∈ subgradient (pairing n) f x :=
   prox_eq_iff hf z x
 
-/-- **Rockafellar, §31** (13820): the decomposition `z = prox (z ∣ f) + prox (z ∣ f*)`. -/
+/-- **§31**: the decomposition `z = prox (z ∣ f) + prox (z ∣ f*)`. -/
 theorem prox_add_prox_conj_eq {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     prox (pairing n) f z + prox (pairing n) (conj (pairing n) f) z = z :=
   prox_add_prox_conj hf z
 
-/-- **Rockafellar, §31** (13838): `prox (z ∣ f*) = z - prox (z ∣ f)`. Specialises
-`prox_conj_eq`. -/
+/-- **§31**: `prox (z ∣ f*) = z - prox (z ∣ f)`. Specialises `prox_conj_eq`. -/
 theorem prox_conj_eq_sub {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     prox (pairing n) (conj (pairing n) f) z = z - prox (pairing n) f z :=
   prox_conj_eq hf z
 
-/-- **Rockafellar, Theorem 31.5** (13756): `x* = ∇(f □ w)(z)`, the gradient formula for the
-Moreau envelope of `f`. The subdifferential of `f □ w` is the single point `prox (z ∣ f*)`, so
-Theorem 25.1's converse upgrades it to a gradient. Specialises `gradient_infConv_quadFn`. -/
+/-- **Theorem 31.5**: `x* = ∇(f □ w)(z)`, the gradient formula for the Moreau envelope of `f`. The
+subdifferential of `f □ w` is the single point `prox (z ∣ f*)`, so Theorem 25.1's converse upgrades
+it to a gradient. Specialises `gradient_infConv_quadFn`. -/
 theorem theorem_31_5_gradient {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     gradient (fun u => (infConv f (quadFn (pairing n)) u).toReal) z
       = z - prox (pairing n) f z :=
   gradient_infConv_quadFn hf z
 
-/-- **Rockafellar, Theorem 31.5** (13756): `x = ∇(f* □ w)(z)`. Specialises
-`gradient_infConv_conj_quadFn`. -/
+/-- **Theorem 31.5**: `x = ∇(f* □ w)(z)`. Specialises `gradient_infConv_conj_quadFn`. -/
 theorem theorem_31_5_gradient_conj {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z : Rn n) :
     gradient (fun u => (infConv (conj (pairing n) f) (quadFn (pairing n)) u).toReal) z
       = prox (pairing n) f z :=
   gradient_infConv_conj_quadFn hf z
 
-/-- **Rockafellar, §31** (13841): `prox (· ∣ f)` is the gradient mapping of the differentiable
-convex function `f* □ w`, hence continuous (Corollary 25.5.1). Specialises `continuous_prox`. -/
+/-- **§31**: `prox (· ∣ f)` is the gradient mapping of the differentiable convex function `f* □ w`,
+hence continuous (Corollary 25.5.1). Specialises `continuous_prox`. -/
 theorem prox_continuous {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     Continuous (prox (pairing n) f) :=
   continuous_prox hf
 
-/-- **The contraction property of `prox`** (13851–13885). Rockafellar states and proves it in
-*unnumbered running text*, and it is what Corollary 31.5.2 is built on, so it gets a name here:
-
-`|prox (z₁ ∣ f) - prox (z₀ ∣ f)| ≤ |z₁ - z₀|` for all `z₀`, `z₁`.
-
-The book's argument is exactly the backbone's: with `xᵢ = prox (zᵢ ∣ f)` and `xᵢ* = zᵢ - xᵢ`,
-expanding `|z₁ - z₀|²` and using monotonicity of `∂f` (end of §24) to drop the cross term gives
-`|z₁ - z₀|² ≥ |x₁ - x₀|²`. Specialises `dist_prox_prox_le`, which is
-`pairingNorm_prox_sub_le` read at the inner product, where the pairing norm *is* the norm. -/
+/-- **The contraction property of `prox`**, which Rockafellar states and proves in *unnumbered
+running text* and on which Corollary 31.5.2 is built: `|prox (z₁ ∣ f) - prox (z₀ ∣ f)| ≤ |z₁ - z₀|`.
+With `xᵢ = prox (zᵢ ∣ f)` and `xᵢ* = zᵢ - xᵢ`, expanding `|z₁ - z₀|²` and dropping the cross term by
+monotonicity of `∂f` gives `|z₁ - z₀|² ≥ |x₁ - x₀|²`. -/
 theorem prox_contraction {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (z₀ z₁ : Rn n) :
     ‖prox (pairing n) f z₁ - prox (pairing n) f z₀‖ ≤ ‖z₁ - z₀‖ := by
   have h := dist_prox_prox_le (E := Rn n) hf z₁ z₀
   rwa [dist_eq_norm, dist_eq_norm] at h
 
-/-- **The contraction property of `prox`** (13851–13885), packaged as a Lipschitz bound with
-constant `1`. Specialises `lipschitzWith_prox`. -/
+/-- **The contraction property of `prox`**, packaged as a Lipschitz bound with constant `1`.
+Specialises `lipschitzWith_prox`. -/
 theorem prox_lipschitzWith_one {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     LipschitzWith 1 (prox (pairing n) f) :=
   lipschitzWith_prox hf
 
-/-- **Rockafellar, §31** (13849): "the range of `prox (· ∣ f)` is of course `dom ∂f`". Unnumbered,
-and one line in each direction: `z - prox (z ∣ f) ∈ ∂f (prox (z ∣ f))` gives `⊆`, and a subgradient
-`y ∈ ∂f(x)` exhibits `x` as `prox (x + y ∣ f)`. -/
+/-- **§31**: "the range of `prox (· ∣ f)` is of course `dom ∂f`". Unnumbered, and one line in each
+direction: `z - prox (z ∣ f) ∈ ∂f (prox (z ∣ f))` gives `⊆`, and a subgradient `y ∈ ∂f(x)` exhibits
+`x` as `prox (x + y ∣ f)`. -/
 theorem range_prox {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     Set.range (prox (pairing n) f) = {x : Rn n | (subgradient (pairing n) f x).Nonempty} := by
   ext x
@@ -1306,15 +1060,11 @@ theorem range_prox {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     refine ⟨x + y, prox_eq_of_sub_mem_subgradient hf ?_⟩
     rwa [add_sub_cancel_left]
 
-/-- **Rockafellar, Corollary 31.5.1** (13889) — *stated in the book with no proof at all*, like
-Corollary 23.5.1. The mapping `(x, x*) ↦ x + x*` is one-to-one from the graph of `∂f` onto `ℝⁿ`
-and continuous in both directions, so the graph of `∂f` is homeomorphic to `ℝⁿ`.
-
-A `Homeomorph` *is* that statement: bijective, continuous, with continuous inverse. Bijectivity is
-Theorem 31.5 (`theorem_31_5_existsUnique`); continuity of the inverse
-`z ↦ (prox (z ∣ f), z - prox (z ∣ f))` is the contraction property `prox_contraction`, and that is
-the whole analytic content — Theorem 24.4 (closedness of the graph) is not used. Specialises
-`subgradientRelHomeomorph`. -/
+/-- **Corollary 31.5.1** — *stated in the book with no proof at all*. The mapping `(x, x*) ↦ x + x*`
+is one-to-one from the graph of `∂f` onto `ℝⁿ` and continuous in both directions, so that graph is
+homeomorphic to `ℝⁿ`. A `Homeomorph` *is* that statement: bijectivity is Theorem 31.5, and
+continuity of the inverse `z ↦ (prox (z ∣ f), z - prox (z ∣ f))` is `prox_contraction`. Theorem 24.4
+is not used. -/
 noncomputable def corollary_31_5_1 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     ↥(subgradientRel (pairing n) f) ≃ₜ Rn n :=
   subgradientRelHomeomorph hf
@@ -1328,29 +1078,22 @@ noncomputable def corollary_31_5_1 {f : Rn n → EReal} (hf : ClosedProperConvex
       = ⟨(prox (pairing n) f z, z - prox (pairing n) f z), sub_prox_mem_subgradient hf z⟩ :=
   rfl
 
-/-- **Rockafellar, Corollary 31.5.2** (13897): `∂f` is a *maximal monotone* mapping from `ℝⁿ` to
-`ℝⁿ`.
-
-Rockafellar's proof is the one the backbone runs: given `(y, y*)` outside the graph, Theorem 31.5
-produces `(x, x*)` in the graph with `x + x* = y + y*`, and then
+/-- **Corollary 31.5.2**: `∂f` is a *maximal monotone* mapping from `ℝⁿ` to `ℝⁿ`. Given `(y, y*)`
+outside the graph, Theorem 31.5 produces `(x, x*)` in the graph with `x + x* = y + y*`, and then
 `⟨y - x, y* - x*⟩ = -|y - x|² < 0`. This is *monotone* maximality, not the *cyclically* monotone
-maximality of Theorem 24.9; neither implies the other, and line 9631 of the book warns explicitly
-that this one does not follow from that one. Specialises
-`isMaximalMonotoneRel_subgradientRel`. -/
+maximality of Theorem 24.9; the book warns explicitly that neither implies the other. -/
 theorem corollary_31_5_2 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     IsMaximalMonotoneRel (pairing n) (subgradientRel (pairing n) f) :=
   isMaximalMonotoneRel_subgradientRel hf
 /-! ### Theorem 31.2: Fenchel's problem as a convex program
 
-Rockafellar (13257) exhibits the Fenchel problem as the convex program of §29 attached to the
-bifunction `(F u)(x) = f x - g (A x + u)`: the perturbation translates the concave function. The
-whole machinery of §§29–30 then applies, and Corollary 31.2.1 is what Theorem 30.4 and
-Corollary 30.5.2 give back. -/
+Rockafellar exhibits the Fenchel problem as the convex program of §29 attached to the bifunction
+`(F u)(x) = f x - g (A x + u)`: the perturbation translates the concave function. The whole
+machinery of §§29–30 then applies, and Corollary 31.2.1 is what Theorem 30.4 and Corollary 30.5.2
+give back. -/
 
-/-- The **Fenchel bifunction** `(F u)(x) = f x - g (A x + u)` of Rockafellar's line 13260: the
-Fenchel problem `inf (f - g ∘ A)` perturbed by translating the concave function.
-
-`fenchelBifun_apply` is the bridge back to the displayed formula. -/
+/-- The **Fenchel bifunction** `(F u)(x) = f x - g (A x + u)`: the Fenchel problem `inf (f - g ∘ A)`
+perturbed by translating the concave function. -/
 noncomputable def fenchelBifun (A : Rn n →ₗ[ℝ] Rn m) (f : Rn n → EReal) (g : Rn m → EReal) :
     Bifun (Rn m) (Rn n) := fun u x => f x - g (A x + u)
 
@@ -1372,7 +1115,7 @@ private theorem graphFn_fenchelBifun (A : Rn n →ₗ[ℝ] Rn m) (f : Rn n → E
     graphFn (fenchelBifun A f g)
       = compLin f (LinearMap.snd ℝ (Rn m) (Rn n)) + compLin (fun w => -(g w)) (shiftLin A) := rfl
 
-/-- **Rockafellar, Theorem 31.2** (13263), first assertion: `F` is a convex bifunction. -/
+/-- **Theorem 31.2**, first assertion: `F` is a convex bifunction. -/
 theorem theorem_31_2_convex (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hf : ConvexFn f) (hpf : Proper f) (hg : ConcaveFn g) (hpg : ProperConcave g) :
     ConvexBifun (fenchelBifun A f g) := by
@@ -1381,9 +1124,9 @@ theorem theorem_31_2_convex (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g 
     (convexFn_compLin _ (concaveFn_iff_convexFn_neg.1 hg)) (fun p => hpf.ne_bot _) fun p => ?_
   simpa using hpg.ne_top (shiftLin A p)
 
-/-- **Rockafellar, Theorem 31.2** (13263), second assertion: `F` is proper. Properness is
-automatic — it needs no relative-interior hypothesis, only a point of `dom f` and a point of
-`dom g`, which `Proper` and `ProperConcave` supply. -/
+/-- **Theorem 31.2**, second assertion: `F` is proper. Properness is automatic — it needs no
+relative-interior hypothesis, only a point of `dom f` and a point of `dom g`, which `Proper` and
+`ProperConcave` supply. -/
 theorem theorem_31_2_proper (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hpf : Proper f) (hpg : ProperConcave g) : Proper (graphFn (fenchelBifun A f g)) := by
   obtain ⟨x₀, hx₀⟩ := hpf.dom_nonempty
@@ -1402,7 +1145,7 @@ theorem theorem_31_2_proper (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g 
     exact EReal.coe_lt_top _
   · exact _root_.EReal.add_ne_bot_iff.2 ⟨hpf.ne_bot p.2, by simpa using hpg.ne_top (A p.2 + p.1)⟩
 
-/-- **Rockafellar, Theorem 31.2** (13263), third assertion: `F` is closed when `f` and `g` are. -/
+/-- **Theorem 31.2**, third assertion: `F` is closed when `f` and `g` are. -/
 theorem theorem_31_2_closed (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hf : ClosedProperConvexFn f) (hg : ClosedProperConcaveFn g) :
     ClosedBifun (fenchelBifun A f g) := by
@@ -1423,8 +1166,8 @@ theorem theorem_31_2_closed (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g 
     exact ⟨p, hp⟩
 
 /-- The linear map `(w, x) ↦ w - A x`, whose image of `dom g ×ˢ dom f` is `dom F`. Writing the
-book's `dom g - A (dom f)` as one linear image is what lets Theorem 6.6 and the product formula
-for relative interiors do the whole job at once. -/
+book's `dom g - A (dom f)` as one linear image is what lets Theorem 6.6 and the product formula for
+relative interiors do the whole job at once. -/
 private def subLin (A : Rn n →ₗ[ℝ] Rn m) : (Rn m × Rn n) →ₗ[ℝ] Rn m :=
   LinearMap.fst ℝ (Rn m) (Rn n) - A ∘ₗ LinearMap.snd ℝ (Rn m) (Rn n)
 
@@ -1440,17 +1183,15 @@ private theorem sub_image_eq_subLin_image (A : Rn n →ₗ[ℝ] Rn m) (S : Set (
   · rintro ⟨⟨w, x⟩, ⟨hw, hx⟩, rfl⟩
     exact ⟨w, hw, A x, ⟨x, hx, rfl⟩, rfl⟩
 
-/-- **Rockafellar, Theorem 6.6 and Corollary 6.6.2** in the combination this section needs:
-`ri (S - A T) = ri S - A (ri T)`.  Surface §6's `theorem_6_6_ri` is stated only for maps
-`Rn n →ₗ[ℝ] Rn m`, and the map here goes out of a product, so Theorem 6.6 is taken in its backbone
-form `Convex.relint_image`.  Stating this once, with the two sets opaque, also keeps the elaborator
-away from the conjugates it is applied to. -/
+/-- **Theorem 6.6 and Corollary 6.6.2** in the combination this section needs:
+`ri (S - A T) = ri S - A (ri T)`. The map `(w, x) ↦ w - A x` goes out of a *product*, so Theorem 6.6
+is taken in its backbone form `Convex.relint_image`. -/
 private theorem relint_sub_image (A : Rn n →ₗ[ℝ] Rn m) {S : Set (Rn m)} {T : Set (Rn n)}
     (hS : Convex ℝ S) (hT : Convex ℝ T) : ri (S - A '' T) = ri S - A '' ri T := by
   rw [sub_image_eq_subLin_image, sub_image_eq_subLin_image,
     Convex.relint_image (hS.prod hT) (subLin A), intrinsicInterior_prod_eq]
 
-/-- `F u` is `+∞` at `x` unless `x ∈ dom f` and `A x + u ∈ dom g` (13283). -/
+/-- `F u` is `+∞` at `x` unless `x ∈ dom f` and `A x + u ∈ dom g`. -/
 private theorem fenchelBifun_ne_top_iff {f : Rn n → EReal} {g : Rn m → EReal} (hpf : Proper f)
     (hpg : ProperConcave g) (A : Rn n →ₗ[ℝ] Rn m) (u : Rn m) (x : Rn n) :
     fenchelBifun A f g u x ≠ ⊤ ↔ x ∈ dom f ∧ A x + u ∈ domConcave g := by
@@ -1465,13 +1206,13 @@ private theorem fenchelBifun_ne_top_iff {f : Rn n → EReal} {g : Rn m → EReal
       ⟨lt_top_iff_ne_top.1 h1, ?_⟩
     simpa using (ne_of_gt h2)
 
-/-- **Rockafellar, Theorem 31.2** (13266): the optimal value of the convex program attached
-to `F` is the Fenchel infimum `inf {f x - g (A x)}`. -/
+/-- **Theorem 31.2**: the optimal value of the convex program attached to `F` is the Fenchel infimum
+`inf {f x - g (A x)}`. -/
 theorem theorem_31_2_infBifun (A : Rn n →ₗ[ℝ] Rn m) (f : Rn n → EReal) (g : Rn m → EReal) :
     infBifun (fenchelBifun A f g) 0 = ⨅ x, f x - g (A x) :=
   iInf_congr fun x => by rw [fenchelBifun_apply, add_zero]
 
-/-- **Rockafellar, Theorem 31.2** (13286): `dom F = dom g - A (dom f)`. -/
+/-- **Theorem 31.2**: `dom F = dom g - A (dom f)`. -/
 theorem theorem_31_2_domBifun (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hpf : Proper f) (hpg : ProperConcave g) :
     domBifun (fenchelBifun A f g) = domConcave g - A '' dom f := by
@@ -1488,16 +1229,16 @@ theorem theorem_31_2_domBifun (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {
     have hAx : A x + subLin A (w, x) = w := by change A x + (w - A x) = w; abel
     rwa [hAx]
 
-/-- **Rockafellar, Theorem 31.2** (13292): `ri (dom F) = ri (dom g) - A (ri (dom f))`, by
-Theorem 6.6 and Corollary 6.6.2 (`relint_sub_image`). -/
+/-- **Theorem 31.2**: `ri (dom F) = ri (dom g) - A (ri (dom f))`, by Theorem 6.6 and Corollary 6.6.2
+(`relint_sub_image`). -/
 theorem theorem_31_2_relint_domBifun (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hf : ConvexFn f) (hpf : Proper f) (hg : ConcaveFn g) (hpg : ProperConcave g) :
     ri (domBifun (fenchelBifun A f g)) = ri (domConcave g) - A '' ri (dom f) := by
   rw [theorem_31_2_domBifun A hpf hpg,
     relint_sub_image A hg.convex_domConcave hf.convex_dom]
 
-/-- **Rockafellar, Theorem 31.2** (13269): the primal program is strongly consistent exactly
-when `A (ri (dom f))` meets `ri (dom g)` — condition (a) of Theorem 31.1, in program form. -/
+/-- **Theorem 31.2**: the primal program is strongly consistent exactly when `A (ri (dom f))` meets
+`ri (dom g)` — condition (a) of Theorem 31.1, in program form. -/
 theorem theorem_31_2_stronglyConsistent_iff (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal}
     {g : Rn m → EReal} (hf : ConvexFn f) (hpf : Proper f) (hg : ConcaveFn g)
     (hpg : ProperConcave g) :
@@ -1519,16 +1260,10 @@ theorem theorem_31_2_stronglyConsistent_iff (A : Rn n →ₗ[ℝ] Rn m) {f : Rn 
     change A x - A x = 0
     exact sub_self _
 
-/-! #### The adjoint of the Fenchel bifunction
+/-- Regrouping the five terms of Rockafellar's third display. Both sides are sums of the same
+`EReal`s, so associativity and commutativity settle it — no finiteness needed. -/
 
-Rockafellar's calculation (13301–13320) is a change of variable `w = A x + u` followed by a split
-of one infimum over a product into two independent infima.  The split is where `EReal` bites: it
-is *false* without a side condition (take `ψ i = -i` on `ℕ` and `φ ≡ ⊤`; then `⨅ ψ = ⊥`,
-`⨅ φ = ⊤`, the sum is `⊥`, but every `ψ i + φ j` is `⊤`, so the joint infimum is `⊤`).
-`Tdaf.EReal.iInf_prod_add` supplies it under `⨅ ψ ≠ ⊤` and `⨅ φ ≠ ⊤`, which properness gives at a
-single point of each effective domain. -/
-
-/-- Regrouping the five terms of Rockafellar's third display.  Both sides are sums of the same
+/-- Regrouping the five terms of Rockafellar's third display. Both sides are sums of the same
 `EReal`s, so `AddCommMonoid` associativity and commutativity settle it — no finiteness needed. -/
 private theorem ereal_regroup (a b : EReal) (P K : ℝ) :
     a - b + ((P - K : ℝ) : EReal) = ((P : ℝ) : EReal) - b + (a - ((K : ℝ) : EReal)) := by
@@ -1543,7 +1278,7 @@ private def shiftEquiv (A : Rn n →ₗ[ℝ] Rn m) : (Rn m × Rn n) ≃ (Rn m ×
   left_inv := by rintro ⟨w, x⟩; simp
   right_inv := by rintro ⟨u, x⟩; simp
 
-/-- **Rockafellar, Theorem 31.2** (13272): the adjoint of the Fenchel bifunction is
+/-- **Theorem 31.2**: the adjoint of the Fenchel bifunction is
 `(F* x*)(u*) = g*(u*) - f*(A* u* + x*)`. -/
 theorem theorem_31_2_adjoint (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hpf : Proper f) (hpg : ProperConcave g) (y : Rn n) (v : Rn m) :
@@ -1600,8 +1335,8 @@ theorem theorem_31_2_adjoint (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g
     exact (iInf_congr fun x => Tdaf.EReal.neg_coe_sub _ _).symm
   rw [hsplit, hsp, hc1, hc2, ← sub_eq_add_neg]
 
-/-- **Rockafellar, Theorem 31.2** (13278): the optimal value of the dual concave program is
-`sup {g*(u*) - f*(A* u*)}`. -/
+/-- **Theorem 31.2**: the optimal value of the dual concave program is `sup {g*(u*) - f*(A*
+u*)}`. -/
 theorem theorem_31_2_supBifun_adjoint (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hpf : Proper f) (hpg : ProperConcave g) :
     supBifun (adjointBifun (pairing m) (pairing n) (fenchelBifun A f g)) 0
@@ -1646,9 +1381,8 @@ theorem theorem_31_2_domConcaveBifun_adjoint (A : Rn n →ₗ[ℝ] Rn m) {f : Rn
       abel
     rwa [hz]
 
-/-- **Rockafellar, Theorem 31.2** (13281): the dual program is strongly consistent exactly
-when `A* (ri (dom g*))` meets `ri (dom f*)` — condition (b) of Corollary 31.2.1, in program
-form. -/
+/-- **Theorem 31.2**: the dual program is strongly consistent exactly when `A* (ri (dom g*))` meets
+`ri (dom f*)` — condition (b) of Corollary 31.2.1, in program form. -/
 theorem theorem_31_2_concaveStronglyConsistent_iff (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal}
     {g : Rn m → EReal} (hpf : Proper f) (hpg : ProperConcave g) :
     ConcaveStronglyConsistent (adjointBifun (pairing m) (pairing n) (fenchelBifun A f g))
@@ -1680,14 +1414,11 @@ theorem theorem_31_2_concaveStronglyConsistent_iff (A : Rn n →ₗ[ℝ] Rn m) {
     change LinearMap.adjoint A v - LinearMap.adjoint A v = 0
     exact sub_self _
 
-/-! ### Corollary 31.2.1 under condition (b)
+/-- **Corollary 31.2.1** under condition (b): if `ri (dom g*)` contains a `u*` with
+`A* u* ∈ ri (dom f*)` then the Fenchel duality equation holds. This is Theorem 31.2 followed by
+Theorem 30.4(b) and Theorem 30.3. -/
 
-Rockafellar derives Corollary 31.2.1 from Theorem 31.2 by way of Theorem 30.4 and
-Corollary 30.5.2, and under condition (b) that is the only route available: condition (b) is a
-statement about `ri (dom g*)` and `ri (dom f*)`, and the composite `g ∘ A` it would have to be
-turned into never appears in it. -/
-
-/-- **Rockafellar, Corollary 31.2.1** under condition (b) (13375): if `ri (dom g*)` contains
+/-- **Corollary 31.2.1** under condition (b): if `ri (dom g*)` contains
 a `u*` with `A* u* ∈ ri (dom f*)` then the Fenchel duality equation holds.
 
 This is Theorem 31.2 followed by Theorem 30.4(b) (a convex program whose dual is strongly
@@ -1710,8 +1441,8 @@ theorem corollary_31_2_1_b (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g :
   rw [← theorem_31_2_infBifun A f g, ← hgap]
   exact theorem_31_2_supBifun_adjoint A hf.proper hg.proper
 
-/-- **Rockafellar, Corollary 31.2.1** under condition (b), attainment clause (13377): the
-*infimum* is attained at some `x`. -/
+/-- **Corollary 31.2.1** under condition (b), attainment clause: the *infimum* is attained at some
+`x`. -/
 theorem corollary_31_2_1_b_attained (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
     (hf : ClosedProperConvexFn f) (hg : ClosedProperConcaveFn g) {v₀ : Rn m}
     (hv : v₀ ∈ ri (domConcave (concaveConj (pairing m) g)))
