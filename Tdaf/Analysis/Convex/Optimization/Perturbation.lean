@@ -20,10 +20,10 @@ parameter `u`. The **generalized convex program** `(P)` associated with `F` is "
 is worth buying.
 
 Everything rests on one identification: `inf F` is a partial minimisation of the graph function,
-hence convex, and `v` is a Kuhn–Tucker vector exactly when `-v ∈ ∂(inf F)(0)` (**Theorem 29.1**).
-The Kuhn–Tucker set is a reflected subdifferential, so the theory of §23 transfers wholesale:
-existence under strong consistency, compactness under strict consistency, the
-directional-derivative formulas, the polyhedral case.
+hence convex, and `v` is a Kuhn–Tucker vector exactly when `-v ∈ ∂(inf F)(0)`. The Kuhn–Tucker set
+is a reflected subdifferential, so the whole subgradient theory transfers wholesale: existence
+under strong consistency, compactness under strict consistency, the directional-derivative
+formulas, the polyhedral case.
 
 ## Main definitions
 
@@ -36,28 +36,30 @@ directional-derivative formulas, the polyhedral case.
 
 ## Main results
 
-* `convexFn_infBifun`, `dom_infBifun`, `mem_kuhnTucker_iff_neg_mem_subgradient` — **Theorem 29.1**.
+* `convexFn_infBifun`, `dom_infBifun`, `mem_kuhnTucker_iff_neg_mem_subgradient` — `inf F` is
+  convex with effective domain `dom F`, and `∂(inf F)(0)` is the reflected Kuhn–Tucker set
+  (Theorem 29.1 in [^1]).
 * `kuhnTucker_eq_neg_subgradient`, `convex_kuhnTucker`, `isClosed_kuhnTucker`,
-  `supportFn_kuhnTucker` — **Corollary 29.1.1**; `kuhnTucker_eq_empty_iff` — **Corollary 29.1.2**;
-  `kuhnTucker_eq_singleton_of_hasGradientAt` — **Corollary 29.1.3**;
-  `kuhnTucker_nonempty_of_stronglyConsistent`, `dirDeriv_infBifun_eq` — **Corollary 29.1.4**.
-* `isCompact_kuhnTucker_of_strictlyConsistent`, `continuousOn_infBifun_interior` —
-  **Corollary 29.1.5**; `infBifun_eq_bot_of_mem_relint` — **Corollary 29.1.6**.
+  `supportFn_kuhnTucker` — the Kuhn–Tucker set is closed convex with a computable support function;
+  `kuhnTucker_eq_empty_iff` — when it is empty; `kuhnTucker_eq_singleton_of_hasGradientAt` — when
+  it is one vector; `kuhnTucker_nonempty_of_stronglyConsistent`, `dirDeriv_infBifun_eq` — existence
+  and the directional-derivative formula.
+* `isCompact_kuhnTucker_of_strictlyConsistent`, `continuousOn_infBifun_interior` — what strict
+  consistency buys; `infBifun_eq_bot_of_mem_relint` — an improper `inf F` is `-∞` on `ri (dom F)`.
 * `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`,
-  `argmin_nonempty_of_polyhedralBifun` and companions — **Theorem 29.2**.
+  `argmin_nonempty_of_polyhedralBifun` and companions — the polyhedral case (Theorem 29.2 in [^1]).
 
 ## Implementation notes
 
-`KuhnTucker` is the book's own definition, not Theorem 29.1's conclusion: the inequality form
-`inf F 0 ≤ ⟨u, v⟩ + inf F u` is a consequence, and defining `KuhnTucker` by it would have made
-Theorem 29.1 an `Iff.rfl`. The boundedness clause of Corollary 29.1.5 is finite-dimensional in `V`:
-pairing-boundedness (Corollary 13.2.2) is all a general dual pair supports, and a norm bound needs
-a coordinate estimate against a finite basis.
+`KuhnTucker` is the book's own definition, not the subdifferential characterisation: the inequality
+form `inf F 0 ≤ ⟨u, v⟩ + inf F u` is a consequence, and defining `KuhnTucker` by it would have made
+that characterisation an `Iff.rfl`. The boundedness clause under strict consistency is
+finite-dimensional in `V`: pairing-boundedness is all a general dual pair supports, and a norm
+bound needs a coordinate estimate against a finite basis.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §29 (Theorems 29.1
-  and 29.2, Corollaries 29.1.1–29.1.6).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §29.
 -/
 
 open Pointwise
@@ -80,9 +82,9 @@ def graphFn (F : Bifun U X) : U × X → EReal := fun p => F p.1 p.2
 
 @[simp] theorem graphFn_apply (F : Bifun U X) (u : U) (x : X) : graphFn F (u, x) = F u x := rfl
 
-/-- **The inverse `F_*` of a bifunction** (§36): `(F_* x) u = -(F u)(x)`. Unlike `flipBifun` it
-also changes the sign, so it carries convex bifunctions to concave ones and back; it is
-involutory, and it is the operation §37 is built on. The sign flip is what makes
+/-- **The inverse `F_*` of a bifunction**: `(F_* x) u = -(F u)(x)`. Unlike `flipBifun` it also
+changes the sign, so it carries convex bifunctions to concave ones and back; it is involutory, and
+composition of bifunctions is built on it. The sign flip is what makes
 `(Ff)(x) = ⨅ (f - F_* x)` agree with `⨅ u, f u + (F u)(x)`. -/
 noncomputable def inverseBifun (F : Bifun U X) : Bifun X U := fun x u => -(F u x)
 
@@ -109,7 +111,7 @@ def domBifun (F : Bifun U X) : Set U := {u | ∃ x, F u x ≠ ⊤}
 @[simp] theorem mem_domBifun {F : Bifun U X} {u : U} :
     u ∈ domBifun F ↔ ∃ x, F u x ≠ ⊤ := Iff.rfl
 
-/-- **Theorem 29.1**, first assertion (domain half): `dom (inf F) = dom F`. -/
+/-- The effective domain of the perturbation function is the effective domain of `F`. -/
 theorem dom_infBifun (F : Bifun U X) : dom (infBifun F) = domBifun F := by
   ext u
   constructor
@@ -138,8 +140,8 @@ def ConvexBifun (F : Bifun U X) : Prop := ConvexFn (graphFn F)
 
 theorem convexBifun_iff : ConvexBifun F ↔ ConvexFn (graphFn F) := Iff.rfl
 
-/-- **Theorem 29.1**, first assertion (convexity half): the perturbation function of a convex
-bifunction is convex — Theorem 5.7 at the projection `(u, x) ↦ u`. -/
+/-- The perturbation function of a convex bifunction is convex: a partial minimisation of the
+jointly convex graph function along the projection `(u, x) ↦ u`. -/
 theorem convexFn_infBifun (hF : ConvexBifun F) : ConvexFn (infBifun F) :=
   convexFn_iInf_right hF
 
@@ -193,7 +195,7 @@ theorem StronglyConsistent.consistent (h : StronglyConsistent F) : Consistent F 
 
 end ConsistencyTopology
 
-/-! ### Theorem 29.1: Kuhn–Tucker vectors -/
+/-! ### Kuhn–Tucker vectors -/
 
 section KuhnTucker
 
@@ -235,9 +237,9 @@ private theorem coe_add_neg_le_iff {c p : ℝ} {w : EReal} :
       constructor <;> intro h <;> linarith
   | top => simp
 
-/-- **Theorem 29.1**, second assertion: when the optimal value is finite, the Kuhn–Tucker vectors
-are exactly the `v` with `-v ∈ ∂(inf F)(0)`. The subgradient inequality at `0` in the direction
-`-v` says precisely that no perturbation is worth buying at the price `v`. -/
+/-- When the optimal value is finite, the Kuhn–Tucker vectors are exactly the `v` with
+`-v ∈ ∂(inf F)(0)`. The subgradient inequality at `0` in the direction `-v` says precisely that no
+perturbation is worth buying at the price `v`. -/
 theorem mem_kuhnTucker_iff_neg_mem_subgradient (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) :
     v ∈ KuhnTucker B F ↔ -v ∈ subgradient B (infBifun F) 0 := by
   obtain ⟨c, hc⟩ := EReal.exists_coe_of_ne_bot_of_lt_top hb (lt_top_iff_ne_top.2 ht)
@@ -249,15 +251,15 @@ theorem mem_kuhnTucker_iff_neg_mem_subgradient (ht : infBifun F 0 ≠ ⊤) (hb :
   rw [mem_kuhnTucker_iff_forall_le, mem_subgradient]
   exact ⟨fun h u => (hiff u).1 (h.2.2 u), fun h => ⟨ht, hb, fun u => (hiff u).2 (h u)⟩⟩
 
-/-- **Theorem 29.1** as an equation between sets: the Kuhn–Tucker set is the reflected
-subdifferential of the perturbation function at the origin. -/
+/-- The same as an equation between sets: the Kuhn–Tucker set is the reflected subdifferential of
+the perturbation function at the origin. -/
 theorem kuhnTucker_eq_neg_subgradient (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) :
     KuhnTucker B F = -(subgradient B (infBifun F) 0) := by
   ext v
   rw [Set.mem_neg]
   exact mem_kuhnTucker_iff_neg_mem_subgradient ht hb
 
-/-- **Corollary 29.1.1**, convexity half: the Kuhn–Tucker vectors form a convex set. -/
+/-- The Kuhn–Tucker vectors form a convex set. -/
 theorem convex_kuhnTucker (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) :
     Convex ℝ (KuhnTucker B F) := by
   rw [kuhnTucker_eq_neg_subgradient ht hb]
@@ -272,7 +274,7 @@ section Topology
 variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {F : Bifun U X}
 
-/-- **Corollary 29.1.1**, closedness half: the Kuhn–Tucker vectors form a closed set. -/
+/-- The Kuhn–Tucker vectors form a closed set. -/
 theorem isClosed_kuhnTucker [IsContinuousPairing B.flip] (ht : infBifun F 0 ≠ ⊤)
     (hb : infBifun F 0 ≠ ⊥) : IsClosed (KuhnTucker B F) := by
   rw [kuhnTucker_eq_neg_subgradient ht hb]
@@ -286,8 +288,8 @@ variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimen
   [NormedAddCommGroup V] [NormedSpace ℝ V] [AddCommGroup X] [Module ℝ X]
   {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {F : Bifun U X}
 
-/-- **Corollary 29.1.4**, existence half: a strongly consistent convex program whose perturbation
-function is proper has a Kuhn–Tucker vector. Theorem 23.4 applied to `inf F` at the origin. -/
+/-- A strongly consistent convex program whose perturbation function is proper has a Kuhn–Tucker
+vector: `inf F` is subdifferentiable at the origin, a relative-interior point of its domain. -/
 theorem kuhnTucker_nonempty_of_stronglyConsistent [IsCompatiblePairing B] (hF : ConvexBifun F)
     (hp : Proper (infBifun F)) (hs : StronglyConsistent F) (ht : infBifun F 0 ≠ ⊤) :
     (KuhnTucker B F).Nonempty := by
@@ -300,7 +302,7 @@ theorem kuhnTucker_nonempty_of_stronglyConsistent [IsCompatiblePairing B] (hF : 
 
 end Existence
 
-/-! ### Corollary 29.1.1: the directional derivative of the perturbation function -/
+/-! ### The directional derivative of the perturbation function -/
 
 section DirDeriv
 
@@ -325,12 +327,12 @@ theorem supportFn_neg_set (B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (s : Set U) (v :
     simp
 
 omit [AddCommGroup X] [Module ℝ X] in
-/-- **Corollary 29.1.1**: `(inf F)'(0; ·)` is positively homogeneous, for every bifunction. -/
+/-- `(inf F)'(0; ·)` is positively homogeneous, for every bifunction. -/
 theorem posHomogeneous_dirDeriv_infBifun (F : Bifun U X) :
     PosHomogeneous (dirDeriv (infBifun F) 0) :=
   posHomogeneous_dirDeriv _ _
 
-/-- **Corollary 29.1.1**: `(inf F)'(0; ·)` is convex in the direction when `inf F 0` is finite. -/
+/-- `(inf F)'(0; ·)` is convex in the direction when `inf F 0` is finite. -/
 theorem convexFn_dirDeriv_infBifun (hF : ConvexBifun F) (ht : infBifun F 0 ≠ ⊤)
     (hb : infBifun F 0 ≠ ⊥) : ConvexFn (dirDeriv (infBifun F) 0) :=
   convexFn_dirDeriv (convexFn_infBifun hF) ht hb
@@ -344,8 +346,8 @@ variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Modul
   [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
   {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {F : Bifun U X}
 
-/-- **Corollary 29.1.1**, derivative clause: the support function of the Kuhn–Tucker set is the
-closure of `u ↦ (inf F)'(0; -u)`. Theorem 23.2 at the origin, composed with the reflection. -/
+/-- The support function of the Kuhn–Tucker set is the closure of `u ↦ (inf F)'(0; -u)`: the
+support function of a subdifferential, composed with the reflection. -/
 theorem supportFn_kuhnTucker (hF : ConvexBifun F) (ht : infBifun F 0 ≠ ⊤)
     (hb : infBifun F 0 ≠ ⊥) (u : U) :
     supportFn B.flip (KuhnTucker B F) u = clFn (dirDeriv (infBifun F) 0) (-u) := by
@@ -354,7 +356,7 @@ theorem supportFn_kuhnTucker (hF : ConvexBifun F) (ht : infBifun F 0 ≠ ⊤)
 
 end DirDerivSupport
 
-/-! ### Corollaries 29.1.2 and 29.1.6 -/
+/-! ### The improper and the empty case -/
 
 section Improper
 
@@ -364,14 +366,15 @@ variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimen
 
 omit [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U] [AddCommGroup V]
   [Module ℝ V] [AddCommGroup X] [Module ℝ X] in
-/-- **Corollary 29.1.6**, trivial half: off `dom F` the optimal value is `+∞`. -/
+/-- Off `dom F` the optimal value is `+∞`. -/
 theorem infBifun_eq_top_of_notMem_domBifun {u : U} (hu : u ∉ domBifun F) : infBifun F u = ⊤ := by
   by_contra h
   exact hu (by rw [← dom_infBifun]; exact mem_dom.2 (lt_of_le_of_ne le_top h))
 
 omit [FiniteDimensional ℝ U] [AddCommGroup V] [Module ℝ V] in
-/-- **Corollary 29.1.6**: if some perturbation drives the optimal value to `-∞`, so does every
-perturbation in `ri (dom F)`. Theorem 7.2 applied to `inf F`. -/
+/-- If some perturbation drives the optimal value to `-∞`, so does every perturbation in
+`ri (dom F)`: an improper convex function is `-∞` throughout the relative interior of its
+domain. -/
 theorem infBifun_eq_bot_of_mem_relint (hF : ConvexBifun F) (h : ∃ u, infBifun F u = ⊥) {u : U}
     (hu : u ∈ ri (domBifun F)) : infBifun F u = ⊥ := by
   obtain ⟨u₀, hu₀⟩ := h
@@ -387,11 +390,10 @@ variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimen
   [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X]
   {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {F : Bifun U X}
 
-/-- **Corollary 29.1.2** (Theorem 23.3 applied to `inf F`): a convex program with a finite optimal
-value has no Kuhn–Tucker vector exactly when some direction of perturbation makes the two-sided
-directional derivative `-∞`, `(inf F)'(0; u) = -(inf F)'(0; -u) = -∞`. Forwards: an empty
-subdifferential makes `cl (inf F)'(0; ·)` the constant `-∞`, and the closure of a proper convex
-function is proper. -/
+/-- A convex program with a finite optimal value has no Kuhn–Tucker vector exactly when some
+direction of perturbation makes the two-sided directional derivative `-∞`,
+`(inf F)'(0; u) = -(inf F)'(0; -u) = -∞`. Forwards: an empty subdifferential makes
+`cl (inf F)'(0; ·)` the constant `-∞`, and the closure of a proper convex function is proper. -/
 theorem kuhnTucker_eq_empty_iff (hF : ConvexBifun F) (ht : infBifun F 0 ≠ ⊤)
     (hb : infBifun F 0 ≠ ⊥) :
     KuhnTucker B F = ∅ ↔
@@ -434,7 +436,7 @@ theorem kuhnTucker_eq_empty_iff (hF : ConvexBifun F) (ht : infBifun F 0 ≠ ⊤)
 
 end Cor2912
 
-/-! ### Corollaries 29.1.3, 29.1.4 and 29.1.5 -/
+/-! ### What consistency and differentiability buy -/
 
 section Consistency
 
@@ -443,7 +445,7 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
 
 omit [FiniteDimensional ℝ U] in
 /-- A strongly consistent convex program whose optimal value is `> -∞` has a proper perturbation
-function: by Corollary 29.1.6 an improper `inf F` is `-∞` throughout `ri (dom F)`. -/
+function: an improper `inf F` would be `-∞` throughout `ri (dom F)`. -/
 theorem proper_infBifun_of_stronglyConsistent (hF : ConvexBifun F) (hs : StronglyConsistent F)
     (hb : infBifun F 0 ≠ ⊥) : Proper (infBifun F) := by
   refine ⟨⟨0, ?_⟩, fun u => ?_⟩
@@ -451,8 +453,8 @@ theorem proper_infBifun_of_stronglyConsistent (hF : ConvexBifun F) (hs : Strongl
     exact StronglyConsistent.consistent hs
   · exact fun hcon => hb (infBifun_eq_bot_of_mem_relint hF ⟨u, hcon⟩ hs)
 
-/-- **Corollary 29.1.5**, first clause: under strict consistency the optimal value is finite and
-continuous on `int (dom F)`, a neighbourhood of the origin. -/
+/-- Under strict consistency the optimal value is finite and continuous on `int (dom F)`, a
+neighbourhood of the origin. -/
 theorem continuousOn_infBifun_interior (hF : ConvexBifun F) (hp : Proper (infBifun F)) :
     ContinuousOn (infBifun F) (interior (domBifun F)) := by
   have hsub : interior (domBifun F) ⊆ ri (dom (infBifun F)) := by
@@ -475,9 +477,9 @@ variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimen
   [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X]
   {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {F : Bifun U X}
 
-/-- **Corollary 29.1.4**, derivative formula: for a strongly consistent program with a proper
-perturbation function, `(inf F)'(0; u) = δ*(-u | U*)`, the support function of the Kuhn–Tucker set
-read at the reflected direction. Theorem 23.4 composed with `KuhnTucker B F = -∂(inf F)(0)`. -/
+/-- **The derivative formula**: for a strongly consistent program with a proper perturbation
+function, `(inf F)'(0; u) = δ*(-u | U*)`, the support function of the Kuhn–Tucker set read at the
+reflected direction. -/
 theorem dirDeriv_infBifun_eq (hF : ConvexBifun F) (hp : Proper (infBifun F))
     (hs : StronglyConsistent F) (u : U) :
     dirDeriv (infBifun F) 0 u = supportFn B.flip (KuhnTucker B F) (-u) := by
@@ -486,8 +488,8 @@ theorem dirDeriv_infBifun_eq (hF : ConvexBifun F) (hp : Proper (infBifun F))
   rw [kuhnTucker_eq_neg_subgradient ht (hp.ne_bot 0), supportFn_neg_set, neg_neg,
     dirDeriv_eq_supportFn_of_mem_relint_dom (B := B) (convexFn_infBifun hF) hp hri]
 
-/-- **Corollary 29.1.5**: under *strict* consistency the Kuhn–Tucker set is bounded in the pairing
-sense of Corollary 13.2.2 — every `⟨u, ·⟩` is bounded above on it. -/
+/-- Under *strict* consistency the Kuhn–Tucker set is bounded in the pairing sense: every
+`⟨u, ·⟩` is bounded above on it. -/
 theorem bddAbove_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F) (hp : Proper (infBifun F))
     (hs : StrictlyConsistent F) (u : U) :
     ∃ c : ℝ, ∀ v ∈ KuhnTucker B F, B u v ≤ c := by
@@ -509,8 +511,8 @@ variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimen
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] [AddCommGroup X] [Module ℝ X]
   {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {F : Bifun U X}
 
-/-- **Corollary 29.1.5**, boundedness half: under *strict* consistency the Kuhn–Tucker set is
-bounded in the norm. The upgrade from pairing-boundedness is finite-dimensional. -/
+/-- Under *strict* consistency the Kuhn–Tucker set is bounded in the norm. The upgrade from
+pairing-boundedness is finite-dimensional. -/
 theorem isBounded_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F)
     (hp : Proper (infBifun F)) (hs : StrictlyConsistent F) :
     Bornology.IsBounded (KuhnTucker B F) := by
@@ -518,9 +520,9 @@ theorem isBounded_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F)
   intro u
   simpa using bddAbove_kuhnTucker_of_strictlyConsistent (B := B) hF hp hs u
 
-/-- **Corollary 29.1.5**: under *strict* consistency the Kuhn–Tucker set is compact — closed by
-Corollary 29.1.1, bounded by Theorem 23.4, hence compact by Heine–Borel. With nonemptiness and
-convexity this is the book's "non-empty closed bounded convex set". -/
+/-- Under *strict* consistency the Kuhn–Tucker set is compact — closed and bounded, hence compact
+by Heine–Borel. With nonemptiness and convexity this is the book's "non-empty closed bounded convex
+set". -/
 theorem isCompact_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F)
     (hp : Proper (infBifun F)) (hs : StrictlyConsistent F) (ht : infBifun F 0 ≠ ⊤) :
     IsCompact (KuhnTucker B F) :=
@@ -528,8 +530,7 @@ theorem isCompact_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F)
     (isBounded_kuhnTucker_of_strictlyConsistent hF hp hs)
 
 omit [FiniteDimensional ℝ V] [IsCompatiblePairing B.flip] in
-/-- **Corollary 29.1.5**, existence half: a strictly consistent program is strongly consistent, so
-Theorem 23.4 gives it a Kuhn–Tucker vector. -/
+/-- A strictly consistent program is strongly consistent, so it has a Kuhn–Tucker vector. -/
 theorem kuhnTucker_nonempty_of_strictlyConsistent (hF : ConvexBifun F)
     (hp : Proper (infBifun F)) (hs : StrictlyConsistent F) (ht : infBifun F 0 ≠ ⊤) :
     (KuhnTucker B F).Nonempty :=
@@ -543,8 +544,8 @@ variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Modul
   [AddCommGroup X] [Module ℝ X] {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {F : Bifun U X}
 
 omit [AddCommGroup X] [Module ℝ X] in
-/-- **Corollary 29.1.3**, algebraic form: if `(inf F)'(0; ·)` is the linear function `⟨·, -v₀⟩` then
-`v₀` is the unique Kuhn–Tucker vector. -/
+/-- **Algebraic form**: if `(inf F)'(0; ·)` is the linear function `⟨·, -v₀⟩` then `v₀` is the
+unique Kuhn–Tucker vector. -/
 theorem kuhnTucker_eq_singleton_of_dirDeriv_eq (hsep : Function.Injective B.flip)
     (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) {v₀ : V}
     (h : ∀ u : U, dirDeriv (infBifun F) 0 u = ((B u (-v₀) : ℝ) : EReal)) :
@@ -560,8 +561,8 @@ section Cor2913Gradient
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [AddCommGroup X] [Module ℝ X]
   {F : Bifun U X}
 
-/-- **Corollary 29.1.3**, Fréchet form: where the perturbation function is differentiable, the
-program has exactly one Kuhn–Tucker vector, namely `-∇(inf F)(0)`. -/
+/-- **Fréchet form**: where the perturbation function is differentiable, the program has exactly
+one Kuhn–Tucker vector, namely `-∇(inf F)(0)`. -/
 theorem kuhnTucker_eq_singleton_of_hasGradientAt (hF : ConvexBifun F)
     {f' : StrongDual ℝ U} (h : HasGradientAt (infBifun F) f' 0) (ht : infBifun F 0 ≠ ⊤)
     (hb : infBifun F 0 ≠ ⊥) :
@@ -571,7 +572,7 @@ theorem kuhnTucker_eq_singleton_of_hasGradientAt (hF : ConvexBifun F)
 
 end Cor2913Gradient
 
-/-! ### Theorem 29.2: polyhedral convex programs -/
+/-! ### Polyhedral convex programs -/
 
 section PolyhedralImage
 
@@ -579,7 +580,7 @@ variable {E G : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G] {f : E → EReal}
 
 /-- A polyhedral convex function agrees with its closure throughout its effective domain: if proper
-it *is* closed, and otherwise both are `-∞` there (Corollary 7.2.1). -/
+it *is* closed, and otherwise both are `-∞` there. -/
 theorem PolyhedralFn.clFn_eq_of_mem_dom (hf : PolyhedralFn f) {x : E} (hx : x ∈ dom f) :
     clFn f x = f x := by
   by_cases hp : Proper f
@@ -613,8 +614,8 @@ theorem PolyhedralBifun.convexBifun (hF : PolyhedralBifun F) : ConvexBifun F :=
 
 omit [FiniteDimensional ℝ U] [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
   [FiniteDimensional ℝ X] in
-/-- **Theorem 29.2**, first clause: every image `F u` of a polyhedral convex bifunction — the
-objective `F 0` in particular — is a polyhedral convex function. -/
+/-- Every image `F u` of a polyhedral convex bifunction — the objective `F 0` in particular — is a
+polyhedral convex function. -/
 theorem PolyhedralBifun.polyhedralFn_apply (hF : PolyhedralBifun F) (u : U) :
     PolyhedralFn (F u) := by
   have hpre : epi (F u)
@@ -627,8 +628,8 @@ theorem PolyhedralBifun.polyhedralFn_apply (hF : PolyhedralBifun F) (u : U) :
   exact Polyhedral.comap_affine hF _ _
 
 omit [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] in
-/-- **Theorem 29.2**, second clause: the perturbation function of a polyhedral convex program is
-polyhedral. Corollary 19.3.1 at the projection `(u, x) ↦ u`. -/
+/-- The perturbation function of a polyhedral convex program is polyhedral: a partial minimisation
+of a polyhedral function along the projection `(u, x) ↦ u`. -/
 theorem PolyhedralBifun.polyhedralFn_infBifun (hF : PolyhedralBifun F) :
     PolyhedralFn (infBifun F) := by
   have h : infBifun F = mapLin (LinearMap.fst ℝ U X) (graphFn F) := by
@@ -639,16 +640,16 @@ theorem PolyhedralBifun.polyhedralFn_infBifun (hF : PolyhedralBifun F) :
   exact polyhedralFn_mapLin hF _
 
 omit [FiniteDimensional ℝ V] in
-/-- **Theorem 29.2**: a polyhedral convex program with a finite optimal value has a Kuhn–Tucker
-vector. Theorem 23.10 applied to `inf F` at the origin. -/
+/-- A polyhedral convex program with a finite optimal value has a Kuhn–Tucker vector: a polyhedral
+convex function is subdifferentiable throughout its effective domain. -/
 theorem kuhnTucker_nonempty_of_polyhedralBifun [IsCompatiblePairing B] (hF : PolyhedralBifun F)
     (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) : (KuhnTucker B F).Nonempty := by
   obtain ⟨y, hy⟩ :=
     subgradient_nonempty_of_polyhedralFn (B := B) hF.polyhedralFn_infBifun ht hb
   exact ⟨-y, by rw [mem_kuhnTucker_iff_neg_mem_subgradient ht hb, neg_neg]; exact hy⟩
 
-/-- **Theorem 29.2**: the Kuhn–Tucker vectors of a polyhedral convex program with a finite optimal
-value form a polyhedral convex set. -/
+/-- The Kuhn–Tucker vectors of a polyhedral convex program with a finite optimal value form a
+polyhedral convex set. -/
 theorem polyhedral_kuhnTucker_of_polyhedralBifun (hF : PolyhedralBifun F)
     (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) : Polyhedral (KuhnTucker B F) := by
   rw [kuhnTucker_eq_neg_subgradient ht hb]
@@ -656,10 +657,10 @@ theorem polyhedral_kuhnTucker_of_polyhedralBifun (hF : PolyhedralBifun F)
     (polyhedral_subgradient_of_polyhedralFn (B := B) hF.polyhedralFn_infBifun ht hb)
 
 omit [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] [FiniteDimensional ℝ U] in
-/-- **Theorem 29.2**: a polyhedral convex program whose optimal value is not `-∞` has an **optimal
-solution**. The book assumes the optimal value finite; only `inf F 0 ≠ -∞` is used here, an optimal
-value of `+∞` meaning every point is optimal. Finiteness is what the polyhedrality of the minimum
-set below needs. -/
+/-- A polyhedral convex program whose optimal value is not `-∞` has an **optimal solution**. The
+book assumes the optimal value finite; only `inf F 0 ≠ -∞` is used here, an optimal value of `+∞`
+meaning every point is optimal. Finiteness is what the polyhedrality of the minimum set below
+needs. -/
 theorem argmin_nonempty_of_polyhedralBifun (hF : PolyhedralBifun F) (hb : infBifun F 0 ≠ ⊥) :
     (argmin (F 0)).Nonempty := by
   refine argmin_nonempty_of_polyhedralFn (hF.polyhedralFn_apply 0) ?_
@@ -668,8 +669,8 @@ theorem argmin_nonempty_of_polyhedralBifun (hF : PolyhedralBifun F) (hb : infBif
   exact lt_of_le_of_ne bot_le (Ne.symm hb)
 
 omit [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] [FiniteDimensional ℝ U] in
-/-- **Theorem 29.2**: the optimal solutions of a polyhedral convex program with a finite optimal
-value form a polyhedral convex set — a sublevel set of `F 0` at the optimal value. -/
+/-- The optimal solutions of a polyhedral convex program with a finite optimal value form a
+polyhedral convex set — a sublevel set of `F 0` at the optimal value. -/
 theorem polyhedral_argmin_of_polyhedralBifun (hF : PolyhedralBifun F) (ht : infBifun F 0 ≠ ⊤)
     (hb : infBifun F 0 ≠ ⊥) : Polyhedral (argmin (F 0)) := by
   obtain ⟨x, hx⟩ := argmin_nonempty_of_polyhedralBifun hF hb

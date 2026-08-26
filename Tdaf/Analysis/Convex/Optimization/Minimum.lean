@@ -16,12 +16,12 @@ import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 # The minimum of a convex function
 
 A point `x` minimises `f` exactly when `0 ∈ ∂f x`, the subgradient inequality read at `y = 0`; that
-is why §23 is the engine of the section. Dually `inf f = -f*(0)` with no hypothesis at all, and for
-closed proper convex `f` the minimum set *is* `∂f*(0)` (**Theorem 27.1**), so every question about
-minimisers becomes one about the conjugate near the origin. Existence comes from recession: a
-closed proper convex function with no direction of recession has compact level sets and attains its
-infimum (**Theorem 27.2**); **Theorem 27.3** relaxes this to a constrained problem, with a further
-weakening when the constraint set is polyhedral.
+is why subgradients are the engine here. Dually `inf f = -f*(0)` with no hypothesis at all, and for
+closed proper convex `f` the minimum set *is* `∂f*(0)`, so every question about minimisers becomes
+one about the conjugate near the origin. Existence comes from recession: a closed proper convex
+function with no direction of recession has compact level sets and attains its infimum; that
+relaxes to a constrained problem, with a further weakening when the constraint set is
+polyhedral.
 
 ## Main definitions
 
@@ -34,35 +34,35 @@ weakening when the constraint set is polyhedral.
   `iInf_ne_bot_and_argmin_eq_empty_iff`,
   `argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj`, `supportFn_setOf_le`,
   `argmin_eq_singleton_iff_hasGradientAt_conj_zero`, `supportFn_argmin`,
-  `recessionCone_setOf_le_eq_polarCone_dom_conj`,
-  `iInf_supportFn_setOf_le` — **Theorem 27.1**, clauses (a)–(h).
+  `recessionCone_setOf_le_eq_polarCone_dom_conj`, `iInf_supportFn_setOf_le` — the minimum set and
+  the optimal value read off the conjugate at the origin (Theorem 27.1 in [^1], clauses (a)–(h)).
 * `isCompact_setOf_le` — a level set of a closed proper convex function with no direction of
   recession is compact; `argmin_nonempty_of_recessionConeFn_eq_zero`,
   `isCompact_argmin_of_recessionConeFn_eq_zero`, `exists_pos_forall_exists_mem_argmin_dist_lt` —
-  **Theorem 27.2**, with `tendsto_infDist_argmin` and `tendsto_of_argmin_eq_singleton` for
-  **Corollaries 27.2.1** and **27.2.2**.
+  existence of a minimiser, and well-posedness (Theorem 27.2 in [^1]); `tendsto_infDist_argmin`
+  and `tendsto_of_argmin_eq_singleton` — the behaviour of minimising nets.
 * `exists_forall_le_of_recessionConeFn_inter_eq_zero`,
   `exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace`,
-  `exists_forall_le_of_polyhedral_of_inter_subset_constancySpace` — **Theorem 27.3** in its basic,
-  general and polyhedral forms, with `argmin_nonempty_of_polyhedralFn` for
-  **Corollary 27.3.2**.
-* `le_of_mem_subgradient_of_neg_mem_normalCone`, `exists_mem_subgradient_neg_mem_normalCone` —
-  **Theorem 27.4**, sufficiency and necessity.
+  `exists_forall_le_of_polyhedral_of_inter_subset_constancySpace` — attainment over a closed convex
+  set in its basic, general and polyhedral forms (Theorem 27.3 in [^1]), with
+  `argmin_nonempty_of_polyhedralFn` for a polyhedral objective.
+* `le_of_mem_subgradient_of_neg_mem_normalCone`, `exists_mem_subgradient_neg_mem_normalCone` — the
+  optimality condition for minimising over a convex set, sufficiency and necessity.
 * `argmin_sepSum`, `dom_sepSum` — a **separable** objective `x ↦ ∑ᵢ hᵢ(xᵢ)` on a dependent finite
-  product is minimised coordinatewise: the content of §28's *decomposition principle*.
+  product is minimised coordinatewise: the *decomposition principle*.
 
 ## Implementation notes
 
 The minimum set is `{x | ∀ z, f x ≤ f z}` rather than `IsMinOn f Set.univ`, because that unfolds to
-the subgradient inequality at `y = 0`; `mem_argmin_iff_isMinOn` bridges to Mathlib. Theorem 27.4's
-necessity is stated against `IsExactSum B h (indicatorFn C)`, which both of the book's hypotheses
-instantiate. Minimising results are stated for an arbitrary filter where the book uses sequences,
-except `isBounded_range_of_tendsto_iInf`, whose conclusion is about a range.
+the subgradient inequality at `y = 0`; `mem_argmin_iff_isMinOn` bridges to Mathlib. Necessity of
+the optimality condition is stated against `IsExactSum B h (indicatorFn C)`, which both of the
+book's hypotheses instantiate. Minimising results are stated for an arbitrary filter where the book
+uses sequences, except `isBounded_range_of_tendsto_iInf`, whose conclusion is about a range.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §27. Both sentences of
-  Theorem 27.1(i) are in `Duality/Level.lean`.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §27. Both level-set
+  formulas of clause (i) are in `Duality/Level.lean`.
 -/
 
 open Set Pointwise
@@ -144,20 +144,19 @@ theorem mem_argmin_iff_zero_mem_subgradient (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ
   · intro h z; simpa using h z
   · intro h z; simpa using h z
 
-/-- **Rockafellar, Theorem 27.1(a)**: `f*(0) = -inf f`. No hypothesis at all. -/
+/-- The conjugate at the origin is the negated infimum: `f*(0) = -inf f`. No hypothesis at all. -/
 theorem conj_zero_eq_neg_iInf (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) :
     conj B f 0 = -(⨅ x, f x) := by
   rw [EReal.neg_iInf]
   refine iSup_congr fun x => ?_
   simp
 
-/-- **Rockafellar, Theorem 27.1(a)**, in Rockafellar's own orientation. -/
+/-- The same the other way round: `inf f = -f*(0)`. -/
 theorem iInf_eq_neg_conj_zero (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) :
     (⨅ x, f x) = -(conj B f 0) := by
   rw [conj_zero_eq_neg_iInf, neg_neg]
 
-/-- **Rockafellar, Theorem 27.1(a)**, second sentence: `f` is bounded below exactly when `f*` is
-finite at the origin. -/
+/-- `f` is bounded below exactly when `f*` is finite at the origin. -/
 theorem zero_mem_dom_conj_iff (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) :
     (0 : F) ∈ dom (conj B f) ↔ (⊥ : EReal) < ⨅ x, f x := by
   rw [mem_dom, conj_zero_eq_neg_iInf, lt_top_iff_ne_top, bot_lt_iff_ne_bot, ne_eq, ne_eq,
@@ -176,7 +175,7 @@ theorem convex_argmin (hf : ConvexFn f) : Convex ℝ (argmin f) := by
 
 /-- **The minimum set transports along a surjection**: `x ↦ g (e x)` is minimised exactly at the
 `e`-preimages of the minimisers of `g`. Surjectivity makes the two quantifiers agree and is all the
-proof uses; composed with `argmin_sepSum` this is §28's decomposition principle. -/
+proof uses; composed with `argmin_sepSum` it is the decomposition principle. -/
 theorem argmin_comp_of_surjective {α β : Type*} {g : β → EReal} {e : α → β}
     (he : Function.Surjective e) : argmin (fun x => g (e x)) = e ⁻¹' argmin g := by
   ext x
@@ -188,7 +187,7 @@ end Defs
 
 A **separable** objective `x ↦ ∑ᵢ hᵢ(xᵢ)` on a dependent finite product `∀ i, E i` has its minimum
 set and its effective domain given coordinatewise. This is the content of the *decomposition
-principle* of §28: once a Kuhn–Tucker vector has reduced a program to minimising `h₁ + ⋯ + h_s`
+principle*: once a Kuhn–Tucker vector has reduced a program to minimising `h₁ + ⋯ + h_s`
 over `C¹ × ⋯ × C^s`, the problem splits into `s` independent problems. Both statements are about
 the dependent product itself; no isometry with `ℝⁿ`, no relative interior and no linear structure
 enter, since `argmin` and `dom` are order-theoretic. -/
@@ -261,7 +260,7 @@ theorem argmin_sepSum (hp : ∀ i, Proper (h i)) :
 
 end Pi
 
-/-! ### Theorem 27.1(b) -/
+/-! ### The minimum set as a subdifferential of the conjugate -/
 
 section FenchelMoreau
 
@@ -269,9 +268,9 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
-/-- **Theorem 27.1(b)**: the minimum set of a closed convex function is `∂f*(0)`; in particular the
-infimum is attained exactly when `f*` is subdifferentiable at the origin. Theorem 23.5 applied to
-`f*` at the origin, where Fenchel–Moreau turns `f**` back into `f`. -/
+/-- **The minimum set of a closed convex function is `∂f*(0)`**; in particular the infimum is
+attained exactly when `f*` is subdifferentiable at the origin. This is the subgradient inequality
+for `f*` at the origin, where Fenchel–Moreau turns `f**` back into `f`. -/
 theorem argmin_eq_subgradient_conj_zero (hf : ConvexFn f) (hc : ClosedFn f) :
     argmin f = subgradient B.flip (conj B f) 0 := by
   ext x
@@ -281,16 +280,16 @@ theorem argmin_eq_subgradient_conj_zero (hf : ConvexFn f) (hc : ClosedFn f) :
     hpair, ← _root_.EReal.le_sub_iff_add_le (.inr (by simp)) (.inr (by simp)), zero_sub,
     _root_.EReal.le_neg]
 
-/-- **Theorem 27.1(f)**: every nonempty level set of a closed proper convex function has the same
-recession cone, the polar of `dom f*`. Theorem 8.7 then Theorem 14.2. -/
+/-- Every nonempty level set of a closed proper convex function has the same recession cone, the
+polar of `dom f*`. -/
 theorem recessionCone_setOf_le_eq_polarCone_dom_conj (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) {α : ℝ} (hne : {z : E | f z ≤ (α : EReal)}.Nonempty) :
     recessionCone {z : E | f z ≤ (α : EReal)} = polarCone B.flip (dom (conj B f)) := by
   rw [recessionCone_setOf_le hf (ClosedProperConvexFn.isClosed_epi ⟨hf, hc, hp⟩) hne,
     recessionConeFn_eq_polarCone_dom_conj (B := B) hf hc hp]
 
-/-- **Rockafellar, Theorem 27.1(f)**, for the minimum set: when the infimum is attained the minimum
-set is a level set, so it too has the polar of `dom f*` as its recession cone. -/
+/-- The same for the minimum set: when the infimum is attained the minimum set is a level set, so
+it too has the polar of `dom f*` as its recession cone. -/
 theorem recessionCone_argmin_eq_polarCone_dom_conj (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) {a : E} (ha : a ∈ argmin f) {μ : ℝ} (hμ : f a = (μ : EReal)) :
     recessionCone (argmin f) = polarCone B.flip (dom (conj B f)) := by
@@ -299,16 +298,16 @@ theorem recessionCone_argmin_eq_polarCone_dom_conj (hf : ConvexFn f) (hc : Close
 
 end FenchelMoreau
 
-/-! ### Theorem 27.4: minimising over a convex set -/
+/-! ### Minimising over a convex set -/
 
 section Optimality
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {h : E → EReal} {C : Set E} {x : E} {y : F}
 
-/-- **Theorem 27.4**, sufficiency: if some `y ∈ ∂h x` has `-y` normal to `C` at `x`, then `h`
-attains its infimum over `C` at `x`. No hypothesis is needed — the subgradient inequality and the
-normality inequality simply add. -/
+/-- **Sufficiency of the optimality condition**: if some `y ∈ ∂h x` has `-y` normal to `C` at `x`,
+then `h` attains its infimum over `C` at `x`. No hypothesis is needed — the subgradient inequality
+and the normality inequality simply add. -/
 theorem le_of_mem_subgradient_of_neg_mem_normalCone (hy : y ∈ subgradient B h x)
     (hn : -y ∈ normalCone B C x) {z : E} (hz : z ∈ C) : h x ≤ h z := by
   have h2 : B (z - x) (-y) ≤ 0 := hn z hz
@@ -339,9 +338,9 @@ theorem forall_le_of_mem_argmin_add_indicatorFn (hx : x ∈ argmin (h + indicato
   rwa [Pi.add_apply, Pi.add_apply, indicatorFn_of_mem hxC, indicatorFn_of_mem hz, add_zero,
     add_zero] at hle
 
-/-- **Theorem 27.4**, necessity: when the sum `h + δ(· | C)` is exact, every point where `h` attains
-its infimum over `C` carries a subgradient `y ∈ ∂h x` with `-y` normal to `C`. The book's two
-hypotheses are two ways of supplying that exactness. -/
+/-- **Necessity**: when the sum `h + δ(· | C)` is exact, every point where `h` attains its infimum
+over `C` carries a subgradient `y ∈ ∂h x` with `-y` normal to `C`. The book's two hypotheses are
+two ways of supplying that exactness. -/
 theorem exists_mem_subgradient_neg_mem_normalCone (hex : IsExactSum B h (indicatorFn C))
     (hx : x ∈ C) (hmin : ∀ z ∈ C, h x ≤ h z) :
     ∃ y ∈ subgradient B h x, -y ∈ normalCone B C x := by
@@ -358,15 +357,15 @@ theorem exists_mem_subgradient_neg_mem_normalCone (hex : IsExactSum B h (indicat
 
 end Optimality
 
-/-! ### Theorem 27.2: existence of a minimiser -/
+/-! ### Existence of a minimiser -/
 
 section Existence
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- **The level set that carries the argument of Theorem 27.2**: nonempty, closed, convex, and —
-when `f` has no direction of recession — compact. Only the `⇒` direction is packaged here. -/
+/-- **The level set that carries the existence argument**: nonempty, closed, convex, and — when `f`
+has no direction of recession — compact. Only the `⇒` direction is packaged here. -/
 theorem isCompact_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hrec : recessionConeFn f = {0}) {α : ℝ} (hne : {z : E | f z ≤ (α : EReal)}.Nonempty) :
     IsCompact {z : E | f z ≤ (α : EReal)} := by
@@ -377,9 +376,9 @@ theorem isCompact_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
   rw [recessionCone_setOf_le hf hepi hne]
   exact hrec
 
-/-- **Theorem 27.2**: a closed proper convex function with no direction of recession attains its
-infimum. Any level set of `f` is nonempty, closed, convex and compact, so lower semicontinuity
-attains a minimum on it, and off that level set `f` is larger. -/
+/-- A closed proper convex function with no direction of recession attains its infimum. Any level
+set of `f` is nonempty, closed, convex and compact, so lower semicontinuity attains a minimum on
+it, and off that level set `f` is larger. -/
 theorem argmin_nonempty_of_recessionConeFn_eq_zero (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) (hrec : recessionConeFn f = {0}) : (argmin f).Nonempty := by
   have hlsc : LowerSemicontinuous f := (closedFn_iff_lowerSemicontinuous hp.ne_bot).1 hc
@@ -394,8 +393,7 @@ theorem argmin_nonempty_of_recessionConeFn_eq_zero (hf : ConvexFn f) (hc : Close
   · exact isMinOn_iff.1 hamin z hzL
   · exact le_trans haL (le_of_lt (not_le.1 hzL))
 
-/-- **Rockafellar, Theorem 27.2**, second assertion: the minimum set is then a nonempty compact
-convex set. -/
+/-- The minimum set is then a nonempty compact convex set. -/
 theorem isCompact_argmin_of_recessionConeFn_eq_zero (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) (hrec : recessionConeFn f = {0}) : IsCompact (argmin f) := by
   obtain ⟨a, ha⟩ := argmin_nonempty_of_recessionConeFn_eq_zero hf hc hp hrec
@@ -409,7 +407,7 @@ theorem isCompact_argmin_of_recessionConeFn_eq_zero (hf : ConvexFn f) (hc : Clos
   rw [hset]
   exact isCompact_setOf_le hf hc hp hrec ⟨a, le_of_eq hμ⟩
 
-/-- Under the hypotheses of Theorem 27.2 the infimum is a real number. -/
+/-- With no direction of recession, the infimum of a closed proper convex function is real. -/
 theorem exists_iInf_eq_coe (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hrec : recessionConeFn f = {0}) : ∃ μ : ℝ, (⨅ z, f z) = (μ : EReal) := by
   obtain ⟨a, ha⟩ := argmin_nonempty_of_recessionConeFn_eq_zero hf hc hp hrec
@@ -418,10 +416,10 @@ theorem exists_iInf_eq_coe (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (lt_of_le_of_lt (ha x₀) (mem_dom.1 hx₀))
   exact ⟨μ, by rw [iInf_eq_of_mem_argmin ha, hμ]⟩
 
-/-- **Theorem 27.2**, third assertion: the minimum is *well posed*. For every `ε > 0` there is a
-`δ > 0` with the level set `{x | f x ≤ inf f + δ}` lying within `ε` of the minimum set. One
-application of the extreme value theorem to the compact `{f ≤ inf f + 1} \ (M + ε·int B)` gives
-`δ` directly, in place of the book's nested-compactness argument. -/
+/-- The minimum is then *well posed*: for every `ε > 0` there is a `δ > 0` with the level set
+`{x | f x ≤ inf f + δ}` lying within `ε` of the minimum set. One application of the extreme value
+theorem to the compact `{f ≤ inf f + 1} \ (M + ε·int B)` gives `δ` directly, in place of the
+book's nested-compactness argument. -/
 theorem exists_pos_forall_exists_mem_argmin_dist_lt (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) (hrec : recessionConeFn f = {0}) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ x, f x ≤ (⨅ z, f z) + (δ : EReal) → ∃ z ∈ argmin f, dist x z < ε := by
@@ -480,8 +478,8 @@ theorem exists_pos_forall_exists_mem_argmin_dist_lt (hf : ConvexFn f) (hc : Clos
     have hhalf : min 1 ((r - μ) / 2) ≤ (r - μ) / 2 := min_le_right _ _
     linarith
 
-/-- **Rockafellar, Corollary 27.2.1**, the substance: along any minimising net the distance to the
-minimum set tends to `0`. Stated for an arbitrary filter — `atTop` on `ℕ` is Rockafellar's case. -/
+/-- **Minimising nets approach the minimum set**: along any such net the distance to it tends to
+`0`. Stated for an arbitrary filter — `atTop` on `ℕ` is the sequential case. -/
 theorem tendsto_infDist_argmin (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hrec : recessionConeFn f = {0}) {ι : Type*} {l : Filter ι} {u : ι → E}
     (hu : Filter.Tendsto (fun i => f (u i)) l (nhds (⨅ z, f z))) :
@@ -497,8 +495,7 @@ theorem tendsto_infDist_argmin (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper 
   rw [Real.dist_eq, sub_zero, abs_of_nonneg Metric.infDist_nonneg]
   exact lt_of_le_of_lt (Metric.infDist_le_dist_of_mem hz) hdz
 
-/-- **Rockafellar, Corollary 27.2.1**, second assertion: every cluster point of a minimising net
-belongs to the minimum set. -/
+/-- Every cluster point of a minimising net belongs to the minimum set. -/
 theorem mem_argmin_of_mapClusterPt (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hrec : recessionConeFn f = {0}) {ι : Type*} {l : Filter ι} {u : ι → E}
     (hu : Filter.Tendsto (fun i => f (u i)) l (nhds (⨅ z, f z))) {x : E}
@@ -528,7 +525,7 @@ theorem mem_argmin_of_mapClusterPt (hf : ConvexFn f) (hc : ClosedFn f) (hp : Pro
   · exact absurd (key _ hpos) (lt_irrefl _)
   · exact le_antisymm hnonpos Metric.infDist_nonneg
 
-/-- **Rockafellar, Corollary 27.2.1**, first assertion: a minimising sequence is bounded. -/
+/-- A minimising sequence is bounded. -/
 theorem isBounded_range_of_tendsto_iInf (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hrec : recessionConeFn f = {0}) {u : ℕ → E}
     (hu : Filter.Tendsto (fun i => f (u i)) Filter.atTop (nhds (⨅ z, f z))) :
@@ -557,9 +554,9 @@ theorem isBounded_range_of_tendsto_iInf (hf : ConvexFn f) (hc : ClosedFn f) (hp 
   exact Bornology.IsBounded.subset
     (((Set.finite_Iio N).image u).isBounded.union Metric.isBounded_closedBall) hsplit
 
-/-- **Rockafellar, Corollary 27.2.2**: if a closed proper convex function attains its infimum at a
-unique point, every minimising net converges to that point. No recession hypothesis is needed: a
-one-point minimum set is a level set, so Theorem 8.7 forces the recession cone to be `{0}`. -/
+/-- If a closed proper convex function attains its infimum at a unique point, every minimising net
+converges to that point. No recession hypothesis is needed: a one-point minimum set is a level set,
+and a bounded level set forces the recession cone to be `{0}`. -/
 theorem tendsto_of_argmin_eq_singleton (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     {a : E} (hM : argmin f = {a}) {ι : Type*} {l : Filter ι} {u : ι → E}
     (hu : Filter.Tendsto (fun i => f (u i)) l (nhds (⨅ z, f z))) :
@@ -580,7 +577,7 @@ theorem tendsto_of_argmin_eq_singleton (hf : ConvexFn f) (hc : ClosedFn f) (hp :
 
 end Existence
 
-/-! ### Theorem 27.3: minimising over a closed convex set -/
+/-! ### Minimising over a closed convex set -/
 
 section Constrained
 
@@ -596,7 +593,7 @@ theorem closedProperConvexFn_indicatorFn (hC : Convex ℝ C) (hCc : IsClosed C) 
 
 omit [FiniteDimensional ℝ E] in
 /-- The directions of recession of `h + δ(· | C)` are exactly the directions of recession common to
-`h` and to `C`. This is Theorem 9.3's recession formula read against an indicator: `δ(· | C)0⁺` is
+`h` and to `C`. This is the recession formula for a sum read against an indicator: `δ(· | C)0⁺` is
 `δ(· | 0⁺C)`, which is `0` on `0⁺C` and `⊤` off it. -/
 theorem recessionConeFn_add_indicatorFn (hh : ClosedProperConvexFn h) (hC : Convex ℝ C)
     (hCc : IsClosed C) (hCne : C.Nonempty) (hne : (dom (h + indicatorFn C)).Nonempty) :
@@ -612,9 +609,9 @@ theorem recessionConeFn_add_indicatorFn (hh : ClosedProperConvexFn h) (hC : Conv
       _root_.EReal.add_top_of_ne_bot (recessionFn_ne_bot hh.proper y)]
     simp [hy]
 
-/-- **Theorem 27.3**, the non-polyhedral case: a closed proper convex `h` attains its infimum over a
-nonempty closed convex `C` as soon as `h` and `C` have no direction of recession in common. The
-directions of recession of `h + δ(· | C)` are the common ones, so Theorem 27.2 applies; when
+/-- **The non-polyhedral case**: a closed proper convex `h` attains its infimum over a nonempty
+closed convex `C` as soon as `h` and `C` have no direction of recession in common. The directions
+of recession of `h + δ(· | C)` are the common ones, so unconstrained existence applies; when
 `dom h ∩ C = ∅` the function is `+∞` throughout `C` and every point minimises. -/
 theorem exists_forall_le_of_recessionConeFn_inter_eq_zero (hh : ClosedProperConvexFn h)
     (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
@@ -641,9 +638,9 @@ theorem exists_forall_le_of_recessionConeFn_inter_eq_zero (hh : ClosedProperConv
     rw [hz']
     exact le_top
 
-/-- **Rockafellar, Corollary 27.3.3**, the non-polyhedral case: a closed proper convex `h` attains
-its infimum subject to a consistent system of constraints `g i x ≤ 0` when `h` and the `g i` have
-no direction of recession in common. The index type is arbitrary. -/
+/-- The same for an inequality system: a closed proper convex `h` attains its infimum subject to a
+consistent system of constraints `g i x ≤ 0` when `h` and the `g i` have no direction of recession
+in common. The index type is arbitrary. -/
 theorem exists_forall_le_of_forall_le_zero {ι : Type*} {g : ι → E → EReal}
     (hh : ClosedProperConvexFn h) (hg : ∀ i, ClosedProperConvexFn (g i))
     (hCne : {x : E | ∀ i, g i x ≤ 0}.Nonempty)
@@ -669,7 +666,7 @@ theorem exists_forall_le_of_forall_le_zero {ι : Type*} {g : ι → E → EReal}
 
 end Constrained
 
-/-! ### Theorem 27.3: the polyhedral refinement
+/-! ### The polyhedral refinement
 
 For polyhedral `C` the recession hypothesis weakens from "`h` and `C` have no direction of
 recession in common" to "every common direction of recession is one in which `h` is *constant*".
@@ -685,8 +682,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
 
 omit [FiniteDimensional ℝ E] in
 /-- Two points differing by a direction of constancy carry the same value. This is
-`mem_constancySpace_iff_forall_eq` (Corollary 8.6.1) read as a statement about a *pair* of points
-rather than about a direction. -/
+`mem_constancySpace_iff_forall_eq` read as a statement about a *pair* of points rather than about
+a direction. -/
 theorem eq_of_sub_mem_constancySpace {x y : E} (hxy : x - y ∈ constancySpace h) : h x = h y := by
   have hxy' : y + (1 : ℝ) • (x - y) = x := by rw [one_smul]; abel
   have hval := (mem_constancySpace_iff_forall_eq.1 hxy) y 1
@@ -719,10 +716,10 @@ theorem exists_linearProj (M : Submodule ℝ E) :
         Submodule.coe_zero]
     simp [hzero]
 
-/-- **Theorem 27.3** in general form: a closed proper convex `h` attains its infimum over a nonempty
-closed convex `C` as soon as every direction of recession common to `h` and `C` is *both* one in
-which `h` is constant *and* a direction of linearity of `C`. The common recession cone may now be
-any such subspace, not only `{0}`. The proof projects along
+/-- **The general form**: a closed proper convex `h` attains its infimum over a nonempty closed
+convex `C` as soon as every direction of recession common to `h` and `C` is *both* one in which `h`
+is constant *and* a direction of linearity of `C`. The common recession cone may now be any such
+subspace, not only `{0}`. The proof projects along
 `constancySubmodule h ⊓ linealitySubmodule C`, where the image of `C` is `C ∩ N`. -/
 theorem exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace
     (hh : ClosedProperConvexFn h) (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
@@ -772,9 +769,9 @@ theorem exists_forall_le_of_inter_subset_constancySpace_inter_linealitySpace
   rw [eq_of_sub_mem_constancySpace (hsubc x), eq_of_sub_mem_constancySpace (hsubc z)]
   exact hx'min (A z) ⟨z, hz, rfl⟩
 
-/-- **Theorem 27.3**, the polyhedral refinement: a closed proper convex `h` attains its infimum over
-a nonempty **polyhedral** convex `C` as soon as every direction of recession common to `h` and `C`
-is one in which `h` is constant.
+/-- **The polyhedral refinement**: a closed proper convex `h` attains its infimum over a nonempty
+**polyhedral** convex `C` as soon as every direction of recession common to `h` and `C` is one in
+which `h` is constant.
 
 Polyhedrality of `C` pays for the weakened hypothesis and cannot be dropped: on `ℝ²` with
 `h(x₁, x₂) = x₂` and the closed convex `C = {x | x₁ ≥ x₂²}`, the common recession cone is
@@ -812,16 +809,16 @@ theorem exists_forall_le_of_polyhedral_of_inter_subset_constancySpace
   rw [eq_of_sub_mem_constancySpace (hsub x), eq_of_sub_mem_constancySpace (hsub z)]
   exact hx'min (A z) ⟨z, hz, rfl⟩
 
-/-- **Corollary 27.3.1**: a closed proper convex `h` every direction of recession of which is one in
-which `h` is *affine* attains its infimum relative to any nonempty polyhedral convex `C` on which
-it is bounded below.
+/-- A closed proper convex `h` all of whose directions of recession are directions in which `h` is
+*affine* attains its infimum relative to any nonempty polyhedral convex `C` on which it is bounded
+below.
 
 The hypothesis `recessionConeFn h ⊆ linealitySpaceFn h` is weaker than the constancy hypothesis
 above, and the price is the lower bound on `C`: a direction of recession in which `h` is affine has
 slope `ν = (h0⁺) y ≤ 0`, and a lower bound along the half-lines of `C` in that direction forces
 `ν = 0`, which is constancy. The lower bound cannot be dropped — `h(x₁, x₂) = x₁` on `ℝ²` is affine
 in every direction and its infimum over `C = {x | x₂ = 0}` is `-∞`. The hypothesis holds for every
-affine or convex quadratic `h`, and whenever `dom h*` is affine (Corollary 13.3.2). -/
+affine or convex quadratic `h`, and whenever `dom h*` is affine. -/
 theorem exists_forall_le_of_polyhedral_of_recessionConeFn_subset_linealitySpaceFn
     (hh : ClosedProperConvexFn h) (hC : Polyhedral C) (hCne : C.Nonempty)
     (hrec : recessionConeFn h ⊆ linealitySpaceFn h) {β : ℝ}
@@ -839,7 +836,7 @@ theorem exists_forall_le_of_polyhedral_of_recessionConeFn_subset_linealitySpaceF
 
 /-- The unconstrained case of the polyhedral refinement: a closed proper convex function whose
 recession cone consists entirely of directions of constancy — equivalently, is a subspace —
-attains its infimum. Theorem 27.2 is the case where that subspace is `{0}`. -/
+attains its infimum. Existence with no direction of recession is the case of the subspace `{0}`. -/
 theorem argmin_nonempty_of_recessionConeFn_subset_constancySpace (hh : ClosedProperConvexFn h)
     (hrec : recessionConeFn h ⊆ constancySpace h) : (argmin h).Nonempty := by
   obtain ⟨x, -, hx⟩ := exists_forall_le_of_polyhedral_of_inter_subset_constancySpace hh
@@ -965,10 +962,10 @@ theorem argmin_nonempty_of_polyhedralFn (hf : PolyhedralFn f) (hbdd : ⊥ < ⨅ 
     _ ≤ (r : EReal) := by exact_mod_cast hmr
     _ = f z := hr.symm
 
-/-- **Corollary 27.3.2**: a polyhedral convex function attains its infimum relative to any non-empty
-polyhedral convex set on which it is bounded below. Restricting `f` to `C` cuts the epigraph down
-by the vertical prism over `C`, so the restriction is again polyhedral. The book derives this from
-Corollary 27.3.1 and hence from Helly's theorem; this argument needs neither. -/
+/-- A polyhedral convex function attains its infimum relative to any non-empty polyhedral convex
+set on which it is bounded below. Restricting `f` to `C` cuts the epigraph down by the vertical
+prism over `C`, so the restriction is again polyhedral. The book derives this from the
+affine-recession form above, and hence from Helly's theorem; this argument needs neither. -/
 theorem exists_forall_le_of_polyhedralFn_of_polyhedral (hf : PolyhedralFn f) {C : Set E}
     (hC : Polyhedral C) (hCne : C.Nonempty) (hbdd : ⊥ < ⨅ x ∈ C, f x) :
     ∃ x ∈ C, ∀ z ∈ C, f x ≤ f z := by
@@ -1015,8 +1012,8 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {f : E → EReal}
 
 omit [FiniteDimensional ℝ E] in
-/-- The origin is interior to `dom f*` exactly when `f` has no direction of recession: Theorem 14.2
-turns the recession cone into the polar of `dom f*`, which is trivial exactly then. -/
+/-- The origin is interior to `dom f*` exactly when `f` has no direction of recession: the
+recession cone is the polar of `dom f*`, which is trivial exactly then. -/
 theorem zero_mem_interior_dom_conj_iff_recessionConeFn_eq_zero (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) :
     (0 : F) ∈ interior (dom (conj B f)) ↔ recessionConeFn f = {(0 : E)} := by
@@ -1025,9 +1022,9 @@ theorem zero_mem_interior_dom_conj_iff_recessionConeFn_eq_zero (hf : ConvexFn f)
     ← recessionConeFn_eq_polarCone_dom_conj (B := B) hf hc hp]
 
 omit [FiniteDimensional ℝ E] in
-/-- **Theorem 27.1(b)**, last sentence: the origin is in the *relative* interior of `dom f*` exactly
-when every direction of recession of `f` is one in which `f` is constant. Corollary 13.3.4(b) at
-the origin, whose two conditions collapse to `0⁺f ⊆ constancy space` through Theorem 8.8. -/
+/-- The origin is in the *relative* interior of `dom f*` exactly when every direction of recession
+of `f` is one in which `f` is constant. The relative-interior criterion for `dom f*`, read at the
+origin, collapses to `0⁺f ⊆ constancy space`. -/
 theorem zero_mem_relint_dom_conj_iff_recessionConeFn_subset_constancySpace (hf : ConvexFn f)
     (hc : ClosedFn f) (hp : Proper f) :
     (0 : F) ∈ ri (dom (conj B f)) ↔ recessionConeFn f ⊆ constancySpace f := by
@@ -1059,9 +1056,9 @@ theorem zero_mem_relint_dom_conj_iff_recessionConeFn_subset_constancySpace (hf :
         le_antisymm (mem_constancySpace.1 (H hyrec)).2 (h1 (-y))
       exact hy (by rw [hneg0, ← heq, neg_zero])
 
-/-- **Theorem 27.1(d)**: the minimum set of a closed proper convex function is non-empty and bounded
-exactly when the origin is interior to `dom f*`. Both directions pass through "no direction of
-recession", by Theorem 8.7 one way and Theorem 27.2 the other. -/
+/-- The minimum set of a closed proper convex function is non-empty and bounded exactly when the
+origin is interior to `dom f*`. Both directions pass through "no direction of recession": a bounded
+level set has trivial recession cone one way, and existence of a minimiser the other. -/
 theorem argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (hf : ConvexFn f)
     (hc : ClosedFn f) (hp : Proper f) :
     ((argmin f).Nonempty ∧ Bornology.IsBounded (argmin f))
@@ -1083,9 +1080,9 @@ theorem argmin_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (hf : Conve
     exact ⟨argmin_nonempty_of_recessionConeFn_eq_zero hf hc hp hrec,
       (isCompact_argmin_of_recessionConeFn_eq_zero hf hc hp hrec).isBounded⟩
 
-/-- **Theorem 27.1(d)** in the form Theorem 30.4(g) states it: *some* level set of `f` is non-empty
-and bounded exactly when the origin is interior to `dom f*`. Theorem 27.1(f) makes "some" as good
-as "every", since all non-empty level sets share the recession cone of `f`. -/
+/-- The same in level-set form: *some* level set of `f` is non-empty and bounded exactly when the
+origin is interior to `dom f*`. Here "some" is as good as "every", since all non-empty level sets
+share the recession cone of `f`. -/
 theorem exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (hf : ConvexFn f)
     (hc : ClosedFn f) (hp : Proper f) :
     (∃ α : ℝ, {x : E | f x ≤ (α : EReal)}.Nonempty ∧
@@ -1108,9 +1105,8 @@ theorem exists_setOf_le_nonempty_and_isBounded_iff_zero_mem_interior_dom_conj (h
     exact (isCompact_argmin_of_recessionConeFn_eq_zero hf hc hp hrec).isBounded
 
 include B in
-/-- **Rockafellar, Theorem 30.4**, the equivalence of its conditions (g) and (i) for the objective
-function of a convex program: the minimum set is non-empty and bounded exactly when some level set
-is. Both say `0 ∈ int (dom f*)`. -/
+/-- For the objective function of a convex program: the minimum set is non-empty and bounded
+exactly when some level set is. Both say `0 ∈ int (dom f*)`. -/
 theorem argmin_nonempty_and_isBounded_iff_exists_setOf_le (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) :
     ((argmin f).Nonempty ∧ Bornology.IsBounded (argmin f))
@@ -1122,15 +1118,14 @@ theorem argmin_nonempty_and_isBounded_iff_exists_setOf_le (hf : ConvexFn f) (hc 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] [IsCompatiblePairing B]
   [IsCompatiblePairing B.flip] in
 /-- Raising the conjugate by a real constant lowers the biconjugate by the same constant. This is
-the constant row of **Theorem 12.3** (`conj_add_const`) read on the dual pair. -/
+`conj_add_const` read on the dual pair. -/
 theorem conj_flip_conj_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (α : ℝ) (x : E) :
     conj B.flip (fun y => conj B f y + (α : EReal)) x = biconj B f x - (α : EReal) :=
   conj_add_const B.flip (conj B f) α x
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
-/-- **Theorem 27.1(g)**, first sentence: for each real `α` the support function of the level set
-`{f ≤ α}` is the closure of the positively homogeneous convex function generated by `f* + α`.
-Theorem 13.5 for `f - α`, via Corollary 13.2.1. -/
+/-- For each real `α` the support function of the level set `{f ≤ α}` is the closure of the
+positively homogeneous convex function generated by `f* + α`. -/
 theorem supportFn_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (α : ℝ) :
     supportFn B {x : E | f x ≤ (α : EReal)}
       = clFn (posHomGen fun y => conj B f y + (α : EReal)) := by
@@ -1143,9 +1138,8 @@ theorem supportFn_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (α : ℝ) :
       (.inl (_root_.EReal.coe_ne_top α)), zero_add]
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
-/-- **Theorem 27.1(g)**, second sentence: when `f` is bounded below, the support function of its
-minimum set is the closure of the directional derivative of `f*` at the origin — Theorem 27.1(b)
-followed by Theorem 23.2. -/
+/-- When `f` is bounded below, the support function of its minimum set is the closure of the
+directional derivative of `f*` at the origin. -/
 theorem supportFn_argmin (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hbdd : conj B f 0 ≠ ⊤) :
     supportFn B (argmin f) = clFn (dirDeriv (conj B f) 0) := by
@@ -1178,10 +1172,9 @@ theorem epsSubgradient_conj_zero (hf : ConvexFn f) (hc : ClosedFn f) (hp : Prope
   rw [← iSup_le_iff, hbi]
 
 omit [FiniteDimensional ℝ E] in
-/-- **Theorem 27.1(h)**: as the level shrinks to the infimum, the support functions of the level
-sets of `f` converge to the directional derivative of `f*` at the origin. Theorem 23.6 for `f*`,
-once the ε-subdifferentials are identified with the level sets; the limit is an infimum because
-`ε ↦ ∂_ε f*(0)` is monotone. -/
+/-- As the level shrinks to the infimum, the support functions of the level sets of `f` converge to
+the directional derivative of `f*` at the origin. The ε-subdifferentials of `f*` at the origin are
+exactly those level sets; the limit is an infimum because `ε ↦ ∂_ε f*(0)` is monotone. -/
 theorem iInf_supportFn_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     {μ : ℝ} (hμ : (⨅ x, f x) = (μ : EReal)) (y : F) :
     (⨅ ε ∈ Set.Ioi (0 : ℝ), supportFn B {z : E | f z ≤ ((μ + ε : ℝ) : EReal)} y)
@@ -1197,16 +1190,15 @@ theorem iInf_supportFn_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper
 
 omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
 /-- A proper function takes a value below `⊤` somewhere, so its infimum is never `⊤`. Together
-with `conj_ne_bot` this is why "finite" costs only one inequality on each side of Theorem
-27.1(c). -/
+with `conj_ne_bot` this is why "finite" costs only one inequality on each side below. -/
 theorem iInf_ne_top (hp : Proper f) : (⨅ x, f x) ≠ ⊤ := by
   obtain ⟨x₀, hx₀⟩ := hp.dom_nonempty
   exact (lt_of_le_of_lt (iInf_le _ x₀) (mem_dom.1 hx₀)).ne
 
 omit [FiniteDimensional ℝ E] in
-/-- **Theorem 27.1(c)**: the infimum of a closed proper convex function is finite but *unattained*
-exactly when `f*(0)` is finite and `f*'(0; ·)` takes `−∞` somewhere. Only one bound appears on each
-side, because `f*(0) ≠ ⊥` and `⨅ f ≠ ⊤` hold for every proper `f`. -/
+/-- The infimum of a closed proper convex function is finite but *unattained* exactly when `f*(0)`
+is finite and `f*'(0; ·)` takes `−∞` somewhere. Only one bound appears on each side, because
+`f*(0) ≠ ⊥` and `⨅ f ≠ ⊤` hold for every proper `f`. -/
 theorem iInf_ne_bot_and_argmin_eq_empty_iff (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f) :
     ((⨅ x, f x) ≠ ⊥ ∧ argmin f = ∅)
       ↔ (conj B f 0 ≠ ⊤ ∧ ∃ y : F, dirDeriv (conj B f) 0 y = ⊥) := by
@@ -1220,12 +1212,11 @@ theorem iInf_ne_bot_and_argmin_eq_empty_iff (hf : ConvexFn f) (hc : ClosedFn f) 
 
 end ConjugateAtZero
 
-/-! ### Theorem 27.1(e): a unique minimiser is a gradient of the conjugate
+/-! ### A unique minimiser is a gradient of the conjugate
 
-Theorem 27.1(b) says the minimum set *is* `∂f*(0)`, and Theorem 25.1 says a subdifferential is a
-singleton exactly at a point of differentiability; clause (e) is the two composed. No reflexivity
-is needed: the subdifferential in question is `subgradient B.flip (conj B f) 0`, a subset of
-`E`. -/
+The minimum set *is* `∂f*(0)`, and a subdifferential is a singleton exactly at a point of
+differentiability; what follows is the two composed. No reflexivity is needed: the subdifferential
+in question is `subgradient B.flip (conj B f) 0`, a subset of `E`. -/
 
 section UniqueMinimiser
 
@@ -1234,9 +1225,9 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {f : E → EReal}
   {x : E}
 
-/-- **Theorem 27.1(e)**, necessity: if the minimum set of `f` is the single vector `x`, then `f*` is
-differentiable at the origin with `∇f*(0) = ⟨·, x⟩`. Theorem 27.1(b) then Theorem 25.1's converse
-half. The finite-dimensionality is `F`'s, not `E`'s — it is the space `f*` lives on. -/
+/-- **Necessity**: if the minimum set of `f` is the single vector `x`, then `f*` is differentiable
+at the origin with `∇f*(0) = ⟨·, x⟩`. The finite-dimensionality is `F`'s, not `E`'s — it is the
+space `f*` lives on. -/
 theorem hasGradientAt_conj_zero_of_argmin_eq_singleton (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) (h : argmin f = {x}) :
     HasGradientAt (conj B f) (evalCLM B.flip x) 0 :=
@@ -1245,8 +1236,8 @@ theorem hasGradientAt_conj_zero_of_argmin_eq_singleton (hf : ConvexFn f) (hc : C
     (by rw [← argmin_eq_subgradient_conj_zero (B := B) hf hc]; exact h)
 
 omit [FiniteDimensional ℝ F] in
-/-- **Theorem 27.1(e)**, sufficiency: if `f*` is differentiable at the origin with
-`∇f*(0) = ⟨·, x⟩`, then `x` is the unique minimiser of `f`.
+/-- **Sufficiency**: if `f*` is differentiable at the origin with `∇f*(0) = ⟨·, x⟩`, then `x` is
+the unique minimiser of `f`.
 
 Properness of `f` is not needed: differentiability of `f*` at the origin already forces `f*` proper,
 hence `f*(0)` finite, which is all the uniqueness argument consumes. The separation that argument
@@ -1265,16 +1256,16 @@ theorem argmin_eq_singleton_of_hasGradientAt_conj_zero (hf : ConvexFn f) (hc : C
   rw [HasGradientAt.dirDeriv_eq hcf h v]
   rfl
 
-/-- **Rockafellar, Theorem 27.1(e)**: the minimum set of a closed proper convex `f` is the single
-vector `x` exactly when `f*` is differentiable at the origin with `∇f*(0) = ⟨·, x⟩`. -/
+/-- The minimum set of a closed proper convex `f` is the single vector `x` exactly when `f*` is
+differentiable at the origin with `∇f*(0) = ⟨·, x⟩`. -/
 theorem argmin_eq_singleton_iff_hasGradientAt_conj_zero (hf : ConvexFn f) (hc : ClosedFn f)
     (hp : Proper f) : argmin f = {x} ↔ HasGradientAt (conj B f) (evalCLM B.flip x) 0 :=
   ⟨hasGradientAt_conj_zero_of_argmin_eq_singleton hf hc hp,
     argmin_eq_singleton_of_hasGradientAt_conj_zero hf hc⟩
 
-/-- **Theorem 27.1(e)** in the book's own shape: the infimum of `f` is attained at a *unique* point
-exactly when `f*` is differentiable at the origin. Passing from the functional `∇f*(0)` to the
-vector `x : E` representing it is the surjectivity half of `IsCompatiblePairing B.flip`. -/
+/-- The existential form: the infimum of `f` is attained at a *unique* point exactly when `f*` is
+differentiable at the origin. Passing from the functional `∇f*(0)` to the vector `x : E`
+representing it is the surjectivity half of `IsCompatiblePairing B.flip`. -/
 theorem exists_argmin_eq_singleton_iff_differentiableAtFn_conj_zero (hf : ConvexFn f)
     (hc : ClosedFn f) (hp : Proper f) :
     (∃ x : E, argmin f = {x}) ↔ DifferentiableAtFn (conj B f) 0 := by
