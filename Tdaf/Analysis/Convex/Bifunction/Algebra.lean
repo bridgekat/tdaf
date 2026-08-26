@@ -194,7 +194,7 @@ theorem supConvBifun_apply (G₁ G₂ : Bifun Y V) (y : Y) :
 
 end SupConvBifun
 
-section Thm382
+section AdjointInfConvBifun
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -235,7 +235,7 @@ theorem adjointBifun_infConvBifun_eq_supConvBifun (Bu : U →ₗ[ℝ] V →ₗ[�
       = supConvBifun (adjointBifun Bu Bx F₁) (adjointBifun Bu Bx F₂) :=
   funext fun y => adjointBifun_infConvBifun Bu Bx F₁ F₂ (hex y)
 
-end Thm382
+end AdjointInfConvBifun
 
 /-! ### `EReal` bookkeeping -/
 
@@ -528,7 +528,7 @@ end ImageBifunConj
 
 /-! ### The image of a closed proper convex function -/
 
-section Cor3841
+section ImageBifunProper
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
 variable [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -556,9 +556,9 @@ theorem conj_imageBifun_eq_imageBifun (hbF : ∀ u x, F u x ≠ ⊥) (hf : Prope
   rw [conj_imageBifun hbF hf hex]
   rfl
 
-end Cor3841
+end ImageBifunProper
 
-section Cor3841Closed
+section ImageBifunClosed
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -657,7 +657,7 @@ theorem conj_imageBifun_eq_clFn (hF : ConvexBifun F) (hFcl : ClosedBifun F)
   rw [hfun]
   exact biconj_eq_clFn (B := Bx.flip) hconv
 
-end Cor3841Closed
+end ImageBifunClosed
 
 
 
@@ -727,7 +727,7 @@ end FenchelPairing
 
 /-! ### Conjugation reverses the inner product -/
 
-section Lemma386
+section FenchelPairingConj
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {g : F → EReal}
@@ -775,11 +775,11 @@ theorem fenchelPairing_conj (hf : Proper f) (hg : ProperConcave g)
     rw [← hasFenchelPairing_conj hf hg h]
     exact neg_fenchelInf_le_fenchelSup_conj hf hg
 
-end Lemma386
+end FenchelPairingConj
 
 /-! ### An adjoint moves across the inner product -/
 
-section Thm387
+section AdjointAcrossAux
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
@@ -795,9 +795,9 @@ theorem fenchelSup_conj_eq_neg_fenchelInf (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) 
   rw [LinearMap.flip_flip]
   exact (Tdaf.EReal.neg_sub_comm (conj_ne_bot hd y) (concaveConj_ne_top hh y)).symm
 
-end Thm387
+end AdjointAcrossAux
 
-section Thm387Bifun
+section AdjointAcrossBracket
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
 variable [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -838,9 +838,9 @@ theorem conj_imageBifun_eq_fenchelPairing (hbF : ∀ u x, F u x ≠ ⊥) (hf : P
     conj Bx (imageBifun F f) y = fenchelPairing Bu f (adjointBifun Bu Bx F y) :=
   conj_imageBifun hbF hf hex
 
-end Thm387Bifun
+end AdjointAcrossBracket
 
-section Thm387Main
+section AdjointAcross
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
 variable [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -943,7 +943,7 @@ theorem fenchelInf_imageBifun_eq_fenchelInf_concaveImageBifun (hbF : ∀ u x, F 
   have h2 := congrArg (fun z : EReal => -z) h1
   simpa using h2.symm
 
-end Thm387Main
+end AdjointAcross
 
 /-! ### Right scalar multiplication -/
 
@@ -1092,7 +1092,7 @@ end CompBifun
 
 /-! ### The adjoint of a product -/
 
-section Thm385Adjoint
+section AdjointCompBifun
 
 variable {U V X W Y Z : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup W] [Module ℝ W]
@@ -1236,12 +1236,12 @@ theorem exists_adjointBifun_compBifun_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
   change _ = _ + - -(adjointBifun Bu Bx F w v)
   rw [neg_neg]
 
-end Thm385Adjoint
+end AdjointCompBifun
 
 
 /-! ### Products of closed proper convex bifunctions -/
 
-section Cor3851
+section CompBifunClosed
 
 variable {U V X W Y Z : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup W] [Module ℝ W]
@@ -1337,9 +1337,9 @@ theorem exists_compBifun_eq (hF : ClosedProperConvexFn (graphFn F))
   rw [add_comm]
   exact neg_injective hx
 
-end Cor3851
+end CompBifunClosed
 
-section Cor3851Adjoint
+section CompBifunClosedAdjoint
 
 variable {U V X W Y Z : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup W] [Module ℝ W]
@@ -1381,7 +1381,7 @@ theorem lowerAdjointBifun_compBifun_eq_clBifun (hF : ClosedProperConvexFn (graph
   simp only [LinearMap.flip_flip] at hbi
   rw [hfun, hbi]
 
-end Cor3851Adjoint
+end CompBifunClosedAdjoint
 
 /-! ### Infimal convolution in the first variable -/
 
@@ -1591,7 +1591,7 @@ end LowerAdjointInfConvFst
 
 /-! ### Infimal convolutes of closed proper convex bifunctions -/
 
-section Cor3821
+section InfConvBifunClosed
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1641,9 +1641,9 @@ theorem closedBifun_infConvBifun (hF₁ : ConvexBifun F₁) (hF₁cl : ClosedBif
   rw [infConvBifun_eq_lowerAdjointBifun_infConvFstBifun hF₁ hF₁cl hF₂ hF₂cl hex]
   exact closedBifun_lowerAdjointBifun
 
-end Cor3821
+end InfConvBifunClosed
 
-section Cor3821Adjoint
+section InfConvBifunClosedAdjoint
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1681,11 +1681,11 @@ theorem lowerAdjointBifun_infConvBifun_eq_clBifun (hF₁ : ClosedProperConvexFn 
   rw [infConvBifun_eq_lowerAdjointBifun_infConvFstBifun hF₁.convex hF₁.closed hF₂.convex
     hF₂.closed hex, hbi]
 
-end Cor3821Adjoint
+end InfConvBifunClosedAdjoint
 
 /-! ### The inner products of a product of bifunctions -/
 
-section Cor3872
+section CompBifunPairing
 
 variable {U X W Y Z : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup W] [Module ℝ W]
   [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z] {F : Bifun U X} {G : Bifun X Y}
@@ -1719,6 +1719,6 @@ theorem bracket_compBifun_eq_fenchelPairing (Bx : X →ₗ[ℝ] W →ₗ[ℝ] �
     bracket By (compBifun G F) u z = fenchelPairing Bx (F u) (adjointBifun Bx By G z) :=
   conj_imageBifun_eq_fenchelPairing hbG hFu hex
 
-end Cor3872
+end CompBifunPairing
 
 end Tdaf.ConvexAnalysis

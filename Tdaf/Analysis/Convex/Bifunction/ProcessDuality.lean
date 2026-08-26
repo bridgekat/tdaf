@@ -127,7 +127,7 @@ end DomAdjoint
 
 /-! ### The two inner products for a closed convex process -/
 
-section Thm393Closed
+section BracketClosed
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -154,11 +154,11 @@ theorem partialCl₂_concaveBracket_adjointBifun_indicatorBifun (A : ConvexProce
 
 end ConvexProcess
 
-end Thm393Closed
+end BracketClosed
 
 /-! ### Where the two brackets of a bifunction agree, on the dual side -/
 
-section Cor3321Dual
+section BracketAgreeDual
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X]
@@ -186,11 +186,11 @@ theorem bracket_eq_concaveBracket_adjointBifun_of_mem_relint_domConcaveBifun
     (convexFn_concaveBracket (concaveBifun_adjointBifun Bu Bx F) Bu u)
     (by rw [dom_concaveBracket]; exact hy)
 
-end Cor3321Dual
+end BracketAgreeDual
 
 /-! ### Where the two inner products agree -/
 
-section Thm393RelintDom
+section BracketAgree
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -212,9 +212,9 @@ theorem bracket_eq_concaveBracket_of_mem_relint_dom (A : ConvexProcess U X) {u :
 
 end ConvexProcess
 
-end Thm393RelintDom
+end BracketAgree
 
-section Thm393RelintDomAdjoint
+section BracketAgreeAdjoint
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X]
@@ -241,7 +241,7 @@ theorem bracket_eq_concaveBracket_of_mem_relint_dom_adjoint (A : ConvexProcess U
 
 end ConvexProcess
 
-end Thm393RelintDomAdjoint
+end BracketAgreeAdjoint
 
 /-! ### Which saddle-functions are inner products of processes
 
@@ -249,7 +249,7 @@ The lower closed concave-convex functions on `U × Y` match the closed convex bi
 to `X`. Cutting that down to *processes* costs exactly two further conditions on `K`: it vanishes
 at the origin, and it is positively homogeneous in each variable separately. -/
 
-section Thm394
+section SaddleCorrespondence
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -449,11 +449,11 @@ theorem exists_unique_convexProcess_bracket_indicatorBifun_eq
       ⟨A'.convexBifun_indicatorBifun, (ConvexProcess.closedBifun_indicatorBifun_iff A').2 hA'cl,
         hA'br⟩
 
-end Thm394
+end SaddleCorrespondence
 
 /-! ### The image under a closed convex process -/
 
-section Thm397Closed
+section ImageClosed
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -528,7 +528,7 @@ theorem conj_imageBifun_indicatorBifun_eq_clFn (hA : IsClosed (A.graph : Set (U 
 
 end ConvexProcess
 
-end Thm397Closed
+end ImageClosed
 
 
 end Tdaf.ConvexAnalysis

@@ -45,7 +45,7 @@ open scoped Pointwise
 
 namespace Tdaf.ConvexAnalysis
 
-section Thm133
+section RecessionConj
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
@@ -140,7 +140,7 @@ theorem constancySpace_conj (hp : Proper f) (hc : Proper (conj B f)) :
     · exact le_of_eq (h x hx)
     · rw [map_neg, h x hx, neg_zero]
 
-end Thm133
+end RecessionConj
 
 /-! ### Recession cones and polars of effective domains -/
 
