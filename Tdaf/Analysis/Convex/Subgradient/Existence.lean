@@ -516,7 +516,7 @@ end PolyhedralSubgradient
 Read backwards from the bipolar: `cl (cone (∂f x))` is the bipolar `(∂f x)°°`, its inner polar is
 the sublevel set `{v | (cl f'(x; ·)) v ≤ 0}`, and that set is `cl {v | f'(x; v) < 0}`. -/
 
-section Theorem237
+section NormalCone
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [AddCommGroup F] [Module ℝ F] [TopologicalSpace F] [IsTopologicalAddGroup F]
@@ -628,9 +628,9 @@ theorem normalCone_setOf_le_eq_closure_coe_hull_subgradient [IsCompatiblePairing
       Submodule.span_le.2 (subgradient_subset_normalCone_setOf_le hr)
     exact hle
 
-end Theorem237
+end NormalCone
 
-section Corollary2371
+section NormalConeBounded
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
@@ -678,7 +678,7 @@ theorem normalCone_setOf_le_eq_coe_hull_subgradient_of_mem_interior_dom [IsCompa
     (subgradient_nonempty_of_mem_relint_dom (B := B) hf hp hri)
     ((isBounded_subgradient_iff_mem_interior_dom (B := B) hf hp hri).2 hx)
 
-end Corollary2371
+end NormalConeBounded
 
 /-! ### A trivial normal cone means an interior point -/
 

@@ -517,7 +517,7 @@ end Adjoint
 
 /-! ### The adjoint against the two partial closures -/
 
-section Thm332
+section AdjointClosureFst
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace U]
@@ -541,9 +541,9 @@ theorem concaveBracket_adjointBifun_eq_partialCl₁ (hF : ConvexBifun F) (y : Y)
       = fun u => partialCl₁ (fun p : U × Y => bracket Bx F p.1 p.2) (u, y) :=
   concaveConj_adjointBifun_eq_partialCl₁ hF y
 
-end Thm332
+end AdjointClosureFst
 
-section Thm332Concave
+section AdjointClosureConcave
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [TopologicalSpace Y]
@@ -563,9 +563,9 @@ theorem bracket_concaveAdjointBifun_eq_partialCl₂ (hG : ConcaveBifun G) (u : U
   rw [bracket_eq_conj, hconj, partialCl₂_slice]
   exact biconj_eq_clFn (B := Bx.flip) (convexFn_concaveBracket hG Bu u)
 
-end Thm332Concave
+end AdjointClosureConcave
 
-section Thm332Full
+section AdjointClosureSnd
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -584,7 +584,7 @@ theorem partialCl₂_concaveBracket_adjointBifun (hF : ConvexBifun F) (u : U) :
   rw [← concaveAdjointBifun_adjointBifun_eq_clBifun (Bu := Bu) (Bx := Bx) hF]
   exact (bracket_concaveAdjointBifun_eq_partialCl₂ (concaveBifun_adjointBifun Bu Bx F) u).symm
 
-end Thm332Full
+end AdjointClosureSnd
 
 /-! ### The clauses that need the correspondence -/
 

@@ -197,7 +197,7 @@ end CorMirror
 
 /-! ### Idempotence of the two closures -/
 
-section Thm341
+section Idempotence
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -248,6 +248,6 @@ theorem lowerClosedFn_lowerCl [TopologicalSpace V] [IsTopologicalAddGroup V] [Co
   rw [lowerClosedFn_iff_upperClosedFn_saddleSwap, ← upperCl_saddleSwap]
   exact upperClosedFn_upperCl Bx.flip Bu.flip (concaveConvexFn_saddleSwap hK)
 
-end Thm341
+end Idempotence
 
 end Tdaf.ConvexAnalysis

@@ -74,7 +74,7 @@ end Metric
 
 /-! ### The gradient criterion for co-finiteness -/
 
-section Lemma267
+section GradientCriterion
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
@@ -201,6 +201,6 @@ theorem cofinite_iff_forall_tendsto_norm_gradient_atTop (hf : ConvexFn f) (hp : 
   exact ⟨fun h => isBounded_setOf_norm_gradient_le_of_dom_conj_eq_univ hf hp hdom hdiff h,
     dom_conj_eq_univ_of_isBounded hf hp hdom hdiff⟩
 
-end Lemma267
+end GradientCriterion
 
 end Tdaf.ConvexAnalysis
