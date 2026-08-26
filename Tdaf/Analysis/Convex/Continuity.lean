@@ -174,7 +174,7 @@ theorem exists_chart_retraction (hC : Convex ℝ C) (hx₀ : x₀ ∈ C) :
 
 end Chart
 
-section Thm101
+section Relint
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
@@ -222,11 +222,11 @@ theorem ConvexFn.continuousOn_relint_dom (hf : ConvexFn f) (hp : Proper f) :
   exact ContinuousOn.congr
     (continuous_coe_real_ereal.comp_continuousOn (hf.continuousOn_toReal_relint_dom hp)) hcoe
 
-end Thm101
+end Relint
 
 /-! ### Functions finite everywhere -/
 
-section Cor1011
+section FiniteEverywhere
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
@@ -246,11 +246,11 @@ theorem ConvexFn.continuous_toReal_of_dom_eq_univ (hf : ConvexFn f) (hp : Proper
   rw [← continuousOn_univ, ← hri]
   exact hf.continuousOn_toReal_relint_dom hp
 
-end Cor1011
+end FiniteEverywhere
 
 /-! ### Lipschitz continuity on compact subsets of the relative interior -/
 
-section Thm104
+section Lipschitz
 
 variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W] [FiniteDimensional ℝ W]
   {D : Set W} {ψ : W → ℝ}
@@ -375,11 +375,11 @@ theorem ConvexFn.exists_lipschitzOnWith_of_isCompact (hf : ConvexFn f) (hp : Pro
   have := hcomp.dist_le_mul x hx y hy
   rwa [Function.comp_apply, Function.comp_apply, hval x hx, hval y hy] at this
 
-end Thm104
+end Lipschitz
 
 /-! ### Uniform continuity and Lipschitz continuity on the whole space -/
 
-section Thm105
+section UniformContinuity
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
@@ -550,6 +550,6 @@ theorem ConvexFn.exists_lipschitzWith_of_le_lipschitz (hf : ConvexFn f) (hp : Pr
   have h1 : g (a • y) - g 0 ≤ (K : ℝ) * (a * ‖y‖) := (le_abs_self _).trans hd
   nlinarith [le_abs_self (g 0), abs_nonneg (g 0), norm_nonneg y, K.coe_nonneg]
 
-end Thm105
+end UniformContinuity
 
 end Tdaf.ConvexAnalysis

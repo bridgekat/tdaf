@@ -228,7 +228,7 @@ end Core
 
 /-! ### Upper semicontinuity on a locally simplicial set -/
 
-section Thm102
+section UpperSemicontinuous
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [T2Space E] {f : E → EReal} {S : Set E}
@@ -278,11 +278,11 @@ theorem ConvexFn.continuousOn_of_locallySimplicial (hf : ConvexFn f)
   exact ⟨fun b hb => (hlsc x b hb).filter_mono nhdsWithin_le_nhds,
     fun b hb => hf.upperSemicontinuousOn_of_locallySimplicial hS hSdom x hx b hb⟩
 
-end Thm102
+end UpperSemicontinuous
 
 /-! ### Extension from the relative interior -/
 
-section Thm103
+section Extension
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {C : Set E} {f : E → EReal}
@@ -340,6 +340,6 @@ theorem exists_closedFn_continuousOn_of_locallySimplicial (hC : Convex ℝ C)
   · exact (convexFn_clFn hf).continuousOn_of_locallySimplicial
       (closedFn_clFn f).lowerSemicontinuous hCls hCdom
 
-end Thm103
+end Extension
 
 end Tdaf.ConvexAnalysis

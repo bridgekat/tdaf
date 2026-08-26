@@ -747,7 +747,7 @@ theorem subgradientRel_add_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → 
 
 end MaximalCyclic
 
-section Theorem249
+section Maximality
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
@@ -851,6 +851,6 @@ theorem isMaximalCyclicallyMonotone_iff_exists_closedProperConvexFn [IsCompatibl
   · rintro ⟨f, hf, rfl⟩
     exact isMaximalCyclicallyMonotone_subgradientRel hf
 
-end Theorem249
+end Maximality
 
 end Tdaf.ConvexAnalysis

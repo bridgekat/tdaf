@@ -359,7 +359,7 @@ end SaddleTilt
 
 /-! ### Subgradients are saddle-points of the tilted function -/
 
-section Thm374
+section TiltCriterion
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -397,11 +397,11 @@ theorem mem_saddleSubgradient_iff_isSaddlePoint :
   · rintro ⟨ha, hb⟩
     exact ⟨fun u => (hfst u).1 (ha u), fun x => (hsnd x).1 (hb x)⟩
 
-end Thm374
+end TiltCriterion
 
 /-! ### The effective domain of the subdifferential -/
 
-section Thm374Dom
+section SubgradientDom
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -420,9 +420,9 @@ theorem domSaddleSubgradient_subset_domSaddle (hp : ProperSaddleFn K) :
   rw [mem_domSaddle, dom₁_saddleTilt, dom₂_saddleTilt] at h
   exact h
 
-end Thm374Dom
+end SubgradientDom
 
-section Thm374Relint
+section SubgradientRelint
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V]
@@ -466,7 +466,7 @@ theorem kernelSet_subset_domSaddleSubgradient_subset_domSaddle [IsCompatiblePair
   ⟨kernelSet_subset_domSaddleSubgradient hK ((closedSaddleFn_iff_saddleStructure hK hp).1 hcl),
     domSaddleSubgradient_subset_domSaddle hp⟩
 
-end Thm374Relint
+end SubgradientRelint
 
 
 /-! ### The subdifferential of an equivalence class -/
@@ -506,7 +506,7 @@ theorem isBifunSubgradientPair_def (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : 
 
 end BifunPair
 
-section Thm375
+section ClassSubgradient
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -619,12 +619,12 @@ theorem exists_isSaddlePoint_iff_zero_mem_domSaddleSubgradient (Bu : U →ₗ[�
   · rintro ⟨p, hp⟩
     exact ⟨p, (mem_saddleSubgradient_upperConjSaddle_zero_iff Bu Bx hF hcl hK p).1 hp⟩
 
-end Thm375
+end ClassSubgradient
 
 
 /-! ### Existence of a saddle-point -/
 
-section Thm376
+section Existence
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -666,11 +666,11 @@ theorem exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle
   exists_isSaddlePoint_of_zero_mem_kernelSet_upperConjSaddle Bu Bx hF hcl hpr hK
     ⟨interior_subset_intrinsicInterior h₁, interior_subset_intrinsicInterior h₂⟩
 
-end Thm376
+end Existence
 
 /-! ### The Lagrangian in subgradient form -/
 
-section Thm366
+section Lagrangian
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -689,6 +689,6 @@ theorem zero_mem_saddleSubgradient_saddleLagrangian_iff (Bx : X →ₗ[ℝ] Y �
   rw [mem_saddleSubgradient_iff_isSaddlePoint, saddleTilt_zero]
   exact isSaddlePoint_lagrangian_iff hF hcl hpr
 
-end Thm366
+end Lagrangian
 
 end Tdaf.ConvexAnalysis

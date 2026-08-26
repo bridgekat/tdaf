@@ -318,7 +318,7 @@ end PosHom
 
 /-! ### The support functions of the ε-subdifferentials -/
 
-section Theorem236
+section SupportFn
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {x : E} {ε r : ℝ}
@@ -424,6 +424,6 @@ theorem dirDeriv_eq_iInf_supportFn_epsSubgradient [IsCompatiblePairing B] (hf : 
     have hstep := posHomGen_mono hmono v
     rwa [posHomGen_shiftFn hf hr] at hstep
 
-end Theorem236
+end SupportFn
 
 end Tdaf.ConvexAnalysis

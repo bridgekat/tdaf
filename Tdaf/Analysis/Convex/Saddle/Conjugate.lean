@@ -134,7 +134,7 @@ end LagrangianBracket
 
 /-! ### The two conjugates are the two brackets of `F_*^*` -/
 
-section Cor3712
+section ConjugateBrackets
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -210,7 +210,7 @@ theorem saddleEquiv_lowerConjSaddle_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ
   have h2 := partialCl₂_upperConjSaddle Bu Bx hF hcl hK
   exact saddleEquiv_of_mem_saddleClass h1 h2 (mem_saddleClass_left h2) (mem_saddleClass_right h2)
 
-end Cor3712
+end ConjugateBrackets
 
 /-! ### Properness of the conjugate saddle-functions -/
 
@@ -316,7 +316,7 @@ end ClosurePairRelint
 
 /-! ### The common effective domain, and existence of the saddle-value -/
 
-section Cor3713
+section CommonDom
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -443,7 +443,7 @@ theorem exists_maximin_eq_coe_of_mem_relint_domSaddle (Bu : U →ₗ[ℝ] V →�
     exact hr
   rw [maximin_eq_neg_upperConjSaddle_zero Bu Bx K, heq, _root_.EReal.coe_neg]
 
-end Cor3713
+end CommonDom
 
 /-! ### The effective domains of the conjugate saddle-functions
 
@@ -566,7 +566,7 @@ theorem supportFn_biUnion {ι : Type*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s 
 
 end SupportUnion
 
-section Thm372
+section ConjRecession
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V]
@@ -698,11 +698,11 @@ theorem zero_mem_interior_dom₂_upperConjSaddle_iff (Bu : U →ₗ[ℝ] V →�
     supportFn_dom₂_upperConjSaddle_eq_iSup_recessionFn Bu Bx hF hcl hK hKcc hne hs w]
   simp only [lt_iSup_iff, exists_prop]
 
-end Thm372
+end ConjRecession
 
 /-! ### Existence of the saddle-value -/
 
-section Thm373
+section SaddleValue
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -726,7 +726,7 @@ theorem hasSaddleValue_of_no_common_direction_of_recession (Bu : U →ₗ[ℝ] V
   exact interior_subset_intrinsicInterior
     ((zero_mem_interior_dom₂_upperConjSaddle_iff Bu Bx hB hF hcl hpr hK hKcc hne hs).2 hrec)
 
-end Thm373
+end SaddleValue
 
 section BoundedRecession
 
@@ -761,7 +761,7 @@ theorem lt_recessionFn_of_isBounded_dom (hne : (dom f).Nonempty)
 
 end BoundedRecession
 
-section Cor3731
+section BoundedDom
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -787,6 +787,6 @@ theorem hasSaddleValue_of_isBounded_dom₂ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ
   exact ⟨u, hu, lt_recessionFn_of_isBounded_dom (by rw [hdom]; exact hne)
     (by rw [hdom]; exact hbd) hw⟩
 
-end Cor3731
+end BoundedDom
 
 end Tdaf.ConvexAnalysis

@@ -303,7 +303,7 @@ theorem separatingRight_neg_flip {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} (hB : B.S
 
 end SeparatingNeg
 
-section Cor3721Fst
+section SaddleValueFst
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -363,11 +363,11 @@ theorem hasSaddleValue_of_isBounded_dom₁ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ
   exact ⟨y, hy, lt_recessionFn_of_isBounded_dom (by rw [hdom]; exact hp.dom₁_nonempty)
     (by rw [hdom]; exact hbd) hz⟩
 
-end Cor3721Fst
+end SaddleValueFst
 
 /-! ### Existence of a saddle-point -/
 
-section Thm376
+section SaddlePoint
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -431,7 +431,7 @@ theorem exists_maximin_eq_coe_of_isBounded_domSaddle (Bu : U →ₗ[ℝ] V →�
     hs hbd₁ hbd₂
   exact hq.exists_maximin_eq_coe hp
 
-end Thm376
+end SaddlePoint
 
 /-! ### A finite continuous saddle-function on `C × D` -/
 
@@ -516,7 +516,7 @@ theorem exists_bifunSaddleClass_lowerSimpleExt (Bu : U →ₗ[ℝ] V →ₗ[ℝ]
 
 end SimpleExt
 
-section Cor3732
+section Minimax
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -618,11 +618,11 @@ theorem exists_saddlePoint_of_isBounded (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [
     rw [lowerSimpleExt_of_mem (p := (q.1, x)) hq₁ hx, hval, EReal.coe_le_coe_iff] at h
     exact h
 
-end Cor3732
+end Minimax
 
 /-! ### `∂K` as the subdifferential of the graph function, partially inverted -/
 
-section Thm375c
+section GraphSubgradient
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -667,9 +667,9 @@ theorem isBifunSubgradientPair_iff_mem_subgradient_graphFn (Bu : U →ₗ[ℝ] V
   rw [mem_subgradient_iff_conj_eq, hconj, hpair, graphFn_apply, isBifunSubgradientPair_def]
   exact (neg_eq_coe_sub_iff_sub_coe_eq_sub_coe _ _ _ _ _ rfl).symm
 
-end Thm375c
+end GraphSubgradient
 
-section Cor3751
+section GraphInversion
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
@@ -714,6 +714,6 @@ theorem isClosed_setOf_mem_saddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
   exact IsClosed.preimage hcont
     (isClosed_subgradientRel hpairing hpr (ClosedFn.lowerSemicontinuous hcl))
 
-end Cor3751
+end GraphInversion
 
 end Tdaf.ConvexAnalysis
