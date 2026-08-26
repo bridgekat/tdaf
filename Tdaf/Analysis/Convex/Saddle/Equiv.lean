@@ -8,48 +8,32 @@ import Tdaf.Analysis.Convex.Saddle.Correspondence
 /-!
 # Equivalence classes of saddle-functions
 
-Rockafellar's §34, second half. Two saddle-functions are **equivalent** when their partial
-closures agree, and `K` is **closed** when `cl₁ K` and `cl₂ K` are both equivalent to `K`.
-**Theorem 34.2** identifies the equivalence classes of closed saddle-functions: each is the
-order interval `Ω(F) = {K | ⟨Fu, y⟩ ≤ K ≤ ⟨u, F* y⟩}` between the two brackets of a closed convex
-bifunction `F`, and `F` is determined by the class.
+Two saddle-functions are **equivalent** when their partial closures agree, and `K` is **closed**
+when `cl₁ K` and `cl₂ K` are both equivalent to `K`. This is weaker than lower or upper closedness:
+a whole order interval can be closed while only its two ends are lower and upper closed.
+
+**Theorem 34.2** identifies the equivalence classes of closed saddle-functions. Each is an order
+interval `Ω(F) = {K | ⟨Fu, y⟩ ≤ K ≤ ⟨u, F* y⟩}` between the two brackets of a closed convex
+bifunction `F`; on it both partial closures are constant, equal to the two ends, and `F` is
+determined by the class. The interval lemmas below are stated for a closure pair `(K̲, K̄)` with
+`cl₁ K̲ = K̄` and `cl₂ K̄ = K̲` rather than for a bifunction, so they need no pairing; that the
+closure pairs are exactly the bracket pairs is Corollary 33.3.1.
 
 ## Main definitions
 
 * `SaddleEquiv K L` — `cl₁ K = cl₁ L` and `cl₂ K = cl₂ L`.
-* `ClosedSaddleFn K` — `cl₁ cl₂ K = cl₁ K` and `cl₂ cl₁ K = cl₂ K`, Rockafellar's closedness for
-  saddle-functions. It is weaker than lower or upper closedness.
+* `ClosedSaddleFn K` — `cl₁ cl₂ K = cl₁ K` and `cl₂ cl₁ K = cl₂ K`.
 * `saddleClass Klow Kup` — the order interval `Ω`, as a set of functions.
 
 ## Main results
 
-* `partialCl₂_eq_of_mem_saddleClass`, `partialCl₁_eq_of_mem_saddleClass` — **Theorem 34.2**'s
-  computation: on a closure pair's order interval the two closures are constant, equal to the two
-  ends. Everything else in the theorem follows from this.
-* `saddleEquiv_of_mem_saddleClass`, `closedSaddleFn_of_mem_saddleClass` — the interval is contained
-  in one equivalence class, and all its members are closed.
+* `partialCl₂_eq_of_mem_saddleClass`, `closedSaddleFn_of_mem_saddleClass` — **Theorem 34.2**.
 * `exists_unique_bifun_of_closedSaddleFn` — **Theorem 34.2**, converse: a closed concave-convex
-  function determines a unique closed convex bifunction, whose brackets are `cl₂ K` and `cl₁ K`.
-* `mem_saddleClass_self` — and `K` lies in the interval those two brackets span, so the classes
-  are exactly the `Ω(F)`.
-
-## Design notes
-
-**The interval is stated on a closure pair, not on a bifunction.** All the content of
-Theorem 34.2 is about a pair `(K̲, K̄)` with `cl₁ K̲ = K̄` and `cl₂ K̄ = K̲`; that the pairs are
-exactly the bracket pairs of closed convex bifunctions is Corollary 33.3.1, already proved in
-`Saddle/Correspondence.lean`. Keeping the two apart means the interval lemmas need no pairing at
-all — only monotonicity and idempotence of the partial closures.
-
-**Closed is weaker than lower or upper closed.** `LowerClosedFn K` is `cl₂ cl₁ K = K`;
-`ClosedSaddleFn K` only asks that the closures be *equivalent* to `K`, which is what lets a whole
-interval of functions be closed while just two of its members — the ends — are lower and upper
-closed.
+  function determines a unique closed convex bifunction, with brackets `cl₂ K` and `cl₁ K`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §34 (Theorem 34.2 and
-  its corollaries).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §34.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -72,8 +56,8 @@ theorem SaddleEquiv.symm (h : SaddleEquiv K L) : SaddleEquiv L K := ⟨h.1.symm,
 theorem SaddleEquiv.trans (h : SaddleEquiv K L) (h' : SaddleEquiv L M) : SaddleEquiv K M :=
   ⟨h.1.trans h'.1, h.2.trans h'.2⟩
 
-/-- A saddle-function is **closed** when `cl₁ K` and `cl₂ K` are both equivalent to it. Since the
-partial closures are idempotent, that amounts to these two equations. -/
+/-- A saddle-function is **closed** when `cl₁ K` and `cl₂ K` are both equivalent to it; by
+idempotence of the closures that amounts to these two equations. -/
 def ClosedSaddleFn (K : U × X → EReal) : Prop :=
   partialCl₁ (partialCl₂ K) = partialCl₁ K ∧ partialCl₂ (partialCl₁ K) = partialCl₂ K
 
@@ -84,7 +68,6 @@ omit [TopologicalSpace U] [TopologicalSpace X] in
 theorem mem_saddleClass {Klow Kup : U × X → EReal} :
     K ∈ saddleClass Klow Kup ↔ Klow ≤ K ∧ K ≤ Kup := Iff.rfl
 
-/-- Every saddle-function lies in the interval spanned by its own closures. -/
 theorem mem_saddleClass_self (K : U × X → EReal) :
     K ∈ saddleClass (partialCl₂ K) (partialCl₁ K) := ⟨partialCl₂_le K, le_partialCl₁ K⟩
 
@@ -96,13 +79,11 @@ variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGr
   [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X] {K : U × X → EReal}
 
 omit [AddCommGroup U] [IsTopologicalAddGroup U] in
-/-- Rockafellar's definition of closedness, unfolded: `cl₂ K` is equivalent to `K`. -/
 theorem ClosedSaddleFn.saddleEquiv_partialCl₂ (h : ClosedSaddleFn K) :
     SaddleEquiv (partialCl₂ K) K :=
   ⟨h.1, convexClosedFn_partialCl₂ K⟩
 
 omit [AddCommGroup X] [IsTopologicalAddGroup X] in
-/-- Rockafellar's definition of closedness, unfolded: `cl₁ K` is equivalent to `K`. -/
 theorem ClosedSaddleFn.saddleEquiv_partialCl₁ (h : ClosedSaddleFn K) :
     SaddleEquiv (partialCl₁ K) K :=
   ⟨concaveClosedFn_partialCl₁ K, h.2⟩
@@ -133,8 +114,6 @@ section IntervalCl₁
 variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U]
   {Klow Kup K : U × X → EReal}
 
-/-- **Rockafellar, Theorem 34.2**: on the interval of a closure pair, `cl₁` is constant at the
-upper end. -/
 theorem partialCl₁_eq_of_mem_saddleClass (h1 : partialCl₁ Klow = Kup)
     (hK : K ∈ saddleClass Klow Kup) : partialCl₁ K = Kup := by
   have hcc : partialCl₁ Kup = Kup := by
@@ -151,8 +130,6 @@ variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGr
   [TopologicalSpace X] [AddCommGroup X] [IsTopologicalAddGroup X]
   {Klow Kup K L : U × X → EReal}
 
-/-- **Rockafellar, Theorem 34.2**: the interval of a closure pair is contained in a single
-equivalence class. -/
 theorem saddleEquiv_of_mem_saddleClass (h1 : partialCl₁ Klow = Kup) (h2 : partialCl₂ Kup = Klow)
     (hK : K ∈ saddleClass Klow Kup) (hL : L ∈ saddleClass Klow Kup) : SaddleEquiv K L :=
   ⟨(partialCl₁_eq_of_mem_saddleClass h1 hK).trans (partialCl₁_eq_of_mem_saddleClass h1 hL).symm,
@@ -167,7 +144,6 @@ theorem closedSaddleFn_of_mem_saddleClass (h1 : partialCl₁ Klow = Kup)
 
 omit [TopologicalSpace U] [AddCommGroup U] [IsTopologicalAddGroup U] [AddCommGroup X]
   [IsTopologicalAddGroup X] in
-/-- The two ends of a closure pair lie in its interval. -/
 theorem mem_saddleClass_left (h2 : partialCl₂ Kup = Klow) : Klow ∈ saddleClass Klow Kup :=
   ⟨le_refl _, le_of_partialCl₂_eq h2⟩
 
@@ -189,9 +165,8 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
   {F : Bifun U X} {K : U × Y → EReal}
 
-/-- **Rockafellar, Theorem 34.2**, the `Ω(F)` half: on the interval between the two brackets of a
-closed convex bifunction, `cl₂` is the lower bracket, `cl₁` is the upper one, and every member is
-closed. The closure-pair hypotheses are Theorem 33.2. -/
+/-- **Rockafellar, Theorem 34.2**, the `Ω(F)` half: between the two brackets of a closed convex
+bifunction, `cl₂` is the lower bracket and `cl₁` the upper (the hypotheses are Theorem 33.2). -/
 theorem partialCl₂_eq_bracket_of_mem_saddleClass (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -221,8 +196,8 @@ theorem closedSaddleFn_of_mem_saddleClass_bracket (Bu : U →ₗ[ℝ] V →ₗ[�
     (partialCl₂_concaveBracket_adjoint Bu Bx hF hcl) hK
 
 /-- **Rockafellar, Theorem 34.2**, converse: a closed concave-convex function determines a unique
-closed convex bifunction, whose two brackets are `cl₂ K` and `cl₁ K`. Together with
-`mem_saddleClass_self` this says every class of closed saddle-functions is an `Ω(F)`. -/
+closed convex bifunction, with brackets `cl₂ K` and `cl₁ K`. With `mem_saddleClass_self`, every
+class of closed saddle-functions is an `Ω(F)`. -/
 theorem exists_unique_bifun_of_closedSaddleFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
     (hK : ConcaveConvexFn K) (hcl : ClosedSaddleFn K) :

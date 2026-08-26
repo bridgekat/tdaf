@@ -10,79 +10,46 @@ import Tdaf.Analysis.Convex.Subgradient.Monotone
 # Existence of saddle-values and saddle-points
 
 `Saddle/Conjugate.lean` proves the `D*` halves of Theorem 37.2, Corollary 37.2.1, Theorem 37.3 and
-Corollary 37.3.1, and leaves the `C*` halves open; `Saddle/Subgradient.lean` proves Theorem 37.6
-against the hypothesis `(0, 0) ∈ int (dom K*)`. This module supplies the missing halves and turns
-both theorems into statements about `K` alone.
+Corollary 37.3.1; this module supplies the `C*` halves, turns Theorem 37.6 into a statement about
+`K` alone, and then specialises everything to a finite continuous concave-convex function on a
+product of closed convex sets — where **Corollary 37.6.2** is the classical minimax theorem.
 
-The device is the involution `saddleSwap K (y, u) = -K (u, y)`, which exchanges the two variables
-of a saddle-function. Under it the equivalence class `Ω (F)` becomes the class `Ω (F♯)` for the
-**negated flipped pairings** `-Bx.flip`, `-Bu.flip`, where `F♯` is the bifunction
-`(F♯ y) v = -(F* y)(v)`; and the lower and upper conjugates are exchanged. Every `C*` statement is
-therefore its `D*` companion read at the swapped data, and no new duality is needed.
+The device is the involution `saddleSwap K (y, u) = -K (u, y)`. Under it the class `Ω (F)` becomes
+the class `Ω (F♯)` for the **negated flipped pairings** `-Bx.flip`, `-Bu.flip`, where `F♯` is the
+bifunction `(F♯ y) v = -(F* y)(v)`, and the two conjugates are exchanged. So every `C*` statement
+is its `D*` companion read at the swapped data, and no new duality is needed. The pairings must be
+negated and not merely flipped: `saddleSwap` negates values, and only the negated pairings restore
+the sign of the linear terms in the two conjugates.
+
+The file closes with Theorem 37.5's condition (c), which identifies `∂K` with the subdifferential
+of the graph function of `F`, partially inverted along a linear homeomorphism.
 
 ## Main results
 
-* `swapAdjointBifun`, `adjointBifun_swapAdjointBifun`, `saddleSwap_mem_bifunSaddleClass` — the
-  swap dictionary: `saddleSwap` carries `Ω (F)` onto `Ω (F♯)`, and the adjoint of `F♯` is `-F`.
-* `upperConjSaddle_saddleSwap`, `lowerConjSaddle_saddleSwap` — `saddleSwap` exchanges the two
-  conjugates.
+* `swapAdjointBifun`, `adjointBifun_swapAdjointBifun`, `saddleSwap_mem_bifunSaddleClass` — the swap
+  dictionary: `saddleSwap` carries `Ω (F)` onto `Ω (F♯)`, and the adjoint of `F♯` is `-F`;
+  `upperConjSaddle_saddleSwap`, `lowerConjSaddle_saddleSwap` exchange the two conjugates.
 * `proper_graphFn_of_properSaddleFn` — a proper member of `Ω (F)` forces `Proper (graphFn F)`.
-* `zero_mem_interior_dom₁_lowerConjSaddle_iff` — **Corollary 37.2.1**, the `C*` half.
-* `hasSaddleValue_of_no_common_direction_of_recession_neg` — **Theorem 37.3**, condition (b).
-* `hasSaddleValue_of_isBounded_dom₁` — **Corollary 37.3.1**, the half where `C` is bounded.
-* `exists_isSaddlePoint_of_no_common_direction_of_recession` — **Theorem 37.6** with its
-  hypotheses stated on `K` itself, as conditions (a) and (b) of Theorem 37.3.
-* `exists_isSaddlePoint_of_isBounded_domSaddle`,
-  `exists_maximin_eq_coe_of_isBounded_domSaddle` — **Corollary 37.6.1**.
-* `saddleStructure_lowerSimpleExt`, `maximin_lowerSimpleExt`, `minimax_lowerSimpleExt`,
+* `zero_mem_interior_dom₁_lowerConjSaddle_iff` — **Corollary 37.2.1**, the `C*` half;
+  `hasSaddleValue_of_no_common_direction_of_recession_neg` — **Theorem 37.3**, condition (b);
+  `hasSaddleValue_of_isBounded_dom₁` — **Corollary 37.3.1** where `C` is bounded.
+* `exists_isSaddlePoint_of_no_common_direction_of_recession` — **Theorem 37.6** with its hypotheses
+  stated on `K` itself; `exists_isSaddlePoint_of_isBounded_domSaddle` — **Corollary 37.6.1**.
+* `saddleStructure_lowerSimpleExt`, `maximin_lowerSimpleExt`,
   `exists_bifunSaddleClass_lowerSimpleExt` — the transfer of §37 to a finite continuous
   concave-convex function on a closed `C × D`, through Corollaries 34.2.4 and 33.3.3.
-* `biSup_biInf_eq_biInf_biSup_of_isBounded_right`, `..._left` — **Corollary 37.3.2**.
-* `exists_saddlePoint_of_isBounded` — **Corollary 37.6.2**, the classical minimax theorem.
-* `isBifunSubgradientPair_iff_mem_subgradient_graphFn` — **Theorem 37.5**, (c) ⇔ (d): `∂K` is the
-  partial inversion of `∂f`, `f` the graph function of `F`.
-* `setOf_mem_saddleSubgradient_eq_preimage` — the same identity read as an equality of sets: the
-  graph of `∂K` is the graph of `∂f` pulled back along `(u, y, v, x) ↦ ((u, x), (-v, y))`.
-* `isClosed_setOf_mem_saddleSubgradient` — **Corollary 37.5.1**, closedness clause. Its
-  homeomorphism clause and Corollary 37.5.2 are in `Saddle/Monotone.lean`.
+* `biSup_biInf_eq_biInf_biSup_of_isBounded_right` — **Corollary 37.3.2**;
+  `exists_saddlePoint_of_isBounded` — **Corollary 37.6.2**.
+* `isBifunSubgradientPair_iff_mem_subgradient_graphFn`, `setOf_mem_saddleSubgradient_eq_preimage` —
+  **Theorem 37.5**, (c) ⇔ (d), pointwise and as an equality of graphs;
+  `isClosed_setOf_mem_saddleSubgradient` — **Corollary 37.5.1**, closedness clause.
 
-## Design notes
+## Implementation notes
 
-**The swap needs the pairings negated, not merely flipped.** `saddleSwap` negates values, so the
-linear terms `⟨u, v⟩ + ⟨x, y⟩` in the two conjugates come back with the opposite sign; only
-`-Bx.flip` and `-Bu.flip` restore them. `isCompatiblePairing_neg`, `isCompatiblePairing_flip_neg`
-and `flip_neg` (in `Duality/Pairing.lean`) are instances, so the negated pairings are usable with
-no `have`; `separatingRight_neg_flip` is the third lemma of that family.
-
-**The bifunction of the swapped class is `F♯ = -F*` with its arguments exchanged, not `F_*^*`.**
-`F_*^* = inverseBifun (adjointBifun Bu Bx F)` is a bifunction from `V` to `Y` and belongs to the
-*conjugate* class `Ω (F_*^*)` on `V × X`; the swapped class lives on `Y × U` and its bifunction
-goes from `Y` to `V`. The two differ by `flipBifun`, and `adjointBifun_neg_flipBifun` — a pure
-reindexing of one infimum over a product — is what relates them, after which
-`adjointBifun_swapAdjointBifun` is the biadjoint identity verbatim.
-
-**`Proper (graphFn F)` had to be derived, not assumed.** Every §37 statement in
-`Saddle/Conjugate.lean` and `Saddle/Subgradient.lean` takes it as a hypothesis, whereas
-Corollary 34.2.4 and Theorem 34.3 deliver `ProperSaddleFn K`. The bridge is
-`proper_graphFn_of_properSaddleFn`, and it needs both halves of properness: `dom₂ K ≠ ∅` rules out
-`F u x = -∞` (which would make a bracket `+∞`), and `dom₁ K ≠ ∅` rules out `F ≡ +∞` (which would
-make the upper bracket `-∞`).
-
-**Theorem 37.5's (c) needs no hypothesis on `F` at all.** The equivalence between condition (d)
-and `(-u*, v) ∈ ∂f (u, v*)` is Theorem 23.5 plus the identity `(F* v)(u*) = -f*(-u*, v)`
-(`adjointBifun_eq_neg_conj_graphFn`), and both are unconditional; convexity and closedness enter
-only when (a) is brought in, i.e. when a representative `K ∈ Ω (F)` is chosen.
-
-**Corollary 37.3.2 is stated with `EReal`-valued extrema.** The book writes
+Corollary 37.3.2 is stated with `EReal`-valued extrema. The book writes
 `inf_D sup_C K = sup_C inf_D K` for a finite `K`, but with only one of `C`, `D` bounded the two
-iterated extrema can be `±∞`, so the equality has to be read in `EReal`. Corollary 37.6.2, where
-both sets are bounded, is stated with real inequalities exactly as the book displays them.
-
-## What is not here
-
-**Corollary 37.5.1's homeomorphism clause, and Corollary 37.5.2** are in `Saddle/Monotone.lean`,
-which is where `Optimization/Prox.lean` gets instantiated at `prodPairing (innerₗ U) (innerₗ X)`.
-Only the closedness clause is here, since only it is Theorem 24.4.
+iterated extrema can be `±∞`. Corollary 37.6.2, where both are bounded, is stated with real
+inequalities exactly as the book displays them.
 
 ## References
 
@@ -98,7 +65,6 @@ section SwapNeg
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- Reflecting both the real minuend and the `EReal` subtrahend. -/
 private theorem coe_neg_sub_neg (r : ℝ) (z : EReal) :
     ((-r : ℝ) : EReal) - -z = z - ((r : ℝ) : EReal) := by
   induction z using EReal.rec with
@@ -106,11 +72,10 @@ private theorem coe_neg_sub_neg (r : ℝ) (z : EReal) :
   | coe s => norm_cast; ring
   | top => simp
 
-/-- **The adjoint commutes with `flipBifun` once both pairings are negated and exchanged.**
-
-This is the identity of definitions behind the whole swap dictionary: `adjointBifun` is an
-infimum over `U × X` of `F u x + ⟨u, v⟩ - ⟨x, y⟩`, and exchanging the two pairings while negating
-both restores exactly that summand with the two bound variables exchanged. -/
+/-- **The adjoint commutes with `flipBifun` once both pairings are negated and exchanged.** This is
+the identity behind the whole swap dictionary: `adjointBifun` is an infimum over `U × X` of
+`F u x + ⟨u, v⟩ - ⟨x, y⟩`, and negating and exchanging the pairings restores that summand with the
+two bound variables exchanged. -/
 theorem adjointBifun_neg_flipBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) :
     adjointBifun (-Bx) (-Bu) (flipBifun F) = flipBifun (adjointBifun Bu Bx F) := by
@@ -159,10 +124,10 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
 
 /-- The convex bifunction attached to the **swapped** saddle-function: `(F♯ y) v = -(F* y)(v)`.
 
-`saddleSwap K` is a concave-convex function on `Y × U`, and Theorem 33.3 attaches a convex
-bifunction from `Y` to `V` to its class; this is it. The two brackets of `F♯` at the negated
-flipped pairings `-Bx.flip`, `-Bu.flip` are the negatives of the two brackets of `F`, exchanged
-— which is exactly what `saddleSwap` does to the class `Ω (F)`. -/
+It is not `F_*^*`, which goes from `V` to `Y` and belongs to the *conjugate* class on `V × X`;
+`F♯` goes from `Y` to `V`, and the two differ by `flipBifun`. Its two brackets at the negated
+flipped pairings are the negatives of the two brackets of `F`, exchanged — which is what
+`saddleSwap` does to the class `Ω (F)`. -/
 noncomputable def swapAdjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) : Bifun Y V :=
   flipBifun (inverseBifun (adjointBifun Bu Bx F))
@@ -281,14 +246,11 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {F : Bifun U X} {K : U × Y → EReal}
 
 /-- **A proper member forces a proper bifunction.** Rockafellar never separates the two
-propernesses — the equivalence class `Ω (F)` of a closed proper convex bifunction consists of
-proper saddle-functions and conversely — but the §37 API asks for `Proper (graphFn F)` while
-Theorem 34.3 and Corollary 34.2.4 deliver `ProperSaddleFn K`, so the bridge has to be crossed
-explicitly.
+propernesses, but the §37 statements ask for `Proper (graphFn F)` while Theorem 34.3 and
+Corollary 34.2.4 deliver `ProperSaddleFn K`, so the bridge is crossed explicitly.
 
-Proof idea: `F u x = ⊥` would make the bracket `⟨Fu, y⟩` identically `+∞`, contradicting
-`dom₂ K ≠ ∅` through `⟨Fu, ·⟩ ≤ K (u, ·)`; and `F ≡ +∞` would make the adjoint `+∞` and hence the
-upper bracket `-∞`, contradicting `dom₁ K ≠ ∅` through `K ≤ ⟨·, F*·⟩`. -/
+`F u x = ⊥` would make the bracket `⟨Fu, y⟩` identically `+∞`, contradicting `dom₂ K ≠ ∅`; and
+`F ≡ +∞` would make the upper bracket `-∞`, contradicting `dom₁ K ≠ ∅`. -/
 theorem proper_graphFn_of_properSaddleFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (hK : K ∈ bifunSaddleClass Bu Bx F) (hp : ProperSaddleFn K) : Proper (graphFn F) := by
   obtain ⟨u₀, hu₀⟩ := hp.dom₁_nonempty
@@ -350,11 +312,8 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
 omit [FiniteDimensional ℝ X] in
 /-- **Rockafellar, Corollary 37.2.1** (the `C*` half): the origin is an interior point of `C*` if
 and only if the convex functions `-K (·, v)`, for `v ∈ ri D`, have no common direction of
-recession.
-
-This is the `D*` half read at `saddleSwap K`, whose class is `Ω (F♯)` for the negated flipped
-pairings (`saddleSwap_mem_bifunSaddleClass`); `upperConjSaddle_saddleSwap` identifies the second
-effective domain of the swapped upper conjugate with `C*`. -/
+recession. This is the `D*` half read at `saddleSwap K`, whose class is `Ω (F♯)` for the negated
+flipped pairings. -/
 theorem zero_mem_interior_dom₁_lowerConjSaddle_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bu.SeparatingLeft)
@@ -417,11 +376,8 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   {F : Bifun U X} {K : U × Y → EReal}
 
 /-- **Rockafellar, Theorem 37.6**: if conditions (a) and (b) of Theorem 37.3 both hold, `K` has a
-saddle-point.
-
-Both conditions are translated by Corollary 37.2.1 into `0 ∈ int C*` and `0 ∈ int D*`, and
-`exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle` — Corollary 37.5.3 through
-Theorem 37.4 — concludes. -/
+saddle-point. Corollary 37.2.1 translates them into `0 ∈ int C*` and `0 ∈ int D*`, after which
+Corollary 37.5.3 through Theorem 37.4 concludes. -/
 theorem exists_isSaddlePoint_of_no_common_direction_of_recession (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hBu : Bu.SeparatingLeft)
@@ -463,9 +419,8 @@ theorem exists_isSaddlePoint_of_isBounded_domSaddle (Bu : U →ₗ[ℝ] V →ₗ
     exact ⟨y, hy, lt_recessionFn_of_isBounded_dom (by rw [hdom]; exact hp.dom₁_nonempty)
       (by rw [hdom]; exact hbd₁) hz⟩
 
-/-- **Rockafellar, Corollary 37.6.1**, second clause: the saddle-value is then finite. It is a
-value of `K` at a saddle-point, and a proper saddle-function is finite on its effective
-domain (Corollary 36.3.1). -/
+/-- **Rockafellar, Corollary 37.6.1**, second clause: the saddle-value is then finite — a value of
+`K` at a saddle-point, and a proper saddle-function is finite on its effective domain. -/
 theorem exists_maximin_eq_coe_of_isBounded_domSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hBu : Bu.SeparatingLeft)
@@ -572,11 +527,9 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
 
 /-- **Rockafellar, Corollary 37.3.2**, the half where `D` is bounded: a finite continuous
 concave-convex function on a product of nonempty closed convex sets, one of them bounded, has
-`sup inf = inf sup` over `C × D`.
-
-Proof idea: the lower simple extension is a closed proper concave-convex function with effective
-domain `C × D` (Corollary 34.2.4), so Corollary 37.3.1 gives it a saddle-value, and Theorem 36.3
-identifies its two iterated extrema with the book's restricted ones. -/
+`sup inf = inf sup` over `C × D`. The lower simple extension is a closed proper concave-convex
+function with effective domain `C × D` (Corollary 34.2.4), so Corollary 37.3.1 gives it a
+saddle-value and Theorem 36.3 identifies its extrema with the restricted ones. -/
 theorem biSup_biInf_eq_biInf_biSup_of_isBounded_right (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bx.SeparatingRight)
@@ -630,12 +583,9 @@ theorem biSup_biInf_eq_biInf_biSup_of_isBounded_left (Bu : U →ₗ[ℝ] V →�
   exact hsv
 
 /-- **Rockafellar, Corollary 37.6.2**: a finite continuous concave-convex function on a product of
-nonempty compact convex sets has a saddle-point relative to that product. This is the classical
-minimax theorem in the form everyone cites.
-
-Proof idea: the lower simple extension is closed, proper and concave-convex with effective domain
-`C × D` (Corollary 34.2.4); Corollary 37.6.1 gives it a saddle-point, Corollary 36.3.1 places that
-point in `C × D`, and there the extension agrees with `K`. -/
+nonempty compact convex sets has a saddle-point relative to that product — the classical minimax
+theorem. Corollary 37.6.1 gives the lower simple extension a saddle-point, Corollary 36.3.1 places
+it in `C × D`, and there the extension agrees with `K`. -/
 theorem exists_saddlePoint_of_isBounded (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hBu : Bu.SeparatingLeft) (hBx : Bx.SeparatingRight)
@@ -679,15 +629,13 @@ section Thm375c
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- Cancelling a real summand on the right of an `EReal` equation. -/
 private theorem add_coe_right_inj {a b : EReal} {r : ℝ} :
     a + (r : EReal) = b + (r : EReal) ↔ a = b :=
   ⟨fun h => le_antisymm ((_root_.EReal.addLECancellable_coe r).add_le_add_iff_right.1 h.le)
       ((_root_.EReal.addLECancellable_coe r).add_le_add_iff_right.1 h.ge), fun h => by rw [h]⟩
 
-/-- The arithmetic behind Theorem 37.5's (c) ⇔ (d): with `e = c - d`, the two equations
-`-b = e - a` and `a - c = b - d` say the same thing. Both reduce to `a + d = b + c`, where no
-`∞ - ∞` can arise because `c` and `d` are real. -/
+/-- The arithmetic behind Theorem 37.5's (c) ⇔ (d): with `e = c - d`, the equations `-b = e - a`
+and `a - c = b - d` say the same thing, both reducing to `a + d = b + c`. -/
 private theorem neg_eq_coe_sub_iff_sub_coe_eq_sub_coe (a b : EReal) (c d e : ℝ)
     (he : -d + c = e) :
     -b = ((e : ℝ) : EReal) - a ↔ a - ((c : ℝ) : EReal) = b - ((d : ℝ) : EReal) := by
@@ -706,10 +654,8 @@ private theorem neg_eq_coe_sub_iff_sub_coe_eq_sub_coe (a b : EReal) (c d e : ℝ
 
 /-- **Rockafellar, Theorem 37.5**, (c) ⇔ (d): membership in the subdifferential of the class
 `Ω (F)` is membership in the subdifferential of the graph function `f` of `F`, with the pair
-`(u*, v)` **partially inverted** to `(-u*, v)` and `(u, v*)` read as a point of `U × X`.
-
-This is the identity that makes `∂K` a partial inversion of `∂f`, and hence lets the geometric
-results about `∂f` be read off for saddle-functions. -/
+`(u*, v)` **partially inverted** to `(-u*, v)`. No hypothesis on `F` is needed: it is Theorem 23.5
+together with the unconditional identity `(F* v)(u*) = -f*(-u*, v)`. -/
 theorem isBifunSubgradientPair_iff_mem_subgradient_graphFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (p : U × Y) (q : V × X) :
     IsBifunSubgradientPair Bu Bx F p q ↔
@@ -731,10 +677,9 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X} {K : U × Y → EReal}
 
-/-- **The graph of `∂K` is the graph of `∂f` partially inverted**, where `f` is the graph function
-of `F`: Theorem 37.5's (a) ⇔ (c) read as an equality of sets. The map that does the inversion,
-`(u, y, v, x) ↦ ((u, x), (-v, y))`, is a linear homeomorphism, which is what makes both clauses of
-Corollary 37.5.1 and Corollary 37.5.2 transfer from `∂f`. -/
+/-- **The graph of `∂K` is the graph of `∂f` partially inverted**, `f` the graph function of `F`:
+Theorem 37.5's (a) ⇔ (c) as an equality of sets. The inversion `(u, y, v, x) ↦ ((u, x), (-v, y))`
+is a linear homeomorphism, which is what makes Corollaries 37.5.1 and 37.5.2 transfer from `∂f`. -/
 theorem setOf_mem_saddleSubgradient_eq_preimage (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -748,14 +693,9 @@ theorem setOf_mem_saddleSubgradient_eq_preimage (Bu : U →ₗ[ℝ] V →ₗ[ℝ
     isBifunSubgradientPair_iff_mem_subgradient_graphFn]
   exact Iff.rfl
 
-/-- **Rockafellar, Corollary 37.5.1**, closedness clause: the graph of `∂K` is closed.
-
-Proof idea: Theorem 37.5 identifies that graph with the preimage of the graph of `∂f` — `f` the
-graph function of `F` — under the linear homeomorphism `(u, y, v, x) ↦ ((u, x), (-v, y))`, and
-Theorem 24.4 says the graph of `∂f` is closed.
-
-The homeomorphism clause of the corollary is `saddleSubgradientHomeomorph`
-(`Saddle/Monotone.lean`), which runs the same identification through Corollary 31.5.1. -/
+/-- **Rockafellar, Corollary 37.5.1**, closedness clause: the graph of `∂K` is closed. It is the
+preimage of the graph of `∂f` under a linear homeomorphism, and Theorem 24.4 says the graph of
+`∂f` is closed. The homeomorphism clause is `saddleSubgradientHomeomorph`. -/
 theorem isClosed_setOf_mem_saddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hcu : Continuous fun r : U × V => Bu r.1 r.2)
