@@ -87,6 +87,8 @@ therefore developed here, since §13.5 is its first consumer.
   which is **Theorem 27.1(i)** in both its sentences.
 * `separatingRight_flip_of_separatingDual` — a compatible pairing with a separating dual separates
   the points of `E`, which is what clause (c) needs in place of the book's `y ≠ 0`.
+* `injective_of_separatingDual` — the same fact stated as injectivity of `B`, which is the form
+  the uniqueness results of §25 and §29 take as an explicit hypothesis.
 * `dom_conj_eq_univ_iff`, `cofinite_iff_dom_conj_eq_univ`, `cofinite_iff_forall_conj_lt_top` — the
   book's form, under `FiniteDimensional ℝ F`.
 
@@ -932,6 +934,26 @@ theorem separatingRight_flip_of_separatingDual (B : E →ₗ[ℝ] F →ₗ[ℝ] 
   obtain ⟨g, hg⟩ := SeparatingDual.exists_ne_zero (R := ℝ) hne
   obtain ⟨y, hy⟩ := exists_pairing_eq B g
   exact hg (by rw [hy x]; simpa using hx y)
+
+omit [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
+  [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
+  [IsCompatiblePairing B.flip] in
+/-- **A compatible pairing is injective on the left** when the left space has a separating dual:
+`B x₁ = B x₂` makes `⟨x₁ - x₂, y⟩` vanish for every `y`, and the lemma above then leaves only
+`x₁ = x₂`.
+
+This is `separatingRight_flip_of_separatingDual` packaged as injectivity of the bilinear map
+itself, which is the form the uniqueness results ask for: `subgradient_eq_singleton_of_dirDeriv_eq`
+(`Subgradient/Gradient.lean`), `kuhnTucker_eq_singleton_of_dirDeriv_eq`
+(`Optimization/Perturbation.lean`) and the three rules of `Subgradient/Calculus.lean` that name a
+single dual point all take `Function.Injective B.flip` as an explicit hypothesis, because they are
+stated with no topology at all. A caller working over a normed space never has to supply it:
+`SeparatingDual ℝ E` is automatic there, so `[IsCompatiblePairing B]` alone is enough. -/
+theorem injective_of_separatingDual (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
+    [SeparatingDual ℝ E] : Function.Injective B := by
+  intro x₁ x₂ h
+  refine sub_eq_zero.1 (separatingRight_flip_of_separatingDual B (x₁ - x₂) fun z => ?_)
+  rw [LinearMap.flip_apply, map_sub, LinearMap.sub_apply, h, sub_self]
 
 /-! ### Corollary 13.3.4
 

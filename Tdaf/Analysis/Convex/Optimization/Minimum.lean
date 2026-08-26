@@ -114,9 +114,10 @@ question is `subgradient B.flip (conj B f) 0`, a subset of **`E`** — `conj B f
 `f*` is an element of `E` and `E**` never appears. `argmin_eq_subgradient_conj_zero`, which is
 Theorem 27.1(b) and had been in this module all along, is literally `argmin f = ∂f*(0)` and states
 without a murmur. And no extra hypothesis was needed either: the separation the uniqueness half
-consumes is *free* from `[IsCompatiblePairing B]` in a normed space (`injective_of_separatingDual`,
-below), so the whole clause is `argmin_eq_subgradient_conj_zero` composed with Theorem 25.1 under
-the hypotheses `section ConjugateAtZero` already carried. The item stood open for five rounds on
+consumes is *free* from `[IsCompatiblePairing B]` in a normed space
+(`injective_of_separatingDual`, `Duality/Level.lean`), so the whole clause is
+`argmin_eq_subgradient_conj_zero` composed with Theorem 25.1 under the hypotheses
+`section ConjugateAtZero` already carried. The item stood open for five rounds on
 the strength of that sentence.
 
 ## What is not here
@@ -1429,20 +1430,6 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {f : E → EReal}
   {x : E}
 
-omit [FiniteDimensional ℝ F] [IsCompatiblePairing B.flip] in
-/-- **A compatible pairing is injective on the left**, when the left space has a separating dual.
-If `⟨x, y⟩ = 0` for every `y`, then by surjectivity of the evaluation *every* continuous linear
-functional kills `x`, and a separating dual leaves only `x = 0`.
-
-This is `separatingRight_flip_of_separatingDual` (`Duality/Level.lean`) packaged as injectivity of
-the bilinear map itself, which is the form `subgradient_eq_singleton_of_dirDeriv_eq` asks for. It
-belongs beside that lemma and is `private` here only because this module may not edit it. -/
-private theorem injective_of_separatingDual (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
-    [SeparatingDual ℝ E] : Function.Injective B := by
-  intro x₁ x₂ h
-  refine sub_eq_zero.1 (separatingRight_flip_of_separatingDual B (x₁ - x₂) fun z => ?_)
-  rw [LinearMap.flip_apply, map_sub, LinearMap.sub_apply, h, sub_self]
-
 /-- **Rockafellar, Theorem 27.1(e)**, necessity: if the minimum set of `f` is the single vector
 `x`, then `f*` is differentiable at the origin and `∇f*(0) = ⟨·, x⟩`.
 
@@ -1466,7 +1453,8 @@ the directional derivative that `HasGradientAt.dirDeriv_eq` supplies. Properness
 needed: differentiability of `f*` at the origin already forces `f*` proper, hence `f*(0)` finite,
 which is all the uniqueness argument consumes.
 
-The separation the uniqueness step needs is free here — `injective_of_separatingDual` — and it is
+The separation the uniqueness step needs is free here — `injective_of_separatingDual`,
+`Duality/Level.lean` — and it is
 not an artefact: if `B x = 0` for some `x ≠ 0` then `f = f**` cannot see `x`, every level set of
 `f` is invariant under translation by `x`, and no minimum set is ever a singleton.
 
