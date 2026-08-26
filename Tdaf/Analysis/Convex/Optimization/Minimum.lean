@@ -78,6 +78,11 @@ convex set, and the optimality condition `0 ∈ ∂h x + N_C(x)`.
   `argmin_nonempty_and_isBounded_iff_exists_setOf_le` — Theorem 27.1(d) and (f) combined, in the
   form **Theorem 30.4** conditions (g) and (i) take: *some* level set is non-empty and bounded
   exactly when the minimum set is, and both say `0 ∈ int (dom f*)`.
+* `argmin_comp_of_surjective` — the minimum set read in another set of coordinates.
+* `argmin_sepSum`, `dom_sepSum` — a **separable** objective `x ↦ ∑ᵢ hᵢ(xᵢ)` on a dependent
+  finite product is minimised coordinatewise, and its effective domain is the product of the
+  effective domains. This is the content of §28's *decomposition principle*, stated on the
+  product the principle is about rather than on an isometric copy of it.
 
 ## Design notes
 
@@ -110,9 +115,10 @@ question is `subgradient B.flip (conj B f) 0`, a subset of **`E`** — `conj B f
 `f*` is an element of `E` and `E**` never appears. `argmin_eq_subgradient_conj_zero`, which is
 Theorem 27.1(b) and had been in this module all along, is literally `argmin f = ∂f*(0)` and states
 without a murmur. And no extra hypothesis was needed either: the separation the uniqueness half
-consumes is *free* from `[IsCompatiblePairing B]` in a normed space (`injective_of_separatingDual`,
-below), so the whole clause is `argmin_eq_subgradient_conj_zero` composed with Theorem 25.1 under
-the hypotheses `section ConjugateAtZero` already carried. The item stood open for five rounds on
+consumes is *free* from `[IsCompatiblePairing B]` in a normed space
+(`injective_of_separatingDual`, `Duality/Level.lean`), so the whole clause is
+`argmin_eq_subgradient_conj_zero` composed with Theorem 25.1 under the hypotheses
+`section ConjugateAtZero` already carried. The item stood open for five rounds on
 the strength of that sentence.
 
 ## What is not here
@@ -268,7 +274,106 @@ theorem convex_argmin (hf : ConvexFn f) : Convex ℝ (argmin f) := by
     rw [hset]
     exact hf.convex_le _
 
+/-- **The minimum set transports along a surjection**: `x ↦ g (e x)` is minimised exactly at
+the `e`-preimages of the minimisers of `g`.
+
+Surjectivity is what makes the two quantifiers agree, and it is all the proof uses: injectivity
+of `e` plays no part, and neither does any structure on either type. This is what reads a
+minimisation problem in a different set of coordinates, and composed with `argmin_sepSum` it is
+the whole of §28's decomposition principle. -/
+theorem argmin_comp_of_surjective {α β : Type*} {g : β → EReal} {e : α → β}
+    (he : Function.Surjective e) : argmin (fun x => g (e x)) = e ⁻¹' argmin g := by
+  ext x
+  exact ⟨fun hx w => by obtain ⟨z, rfl⟩ := he w; exact hx z, fun hx z => hx (e z)⟩
+
 end Defs
+
+/-! ### Separable sums on a finite product
+
+A **separable** objective — `x ↦ ∑ᵢ hᵢ(xᵢ)` on a dependent finite product `∀ i, E i` — has its
+minimum set and its effective domain given coordinatewise. This is the mathematical content of
+Rockafellar's *decomposition principle* (§28, book 11309–11385): once a Kuhn–Tucker vector has
+reduced a program to minimising `h = h₁ + ⋯ + h_s` over `C = C¹ × ⋯ × C^s`, the problem splits
+into `s` independent problems, one per factor.
+
+The two statements are about the dependent product itself. The book's `n₁ + ⋯ + n_s = n` and its
+silent identification of `ℝ^{n₁} × ⋯ × ℝ^{n_s}` with `ℝⁿ` are bookkeeping, not content: no
+isometry appears in either proof, and neither does any relative interior. Nor does any linear
+structure — `argmin` and `dom` are order-theoretic and the only arithmetic is `EReal`'s — so both
+lemmas sit below every layer of D9. -/
+
+section Pi
+
+variable {ι : Type*} [Fintype ι] {E : ι → Type*} {h : ∀ i, E i → EReal}
+
+/-- **The effective domain of a separable sum is the product of the effective domains**:
+`∑ᵢ hᵢ(xᵢ) < ⊤` exactly when `hᵢ(xᵢ) < ⊤` for every `i`.
+
+The hypothesis is only that no summand takes the value `⊥`; the non-emptiness half of properness
+plays no part. It cannot be dropped, and it is `⊆` that fails without it: `⊥ + ⊤ = ⊥` (ER4), so a
+sum can be finite while one of its summands is `+∞`. The `⊇` direction is unconditional. -/
+theorem dom_sepSum (hb : ∀ i (z : E i), h i z ≠ ⊥) :
+    dom (fun x : ∀ i, E i => ∑ i, h i (x i)) = univ.pi fun i => dom (h i) := by
+  ext x
+  constructor
+  · intro hx i _
+    exact lt_top_iff_ne_top.2
+      (Tdaf.EReal.forall_ne_top_of_sum_ne_top _ _ (fun j _ => hb j (x j))
+        (lt_top_iff_ne_top.1 hx) i (Finset.mem_univ i))
+  · intro hx
+    choose c hc using fun j =>
+      Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hb j (x j)) (hx j (mem_univ j))
+    have hsum : ∑ j, h j (x j) = ((∑ j, c j : ℝ) : EReal) := by
+      rw [Tdaf.EReal.coe_sum]
+      exact Finset.sum_congr rfl fun j _ => hc j
+    change ∑ j, h j (x j) < ⊤
+    rw [hsum]
+    exact _root_.EReal.coe_lt_top _
+
+/-- **A separable sum is minimised coordinatewise**: the minimum set of `x ↦ ∑ᵢ hᵢ(xᵢ)` on a
+finite product is the product of the minimum sets of the summands.
+
+`⊇` is `Finset.sum_le_sum` and needs no hypothesis at all. `⊆` needs every summand proper, and
+both halves of properness are load-bearing rather than decorative. A common domain point bounds
+the value at a minimiser by a real, so `dom_sepSum` makes every `hⱼ(xⱼ)` finite; and finiteness is
+what allows the `j ≠ i` part of the sum to be cancelled off both sides, since `EReal` is not
+cancellative (ER1) and the cancellation has to run through `EReal.addLECancellable_coe` on a
+*real* remainder. Without the domain point the statement is false: for `ι = Fin 2`, `h 0 ≡ ⊤` and
+`h 1 = id` on `ℝ`, the left-hand side is everything and the right-hand side is empty. -/
+theorem argmin_sepSum (hp : ∀ i, Proper (h i)) :
+    argmin (fun x : ∀ i, E i => ∑ i, h i (x i)) = univ.pi fun i => argmin (h i) := by
+  classical
+  ext x
+  refine ⟨fun hx i _ z => ?_, fun hx z => Finset.sum_le_sum fun i _ => hx i (mem_univ i) (z i)⟩
+  -- a common domain point certifies that the value at `x` is finite
+  choose y hy using fun j => (hp j).dom_nonempty
+  choose r hr using fun j =>
+    Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top ((hp j).ne_bot (y j)) (hy j)
+  have hxle : ∑ j, h j (x j) ≤ ((∑ j, r j : ℝ) : EReal) := by
+    rw [Tdaf.EReal.coe_sum]
+    exact (hx y).trans (le_of_eq (Finset.sum_congr rfl fun j _ => hr j))
+  have hxdom : x ∈ dom fun w : ∀ i, E i => ∑ j, h j (w j) :=
+    lt_of_le_of_lt hxle (_root_.EReal.coe_lt_top _)
+  have hxpi := (dom_sepSum fun j z => (hp j).ne_bot z).subset hxdom
+  choose c hc using fun j =>
+    Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top ((hp j).ne_bot (x j)) (hxpi j (mem_univ j))
+  -- off the `i`-th coordinate the sum is a real, so it cancels
+  have hrest : ∑ j ∈ Finset.univ.erase i, h j (x j)
+      = ((∑ j ∈ Finset.univ.erase i, c j : ℝ) : EReal) := by
+    rw [Tdaf.EReal.coe_sum]
+    exact Finset.sum_congr rfl fun j _ => hc j
+  have hupdsum : ∑ j ∈ Finset.univ.erase i, h j (Function.update x i z j)
+      = ∑ j ∈ Finset.univ.erase i, h j (x j) :=
+    Finset.sum_congr rfl fun j hj => by
+      rw [Function.update_of_ne (Finset.ne_of_mem_erase hj)]
+  have hupd : ∑ j, h j (x j) ≤ ∑ j, h j (Function.update x i z j) :=
+    hx (Function.update x i z)
+  rw [← Finset.add_sum_erase _ (fun j => h j (x j)) (Finset.mem_univ i),
+    ← Finset.add_sum_erase _ (fun j => h j (Function.update x i z j)) (Finset.mem_univ i),
+    Function.update_self, hupdsum, hrest] at hupd
+  exact (_root_.EReal.addLECancellable_coe _).add_le_add_iff_right.1 hupd
+
+end Pi
 
 /-! ### Theorem 27.1(b) -/
 
@@ -1338,20 +1443,6 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] [IsCompatiblePairing B.flip] {f : E → EReal}
   {x : E}
 
-omit [FiniteDimensional ℝ F] [IsCompatiblePairing B.flip] in
-/-- **A compatible pairing is injective on the left**, when the left space has a separating dual.
-If `⟨x, y⟩ = 0` for every `y`, then by surjectivity of the evaluation *every* continuous linear
-functional kills `x`, and a separating dual leaves only `x = 0`.
-
-This is `separatingRight_flip_of_separatingDual` (`Duality/Level.lean`) packaged as injectivity of
-the bilinear map itself, which is the form `subgradient_eq_singleton_of_dirDeriv_eq` asks for. It
-belongs beside that lemma and is `private` here only because this module may not edit it. -/
-private theorem injective_of_separatingDual (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
-    [SeparatingDual ℝ E] : Function.Injective B := by
-  intro x₁ x₂ h
-  refine sub_eq_zero.1 (separatingRight_flip_of_separatingDual B (x₁ - x₂) fun z => ?_)
-  rw [LinearMap.flip_apply, map_sub, LinearMap.sub_apply, h, sub_self]
-
 /-- **Rockafellar, Theorem 27.1(e)**, necessity: if the minimum set of `f` is the single vector
 `x`, then `f*` is differentiable at the origin and `∇f*(0) = ⟨·, x⟩`.
 
@@ -1375,7 +1466,8 @@ the directional derivative that `HasGradientAt.dirDeriv_eq` supplies. Properness
 needed: differentiability of `f*` at the origin already forces `f*` proper, hence `f*(0)` finite,
 which is all the uniqueness argument consumes.
 
-The separation the uniqueness step needs is free here — `injective_of_separatingDual` — and it is
+The separation the uniqueness step needs is free here — `injective_of_separatingDual`,
+`Duality/Level.lean` — and it is
 not an artefact: if `B x = 0` for some `x ≠ 0` then `f = f**` cannot see `x`, every level set of
 `f` is invariant under translation by `x`, and no minimum set is ever a singleton.
 

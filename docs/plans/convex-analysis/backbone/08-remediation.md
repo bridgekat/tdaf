@@ -780,11 +780,26 @@ naming because each one is invisible to the check that would seem to catch it.
 * **A blocker no import check can see (§11.18 again).** `convex_polarSet` was declared 650 lines
   below the target section **in the same file**. The grep finds it; the elaborator does not.
 
-Two of the errors were mine and are worth stating plainly. I wrote "about a dozen lines" into both
-§12.30's row and the docstring it produced, having inherited the figure from §28's gap note without
-measuring; it is four. And I closed §12.22 with "all six private copies are deleted" after sweeping
-the files I already knew about rather than the tree; five more were still there. **An item closed
-centrally is not closed everywhere** — that is LIB24, at the ledger's own expense.
+Three of the errors were mine and are worth stating plainly.
+
+* I wrote "about a dozen lines" into both §12.30's row and the docstring it produced, having
+  inherited the figure from §28's gap note without measuring. It is four.
+* I closed §12.22 with "all six private copies are deleted" after sweeping the files I already knew
+  about rather than the tree; five more were still there. **An item closed centrally is not closed
+  everywhere** — LIB24, at the ledger's own expense.
+* I wrote §12.31 and the last item of §12.20 into the ledger as closed on the strength of an
+  agent's report, while its branch was **still unmerged**. The report was accurate about its own
+  worktree and said nothing about mine; `grep` of the merged tree would have shown that
+  `argmin_sepSum`, `dom_sepSum` and `argmin_comp_of_surjective` did not exist, and that
+  `injective_of_separatingDual` had never moved. Seven of eight branches had been merged and the
+  eighth was missed. **A report is not the tree** (BLD32): `git merge-base --is-ancestor` is one
+  line per branch, and the closure should be checked against the declaration, not the account of
+  it.
+
+That third one is the same mistake as the second at a different scale, which is the point: both
+times I closed an item against a description of the work instead of against the work. It is also
+the ninth failure mode in the list above, and the only one found *after* the round was written
+up.
 
 The reusable conclusion: a remediation row is a claim with a shelf life, and the parts that decay
 first are the ones a reader is least likely to re-check — the home, the count, and the names. The

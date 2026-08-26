@@ -1845,3 +1845,21 @@ assert mods == reg, sorted(mods ^ reg)
 The same run should assert the import list is sorted, which is the other half of the convention and
 equally invisible to the build.
 
+**BLD32. An agent's report is not the tree; check `git merge-base --is-ancestor` before writing a
+closure.** A round with eight branches merged seven of them, and the eighth sat unmerged while its
+results were written into the ledger as closed — on the strength of its report, which was accurate
+about its own worktree and said nothing about mine. Two rows claimed declarations that a `grep` of
+the merged tree would have shown did not exist. The check is one line per branch and it is the last
+thing to run before recording anything:
+
+```bash
+for b in $(git branch --list 'wt/round-*' --format='%(refname:short)'); do
+  git merge-base --is-ancestor "$b" HEAD && echo "$b MERGED" || echo "$b *** NOT MERGED ***"
+done
+```
+
+The deeper version of the rule: **close an item against the artefact, not against the account of
+it.** Grep the merged tree for the declaration the row asked for. That is the same check LIB24
+prescribes for items closed centrally, and it is the same failure — this time between a branch and
+its merge rather than between one file and the rest of the tree.
+
