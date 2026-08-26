@@ -10,18 +10,18 @@ import Tdaf.Analysis.Convex.Saddle.Minimax
 
 The lower and upper conjugates `K̲*`, `K̄*` of a saddle-function in the class `Ω (F)` of a closed
 convex bifunction `F` are the two brackets of one and the same convex bifunction, `F_*^*`. So they
-are a closure pair in the sense of Corollary 33.3.1: equivalent, sharing an effective domain
-`C* × D*`, and agreeing wherever one coordinate is a relative interior point of it. That is
-**Corollary 37.1.2**; **Corollary 37.1.3** adds that the origin in `ri C*` or `ri D*` forces the
-saddle-value of `K` to exist.
+are a **closure pair**: equivalent, sharing an effective domain `C* × D*`, and agreeing wherever
+one coordinate is a relative interior point of it. In particular the origin in `ri C*` or `ri D*`
+forces the saddle-value of `K` to exist.
 
 The one new algebraic fact needed is the **biadjoint identity** `(F_*^*)^* = F_*`. Since `F ↦ F_*`
-intertwines the convex and the concave adjoint, it is Theorem 30.2 read through that intertwining.
+intertwines the convex and the concave adjoint, it is involutivity of the adjoint read through
+that intertwining.
 
 The rest of the file computes the effective domains. `D*` is the projection of `dom F` on `X`, and
-**Theorem 37.2** evaluates its support function as a supremum of recession functions of the slices
-`K (u, ·)`; **Corollary 37.2.1** and **Theorem 37.3** turn that into criteria for `0 ∈ int D*` and
-for the saddle-value to exist. The `C*` halves are in `Saddle/Existence.lean`, read at `saddleSwap`.
+its support function is a supremum of recession functions of the slices `K (u, ·)`; that turns
+into criteria for `0 ∈ int D*` and for the saddle-value to exist. The `C*` halves are in
+`Saddle/Existence.lean`, read at `saddleSwap`.
 
 ## Main results
 
@@ -29,28 +29,29 @@ for the saddle-value to exist. The `C*` halves are in `Saddle/Existence.lean`, r
   intertwining `(G_*)^* = (G^*)_*` and the biadjoint identity `(F_*^*)^* = F_*`.
 * `saddleLagrangian_eq_concaveBracket` — the Lagrangian *is* the concave bracket of `F_*`.
 * `partialCl₁_lowerConjSaddle`, `partialCl₂_upperConjSaddle`, `saddleClass_conjSaddle`,
-  `domSaddle_conjSaddle_eq`, `lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₁` —
-  **Corollary 37.1.2**; `properSaddleFn_saddleLagrangian` — conjugates of closed proper
-  saddle-functions are proper.
+  `domSaddle_conjSaddle_eq`, `lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₁` — the two
+  conjugates are a closure pair (Corollary 37.1.2 in [^1]); `properSaddleFn_saddleLagrangian` —
+  conjugates of closed proper saddle-functions are proper.
 * `hasSaddleValue_of_mem_relint_dom₁_lowerConjSaddle` and
-  `exists_maximin_eq_coe_of_mem_relint_domSaddle` — **Corollary 37.1.3**.
+  `exists_maximin_eq_coe_of_mem_relint_domSaddle` — the origin in the relative interior of `C*` or
+  of `D*` gives the saddle-value, and in both gives a finite one.
 * `dom₁_eq_domBifun_of_mem_bifunSaddleClass` — `C = dom F` for every member of `Ω (F)`.
-* `supportFn_dom₂_upperConjSaddle`, `zero_mem_interior_dom₂_upperConjSaddle_iff` —
-  **Theorem 37.2** and **Corollary 37.2.1**, the `D*` halves.
-* `hasSaddleValue_of_no_common_direction_of_recession`, `hasSaddleValue_of_isBounded_dom₂` —
-  **Theorem 37.3**(a) and **Corollary 37.3.1**.
+* `supportFn_dom₂_upperConjSaddle`, `zero_mem_interior_dom₂_upperConjSaddle_iff` — the support
+  function of `D*`, and the criterion for `0 ∈ int D*` (Theorem 37.2 in [^1]).
+* `hasSaddleValue_of_no_common_direction_of_recession`, `hasSaddleValue_of_isBounded_dom₂` — no
+  common direction of recession, or a bounded `D`, gives the saddle-value.
 
 ## Implementation notes
 
-`K̲*` and `K̄*` live on `V × X` and the bifunction behind them goes from `V` to `Y`, so every §33
-lemma is used at the flipped pairings, whence the `.flip` compatibility instances throughout.
-Properness of the conjugate splits unevenly: `dom₂ K̄* ≠ ∅` is one line from properness of the
-graph function, while `dom₁ K̄* ≠ ∅` is the existence of an affine minorant of it — which is what
-makes closedness of `F` a genuine hypothesis of Corollary 37.1.3 rather than a convenience.
+`K̲*` and `K̄*` live on `V × X` and the bifunction behind them goes from `V` to `Y`, so every
+bracket lemma is used at the flipped pairings, whence the `.flip` compatibility instances
+throughout. Properness of the conjugate splits unevenly: `dom₂ K̄* ≠ ∅` is one line from properness
+of the graph function, while `dom₁ K̄* ≠ ∅` is the existence of an affine minorant of it — which is
+what makes closedness of `F` a genuine hypothesis rather than a convenience.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §30, §34, §37.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §30, §34, §37.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -97,8 +98,8 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
 
 /-- **The biadjoint identity `(F_*^*)^* = F_*`** for a closed convex bifunction. This is
 Rockafellar's remark that the equivalence class conjugate to `Ω (F)` is `Ω (F_*)`, and it is what
-makes Corollary 37.1.2 a statement about a closure pair. It is `adjointBifun_flip_inverseBifun`
-followed by Theorem 30.2. -/
+makes the two conjugates a closure pair. It is `adjointBifun_flip_inverseBifun` followed by
+involutivity of the adjoint on closed convex bifunctions. -/
 theorem adjointBifun_flip_inverseBifun_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     (hF : ConvexBifun F) (hcl : ClosedBifun F) :
@@ -113,8 +114,8 @@ section LagrangianBracket
 
 variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
 
-/-- **Rockafellar, §36**: `L (v, x) = ⟨v, F_* x⟩` — the Lagrangian of `(P)` is the concave bracket
-of the inverse bifunction `F_*`, for the flipped pairing. The identity itself is an unfolding. -/
+/-- `L (v, x) = ⟨v, F_* x⟩` — the Lagrangian of `(P)` is the concave bracket of the inverse
+bifunction `F_*`, for the flipped pairing. The identity itself is an unfolding. -/
 theorem concaveBracket_inverseBifun_eq_lagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X)
     (v : V) (x : X) :
     concaveBracket Bu.flip (inverseBifun F) v x = lagrangian Bu F v x := by
@@ -131,7 +132,7 @@ theorem saddleLagrangian_eq_concaveBracket (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ
 
 end LagrangianBracket
 
-/-! ### Corollary 37.1.2: the two conjugates are the two brackets of `F_*^*` -/
+/-! ### The two conjugates are the two brackets of `F_*^*` -/
 
 section Cor3712
 
@@ -146,9 +147,9 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
 omit [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V]
   [LocallyConvexSpace ℝ V] in
 /-- **The upper conjugate is the *upper* bracket of `F_*^*`**, companion of
-`lowerConjSaddle_eq_bracket_inverseBifun`. Theorem 37.1 identifies `K̄*` with the Lagrangian of
-`F`, that is the concave bracket of `F_*`, and the biadjoint identity rewrites `F_*` as the
-adjoint of `F_*^*`. -/
+`lowerConjSaddle_eq_bracket_inverseBifun`. The upper conjugate is the Lagrangian of `F`, that is
+the concave bracket of `F_*`, and the biadjoint identity rewrites `F_*` as the adjoint of
+`F_*^*`. -/
 theorem upperConjSaddle_eq_concaveBracket_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -159,9 +160,8 @@ theorem upperConjSaddle_eq_concaveBracket_adjointBifun (Bu : U →ₗ[ℝ] V →
     adjointBifun_flip_inverseBifun_adjointBifun Bu Bx hF hcl,
     saddleLagrangian_eq_concaveBracket]
 
-/-- **Rockafellar, Corollary 37.1.2**, first equation: `cl₁ K̲* = K̄*`. Both conjugates are brackets
-of the single closed convex bifunction `F_*^*`, so this is Theorem 33.2's first equation at the
-flipped pairings. -/
+/-- **`cl₁ K̲* = K̄*`.** Both conjugates are brackets of the single closed convex bifunction
+`F_*^*`, so this is the first bracket-closure equation, at the flipped pairings. -/
 theorem partialCl₁_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -173,8 +173,8 @@ theorem partialCl₁_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsC
     partialCl₁_bracket Bu.flip Bx.flip hG,
     upperConjSaddle_eq_concaveBracket_adjointBifun Bu Bx hF hcl hK]
 
-/-- **Rockafellar, Corollary 37.1.2**, second equation: `cl₂ K̄* = K̲*`. This is Theorem 33.2's
-second equation, and it is where closedness of `F_*^*` is used. -/
+/-- **`cl₂ K̄* = K̲*`**, the second bracket-closure equation; it is where closedness of `F_*^*` is
+used. -/
 theorem partialCl₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -188,8 +188,8 @@ theorem partialCl₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsC
     partialCl₂_concaveBracket_adjoint Bu.flip Bx.flip hG hGcl,
     lowerConjSaddle_eq_bracket_inverseBifun Bu Bx hF hK]
 
-/-- **Rockafellar, §37**, the sentence before Corollary 37.1.2: the class conjugate to `Ω (F)` is
-`Ω (F_*^*)`, its two ends being the lower and the upper conjugate of any member of `Ω (F)`. -/
+/-- The class conjugate to `Ω (F)` is `Ω (F_*^*)`, its two ends being the lower and the upper
+conjugate of any member of `Ω (F)`. -/
 theorem saddleClass_conjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -199,8 +199,8 @@ theorem saddleClass_conjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompati
   rw [bifunSaddleClass, lowerConjSaddle_eq_bracket_inverseBifun Bu Bx hF hK,
     upperConjSaddle_eq_concaveBracket_adjointBifun Bu Bx hF hcl hK]
 
-/-- **Rockafellar, Corollary 37.1.2**: the two conjugates are equivalent saddle-functions, so by
-Theorem 36.4 they have the same iterated extrema and the same saddle-points. -/
+/-- The two conjugates are equivalent saddle-functions, hence have the same iterated extrema and
+the same saddle-points. -/
 theorem saddleEquiv_lowerConjSaddle_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -222,12 +222,11 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
   {F : Bifun U X}
 
-/-- **Rockafellar, §37**, the remark before Corollary 37.1.2: a saddle-function conjugate to a
-closed proper one is again proper.
+/-- A saddle-function conjugate to a closed proper one is again proper.
 
 The two halves are quite different. `dom₂ L ≠ ∅` needs only a point where the graph function is
-finite. `dom₁ L ≠ ∅` is the existence of an affine minorant of the graph function — `proper_conj`,
-i.e. Theorem 12.2 — which is where closedness enters. -/
+finite. `dom₁ L ≠ ∅` is the existence of an affine minorant of the graph function (`proper_conj`),
+which is where closedness enters. -/
 theorem properSaddleFn_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] (hF : ConvexBifun F)
     (hcl : ClosedBifun F) (hpr : Proper (graphFn F)) :
@@ -266,18 +265,18 @@ theorem properSaddleFn_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [
 
 end ProperConj
 
-/-! ### Theorem 34.2's last clause for a closure pair -/
+/-! ### A closure pair agrees on the relative interiors -/
 
 section ClosurePairRelint
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {Klow Kup : U × X → EReal}
 
-/-- **Rockafellar, Theorem 34.2**, last clause, for a *closure pair*: if `cl₁ K̲ = K̄` and
-`cl₂ K̄ = K̲` then the two agree over `ri (dom₁ K̲)`. Because the closure relations hold on the
-nose the hypotheses are lighter than in the version for a closed saddle-function: `K̲ (·, x)` is
-`cl₂ K̄ (·, x)`, whose concave effective domain is `dom₁ K̄`, and a concave function meets its
-closure on the relative interior of that domain. Only `dom₂ K̄ ≠ ∅` is needed. -/
+/-- **A closure pair agrees over `ri (dom₁ K̲)`**: if `cl₁ K̲ = K̄` and `cl₂ K̄ = K̲` then the two
+coincide there. Because the closure relations hold on the nose the hypotheses are lighter than in
+the version for a closed saddle-function: `K̲ (·, x)` is `cl₂ K̄ (·, x)`, whose concave effective
+domain is `dom₁ K̄`, and a concave function meets its closure on the relative interior of that
+domain. Only `dom₂ K̄ ≠ ∅` is needed. -/
 theorem eq_of_mem_relint_dom₁_of_closure_pair (hup : ConcaveConvexFn Kup)
     (hne : (dom₂ Kup).Nonempty) (h1 : partialCl₁ Klow = Kup) (h2 : partialCl₂ Kup = Klow)
     {u : U} (hu : u ∈ ri (dom₁ Klow)) (x : X) : Klow (u, x) = Kup (u, x) := by
@@ -315,7 +314,7 @@ theorem eq_of_mem_relint_dom₂_of_closure_pair (hlow : ConcaveConvexFn Klow)
 
 end ClosurePairRelint
 
-/-! ### Corollary 37.1.2, last clause, and Corollary 37.1.3 -/
+/-! ### The common effective domain, and existence of the saddle-value -/
 
 section Cor3713
 
@@ -325,8 +324,8 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X} {K : U × Y → EReal}
 
 omit [FiniteDimensional ℝ V] [FiniteDimensional ℝ X] in
-/-- **Rockafellar, Corollary 37.1.2**: the upper conjugate of a member of `Ω (F)` is proper when
-`F` is a closed proper convex bifunction. -/
+/-- The upper conjugate of a member of `Ω (F)` is proper when `F` is a closed proper convex
+bifunction. -/
 theorem properSaddleFn_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
     (hF : ConvexBifun F) (hcl : ClosedBifun F) (hpr : Proper (graphFn F))
@@ -335,8 +334,8 @@ theorem properSaddleFn_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [I
   exact properSaddleFn_saddleLagrangian Bu Bx hF hcl hpr
 
 omit [FiniteDimensional ℝ V] in
-/-- **Rockafellar, Corollary 37.1.2**: the lower conjugate is proper as well — it is `cl₂` of the
-upper one, and `cl₂` preserves properness. -/
+/-- The lower conjugate is proper as well — it is `cl₂` of the upper one, and `cl₂` preserves
+properness. -/
 theorem properSaddleFn_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -347,8 +346,8 @@ theorem properSaddleFn_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [I
     (properSaddleFn_upperConjSaddle Bu Bx hF hcl hpr hK)
 
 omit [FiniteDimensional ℝ V] in
-/-- **Rockafellar, Corollary 37.1.2**: `C*`, the first half of the common effective domain, does
-not depend on which of the two conjugates it is read from. -/
+/-- `C*`, the first half of the common effective domain, does not depend on which of the two
+conjugates it is read from. -/
 theorem dom₁_conjSaddle_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -358,7 +357,7 @@ theorem dom₁_conjSaddle_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatibl
   exact dom₁_partialCl₂ (concaveConvexFn_upperConjSaddle Bu Bx hF hcl hK)
     (properSaddleFn_upperConjSaddle Bu Bx hF hcl hpr hK).dom₂_nonempty
 
-/-- **Rockafellar, Corollary 37.1.2**: the same for `D*`. -/
+/-- The same for `D*`. -/
 theorem dom₂_conjSaddle_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -368,7 +367,7 @@ theorem dom₂_conjSaddle_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatibl
   exact (dom₂_partialCl₁ (concaveConvexFn_lowerConjSaddle Bu Bx hF hK)
     (properSaddleFn_lowerConjSaddle Bu Bx hF hcl hpr hK).dom₁_nonempty).symm
 
-/-- **Rockafellar, Corollary 37.1.2**: `C* × D*` is the effective domain of *both* conjugates. -/
+/-- `C* × D*` is the effective domain of *both* conjugates. -/
 theorem domSaddle_conjSaddle_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -377,8 +376,7 @@ theorem domSaddle_conjSaddle_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompat
   rw [domSaddle, domSaddle, dom₁_conjSaddle_eq Bu Bx hF hcl hpr hK,
     dom₂_conjSaddle_eq Bu Bx hF hcl hpr hK]
 
-/-- **Rockafellar, Corollary 37.1.2**, last clause: the two conjugates agree wherever the first
-coordinate is a relative interior point of `C*`. -/
+/-- The two conjugates agree wherever the first coordinate is a relative interior point of `C*`. -/
 theorem lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₁ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -390,8 +388,7 @@ theorem lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₁ (Bu : U →ₗ[�
     (partialCl₁_lowerConjSaddle Bu Bx hF hcl hK) (partialCl₂_upperConjSaddle Bu Bx hF hcl hK)
     hv x
 
-/-- **Rockafellar, Corollary 37.1.2**, last clause: and wherever the second coordinate is a
-relative interior point of `D*`. -/
+/-- And wherever the second coordinate is a relative interior point of `D*`. -/
 theorem lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₂ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -404,9 +401,9 @@ theorem lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₂ (Bu : U →ₗ[�
     ?_ v
   rwa [← dom₂_conjSaddle_eq Bu Bx hF hcl hpr hK]
 
-/-- **Rockafellar, Corollary 37.1.3**: if the origin of the dual of the concave variable lies in
-`ri C*`, the saddle-value of `K` exists. The two iterated extrema of `K` are the two conjugates at
-the origin, and Corollary 37.1.2 makes them agree there. -/
+/-- If the origin of the dual of the concave variable lies in `ri C*`, the saddle-value of `K`
+exists. The two iterated extrema of `K` are the two conjugates at the origin, and the closure pair
+makes them agree there. -/
 theorem hasSaddleValue_of_mem_relint_dom₁_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -415,7 +412,7 @@ theorem hasSaddleValue_of_mem_relint_dom₁_lowerConjSaddle (Bu : U →ₗ[ℝ] 
   (hasSaddleValue_iff_conjSaddle_zero_eq Bu Bx K).2
     (lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₁ Bu Bx hF hcl hpr hK h0 0).symm
 
-/-- **Rockafellar, Corollary 37.1.3**, mirror half: the origin in `ri D*` suffices as well. -/
+/-- The mirror half: the origin in `ri D*` suffices as well. -/
 theorem hasSaddleValue_of_mem_relint_dom₂_lowerConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -424,9 +421,9 @@ theorem hasSaddleValue_of_mem_relint_dom₂_lowerConjSaddle (Bu : U →ₗ[ℝ] 
   (hasSaddleValue_iff_conjSaddle_zero_eq Bu Bx K).2
     (lowerConjSaddle_eq_upperConjSaddle_of_mem_relint_dom₂ Bu Bx hF hcl hpr hK h0 0).symm
 
-/-- **Rockafellar, Corollary 37.1.3**, last sentence: if the origin lies in the relative interior
-of *both* halves of `C* × D*`, the saddle-value is finite — it is a value of the conjugate on its
-own effective domain, where a saddle-function is finite by definition. -/
+/-- If the origin lies in the relative interior of *both* halves of `C* × D*`, the saddle-value is
+finite — it is a value of the conjugate on its own effective domain, where a saddle-function is
+finite by definition. -/
 theorem exists_maximin_eq_coe_of_mem_relint_domSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -448,20 +445,20 @@ theorem exists_maximin_eq_coe_of_mem_relint_domSaddle (Bu : U →ₗ[ℝ] V →�
 
 end Cor3713
 
-/-! ### Theorem 37.2: the effective domains of the conjugate saddle-functions
+/-! ### The effective domains of the conjugate saddle-functions
 
-Theorem 37.2 computes the support functions of `C* = dom₁ K*` and `D* = dom₂ K*`, for `K ∈ Ω (F)`,
-in terms of `K` itself. The `D*` half is the one with content: `D*` is the projection on `X` of
-`dom F`, and the support function of that projection is assembled from the support functions of the
-individual slices `dom (F u)`, each of which is a recession function by Theorem 13.3. The lemmas
-before it are bookkeeping: support functions do not see relative interiors, and the relative
-interior of a projection is the union of those of the slices (Theorems 6.6 and 6.8). -/
+The support functions of `C* = dom₁ K*` and `D* = dom₂ K*`, for `K ∈ Ω (F)`, can be computed in
+terms of `K` itself. The `D*` half is the one with content: `D*` is the projection on `X` of
+`dom F`, and the support function of that projection is assembled from the support functions of
+the individual slices `dom (F u)`, each of which is a recession function. The lemmas before it are
+bookkeeping: support functions do not see relative interiors, and the relative interior of a
+projection is the union of those of the slices. -/
 
 section DomLagrangian
 
 variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
 
-/-- **Rockafellar, Theorem 37.2 (the set `D*`)**: the second effective domain of the Lagrangian
+/-- **The set `D*`**: the second effective domain of the Lagrangian
 `L (v, x) = inf_u {⟨u, v⟩ + F (u, x)}` is the projection of `dom F` on `X`, with no hypotheses on
 `F` whatsoever. `L (v, x) ≤ ⟨u, v⟩ + F (u, x)` gives `⊇`; for `⊆` it is enough to test `v = 0`. -/
 theorem dom₂_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) :
@@ -527,7 +524,7 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [AddCommGroup F] [Module ℝ F]
 
 /-- **The support function does not see the relative interior**: `δ*(· | ri C) = δ*(· | C)` for
-convex `C`, since it does not see closures and `cl (ri C) = cl C` by Theorem 6.3. -/
+convex `C`, since it does not see closures and `cl (ri C) = cl C`. -/
 theorem supportFn_relint (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsContinuousPairing B] {C : Set E}
     (hC : Convex ℝ C) : supportFn B (ri C) = supportFn B C := by
   rw [← supportFn_closure (B := B) (ri C), Convex.closure_relint hC, supportFn_closure]
@@ -539,9 +536,9 @@ section RelintProjection
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
 
-/-- **Theorems 6.6 and 6.8 combined**: the relative interior of the projection on `X` of a convex
-set `S ⊆ U × X` is the union, over `u` in the relative interior of the projection on `U`, of the
-relative interiors of the slices of `S`. -/
+/-- **The relative interior of a projection**: for a convex `S ⊆ U × X` that of the projection on
+`X` is the union, over `u` in the relative interior of the projection on `U`, of the relative
+interiors of the slices of `S`. -/
 theorem relint_image_snd_eq_iUnion {S : Set (U × X)} (hS : Convex ℝ S) :
     ri (Prod.snd '' S) = ⋃ u ∈ ri (Prod.fst '' S), ri {x | (u, x) ∈ S} := by
   have hsnd : ri (Prod.snd '' S) = Prod.snd '' ri S := by
@@ -578,9 +575,9 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   {F : Bifun U X} {K : U × Y → EReal}
 
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
-/-- **The first effective domain of any `K ∈ Ω (F)` is `dom F`**, which Rockafellar identifies
-silently throughout §37. `cl₂` does not move `dom₁`, and on `Ω (F)` it is constant at the lower
-bracket, whose `dom₁` is `dom F` because `⟨Fu, y⟩ = -∞` exactly where `F u ≡ +∞`. -/
+/-- **The first effective domain of any `K ∈ Ω (F)` is `dom F`**, an identification the book makes
+silently. `cl₂` does not move `dom₁`, and on `Ω (F)` it is constant at the lower bracket, whose
+`dom₁` is `dom F` because `⟨Fu, y⟩ = -∞` exactly where `F u ≡ +∞`. -/
 theorem dom₁_eq_domBifun_of_mem_bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -593,7 +590,8 @@ theorem dom₁_eq_domBifun_of_mem_bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
 /-- **The support function of `dom (F u)` is the recession function of `K (u, ·)`**, for `u` in
 `ri (dom₁ K)` and `F = bifunOfSaddle Bx K`. Over `ri (dom₁ K)` the slice is closed proper convex
-(Theorem 34.3) and `F u` is its conjugate, so this is Theorem 13.3 for that slice. -/
+and `F u` is its conjugate, and the support function of the domain of a conjugate is the recession
+function of the original. -/
 theorem recessionFn_slice_eq_supportFn_dom (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx.flip] (hK : ConcaveConvexFn K) (hs : ConvexSliceStructure K) {u : U}
     (hu : u ∈ ri (dom₁ K)) :
@@ -604,11 +602,11 @@ theorem recessionFn_slice_eq_supportFn_dom (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ
   rwa [LinearMap.flip_flip] at h
 
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
-/-- **The inner half of Rockafellar, Theorem 37.2**: for `u` in `ri (dom₁ K)` the support function
-of the slice `dom (F u)` — where `F = bifunOfSaddle Bx K` — is the difference-quotient supremum
-`sup_{y ∈ D} {K (u, y + w) - K (u, y)}`. Theorem 13.3 turns the support function of
-`dom (K (u, ·)*)` into the recession function of `K (u, ·)`, and Theorem 8.5 evaluates that
-recession function as a supremum of difference quotients over the effective domain. -/
+/-- **The inner half**: for `u` in `ri (dom₁ K)` the support function of the slice `dom (F u)` —
+where `F = bifunOfSaddle Bx K` — is the difference-quotient supremum
+`sup_{y ∈ D} {K (u, y + w) - K (u, y)}`. The support function of `dom (K (u, ·)*)` is the
+recession function of `K (u, ·)`, which is in turn the supremum of the difference quotients over
+the effective domain. -/
 theorem supportFn_dom_bifunOfSaddle_eq_iSup_sub (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx.flip] (hK : ConcaveConvexFn K) (hs : ConvexSliceStructure K) {u : U}
     (hu : u ∈ ri (dom₁ K)) (w : Y) :
@@ -620,21 +618,21 @@ theorem supportFn_dom_bifunOfSaddle_eq_iSup_sub (Bx : X →ₗ[ℝ] Y →ₗ[ℝ
 
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] in
 /-- The second effective domain of the upper conjugate is the projection of `dom F` on `X`: the
-upper conjugate is the Lagrangian of `F` (Corollary 37.1.1) and `dom₂_saddleLagrangian` applies. -/
+upper conjugate is the Lagrangian of `F`, and `dom₂_saddleLagrangian` applies. -/
 theorem dom₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
     (hF : ConvexBifun F) (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
     dom₂ (upperConjSaddle Bu Bx K) = Prod.snd '' dom (graphFn F) := by
   rw [upperConjSaddle_eq_saddleLagrangian Bu Bx hF hcl hK, dom₂_saddleLagrangian]
 
-/-- **Rockafellar, Theorem 37.2** (the `D*` half): the support function of the second effective
-domain of the conjugate saddle-function is
+/-- **The support function of `D*`**: that of the second effective domain of the conjugate
+saddle-function is
 
 `δ*(w | D*) = sup_{u ∈ ri C} sup_{y ∈ D} {K (u, y + w) - K (u, y)}`,
 
 where `C = dom₁ K` and `D = dom₂ K`. `D*` is the projection of `dom F` on `X`; a support function
-does not see the relative interior, so by Theorems 6.6 and 6.8 it is the supremum over `u ∈ ri C`
-of the support functions of the slices `dom (F u)`. -/
+does not see the relative interior, so it is the supremum over `u ∈ ri C` of the support functions
+of the slices `dom (F u)`. -/
 theorem supportFn_dom₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
     (hF : ConvexBifun F) (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F)
@@ -663,8 +661,8 @@ theorem supportFn_dom₂_upperConjSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
         rw [hslice, supportFn_relint Bx (ConvexFn.convex_dom hconvu)]
         exact supportFn_dom_bifunOfSaddle_eq_iSup_sub Bx hKcc hs hu w
 
-/-- **Rockafellar, Theorem 37.2**, in recession-function form: the support function of `D*` is the
-pointwise supremum, over `u ∈ ri C`, of the recession functions of the slices `K (u, ·)`. -/
+/-- The same in recession-function form: the support function of `D*` is the pointwise supremum,
+over `u ∈ ri C`, of the recession functions of the slices `K (u, ·)`. -/
 theorem supportFn_dom₂_upperConjSaddle_eq_iSup_recessionFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -677,10 +675,10 @@ theorem supportFn_dom₂_upperConjSaddle_eq_iSup_recessionFn (Bu : U →ₗ[ℝ]
   exact (supportFn_dom_bifunOfSaddle_eq_iSup_sub Bx hKcc hs hu w).symm.trans
     (congrFun (recessionFn_slice_eq_supportFn_dom Bx hKcc hs hu) w).symm
 
-/-- **Rockafellar, Corollary 37.2.1** (the `D*` half): the origin is an interior point of `D*` if
-and only if the convex functions `K (u, ·)`, for `u ∈ ri C`, have no common direction of recession.
+/-- **The origin is an interior point of `D*`** if and only if the convex functions `K (u, ·)`, for
+`u ∈ ri C`, have no common direction of recession.
 
-`0 ∈ int D*` iff `δ*(w | D*) > 0` for every `w ≠ 0` (Theorem 13.1), and Theorem 37.2 evaluates
+`0 ∈ int D*` iff `δ*(w | D*) > 0` for every `w ≠ 0`, and the computation above evaluates
 `δ*(w | D*)` as the supremum of the `(K (u, ·))∞ (w)`. `Bx.SeparatingRight` is what makes `w ≠ 0`
 and `⟨·, w⟩ ≠ 0` the same condition; where a space is paired with itself it is automatic. -/
 theorem zero_mem_interior_dom₂_upperConjSaddle_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
@@ -702,7 +700,7 @@ theorem zero_mem_interior_dom₂_upperConjSaddle_iff (Bu : U →ₗ[ℝ] V →�
 
 end Thm372
 
-/-! ### Theorem 37.3: existence of the saddle-value -/
+/-! ### Existence of the saddle-value -/
 
 section Thm373
 
@@ -712,9 +710,9 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
   {F : Bifun U X} {K : U × Y → EReal}
 
-/-- **Rockafellar, Theorem 37.3**, condition (a): if the convex functions `K (u, ·)` for
-`u ∈ ri C` have no common direction of recession, then the saddle-value of `K` exists. Corollary
-37.2.1 turns the hypothesis into `0 ∈ int D*`, hence `0 ∈ ri D*`, and Corollary 37.1.3 concludes. -/
+/-- If the convex functions `K (u, ·)` for `u ∈ ri C` have no common direction of recession, then
+the saddle-value of `K` exists. The hypothesis turns into `0 ∈ int D*`, hence `0 ∈ ri D*`, and the
+origin in `ri D*` gives the saddle-value. -/
 theorem hasSaddleValue_of_no_common_direction_of_recession (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bx.SeparatingRight)
@@ -771,11 +769,11 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
   {F : Bifun U X} {K : U × Y → EReal}
 
-/-- **Rockafellar, Corollary 37.3.1** (the `D` half): if the second effective domain of `K` is
-bounded, the saddle-value of `K` exists. Over a compact `D` this is the classical minimax theorem.
+/-- **If the second effective domain of `K` is bounded, the saddle-value of `K` exists.** Over a
+compact `D` this is the classical minimax theorem.
 
-For `u ∈ ri C` the slice `K (u, ·)` has effective domain exactly `D` (Theorem 34.3), which is
-bounded, so it has no nonzero direction of recession and Theorem 37.3(a) applies. -/
+For `u ∈ ri C` the slice `K (u, ·)` has effective domain exactly `D`, which is bounded, so it has
+no nonzero direction of recession and the previous criterion applies. -/
 theorem hasSaddleValue_of_isBounded_dom₂ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hB : Bx.SeparatingRight) (hF : ConvexBifun F)
