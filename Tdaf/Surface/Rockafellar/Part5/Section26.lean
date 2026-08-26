@@ -31,7 +31,9 @@ of the section's counterexamples.
 | §26 counterexample, p. 253 | `essStrictlyConvexFn`, `essStrictlyConvexFn_axis`,
   `essStrictlyConvexFn_not_strictConvexOn_dom` |
 | §26 counterexample, p. 254 | `strictOnRelintFn`, `nonnegAxis`, `convex_nonnegAxis`,
-  `zero_mem_subgradient_strictOnRelintFn`, `strictOnRelintFn_not_essentiallyStrictlyConvex` |
+  `zero_mem_subgradient_strictOnRelintFn`, `strictOnRelintFn_not_essentiallyStrictlyConvex`,
+  `openQuadrant`, `isOpen_openQuadrant`, `dom_strictOnRelintFn`, `relint_dom_strictOnRelintFn`,
+  `strictConvexOnFn_strictOnRelintFn` |
 | Theorem 26.3 | `theorem_26_3`, `theorem_26_3'` |
 | Corollary 26.3.1 | `corollary_26_3_1` |
 | Corollary 26.3.2 | `corollary_26_3_2` |
@@ -100,21 +102,21 @@ type**, and only there, the transformation is a symmetric one-to-one corresponde
 the Legendre conjugate of (C*, f*)", and both carry `LegendreType f` as a hypothesis.
 `not_convex_legendreDomain_halfPlaneFn` is the reason the hypothesis cannot be dropped.
 
-**The two counterexamples of pp. 253–254 are transcribed, but only their decisive half is proved.**
-Both functions are stated as Lean definitions and the property that makes each of them a
-counterexample is proved:
+**The counterexample of p. 254 is proved in both halves; the one of p. 253 in one.** Both
+functions are stated as Lean definitions and the property that makes each of them a counterexample
+is proved:
 
 * `essStrictlyConvexFn` — the book's `(ξ₂²/2ξ₁) − 2ξ₂^(1/2)` — is **not strictly convex on**
   `dom f`, because it vanishes identically along the non-negative `ξ₁`-axis
   (`essStrictlyConvexFn_not_strictConvexOn_dom`). The book's other claim about it, that it *is*
-  essentially strictly convex and essentially smooth, is not proved here; it needs the strict
-  convexity of `ξ₂²/2ξ₁ − 2√ξ₂` on the open quadrant, which is a two-variable second-derivative
-  computation with no convex-analytic content. See `## Backbone gaps`.
+  essentially strictly convex and essentially smooth, is not proved here. See `## Backbone gaps`.
 * `strictOnRelintFn` — the book's `(ξ₂²/2ξ₁) + ξ₂²` — is **not essentially strictly convex**
   (`strictOnRelintFn_not_essentiallyStrictlyConvex`), because it is a non-negative function
   vanishing on the whole non-negative `ξ₁`-axis, which is therefore a convex subset of `dom ∂f` on
-  which the function is constant. The complementary claim, that it *is* strictly convex on
-  `ri (dom f)`, is the same kind of computation and is likewise not proved. See `## Backbone gaps`.
+  which the function is constant. It **is** strictly convex on `ri (dom f)`
+  (`strictConvexOnFn_strictOnRelintFn`), which is the open positive quadrant
+  (`relint_dom_strictOnRelintFn`) — so the example separates the two conditions in both
+  directions, as Rockafellar intends it to.
 
 The third counterexample, the parabola of p. 257, is proved in full — `D` is computed exactly
 (`gradientRange_halfPlaneFn`), shown not to be convex, and the example is shown to fail condition
@@ -128,30 +130,28 @@ open item (`Section09`'s `## What is not here`), not §26's.
 
 ## Backbone gaps
 
-**The two `StrictConvexOnFn` API items are closed and the counterexamples are still open.**
-`strictConvexOnFn_iff_strictConvexOn` (in `Subgradient/StrictlyConvex.lean`) is the bridge
-`StrictConvexOnFn f C ↔ StrictConvexOn ℝ C (fun x => (f x).toReal)` for `f` finite on a convex `C`,
-and `ConvexFn.add_strictConvexOnFn` (in `Preservation.lean`, beside the
-`StrictConvexOnFn.add_convexFn` it mirrors) is the sum rule with the summands the other way round.
-Neither closes the positive halves of pp. 253–254, and the earlier note that "that bridge is the
-gap, and it is what both halves of the two unproved claims above would run on" was wrong on both
-counts:
+**Nothing here is blocked on the backbone.** The one claim still unproved is the *positive* half
+of p. 253 — that `essStrictlyConvexFn` is essentially strictly convex and essentially smooth — and
+what stands in its way is arithmetic, not missing convex analysis.
 
-* `add_strictConvexOnFn` does not apply. `strictOnRelintFn` is `ξ₂²/2ξ₁` plus `ξ₂²`, and *neither*
-  summand is strictly convex on the open quadrant — the first is positively homogeneous, so it is
-  affine along every ray from the origin, and the second is constant in `ξ₁`. What makes the sum
-  strict is that the two summands' directions of affineness are disjoint, which is a case split on
-  whether `ξ₂` varies along the segment, not an application of a sum rule.
-* The bridge reduces each claim to `StrictConvexOn ℝ Q (concrete formula)`, and Mathlib stops
-  there: `strictConvexOn_of_deriv2_pos` is one-dimensional and there is no positive-definite-Hessian
-  criterion in several variables. So each claim still needs the two-variable inequality by hand,
-  on top of a computation of `ri (dom f)` for the function concerned.
+Two things are worth recording, because both were once thought to be the obstruction and neither
+is. `ConvexFn.add_strictConvexOnFn` (`Preservation.lean`) **does not apply**: `ξ₂²/2ξ₁ + ξ₂²` has
+*neither* summand strictly convex on the open quadrant — the first is positively homogeneous and
+so affine along every ray from the origin, the second is constant in `ξ₁` — and what makes the sum
+strict is that their directions of affineness are disjoint, which is a case split, not a sum rule.
+And `strictConvexOnFn_iff_strictConvexOn` (`Subgradient/StrictlyConvex.lean`) reduces the claim to
+`StrictConvexOn ℝ Q (concrete formula)`, where Mathlib stops:
+`strictConvexOn_of_deriv2_pos` is one-dimensional and there is no positive-definite-Hessian
+criterion in several variables. `strictConvexOnFn_strictOnRelintFn` is therefore proved from the
+definition and two explicit algebraic identities — the weighted Cauchy–Schwarz gap
+`ab(ut − vs)²/(st(as + bt))` and the Jensen gap `ab(u − v)²` — with the case split above and no
+bridge at all.
 
-What each unproved claim actually needs is therefore, in order: (i) `ri (dom f)` computed — the
-open quadrant in both cases; (ii) strict convexity there, by the case split above, through the new
-bridge; and for `essStrictlyConvexFn` also (iii) essential smoothness, i.e. the blow-up of
-`|∇f|` at the boundary of the quadrant, which is a separate calculation of the same size. None of
-this is convex analysis the backbone is missing; it is the arithmetic of two explicit formulas.
+What the remaining p. 253 claim needs, in order: (i) `ri (dom f)` computed, which is the same open
+quadrant and the same argument as `relint_dom_strictOnRelintFn`; (ii) strict convexity there, the
+same case split with `−2√ξ₂` in place of `ξ₂²`; and (iii) essential smoothness, i.e. the blow-up of
+`|∇f|` at the boundary of the quadrant, which needs the gradient of a two-variable function with a
+square root in it and is much the largest of the three.
 
 **The conjugate's `innerₗ` / `topDualPairing` bridge is closed.**
 `conj_innerL_eq_conj_topDualPairing`, in `Subgradient/Rademacher.lean` beside
@@ -376,13 +376,9 @@ Rockafellar's two warnings about the definition are the counterexamples below. -
 
 /-! ### Coordinates on `ℝ²`
 
-The three counterexamples of the section all live on `ℝ²`, and these are the four facts about
-`Rn 2` they need. They are `private`: nothing outside this module should be reading coordinates. -/
-
-/-- Coordinates of the pairing on `ℝ²`. -/
-private theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
-  simp [PiLp.inner_apply, Fin.sum_univ_two]
-  ring
+The three counterexamples of the section all live on `ℝ²`, and these are the facts about `Rn 2`
+they need beyond the shared `Tdaf.Surface.pairing_two`. They are `private`: nothing outside this
+module should be reading coordinates. -/
 
 private theorem sub_apply_two (u v : Rn 2) (i : Fin 2) : (u - v) i = u i - v i := rfl
 
@@ -577,6 +573,162 @@ theorem strictOnRelintFn_not_essentiallyStrictlyConvex :
   refine not_strictConvexOnFn_of_axis (C := nonnegAxis) ⟨zero_le_one, rfl⟩
     ⟨by norm_num, rfl⟩ (fun _ ht => strictOnRelintFn_axis ht) ?_
   exact h convex_nonnegAxis hsub
+
+/-! ### The p. 254 example is strictly convex on `ri (dom f)`
+
+The other half of Rockafellar's claim, and what makes the example separate the two conditions: `f`
+*is* strictly convex on `ri (dom f)` and is still not essentially strictly convex. There is no
+convex analysis in it. `ri (dom f)` is the open positive quadrant, and strict convexity there is
+the weighted Cauchy–Schwarz inequality `(au + bv)²/(as + bt) ≤ au²/s + bv²/t` together with
+`(au + bv)² ≤ au² + bv²`, one of which is strict at any two distinct points of the quadrant. -/
+
+/-- The open positive quadrant of `ℝ²`, which is `ri (dom f)` for the p. 254 example. -/
+def openQuadrant : Set (Rn 2) := {x : Rn 2 | 0 < x 0 ∧ 0 < x 1}
+
+private theorem continuous_coord (i : Fin 2) : Continuous fun x : Rn 2 => x i :=
+  PiLp.continuous_apply (p := 2) (fun _ : Fin 2 => ℝ) i
+
+theorem isOpen_openQuadrant : IsOpen openQuadrant :=
+  (isOpen_lt continuous_const (continuous_coord 0)).inter
+    (isOpen_lt continuous_const (continuous_coord 1))
+
+/-- The effective domain of the p. 254 example, spelled as a set. -/
+theorem dom_strictOnRelintFn :
+    dom strictOnRelintFn = {x : Rn 2 | (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0)} := by
+  ext x
+  by_cases h : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0)
+  · simp only [mem_dom, strictOnRelintFn_of_mem h, Set.mem_ofPred_eq]
+    exact ⟨fun _ => h, fun _ => _root_.EReal.coe_lt_top _⟩
+  · simp only [mem_dom, strictOnRelintFn_of_not_mem h, Set.mem_ofPred_eq, lt_self_iff_false]
+    exact ⟨fun hc => absurd hc not_false, fun hc => absurd hc h⟩
+
+private theorem openQuadrant_subset_dom : openQuadrant ⊆ dom strictOnRelintFn := by
+  rintro x ⟨h0, h1⟩
+  rw [dom_strictOnRelintFn]
+  exact Or.inl ⟨h0, h1.le⟩
+
+/-- **`ri (dom f)` is the open positive quadrant** for the p. 254 example.
+
+The domain has non-empty interior, so `ri` collapses to `interior`
+(`intrinsicInterior_eq_interior`), and the interior is the quadrant because a domain point with
+`ξ₂ = 0` has points with `ξ₂ < 0` arbitrarily close to it. -/
+theorem relint_dom_strictOnRelintFn : ri (dom strictOnRelintFn) = openQuadrant := by
+  have hpt : (WithLp.toLp 2 ![(1 : ℝ), 1] : Rn 2) ∈ openQuadrant := ⟨one_pos, one_pos⟩
+  have htop : affineSpan ℝ (dom strictOnRelintFn) = ⊤ :=
+    top_unique <| (isOpen_openQuadrant.affineSpan_eq_top ⟨_, hpt⟩).ge.trans
+      (affineSpan_mono ℝ openQuadrant_subset_dom)
+  rw [intrinsicInterior_eq_interior htop]
+  refine Set.Subset.antisymm (fun x hx => ?_)
+    (interior_maximal openQuadrant_subset_dom isOpen_openQuadrant)
+  have hnn : ∀ y : Rn 2, y ∈ dom strictOnRelintFn → 0 ≤ y 1 := by
+    intro y hy
+    rw [dom_strictOnRelintFn] at hy
+    rcases hy with ⟨-, h⟩ | ⟨-, h⟩
+    · exact h
+    · exact h.ge
+  have hnorm : ‖(WithLp.toLp 2 ![(0 : ℝ), 1] : Rn 2)‖ = 1 := by
+    rw [EuclideanSpace.norm_eq]
+    simp [Fin.sum_univ_two]
+  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.1 isOpen_interior x hx
+  have hd : dist (x + (-(ε / 2)) • (WithLp.toLp 2 ![(0 : ℝ), 1] : Rn 2)) x = ε / 2 := by
+    rw [dist_eq_norm, add_sub_cancel_left, norm_smul, hnorm, mul_one, Real.norm_eq_abs,
+      abs_of_nonpos (by linarith), neg_neg]
+  have hmem := hball (by rw [Metric.mem_ball, hd]; linarith)
+  have hcoord : (x + (-(ε / 2)) • (WithLp.toLp 2 ![(0 : ℝ), 1] : Rn 2)) 1 = x 1 - ε / 2 := by
+    change x 1 + -(ε / 2) * (1 : ℝ) = x 1 - ε / 2
+    ring
+  have hle := hnn _ (interior_subset hmem)
+  rw [hcoord] at hle
+  have hx1 : 0 < x 1 := by linarith
+  have hxD := interior_subset hx
+  rw [dom_strictOnRelintFn] at hxD
+  rcases hxD with ⟨h0, -⟩ | ⟨-, h1⟩
+  · exact ⟨h0, hx1⟩
+  · exact absurd h1 hx1.ne'
+
+/-- The weighted Cauchy–Schwarz identity: the gap in `(au + bv)²/(as + bt) ≤ au²/s + bv²/t` is
+`ab(ut − vs)²/(st(as + bt))`. No relation between `a` and `b` is used. -/
+private theorem engel_key {s t u v a b : ℝ} (hs : 0 < s) (ht : 0 < t) (ha : 0 < a) (hb : 0 < b) :
+    a * (u ^ 2 / s) + b * (v ^ 2 / t) - (a * u + b * v) ^ 2 / (a * s + b * t)
+      = a * b * (u * t - v * s) ^ 2 / (s * t * (a * s + b * t)) := by
+  have hw : 0 < a * s + b * t := by positivity
+  field_simp
+  ring
+
+private theorem engel_le {s t u v a b : ℝ} (hs : 0 < s) (ht : 0 < t) (ha : 0 < a) (hb : 0 < b) :
+    (a * u + b * v) ^ 2 / (a * s + b * t) ≤ a * (u ^ 2 / s) + b * (v ^ 2 / t) := by
+  have hkey := engel_key (u := u) (v := v) hs ht ha hb
+  have hnn : 0 ≤ a * b * (u * t - v * s) ^ 2 / (s * t * (a * s + b * t)) := by positivity
+  linarith
+
+private theorem engel_lt {s t u v a b : ℝ} (hs : 0 < s) (ht : 0 < t) (ha : 0 < a) (hb : 0 < b)
+    (hne : u * t ≠ v * s) :
+    (a * u + b * v) ^ 2 / (a * s + b * t) < a * (u ^ 2 / s) + b * (v ^ 2 / t) := by
+  have hkey := engel_key (u := u) (v := v) hs ht ha hb
+  have hsq : 0 < (u * t - v * s) ^ 2 :=
+    lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 (sub_ne_zero.2 hne)))
+  have hw : 0 < s * t * (a * s + b * t) := by positivity
+  have hpos : 0 < a * b * (u * t - v * s) ^ 2 / (s * t * (a * s + b * t)) :=
+    div_pos (by positivity) hw
+  linarith
+
+/-- The gap in `(au + bv)² ≤ au² + bv²` is `ab(u − v)²`, and here `a + b = 1` is used. -/
+private theorem sq_combo_key {u v a b : ℝ} (hab : a + b = 1) :
+    a * u ^ 2 + b * v ^ 2 - (a * u + b * v) ^ 2 = a * b * (u - v) ^ 2 := by
+  linear_combination (-(a * u ^ 2 + b * v ^ 2)) * hab
+
+/-- **Rockafellar, §26 (p. 254)**, the positive half: the example *is* strictly convex on
+`ri (dom f)`, the open positive quadrant. Together with
+`strictOnRelintFn_not_essentiallyStrictlyConvex` this is the whole point of the example — a
+function strictly convex on `ri (dom f)` that is not essentially strictly convex.
+
+The case split is what a sum rule cannot do: neither summand of `ξ₂²/2ξ₁ + ξ₂²` is strictly convex
+on the quadrant — the first is positively homogeneous and so affine along every ray from the
+origin, the second is constant in `ξ₁` — and what makes the sum strict is that their directions of
+affineness are disjoint. Two distinct points of the quadrant either differ in `ξ₂`, where the
+second summand is strict, or lie on distinct rays, where the first is. -/
+theorem strictConvexOnFn_strictOnRelintFn :
+    StrictConvexOnFn strictOnRelintFn (ri (dom strictOnRelintFn)) := by
+  rw [relint_dom_strictOnRelintFn]
+  rintro x ⟨hx0, hx1⟩ y ⟨hy0, hy1⟩ hxy a b ha hb hab
+  have hzc0 : (a • x + b • y : Rn 2) 0 = a * x 0 + b * y 0 := rfl
+  have hzc1 : (a • x + b • y : Rn 2) 1 = a * x 1 + b * y 1 := rfl
+  have hz0 : 0 < a * x 0 + b * y 0 := by positivity
+  have hz1 : 0 < a * x 1 + b * y 1 := by positivity
+  have hxm : (0 < x 0 ∧ 0 ≤ x 1) ∨ (x 0 = 0 ∧ x 1 = 0) := Or.inl ⟨hx0, hx1.le⟩
+  have hym : (0 < y 0 ∧ 0 ≤ y 1) ∨ (y 0 = 0 ∧ y 1 = 0) := Or.inl ⟨hy0, hy1.le⟩
+  have hzm : (0 < (a • x + b • y : Rn 2) 0 ∧ 0 ≤ (a • x + b • y : Rn 2) 1)
+      ∨ ((a • x + b • y : Rn 2) 0 = 0 ∧ (a • x + b • y : Rn 2) 1 = 0) :=
+    Or.inl ⟨by rw [hzc0]; exact hz0, by rw [hzc1]; exact hz1.le⟩
+  rw [strictOnRelintFn_of_mem hxm, strictOnRelintFn_of_mem hym, strictOnRelintFn_of_mem hzm,
+    hzc0, hzc1, Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe, ← _root_.EReal.coe_add,
+    _root_.EReal.coe_lt_coe_iff]
+  have hden : a * (2 * x 0) + b * (2 * y 0) = 2 * (a * x 0 + b * y 0) := by ring
+  have hexp : a * (x 1 ^ 2 / (2 * x 0) + x 1 ^ 2) + b * (y 1 ^ 2 / (2 * y 0) + y 1 ^ 2)
+      = (a * (x 1 ^ 2 / (2 * x 0)) + b * (y 1 ^ 2 / (2 * y 0)))
+        + (a * x 1 ^ 2 + b * y 1 ^ 2) := by ring
+  have hx0' : (0 : ℝ) < 2 * x 0 := by linarith
+  have hy0' : (0 : ℝ) < 2 * y 0 := by linarith
+  have hsq := sq_combo_key (u := x 1) (v := y 1) hab
+  rw [hexp]
+  rcases eq_or_ne (x 1) (y 1) with h1 | h1
+  · have hx0y0 : x 0 ≠ y 0 := fun h => hxy (ext_two h h1)
+    have hne : x 1 * (2 * y 0) ≠ y 1 * (2 * x 0) := by
+      rw [h1]
+      intro hcon
+      exact hx0y0 (by linarith [mul_left_cancel₀ hy1.ne' hcon, h1])
+    have hA := engel_lt (u := x 1) (v := y 1) hx0' hy0' ha hb hne
+    rw [hden] at hA
+    have hB : (a * x 1 + b * y 1) ^ 2 ≤ a * x 1 ^ 2 + b * y 1 ^ 2 := by
+      nlinarith [sq_nonneg (x 1 - y 1), mul_pos ha hb]
+    linarith
+  · have hA := engel_le (u := x 1) (v := y 1) hx0' hy0' ha hb
+    rw [hden] at hA
+    have hB : (a * x 1 + b * y 1) ^ 2 < a * x 1 ^ 2 + b * y 1 ^ 2 := by
+      have hsq0 : 0 < (x 1 - y 1) ^ 2 :=
+        lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 (sub_ne_zero.2 h1)))
+      nlinarith [mul_pos ha hb]
+    linarith
 
 /-! ### Theorem 26.3 -/
 
