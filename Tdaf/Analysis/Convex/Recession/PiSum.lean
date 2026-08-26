@@ -11,8 +11,8 @@ import Tdaf.Analysis.Convex.Recession.Closedness
 A sum `C₁ + ⋯ + Cₘ` of subsets of `E` is the image of the product set `∏ Cᵢ ⊆ ι → E` under the
 sum map `(xᵢ) ↦ ∑ xᵢ`, so every question about the closure and the recession cone of a finite sum
 becomes a question about a linear *image*, which the recession calculus of a linear map answers.
-`Convex.isClosed_sum`, `Convex.closure_sum_eq` and `Convex.recessionCone_sum` are **Corollary
-9.1.1** for a family.
+`Convex.isClosed_sum`, `Convex.closure_sum_eq` and `Convex.recessionCone_sum` are the `m`-ary
+statements: closure and recession cone both distribute over a finite sum of convex sets.
 
 The cancellation hypothesis is genuinely `m`-ary: a sum of `m` directions of recession can vanish
 without any two of them cancelling, so it is stated on the family, and the two-set results of
@@ -20,7 +20,7 @@ without any two of them cancelling, so it is stated on the family, and the two-s
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §9 (Corollary 9.1.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §9.
 -/
 
 open Set
@@ -43,7 +43,7 @@ def piSum : (ι → E) →ₗ[ℝ] E where
 @[simp] theorem piSum_apply (x : ι → E) : (piSum : (ι → E) →ₗ[ℝ] E) x = ∑ i, x i := rfl
 
 /-- **A sum of finitely many sets is the image of their product under the sum map**: what turns
-Corollary 9.1.1 for a family into an instance of Theorem 9.1. -/
+a question about a finite sum into a question about a linear image. -/
 theorem image_piSum_univ_pi (C : ι → Set E) :
     (piSum : (ι → E) →ₗ[ℝ] E) '' univ.pi C = ∑ i, C i := by
   ext y
@@ -75,8 +75,8 @@ theorem forall_mem_linealitySpace_pi (hne : ∀ i, (C i).Nonempty)
   rw [closure_pi_set, linealitySpace_pi hpine]
   exact fun i _ => h p (fun i => hp i (mem_univ i)) hzero i
 
-/-- **Rockafellar, Corollary 9.1.1**, closedness: a finite sum of closed convex sets is closed as
-soon as the only way finitely many directions of recession can sum to zero is inside the lineality
+/-- **Closedness of a finite sum**: a finite sum of closed convex sets is closed as soon as the
+only way finitely many directions of recession can sum to zero is inside the lineality
 spaces. -/
 theorem Convex.isClosed_sum (hC : ∀ i, Convex ℝ (C i)) (hCc : ∀ i, IsClosed (C i))
     (hne : ∀ i, (C i).Nonempty)
@@ -90,7 +90,7 @@ theorem Convex.isClosed_sum (hC : ∀ i, Convex ℝ (C i)) (hCc : ∀ i, IsClose
   simp only [hcl] at hmain
   rwa [image_piSum_univ_pi] at hmain
 
-/-- **Rockafellar, Corollary 9.1.1**: `cl (C₁ + ⋯ + Cₘ) = cl C₁ + ⋯ + cl Cₘ`. -/
+/-- **Closure distributes over a finite sum**: `cl (C₁ + ⋯ + Cₘ) = cl C₁ + ⋯ + cl Cₘ`. -/
 theorem Convex.closure_sum_eq (hC : ∀ i, Convex ℝ (C i)) (hne : ∀ i, (C i).Nonempty)
     (h : ∀ z : ι → E, (∀ i, z i ∈ recessionCone (closure (C i))) → ∑ i, z i = 0 →
       ∀ i, z i ∈ linealitySpace (closure (C i))) :
@@ -99,7 +99,7 @@ theorem Convex.closure_sum_eq (hC : ∀ i, Convex ℝ (C i)) (hne : ∀ i, (C i)
     (forall_mem_linealitySpace_pi hne h)
   rwa [image_piSum_univ_pi, closure_pi_set, image_piSum_univ_pi] at hmain
 
-/-- **Rockafellar, Corollary 9.1.1**, recession cones:
+/-- **The recession cone of a finite sum of closed convex sets**:
 `0⁺(cl C₁ + ⋯ + cl Cₘ) = 0⁺(cl C₁) + ⋯ + 0⁺(cl Cₘ)`. -/
 theorem Convex.recessionCone_sum (hC : ∀ i, Convex ℝ (C i)) (hne : ∀ i, (C i).Nonempty)
     (h : ∀ z : ι → E, (∀ i, z i ∈ recessionCone (closure (C i))) → ∑ i, z i = 0 →
