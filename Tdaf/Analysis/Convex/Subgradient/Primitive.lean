@@ -10,8 +10,8 @@ import Tdaf.Analysis.Convex.Subgradient.OneDim
 
 A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite somewhere is squeezed between the two one-sided
 derivatives of a closed proper convex function on `ℝ`, uniquely determined up to an additive
-constant. This is Rockafellar's **Theorem 24.2**; `Subgradient/OneDim.lean` has its uniqueness
-clause, and this module supplies the existence clause and closes the theorem.
+constant. This is **Theorem 24.2**; its uniqueness clause is in `Subgradient/OneDim.lean` and this
+module supplies the existence clause.
 
 The object that carries the construction is the region
 
@@ -19,10 +19,11 @@ The object that carries the construction is the region
 Γ(φ) = {(x, y) ∈ ℝ × ℝ | φ⁻(x) ≤ y ≤ φ⁺(x)},   φ⁻(x) = ⨆_{z < x} φ z,  φ⁺(x) = ⨅_{z > x} φ z,
 ```
 
-Rockafellar's *complete non-decreasing curve*. It is a chain for the coordinatewise order, and it
-meets every antidiagonal `{(u, v) | u + v = s}` — which is exactly what makes it a *maximal* chain.
-Theorem 24.3 then produces a closed proper convex `f` with `∂f = Γ(φ)`, and reading the two
-endpoints of `Γ(φ)ₓ` off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f'₊`.
+a *complete non-decreasing curve*. It is a chain for the coordinatewise order and it meets every
+antidiagonal `{(u, v) | u + v = s}`, which is exactly what makes it a *maximal* chain. Theorem 24.3
+then produces a closed proper convex `f` with `∂f = Γ(φ)`, and reading the two endpoints of `Γ(φ)ₓ`
+off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f'₊`. No integral appears anywhere: the book's
+`f(x) = ∫ₐˣ φ(t) dt` is replaced by the graph of the subdifferential.
 
 ## Main results
 
@@ -34,52 +35,23 @@ endpoints of `Γ(φ)ₓ` off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f
 * `monotone_of_forall_ne_of_le_of_le`, `monotoneCurve_eq_of_forall_ne` — moving `φ` at a single
   point, to anywhere between the two one-sided limits there, changes neither its monotonicity nor
   `Γ(φ)`.
-* `exists_monotone_ne_bot_ne_top_monotoneCurve_eq` — every `∂f` is `Γ(φ)` for a `φ` that is
-  **finite at a point**, which is the form the book's *definition* of a complete non-decreasing
-  curve takes.
+* `exists_monotone_ne_bot_ne_top_monotoneCurve_eq` — every `∂f` is `Γ(φ)` for a `φ` that is finite
+  at a point, the form the book's definition of a complete non-decreasing curve takes.
 * `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq` — the existence clause of
   **Theorem 24.2**, with the identification `f'₋ = φ⁻` and `f'₊ = φ⁺`.
 * `exists_closedProperConvexFn_forall_le_le` — **Theorem 24.2** in full: a closed proper convex `f`
   with `f'₋ ≤ φ ≤ f'₊`, unique up to an additive constant.
-* `eq_and_eq_of_forall_coe_mem_iff`, `eq_bot_or_eq_top_of_forall_not_coe_mem` — the two facts about
-  extended-real intervals that turn `∂f = Γ(φ)` into an identity between endpoints.
 
-## Design notes
+## Implementation notes
 
-**No integral is involved.** Rockafellar defines `f(x) = ∫ₐˣ φ(t) dt`, improper at the two ends of
-the interval where `φ` is finite, and the earlier plan recorded that integral as the obstruction to
-this theorem. It is not needed: the *graph* of the subdifferential is available directly as `Γ(φ)`,
-and Theorem 24.3 (`isMaximalMonotoneRel_iff_exists_closedProperConvexFn`, itself proved through
-cyclic monotonicity and Theorem 24.8's construction, with no analysis on the line) hands back the
-function. What the argument does have to supply is the maximality of `Γ(φ)`, and that reduces to
-one sharp statement, `exists_mem_monotoneCurve_sub`.
+Maximality of `Γ(φ)` is proved from the antidiagonal statement rather than by case analysis on the
+places where `φ` is `±∞`: if `p` is comparable with every element of `Γ(φ)`, then a `q ∈ Γ(φ)` with
+the same coordinate sum must equal it.
 
-**Maximality is an antidiagonal statement, not a case analysis.** Rockafellar remarks that
-`(x, y) ↦ x + y` is a bijection from a complete non-decreasing curve onto `ℝ`; only surjectivity is
-needed, and it makes maximality immediate. If `p` is comparable with every element of `Γ(φ)`, pick
-`q ∈ Γ(φ)` on the antidiagonal through `p`: comparability plus equal coordinate sums forces
-`p = q`. Attacking maximality directly instead means chasing the places where `φ` is `-∞` or `+∞`,
-which splits into four or five cases; the antidiagonal argument has none.
-
-**The point `u` on the antidiagonal is a supremum, not a limit.** For a target sum `s`, the set
-`T = {t | φ t ≤ s - t}` is a nonempty bounded-above down-set — nonempty because `φ ≤ φ a` to the
-left of `a`, bounded above because `φ ≥ φ a` to the right — and `u = sup T` has
-`(u, s - u) ∈ Γ(φ)`. Both halves are one contradiction each, obtained by nudging `u` to a point
-that must and must not lie in `T`.
-
-**The one-point domain needs no case of its own.** Reading `∂f` back as a curve
-(`exists_monotone_ne_bot_ne_top_monotoneCurve_eq`) wants a `φ` that is *finite somewhere*, and
-`f'₊` is not, exactly when `dom f` is a single point `a`: there `f'₊` is `-∞` to the left of `a`
-and `+∞` from `a` on. The temptation is to split and exhibit a two-branch `φ`. It is cheaper to
-move `f'₊` at one relative interior point of `dom f` to a subgradient there — real, and between
-the two one-sided limits precisely because it *is* a subgradient — and to observe that `Γ` cannot
-see the change (`monotoneCurve_eq_of_forall_ne`). That covers both cases with one argument.
-
-**`Γ(φ)ₓ` can be empty, and the endpoints are then still determined.** Where `φ = -∞` (to the left
-of `a`) the fibre is empty and the interval identity `Γ(φ) = ∂f` says nothing pointwise. What
-settles it is that an empty extended-real interval has both endpoints `-∞` or both `+∞`
-(`eq_bot_or_eq_top_of_forall_not_coe_mem`), and the two alternatives are separated by comparison
-with the fibre over `a`, which is never empty because `φ a` is finite.
+`Γ(φ)ₓ` can be empty — to the left of a point where `φ = -∞` — so the identity `Γ(φ) = ∂f` says
+nothing pointwise there. What settles the endpoints is that an empty extended-real interval has
+both of them `-∞` or both `+∞`, the two alternatives being separated by comparison with a fibre
+that is not empty.
 
 ## References
 
@@ -95,10 +67,8 @@ namespace Tdaf.ConvexAnalysis
 
 section Interval
 
-/-- **Two extended-real intervals with the same real points have the same endpoints**, as soon as
-one of them contains a real point. The proof is four copies of one step: a real number strictly
-between the two candidate endpoints lies in exactly one of the two intervals, the anchoring real
-point supplying the bound at the other end. -/
+/-- Two extended-real intervals with the same real points have the same endpoints, as soon as one
+of them contains a real point. -/
 theorem eq_and_eq_of_forall_coe_mem_iff {A₁ B₁ A₂ B₂ : EReal}
     (hne : ∃ y : ℝ, A₁ ≤ (y : EReal) ∧ (y : EReal) ≤ B₁)
     (h : ∀ y : ℝ, (A₁ ≤ (y : EReal) ∧ (y : EReal) ≤ B₁) ↔
@@ -155,9 +125,9 @@ variable {φ : ℝ → EReal}
 Γ(φ) = {(x, y) | ⨆_{z < x} φ z ≤ y ≤ ⨅_{z > x} φ z},
 ```
 
-Rockafellar's **complete non-decreasing curve**. For nondecreasing `φ` it is a chain for the
-coordinatewise order on `ℝ × ℝ`, and Theorem 24.2 identifies it with the graph of `∂f` for a
-closed proper convex `f`. -/
+a **complete non-decreasing curve**. For nondecreasing `φ` it is a chain for the coordinatewise
+order on `ℝ × ℝ`, and Theorem 24.2 identifies it with the graph of `∂f` for a closed proper
+convex `f`. -/
 def monotoneCurve (φ : ℝ → EReal) : SetRel ℝ ℝ :=
   {p : ℝ × ℝ | (⨆ z ∈ Iio p.1, φ z) ≤ (p.2 : EReal) ∧ (p.2 : EReal) ≤ ⨅ z ∈ Ioi p.1, φ z}
 
@@ -166,10 +136,9 @@ def monotoneCurve (φ : ℝ → EReal) : SetRel ℝ ℝ :=
       (⨆ z ∈ Iio x, φ z) ≤ (y : EReal) ∧ (y : EReal) ≤ ⨅ z ∈ Ioi x, φ z :=
   Iff.rfl
 
-/-- **The curve is a monotone mapping** — for *every* `φ`, monotone or not. Between two of its
-points with distinct abscissas sits a value of `φ` itself, which bounds the left ordinate from
-above and the right ordinate from below; on the line that is monotonicity
-(`isMonotoneRel_iff_forall_le_or_le`). -/
+/-- The curve is a monotone mapping, for *every* `φ`, monotone or not: between two of its points
+with distinct abscissas sits a value of `φ` itself, which bounds the left ordinate from above and
+the right ordinate from below. -/
 theorem isMonotoneRel_monotoneCurve (φ : ℝ → EReal) :
     IsMonotoneRel (innerₗ ℝ) (monotoneCurve φ) := by
   have key : ∀ p ∈ monotoneCurve φ, ∀ q ∈ monotoneCurve φ, p.1 < q.1 → p.2 ≤ q.2 := by
@@ -190,14 +159,9 @@ theorem isMonotoneRel_monotoneCurve (φ : ℝ → EReal) :
     · exact Or.inr (Prod.le_def.2 ⟨heq.ge, hle⟩)
   · exact Or.inr (Prod.le_def.2 ⟨hgt.le, key q hq p hp hgt⟩)
 
-/-- **The curve meets every antidiagonal**: for each `s : ℝ` there is a `u` with
-`(u, s - u) ∈ Γ(φ)`. This is Rockafellar's remark that `(x, y) ↦ x + y` maps a complete
-non-decreasing curve onto `ℝ`, and it is what makes the curve a *maximal* chain.
-
-The point is `u = sup {t | φ t ≤ s - t}`. That set is non-empty because `φ ≤ φ a` to the left of
-`a`, and bounded above because `φ ≥ φ a` to the right; it is a down-set because `t ↦ s - t` is
-decreasing while `φ` is not. Each of the two defining inequalities of `Γ(φ)` then follows by
-nudging `u` to a point that would have to lie on the wrong side of the supremum. -/
+/-- The curve meets every antidiagonal: for each `s : ℝ` there is a `u` with `(u, s - u) ∈ Γ(φ)`.
+Equivalently `(x, y) ↦ x + y` maps a complete non-decreasing curve onto `ℝ`, and that is what makes
+the curve a *maximal* chain. The point is `u = sup {t | φ t ≤ s - t}`. -/
 theorem exists_mem_monotoneCurve_sub (hφ : Monotone φ) {a : ℝ} (hb : φ a ≠ ⊥) (ht : φ a ≠ ⊤)
     (s : ℝ) : ∃ u : ℝ, ((u, s - u) : ℝ × ℝ) ∈ monotoneCurve φ := by
   obtain ⟨c, hc⟩ := EReal.exists_coe_of_ne_bot_of_lt_top hb (lt_top_iff_ne_top.2 ht)
@@ -241,10 +205,9 @@ theorem exists_mem_monotoneCurve_sub (hφ : Monotone φ) {a : ℝ} (hb : φ a �
       exact_mod_cast (by linarith [min_le_right z (s - r)] : r ≤ s - min z (s - r))
     exact hwT (h₁.le.trans h₂)
 
-/-- **The curve of a nondecreasing `φ` finite at one point is a maximal monotone mapping.** Given a
-pair `p` comparable with everything on the curve, take the point `q` of the curve with the same
-coordinate sum as `p`. Comparability makes `p ≤ q` or `q ≤ p` coordinatewise, and equal sums then
-force `p = q`. -/
+/-- The curve of a nondecreasing `φ` finite at one point is a maximal monotone mapping: a pair `p`
+comparable with everything on the curve equals the point of the curve with the same coordinate
+sum. -/
 theorem isMaximalMonotoneRel_monotoneCurve (hφ : Monotone φ) {a : ℝ} (hb : φ a ≠ ⊥)
     (ht : φ a ≠ ⊤) : IsMaximalMonotoneRel (innerₗ ℝ) (monotoneCurve φ) := by
   refine ⟨isMonotoneRel_monotoneCurve φ, fun σ hσ hsub p hp => ?_⟩
@@ -257,10 +220,8 @@ theorem isMaximalMonotoneRel_monotoneCurve (hφ : Monotone φ) {a : ℝ} (hb : �
   rw [heq]
   exact hu
 
-/-- **Every subdifferential on the line is such a curve**, namely the one of its own right
-derivative. This is the converse direction of Rockafellar's identification of the complete
-non-decreasing curves, and it is the two crossed limit formulas of Theorem 24.1
-(`iSup_rightDeriv_Iio`, `iInf_rightDeriv_Ioi`) read through `mem_subgradientRel_iff`. -/
+/-- Every subdifferential on the line is such a curve, namely the one of its own right derivative.
+This is the two crossed limit formulas of Theorem 24.1 read through `mem_subgradientRel_iff`. -/
 theorem subgradientRel_eq_monotoneCurve_rightDeriv {f : ℝ → EReal} (hf : ClosedProperConvexFn f) :
     subgradientRel (innerₗ ℝ) f = monotoneCurve (rightDeriv f) := by
   ext p
@@ -297,15 +258,10 @@ theorem monotone_of_forall_ne_of_le_of_le (hφ : Monotone φ) (heq : ∀ z, z �
     · rw [heq t ht]
       exact hφ hst
 
-/-- **Such a perturbation leaves the curve unchanged.** Neither `⨆_{z < x} φ z` nor
-`⨅_{z > x} φ z` can see the value at `a`: on the left, `ψ a` is squeezed between values of `φ` at
-points strictly between `a` and `x`, which are themselves in the range of the supremum, and on the
-right symmetrically. Every step is `hφ`, `h₁` or `h₂` applied at the midpoint of the interval
-concerned.
-
-This is the missing lemma of remediation §12.6: it is what turns
-`subgradientRel_eq_monotoneCurve_rightDeriv` into a statement about a `φ` that is *finite at a
-point*, which is the form the book's definition of a complete non-decreasing curve takes. -/
+/-- Such a perturbation leaves the curve unchanged: neither `⨆_{z < x} φ z` nor `⨅_{z > x} φ z`
+can see the value at `a`, since `ψ a` is squeezed between values of `φ` at points strictly between
+`a` and `x`, which are themselves in the range of the supremum. This is what turns
+`subgradientRel_eq_monotoneCurve_rightDeriv` into a statement about a `φ` finite at a point. -/
 theorem monotoneCurve_eq_of_forall_ne (hφ : Monotone φ) (heq : ∀ z, z ≠ a → ψ z = φ z)
     (h₁ : (⨆ z ∈ Iio a, φ z) ≤ ψ a) (h₂ : ψ a ≤ ⨅ z ∈ Ioi a, φ z) :
     monotoneCurve ψ = monotoneCurve φ := by
@@ -360,19 +316,14 @@ theorem monotoneCurve_eq_of_forall_ne (hφ : Monotone φ) (heq : ∀ z, z ≠ a 
   rw [show p = ((p.1, p.2) : ℝ × ℝ) from rfl, mem_monotoneCurve, mem_monotoneCurve,
     hsup p.1, hinf p.1]
 
-/-- **Every subdifferential on the line is the curve of a nondecreasing function that is finite
-somewhere.** This is the converse of the hypothesis of `isMaximalMonotoneRel_monotoneCurve`, and it
-is the implication from Rockafellar's order-theoretic *characterisation* of a complete
-non-decreasing curve back to his *definition* of one.
+/-- Every subdifferential on the line is the curve of a nondecreasing function that is finite
+somewhere — the implication from the order-theoretic *characterisation* of a complete
+non-decreasing curve back to the book's *definition* of one.
 
-`subgradientRel_eq_monotoneCurve_rightDeriv` already gives `∂f = Γ(f'₊)` with `f'₊` nondecreasing,
-so the only clause missing is finiteness at a point. `f'₊` itself is finite on `int (dom f)` and so
-serves whenever that is non-empty; the one case it does not cover is `dom f` a single point `a`,
-where `f'₊` is `-∞` to the left of `a` and `+∞` from `a` on. Rather than split, replace `f'₊` at
-*one* point of `ri (dom f)` by a subgradient there. One exists by Theorem 23.4, it is a real
-number, and it lies between the two one-sided limits precisely because `(a, y₀) ∈ ∂f = Γ(f'₊)`; so
-`monotoneCurve_eq_of_forall_ne` says the curve does not notice the change, and
-`monotone_of_forall_ne_of_le_of_le` says monotonicity survives it. -/
+`subgradientRel_eq_monotoneCurve_rightDeriv` gives `∂f = Γ(f'₊)` with `f'₊` nondecreasing, so only
+finiteness at a point is missing. `f'₊` is finite on `int (dom f)`; the one case that does not cover
+is `dom f` a single point `a`, and there `f'₊` is replaced at *one* point of `ri (dom f)` by a
+subgradient, which the curve does not notice. -/
 theorem exists_monotone_ne_bot_ne_top_monotoneCurve_eq {f : ℝ → EReal}
     (hf : ClosedProperConvexFn f) :
     ∃ φ : ℝ → EReal, Monotone φ ∧ (∃ a, φ a ≠ ⊥ ∧ φ a ≠ ⊤) ∧
@@ -409,18 +360,14 @@ section Primitive
 
 variable {φ : ℝ → EReal}
 
-/-- **Theorem 24.2**, existence clause, in its sharpest form: a nondecreasing
-`φ : ℝ → [-∞, +∞]` finite at one point is the "derivative" of a closed proper convex function on
-the line, in the precise sense that the one-sided limits of `φ` *are* the one-sided derivatives of
-`f`.
+/-- **Theorem 24.2**, existence clause, in its sharpest form: a nondecreasing `φ : ℝ → [-∞, +∞]`
+finite at one point is the derivative of a closed proper convex function on the line, in the precise
+sense that the one-sided limits of `φ` *are* the one-sided derivatives of `f`.
 
-Theorem 24.3 turns the maximality of `Γ(φ)` into an `f` with `∂f = Γ(φ)`. Reading that identity at
-a fixed `x` says that the intervals `[φ⁻(x), φ⁺(x)]` and `[f'₋(x), f'₊(x)]` have the same real
-points, so their endpoints agree whenever one of them has a real point at all
-(`eq_and_eq_of_forall_coe_mem_iff`). Where neither has, both intervals are `{-∞}` or both `{+∞}`
-(`eq_bot_or_eq_top_of_forall_not_coe_mem`), and which of the two is decided by comparison across
-`a`, where `φ` is finite and the fibre is non-empty: `f'₊(x) ≤ f'₋(a) < +∞` for `x < a` and
-`-∞ < f'₊(a) ≤ f'₋(x)` for `x > a`. -/
+Theorem 24.3 turns the maximality of `Γ(φ)` into an `f` with `∂f = Γ(φ)`; at a fixed `x` that says
+the intervals `[φ⁻(x), φ⁺(x)]` and `[f'₋(x), f'₊(x)]` have the same real points, hence the same
+endpoints whenever either has a real point at all. Where neither has, both are `{-∞}` or both
+`{+∞}`, decided by comparison across the point where `φ` is finite. -/
 theorem exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq (hφ : Monotone φ) {a : ℝ}
     (hb : φ a ≠ ⊥) (ht : φ a ≠ ⊤) :
     ∃ f : ℝ → EReal, ClosedProperConvexFn f ∧
@@ -478,13 +425,9 @@ theorem exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq (hφ : Monotone �
         (lt_irrefl ⊥)
     · exact ⟨g₁.trans h₁.symm, g₂.trans h₂.symm⟩
 
-/-- **Theorem 24.2** in full. A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite at one
-point lies between the one-sided derivatives of a closed proper convex function on the line, and
-that function is unique up to an additive constant.
-
-Existence is `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq` together with
-`⨆_{z < x} φ z ≤ φ x ≤ ⨅_{z > x} φ z`, which is monotonicity of `φ`; uniqueness is
-`exists_eq_add_coe_of_le_le`. -/
+/-- **Theorem 24.2** in full. A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite at one point lies
+between the one-sided derivatives of a closed proper convex function on the line, and that function
+is unique up to an additive constant. -/
 theorem exists_closedProperConvexFn_forall_le_le (hφ : Monotone φ) {a : ℝ} (hb : φ a ≠ ⊥)
     (ht : φ a ≠ ⊤) :
     ∃ f : ℝ → EReal, ClosedProperConvexFn f ∧ (∀ x, leftDeriv f x ≤ φ x) ∧
