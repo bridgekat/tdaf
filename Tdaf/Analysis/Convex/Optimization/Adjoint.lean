@@ -17,9 +17,9 @@ The **adjoint** of a convex bifunction `F : U → X → EReal` is the concave bi
 and the concave program `(P*)` dual to `(P)` is "maximise `F* 0` over `V`". Everything here follows
 from one computation: `F*` is the conjugate of the graph function of `F`, negated and read at the
 reflected point `(-v, y)`. So `F*` is closed concave with no hypothesis on `F`, `F** = cl F`, and
-the dual objective is the *concave* conjugate of `-inf F`. The same view gives Theorem 29.4 and
-Corollary 29.4.1: `cl F` is computed slice by slice on `ri (dom F)`, and closing a strongly
-consistent program changes neither its value, its solutions, nor its Kuhn–Tucker vectors.
+the dual objective is the *concave* conjugate of `-inf F`. The same view shows that `cl F` is
+computed slice by slice on `ri (dom F)`, and that closing a strongly consistent program changes
+neither its value, its solutions, nor its Kuhn–Tucker vectors.
 
 ## Main definitions
 
@@ -32,29 +32,28 @@ consistent program changes neither its value, its solutions, nor its Kuhn–Tuck
 
 * `adjointBifun_eq_neg_conj_graphFn` — the computation above;
   `concaveFn_graphFn_adjointBifun`, `closedConcaveFn_graphFn_adjointBifun`,
-  `concaveAdjointBifun_adjointBifun_eq_clBifun`, `properConcave_graphFn_adjointBifun_iff` —
-  **Theorem 30.1**: `F*` is closed concave, `F** = cl F`, and `F*` is proper exactly when `F` is.
-* `adjointBifun_zero_eq_concaveConj` — **Theorem 30.2**; `adjointBifun_zero_le` —
-  **Corollary 30.2.2**, weak duality.
+  `concaveAdjointBifun_adjointBifun_eq_clBifun`, `properConcave_graphFn_adjointBifun_iff` — `F*` is
+  closed concave, `F** = cl F`, and `F*` is proper exactly when `F` is (Theorem 30.1 in [^1]).
+* `adjointBifun_zero_eq_concaveConj` — the dual objective as a concave conjugate;
+  `adjointBifun_zero_le` — weak duality.
 * `mem_kuhnTucker_iff_adjointBifun_zero_eq` — the Kuhn–Tucker vectors are the points where the dual
-  objective attains the optimal value: the half of **Theorem 30.5** needing no normality.
-* `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq` and the two `domBifun` inclusions —
-  **Theorem 29.4**.
+  objective attains the optimal value, with no normality needed.
+* `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq` and the two `domBifun` inclusions — the closure of
+  a bifunction, slice by slice (Theorem 29.4 in [^1]).
 
 ## Implementation notes
 
 The sign flip is carried in the argument rather than in a reflected pairing: `⟨u, -v⟩ + ⟨x, y⟩` is
 read as the pairing of `(u, x)` with `(-v, y)`, so `F*` is `conj` at a reflected point and `conj`'s
 own lemmas apply verbatim. The two real terms are grouped inside one coercion, so no `∞ - ∞` can
-arise, and Theorem 30.2 uses the *concave* conjugate, since `g* ≠ -(-g)*`. Theorem 30.1's
-closedness half asks for `IsContinuousPairing (prodPairing Bu Bx).flip` rather than the un-flipped
-class: `closedFn_conj` needs continuity on the side the conjugate lives on, and the un-flipped form
-would demand a topology on `U × X` that this development never supplies.
+arise, and the dual objective uses the *concave* conjugate, since `g* ≠ -(-g)*`. The closedness of
+`F*` asks for `IsContinuousPairing (prodPairing Bu Bx).flip` rather than the un-flipped class:
+`closedFn_conj` needs continuity on the side the conjugate lives on, and the un-flipped form would
+demand a topology on `U × X` that this development never supplies.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §29 (Theorem 29.4),
-  §30 (Theorems 30.1, 30.2, Corollary 30.2.2).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §§29-30.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -76,8 +75,8 @@ theorem adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ
     adjointBifun Bu Bx F y v = ⨅ p : U × X, (F p.1 p.2 + ((Bu p.1 v - Bx p.2 y : ℝ) : EReal)) :=
   rfl
 
-/-- **Theorem 30.1**, the computation the section rests on: the adjoint is the conjugate of the
-graph function, negated and evaluated at a reflected point. -/
+/-- **The computation everything here rests on**: the adjoint is the conjugate of the graph
+function, negated and evaluated at a reflected point. -/
 theorem adjointBifun_eq_neg_conj_graphFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) (y : Y) (v : V) :
     adjointBifun Bu Bx F y v = -(conj (prodPairing Bu Bx) (graphFn F) (-v, y)) := by
@@ -93,7 +92,7 @@ theorem adjointBifun_eq_neg_conj_graphFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
 
 end Defs
 
-/-! ### Theorem 30.1: the adjoint is a closed concave bifunction -/
+/-! ### The adjoint is a closed concave bifunction -/
 
 section Closed
 
@@ -120,8 +119,8 @@ theorem graphFn_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →�
       = fun q => -(compLin (conj (prodPairing Bu Bx) (graphFn F)) (adjointSwap V Y) q) :=
   funext fun q => adjointBifun_eq_neg_conj_graphFn Bu Bx F q.1 q.2
 
-/-- **Theorem 30.1**, concavity half: the adjoint of *any* bifunction is concave. No convexity,
-properness or closedness of `F` is needed. -/
+/-- The adjoint of *any* bifunction is concave. No convexity, properness or closedness of `F` is
+needed. -/
 theorem concaveFn_graphFn_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) : ConcaveFn (graphFn (adjointBifun Bu Bx F)) := by
   rw [concaveFn_iff_convexFn_neg]
@@ -132,13 +131,13 @@ theorem concaveFn_graphFn_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (B
   rw [h]
   exact convexFn_compLin _ (convexFn_conj _ _)
 
-/-- **Theorem 30.1**, concavity half, packaged as a statement about bifunctions. -/
+/-- The same, packaged as a statement about bifunctions. -/
 theorem concaveBifun_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) : ConcaveBifun (adjointBifun Bu Bx F) :=
   concaveFn_graphFn_adjointBifun Bu Bx F
 
-/-- **Theorem 30.1**, concavity half, negated: `-F*` is a *convex* bifunction. This is the shape in
-which the concave clauses of Theorem 30.4 consume the adjoint. -/
+/-- The same negated: `-F*` is a *convex* bifunction. This is the shape in which the concave
+normality criteria consume the adjoint. -/
 theorem convexBifun_neg_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) : ConvexBifun fun y v => -(adjointBifun Bu Bx F y v) :=
   concaveFn_iff_convexFn_neg.1 (concaveFn_graphFn_adjointBifun Bu Bx F)
@@ -158,8 +157,8 @@ theorem continuous_adjointSwap : Continuous (adjointSwap V Y) := by
   change Continuous fun q : Y × V => ((-q.2, q.1) : V × Y)
   exact (continuous_neg.comp continuous_snd).prodMk continuous_fst
 
-/-- **Theorem 30.1**, closedness half: the adjoint of *any* bifunction is concave-closed. The
-conjugate is closed, and closedness survives the linear reflection. -/
+/-- The adjoint of *any* bifunction is concave-closed. The conjugate is closed, and closedness
+survives the linear reflection. -/
 theorem closedConcaveFn_graphFn_adjointBifun :
     ClosedConcaveFn (graphFn (adjointBifun Bu Bx F)) := by
   rw [closedConcaveFn_iff]
@@ -179,7 +178,7 @@ section BifunClosure
 variable {U X : Type*} [TopologicalSpace U] [TopologicalSpace X] {F : Bifun U X}
 
 /-- The **closure of a bifunction**: the bifunction whose graph function is the closure of that of
-`F`. Theorem 30.1 says it is what two applications of the adjoint return. -/
+`F`. Two applications of the adjoint return exactly this. -/
 noncomputable def clBifun (F : Bifun U X) : Bifun U X := fun u x => clFn (graphFn F) (u, x)
 
 theorem clBifun_apply (F : Bifun U X) (u : U) (x : X) :
@@ -214,7 +213,7 @@ theorem closedBifun_clBifun (F : Bifun U X) : ClosedBifun (clBifun F) :=
 
 end BifunClosureClosed
 
-/-! ### Theorem 29.4: the closure of a bifunction, slice by slice -/
+/-! ### The closure of a bifunction, slice by slice -/
 
 section RelintClosure
 
@@ -225,7 +224,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
 
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
 /-- The effective domain of a bifunction is the projection of that of its graph function. Since `ri`
-and `closure` commute with a linear image, Theorem 29.4 is a statement about `graph F`. -/
+and `closure` commute with a linear image, the slice-by-slice closure is a fact about
+`graph F`. -/
 theorem domBifun_eq_image_dom_graphFn (F : Bifun U X) :
     domBifun F = LinearMap.fst ℝ U X '' dom (graphFn F) := by
   ext u
@@ -235,8 +235,8 @@ theorem domBifun_eq_image_dom_graphFn (F : Bifun U X) :
   · rintro ⟨p, hp, rfl⟩
     exact ⟨p.2, (mem_dom.1 hp).ne⟩
 
-/-- **Theorem 6.4** on a slice: if `(u, x)` is a relative interior point of a convex set of pairs,
-then `x` is one of the slice through `u`. -/
+/-- **Relative interiors pass to slices**: if `(u, x)` is a relative interior point of a convex set
+of pairs, then `x` is one of the slice through `u`. -/
 theorem mem_relint_slice {S : Set (U × X)} (hS : Convex ℝ S) {u : U} {x : X}
     (hux : (u, x) ∈ ri S) : x ∈ ri {y | (u, y) ∈ S} := by
   have hT : Convex ℝ {y | (u, y) ∈ S} := by
@@ -253,10 +253,10 @@ theorem mem_relint_slice {S : Set (U × X)} (hS : Convex ℝ S) {u : U} {x : X}
     rw [Prod.smul_mk, Prod.smul_mk, Prod.mk_add_mk, ← add_smul, sub_add_cancel, one_smul]
   rwa [hu] at hmem
 
-/-- **Theorem 29.4**, first assertion: at a relative interior point of `dom F` the closure of a
-convex bifunction is computed slice by slice, `(cl F) u = cl (F u)`. Theorem 6.6 and Theorem 6.4
-put a relative interior point of `dom (graph F)` over `u` with `x` in `ri (dom (F u))`, and
-Theorem 7.5 writes both closures as the same limit along a segment inside the slice. -/
+/-- At a relative interior point of `dom F` the closure of a convex bifunction is computed slice by
+slice, `(cl F) u = cl (F u)`. A relative interior point of `dom (graph F)` is placed over `u` with
+`x` in `ri (dom (F u))`, and both closures are then the same limit along a segment inside the
+slice. -/
 theorem clBifun_apply_eq_clFn (hF : ConvexBifun F) {u : U} (hu : u ∈ ri (domBifun F)) :
     clBifun F u = clFn (F u) := by
   have hconv : Convex ℝ (dom (graphFn F)) := ConvexFn.convex_dom hF
@@ -292,16 +292,15 @@ theorem clBifun_apply_eq_clFn (hF : ConvexBifun F) {u : U} (hu : u ∈ ri (domBi
     funext y
     rw [clBifun_apply, clFn_of_exists_eq_bot ⟨(u', x), hb1⟩]
 
-/-- **Theorem 29.4**, second assertion: at a relative interior point of `dom F` the program
-`(cl F) u` has the same optimal value as `F u`. A convex function and its closure have the same
-infimum; the content is the first assertion, which makes `(cl F) u` a closure at all. -/
+/-- At a relative interior point of `dom F` the program `(cl F) u` has the same optimal value as
+`F u`. A convex function and its closure have the same infimum; the content is the slice formula,
+which makes `(cl F) u` a closure at all. -/
 theorem infBifun_clBifun_eq (hF : ConvexBifun F) {u : U} (hu : u ∈ ri (domBifun F)) :
     infBifun (clBifun F) u = infBifun F u := by
   rw [infBifun_apply, infBifun_apply, clBifun_apply_eq_clFn hF hu]
   exact iInf_clFn_eq_iInf (F u)
 
-/-- **Theorem 29.4**, third assertion, first inclusion: closing a proper convex bifunction can only
-enlarge its effective domain. -/
+/-- Closing a proper convex bifunction can only enlarge its effective domain. -/
 theorem domBifun_subset_domBifun_clBifun (hF : ConvexBifun F) (hp : Proper (graphFn F)) :
     domBifun F ⊆ domBifun (clBifun F) := by
   rw [domBifun_eq_image_dom_graphFn F, domBifun_eq_image_dom_graphFn (clBifun F), graphFn_clBifun]
@@ -309,8 +308,8 @@ theorem domBifun_subset_domBifun_clBifun (hF : ConvexBifun F) (hp : Proper (grap
   rw [ConvexFn.clFn_eq_lscHull hF hp]
   exact dom_subset_dom_lscHull _
 
-/-- **Theorem 29.4**, third assertion, second inclusion: closing a proper convex bifunction cannot
-enlarge its effective domain beyond the closure. -/
+/-- Closing a proper convex bifunction cannot enlarge its effective domain beyond the closure of
+that domain. -/
 theorem domBifun_clBifun_subset_closure (hF : ConvexBifun F) (hp : Proper (graphFn F)) :
     domBifun (clBifun F) ⊆ closure (domBifun F) := by
   rw [domBifun_eq_image_dom_graphFn F, domBifun_eq_image_dom_graphFn (clBifun F), graphFn_clBifun]
@@ -324,8 +323,8 @@ section ImageClosed
 
 variable {U X : Type*} [TopologicalSpace X] {F : Bifun U X}
 
-/-- A bifunction is **image-closed** when each `F u` is a closed function. This is all §33's
-correspondence sees of `F`. -/
+/-- A bifunction is **image-closed** when each `F u` is a closed function. This is all the
+correspondence with concave-convex functions sees of `F`. -/
 def ImageClosedBifun (F : Bifun U X) : Prop := ∀ u, ClosedFn (F u)
 
 theorem imageClosedBifun_iff : ImageClosedBifun F ↔ ∀ u, ClosedFn (F u) := Iff.rfl
@@ -384,15 +383,14 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsContinuousPairing (prodPairing Bu Bx).flip] {F : Bifun U X}
 
-/-- **Theorem 30.1**, closedness half, negated: `-F*` is a closed bifunction, with no hypothesis on
-`F`. -/
+/-- Negated: `-F*` is a closed bifunction, with no hypothesis on `F`. -/
 theorem closedBifun_neg_adjointBifun :
     ClosedBifun fun y v => -(adjointBifun Bu Bx F y v) :=
   closedConcaveFn_iff.1 closedConcaveFn_graphFn_adjointBifun
 
 end NegAdjointClosed
 
-/-! ### Theorem 30.1: `F** = cl F` -/
+/-! ### The second adjoint: `F** = cl F` -/
 
 section ConcaveAdjoint
 
@@ -414,8 +412,8 @@ theorem concaveAdjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X
 theorem surjective_adjointSwap : Function.Surjective (adjointSwap V Y) :=
   fun w => ⟨(w.2, -w.1), by rw [adjointSwap_apply, neg_neg]⟩
 
-/-- **Theorem 30.1**, the algebraic core of the biconjugation: the concave adjoint of `F*` is the
-*biconjugate* of the graph function of `F`, the two reflections cancelling by reindexing. -/
+/-- **The algebraic core of the biconjugation**: the concave adjoint of `F*` is the *biconjugate*
+of the graph function of `F`, the two reflections cancelling by reindexing. -/
 theorem concaveAdjointBifun_adjointBifun_eq_biconj (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (u : U) (x : X) :
     concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) u x
@@ -443,23 +441,23 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx] {F : Bifun U X}
 
-/-- **Theorem 30.1**: `F** = cl F`. The two adjoints compose to the biconjugate of the graph
-function, and Fenchel–Moreau turns that into its closure. Compatibility of the product pairing
-follows from compatibility of `Bu` and `Bx`. -/
+/-- **The second adjoint is the closure**: `F** = cl F`. The two adjoints compose to the
+biconjugate of the graph function, and Fenchel–Moreau turns that into its closure. Compatibility of
+the product pairing follows from compatibility of `Bu` and `Bx`. -/
 theorem concaveAdjointBifun_adjointBifun_eq_clBifun (hF : ConvexBifun F) :
     concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) = clBifun F := by
   funext u x
   rw [concaveAdjointBifun_adjointBifun_eq_biconj, clBifun_apply]
   exact congrFun (biconj_eq_clFn (B := prodPairing Bu Bx) hF) (u, x)
 
-/-- **Theorem 30.1**, fixed-point form: `F** = F` for a closed convex bifunction. -/
+/-- Fixed-point form: `F** = F` for a closed convex bifunction. -/
 theorem concaveAdjointBifun_adjointBifun_eq_self (hF : ConvexBifun F) (hcl : ClosedBifun F) :
     concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) = F := by
   rw [concaveAdjointBifun_adjointBifun_eq_clBifun hF, hcl.clBifun_eq]
 
-/-- **Theorem 30.1**, properness half: the adjoint of a *closed proper* convex bifunction is finite
-somewhere. Theorem 12.2's properness half read through `adjointBifun_eq_neg_conj_graphFn`: `F*` is
-somewhere `> -∞` exactly when `(graph F)*` is somewhere `< +∞`. -/
+/-- The adjoint of a *closed proper* convex bifunction is finite somewhere. This is properness of
+a conjugate, read through `adjointBifun_eq_neg_conj_graphFn`: `F*` is somewhere `> -∞` exactly when
+`(graph F)*` is somewhere `< +∞`. -/
 theorem exists_adjointBifun_ne_bot (hF : ClosedProperConvexFn (graphFn F)) :
     ∃ (y : Y) (v : V), adjointBifun Bu Bx F y v ≠ ⊥ := by
   obtain ⟨q, hq⟩ := (proper_conj (B := prodPairing Bu Bx) hF).dom_nonempty
@@ -467,10 +465,10 @@ theorem exists_adjointBifun_ne_bot (hF : ClosedProperConvexFn (graphFn F)) :
   rw [adjointBifun_eq_neg_conj_graphFn, neg_neg]
   simpa using hq.ne
 
-/-- **Theorem 30.1**, the properness clause in full: for a closed convex `F`, the adjoint `F*` is a
-proper *concave* bifunction exactly when `F` is proper. This is Theorem 12.2's properness clause
-read through the onto reflection `(y, v) ↦ (-v, y)`; as there, closedness is used only for the
-direction "`F` proper ⇒ `F*` proper". -/
+/-- **The properness clause in full**: for a closed convex `F`, the adjoint `F*` is a proper
+*concave* bifunction exactly when `F` is proper. This is properness of a conjugate read through the
+onto reflection `(y, v) ↦ (-v, y)`; as there, closedness is used only for the direction "`F` proper
+⇒ `F*` proper". -/
 theorem properConcave_graphFn_adjointBifun_iff (hF : ConvexBifun F) (hcl : ClosedBifun F) :
     ProperConcave (graphFn (adjointBifun Bu Bx F)) ↔ Proper (graphFn F) := by
   have hg : (fun q : Y × V => -(graphFn (adjointBifun Bu Bx F) q))
@@ -482,7 +480,7 @@ theorem properConcave_graphFn_adjointBifun_iff (hF : ConvexBifun F) (hcl : Close
 
 end Thm301
 
-/-! ### Theorem 30.2: the dual objective -/
+/-! ### The dual objective -/
 
 section Dual
 
@@ -501,8 +499,7 @@ theorem adjointBifun_zero_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X �
   simp only [hzero]
   rw [infBifun_apply, add_comm, Tdaf.EReal.iInf_add_coe]
 
-/-- **Theorem 30.2**: the dual objective is the *concave* conjugate of the concave function
-`-inf F`. -/
+/-- The dual objective is the *concave* conjugate of the concave function `-inf F`. -/
 theorem adjointBifun_zero_eq_concaveConj (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) :
     adjointBifun Bu Bx F 0 = concaveConj Bu (fun u => -(infBifun F u)) := by
@@ -510,29 +507,29 @@ theorem adjointBifun_zero_eq_concaveConj (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
   rw [adjointBifun_zero_apply, concaveConj_apply]
   exact iInf_congr fun u => by rw [sub_eq_add_neg, neg_neg]
 
-/-- **Corollary 30.2.2** (weak duality): every value of the dual objective is at most the optimal
-value of `(P)`, with no hypothesis at all. -/
+/-- **Weak duality**: every value of the dual objective is at most the optimal value of `(P)`,
+with no hypothesis at all. -/
 theorem adjointBifun_zero_le (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X)
     (v : V) : adjointBifun Bu Bx F 0 v ≤ infBifun F 0 := by
   rw [adjointBifun_zero_apply]
   exact iInf_add_infBifun_le Bu F v
 
-/-- **Theorem 30.5**, the half holding without normality: the Kuhn–Tucker vectors of `(P)` are the
-points at which the dual objective attains its optimal value. -/
+/-- The half that holds without normality: the Kuhn–Tucker vectors of `(P)` are the points at
+which the dual objective attains the optimal value of `(P)`. -/
 theorem mem_kuhnTucker_iff_adjointBifun_zero_eq (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) :
     v ∈ KuhnTucker Bu F ↔ infBifun F 0 ≠ ⊤ ∧ infBifun F 0 ≠ ⊥ ∧
       adjointBifun Bu Bx F 0 v = infBifun F 0 := by
   rw [KuhnTucker, Set.mem_ofPred_eq, adjointBifun_zero_apply]
 
-/-- **Corollary 30.2.2** in the form normality uses: the supremum of the dual objective never
-exceeds the optimal value of `(P)`. -/
+/-- Weak duality in the form normality uses: the supremum of the dual objective never exceeds the
+optimal value of `(P)`. -/
 theorem iSup_adjointBifun_zero_le (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) : (⨆ v, adjointBifun Bu Bx F 0 v) ≤ infBifun F 0 :=
   iSup_le (adjointBifun_zero_le Bu Bx F)
 
 end Dual
 
-/-! ### Corollary 29.4.1: closing a strongly consistent program changes nothing -/
+/-! ### Closing a strongly consistent program changes nothing -/
 
 section Cor2941
 
@@ -541,9 +538,9 @@ open Filter Topology
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {F : Bifun U X}
 
-/-- **Corollary 29.4.1**, domain clause: closing a proper convex bifunction leaves the relative
-interior of its effective domain alone. Theorem 29.4 sandwiches `dom (cl F)` between `dom F` and
-`cl (dom F)`, and Corollary 6.3.1 says such a sandwich has the same relative interior. -/
+/-- **Domain clause**: closing a proper convex bifunction leaves the relative interior of its
+effective domain alone. `dom (cl F)` is sandwiched between `dom F` and `cl (dom F)`, and such a
+sandwich has the same relative interior. -/
 theorem relint_domBifun_clBifun (hF : ConvexBifun F) (hp : Proper (graphFn F)) :
     ri (domBifun (clBifun F)) = ri (domBifun F) := by
   have hconv : Convex ℝ (domBifun F) := convex_domBifun hF
@@ -553,25 +550,24 @@ theorem relint_domBifun_clBifun (hF : ConvexBifun F) (hp : Proper (graphFn F)) :
     (intrinsicInterior_subset.trans (domBifun_subset_domBifun_clBifun hF hp))
     (domBifun_clBifun_subset_closure hF hp)
 
-/-- **Corollary 29.4.1**, first clause: `(cl P)` is strongly consistent whenever `(P)` is. -/
+/-- `(cl P)` is strongly consistent whenever `(P)` is. -/
 theorem stronglyConsistent_clBifun (hF : ConvexBifun F) (hp : Proper (graphFn F))
     (hs : StronglyConsistent F) : StronglyConsistent (clBifun F) := by
   rw [StronglyConsistent, relint_domBifun_clBifun hF hp]
   exact hs
 
-/-- **Corollary 29.4.1**, second clause: the objective of `(cl P)` is the closure of that of `(P)` —
-Theorem 29.4 read at the origin. -/
+/-- The objective of `(cl P)` is the closure of that of `(P)`: the slice formula at the origin. -/
 theorem clBifun_zero_eq_clFn (hF : ConvexBifun F) (hs : StronglyConsistent F) :
     clBifun F 0 = clFn (F 0) :=
   clBifun_apply_eq_clFn hF hs
 
-/-- **Corollary 29.4.1**, third clause: `(P)` and `(cl P)` have the same optimal value. -/
+/-- `(P)` and `(cl P)` have the same optimal value. -/
 theorem infBifun_clBifun_zero_eq (hF : ConvexBifun F) (hs : StronglyConsistent F) :
     infBifun (clBifun F) 0 = infBifun F 0 :=
   infBifun_clBifun_eq hF hs
 
-/-- **Corollary 29.4.1**, fourth clause: every optimal solution to `(P)` is one to `(cl P)`. The
-inclusion is strict in general — closing can create new minimisers. -/
+/-- Every optimal solution to `(P)` is one to `(cl P)`. The inclusion is strict in general —
+closing can create new minimisers. -/
 theorem argmin_subset_argmin_clBifun (hF : ConvexBifun F) (hs : StronglyConsistent F) :
     argmin (F 0) ⊆ argmin (clBifun F 0) := by
   rw [clBifun_zero_eq_clFn hF hs]
@@ -580,10 +576,9 @@ theorem argmin_subset_argmin_clBifun (hF : ConvexBifun F) (hs : StronglyConsiste
   rw [iInf_clFn_eq_iInf]
   exact le_trans (clFn_le _ x) hx
 
-/-- **Corollary 29.4.1**, fifth clause: the perturbation functions of `(P)` and `(cl P)` agree on a
-neighbourhood of the origin.
+/-- The perturbation functions of `(P)` and `(cl P)` agree on a neighbourhood of the origin.
 
-Theorem 29.4 supplies agreement only on `ri (dom F)`, a *relative* neighbourhood; the two are
+The slice formula supplies agreement only on `ri (dom F)`, a *relative* neighbourhood; the two are
 reconciled by the points outside `aff (dom F)`, where both perturbation functions are `+∞`. Since
 `ri (dom F)` is relatively open and `dom (cl F) ⊆ cl (dom F) ⊆ aff (dom F)`, a small enough ball
 around the origin meets no other kind of point. -/
@@ -613,9 +608,9 @@ variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimen
   [AddCommGroup V] [Module ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [FiniteDimensional ℝ X] {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsContinuousPairing Bu] {F : Bifun U X}
 
-/-- **Corollary 29.4.1**, last clause: `(P)` and `(cl P)` have the same Kuhn–Tucker vectors. Such a
-vector is a point where the dual objective attains the optimal value, the adjoint does not see the
-closure, and strong consistency equates the two optimal values. -/
+/-- `(P)` and `(cl P)` have the same Kuhn–Tucker vectors. Such a vector is a point where the dual
+objective attains the optimal value, the adjoint does not see the closure, and strong consistency
+equates the two optimal values. -/
 theorem kuhnTucker_clBifun_eq {Y : Type*} [AddCommGroup Y] [Module ℝ Y]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx] (hF : ConvexBifun F)
     (hs : StronglyConsistent F) : KuhnTucker Bu (clBifun F) = KuhnTucker Bu F := by
