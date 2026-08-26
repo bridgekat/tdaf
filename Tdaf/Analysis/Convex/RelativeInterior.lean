@@ -33,6 +33,8 @@ theory that Mathlib's `Mathlib.Analysis.Convex.Intrinsic` does not carry.
 * `Convex.segment_mem_relint` — Theorem 6.1, the *line segment principle*: the half-open
   segment from a point of `ri C` to a point of `cl C` stays in `ri C`.
 * `Convex.relint_nonempty`, `Convex.affineSpan_relint` — Theorem 6.2.
+* `Convex.interior_subset_relint` — the full-dimensional collapse `ri C = int C` of §6, in the
+  direction every caller uses: a convex set with an interior point has `int C ⊆ ri C`.
 * `Convex.closure_relint`, `Convex.relint_closure` — Theorem 6.3, and its corollaries
   `Convex.closure_eq_iff_relint_eq` (6.3.1) and
   `Convex.relint_inter_nonempty_of_isOpen` (6.3.2).
@@ -329,6 +331,16 @@ theorem Convex.affineSpan_relint (hC : Convex ℝ C) : affineSpan ℝ (ri C) = a
     match_scalars <;> norm_num
   rw [hrw]
   exact AffineSubspace.combo_mem (subset_affineSpan ℝ _ hz) (subset_affineSpan ℝ _ hm) 2
+
+/-- **Rockafellar, §6 (book line 1875)**: "for an `n`-dimensional convex set, `aff C = Rⁿ` by
+definition, so `ri C = int C`". A convex set with an interior point is full-dimensional
+(`Convex.interior_nonempty_iff_affineSpan_eq_top`), so `intrinsicInterior_eq_interior` applies and
+the two interiors agree; the inclusion `int C ⊆ ri C` is the half every caller uses, because it is
+what makes the relative-interior theorems applicable at an ordinary interior point. -/
+theorem Convex.interior_subset_relint (hC : Convex ℝ C) (hne : (interior C).Nonempty) :
+    interior C ⊆ ri C :=
+  le_of_eq (intrinsicInterior_eq_interior
+    ((Convex.interior_nonempty_iff_affineSpan_eq_top hC).1 hne)).symm
 
 /-! ### Theorem 6.3 and its corollaries -/
 
@@ -1236,8 +1248,7 @@ The inclusion `⊇` is `cl f ≤ f`. For `⊆`, `interior (dom (cl f))` is an *o
 separate degenerate case is needed beyond the one the `ri`/`int` collapse asks for: where there is
 no interior point at all the left-hand side is empty.
 
-The step `int ⊆ ri` is `intrinsicInterior_eq_interior` at a full-dimensional domain; it is also
-`Convex.interior_subset_relint`, which sits in `Subgradient/Bounded.lean`, far above this file. -/
+The step `int ⊆ ri` is `Convex.interior_subset_relint`, the full-dimensional collapse of §6. -/
 theorem ConvexFn.interior_dom_clFn (hf : ConvexFn f) (hp : Proper f) :
     interior (dom (clFn f)) = interior (dom f) := by
   refine Set.Subset.antisymm ?_ (interior_mono fun z hz =>
@@ -1246,10 +1257,7 @@ theorem ConvexFn.interior_dom_clFn (hf : ConvexFn f) (hp : Proper f) :
   · rw [hemp]
     exact Set.empty_subset _
   refine interior_maximal ?_ isOpen_interior
-  have hint : interior (dom (clFn f)) ⊆ ri (dom (clFn f)) :=
-    le_of_eq (intrinsicInterior_eq_interior (Convex.interior_nonempty_iff_affineSpan_eq_top
-      (convexFn_clFn hf).convex_dom |>.1 hne)).symm
-  refine hint.trans ?_
+  refine (Convex.interior_subset_relint (convexFn_clFn hf).convex_dom hne).trans ?_
   rw [hf.relint_dom_clFn hp]
   exact intrinsicInterior_subset
 
