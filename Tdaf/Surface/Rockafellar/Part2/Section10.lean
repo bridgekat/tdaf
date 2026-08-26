@@ -183,7 +183,7 @@ theorem uniformlyBoundedOn_iff {n : ℕ} {ι : Type*} {f : ι → Rn n → ℝ} 
 
 /-! ### Theorem 10.1 -/
 
-/-- **Rockafellar, Theorem 10.1.** A convex function `f` on `ℝⁿ` is continuous relative to any
+/-- **Theorem 10.1.** A convex function `f` on `ℝⁿ` is continuous relative to any
 relatively open convex set `C` in its effective domain — in particular relative to `ri (dom f)`,
 which is `corollary_10_1_1`'s and Theorem 10.4's form.
 
@@ -218,48 +218,45 @@ theorem theorem_10_1 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) {C : Set (
 
 /-! ### Corollary 10.1.1 -/
 
-/-- **Rockafellar, Corollary 10.1.1.** A convex function finite on all of `ℝⁿ` is necessarily
+/-- **Corollary 10.1.1.** A convex function finite on all of `ℝⁿ` is necessarily
 continuous.
 
-Specialises `ConvexFn.continuous_of_dom_eq_univ`; "finite on all of `ℝⁿ`" is `dom f = univ`
-together with properness, which is the `≠ -∞` half. -/
+"finite on all of `ℝⁿ`" is `dom f = univ` together with properness, which is the `≠ -∞` half. -/
 theorem corollary_10_1_1 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) : Continuous f :=
   hf.continuous_of_dom_eq_univ hp hdom
 
 /-! ### Theorem 10.2 -/
 
-/-- **Rockafellar, Theorem 10.2.** Let `f` be a convex function on `ℝⁿ`, and let `S` be any locally
+/-- **Theorem 10.2.** Let `f` be a convex function on `ℝⁿ`, and let `S` be any locally
 simplicial subset of `dom f`. Then `f` is upper semicontinuous relative to `S`.
 
-Specialises `ConvexFn.upperSemicontinuousOn_of_locallySimplicial`. Rockafellar's proof triangulates
-each simplex around `x` so as to make `x` a vertex, a step he calls "intuitively obvious" and does
-not prove; the backbone avoids it — see the module docstring. Improperness is not excluded, and the
-book's parenthetical about `∞ - ∞` is what `ConvexFn.epi_combo` handles by never leaving `ℝ`. -/
+Rockafellar's proof triangulates each simplex around `x` so as to make `x` a vertex, a step he calls
+"intuitively obvious" and does not prove; the backbone avoids it — see the module docstring.
+Improperness is not excluded, and the book's parenthetical about `∞ - ∞` is what
+`ConvexFn.epi_combo` handles by never leaving `ℝ`. -/
 theorem theorem_10_2 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) {S : Set (Rn n)}
     (hS : LocallySimplicial S) (hSdom : S ⊆ dom f) : UpperSemicontinuousOn f S :=
   hf.upperSemicontinuousOn_of_locallySimplicial hS hSdom
 
-/-- **Rockafellar, Theorem 10.2**, second assertion: if `f` is closed, `f` is actually continuous
+/-- **Theorem 10.2**, second assertion: if `f` is closed, `f` is actually continuous
 relative to `S`.
 
-Specialises `ConvexFn.continuousOn_of_locallySimplicial`; a closed function is lower
-semicontinuous (`ClosedFn.lowerSemicontinuous`), and Theorem 10.2 supplies the other half. -/
+A closed function is lower semicontinuous (`ClosedFn.lowerSemicontinuous`), and Theorem 10.2
+supplies the other half. -/
 theorem theorem_10_2_closed {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hcl : ClosedFn f)
     {S : Set (Rn n)} (hS : LocallySimplicial S) (hSdom : S ⊆ dom f) : ContinuousOn f S :=
   hf.continuousOn_of_locallySimplicial (ClosedFn.lowerSemicontinuous hcl) hS hSdom
 
 /-! ### Theorem 10.3 -/
 
-/-- **Rockafellar, Theorem 10.3.** Let `C` be a locally simplicial convex set, and let `f` be a
+/-- **Theorem 10.3.** Let `C` be a locally simplicial convex set, and let `f` be a
 finite convex function on `ri C` which is bounded above on every bounded subset of `ri C`. Then `f`
 can be extended to a continuous finite convex function on the whole of `C`.
 
 "A finite convex function on `ri C`" is transcribed as a convex `f : ℝⁿ → (-∞, +∞]` with
 `dom f = ri C`, which is how §4 reads a function given only on a set. The extension produced is
-`cl f`, exactly Rockafellar's; uniqueness is `theorem_10_3_unique`.
-
-Specialises `exists_closedFn_continuousOn_of_locallySimplicial`. -/
+`cl f`, exactly Rockafellar's; uniqueness is `theorem_10_3_unique`. -/
 theorem theorem_10_3 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCls : LocallySimplicial C)
     (hne : C.Nonempty) {f : Rn n → EReal} (hf : ConvexFn f) (hbot : ∀ x, f x ≠ ⊥)
     (hdom : dom f = ri C)
@@ -268,11 +265,11 @@ theorem theorem_10_3 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCls : Loca
       C ⊆ dom g ∧ ContinuousOn g C :=
   exists_closedFn_continuousOn_of_locallySimplicial hC hCls hne hf hbot hdom hbdd
 
-/-- **Rockafellar, Theorem 10.3**, uniqueness: "there can be only one such extension, since
+/-- **Theorem 10.3**, uniqueness: "there can be only one such extension, since
 `C ⊆ cl (ri C)`".
 
-Specialises `eqOn_of_continuousOn_of_eqOn_relint`, which — as the book's one-line argument already
-shows — needs neither local simpliciality of `C` nor convexity of the two functions. -/
+It — as the book's one-line argument already shows — needs neither local simpliciality of `C` nor
+convexity of the two functions. -/
 theorem theorem_10_3_unique {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) {g₁ g₂ : Rn n → EReal}
     (h₁ : ContinuousOn g₁ C) (h₂ : ContinuousOn g₂ C) (h : Set.EqOn g₁ g₂ (ri C)) :
     Set.EqOn g₁ g₂ C :=
@@ -280,13 +277,12 @@ theorem theorem_10_3_unique {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) {g₁
 
 /-! ### Theorem 10.4 -/
 
-/-- **Rockafellar, Theorem 10.4.** Let `f` be a proper convex function, and let `S` be any closed
+/-- **Theorem 10.4.** Let `f` be a proper convex function, and let `S` be any closed
 bounded subset of `ri (dom f)`. Then `f` is Lipschitzian relative to `S`.
 
-Specialises `ConvexFn.exists_lipschitzOnWith_of_isCompact` through `lipschitzianOn_iff`; closed and
-bounded is compact in `ℝⁿ`, which is the only place finite dimension enters beyond Theorem 10.1.
-The Lipschitz condition is about real values, so the statement is about `(f ·).toReal`, which
-properness makes faithful on `dom f`. -/
+Closed and bounded is compact in `ℝⁿ`, which is the only place finite dimension enters beyond
+Theorem 10.1. The Lipschitz condition is about real values, so the statement is about `(f
+·).toReal`, which properness makes faithful on `dom f`. -/
 theorem theorem_10_4 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     {S : Set (Rn n)} (hScl : IsClosed S) (hSb : Bornology.IsBounded S) (hSri : S ⊆ ri (dom f)) :
     LipschitzianOn (fun x => (f x).toReal) S :=
@@ -296,22 +292,22 @@ theorem theorem_10_4 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : Prop
 
 /-! ### Theorem 10.5 -/
 
-/-- **Rockafellar, Theorem 10.5.** Let `f` be a finite convex function on `ℝⁿ`. In order that `f`
+/-- **Theorem 10.5.** Let `f` be a finite convex function on `ℝⁿ`. In order that `f`
 be uniformly continuous relative to `ℝⁿ`, it is necessary and sufficient that the recession
 function `f0⁺` be finite everywhere.
 
-Specialises `ConvexFn.uniformContinuous_toReal_iff`. "Finite everywhere" is spelled `≠ ⊤`: the
-other half, `f0⁺ ≠ -∞`, is automatic from properness of `f` (`proper_recessionFn`). -/
+"Finite everywhere" is spelled `≠ ⊤`: the other half, `f0⁺ ≠ -∞`, is automatic from properness of
+`f` (`proper_recessionFn`). -/
 theorem theorem_10_5 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) :
     (UniformContinuous fun x => (f x).toReal) ↔ ∀ y, recessionFn f y ≠ ⊤ :=
   hf.uniformContinuous_toReal_iff hp hdom
 
-/-- **Rockafellar, Theorem 10.5**, second assertion: in that event `f` is actually Lipschitzian
+/-- **Theorem 10.5**, second assertion: in that event `f` is actually Lipschitzian
 relative to `ℝⁿ`.
 
-Specialises `ConvexFn.exists_lipschitzWith_of_recessionFn_ne_top`; the constant is Rockafellar's
-`α = sup {(f0⁺) z | ‖z‖ = 1}`, finite by Corollary 10.1.1 applied to `f0⁺`. -/
+The constant is Rockafellar's `α = sup {(f0⁺) z | ‖z‖ = 1}`, finite by Corollary 10.1.1 applied to
+`f0⁺`. -/
 theorem theorem_10_5_lipschitzian {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) (hrec : ∀ y, recessionFn f y ≠ ⊤) :
     LipschitzianOn (fun x => (f x).toReal) Set.univ := by
@@ -320,13 +316,12 @@ theorem theorem_10_5_lipschitzian {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn 
 
 /-! ### Corollary 10.5.1 -/
 
-/-- **Rockafellar, Corollary 10.5.1.** A finite convex function `f` is Lipschitzian relative to
+/-- **Corollary 10.5.1.** A finite convex function `f` is Lipschitzian relative to
 `ℝⁿ` if `liminf_{λ → ∞} f (λ y) / λ < ∞` for every `y`.
 
-Specialises `ConvexFn.exists_lipschitzWith_of_frequently_le`. The `liminf` is spelled as "for some
-`c`, `f (a y) ≤ c a` for arbitrarily large `a`", which is what it says once the `EReal` quotient is
-avoided; the two agree because the quotient is nondecreasing in `λ`, which is Theorem 8.5 and is
-also the book's whole proof of the corollary. -/
+The `liminf` is spelled as "for some `c`, `f (a y) ≤ c a` for arbitrarily large `a`", which is what
+it says once the `EReal` quotient is avoided; the two agree because the quotient is nondecreasing in
+`λ`, which is Theorem 8.5 and is also the book's whole proof of the corollary. -/
 theorem corollary_10_5_1 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ)
     (h : ∀ y : Rn n, ∃ c : ℝ, ∃ᶠ a : ℝ in atTop, f (a • y) ≤ ((c * a : ℝ) : EReal)) :
@@ -336,13 +331,12 @@ theorem corollary_10_5_1 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : 
 
 /-! ### Corollary 10.5.2 -/
 
-/-- **Rockafellar, Corollary 10.5.2.** Let `g` be any finite convex function Lipschitzian relative
+/-- **Corollary 10.5.2.** Let `g` be any finite convex function Lipschitzian relative
 to `ℝⁿ`. Then every finite convex function `f` with `f ≤ g` is likewise Lipschitzian relative to
 `ℝⁿ`.
 
-Specialises `ConvexFn.exists_lipschitzWith_of_le_lipschitz`, which drops the convexity of `g`:
-Rockafellar's proof runs through `f0⁺ ≤ g0⁺`, but the estimate only needs `g` Lipschitz. The
-hypothesis is kept here so the statement is the book's. -/
+It drops the convexity of `g`: Rockafellar's proof runs through `f0⁺ ≤ g0⁺`, but the estimate only
+needs `g` Lipschitz. The hypothesis is kept here so the statement is the book's. -/
 theorem corollary_10_5_2 {n : ℕ} {f g : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) (_hg : ConvexFn g) (hgp : Proper g) (hgdom : dom g = Set.univ)
     (hglip : LipschitzianOn (fun x => (g x).toReal) Set.univ) (hle : ∀ x, f x ≤ g x) :
@@ -355,14 +349,13 @@ theorem corollary_10_5_2 {n : ℕ} {f g : Rn n → EReal} (hf : ConvexFn f) (hp 
 
 /-! ### Theorem 10.6 -/
 
-/-- **Rockafellar, Theorem 10.6.** Let `C` be a relatively open convex set, and let `{f i | i ∈ I}`
+/-- **Theorem 10.6.** Let `C` be a relatively open convex set, and let `{f i | i ∈ I}`
 be an arbitrary collection of convex functions finite and pointwise bounded on `C`. Let `S` be any
 closed bounded subset of `C`. Then `{f i}` is uniformly bounded on `S` and equi-Lipschitzian
 relative to `S`.
 
-Specialises `exists_forall_abs_le_and_lipschitzOnWith_of_isCompact_relint`. "Relatively open" is
-`ri C = C`; "finite and convex on `C`" is Mathlib's `ConvexOn ℝ C`, which is real-valued, exactly
-as the book's collection is. `I` may be empty. -/
+"Relatively open" is `ri C = C`; "finite and convex on `C`" is Mathlib's `ConvexOn ℝ C`, which is
+real-valued, exactly as the book's collection is. `I` may be empty. -/
 theorem theorem_10_6 {n : ℕ} {ι : Type*} {C : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C = C)
     {f : ι → Rn n → ℝ} (hf : ∀ i, ConvexOn ℝ C (f i)) (hbdd : PointwiseBoundedOn f C)
     {S : Set (Rn n)} (hScl : IsClosed S) (hSb : Bornology.IsBounded S) (hSC : S ⊆ C) :
@@ -374,14 +367,11 @@ theorem theorem_10_6 {n : ℕ} {ι : Type*} {C : Set (Rn n)} (hC : Convex ℝ C)
     (Metric.isCompact_of_isClosed_isBounded hScl hSb) hSC'
   exact ⟨uniformlyBoundedOn_iff.2 hub, equiLipschitzianOn_iff.2 hlip⟩
 
-/-- **Rockafellar, Theorem 10.6**, weakened hypotheses: the conclusion survives if pointwise
+/-- **Theorem 10.6**, weakened hypotheses: the conclusion survives if pointwise
 boundedness is replaced by
 
 (a) a subset `C'` of `C` with `cl C' ⊇ C` on which `sup {f i x | i ∈ I}` is finite, and
 (b) at least one `x ∈ C` at which `inf {f i x | i ∈ I}` is finite.
-
-Specialises `exists_forall_abs_le_of_isCompact_relint` and
-`exists_forall_lipschitzOnWith_of_isCompact_relint`.
 
 The book's (a) reads `conv (cl C') ⊇ C`, which is weaker than the `cl C' ⊇ C` used here; the
 convex-hull weakening is in the backbone only in its `interior` form
@@ -404,13 +394,12 @@ theorem theorem_10_6_ab {n : ℕ} {ι : Type*} {C C' : Set (Rn n)} (hC : Convex 
 
 /-! ### Theorem 10.7 -/
 
-/-- **Rockafellar, Theorem 10.7.** Let `C` be a relatively open convex set in `ℝⁿ`, and let `T` be
+/-- **Theorem 10.7.** Let `C` be a relatively open convex set in `ℝⁿ`, and let `T` be
 any locally compact topological space. Let `f` be a real-valued function on `C × T` such that
 `f (x, t)` is convex in `x` for each `t` and continuous in `t` for each `x`. Then `f` is jointly
 continuous on `C × T`.
 
-Specialises `continuousOn_prod_of_convexOn_relint`. `T` is a type, so "continuous on `C × T`" is
-`ContinuousOn F (C ×ˢ univ)`. -/
+`T` is a type, so "continuous on `C × T`" is `ContinuousOn F (C ×ˢ univ)`. -/
 theorem theorem_10_7 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C = C) {T : Type*}
     [TopologicalSpace T] [LocallyCompactSpace T] {F : Rn n × T → ℝ}
     (hconv : ∀ t : T, ConvexOn ℝ C fun x => F (x, t))
@@ -421,7 +410,7 @@ theorem theorem_10_7 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C
   have h := continuousOn_prod_of_convexOn_relint (C' := C) hC hconv hsub hdense hcont
   rwa [hCro] at h
 
-/-- **Rockafellar, Theorem 10.7**, weakened hypothesis: it is enough that `f (x, ·)` be continuous
+/-- **Theorem 10.7**, weakened hypothesis: it is enough that `f (x, ·)` be continuous
 for each `x` in some subset `C'` of `C` with `cl C' ⊇ C`.
 
 Specialises `continuousOn_prod_of_convexOn_relint` directly. -/
@@ -437,12 +426,10 @@ theorem theorem_10_7_dense {n : ℕ} {C C' : Set (Rn n)} (hC : Convex ℝ C) (hC
 
 /-! ### Theorem 10.8 -/
 
-/-- **Rockafellar, Theorem 10.8.** Let `C` be a relatively open convex set and `f 1, f 2, …` a
+/-- **Theorem 10.8.** Let `C` be a relatively open convex set and `f 1, f 2, …` a
 sequence of finite convex functions on `C` converging pointwise on a subset `C'` of `C` with
 `cl C' ⊇ C`. The limit then exists for every `x ∈ C`, is finite and convex, and the convergence is
-uniform on each closed bounded subset of `C`.
-
-Specialises `exists_tendstoUniformlyOn_of_dense_relint`. -/
+uniform on each closed bounded subset of `C`. -/
 theorem theorem_10_8 {n : ℕ} {C C' : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C = C)
     {f : ℕ → Rn n → ℝ} (hf : ∀ i, ConvexOn ℝ C (f i)) (hC'sub : C' ⊆ C)
     (hdense : C ⊆ closure C')
@@ -459,13 +446,13 @@ theorem theorem_10_8 {n : ℕ} {C C' : Set (Rn n)} (hC : Convex ℝ C) (hCro : r
 
 /-! ### Corollary 10.8.1 -/
 
-/-- **Rockafellar, Corollary 10.8.1.** Let `f` be a finite convex function on a relatively open
+/-- **Corollary 10.8.1.** Let `f` be a finite convex function on a relatively open
 convex set `C`, and `f 1, f 2, …` finite convex functions on `C` with `limsup_i f i x ≤ f x` for
 every `x ∈ C`. Then for each closed bounded `S ⊆ C` and each `ε > 0` there is an `i₀` with
 `f i x ≤ f x + ε` for all `i ≥ i₀` and all `x ∈ S`.
 
-Specialises `eventually_forall_le_add_of_eventually_le_relint`. The `limsup` hypothesis is spelled
-"for every `δ > 0`, eventually `f i x ≤ f x + δ`", which is what it means for a real sequence. -/
+The `limsup` hypothesis is spelled "for every `δ > 0`, eventually `f i x ≤ f x + δ`", which is what
+it means for a real sequence. -/
 theorem corollary_10_8_1 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C = C)
     {f : ℕ → Rn n → ℝ} (hf : ∀ i, ConvexOn ℝ C (f i)) {g : Rn n → ℝ} (hg : ConvexOn ℝ C g)
     (hle : ∀ x ∈ C, ∀ δ > 0, ∀ᶠ i in atTop, f i x ≤ g x + δ)
@@ -478,14 +465,13 @@ theorem corollary_10_8_1 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCro : 
 
 /-! ### Theorem 10.9 -/
 
-/-- **Rockafellar, Theorem 10.9.** Let `C` be a relatively open convex set and `f 1, f 2, …` a
+/-- **Theorem 10.9.** Let `C` be a relatively open convex set and `f 1, f 2, …` a
 sequence of finite convex functions on `C` whose values are bounded at each point of a dense subset
 `C'` of `C`. It is then possible to select a subsequence converging uniformly on closed bounded
 subsets of `C` to some finite convex function `f`.
 
-Specialises `exists_subseq_tendstoUniformlyOn_relint`. The book's proof needs a countable dense
-subset of `C'`, extracted by hand from the rational balls; the backbone gets it from separability
-of `ℝⁿ`. -/
+The book's proof needs a countable dense subset of `C'`, extracted by hand from the rational balls;
+the backbone gets it from separability of `ℝⁿ`. -/
 theorem theorem_10_9 {n : ℕ} {C C' : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C = C)
     {f : ℕ → Rn n → ℝ} (hf : ∀ i, ConvexOn ℝ C (f i)) (hC'sub : C' ⊆ C)
     (hdense : C ⊆ closure C') (hbdd : PointwiseBoundedOn f C') :

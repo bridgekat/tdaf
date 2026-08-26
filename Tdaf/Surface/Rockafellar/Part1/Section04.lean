@@ -11,88 +11,36 @@ import Tdaf.Analysis.Convex.Subgradient.Gradient
 import Tdaf.Surface.Common.Euclidean
 
 /-!
-# Rockafellar, *Convex Analysis*, §4: Convex Functions
+# Rockafellar, §4: Convex Functions
 
-The eleven numbered results of §4 (book lines 1039–1438, pp. 23–31), stated in the book's own
-terms over `Rn n = ℝⁿ` and closed by the backbone.
+Convex functions on `ℝⁿ` with values in `[-∞, +∞]`: the secant and Jensen inequalities, the
+second-derivative tests, convexity of level sets, and positively homogeneous convex functions.
+All 11 numbered results of §4 are formalized.
 
-Rockafellar's "convex function" is a function `Rn n → EReal` defined on **all** of `ℝⁿ`, convex by
-definition when its epigraph is convex. That is `Tdaf.ConvexAnalysis.ConvexFn` exactly. Only
-Theorems 4.4 and 4.5 are about finite functions, because only they are about `C²` functions on an
-interval and on an open convex set; everywhere else a hypothesis `f : Rn n → ℝ` would be a
-mistranslation. Properness is imposed only where the book imposes it: Corollaries 4.7.1 and 4.7.2
-and Theorem 4.8.
+Rockafellar's convex function is defined on **all** of `ℝⁿ` and is convex when its epigraph is,
+which is the backbone's `ConvexFn` exactly. Only Theorems 4.4 and 4.5 take a finite `f`, being
+about `C²` functions; anywhere else `f : Rn n → ℝ` would be a mistranslation. Properness is
+imposed only where the book imposes it: Corollaries 4.7.1 and 4.7.2 and Theorem 4.8.
 
-## Main results
+## The extended arithmetic
 
-* `theorem_4_1` — convexity is the secant inequality, for `f` with values in `(-∞, +∞]`.
-* `theorem_4_2` — convexity by strict inequalities; the form valid for **all** `EReal` values.
-* `theorem_4_3` — **Jensen's inequality**: convexity is the finite-convex-combination inequality.
-* `theorem_4_4` — a `C²` function on an open interval is convex iff `f'' ≥ 0`.
-* `theorem_4_5` — a `C²` function on an open convex `C ⊆ ℝⁿ` is convex iff its Hessian is
-  positive semi-definite at every point of `C`.
-* `theorem_4_6` — the level sets `{x | f x < α}` and `{x | f x ≤ α}` of a convex function are
-  convex.
-* `corollary_4_6_1` — a system of convex inequalities has a convex solution set.
-* `theorem_4_7` — a positively homogeneous function is convex iff it is subadditive.
-* `corollary_4_7_1`, `corollary_4_7_2` — subadditivity for positive combinations, and
-  `f (-x) ≥ -f x`.
-* `theorem_4_8` — a positively homogeneous proper convex `f` is linear on a subspace `L` iff
-  `f (-x) = -f x` on `L`; `theorem_4_8_basis` is the book's final sentence, that checking a
-  spanning set suffices.
+The conventions §4 lays down are content, not boilerplate.
 
-## The extended arithmetic of §4
+* **`0 · ∞ = 0`** holds on the nose for Mathlib's `EReal`, and `theorem_4_3` depends on it: the
+  book's `λ₁ f x₁ + ⋯ + λₘ f xₘ` is well defined at an index with `λᵢ = 0` and `f xᵢ = +∞` only
+  because that term is `0`.
+* **`inf ∅ = +∞`** is what the backbone's `restrict`, `⨅ _ : x ∈ s, f x`, computes off `s` — the
+  book's own device for extending a function given on a convex set by `+∞`. `theorem_4_1` is
+  stated through it.
+* **`∞ − ∞` is undefined** in the book, whereas Mathlib's `EReal` totalises it as `⊥`. Nothing
+  here relies on that totalisation: every statement whose right-hand side could produce the
+  combination carries the book's own hypothesis `∀ x, f x ≠ ⊥`, so the value is never consulted.
+  `theorem_4_2` is the one characterisation stated for the full range `[-∞, +∞]`, and it uses
+  strict inequalities between *reals* precisely so that no infinite sum appears; `theorem_4_6` and
+  `corollary_4_6_1` are about level sets, where no sum occurs.
 
-The conventions Rockafellar lays down on pp. 24–25 are the content of this section, not
-boilerplate. How each is realised here:
-
-* **`0 · ∞ = 0`.** Mathlib's `EReal` multiplication satisfies `zero_mul`, so this holds on the
-  nose. `theorem_4_3` **depends on it**: the book's right-hand side `λ₁ f x₁ + ⋯ + λₘ f xₘ` is
-  well defined at an index with `λᵢ = 0` and `f xᵢ = +∞` only because that term is `0`. The proof
-  discards exactly those indices, and the discarded terms must vanish for the two sides to match.
-* **`inf ∅ = +∞`.** This is what `Tdaf.ConvexAnalysis.restrict`, `⨅ _ : x ∈ s, f x`, computes off
-  `s`: an infimum over an empty `Prop` is `⊤`. `theorem_4_1` is stated through `restrict`, which
-  is the book's own device for "a convex function given on a convex set `C`" extended by `+∞`.
-* **`∞ − ∞` deliberately undefined.** Mathlib's `EReal` *totalises* it: `x + ⊥ = ⊥` and
-  `⊥ + x = ⊥`, so `(+∞) + (−∞) = −∞` there, which is **not** Rockafellar's convention. Nothing
-  below relies on that totalisation. Every statement whose right-hand side could produce the
-  combination carries the book's own hypothesis `∀ x, f x ≠ ⊥` — that is, `f` has values in
-  `(-∞, +∞]` — so the value of `⊤ + ⊥` is never consulted: `theorem_4_1`, `theorem_4_3`,
-  `theorem_4_7`, `corollary_4_7_1`, `corollary_4_7_2`, `theorem_4_8`. `theorem_4_2` is the one
-  characterisation stated for the full range `[-∞, +∞]`, and it is stated with strict inequalities
-  between *reals* precisely so that no infinite sum ever appears. `theorem_4_6` and
-  `corollary_4_6_1` need no such hypothesis: they are about level sets, where no sum occurs.
-
-## What is not here
-
-* **The unnumbered claims of §4** are already in the backbone under descriptive names and are not
-  restated: `ConvexFn.convex_dom` (`dom f` is convex, book line 1051), `convexFn_indicatorFn`
-  (`C` is convex iff `δ(·|C)` is convex, 1300), `epi_indicatorFn` (the epigraph of an indicator is
-  a half-cylinder, 1300), and `posHomogeneous_iff_isCone_epi` (positive homogeneity is the
-  epigraph being a cone, 1391). Restating them here would duplicate a one-line alias and risk
-  name collisions with the sibling section modules.
-* **The worked examples of book lines 1211–1290** — `e^{αx}`, `xᵖ`, `−log x`, `(α² − x²)^{-1/2}`,
-  the negative geometric mean, the Euclidean norm — are *deferred by scope*. `part1.md` schedules
-  the whole §4–§5 example corpus as a separate harvest by line range, since none of it is
-  numbered.
-* **The support function `δ*(·|C)`, the gauge `γ(·|C)` and the distance `d(·, C)`** are *defined*
-  in §4 (lines 1310–1318) but the book explicitly postpones their convexity to §5, so they are
-  deferred to `Section05`.
-* **Theorem 4.5's Hessian as a matrix.** The book names the matrix `Q_x = (q_ij x)` with
-  `q_ij = ∂²f/∂ξᵢ∂ξⱼ` and then defines positive semi-definiteness as `⟨z, Q_x z⟩ ≥ 0` for every
-  `z`. `theorem_4_5` states that condition in the coordinate-free form
-  `0 ≤ fderiv ℝ (fderiv ℝ f) x z z`, which is the same quadratic form. The bridge to the matrix of
-  second partial derivatives in the standard basis of `Rn n` is *omitted*: it is pure coordinate
-  bookkeeping, not §4's content.
-
-## Backbone gaps patched locally
-
-The `private` lemmas in the `Lines` section are **not** surface material. They are the missing
-convex half of the reduction to lines (remediation item 4.9 — the concave half already exists as
-`Tdaf.ConvexAnalysis.concaveOn_comp_line`, and the convex forward half as `convexOn_comp_line`),
-together with the second-derivative-along-a-line computation that Rockafellar's proof of
-Theorem 4.5 calls "a straightforward calculation". Both belong in the backbone. They are `private`
-so that no surface statement outside this file can come to depend on them.
+`theorem_4_5` states positive semi-definiteness of the Hessian in the coordinate-free form
+`0 ≤ fderiv ℝ (fderiv ℝ f) x z z` rather than through the matrix of second partial derivatives.
 
 ## References
 
@@ -105,20 +53,12 @@ open Tdaf.ConvexAnalysis Tdaf.Surface
 
 /-! ### Theorem 4.1 -/
 
-/-- **Rockafellar, Theorem 4.1.** Let `f` be a function from `C` to `(-∞, +∞]`, where `C` is a
-convex set (for example `C = ℝⁿ`). Then `f` is convex on `C` if and only if
+/-- **Theorem 4.1.** For `f : C → (-∞, +∞]` with `C` convex, `f` is convex on `C` iff
+`f ((1 − λ) x + λ y) ≤ (1 − λ) f x + λ f y` for all `x, y ∈ C` and `0 < λ < 1`.
 
-`f ((1 − λ) x + λ y) ≤ (1 − λ) f x + λ f y`,  `0 < λ < 1`,
-
-for every `x` and `y` in `C`.
-
-"`f` is convex on `C`" is `ConvexFn (restrict C f)`: the book's own convention (line 1047) is that
-a convex function given on `C` is extended to all of `ℝⁿ` by `+∞`, and `restrict` is that
-extension. The hypothesis `∀ x, f x ≠ ⊥` is the book's "values in `(-∞, +∞]`", which is exactly
-what keeps the right-hand side from being the forbidden `∞ − ∞`.
-
-Specialises `convexFn_iff_le`, whose statement is the `C = ℝⁿ` case; the passage between the two
-is the only content added here. -/
+"Convex on `C`" is `ConvexFn (restrict C f)`, the book's own convention that a function given on
+`C` is extended to `ℝⁿ` by `+∞`. The hypothesis `∀ x, f x ≠ ⊥` is "values in `(-∞, +∞]`", which
+keeps the right-hand side from being the forbidden `∞ − ∞`. -/
 theorem theorem_4_1 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) {f : Rn n → EReal}
     (hbot : ∀ x, f x ≠ ⊥) :
     ConvexFn (restrict C f) ↔ ∀ x ∈ C, ∀ y ∈ C, ∀ a b : ℝ, 0 < a → 0 < b → a + b = 1 →
@@ -147,18 +87,10 @@ theorem theorem_4_1 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) {f : Rn n →
 
 /-! ### Theorem 4.2 -/
 
-/-- **Rockafellar, Theorem 4.2.** Let `f` be a function from `ℝⁿ` to `[-∞, +∞]`. Then `f` is
-convex if and only if
-
-`f ((1 − λ) x + λ y) < (1 − λ) α + λ β`,  `0 < λ < 1`,
-
-whenever `f x < α` and `f y < β`.
-
-This is the characterisation that survives for functions taking **both** infinite values, which is
-why Rockafellar remarks (line 1155) that it, and not Theorem 4.1's inequality, could serve as the
-definition in general. `α` and `β` are reals, so no infinite sum is formed.
-
-Specialises `convexFn_iff_forall_lt`. -/
+/-- **Theorem 4.2.** `f : ℝⁿ → [-∞, +∞]` is convex iff `f ((1 − λ) x + λ y) < (1 − λ) α + λ β`
+for `0 < λ < 1` whenever `f x < α` and `f y < β`. This is the characterisation that survives for
+functions taking **both** infinite values, and Rockafellar remarks that it could serve as the
+definition in general; `α` and `β` are reals, so no infinite sum is formed. -/
 theorem theorem_4_2 {n : ℕ} (f : Rn n → EReal) :
     ConvexFn f ↔ ∀ (x y : Rn n) (a b : ℝ), 0 < a → 0 < b → a + b = 1 →
       ∀ α β : ℝ, f x < (α : EReal) → f y < (β : EReal) →
@@ -167,24 +99,11 @@ theorem theorem_4_2 {n : ℕ} (f : Rn n → EReal) :
 
 /-! ### Theorem 4.3 -/
 
-/-- **Rockafellar, Theorem 4.3 (Jensen's Inequality).** Let `f` be a function from `ℝⁿ` to
-`(-∞, +∞]`. Then `f` is convex if and only if
+/-- **Theorem 4.3 (Jensen's inequality).** `f : ℝⁿ → (-∞, +∞]` is convex iff
+`f (λ₁x₁ + ⋯ + λₘxₘ) ≤ λ₁ f x₁ + ⋯ + λₘ f xₘ` whenever `λᵢ ≥ 0` and `∑ λᵢ = 1`.
 
-`f (λ₁ x₁ + ⋯ + λₘ xₘ) ≤ λ₁ f x₁ + ⋯ + λₘ f xₘ`
-
-whenever `λ₁ ≥ 0, …, λₘ ≥ 0` and `λ₁ + ⋯ + λₘ = 1`.
-
-The book's proof is "An elementary exercise."
-
-The right-hand side is an `EReal` sum, and it is well formed only under the convention `0 · ∞ = 0`
-(book line 1075): an index with `λᵢ = 0` and `f xᵢ = +∞` contributes `0`, not `∞`. Accordingly the
-proof restricts to the indices with `λᵢ ≠ 0`, and it is `zero_mul` on `EReal` that makes the
-restricted sum equal the whole one.
-
-Specialises `ConvexFn.sum_le` — aliased in the backbone as `jensen` — in one direction and
-`convexFn_iff_le` in the other. `ConvexFn.sum_le` bounds the combination by a combination of
-*real* upper bounds `mᵢ ≥ f xᵢ`; producing the book's `EReal` right-hand side from it is the work
-below. -/
+The right-hand side is an `EReal` sum, well formed only under the convention `0 · ∞ = 0`: an
+index with `λᵢ = 0` and `f xᵢ = +∞` must contribute `0`, not `∞`. -/
 theorem theorem_4_3 {n : ℕ} {f : Rn n → EReal} (hbot : ∀ x, f x ≠ ⊥) :
     ConvexFn f ↔ ∀ (m : ℕ) (l : Fin m → ℝ) (x : Fin m → Rn n), (∀ i, 0 ≤ l i) →
       ∑ i, l i = 1 → f (∑ i, l i • x i) ≤ ∑ i, (l i : EReal) * f (x i) := by
@@ -230,19 +149,9 @@ theorem theorem_4_3 {n : ℕ} {f : Rn n → EReal} (hbot : ∀ x, f x ≠ ⊥) :
 
 /-! ### Theorem 4.4 -/
 
-/-- **Rockafellar, Theorem 4.4.** Let `f` be a twice continuously differentiable real-valued
-function on an open interval `(α, β)`. Then `f` is convex if and only if its second derivative
-`f''` is non-negative throughout `(α, β)`.
-
-This is one of the two results of §4 that really is about a *finite* function, so `f : ℝ → ℝ` is
-correct here and not a mistranslation. "Twice continuously differentiable on `(α, β)`" is
-`ContDiffOn ℝ 2 f (Set.Ioo α β)`; since `Ioo α β` is open, `deriv` and `derivWithin` agree on it,
-and the book's `f''` is `deriv (deriv f)`.
-
-Mathlib supplies both halves: `convexOn_of_deriv2_nonneg'` is the book's integral argument, and
-`ConvexOn.monotoneOn_deriv` with `MonotoneOn.derivWithin_nonneg` replaces the book's converse
-("by continuity `f''` would be negative on a subinterval"), which is a contrapositive of the same
-monotonicity fact. -/
+/-- **Theorem 4.4.** A `C²` real function on an open interval `(α, β)` is convex iff `f'' ≥ 0`
+throughout. One of the two results of §4 genuinely about a *finite* function, so `f : ℝ → ℝ` is
+correct here; `Ioo α β` is open, so the book's `f''` is `deriv (deriv f)`. -/
 theorem theorem_4_4 {α β : ℝ} {f : ℝ → ℝ} (hf : ContDiffOn ℝ 2 f (Set.Ioo α β)) :
     ConvexOn ℝ (Set.Ioo α β) f ↔ ∀ x ∈ Set.Ioo α β, 0 ≤ deriv (deriv f) x := by
   have hd1 : DifferentiableOn ℝ f (Set.Ioo α β) := hf.differentiableOn (by norm_num)
@@ -355,19 +264,10 @@ private theorem hasDerivAt_deriv_comp_line (hCopen : IsOpen C) (hf : ContDiffOn 
 
 end Lines
 
-/-- **Rockafellar, Theorem 4.5.** Let `f` be a twice continuously differentiable real-valued
-function on an open convex set `C` in `ℝⁿ`. Then `f` is convex on `C` if and only if its Hessian
-matrix `Q_x = (q_ij x)`, `q_ij = ∂²f/∂ξᵢ∂ξⱼ`, is positive semi-definite for every `x ∈ C`.
-
-Positive semi-definiteness of `Q_x` is, by the book's own definition two paragraphs earlier
-(line 1236), the condition `⟨z, Q_x z⟩ ≥ 0` for every `z ∈ ℝⁿ`. That quadratic form is
-`fderiv ℝ (fderiv ℝ f) x z z` — the second Fréchet derivative evaluated at `(z, z)` — and that is
-how the condition is stated here. The passage to the matrix of second partial derivatives in the
-standard basis of `Rn n` is coordinate bookkeeping and is not stated; see the module docstring.
-
-The proof is Rockafellar's: reduce to lines, use `g'' λ = ⟨z, Q_x z⟩`, apply Theorem 4.4. Both
-steps are `private` lemmas above and both are backbone gaps — the backbone has only the forward
-half of the reduction (`convexOn_comp_line`) and none of the derivative computation. -/
+/-- **Theorem 4.5.** A `C²` real function on an open convex `C ⊆ ℝⁿ` is convex on `C` iff its
+Hessian is positive semi-definite at every `x ∈ C`. Positive semi-definiteness is the book's own
+`⟨z, Q_x z⟩ ≥ 0` for every `z`, and that quadratic form is the second Fréchet derivative
+`fderiv ℝ (fderiv ℝ f) x z z`, which is how the condition is stated here. -/
 theorem theorem_4_5 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCopen : IsOpen C)
     {f : Rn n → ℝ} (hf : ContDiffOn ℝ 2 f C) :
     ConvexOn ℝ C f ↔ ∀ x ∈ C, ∀ z : Rn n, 0 ≤ fderiv ℝ (fderiv ℝ f) x z z := by
@@ -393,27 +293,15 @@ theorem theorem_4_5 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCopen : IsO
 
 /-! ### Theorem 4.6 and Corollary 4.6.1 -/
 
-/-- **Rockafellar, Theorem 4.6.** For any convex function `f` and any `α ∈ [-∞, +∞]`, the level
-sets `{x | f x < α}` and `{x | f x ≤ α}` are convex.
-
-The book prints this as a single sentence about two sets, with no clause labels, so it is one
-declaration. `α` genuinely ranges over `EReal`, including `±∞`; no properness or finiteness
-hypothesis appears, and none is needed.
-
-Specialises `ConvexFn.convex_lt` and `ConvexFn.convex_le`. -/
+/-- **Theorem 4.6.** For convex `f` and any `α ∈ [-∞, +∞]`, the level sets `{x | f x < α}` and
+`{x | f x ≤ α}` are convex. `α` genuinely ranges over `EReal`, including `±∞`, and no properness
+or finiteness hypothesis is needed. -/
 theorem theorem_4_6 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (α : EReal) :
     Convex ℝ {x | f x < α} ∧ Convex ℝ {x | f x ≤ α} :=
   ⟨hf.convex_lt α, hf.convex_le α⟩
 
-/-- **Rockafellar, Corollary 4.6.1.** Let `fᵢ` be a convex function on `ℝⁿ` and `αᵢ` a real number
-for each `i ∈ I`, where `I` is an arbitrary index set. Then
-
-`C = {x | fᵢ x ≤ αᵢ, ∀ i ∈ I}`
-
-is a convex set.
-
-The book's proof is "Like Corollary 2.1.1", i.e. an arbitrary intersection of convex sets is
-convex. Specialises `ConvexFn.convex_le` through `convex_iInter`. -/
+/-- **Corollary 4.6.1.** The solution set `{x | fᵢ x ≤ αᵢ for all i}` of an arbitrary system of
+convex inequalities is convex. -/
 theorem corollary_4_6_1 {n : ℕ} {I : Type*} {f : I → Rn n → EReal} (hf : ∀ i, ConvexFn (f i))
     (α : I → ℝ) : Convex ℝ {x : Rn n | ∀ i, f i x ≤ ((α i : ℝ) : EReal)} := by
   have hEq : {x : Rn n | ∀ i, f i x ≤ ((α i : ℝ) : EReal)}
@@ -424,72 +312,44 @@ theorem corollary_4_6_1 {n : ℕ} {I : Type*} {f : I → Rn n → EReal} (hf : �
 
 /-! ### Theorem 4.7 and its corollaries -/
 
-/-- **Rockafellar, Theorem 4.7.** A positively homogeneous function `f` from `ℝⁿ` to `(-∞, +∞]` is
-convex if and only if `f (x + y) ≤ f x + f y` for every `x, y ∈ ℝⁿ`.
-
-The book's proof is Theorem 2.6 applied to `epi f`: subadditivity is exactly closure of the cone
-`epi f` under addition.
-
-Specialises `PosHomogeneous.convexFn_iff_subadditive`, which the backbone cites by this number. -/
+/-- **Theorem 4.7.** A positively homogeneous `f : ℝⁿ → (-∞, +∞]` is convex iff it is
+subadditive, `f (x + y) ≤ f x + f y`. -/
 theorem theorem_4_7 {n : ℕ} {f : Rn n → EReal} (hf : PosHomogeneous f) (hbot : ∀ x, f x ≠ ⊥) :
     ConvexFn f ↔ ∀ x y : Rn n, f (x + y) ≤ f x + f y :=
   hf.convexFn_iff_subadditive hbot
 
-/-- **Rockafellar, Corollary 4.7.1.** If `f` is a positively homogeneous proper convex function,
-then
+/-- **Corollary 4.7.1.** For positively homogeneous proper convex `f`,
+`f (λ₁x₁ + ⋯ + λₘxₘ) ≤ λ₁ f x₁ + ⋯ + λₘ f xₘ` whenever every `λᵢ > 0`.
 
-`f (λ₁ x₁ + ⋯ + λₘ xₘ) ≤ λ₁ f x₁ + ⋯ + λₘ f xₘ`
-
-whenever `λ₁ > 0, …, λₘ > 0`.
-
-The book prints no proof. The index range must be nonempty (`0 < m`), which the book's
-`λ₁, …, λₘ` implies: the empty sum would assert `f 0 ≤ 0`, and a positively homogeneous proper
-convex function may have `f 0 = +∞` — `δ(·|C)` for a convex cone `C` missing the origin.
-
-Specialises `PosHomogeneous.sum_le`. -/
+The index range must be non-empty, which the book's `λ₁, …, λₘ` implies: the empty sum would
+assert `f 0 ≤ 0`, and such an `f` may have `f 0 = +∞` — take `δ(·|C)` for a convex cone `C`
+missing the origin. -/
 theorem corollary_4_7_1 {n : ℕ} {f : Rn n → EReal} (hf : PosHomogeneous f) (hconv : ConvexFn f)
     (hproper : Proper f) {m : ℕ} (hm : 0 < m) {l : Fin m → ℝ} (hl : ∀ i, 0 < l i)
     (x : Fin m → Rn n) : f (∑ i, l i • x i) ≤ ∑ i, (l i : EReal) * f (x i) :=
   hf.sum_le hconv hproper.ne_bot ⟨⟨0, hm⟩, Finset.mem_univ _⟩ (fun i _ => hl i) x
 
-/-- **Rockafellar, Corollary 4.7.2.** If `f` is a positively homogeneous proper convex function,
-then `f (-x) ≥ -f x` for every `x`.
-
-The book's proof: `f x + f (-x) ≥ f (x − x) = f 0 ≥ 0`.
-
-Specialises `PosHomogeneous.neg_le`. -/
+/-- **Corollary 4.7.2.** For positively homogeneous proper convex `f`, `f (-x) ≥ -f x`. -/
 theorem corollary_4_7_2 {n : ℕ} {f : Rn n → EReal} (hf : PosHomogeneous f) (hconv : ConvexFn f)
     (hproper : Proper f) (x : Rn n) : -(f x) ≤ f (-x) :=
   hf.neg_le hconv hproper.ne_bot x
 
 /-! ### Theorem 4.8 -/
 
-/-- **Rockafellar, Theorem 4.8.** A positively homogeneous proper convex function `f` is linear on
-a subspace `L` if and only if `f (-x) = -f x` for every `x ∈ L`.
-
-"Linear on `L`" is rendered as the existence of a genuine linear functional `L →ₗ[ℝ] ℝ` agreeing
-with `f` on `L`; that such a functional can be extracted at all is part of the content, since a
-function odd at `x` is automatically finite there.
-
-Specialises `PosHomogeneous.exists_linearMap_iff`. The unbundled form — additivity and
-homogeneity as two separate statements about `f` — is `PosHomogeneous.isLinearOn_iff`. -/
+/-- **Theorem 4.8.** A positively homogeneous proper convex `f` is linear on a subspace `L` iff
+`f (-x) = -f x` for every `x ∈ L`. "Linear on `L`" is the existence of a genuine linear functional
+`L →ₗ[ℝ] ℝ` agreeing with `f` there; extracting one is part of the content, since a function odd
+at `x` is automatically finite there. -/
 theorem theorem_4_8 {n : ℕ} {f : Rn n → EReal} (hf : PosHomogeneous f) (hconv : ConvexFn f)
     (hproper : Proper f) (L : Submodule ℝ (Rn n)) :
     (∃ g : L →ₗ[ℝ] ℝ, ∀ x : L, f x = ((g x : ℝ) : EReal)) ↔ ∀ x ∈ L, f (-x) = -(f x) :=
   hf.exists_linearMap_iff hconv hproper.ne_bot L
 
-/-- **Rockafellar, Theorem 4.8**, final sentence: "This is true if merely `f (-bᵢ) = -f bᵢ` for all
-the vectors in some basis `b₁, …, bₘ` for `L`."
-
-Stated for an arbitrary nonempty spanning set rather than a basis, which is what the book's proof
-actually uses and which covers the basis case. Combine with `theorem_4_8` to get linearity on `L`.
-
-The nonemptiness hypothesis is not decoration. Rockafellar's proof writes `f (λᵢ bᵢ) = λᵢ f bᵢ`
-"for every `λᵢ ∈ ℝ`, not just for `λᵢ > 0`", which at `λᵢ = 0` silently uses `f 0 = 0`; that is
-available only once some vector is known to be odd. For `L = {0}` with an empty basis the
-statement fails as printed, since a positively homogeneous proper convex `f` may have `f 0 = +∞`.
-
-Specialises `PosHomogeneous.neg_eq_of_mem_span`. -/
+/-- **Theorem 4.8**, final sentence: it suffices that `f (-bᵢ) = -f bᵢ` on a spanning set of `L`.
+Stated for an arbitrary *non-empty* spanning set rather than a basis. Non-emptiness is not
+decoration: the book's argument uses `f 0 = 0`, which is available only once some vector is known
+to be odd, so for `L = {0}` with an empty basis the statement fails as printed — a positively
+homogeneous proper convex `f` may have `f 0 = +∞`. -/
 theorem theorem_4_8_basis {n : ℕ} {f : Rn n → EReal} (hf : PosHomogeneous f) (hconv : ConvexFn f)
     (hproper : Proper f) {L : Submodule ℝ (Rn n)} {b : Set (Rn n)} (hb : b.Nonempty)
     (hspan : Submodule.span ℝ b = L) (hodd : ∀ v ∈ b, f (-v) = -(f v)) :

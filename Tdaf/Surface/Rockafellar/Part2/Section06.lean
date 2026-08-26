@@ -123,9 +123,7 @@ theorem relint_subset_subset_closure (C : Set (Rn n)) : ri C ⊆ C ∧ C ⊆ clo
   ⟨intrinsicInterior_subset, subset_closure⟩
 
 /-- **Rockafellar, §6 (p. 45).** For an `n`-dimensional convex set `aff C = ℝⁿ`, and then
-`ri C = int C`.
-
-Specialises `intrinsicInterior_eq_interior`. -/
+`ri C = int C`. -/
 theorem relint_eq_interior (h : affineSpan ℝ C = ⊤) : ri C = interior C :=
   intrinsicInterior_eq_interior h
 
@@ -143,65 +141,55 @@ theorem isClosed_of_isAffineSet {M : Set (Rn n)} (h : IsAffineSet M) : IsClosed 
   rwa [h.coe_toAffineSubspace] at key
 
 /-- **Rockafellar, §6 (p. 45).** `cl C ⊆ cl (aff C) = aff C`, so a line through two points of
-`cl C` lies in `aff C`.
-
-Specialises `closure_subset_affineSpan`. -/
+`cl C` lies in `aff C`. -/
 theorem closure_subset_affineSpan (C : Set (Rn n)) :
     closure C ⊆ (affineSpan ℝ C : Set (Rn n)) :=
   Tdaf.ConvexAnalysis.closure_subset_affineSpan C
 
 /-! ### Theorem 6.1: the line segment principle -/
 
-/-- **Rockafellar, Theorem 6.1.** Let `C` be a convex set in `ℝⁿ`, let `x ∈ ri C` and
+/-- **Theorem 6.1.** Let `C` be a convex set in `ℝⁿ`, let `x ∈ ri C` and
 `y ∈ cl C`. Then `(1 - λ) x + λ y` belongs to `ri C` (and hence in particular to `C`) for
-`0 ≤ λ < 1`.
-
-Specialises `Convex.segment_mem_relint`. -/
+`0 ≤ λ < 1`. -/
 theorem theorem_6_1 (hC : Convex ℝ C) {x y : Rn n} (hx : x ∈ ri C) (hy : y ∈ closure C)
     {l : ℝ} (hl₀ : 0 ≤ l) (hl₁ : l < 1) : (1 - l) • x + l • y ∈ ri C :=
   Convex.segment_mem_relint hC hx hy hl₀ hl₁
 
 /-! ### Theorem 6.2 -/
 
-/-- **Rockafellar, Theorem 6.2.** `cl C` is convex.
-
-Specialises Mathlib's `Convex.closure`. -/
+/-- **Theorem 6.2.** `cl C` is convex. -/
 theorem theorem_6_2_convex_cl (hC : Convex ℝ C) : Convex ℝ (closure C) :=
   hC.closure
 
-/-- **Rockafellar, Theorem 6.2.** `ri C` is convex.
+/-- **Theorem 6.2.** `ri C` is convex.
 
-Specialises `Convex.relint`, which is Theorem 6.1 with `y` taken in `ri C`. -/
+This is Theorem 6.1 with `y` taken in `ri C`. -/
 theorem theorem_6_2_convex_ri (hC : Convex ℝ C) : Convex ℝ (ri C) :=
   Convex.relint hC
 
-/-- **Rockafellar, Theorem 6.2.** `cl C` has the same affine hull as `C`. No convexity is needed.
-
-Specialises `affineSpan_closure`. -/
+/-- **Theorem 6.2.** `cl C` has the same affine hull as `C`. No convexity is needed. -/
 theorem theorem_6_2_aff_cl (C : Set (Rn n)) : affineSpan ℝ (closure C) = affineSpan ℝ C :=
   affineSpan_closure C
 
-/-- **Rockafellar, Theorem 6.2.** `ri C` has the same affine hull as `C`.
-
-Specialises `Convex.affineSpan_relint`. -/
+/-- **Theorem 6.2.** `ri C` has the same affine hull as `C`. -/
 theorem theorem_6_2_aff_ri (hC : Convex ℝ C) : affineSpan ℝ (ri C) = affineSpan ℝ C :=
   Convex.affineSpan_relint hC
 
-/-- **Rockafellar, Theorem 6.2.** `cl C` has the same dimension as `C`. -/
+/-- **Theorem 6.2.** `cl C` has the same dimension as `C`. -/
 theorem theorem_6_2_dim_cl (C : Set (Rn n)) : dim (closure C) = dim C := by
   rcases C.eq_empty_or_nonempty with rfl | hne
   · simp
   · rw [dim_of_nonempty (hne.mono subset_closure), dim_of_nonempty hne, ← direction_affineSpan,
       ← direction_affineSpan, affineSpan_closure]
 
-/-- **Rockafellar, Theorem 6.2.** `ri C` has the same dimension as `C`. -/
+/-- **Theorem 6.2.** `ri C` has the same dimension as `C`. -/
 theorem theorem_6_2_dim_ri (hC : Convex ℝ C) : dim (ri C) = dim C := by
   rcases C.eq_empty_or_nonempty with rfl | hne
   · simp
   · rw [dim_of_nonempty (Convex.relint_nonempty hC hne), dim_of_nonempty hne,
       ← direction_affineSpan, ← direction_affineSpan, Convex.affineSpan_relint hC]
 
-/-- **Rockafellar, Theorem 6.2**, the parenthetical clause: `ri C ≠ ∅` when `C ≠ ∅`.
+/-- **Theorem 6.2**, the parenthetical clause: `ri C ≠ ∅` when `C ≠ ∅`.
 
 **This is the single fact that makes Part II finite-dimensional.** It is false in infinite
 dimensions, and §§7, 9, 10, 11, 16, 18 and 20 use it silently. It specialises
@@ -214,35 +202,27 @@ theorem theorem_6_2_nonempty (hC : Convex ℝ C) (hne : C.Nonempty) : (ri C).Non
 
 /-! ### Theorem 6.3 and its corollaries -/
 
-/-- **Rockafellar, Theorem 6.3.** For any convex set `C` in `ℝⁿ`, `cl (ri C) = cl C`.
-
-Specialises `Convex.closure_relint`. -/
+/-- **Theorem 6.3.** For any convex set `C` in `ℝⁿ`, `cl (ri C) = cl C`. -/
 theorem theorem_6_3_cl_ri (hC : Convex ℝ C) : closure (ri C) = closure C :=
   Convex.closure_relint hC
 
-/-- **Rockafellar, Theorem 6.3.** For any convex set `C` in `ℝⁿ`, `ri (cl C) = ri C`.
-
-Specialises `Convex.relint_closure`. -/
+/-- **Theorem 6.3.** For any convex set `C` in `ℝⁿ`, `ri (cl C) = ri C`. -/
 theorem theorem_6_3_ri_cl (hC : Convex ℝ C) : ri (closure C) = ri C :=
   Convex.relint_closure hC
 
 /-- **Rockafellar, §6 (p. 46).** `ri (ri C) = ri C`: the relative interior of a convex set is
 relatively open. The book asserts this for arbitrary sets, before Theorem 6.3; the backbone proves
-it for convex sets, through Theorem 6.3.
-
-Specialises `Convex.relint_relint`. -/
+it for convex sets, through Theorem 6.3. -/
 theorem isRelativelyOpen_relint (hC : Convex ℝ C) : IsRelativelyOpen (ri C) :=
   Convex.relint_relint hC
 
-/-- **Rockafellar, Corollary 6.3.1.** Let `C₁` and `C₂` be convex sets in `ℝⁿ`. Then
-`cl C₁ = cl C₂` if and only if `ri C₁ = ri C₂`.
-
-Specialises `Convex.closure_eq_iff_relint_eq`. -/
+/-- **Corollary 6.3.1.** Let `C₁` and `C₂` be convex sets in `ℝⁿ`. Then
+`cl C₁ = cl C₂` if and only if `ri C₁ = ri C₂`. -/
 theorem corollary_6_3_1 (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) :
     closure C₁ = closure C₂ ↔ ri C₁ = ri C₂ :=
   Convex.closure_eq_iff_relint_eq h₁ h₂
 
-/-- **Rockafellar, Corollary 6.3.1**, the third condition: the two conditions above are equivalent
+/-- **Corollary 6.3.1**, the third condition: the two conditions above are equivalent
 to `ri C₁ ⊆ C₂ ⊆ cl C₁`.
 
 Specialises `Convex.closure_eq_of_relint_subset_of_subset_closure` in one direction; the other is
@@ -257,10 +237,8 @@ theorem corollary_6_3_1_sandwich (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C�
   · rintro ⟨hsub, hsup⟩
     exact (Convex.closure_eq_of_relint_subset_of_subset_closure h₁ hsub hsup).symm
 
-/-- **Rockafellar, Corollary 6.3.2.** If `C` is a convex set in `ℝⁿ`, then every open set which
-meets `cl C` also meets `ri C`.
-
-Specialises `Convex.relint_inter_nonempty_of_isOpen`. -/
+/-- **Corollary 6.3.2.** If `C` is a convex set in `ℝⁿ`, then every open set which
+meets `cl C` also meets `ri C`. -/
 theorem corollary_6_3_2 (hC : Convex ℝ C) {U : Set (Rn n)} (hU : IsOpen U)
     (h : (U ∩ closure C).Nonempty) : (U ∩ ri C).Nonempty :=
   Convex.relint_inter_nonempty_of_isOpen hC hU h
@@ -287,7 +265,7 @@ theorem inter_relint_nonempty_of_affineSpan_eq (h₁ : Convex ℝ C₁) (hne₁ 
   rw [hspan]
   exact subset_affineSpan ℝ C₂ (intrinsicInterior_subset hw)
 
-/-- **Rockafellar, Corollary 6.3.3.** If `C₁` is a convex subset of the relative boundary of a
+/-- **Corollary 6.3.3.** If `C₁` is a convex subset of the relative boundary of a
 non-empty convex set `C₂` in `ℝⁿ`, then `dim C₁ < dim C₂`.
 
 The book's proof, transcribed: were the dimensions equal the affine hulls would coincide, and then
@@ -318,66 +296,54 @@ theorem corollary_6_3_3 (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) (hne�
 
 /-! ### Theorem 6.4: the prolongation criterion -/
 
-/-- **Rockafellar, Theorem 6.4.** Let `C` be a non-empty convex set in `ℝⁿ`. Then `z ∈ ri C` if and
-only if, for every `x ∈ C`, there exists a `μ > 1` such that `(1 - μ) x + μ z` belongs to `C`.
-
-Specialises `Convex.mem_relint_iff_prolong`. -/
+/-- **Theorem 6.4.** Let `C` be a non-empty convex set in `ℝⁿ`. Then `z ∈ ri C` if and
+only if, for every `x ∈ C`, there exists a `μ > 1` such that `(1 - μ) x + μ z` belongs to `C`. -/
 theorem theorem_6_4 (hC : Convex ℝ C) (hne : C.Nonempty) {z : Rn n} :
     z ∈ ri C ↔ ∀ x ∈ C, ∃ μ > (1 : ℝ), (1 - μ) • x + μ • z ∈ C :=
   Convex.mem_relint_iff_prolong hC hne
 
-/-- **Rockafellar, Corollary 6.4.1.** Let `C` be a convex set in `ℝⁿ`. Then `z ∈ int C` if and only
-if, for every `y ∈ ℝⁿ`, there exists some `ε > 0` such that `z + ε y ∈ C`.
-
-Specialises `Convex.mem_interior_iff_absorbs`. -/
+/-- **Corollary 6.4.1.** Let `C` be a convex set in `ℝⁿ`. Then `z ∈ int C` if and only
+if, for every `y ∈ ℝⁿ`, there exists some `ε > 0` such that `z + ε y ∈ C`. -/
 theorem corollary_6_4_1 (hC : Convex ℝ C) {z : Rn n} :
     z ∈ interior C ↔ ∀ y : Rn n, ∃ ε : ℝ, 0 < ε ∧ z + ε • y ∈ C :=
   Convex.mem_interior_iff_absorbs hC
 
 /-! ### Theorem 6.5: intersections -/
 
-/-- **Rockafellar, Theorem 6.5**, the closure formula. Let `Cᵢ` be a convex set in `ℝⁿ` for
+/-- **Theorem 6.5**, the closure formula. Let `Cᵢ` be a convex set in `ℝⁿ` for
 `i ∈ I`. Suppose that the sets `ri Cᵢ` have at least one point in common. Then
-`cl ⋂ᵢ Cᵢ = ⋂ᵢ cl Cᵢ`. The index set is arbitrary.
-
-Specialises `Convex.closure_iInter`. -/
+`cl ⋂ᵢ Cᵢ = ⋂ᵢ cl Cᵢ`. The index set is arbitrary. -/
 theorem theorem_6_5_cl {ι : Type*} {C : ι → Set (Rn n)} (hC : ∀ i, Convex ℝ (C i))
     (h : (⋂ i, ri (C i)).Nonempty) : closure (⋂ i, C i) = ⋂ i, closure (C i) :=
   Convex.closure_iInter hC h
 
-/-- **Rockafellar, Theorem 6.5**, the relative interior formula: if in addition `I` is finite,
+/-- **Theorem 6.5**, the relative interior formula: if in addition `I` is finite,
 `ri ⋂ᵢ Cᵢ = ⋂ᵢ ri Cᵢ`. Finiteness cannot be dropped — the book's own counterexample is the family
-`[0, 1 + α]` for `α > 0`.
-
-Specialises `Convex.relint_iInter`. -/
+`[0, 1 + α]` for `α > 0`. -/
 theorem theorem_6_5_ri {ι : Type*} [Finite ι] {C : ι → Set (Rn n)} (hC : ∀ i, Convex ℝ (C i))
     (h : (⋂ i, ri (C i)).Nonempty) : ri (⋂ i, C i) = ⋂ i, ri (C i) :=
   Convex.relint_iInter hC h
 
-/-- **Rockafellar, Corollary 6.5.1.** Let `C` be a convex set, and let `M` be an affine set (such
-as a line or a hyperplane) which contains a point of `ri C`. Then `ri (M ∩ C) = M ∩ ri C`.
-
-Specialises `Convex.relint_inter_affine` through §1's `IsAffineSet.toAffineSubspace`. -/
+/-- **Corollary 6.5.1.** Let `C` be a convex set, and let `M` be an affine set (such
+as a line or a hyperplane) which contains a point of `ri C`. Then `ri (M ∩ C) = M ∩ ri C`. -/
 theorem corollary_6_5_1_ri (hC : Convex ℝ C) {M : Set (Rn n)} (hM : IsAffineSet M)
     (h : (M ∩ ri C).Nonempty) : ri (M ∩ C) = M ∩ ri C := by
   have key := Convex.relint_inter_affine (M := hM.toAffineSubspace) hC
     (by rwa [hM.coe_toAffineSubspace])
   rwa [hM.coe_toAffineSubspace] at key
 
-/-- **Rockafellar, Corollary 6.5.1**, the closure half: `cl (M ∩ C) = M ∩ cl C`.
-
-Specialises `Convex.closure_inter_affine`. -/
+/-- **Corollary 6.5.1**, the closure half: `cl (M ∩ C) = M ∩ cl C`. -/
 theorem corollary_6_5_1_cl (hC : Convex ℝ C) {M : Set (Rn n)} (hM : IsAffineSet M)
     (h : (M ∩ ri C).Nonempty) : closure (M ∩ C) = M ∩ closure C := by
   have key := Convex.closure_inter_affine (M := hM.toAffineSubspace) hC
     (by rwa [hM.coe_toAffineSubspace])
   rwa [hM.coe_toAffineSubspace] at key
 
-/-- **Rockafellar, Corollary 6.5.2.** Let `C₁` be a convex set. Let `C₂` be a convex set contained
+/-- **Corollary 6.5.2.** Let `C₁` be a convex set. Let `C₂` be a convex set contained
 in `cl C₁` but not entirely contained in the relative boundary of `C₁`. Then `ri C₂ ⊆ ri C₁`.
 
-Specialises `Convex.relint_subset_relint_of_subset_closure`, whose hypothesis is the backbone's
-positive reading `(C₂ ∩ ri C₁).Nonempty` of "not entirely contained in the relative boundary". -/
+Its hypothesis is the backbone's positive reading `(C₂ ∩ ri C₁).Nonempty` of "not entirely contained
+in the relative boundary". -/
 theorem corollary_6_5_2 (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) (hsub : C₂ ⊆ closure C₁)
     (hnb : ¬ C₂ ⊆ relbd C₁) : ri C₂ ⊆ ri C₁ := by
   refine Convex.relint_subset_relint_of_subset_closure h₁ h₂ hsub ?_
@@ -386,83 +352,66 @@ theorem corollary_6_5_2 (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) (hsub 
 
 /-! ### Theorem 6.6: images under a linear transformation -/
 
-/-- **Rockafellar, Theorem 6.6.** Let `C` be a convex set in `ℝⁿ`, and let `A` be a linear
-transformation from `ℝⁿ` to `ℝᵐ`. Then `ri (AC) = A (ri C)`.
-
-Specialises `Convex.relint_image`. -/
+/-- **Theorem 6.6.** Let `C` be a convex set in `ℝⁿ`, and let `A` be a linear
+transformation from `ℝⁿ` to `ℝᵐ`. Then `ri (AC) = A (ri C)`. -/
 theorem theorem_6_6_ri (hC : Convex ℝ C) (A : Rn n →ₗ[ℝ] Rn m) : ri (A '' C) = A '' ri C :=
   Convex.relint_image hC A
 
-/-- **Rockafellar, Theorem 6.6.** `cl (AC) ⊇ A (cl C)`. This is just continuity of `A` and needs
-no convexity.
-
-Specialises `image_closure_subset`. -/
+/-- **Theorem 6.6.** `cl (AC) ⊇ A (cl C)`. This is just continuity of `A` and needs
+no convexity. -/
 theorem theorem_6_6_cl (C : Set (Rn n)) (A : Rn n →ₗ[ℝ] Rn m) :
     A '' closure C ⊆ closure (A '' C) :=
   image_closure_subset C A
 
-/-- **Rockafellar, Corollary 6.6.1.** For any convex set `C` and any real number `λ`,
-`ri (λ C) = λ (ri C)`.
-
-Specialises `Convex.relint_smul`. -/
+/-- **Corollary 6.6.1.** For any convex set `C` and any real number `λ`,
+`ri (λ C) = λ (ri C)`. -/
 theorem corollary_6_6_1 (hC : Convex ℝ C) (l : ℝ) : ri (l • C) = l • ri C :=
   Convex.relint_smul hC l
 
 /-- **Rockafellar, §6 (p. 49).** The direct-sum formula the book calls "elementary":
-`ri (C₁ ⊕ C₂) = ri C₁ ⊕ ri C₂`.
-
-Specialises Mathlib's `intrinsicInterior_prod_eq`. -/
+`ri (C₁ ⊕ C₂) = ri C₁ ⊕ ri C₂`. -/
 theorem relint_prod (D₁ : Set (Rn n)) (D₂ : Set (Rn m)) :
     ri (D₁ ×ˢ D₂) = ri D₁ ×ˢ ri D₂ :=
   intrinsicInterior_prod_eq D₁ D₂
 
-/-- **Rockafellar, §6 (p. 49).** `cl (C₁ ⊕ C₂) = cl C₁ ⊕ cl C₂`.
-
-Specialises Mathlib's `closure_prod_eq`. -/
+/-- **Rockafellar, §6 (p. 49).** `cl (C₁ ⊕ C₂) = cl C₁ ⊕ cl C₂`. -/
 theorem closure_prod (D₁ : Set (Rn n)) (D₂ : Set (Rn m)) :
     closure (D₁ ×ˢ D₂) = closure D₁ ×ˢ closure D₂ :=
   closure_prod_eq
 
-/-- **Rockafellar, Corollary 6.6.2.** For any convex sets `C₁` and `C₂` in `ℝⁿ`,
-`ri (C₁ + C₂) = ri C₁ + ri C₂`.
-
-Specialises `Convex.relint_add`. -/
+/-- **Corollary 6.6.2.** For any convex sets `C₁` and `C₂` in `ℝⁿ`,
+`ri (C₁ + C₂) = ri C₁ + ri C₂`. -/
 theorem corollary_6_6_2_ri (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) :
     ri (C₁ + C₂) = ri C₁ + ri C₂ :=
   Convex.relint_add h₁ h₂
 
-/-- **Rockafellar, Corollary 6.6.2.** `cl (C₁ + C₂) ⊇ cl C₁ + cl C₂`. No convexity is needed.
+/-- **Corollary 6.6.2.** `cl (C₁ + C₂) ⊇ cl C₁ + cl C₂`. No convexity is needed.
 
-Specialises `closure_add_subset`. Corollary 9.1.1 sharpens this to an equality. -/
+Corollary 9.1.1 sharpens this to an equality. -/
 theorem corollary_6_6_2_cl (D₁ D₂ : Set (Rn n)) :
     closure D₁ + closure D₂ ⊆ closure (D₁ + D₂) :=
   closure_add_subset D₁ D₂
 
 /-! ### Theorem 6.7: inverse images under a linear transformation -/
 
-/-- **Rockafellar, Theorem 6.7.** Let `A` be a linear transformation from `ℝⁿ` to `ℝᵐ`. Let `C` be
-a convex set in `ℝᵐ` such that `A⁻¹(ri C) ≠ ∅`. Then `ri (A⁻¹C) = A⁻¹(ri C)`.
-
-Specialises `Convex.relint_preimage`. -/
+/-- **Theorem 6.7.** Let `A` be a linear transformation from `ℝⁿ` to `ℝᵐ`. Let `C` be
+a convex set in `ℝᵐ` such that `A⁻¹(ri C) ≠ ∅`. Then `ri (A⁻¹C) = A⁻¹(ri C)`. -/
 theorem theorem_6_7_ri {D : Set (Rn m)} (hD : Convex ℝ D) (A : Rn n →ₗ[ℝ] Rn m)
     (h : (A ⁻¹' ri D).Nonempty) : ri (A ⁻¹' D) = A ⁻¹' ri D :=
   Convex.relint_preimage hD A h
 
-/-- **Rockafellar, Theorem 6.7.** Under the same hypothesis, `cl (A⁻¹C) = A⁻¹(cl C)`.
-
-Specialises `Convex.closure_preimage`. -/
+/-- **Theorem 6.7.** Under the same hypothesis, `cl (A⁻¹C) = A⁻¹(cl C)`. -/
 theorem theorem_6_7_cl {D : Set (Rn m)} (hD : Convex ℝ D) (A : Rn n →ₗ[ℝ] Rn m)
     (h : (A ⁻¹' ri D).Nonempty) : closure (A ⁻¹' D) = A ⁻¹' closure D :=
   Convex.closure_preimage hD A h
 
 /-! ### Theorem 6.8: slices of a convex set in a product -/
 
-/-- **Rockafellar, Theorem 6.8.** Let `C` be a convex set in `ℝᵐ⁺ᵖ`. For each `y ∈ ℝᵐ` let `C_y`
+/-- **Theorem 6.8.** Let `C` be a convex set in `ℝᵐ⁺ᵖ`. For each `y ∈ ℝᵐ` let `C_y`
 be the set of `z ∈ ℝᵖ` with `(y, z) ∈ C`, and let `D = {y | C_y ≠ ∅}`. Then `(y, z) ∈ ri C` if and
 only if `y ∈ ri D` and `z ∈ ri C_y`.
 
-Specialises `Convex.mem_relint_prod_iff`, which is stated with `D` in the equivalent form
-`Prod.fst '' C`. -/
+This is stated with `D` in the equivalent form `Prod.fst '' C`. -/
 theorem theorem_6_8 {C : Set (Rn m × Rn p)} (hC : Convex ℝ C) (y : Rn m) (z : Rn p) :
     (y, z) ∈ ri C ↔
       y ∈ ri {u : Rn m | {w : Rn p | (u, w) ∈ C}.Nonempty} ∧ z ∈ ri {w : Rn p | (y, w) ∈ C} := by
@@ -476,7 +425,7 @@ theorem theorem_6_8 {C : Set (Rn m × Rn p)} (hC : Convex ℝ C) (y : Rn m) (z :
   rw [hD]
   exact Convex.mem_relint_prod_iff hC
 
-/-- **Rockafellar, Corollary 6.8.1.** The convex cone `K` in `ℝⁿ⁺¹` generated by
+/-- **Corollary 6.8.1.** The convex cone `K` in `ℝⁿ⁺¹` generated by
 `{(1, x) | x ∈ C}`. Rockafellar's cones need not contain the origin, so `K` is the set of positive
 multiples of the cross-section, and nothing more. -/
 def coneOver (C : Set (Rn n)) : Set (ℝ × Rn n) := {q | 0 < q.1 ∧ q.2 ∈ q.1 • C}
@@ -507,12 +456,12 @@ theorem convex_coneOver (hC : Convex ℝ C) : Convex ℝ (coneOver C) := by
   rw [hset]
   exact _root_.Convex.inter (convex_cone_prodMk_one hC) hhalf
 
-/-- **Rockafellar, Corollary 6.8.1.** Let `C` be a non-empty convex set in `ℝⁿ`, and let `K` be the
+/-- **Corollary 6.8.1.** Let `C` be a non-empty convex set in `ℝⁿ`, and let `K` be the
 convex cone in `ℝⁿ⁺¹` generated by `{(1, x) | x ∈ C}`. Then `ri K` consists of the pairs `(λ, x)`
 such that `λ > 0` and `x ∈ λ (ri C)`.
 
-Specialises `Convex.relint_cone_prodMk_one`, which is stated about `K ∪ {0}`; the origin is added
-back and removed again through Corollary 6.3.1, since `K` and `K ∪ {0}` have the same closure. -/
+This is stated about `K ∪ {0}`; the origin is added back and removed again through Corollary 6.3.1,
+since `K` and `K ∪ {0}` have the same closure. -/
 theorem corollary_6_8_1 (hC : Convex ℝ C) (hne : C.Nonempty) :
     ri (coneOver C) = {q : ℝ × Rn n | 0 < q.1 ∧ q.2 ∈ q.1 • ri C} := by
   have hconv0 : Convex ℝ (insert 0 (coneOver C)) := convex_cone_prodMk_one hC
@@ -530,13 +479,12 @@ theorem corollary_6_8_1 (hC : Convex ℝ C) (hne : C.Nonempty) :
 
 /-! ### Theorem 6.9 -/
 
-/-- **Rockafellar, Theorem 6.9**, for two sets. Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ`
+/-- **Theorem 6.9**, for two sets. Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ`
 and let `C₀ = conv (C₁ ∪ C₂)`. Then
 `ri C₀ = ⋃ {λ₁ ri C₁ + λ₂ ri C₂ | λᵢ > 0, λ₁ + λ₂ = 1}`.
 
-Specialises `Convex.relint_convexHull_union`, which states the same union in the parametrised form
-`λ₁ = 1 - a`, `λ₂ = a` with `a ∈ (0, 1)`. **The book states the theorem for `m` sets; only `m = 2`
-is available** — see `What is not here`. -/
+It states the same union in the parametrised form `λ₁ = 1 - a`, `λ₂ = a` with `a ∈ (0, 1)`. **The
+book states the theorem for `m` sets; only `m = 2` is available** — see `What is not here`. -/
 theorem theorem_6_9 (h₁ : Convex ℝ C₁) (hne₁ : C₁.Nonempty) (h₂ : Convex ℝ C₂)
     (hne₂ : C₂.Nonempty) :
     ri (convexHull ℝ (C₁ ∪ C₂)) =
@@ -586,8 +534,7 @@ theorem isCone_relint (hK : IsCone C) (hC : Convex ℝ C) : IsCone (ri C) := by
 
 /-- **Rockafellar, §6 (p. 50).** The closure of a convex cone is a convex cone.
 
-Specialises the backbone's `smul_closure_eq_of_isCone` through the bridge
-`isCone_iff_smul_set_eq`; convexity is not used on either side. -/
+Convexity is not used on either side. -/
 theorem isCone_closure (hK : IsCone C) : IsCone (closure C) := by
   rw [isCone_iff_smul_set_eq] at hK ⊢
   exact smul_closure_eq_of_isCone hK

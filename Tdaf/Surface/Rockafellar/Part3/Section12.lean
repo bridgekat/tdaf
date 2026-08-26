@@ -119,18 +119,17 @@ variable {n : ℕ} {f : Rn n → EReal}
 
 /-! ### Theorem 12.1 -/
 
-/-- **Rockafellar, Theorem 12.1.** A closed convex function `f` on `ℝⁿ` is the pointwise supremum
+/-- **Theorem 12.1.** A closed convex function `f` on `ℝⁿ` is the pointwise supremum
 of the collection of all affine functions `h` such that `h ≤ f`.
 
-Specialises `eq_biSup_affineFn`. An affine function on `ℝⁿ` is `x ↦ ⟨x, b⟩ - β`, indexed here by
-the pair `(b, β)`; that every affine function has this form is the identification of `ℝⁿ` with its
-own dual that `pairing n` makes. -/
+An affine function on `ℝⁿ` is `x ↦ ⟨x, b⟩ - β`, indexed here by the pair `(b, β)`; that every affine
+function has this form is the identification of `ℝⁿ` with its own dual that `pairing n` makes. -/
 theorem theorem_12_1 (hf : ConvexFn f) (hc : ClosedFn f) :
     f = fun x => ⨆ p ∈ {p : Rn n × ℝ | affineFn (pairing n) p.1 p.2 ≤ f},
       affineFn (pairing n) p.1 p.2 x :=
   eq_biSup_affineFn hf hc
 
-/-- **Rockafellar, Corollary 12.1.1.** If `f` is any function from `ℝⁿ` to `[-∞, ∞]`, then
+/-- **Corollary 12.1.1.** If `f` is any function from `ℝⁿ` to `[-∞, ∞]`, then
 `cl (conv f)` is the pointwise supremum of the collection of all affine functions on `ℝⁿ`
 majorized by `f`.
 
@@ -146,12 +145,12 @@ theorem corollary_12_1_1 (f : Rn n → EReal) :
   rw [eq_biSup_affineFn (B := pairing n) (convexFn_clFn (convexFn_convHullFn f))
     (closedFn_clFn _), hset]
 
-/-- **Rockafellar, Corollary 12.1.2.** Given any proper convex function `f` on `ℝⁿ`, there exists
+/-- **Corollary 12.1.2.** Given any proper convex function `f` on `ℝⁿ`, there exists
 some `b ∈ ℝⁿ` and `β ∈ ℝ` such that `f x ≥ ⟨x, b⟩ - β` for every `x`.
 
-Specialises `proper_conj`: `cl f` is a closed proper convex function (Theorem 7.4), so `(cl f)*`
-is proper, and a point where `(cl f)* = f*` is finite is exactly an affine minorant of `f`. The
-book states this corollary with no proof of its own. -/
+`cl f` is a closed proper convex function (Theorem 7.4), so `(cl f)*` is proper, and a point where
+`(cl f)* = f*` is finite is exactly an affine minorant of `f`. The book states this corollary with
+no proof of its own. -/
 theorem corollary_12_1_2 (hf : ConvexFn f) (hp : Proper f) :
     ∃ (b : Rn n) (β : ℝ), ∀ x, ((inner ℝ x b : ℝ) : EReal) - (β : EReal) ≤ f x := by
   have hcl : ClosedProperConvexFn (clFn f) :=
@@ -163,20 +162,20 @@ theorem corollary_12_1_2 (hf : ConvexFn f) (hp : Proper f) :
 
 /-! ### Theorem 12.2: Fenchel–Moreau -/
 
-/-- **Rockafellar, Theorem 12.2**, first clause: the conjugate of a convex function is convex.
+/-- **Theorem 12.2**, first clause: the conjugate of a convex function is convex.
 
-Specialises `convexFn_conj`. Convexity of `f` is not needed — `f*` is a pointwise supremum of
-affine functions whatever `f` is — so the hypothesis of the book's statement is dropped. -/
+Convexity of `f` is not needed — `f*` is a pointwise supremum of affine functions whatever `f` is —
+so the hypothesis of the book's statement is dropped. -/
 theorem theorem_12_2_convex (f : Rn n → EReal) : ConvexFn (conj (pairing n) f) :=
   convexFn_conj _ f
 
-/-- **Rockafellar, Theorem 12.2**, second clause: the conjugate of a convex function is closed.
+/-- **Theorem 12.2**, second clause: the conjugate of a convex function is closed.
 
-Specialises `closedFn_conj`; again no hypothesis on `f` is needed. -/
+Again no hypothesis on `f` is needed. -/
 theorem theorem_12_2_closed (f : Rn n → EReal) : ClosedFn (conj (pairing n) f) :=
   closedFn_conj
 
-/-- **Rockafellar, Theorem 12.2**, third clause: `f*` is proper if and only if `f` is.
+/-- **Theorem 12.2**, third clause: `f*` is proper if and only if `f` is.
 
 Strengthens `proper_conj_iff`, which asks for `f` closed as well as convex: on `ℝⁿ` the closure of
 a proper convex function is again proper (Theorem 7.4), so the hypothesis can be discharged, and
@@ -187,26 +186,26 @@ theorem theorem_12_2_proper (hf : ConvexFn f) : Proper (conj (pairing n) f) ↔ 
     ⟨convexFn_clFn hf, closedFn_clFn f, hf.proper_clFn hp⟩
   rwa [conj_clFn] at h
 
-/-- **Rockafellar, Theorem 12.2**, fourth clause: `(cl f)* = f*`.
+/-- **Theorem 12.2**, fourth clause: `(cl f)* = f*`.
 
-Specialises `conj_clFn`. Convexity is not needed. -/
+Convexity is not needed. -/
 theorem theorem_12_2_conj_clFn (f : Rn n → EReal) :
     conj (pairing n) (clFn f) = conj (pairing n) f :=
   conj_clFn f
 
-/-- **Rockafellar, Theorem 12.2**, the Fenchel–Moreau theorem: `f** = cl f` for convex `f`.
+/-- **Theorem 12.2**, the Fenchel–Moreau theorem: `f** = cl f` for convex `f`.
 
-Specialises `biconj_eq_clFn`. On `ℝⁿ` the two sides of the pairing coincide, so `f**` is literally
-`conj (pairing n)` applied twice; `conj_flip_pairing` is what removes the backbone's `B.flip`. -/
+On `ℝⁿ` the two sides of the pairing coincide, so `f**` is literally `conj (pairing n)` applied
+twice; `conj_flip_pairing` is what removes the backbone's `B.flip`. -/
 theorem theorem_12_2_biconj (hf : ConvexFn f) :
     conj (pairing n) (conj (pairing n) f) = clFn f := by
   simpa using biconj_eq_clFn (B := pairing n) hf
 
-/-- **Rockafellar, Corollary 12.2.1.** The conjugacy operation `f ↦ f*` induces a symmetric
+/-- **Corollary 12.2.1.** The conjugacy operation `f ↦ f*` induces a symmetric
 one-to-one correspondence in the class of all closed proper convex functions on `ℝⁿ`.
 
-Specialises `conjEquiv`. "Symmetric" is `corollary_12_2_1_symm_apply` below: the inverse of the
-correspondence is the correspondence itself. -/
+"Symmetric" is `corollary_12_2_1_symm_apply` below: the inverse of the correspondence is the
+correspondence itself. -/
 noncomputable def corollary_12_2_1 (n : ℕ) :
     {f : Rn n → EReal // ClosedProperConvexFn f} ≃ {g : Rn n → EReal // ClosedProperConvexFn g} :=
   conjEquiv (pairing n)
@@ -222,7 +221,7 @@ noncomputable def corollary_12_2_1 (n : ℕ) :
       = conj (pairing n) g := by
   simp [corollary_12_2_1, conjEquiv]
 
-/-- **Rockafellar, Corollary 12.2.2.** For any convex function `f` on `ℝⁿ`,
+/-- **Corollary 12.2.2.** For any convex function `f` on `ℝⁿ`,
 `f* x* = sup {⟨x, x*⟩ - f x ∣ x ∈ ri (dom f)}`.
 
 The book's proof, transcribed: the right-hand side is `g*` for the function `g` that agrees with
@@ -262,22 +261,21 @@ theorem corollary_12_2_2 (hf : ConvexFn f) (y : Rn n) :
 /-- **Fenchel's inequality** (Rockafellar, §12, p. 105): `⟨x, x*⟩ ≤ f x + f* x*` for any proper
 convex function `f` and its conjugate.
 
-Specialises `Proper.le_add_conj`. Properness is the book's hypothesis and it is not removable:
-for `f ≡ +∞` the right-hand side is `⊤ + ⊥ = ⊥`. -/
+Properness is the book's hypothesis and it is not removable: for `f ≡ +∞` the right-hand side is `⊤
++ ⊥ = ⊥`. -/
 theorem fenchel_inequality (hp : Proper f) (x y : Rn n) :
     ((inner ℝ x y : ℝ) : EReal) ≤ f x + conj (pairing n) f y :=
   hp.le_add_conj (B := pairing n) x y
 
 /-! ### Theorem 12.3 -/
 
-/-- **Rockafellar, Theorem 12.3.** Let `h` be a convex function on `ℝⁿ` and
+/-- **Theorem 12.3.** Let `h` be a convex function on `ℝⁿ` and
 `f x = h (A (x - a)) + ⟨x, a*⟩ + α` with `A` a one-to-one linear transformation from `ℝⁿ` onto
 `ℝⁿ`. Then `f* x* = h* (A*⁻¹ (x* - a*)) + ⟨x*, a⟩ + α*`, where `α* = -α - ⟨a, a*⟩`.
 
-Specialises `conj_comp_affine`. The book writes `A*⁻¹`; the backbone takes the adjoint as data,
-so `A'` and the adjointness relation `⟨A x, z⟩ = ⟨x, A' z⟩` are hypotheses. Over `ℝⁿ` the adjoint
-exists and is unique, so nothing is added — but it does have to be supplied. No convexity of `h`
-is needed. -/
+The book writes `A*⁻¹`; the backbone takes the adjoint as data, so `A'` and the adjointness relation
+`⟨A x, z⟩ = ⟨x, A' z⟩` are hypotheses. Over `ℝⁿ` the adjoint exists and is unique, so nothing is
+added — but it does have to be supplied. No convexity of `h` is needed. -/
 theorem theorem_12_3 (A A' : Rn n ≃ₗ[ℝ] Rn n)
     (hA : ∀ x z : Rn n, (inner ℝ (A x) z : ℝ) = inner ℝ x (A' z))
     (h : Rn n → EReal) (a b : Rn n) (α : ℝ) (y : Rn n) :
@@ -316,7 +314,7 @@ theorem conj_comp_orthogonal {A : Rn n ≃ₗ[ℝ] Rn n} (hA : IsOrthogonalEquiv
   rw [← h]
   exact congrArg (fun g => conj (pairing n) g y) (funext hfA)
 
-/-- **Rockafellar, Corollary 12.3.1.** A closed convex function `f` is symmetric with respect to a
+/-- **Corollary 12.3.1.** A closed convex function `f` is symmetric with respect to a
 given set `G` of orthogonal linear transformations if and only if `f*` is symmetric with respect
 to `G`.
 
@@ -494,7 +492,7 @@ theorem conj_posPart {f : Rn n → EReal} (hf : MonotoneOrthantFn f) (y : Rn n) 
     exact (inner_maskNonneg y z).symm
   · rw [hf.top_of_notMem hz]; simp
 
-/-- **Rockafellar, Theorem 12.4**, first half: the monotone conjugate `g⁺` of a non-decreasing
+/-- **Theorem 12.4**, first half: the monotone conjugate `g⁺` of a non-decreasing
 lower semicontinuous convex function on the non-negative orthant, finite at the origin, is another
 such function.
 
@@ -530,7 +528,7 @@ theorem theorem_12_4_mem {f : Rn n → EReal} (hf : MonotoneOrthantFn f) :
   · rw [hzero]
     exact fun h => hf.zero_ne_top (_root_.EReal.neg_eq_bot_iff.1 h)
 
-/-- **Rockafellar, Theorem 12.4**, second half: the monotone conjugate of `g⁺` is in turn `g`.
+/-- **Theorem 12.4**, second half: the monotone conjugate of `g⁺` is in turn `g`.
 
 The book states Theorem 12.4 with **no proof at all**; this is the argument described in the
 module docstring. `≤` is `conj_antitone` applied to `f* ≤ g⁺`; for `≥`, `conj_posPart` replaces

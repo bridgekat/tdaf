@@ -184,7 +184,7 @@ theorem separableStrongly_iff_exists {C₁ C₂ : Set (Rn n)} (h₁ : C₁.Nonem
 
 /-! ### Theorem 11.1 -/
 
-/-- **Rockafellar, Theorem 11.1**, conditions (a) and (b). Let `C₁` and `C₂` be non-empty sets in
+/-- **Theorem 11.1**, conditions (a) and (b). Let `C₁` and `C₂` be non-empty sets in
 `ℝⁿ`. There exists a hyperplane separating `C₁` and `C₂` properly if and only if there exists a
 vector `b` such that
 
@@ -206,13 +206,13 @@ theorem theorem_11_1_ab {C₁ C₂ : Set (Rn n)} (h₁ : C₁.Nonempty) (h₂ : 
       (by simpa only [linFn_apply] using hb)
     exact ⟨b, β, linFn_eq_zero_iff.not.1 (hβ.ne_zero h₂ h₁), hβ⟩
 
-/-- **Rockafellar, Theorem 11.1**, condition (c). There exists a hyperplane separating the
+/-- **Theorem 11.1**, condition (c). There exists a hyperplane separating the
 non-empty sets `C₁` and `C₂` strongly if and only if there exists a vector `b` such that
 
 (c) `inf {⟨x, b⟩ | x ∈ C₁} > sup {⟨x, b⟩ | x ∈ C₂}`.
 
-Specialises `exists_separatesStrongly_iff_iSup_lt_iInf`; the passage from Rockafellar's `εB`
-definition to this gap is `separatesStronglyRn_iff`, which is the substance of his proof. -/
+The passage from Rockafellar's `εB` definition to this gap is `separatesStronglyRn_iff`, which is
+the substance of his proof. -/
 theorem theorem_11_1_c {C₁ C₂ : Set (Rn n)} (h₁ : C₁.Nonempty) (h₂ : C₂.Nonempty) :
     SeparableStrongly C₁ C₂ ↔ ∃ b : Rn n,
       (⨆ x ∈ C₂, ((pairing n x b : ℝ) : EReal)) < ⨅ x ∈ C₁, ((pairing n x b : ℝ) : EReal) := by
@@ -228,7 +228,7 @@ theorem theorem_11_1_c {C₁ C₂ : Set (Rn n)} (h₁ : C₁.Nonempty) (h₂ : C
 
 /-! ### Theorem 11.2, the fundamental construction -/
 
-/-- **Rockafellar, Theorem 11.2.** Let `C` be a non-empty relatively open convex set in `ℝⁿ`, and
+/-- **Theorem 11.2.** Let `C` be a non-empty relatively open convex set in `ℝⁿ`, and
 let `M` be a non-empty affine set in `ℝⁿ` not meeting `C`. Then there exists a hyperplane `H`
 containing `M`, such that one of the open half-spaces associated with `H` contains `C`.
 
@@ -311,11 +311,9 @@ theorem theorem_11_2 {C M : Set (Rn n)} (hC : Convex ℝ C) (hCne : C.Nonempty)
 
 /-! ### Theorem 11.3, the main separation theorem -/
 
-/-- **Rockafellar, Theorem 11.3.** Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ`. In order
+/-- **Theorem 11.3.** Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ`. In order
 that there exist a hyperplane separating `C₁` and `C₂` properly, it is necessary and sufficient
-that `ri C₁` and `ri C₂` have no point in common.
-
-Specialises `exists_separatesProperly_iff_disjoint_relint`. -/
+that `ri C₁` and `ri C₂` have no point in common. -/
 theorem theorem_11_3 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂)
     (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty) :
     SeparableProperly C₁ C₂ ↔ ri C₁ ∩ ri C₂ = ∅ := by
@@ -324,17 +322,15 @@ theorem theorem_11_3 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : C
 
 /-! ### Theorem 11.4 and its corollaries -/
 
-/-- **Rockafellar, Theorem 11.4**, in the second of the two forms he gives it: strong separation of
-two non-empty convex sets is possible exactly when `0 ∉ cl (C₁ - C₂)`.
-
-Specialises `separatesStrongly_iff_zero_notMem_closure_sub`. -/
+/-- **Theorem 11.4**, in the second of the two forms he gives it: strong separation of
+two non-empty convex sets is possible exactly when `0 ∉ cl (C₁ - C₂)`. -/
 theorem theorem_11_4_closure {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂)
     (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty) :
     SeparableStrongly C₁ C₂ ↔ (0 : Rn n) ∉ closure (C₁ - C₂) := by
   rw [separableStrongly_iff_exists hne₁ hne₂,
     separatesStrongly_iff_zero_notMem_closure_sub h₁ h₂]
 
-/-- **Rockafellar, Theorem 11.4.** Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ`. In order
+/-- **Theorem 11.4.** Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ`. In order
 that there exist a hyperplane separating `C₁` and `C₂` strongly, it is necessary and sufficient
 that `inf {|x₁ - x₂| | x₁ ∈ C₁, x₂ ∈ C₂} > 0`.
 
@@ -360,7 +356,7 @@ theorem theorem_11_4 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : C
     rw [dist_zero_left] at hylt
     exact absurd (hsep x₁ hx₁ x₂ hx₂) (not_le.2 hylt)
 
-/-- **Rockafellar, Corollary 11.4.1.** Let `C₁` and `C₂` be non-empty disjoint closed convex sets
+/-- **Corollary 11.4.1.** Let `C₁` and `C₂` be non-empty disjoint closed convex sets
 in `ℝⁿ` having no common directions of recession. Then there exists a hyperplane separating `C₁`
 and `C₂` strongly.
 
@@ -384,7 +380,7 @@ theorem corollary_11_4_1 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (hc�
   rw [sub_eq_zero] at hxy
   exact Set.disjoint_left.1 hdisj hx (hxy ▸ hy)
 
-/-- **Rockafellar, Corollary 11.4.2.** Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ` whose
+/-- **Corollary 11.4.2.** Let `C₁` and `C₂` be non-empty convex sets in `ℝⁿ` whose
 closures are disjoint. If either set is bounded, there exists a hyperplane separating `C₁` and `C₂`
 strongly.
 
@@ -407,7 +403,7 @@ theorem corollary_11_4_2 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂
 
 /-! ### Theorem 11.5 and its corollaries -/
 
-/-- **Rockafellar, Theorem 11.5.** A closed convex set `C` is the intersection of the closed
+/-- **Theorem 11.5.** A closed convex set `C` is the intersection of the closed
 half-spaces which contain it.
 
 Specialises `isClosed_convex_eq_iInter_halfspaces`, reindexed over vectors by `exists_linFn`. The
@@ -427,10 +423,8 @@ theorem theorem_11_5 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) :
   · intro h b c hb
     simpa only [linFn_apply] using h (linFn b) c (by simpa only [linFn_apply] using hb)
 
-/-- **Rockafellar, Corollary 11.5.1.** Let `S` be any subset of `ℝⁿ`. Then `cl (conv S)` is the
-intersection of all the closed half-spaces containing `S`.
-
-Specialises `closure_convexHull_eq_iInter_halfspaces`. -/
+/-- **Corollary 11.5.1.** Let `S` be any subset of `ℝⁿ`. Then `cl (conv S)` is the
+intersection of all the closed half-spaces containing `S`. -/
 theorem corollary_11_5_1 (S : Set (Rn n)) :
     ⋂ (b : Rn n) (β : ℝ) (_ : ∀ y ∈ S, pairing n y b ≤ β), {x : Rn n | pairing n x b ≤ β} =
       closure (convexHull ℝ S) := by
@@ -445,7 +439,7 @@ theorem corollary_11_5_1 (S : Set (Rn n)) :
   · intro h b c hb
     simpa only [linFn_apply] using h (linFn b) c (by simpa only [linFn_apply] using hb)
 
-/-- **Rockafellar, Corollary 11.5.2.** Let `C` be a convex subset of `ℝⁿ` other than `ℝⁿ` itself.
+/-- **Corollary 11.5.2.** Let `C` be a convex subset of `ℝⁿ` other than `ℝⁿ` itself.
 Then there exists a closed half-space containing `C`; in other words, there exists some `b ∈ ℝⁿ`,
 `b ≠ 0`, such that the linear function `⟨·, b⟩` is bounded above on `C`.
 
@@ -484,7 +478,7 @@ theorem isSupportingHalfSpace_iff {b : Rn n} {β : ℝ} {C : Set (Rn n)} :
     exact ⟨linFn_eq_zero_iff.not.1 hb, fun x hx => by simpa only [linFn_apply] using hle hx,
       by simpa only [linFn_apply] using hex⟩
 
-/-- **Rockafellar, Theorem 11.6.** Let `C` be a convex set, and let `D` be a non-empty convex
+/-- **Theorem 11.6.** Let `C` be a convex set, and let `D` be a non-empty convex
 subset of `C`. In order that there exist a non-trivial supporting hyperplane to `C` containing `D`,
 it is necessary and sufficient that `D` be disjoint from `ri C`.
 
@@ -523,7 +517,7 @@ theorem theorem_11_6 {C D : Set (Rn n)} (hC : Convex ℝ C) (hD : Convex ℝ D) 
       · simpa only [Set.mem_ofPred_eq, linFn_apply] using hDeq z hz
     exact ⟨b, β, ⟨hb, hCle, d₀, hDC hd₀, hDeq d₀ hd₀⟩, hDeq, y, hy, hyne⟩
 
-/-- **Rockafellar, Corollary 11.6.1.** A convex set has a non-zero normal at each of its boundary
+/-- **Corollary 11.6.1.** A convex set has a non-zero normal at each of its boundary
 points.
 
 Rockafellar's normal to `C` at `x` is the backbone's `normalCone (pairing n) C x`. Specialises
@@ -538,11 +532,11 @@ theorem corollary_11_6_1 {C : Set (Rn n)} (hC : Convex ℝ C) {x : Rn n} (hx : x
   simp only [map_sub, LinearMap.sub_apply, sub_nonpos]
   exact hzx
 
-/-- **Rockafellar, Corollary 11.6.2.** Let `C` be a convex set. An `x ∈ C` is a relative boundary
+/-- **Corollary 11.6.2.** Let `C` be a convex set. An `x ∈ C` is a relative boundary
 point of `C` if and only if there exists a linear function `h` not constant on `C` such that `h`
 achieves its maximum over `C` at `x`.
 
-Specialises `notMem_relint_iff_exists_isMaxOn`; `relbd` is §6's relative boundary. -/
+`relbd` is §6's relative boundary. -/
 theorem corollary_11_6_2 {C : Set (Rn n)} (hC : Convex ℝ C) {x : Rn n} (hx : x ∈ C) :
     x ∈ relbd C ↔ ∃ b : Rn n, (∀ y ∈ C, pairing n y b ≤ pairing n x b) ∧
       ∃ y ∈ C, pairing n y b ≠ pairing n x b := by
@@ -558,7 +552,7 @@ theorem corollary_11_6_2 {C : Set (Rn n)} (hC : Convex ℝ C) {x : Rn n} (hx : x
 
 /-! ### Theorem 11.7, cones and homogeneous half-spaces -/
 
-/-- **Rockafellar, Theorem 11.7.** Let `C₁` and `C₂` be non-empty subsets of `ℝⁿ`, at least one of
+/-- **Theorem 11.7.** Let `C₁` and `C₂` be non-empty subsets of `ℝⁿ`, at least one of
 which is a cone. If there exists a hyperplane which separates `C₁` and `C₂` properly, then there
 exists a hyperplane which separates `C₁` and `C₂` properly *and passes through the origin*.
 
@@ -571,18 +565,16 @@ theorem theorem_11_7 {C₁ C₂ : Set (Rn n)} (hne₁ : C₁.Nonempty) (hne₂ :
   obtain ⟨b, β, hb, hsep⟩ := h
   exact ⟨b, hb, hsep.zero_of_isCone_left (fun _ ha _ hx => hcone _ ha _ hx) hne₂ hne₁⟩
 
-/-- **Rockafellar, Theorem 11.7**, with the cone on the `C₁` side. -/
+/-- **Theorem 11.7**, with the cone on the `C₁` side. -/
 theorem theorem_11_7' {C₁ C₂ : Set (Rn n)} (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty)
     (hcone : IsCone C₁) (h : SeparableProperly C₁ C₂) :
     ∃ b : Rn n, SeparatesProperlyRn b 0 C₁ C₂ := by
   obtain ⟨b, β, hb, hsep⟩ := h
   exact ⟨b, hb, hsep.zero_of_isCone_right (fun _ ha _ hx => hcone _ ha _ hx) hne₂ hne₁⟩
 
-/-- **Rockafellar, Corollary 11.7.1.** A non-empty closed convex cone in `ℝⁿ` is the intersection
+/-- **Corollary 11.7.1.** A non-empty closed convex cone in `ℝⁿ` is the intersection
 of the homogeneous closed half-spaces which contain it, a homogeneous half-space being one with the
-origin on its boundary.
-
-Specialises `isClosed_convex_isCone_eq_iInter_halfSpaceCone`. -/
+origin on its boundary. -/
 theorem corollary_11_7_1 {K : Set (Rn n)} (hconv : Convex ℝ K) (hcone : IsCone K)
     (hcl : IsClosed K) (hne : K.Nonempty) :
     ⋂ (b : Rn n) (_ : ∀ y ∈ K, pairing n y b ≤ 0), {x : Rn n | pairing n x b ≤ 0} = K := by
@@ -598,7 +590,7 @@ theorem corollary_11_7_1 {K : Set (Rn n)} (hconv : Convex ℝ K) (hcone : IsCone
   · intro h b hb
     simpa only [linFn_apply] using h (linFn b) (by simpa only [linFn_apply] using hb)
 
-/-- **Rockafellar, Corollary 11.7.2.** Let `S` be any subset of `ℝⁿ`, and let `K` be the closure of
+/-- **Corollary 11.7.2.** Let `S` be any subset of `ℝⁿ`, and let `K` be the closure of
 the convex cone generated by `S`. Then `K` is the intersection of all the homogeneous closed
 half-spaces containing `S`.
 
@@ -619,7 +611,7 @@ theorem corollary_11_7_2 (S : Set (Rn n)) :
   · intro h b hb
     simpa only [linFn_apply] using h (linFn b) (by simpa only [linFn_apply] using hb)
 
-/-- **Rockafellar, Corollary 11.7.3.** Let `K` be a convex cone in `ℝⁿ` other than `ℝⁿ` itself.
+/-- **Corollary 11.7.3.** Let `K` be a convex cone in `ℝⁿ` other than `ℝⁿ` itself.
 Then `K` is contained in some homogeneous closed half-space of `ℝⁿ`; in other words, there exists
 some vector `b ≠ 0` such that `⟨x, b⟩ ≤ 0` for every `x ∈ K`.
 
