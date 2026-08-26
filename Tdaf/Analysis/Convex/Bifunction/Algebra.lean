@@ -12,9 +12,9 @@ import Tdaf.Analysis.Convex.Saddle.Defs
 /-!
 # The algebra of bifunctions
 
-The adjoint of a convex bifunction generalizes the adjoint of a linear transformation. Rockafellar's
-§38 generalizes the rest of the linear algebra — addition, scalar multiplication, application to a
-vector, composition, and the inner product — and describes how each behaves under taking adjoints.
+The adjoint of a convex bifunction generalizes the adjoint of a linear transformation. This file
+generalizes the rest of the linear algebra — addition, scalar multiplication, application to a
+vector, composition, the inner product — and describes how each behaves under taking adjoints.
 
 | operation | here | linear-algebra analogue |
 |---|---|---|
@@ -26,67 +26,41 @@ vector, composition, and the inner product — and describes how each behaves un
 | `F⁎`, `F⁎*` | `inverseBifun`, `lowerAdjointBifun` | `A⁻¹`, `(A⁻¹)*` |
 | `⟨f, g⟩` | `fenchelSup` / `fenchelInf` / `HasFenchelPairing` | `⟨x, y⟩` |
 
-## Main definitions
-
-The table names them all. Two are worth a word: `infConvFstBifun` convolves in the *first*
-variable, which is the operation Corollary 38.2.1 applies to the lower adjoints (`infConvBifun`
-convolves in the wrong variable for that purpose); and `supConvBifun` is the concave mirror of
-`infConvBifun`, the shape the adjoint of `F₁ □ F₂` takes. `concaveImageBifun` and
-`concaveCompBifun` are the concave orientations of `Ff` and `GF`.
-
 ## Main results
 
-* `domBifun_infConvBifun`, `convexBifun_infConvBifun`, `bracket_infConvBifun` — **Theorem 38.1**.
-* `adjointBifun_infConvBifun` — **Theorem 38.2**: `(F₁ □ F₂)* = F₁* □ F₂*`, the right-hand `□`
-  being supremal convolution of concave bifunctions.
-* `adjointBifun_smulRightBifun` — **Theorem 38.3**: `(Fλ)* = F*λ` for `λ > 0`.
-* `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq` — **Theorem 38.4**:
-  `(Ff)* = F⁎* f*` with the infimum attained. `conj_imageBifun_of_bracket_eq_top` is Rockafellar's
-  degenerate branch `y ∉ dom F*`, stated unconditionally.
-* `closedBifun_lowerAdjointBifun` — `F⁎*` is a *closed* convex bifunction with no hypothesis on
-  `F` at all; Theorem 30.1 read on the convex side.
-* `lowerAdjointBifun_lowerAdjointBifun_eq_clBifun`, `closedFn_imageBifun`, `exists_imageBifun_eq`,
-  `conj_imageBifun_eq_clFn` — **Corollary 38.4.1**: for closed proper convex `F` and `f`, `Ff` is
-  closed, the infimum defining it is attained, and `(Ff)* = cl (F⁎* f*)`.
-* `convexBifun_compBifun`, `inverseBifun_compBifun`, `adjointBifun_compBifun`,
-  `lowerAdjointBifun_compBifun` — **Theorem 38.5**: `(GF)⁎ = F⁎ G⁎`, the adjoint formula
-  `(GF)* = F* G*` with the supremum attained, and the convex repackaging `(GF)⁎* = (G⁎*)(F⁎*)`.
-* `closedBifun_compBifun`, `exists_compBifun_eq`, `lowerAdjointBifun_compBifun_eq_clBifun` —
-  **Corollary 38.5.1**, the closed counterpart.
-* `lowerAdjointBifun_infConvFstBifun`, `closedBifun_infConvBifun`,
-  `lowerAdjointBifun_infConvBifun_eq_clBifun` — **Corollary 38.2.1**: `(H₁ ⊡ H₂)⁎* = H₁⁎* □ H₂⁎*`,
-  `F₁ □ F₂` is closed for closed proper convex summands, and `(F₁ □ F₂)⁎* = cl (F₁⁎* ⊡ F₂⁎*)`.
-* `fenchelSup_le_fenchelInf` — weak duality for the inner product, with no hypothesis. It is what
-  makes every existence statement below a single inequality.
-* `hasFenchelPairing_conj`, `fenchelPairing_conj` — **Lemma 38.6**: `⟨f*, g*⟩ = -⟨f, g⟩`.
-* `hasFenchelPairing_adjointBifun`, `conj_imageBifun_eq_fenchelPairing` — **Corollary 38.7.1**:
-  `⟨Ff, y⟩ = ⟨f, F* y⟩`.
-* `fenchelSup_imageBifun_lowerAdjointBifun` — **Theorem 38.7**: adjoints move across the inner
-  product. `bracket_compBifun_eq_fenchelPairing` is **Corollary 38.7.2**'s first equality
-  `⟨GFu, z⟩ = ⟨Fu, G* z⟩`, which is 38.7.1 at the slice `Fu`, a slice of a product being the image
-  of a slice.
+* **Theorems 38.1–38.3** — `bracket_infConvBifun`; `adjointBifun_infConvBifun`, giving
+  `(F₁ □ F₂)* = F₁* □ F₂*` with the right side supremal convolution (`supConvBifun`) of concave
+  bifunctions; and `adjointBifun_smulRightBifun`, `(Fλ)* = F*λ` for `λ > 0`.
+* **Theorem 38.4** — `conj_imageBifun`, `exists_conj_imageBifun_eq`: `(Ff)* = F⁎* f*`, infimum
+  attained; `conj_imageBifun_of_bracket_eq_top` is the degenerate branch `y ∉ dom F*`, stated
+  unconditionally, and `closedBifun_lowerAdjointBifun` says `F⁎*` is closed for *any* `F`.
+* **Theorem 38.5** — `inverseBifun_compBifun`, `adjointBifun_compBifun`,
+  `lowerAdjointBifun_compBifun`: `(GF)⁎ = F⁎ G⁎`, `(GF)* = F* G*` with the supremum attained, and
+  `(GF)⁎* = (G⁎*)(F⁎*)`; `lowerAdjointBifun_infConvFstBifun` is `(H₁ ⊡ H₂)⁎* = H₁⁎* □ H₂⁎*`.
+* **Corollaries 38.2.1, 38.4.1, 38.5.1** — for closed proper convex arguments each operation is
+  closed, its defining extremum is attained, and the adjoint of the result is the *closure* of the
+  corresponding product or convolution (`closedBifun_compBifun` and the `_eq_clBifun` results).
+* **The inner product** — `fenchelSup_le_fenchelInf` is weak duality, with no hypothesis;
+  `fenchelPairing_conj` is **Lemma 38.6**, `conj_imageBifun_eq_fenchelPairing` **Corollary 38.7.1**
+  (`⟨Ff, y⟩ = ⟨f, F* y⟩`), `fenchelSup_imageBifun_lowerAdjointBifun` **Theorem 38.7** (adjoints
+  move across the product), and `bracket_compBifun_eq_fenchelPairing` **Corollary 38.7.2**.
 
 ## Implementation notes
 
 Rockafellar's hypotheses throughout §38 are "`ri (dom …)` and `ri (dom …)` have a point in common",
-whose conclusion is Theorem 16.4. Here that conclusion is taken as the hypothesis, in the form
+whose conclusion is Theorem 16.4. That conclusion is taken here as the hypothesis, in the form
 `IsExactSum` — one instance per dual vector where the book has a single relative-interior
-condition. Because `IsExactSum` also demands that both summands be proper, it is a *stronger*
-hypothesis than the book's; it is also what lets §38 be developed with no topology, no local
-convexity and no finite dimension, and it already carries the case distinction Rockafellar makes
-in proving Theorem 38.4.
+condition. `IsExactSum` also demands that both summands be proper, so it is *stronger* than the
+book's hypothesis; it is what lets §38 be developed with no topology and no finite dimension.
 
-`lowerAdjointBifun Bu Bx F v y` is *defined* as `-(adjointBifun Bu Bx F y v)`, and
-`lowerAdjointBifun_eq_concaveAdjointBifun` identifies it with the concave adjoint of `F⁎` for the
-flipped pairings. Working through `F⁎*` rather than a second, concave adjoint is what keeps
-Corollaries 38.4.1 and 38.2.1 between *convex* bifunctions and avoids needing a concave `clBifun`.
+`lowerAdjointBifun Bu Bx F v y` is *defined* as `-(adjointBifun Bu Bx F y v)`; working through `F⁎*`
+rather than a second, concave adjoint keeps Corollaries 38.2.1 and 38.4.1 between *convex*
+bifunctions and avoids needing a concave `clBifun`.
 
 Rockafellar leaves `⟨f, g⟩` *undefined* when the two extrema differ, so they are kept apart here as
 `fenchelSup`, `fenchelInf` and the predicate `HasFenchelPairing` that they agree. He also restricts
-them to `dom f ∩ dom g*`, to keep improper `f` or `g` from producing `∞ - ∞`; for proper `f` and
-proper concave `g` the excluded terms are `⊥` on the sup side and `⊤` on the inf side, so the plain
-`⨆`/`⨅` used here agree with his. Every theorem needing that agreement carries the properness
-hypothesis explicitly.
+them to `dom f ∩ dom g*` to avoid `∞ - ∞`; for proper `f` and proper concave `g` the excluded terms
+are `⊥` on the sup side and `⊤` on the inf side, so the plain `⨆`/`⨅` used here agree with his.
 
 ## References
 
@@ -109,21 +83,17 @@ This is the bifunction analogue of the *sum* of two linear transformations: if `
 indicator bifunction of `Aᵢ`, then `F₁ □ F₂` is the convex indicator bifunction of `A₁ + A₂`. -/
 noncomputable def infConvBifun (F₁ F₂ : Bifun U X) : Bifun U X := fun u => infConv (F₁ u) (F₂ u)
 
-/-- The defining equation of `infConvBifun`, slice by slice. -/
 theorem infConvBifun_apply (F₁ F₂ : Bifun U X) (u : U) :
     infConvBifun F₁ F₂ u = infConv (F₁ u) (F₂ u) := rfl
 
-/-- `□` is commutative, because infimal convolution is. -/
 theorem infConvBifun_comm (F₁ F₂ : Bifun U X) : infConvBifun F₁ F₂ = infConvBifun F₂ F₁ :=
   funext fun u => infConv_comm (F₁ u) (F₂ u)
 
-/-- `□` is associative, because infimal convolution is. -/
 theorem infConvBifun_assoc (F₁ F₂ F₃ : Bifun U X) :
     infConvBifun (infConvBifun F₁ F₂) F₃ = infConvBifun F₁ (infConvBifun F₂ F₃) :=
   funext fun u => infConv_assoc (F₁ u) (F₂ u) (F₃ u)
 
 omit [AddCommGroup X] in
-/-- Membership in `domBifun` is nonemptiness of the effective domain of the slice. -/
 theorem mem_domBifun_iff_dom_nonempty {F : Bifun U X} {u : U} :
     u ∈ domBifun F ↔ (dom (F u)).Nonempty := by
   constructor
@@ -269,8 +239,6 @@ end Thm382
 
 section ERealAux
 
-/-- A constant that is not `⊤` moves inside a supremum. The hypothesis is exactly what rules out
-`(⨆ i, u i) + ⊤` collapsing differently from `⨆ i, (u i + ⊤)`. -/
 private theorem iSup_add_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal) {c : EReal}
     (hc : c ≠ ⊤) : (⨆ i, u i) + c = ⨆ i, (u i + c) := by
   induction c with
@@ -278,7 +246,6 @@ private theorem iSup_add_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal)
   | coe r => exact Tdaf.EReal.iSup_add_coe u r
   | top => exact absurd rfl hc
 
-/-- Splitting off one summand of a difference, when neither summand is `⊥`. -/
 private theorem coe_sub_add (r : ℝ) {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠ ⊥) :
     (r : EReal) - (a + b) = ((r : EReal) - b) - a := by
   have h : -(a + b) = -b + -a := by
@@ -287,27 +254,23 @@ private theorem coe_sub_add (r : ℝ) {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠
   change (r : EReal) + -(a + b) = ((r : EReal) + -b) + -a
   rw [h, ← add_assoc]
 
-/-- The mirror of `iSup_add_of_ne_top`, with the constant on the left. -/
 private theorem add_iSup_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal) {c : EReal}
     (hc : c ≠ ⊤) : c + (⨆ i, u i) = ⨆ i, (c + u i) := by
   rw [add_comm, iSup_add_of_ne_top u hc]
   exact iSup_congr fun i => add_comm _ _
 
-/-- A constant that is not `⊤` turns an infimum into a supremum of differences. -/
 private theorem sub_iInf_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal) {c : EReal}
     (hc : c ≠ ⊤) : c - (⨅ i, u i) = ⨆ i, (c - u i) := by
   change c + -(⨅ i, u i) = _
   rw [Tdaf.EReal.neg_iInf, add_iSup_of_ne_top _ hc]
   rfl
 
-/-- Adding a real constant cannot create `⊤`. -/
 private theorem add_coe_ne_top {a : EReal} (ha : a ≠ ⊤) (c : ℝ) : a + (c : EReal) ≠ ⊤ := by
   induction a with
   | bot => simp
   | coe p => rw [← _root_.EReal.coe_add]; exact _root_.EReal.coe_ne_top _
   | top => exact absurd rfl ha
 
-/-- Moving a subtrahend out of a difference of differences. -/
 private theorem sub_sub_eq_add_sub {a b c : EReal} (ha : a ≠ ⊥) (hc : c ≠ ⊤) :
     b - (a - c) = (b + c) - a := by
   have h : -(a - c) = c - a := Tdaf.EReal.neg_sub_comm ha hc
@@ -754,7 +717,6 @@ theorem fenchelSup_le_fenchelInf (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E �
         exact add_right_comm _ _ _
     _ ≤ conj B f y - g y := hsub h2
 
-/-- A pairing exists as soon as the reverse of weak duality holds. -/
 theorem hasFenchelPairing_of_le (h : fenchelInf B f g ≤ fenchelSup B f g) :
     HasFenchelPairing B f g :=
   le_antisymm (fenchelSup_le_fenchelInf B f g) h
@@ -995,7 +957,6 @@ variable [AddCommGroup Y] [Module ℝ Y] {F : Bifun U X} {l : ℝ}
 noncomputable def smulRightBifun (F : Bifun U X) (l : ℝ) : Bifun U X := fun u => smulRight (F u) l
 
 omit [AddCommGroup U] [Module ℝ U] in
-/-- The defining equation of `smulRightBifun`, slice by slice. -/
 theorem smulRightBifun_apply (F : Bifun U X) (l : ℝ) (u : U) :
     smulRightBifun F l u = smulRight (F u) l := rfl
 
@@ -1436,16 +1397,13 @@ lower adjoints have to be combined by (`lowerAdjointBifun_infConvFstBifun`). -/
 noncomputable def infConvFstBifun (H₁ H₂ : Bifun V Y) : Bifun V Y :=
   fun v y => infConv (fun w => H₁ w y) (fun w => H₂ w y) v
 
-/-- The defining equation of `infConvFstBifun`, slice by slice in the *second* variable. -/
 theorem infConvFstBifun_slice (H₁ H₂ : Bifun V Y) (y : Y) :
     (fun v => infConvFstBifun H₁ H₂ v y) = infConv (fun w => H₁ w y) (fun w => H₂ w y) := rfl
 
-/-- `⊡` is commutative, because infimal convolution is. -/
 theorem infConvFstBifun_comm (H₁ H₂ : Bifun V Y) :
     infConvFstBifun H₁ H₂ = infConvFstBifun H₂ H₁ :=
   funext fun v => funext fun _y => congrFun (infConv_comm _ _) v
 
-/-- `⊡` is associative, because infimal convolution is. -/
 theorem infConvFstBifun_assoc (H₁ H₂ H₃ : Bifun V Y) :
     infConvFstBifun (infConvFstBifun H₁ H₂) H₃ = infConvFstBifun H₁ (infConvFstBifun H₂ H₃) :=
   funext fun v => funext fun _y => congrFun (infConv_assoc _ _ _) v
@@ -1506,8 +1464,6 @@ end InfConvFstBifunConvex
 
 section ERealAuxFst
 
-/-- Negating a sum whose right summand is a real constant. No side condition is needed: the finite
-term rules out both `∞ - ∞` collisions by itself. -/
 private theorem neg_add_coe' (a : EReal) (r : ℝ) :
     -(a + (r : EReal)) = ((-r : ℝ) : EReal) - a := by
   induction a with
@@ -1520,8 +1476,6 @@ private theorem neg_add_coe' (a : EReal) (r : ℝ) :
     ring
   | top => rw [_root_.EReal.top_add_coe, _root_.EReal.neg_top, _root_.EReal.sub_top]
 
-/-- The same identity with the constant written as a difference, and the roles of the two reals
-separated. -/
 private theorem neg_add_coe_sub' (a : EReal) (r s : ℝ) :
     -(a + ((r - s : ℝ) : EReal)) = (s : EReal) - (a + (r : EReal)) := by
   induction a with
@@ -1665,7 +1619,6 @@ theorem lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun (hF₁ : ConvexBifun
     lowerAdjointBifun_lowerAdjointBifun_eq_clBifun hF₁,
     lowerAdjointBifun_lowerAdjointBifun_eq_clBifun hF₂, hF₁cl.clBifun_eq, hF₂cl.clBifun_eq]
 
-/-- `F₁ □ F₂` is the lower adjoint of `F₁⁎* ⊡ F₂⁎*`, as an identity of bifunctions. -/
 theorem infConvBifun_eq_lowerAdjointBifun_infConvFstBifun (hF₁ : ConvexBifun F₁)
     (hF₁cl : ClosedBifun F₁) (hF₂ : ConvexBifun F₂) (hF₂cl : ClosedBifun F₂)
     (hex : ∀ u : U, IsExactSum Bx.flip

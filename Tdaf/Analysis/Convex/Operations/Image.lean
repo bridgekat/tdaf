@@ -9,13 +9,13 @@ import Tdaf.Analysis.Convex.Operations.Epi
 /-!
 # Images and inverse images of convex functions under a linear map
 
-A linear map `A : E → G` transports convex functions in both directions (Rockafellar's
-Theorem 5.7). The *inverse image* `g A = g ∘ A` is the easy one — its epigraph is a preimage —
-while the *image* `(A f) y = inf {f x | A x = y}` is the interesting one: the infimum need not be
-attained, so `A f` is read off `epi f` not as a set image but as the function determined by that
-image in the sense of Theorem 5.3. Accordingly `epi (A f) = (A × id) '' epi f` is **false** in
-general; `exists_epi_mapLin_ne_image` exhibits the failure, and `epi_mapLin` recovers the set
-equation from the hypothesis `IsEpiLike`, which is exactly the missing attainment.
+A linear map `A : E → G` transports convex functions in both directions (Rockafellar's Theorem
+5.7). The *inverse image* `g A = g ∘ A` is the easy one — its epigraph is a preimage — while the
+*image* `(A f) y = inf {f x | A x = y}` is the interesting one: the infimum need not be attained,
+so `A f` is read off `epi f` not as a set image but as the function that image determines in the
+sense of Theorem 5.3. Accordingly `epi (A f) = (A × id) '' epi f` is **false** in general
+(`exists_epi_mapLin_ne_image`); `epi_mapLin` recovers it from `IsEpiLike`, exactly the missing
+attainment.
 
 ## Main definitions
 
@@ -26,11 +26,10 @@ equation from the hypothesis `IsEpiLike`, which is exactly the missing attainmen
 
 * `convexFn_compLin`, `convexFn_mapLin` — **Theorem 5.7**.
 * `gc_compLin_mapLin` — `g ≤ A f ↔ g A ≤ f`, a *monotone* Galois connection (no `OrderDual`,
-  unlike `gc_ofEpi_epi`), from which the monotonicity lemmas, the unit and counit, and — for
-  surjective `A`, where it is a `GaloisCoinsertion` — the identity `A (g A) = g` all follow.
+  unlike `gc_ofEpi_epi`), giving the monotonicity lemmas, the unit and counit, and — for surjective
+  `A`, where it is a `GaloisCoinsertion` — the identity `A (g A) = g`.
 * `mapLin_eq_ofEpi` — the image is the function determined by the image of the epigraph under
   `(x, μ) ↦ (A x, μ)`: Rockafellar's own proof of Theorem 5.7.
-* `dom_mapLin`, `dom_compLin`, `proper_compLin_of_surjective` — domains and properness.
 * `convexFn_iInf_right` — partial minimisation `y ↦ ⨅ z, h (y, z)` of a jointly convex function is
   convex: the projection case Rockafellar highlights, and the form §29 uses.
 * `ConvexFn.comp_affine`, `ConvexFn.slice_left`, `ConvexFn.slice_right` — precomposition with an
@@ -51,17 +50,15 @@ variable {E G : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup G] [Module 
 
 /-! ### The two operations -/
 
-/-- The **image** of `f` under a linear map `A`: `(A f) y = inf {f x | A x = y}`, over the fibre of
-`A` above `y`, hence `⊤` off the range of `A`. The infimum is generally *not attained*;
-`mapLin_lt_iff` is the way to extract a witness. -/
+/-- The **image** of `f` under a linear map `A`: `(A f) y = inf {f x | A x = y}` over the fibre of
+`A` above `y`, hence `⊤` off its range. The infimum is generally *not attained*. -/
 noncomputable def mapLin (A : E →ₗ[ℝ] G) (f : E → EReal) : G → EReal :=
   fun y => ⨅ x ∈ {x | A x = y}, f x
 
 /-- The **inverse image** of `g` under a linear map `A`: `(g A) x = g (A x)`. -/
 def compLin (g : G → EReal) (A : E →ₗ[ℝ] G) : E → EReal := g ∘ A
 
-/-- The map `(x, μ) ↦ (A x, μ)` on epigraph space, along which `epi (g A)` is the pullback of
-`epi g`. -/
+/-- The map `(x, μ) ↦ (A x, μ)`, along which `epi (g A)` is the pullback of `epi g`. -/
 abbrev prodMapId (A : E →ₗ[ℝ] G) : E × ℝ →ₗ[ℝ] G × ℝ :=
   A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ)
 
@@ -75,12 +72,10 @@ variable {A : E →ₗ[ℝ] G} {f : E → EReal} {g : G → EReal} {x : E} {y : 
 theorem mapLin_le (h : A x = y) : mapLin A f y ≤ f x :=
   iInf₂_le (f := fun z (_ : z ∈ {z | A z = y}) => f z) x h
 
-/-- `(A f) y` is the *greatest* lower bound of `f` on the fibre above `y`. -/
 theorem le_mapLin (h : ∀ x : E, A x = y → z ≤ f x) : z ≤ mapLin A f y :=
   le_iInf₂ (f := fun z (_ : z ∈ {z | A z = y}) => f z) h
 
-/-- The witness extractor: the infimum defining `A f` need not be attained, so — exactly as for
-`ofEpi` — arguments about `mapLin` go through a strict inequality. -/
+/-- The witness extractor: as for `ofEpi`, arguments go through a strict inequality. -/
 theorem mapLin_lt_iff : mapLin A f y < z ↔ ∃ x : E, A x = y ∧ f x < z := by
   simp only [mapLin, iInf_lt_iff, exists_prop]
   exact Iff.rfl
@@ -89,10 +84,7 @@ theorem mapLin_lt_iff : mapLin A f y < z ↔ ∃ x : E, A x = y ∧ f x < z := b
 theorem mapLin_of_notMem_range (hy : y ∉ Set.range A) : mapLin A f y = ⊤ :=
   top_le_iff.1 (le_mapLin fun x hx => absurd ⟨x, hx⟩ hy)
 
-/-! ### The adjunction
-
-`g ≤ A f ↔ g A ≤ f` is a monotone Galois connection, and the order facts below are its formal
-consequences. -/
+/-! ### The adjunction `g ≤ A f ↔ g A ≤ f` -/
 
 /-- **The universal property of the image.** `f ↦ A f` is right adjoint to `g ↦ g A`. -/
 theorem gc_compLin_mapLin (A : E →ₗ[ℝ] G) :
@@ -117,7 +109,6 @@ theorem compLin_mapLin_le (A : E →ₗ[ℝ] G) (f : E → EReal) : compLin (map
 theorem le_mapLin_compLin (A : E →ₗ[ℝ] G) (g : G → EReal) : g ≤ mapLin A (compLin g A) :=
   (gc_compLin_mapLin A).le_u_l g
 
-/-- For surjective `A` the unit is an equality. -/
 theorem mapLin_compLin (hA : Function.Surjective A) (g : G → EReal) :
     mapLin A (compLin g A) = g :=
   le_antisymm (fun y => by
@@ -133,9 +124,9 @@ noncomputable def gci_compLin_mapLin (hA : Function.Surjective A) :
 
 theorem dom_compLin (g : G → EReal) (A : E →ₗ[ℝ] G) : dom (compLin g A) = A ⁻¹' dom g := rfl
 
-/-- **Properness survives a surjective substitution, in both directions.** Surjectivity is needed
-for both halves: without it `g A` can be proper while `g` is `⊥` off the range, and `g` can be
-proper while `A` misses all of its finite values. -/
+/-- **Properness survives a surjective substitution, both ways.** Surjectivity is needed for both
+halves: `g A` can be proper while `g` is `⊥` off the range, and `g` proper while `A` misses all of
+its finite values. -/
 theorem proper_compLin_of_surjective (hA : Function.Surjective A) :
     Proper (compLin g A) ↔ Proper g := by
   constructor
@@ -159,8 +150,7 @@ theorem dom_mapLin (A : E →ₗ[ℝ] G) (f : E → EReal) : dom (mapLin A f) = 
 
 /-! ### Epigraphs, and Theorem 5.7 -/
 
-/-- `epi (g A)` is `epi g` pulled back along `(x, μ) ↦ (A x, μ)` — the whole proof of the easy
-half of Theorem 5.7. -/
+/-- `epi g` pulled back along `(x, μ) ↦ (A x, μ)`: the whole proof of the easy half of 5.7. -/
 theorem epi_compLin (g : G → EReal) (A : E →ₗ[ℝ] G) :
     epi (compLin g A) = prodMapId A ⁻¹' epi g := rfl
 
@@ -170,8 +160,7 @@ theorem convexFn_compLin (A : E →ₗ[ℝ] G) (hg : ConvexFn g) : ConvexFn (com
   rw [epi_compLin]
   exact hg.convex_epi.linear_preimage _
 
-/-- **Precomposition with an affine map preserves convexity**: `convexFn_compLin` for the linear
-part and `ConvexFn.comp_add_left` for the translation, in the form the applications want. -/
+/-- **Precomposition with an affine map preserves convexity**, in the form applications want. -/
 theorem ConvexFn.comp_affine (hg : ConvexFn g) (A : E →ₗ[ℝ] G) (b : G) :
     ConvexFn (fun x : E => g (A x + b)) := by
   have heq : (fun x : E => g (A x + b)) = compLin (fun y => g (b + y)) A := by
@@ -180,9 +169,8 @@ theorem ConvexFn.comp_affine (hg : ConvexFn g) (A : E →ₗ[ℝ] G) (b : G) :
   rw [heq]
   exact convexFn_compLin A (hg.comp_add_left b)
 
-/-- The image of `f` is the function determined, in the sense of Theorem 5.3, by the image of
-`epi f` under `(x, μ) ↦ (A x, μ)`: Rockafellar's own route to Theorem 5.7. This is an equality of
-*functions*; the corresponding equality of *sets*, `epi_mapLin`, needs a hypothesis. -/
+/-- Rockafellar's own route to Theorem 5.7. This is an equality of *functions*; the corresponding
+equality of *sets*, `epi_mapLin`, needs a hypothesis. -/
 theorem mapLin_eq_ofEpi (A : E →ₗ[ℝ] G) (f : E → EReal) :
     mapLin A f = ofEpi (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f) := by
   funext y
@@ -194,16 +182,14 @@ theorem mapLin_eq_ofEpi (A : E →ₗ[ℝ] G) (f : E → EReal) :
   · conv_rhs => rw [← ofEpi_epi f]
     exact le_ofEpi fun μ hμ => ofEpi_apply_le ⟨(x, μ), hμ, by rw [LinearMap.prodMap_apply, hx]; rfl⟩
 
-/-- **Rockafellar, Theorem 5.7**, images. `A f` is the function determined by the image of `epi f`
-under `(x, μ) ↦ (A x, μ)`; a linear image of a convex set is convex, and Theorem 5.3 does the
-rest. -/
+/-- **Rockafellar, Theorem 5.7**, images: a linear image of a convex set is convex, and Theorem 5.3
+does the rest. -/
 theorem convexFn_mapLin (A : E →ₗ[ℝ] G) (hf : ConvexFn f) : ConvexFn (mapLin A f) := by
   rw [mapLin_eq_ofEpi]
   exact convexFn_ofEpi (hf.convex_epi.linear_image _)
 
-/-- The set equation behind Theorem 5.7, with the hypothesis that makes it true: the image of the
-epigraph must itself be an epigraph, i.e. the infimum defining `A f` must be attained wherever it
-is finite. -/
+/-- The set equation behind Theorem 5.7, under the hypothesis that makes it true: the infimum
+defining `A f` must be attained wherever it is finite. -/
 theorem epi_mapLin (h : IsEpiLike (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f)) :
     epi (mapLin A f) = A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f := by
   rw [mapLin_eq_ofEpi]
@@ -211,7 +197,6 @@ theorem epi_mapLin (h : IsEpiLike (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ
 
 /-! ### Indicator functions -/
 
-/-- The image of an indicator function is the indicator function of the image. -/
 theorem mapLin_indicatorFn (A : E →ₗ[ℝ] G) (s : Set E) :
     mapLin A (indicatorFn s) = indicatorFn (A '' s) := by
   have hnonneg : ∀ x : E, (0 : EReal) ≤ indicatorFn s x := by
@@ -228,7 +213,6 @@ theorem mapLin_indicatorFn (A : E →ₗ[ℝ] G) (s : Set E) :
     refine le_antisymm le_top (le_mapLin fun z hz => ?_)
     exact le_of_eq (indicatorFn_of_notMem fun hzs => hy ⟨z, hzs, hz⟩).symm
 
-/-- The inverse image of an indicator function is the indicator function of the preimage. -/
 theorem compLin_indicatorFn (A : E →ₗ[ℝ] G) (s : Set G) :
     compLin (indicatorFn s) A = indicatorFn (A ⁻¹' s) := by
   funext x
@@ -300,8 +284,7 @@ section Projection
 variable {Y Z : Type*} [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
 variable {h : Y × Z → EReal}
 
-/-- Fixing the first variable of a jointly convex function leaves a convex function of the second:
-the slice map `z ↦ (c, z)` is affine. -/
+/-- Fixing one variable of a jointly convex function: the slice map `z ↦ (c, z)` is affine. -/
 theorem ConvexFn.slice_left (hh : ConvexFn h) (c : Y) : ConvexFn (fun z : Z => h (c, z)) := by
   have heq : (fun z : Z => h (c, z)) = fun z : Z => h (LinearMap.inr ℝ Y Z z + (c, 0)) := by
     funext z
@@ -309,7 +292,6 @@ theorem ConvexFn.slice_left (hh : ConvexFn h) (c : Y) : ConvexFn (fun z : Z => h
   rw [heq]
   exact hh.comp_affine _ _
 
-/-- The mirror of `ConvexFn.slice_left`. -/
 theorem ConvexFn.slice_right (hh : ConvexFn h) (c : Z) : ConvexFn (fun y : Y => h (y, c)) := by
   have heq : (fun y : Y => h (y, c)) = fun y : Y => h (LinearMap.inl ℝ Y Z y + (0, c)) := by
     funext y
@@ -317,8 +299,7 @@ theorem ConvexFn.slice_right (hh : ConvexFn h) (c : Z) : ConvexFn (fun y : Y => 
   rw [heq]
   exact hh.comp_affine _ _
 
-/-- The image under the projection `(y, z) ↦ y` is minimisation over `z`. This is the example
-Rockafellar singles out after Theorem 5.7, and the form in which §29 uses the operation. -/
+/-- The image under the projection `(y, z) ↦ y` is minimisation over `z`. -/
 theorem mapLin_fst_apply (h : Y × Z → EReal) (y : Y) :
     mapLin (LinearMap.fst ℝ Y Z) h y = ⨅ z, h (y, z) := by
   refine le_antisymm (le_iInf fun z => mapLin_le rfl) (le_mapLin ?_)

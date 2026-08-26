@@ -8,9 +8,9 @@ import Tdaf.Analysis.Convex.Indicator
 /-!
 # Operations that preserve convexity: the epigraph-only ones
 
-The operations of Rockafellar §5 whose convexity proof needs nothing beyond the epigraph API.
-Those built instead from a convex set in `E × ℝ` by Theorem 5.3 — infimal convolution, convex
-hulls of families, images under linear maps — live elsewhere.
+The operations of Rockafellar §5 whose convexity proof needs nothing beyond the epigraph API. Those
+built from a convex set in `E × ℝ` by Theorem 5.3 — infimal convolution, convex hulls of families,
+images under linear maps — live elsewhere.
 
 ## Main results
 
@@ -19,14 +19,14 @@ hulls of families, images under linear maps — live elsewhere.
 * `ConvexFn.smul` — multiplication by a nonnegative real.
 * `ConvexFn.comp`, `ConvexFn.comp_extendTop` — **Theorem 5.1**, composition with a nondecreasing
   convex function of one real variable.
-* `ConvexFn.restrict`, `ConvexFn.add_indicatorFn` — restriction to a convex set, which is the same
-  operation as adding an indicator function.
+* `ConvexFn.restrict`, `ConvexFn.add_indicatorFn` — restriction to a convex set, the same operation
+  as adding an indicator function.
 
 ## Implementation notes
 
 Sums carry `∀ x, f x ≠ ⊥` where Rockafellar assumes properness: that is the half which avoids
-`∞ - ∞`, and it cannot be dropped. On `ℝ` let `f` be `⊥` on `Ioi 0` and `⊤` elsewhere, `g` be `⊥`
-on `Iio 0` and `⊤` elsewhere; both are convex, but `f + g` is `⊥` off `0` and `⊤` at `0`, with
+`∞ - ∞`, and it cannot be dropped. On `ℝ` let `f` be `⊥` on `Ioi 0` and `⊤` elsewhere, `g` be `⊥` on
+`Iio 0` and `⊤` elsewhere; both are convex, but `f + g` is `⊥` off `0` and `⊤` at `0`, with a
 nonconvex epigraph `(ℝ \ {0}) ×ˢ univ`. The other half, `dom f` nonempty, is irrelevant.
 
 ## References
@@ -44,8 +44,7 @@ section Basic
 
 variable {E : Type*}
 
-/-- **Rockafellar, Theorem 5.5**, set-theoretic content: the epigraph of a pointwise supremum is
-the intersection of the epigraphs. Support functions are computed this way. -/
+/-- **Theorem 5.5**, set-theoretic content. Support functions are computed this way. -/
 theorem epi_iSup {ι : Sort*} (f : ι → E → EReal) : epi (fun x => ⨆ i, f i x) = ⋂ i, epi (f i) := by
   ext p
   simp [epi, iSup_le_iff]
@@ -59,8 +58,7 @@ theorem epi_sup (f g : E → EReal) : epi (f ⊔ g) = epi f ∩ epi g := by
   ext p
   simp [epi, sup_le_iff]
 
-/-- The effective domain of a sum is the intersection of the effective domains (the remark after
-**Rockafellar, Theorem 5.2**). Both `≠ ⊥` hypotheses are needed: for `f x = ⊥` and `g x = ⊤`,
+/-- The remark after **Theorem 5.2**. Both `≠ ⊥` hypotheses are needed: for `f x = ⊥` and `g x = ⊤`,
 `x` lies in `dom (f + g)` but not in `dom g`. -/
 theorem dom_add {f g : E → EReal} (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) :
     dom (f + g) = dom f ∩ dom g := by
@@ -95,9 +93,8 @@ theorem convexFn_const (c : EReal) : ConvexFn (fun _ : E => c) := by
   have h5 : b * r ≤ b * ν := mul_le_mul_of_nonneg_left h2 hb
   exact_mod_cast (by linarith : r ≤ a * μ + b * ν)
 
-/-- A real-valued linear functional is convex when read into `EReal`. So is its negative, which is
-why the functions that are both convex and concave are exactly the affine ones. The
-pairing-presented form is `convexFn_affineFn`. -/
+/-- Its negative is convex too, which is why the functions both convex and concave are exactly the
+affine ones. The pairing-presented form is `convexFn_affineFn`. -/
 theorem convexFn_coe_linearMap (l : E →ₗ[ℝ] ℝ) :
     ConvexFn (fun x : E => ((l x : ℝ) : EReal)) := by
   have h := convexFn_add_coe (f := fun _ : E => (0 : EReal)) (convexFn_const 0)
@@ -106,9 +103,8 @@ theorem convexFn_coe_linearMap (l : E →ₗ[ℝ] ℝ) :
 
 /-! #### Theorem 5.5: pointwise suprema -/
 
-/-- **Rockafellar, Theorem 5.5.** The pointwise supremum of an arbitrary collection of convex
-functions is convex. The index is a `Sort*`, so the empty family is allowed: the supremum is then
-`⊥`, whose epigraph is all of `E × ℝ`. -/
+/-- **Rockafellar, Theorem 5.5.** The index is a `Sort*`, so the empty family is allowed: the
+supremum is then `⊥`, whose epigraph is all of `E × ℝ`. -/
 theorem convexFn_iSup {ι : Sort*} {f : ι → E → EReal} (h : ∀ i, ConvexFn (f i)) :
     ConvexFn (fun x => ⨆ i, f i x) := by
   refine ⟨?_⟩
@@ -129,9 +125,8 @@ theorem ConvexFn.sup {f g : E → EReal} (hf : ConvexFn f) (hg : ConvexFn g) : C
 
 /-! #### Theorem 5.2: sums -/
 
-/-- **Rockafellar, Theorem 5.2.** The sum of two convex functions neither of which takes the value
-`⊥` is convex. Where the book assumes properness this needs only its `≠ ⊥` half, which prevents
-`∞ - ∞` and cannot be dropped; see the module docstring for a counterexample. -/
+/-- **Rockafellar, Theorem 5.2.** Where the book assumes properness this needs only its `≠ ⊥` half,
+which prevents `∞ - ∞` and cannot be dropped; the module docstring has a counterexample. -/
 theorem ConvexFn.add {f g : E → EReal} (hf : ConvexFn f) (hg : ConvexFn g)
     (hf' : ∀ x, f x ≠ ⊥) (hg' : ∀ x, g x ≠ ⊥) : ConvexFn (f + g) := by
   refine convexFn_of_epi_combo (fun x y μ ν hx hy a b ha hb hab => ?_)
@@ -183,9 +178,8 @@ theorem ConvexFn.sum {ι : Type*} {s : Finset ι} {f : ι → E → EReal}
 
 /-! #### Multiplication by a nonnegative scalar -/
 
-/-- Multiplying a convex function by a nonnegative real preserves convexity. The case `a = 0` is
-covered: `EReal` obeys Rockafellar's convention `0 · ∞ = 0`, so `(0 : EReal) * f` is the zero
-function. -/
+/-- The case `a = 0` is covered: `EReal` obeys the convention `0 · ∞ = 0`, so `(0 : EReal) * f` is
+the zero function. -/
 theorem ConvexFn.smul {f : E → EReal} (a : ℝ) (ha : 0 ≤ a) (hf : ConvexFn f) :
     ConvexFn (fun x => (a : EReal) * f x) := by
   rcases eq_or_lt_of_le ha with rfl | ha'
@@ -200,9 +194,8 @@ theorem ConvexFn.smul {f : E → EReal} (a : ℝ) (ha : 0 ≤ a) (hf : ConvexFn 
 
 /-! #### Theorem 5.1: composition with a nondecreasing convex function -/
 
-/-- `φ : ℝ → EReal` extended to `EReal → EReal` by Rockafellar's convention `φ (+∞) = +∞`, and by
-`φ (-∞) = -∞`, which is the choice that keeps the extension monotone. Theorem 5.1 applies `φ` only
-to the values of a function into `(-∞, +∞]`, so the value at `⊥` is immaterial to it. -/
+/-- `φ : ℝ → EReal` extended to `EReal → EReal` by `φ (+∞) = +∞` and `φ (-∞) = -∞`, the choice that
+keeps the extension monotone; Theorem 5.1 never applies `φ` at `⊥`. -/
 noncomputable def extendTop (φ : ℝ → EReal) : EReal → EReal :=
   _root_.EReal.rec ⊥ φ ⊤
 
@@ -225,15 +218,11 @@ theorem monotone_extendTop {φ : ℝ → EReal} (h : Monotone φ) : Monotone (ex
     | top => simp
     | coe s => exact h (by exact_mod_cast hzw)
 
-/-- **Rockafellar, Theorem 5.1.** If `f : E → EReal` is convex and never `⊥` — that is, `f` maps
-into `(-∞, +∞]` — and `φ : EReal → EReal` is monotone, convex on `ℝ`, and satisfies `φ ⊤ = ⊤`, then
-`x ↦ φ (f x)` is convex.
-
-`EReal` is not an `ℝ`-module, so convexity of `φ` is required only where it is statable; off the
-reals the proof uses just monotonicity and `φ ⊤ = ⊤`. The latter is not decoration — a monotone
-convex `φ : ℝ → EReal` bounded above is constant, and gluing a strictly larger finite value at `⊤`
-breaks convexity of `φ ∘ f` as soon as `dom f` has nonconvex complement. Unlike the book's
-`(-∞, +∞]`, `φ` is not required to avoid `⊥`. -/
+/-- **Rockafellar, Theorem 5.1**, stated for `φ : EReal → EReal` rather than the book's
+`φ : ℝ → (-∞, +∞]`. `EReal` is not an `ℝ`-module, so convexity of `φ` is required only where it is
+statable; off the reals the proof uses just monotonicity and `φ ⊤ = ⊤`. That last is not decoration
+— a monotone convex `φ : ℝ → EReal` bounded above is constant, and gluing a strictly larger finite
+value at `⊤` breaks convexity of `φ ∘ f` as soon as `dom f` has nonconvex complement. -/
 theorem ConvexFn.comp {f : E → EReal} {φ : EReal → EReal} (hf : ConvexFn f)
     (hf' : ∀ x, f x ≠ ⊥) (hφ : ConvexFn fun r : ℝ => φ (r : EReal)) (hmono : Monotone φ)
     (htop : φ ⊤ = ⊤) : ConvexFn (fun x => φ (f x)) := by
@@ -275,8 +264,7 @@ theorem ConvexFn.restrict {f : E → EReal} {s : Set E} (hf : ConvexFn f) (hs : 
   rw [epi_restrict]
   exact hf.convex_epi.inter (hs.prod convex_univ)
 
-/-- Adding an indicator function to `f` amounts to restricting the effective domain of `f`
-(Rockafellar's remark after Theorem 5.2). -/
+/-- Adding an indicator restricts the effective domain: the remark after Theorem 5.2. -/
 theorem ConvexFn.add_indicatorFn {f : E → EReal} {s : Set E} (hf : ConvexFn f)
     (hf' : ∀ x, f x ≠ ⊥) (hs : Convex ℝ s) : ConvexFn (f + indicatorFn s) := by
   rw [← restrict_eq_add_indicatorFn hf']

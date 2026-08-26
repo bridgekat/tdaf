@@ -14,23 +14,21 @@ import Tdaf.Analysis.Convex.Epigraph
 
 To build a convex function on `E`, build a convex set `F ⊆ E × ℝ` and take `ofEpi F`, the function
 whose graph is the *lower boundary* of `F`: `ofEpi F x = inf {μ : ℝ | (x, μ) ∈ F}`, an infimum in
-`EReal`, hence `⊤` over an empty vertical section and `⊥` over one unbounded below. This is the
-single generator of Rockafellar §5 — infimal convolution, right scalar multiplication, the convex
-hull of a family of functions, the image of a function under a linear map and the
-lower-semicontinuous hull are all `ofEpi` of a set built from epigraphs — and it needs no structure
-on `E` at all; only Theorem 5.3 itself needs a real vector space.
+`EReal`, hence `⊤` over an empty vertical section and `⊥` over one unbounded below. Infimal
+convolution, right scalar multiplication, the convex hull of a family of functions, the image under
+a linear map and the lower-semicontinuous hull are all `ofEpi` of a set built from epigraphs. No
+structure on `E` is needed; only Theorem 5.3 itself asks for a real vector space.
 
-`epi (ofEpi F) = F` is false in general: only `F ⊆ epi (ofEpi F)` holds unconditionally, and
-`IsEpiLike F` names the sets for which equality holds. That predicate is *not* preserved by the §5
-operations that matter most — a sum of epigraphs need not be an epigraph, since an infimal
-convolution need not attain its infimum, and neither need the convex hull of a union — so those
-modules carry it as a hypothesis.
+`epi (ofEpi F) = F` is false in general — only `F ⊆ epi (ofEpi F)` always holds — and `IsEpiLike F`
+names the sets where it does. That predicate is not preserved by the operations that matter most: a
+sum of epigraphs need not be an epigraph, since an infimal convolution need not attain its infimum,
+and nor need the convex hull of a union. Those modules carry it as a hypothesis.
 
 ## Main results
 
 * `subset_epi_iff_le_ofEpi` — the adjunction `F ⊆ epi g ↔ g ≤ ofEpi F`: `epi` and `ofEpi` form an
   antitone Galois connection (`gc_ofEpi_epi`, `epiClosure`) whose closed elements are the epi-like
-  sets, and every order fact below is a formal consequence.
+  sets, and the order facts below are formal consequences.
 * `convexFn_ofEpi` — **Theorem 5.3**: `ofEpi F` is convex when `F` is.
 * `ofEpi_epi` — `ofEpi (epi f) = f`, with no hypothesis; `epi_ofEpi` is the converse, under
   `IsEpiLike`.
@@ -65,22 +63,20 @@ theorem ofEpi_apply_le (h : (x, μ) ∈ F) : ofEpi F x ≤ (μ : EReal) :=
 theorem le_ofEpi (h : ∀ μ : ℝ, (x, μ) ∈ F → z ≤ (μ : EReal)) : z ≤ ofEpi F x :=
   le_iInf₂ (f := fun μ (_ : (x, μ) ∈ F) => (μ : EReal)) h
 
-/-- The workhorse of the file: the infimum defining `ofEpi F x` need not be attained, so every
-argument about `ofEpi` proceeds through a strict inequality, which does produce a witness. -/
+/-- The workhorse: the infimum defining `ofEpi F x` need not be attained, so arguments about
+`ofEpi` proceed through a strict inequality, which does produce a witness. -/
 theorem ofEpi_lt_iff : ofEpi F x < z ↔ ∃ μ : ℝ, (x, μ) ∈ F ∧ (μ : EReal) < z := by
   simp only [ofEpi, iInf_lt_iff, exists_prop]
   exact Iff.rfl
 
-/-- **The universal property.** `ofEpi F` is the greatest `EReal`-valued function whose epigraph
-contains `F`. -/
+/-- **The universal property**: `ofEpi F` is the greatest function whose epigraph contains `F`. -/
 theorem subset_epi_iff_le_ofEpi : F ⊆ epi g ↔ g ≤ ofEpi F := by
   constructor
   · exact fun h y => le_ofEpi fun _ hμ => h hμ
   · rintro h ⟨y, ρ⟩ hp
     exact (h y).trans (ofEpi_apply_le hp)
 
-/-- `F` always lies in the epigraph of the function it determines; the reverse inclusion is
-`epi_ofEpi` and needs `IsEpiLike`. -/
+/-- The reverse inclusion is `epi_ofEpi`, and needs `IsEpiLike`. -/
 theorem subset_epi_ofEpi (F : Set (E × ℝ)) : F ⊆ epi (ofEpi F) :=
   subset_epi_iff_le_ofEpi.2 le_rfl
 
@@ -97,8 +93,8 @@ theorem ofEpi_eq_top_iff : ofEpi F x = ⊤ ↔ ∀ μ : ℝ, (x, μ) ∉ F := by
 @[simp] theorem ofEpi_univ : ofEpi (univ : Set (E × ℝ)) = ⊥ :=
   funext fun _ => Tdaf.EReal.eq_bot_of_forall_le_coe fun r => ofEpi_apply_le (mem_univ (_, r))
 
-/-- The epigraph of `f` determines `f` back, with no hypothesis: a vertical section of an epigraph
-is `∅`, `ℝ` or a closed half-line, and in each case the infimum is the value of `f`. -/
+/-- No hypothesis: a vertical section of an epigraph is `∅`, `ℝ` or a closed half-line, and in each
+case its infimum is the value of `f`. -/
 @[simp] theorem ofEpi_epi (f : E → EReal) : ofEpi (epi f) = f := by
   refine le_antisymm (fun x => ?_) (subset_epi_iff_le_ofEpi.1 subset_rfl)
   rcases eq_top_or_lt_top (f x) with h | h
@@ -110,15 +106,13 @@ is `∅`, `ℝ` or a closed half-line, and in each case the infimum is the value
   · obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hb h
     exact hr ▸ ofEpi_apply_le (mk_mem_epi.2 hr.le)
 
-/-- The form in which the §5 operations are identified with their `ofEpi` descriptions. -/
 theorem eq_ofEpi_of_epi_eq (h : epi f = F) : f = ofEpi F := by rw [← h, ofEpi_epi]
 
 theorem ofEpi_apply_congr (h : ∀ μ : ℝ, (x, μ) ∈ F ↔ (x, μ) ∈ G) : ofEpi F x = ofEpi G x := by
   have hs : {μ : ℝ | (x, μ) ∈ F} = {μ : ℝ | (x, μ) ∈ G} := Set.ext h
   simp only [ofEpi, hs]
 
-/-- The effective domain of `ofEpi F` is the projection of `F` on `E`, for any `F`: `ofEpi F x < ⊤`
-says exactly that the vertical section over `x` is nonempty. -/
+/-- For any `F`: `ofEpi F x < ⊤` says exactly that the vertical section over `x` is nonempty. -/
 theorem dom_ofEpi (F : Set (E × ℝ)) : dom (ofEpi F) = Prod.fst '' F := by
   ext x
   constructor
@@ -130,11 +124,10 @@ theorem dom_ofEpi (F : Set (E × ℝ)) : dom (ofEpi F) = Prod.fst '' F := by
 
 /-! ### The Galois connection between sets and functions
 
-The `OrderDual` on the function side is what makes the antitone adjunction fit Mathlib's monotone
+`OrderDual` on the function side makes the antitone adjunction fit Mathlib's monotone
 `GaloisConnection`. -/
 
 open OrderDual in
-/-- `ofEpi` is left adjoint to `epi`, antitonely: `F ⊆ epi g ↔ g ≤ ofEpi F`. -/
 theorem gc_ofEpi_epi :
     GaloisConnection (fun F : Set (E × ℝ) => toDual (ofEpi F))
       (fun g : (E → EReal)ᵒᵈ => epi (ofDual g)) :=
@@ -147,8 +140,7 @@ noncomputable def gi_ofEpi_epi :
       (fun g : (E → EReal)ᵒᵈ => epi (ofDual g)) :=
   gc_ofEpi_epi.toGaloisInsertion fun g => le_of_eq (by simp [ofEpi_epi])
 
-/-- The closure operator `F ↦ epi (ofEpi F)` induced by the adjunction; its closed elements are
-exactly the epi-like sets. -/
+/-- The closure operator `F ↦ epi (ofEpi F)`; its closed elements are the epi-like sets. -/
 noncomputable def epiClosure : ClosureOperator (Set (E × ℝ)) := gc_ofEpi_epi.closureOperator
 
 @[simp] theorem epiClosure_apply (F : Set (E × ℝ)) : epiClosure F = epi (ofEpi F) := rfl
@@ -162,9 +154,8 @@ theorem epi_injective : Function.Injective (epi : (E → EReal) → Set (E × �
 (`isEpiLike_iff_forall`), every vertical section `{μ | (x, μ) ∈ F}` is upward closed and attains
 its infimum — is `∅`, `ℝ`, or a closed half-line `Set.Ici c`.
 
-This is the condition under which `epi (ofEpi F) = F`, and both halves of it are needed: it fails
-for `{p | 0 < p.2}` (upward closed, does not attain) and for `{(0, 0)}` (attains, not upward
-closed). The witness is always `ofEpi F` (`isEpiLike_iff`). -/
+Both halves are needed: it fails for `{p | 0 < p.2}` (upward closed, does not attain) and for
+`{(0, 0)}` (attains, not upward closed). The witness is always `ofEpi F` (`isEpiLike_iff`). -/
 def IsEpiLike (F : Set (E × ℝ)) : Prop := ∃ f : E → EReal, F = epi f
 
 @[simp] theorem isEpiLike_epi (f : E → EReal) : IsEpiLike (epi f) := ⟨f, rfl⟩
@@ -191,8 +182,7 @@ theorem IsEpiLike.mem_of_forall_lt (h : IsEpiLike F) (hμ : ∀ ν : ℝ, μ < �
   obtain ⟨ρ, hμρ, hρq⟩ := exists_between hq
   exact lt_of_le_of_lt (mk_mem_epi.1 (hμ ρ hμρ)) (by exact_mod_cast hρq)
 
-/-- The criterion one checks in practice: a set whose vertical sections are upward closed and
-closed from below is an epigraph. -/
+/-- The criterion one checks in practice. -/
 theorem isEpiLike_of_forall
     (hmono : ∀ (x : E) (μ ν : ℝ), (x, μ) ∈ F → μ ≤ ν → (x, ν) ∈ F)
     (hbelow : ∀ (x : E) (μ : ℝ), (∀ ν : ℝ, μ < ν → (x, ν) ∈ F) → (x, μ) ∈ F) :
@@ -211,8 +201,7 @@ theorem isEpiLike_iff_forall :
   ⟨fun h => ⟨fun _ _ _ hμ hμν => h.mem_of_le hμ hμν, fun _ _ hμ => h.mem_of_forall_lt hμ⟩,
     fun h => isEpiLike_of_forall h.1 h.2⟩
 
-/-- An arbitrary intersection of epigraphs is an epigraph — the epigraph of the pointwise supremum.
-This is the epigraph half of Rockafellar's Theorem 5.5. -/
+/-- The epigraph of the pointwise supremum; the epigraph half of Rockafellar's Theorem 5.5. -/
 theorem IsEpiLike.iInter {ι : Sort*} {F : ι → Set (E × ℝ)} (h : ∀ i, IsEpiLike (F i)) :
     IsEpiLike (⋂ i, F i) := by
   choose f hf using h
@@ -227,9 +216,8 @@ theorem IsEpiLike.inter (hF : IsEpiLike F) (hG : IsEpiLike G) : IsEpiLike (F ∩
   ext p
   simp [epi, sup_le_iff]
 
-/-- The union of two epigraphs is the epigraph of the pointwise minimum. Note that this uses
-linearity of `EReal` and fails for infinite unions: the union of the epigraphs of the constants
-`1 / (n + 1)` is not an epigraph. -/
+/-- The epigraph of the pointwise minimum. This uses linearity of `EReal` and fails for infinite
+unions: the union of the epigraphs of the constants `1 / (n + 1)` is not an epigraph. -/
 theorem IsEpiLike.union (hF : IsEpiLike F) (hG : IsEpiLike G) : IsEpiLike (F ∪ G) := by
   obtain ⟨f, rfl⟩ := hF
   obtain ⟨g, rfl⟩ := hG
@@ -245,10 +233,9 @@ section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
-/-- **Rockafellar, Theorem 5.3.** The function whose graph is the lower boundary of a convex set
-`F ⊆ E × ℝ` is convex. The route is Theorem 4.2 (`convexFn_iff_forall_lt`), which asks only for
-*strict* upper bounds `ofEpi F x < α`; a non-strict one yields no witness, since the infimum
-defining `ofEpi F x` need not be attained. -/
+/-- **Rockafellar, Theorem 5.3.** The function whose graph is the lower boundary of a convex set is
+convex. The route is Theorem 4.2 (`convexFn_iff_forall_lt`), which asks only for *strict* upper
+bounds, a non-strict one yielding no witness. -/
 theorem convexFn_ofEpi {F : Set (E × ℝ)} (hF : Convex ℝ F) : ConvexFn (ofEpi F) := by
   rw [convexFn_iff_forall_lt]
   intro x y a b ha hb hab α β hx hy
@@ -269,9 +256,8 @@ section Topology
 
 variable {E : Type*} [TopologicalSpace E] {F : Set (E × ℝ)}
 
-/-- A **closed** set whose vertical sections are upward closed is an epigraph. Closedness buys the
-attainment half — a closed vertical section contains the infimum of its points — but not the other:
-`{(0, 0)}` is closed and is not an epigraph. -/
+/-- Closedness buys the attainment half of `IsEpiLike` — a closed vertical section contains the
+infimum of its points — but not the other: `{(0, 0)}` is closed and is not an epigraph. -/
 theorem IsEpiLike.of_isClosed
     (hmono : ∀ (x : E) (μ ν : ℝ), (x, μ) ∈ F → μ ≤ ν → (x, ν) ∈ F) (hF : IsClosed F) :
     IsEpiLike F := by
@@ -285,8 +271,7 @@ theorem IsEpiLike.of_isClosed
 
 variable [AddZeroClass E] [ContinuousAdd E]
 
-/-- The closure of an epigraph is an epigraph. This is what `lscHull f := ofEpi (closure (epi f))`
-needs in order to satisfy `epi (lscHull f) = closure (epi f)`. -/
+/-- What `lscHull f := ofEpi (closure (epi f))` needs, to satisfy `epi (lscHull f) = cl (epi f)`. -/
 theorem IsEpiLike.closure (h : IsEpiLike F) : IsEpiLike (_root_.closure F) := by
   refine IsEpiLike.of_isClosed (fun x μ ν hμ hμν => ?_) isClosed_closure
   have hcont : Continuous fun p : E × ℝ => p + ((0 : E), ν - μ) :=
