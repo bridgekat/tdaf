@@ -36,6 +36,9 @@ convex set, and the optimality condition `0 ∈ ∂h x + N_C(x)`.
   `∇f*(0) = ⟨·, x⟩`.
 * `le_of_mem_subgradient_of_neg_mem_normalCone` — **Theorem 27.4**, sufficiency.
 * `exists_mem_subgradient_neg_mem_normalCone` — **Theorem 27.4**, necessity, against `IsExactSum`.
+* `isCompact_setOf_le` — the sublevel set of a closed proper convex function with no direction
+  of recession is compact. The lemma **Theorem 27.2** runs on, and what an existence proof with a
+  compactness step should reach for first.
 * `argmin_nonempty_of_recessionConeFn_eq_zero`, `isCompact_argmin_of_recessionConeFn_eq_zero`,
   `exists_pos_forall_exists_mem_argmin_dist_lt` — **Theorem 27.2**: a closed proper convex function
   with no direction of recession attains its infimum, on a nonempty compact set, and does so in a
@@ -365,9 +368,13 @@ section Existence
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- The level set that carries the argument of Theorem 27.2: nonempty, closed, convex, and — when
-`f` has no direction of recession — compact. -/
-private theorem isCompact_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
+/-- **The level set that carries the argument of Theorem 27.2**: nonempty, closed, convex, and —
+when `f` has no direction of recession — compact.
+
+Public because it is not an implementation detail of Theorem 27.2: Corollary 28.1.1 wants exactly
+this set with exactly these hypotheses, and reaching it through
+`isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le` costs a dozen lines. -/
+theorem isCompact_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hrec : recessionConeFn f = {0}) {α : ℝ} (hne : {z : E | f z ≤ (α : EReal)}.Nonempty) :
     IsCompact {z : E | f z ≤ (α : EReal)} := by
   have hlsc : LowerSemicontinuous f := (closedFn_iff_lowerSemicontinuous hp.ne_bot).1 hc

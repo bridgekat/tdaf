@@ -173,12 +173,12 @@ about ordinary convex programs; all are general convex analysis.
 * `subgradient_coe_affineMap` — `∂a(x)` is the singleton of the Riesz vector of `a.linear`, for
   `a` affine. This is Theorem 23.2 for the affine case and is not in the backbone.
 * `subgradient_zero_mul` — `∂0(x) = {0}`.
-* `coe_mul_add_coe_le_coe_mul_iff` — the `EReal` scaling step `cA + ct ≤ cB ↔ A + t ≤ B` for
-  `c > 0`. `Tdaf/Order/EReal.lean` has `coe_mul_le_coe_mul_iff` but no distribution lemma to feed
-  it.
-* `isCompact_setOf_le` is `private` in `Optimization/Minimum.lean`, so Corollary 28.1.1 routes
-  through `isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le` instead. Making it
-  public would shorten that proof by a dozen lines.
+* ~~`coe_mul_add_coe_le_coe_mul_iff`~~ — the `EReal` scaling step `cA + ct ≤ cB ↔ A + t ≤ B`
+  for `c > 0`. **Closed**: it is now `Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff`, beside the
+  `coe_mul_le_coe_mul_iff` it feeds and the `coe_mul_add_coe` that distributes for it.
+* ~~`isCompact_setOf_le` is `private`~~ — **closed**: it is public in
+  `Optimization/Minimum.lean`, so Corollary 28.1.1 no longer has to route through
+  `isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le`.
 * The `s`-fold product decomposition needed by the decomposition principle, described above.
 
 ## References
@@ -1529,21 +1529,6 @@ private theorem eq_of_forall_pairing_eq {k : ℕ} {v v' : Rn k}
   rw [pairing_apply] at h0
   exact sub_eq_zero.1 (inner_self_eq_zero.1 h0)
 
-private theorem coe_mul_add_coe_le_coe_mul_iff {c : ℝ} (hc : 0 < c) (A B : EReal) (t : ℝ) :
-    ((c : EReal) * A + ((c * t : ℝ) : EReal) ≤ (c : EReal) * B) ↔ A + ((t : ℝ) : EReal) ≤ B := by
-  have key : (c : EReal) * (A + ((t : ℝ) : EReal)) = (c : EReal) * A + ((c * t : ℝ) : EReal) := by
-    induction A using EReal.rec with
-    | bot =>
-      rw [_root_.EReal.bot_add, EReal.coe_mul_bot_of_pos hc, _root_.EReal.bot_add]
-    | coe A =>
-      rw [← _root_.EReal.coe_add, Tdaf.EReal.coe_mul_coe, Tdaf.EReal.coe_mul_coe,
-        ← _root_.EReal.coe_add]
-      congr 1
-      ring
-    | top =>
-      rw [_root_.EReal.top_add_coe, EReal.coe_mul_top_of_pos hc, _root_.EReal.top_add_coe]
-  rw [← key, Tdaf.EReal.coe_mul_le_coe_mul_iff hc]
-
 /-- `∂(cf)(x) = c ∂f(x)` for `c > 0`. -/
 private theorem subgradient_coe_mul {c : ℝ} (hc : 0 < c) (f : Rn n → EReal) (x : Rn n) :
     subgradient (pairing n) (fun y => (c : EReal) * f y) x
@@ -1559,7 +1544,7 @@ private theorem subgradient_coe_mul {c : ℝ} (hc : 0 < c) (f : Rn n → EReal) 
     have hp : pairing n (z - x) (c⁻¹ • v) = c⁻¹ * pairing n (z - x) v := by
       rw [map_smul, smul_eq_mul]
     rw [hp]
-    refine (coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).1 ?_
+    refine (Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).1 ?_
     rw [show c * (c⁻¹ * pairing n (z - x) v) = pairing n (z - x) v from by
       field_simp]
     exact h1
@@ -1568,7 +1553,7 @@ private theorem subgradient_coe_mul {c : ℝ} (hc : 0 < c) (f : Rn n → EReal) 
     have hp : pairing n (z - x) (c • w) = c * pairing n (z - x) w := by
       rw [map_smul, smul_eq_mul]
     rw [hp]
-    exact (coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).2 (hw z)
+    exact (Tdaf.EReal.coe_mul_add_coe_le_coe_mul_iff hc (f x) (f z) _).2 (hw z)
 
 /-- The subgradient of the zero function is `{0}`: this is what "omit terms with `λᵢ = 0`" means
 in Rockafellar's condition (c). -/

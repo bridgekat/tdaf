@@ -21,16 +21,16 @@ A ⁻¹' ri (dom g) ≠ ∅        and        ri (dom f) ∩ ri (dom g) ≠ ∅.
 ```
 
 Until now both were unpopulated interfaces — Theorems 16.3, 16.4, 23.8 and 23.9 were proved
-against them, but nothing produced one. `IsExactImage.of_relint_proper` and `IsExactSum.of_relint`
+against them, but nothing produced one. `IsExactImage.of_relint` and `IsExactSum.of_relint`
 are what discharge them.
 
 ## Main results
 
-* `IsExactImage.of_relint` — **Rockafellar, Theorem 16.3**: if `g` is closed proper convex and the
-  range of `A` meets `ri (dom g)`, then `g` pulls back exactly along `A`.
-  `IsExactImage.of_relint_proper` is the book's own statement, for a *proper convex* `g`, with the
-  closedness removed by Theorem 9.3 (`conj_compLin_eq_conj_compLin_clFn`). It is the constructor
-  every consumer should use; `of_relint` is the closed case that carries the argument.
+* `IsExactImage.of_relint` — **Rockafellar, Theorem 16.3**: if `g` is *proper convex* and the
+  range of `A` meets `ri (dom g)`, then `g` pulls back exactly along `A`. This is the book's own
+  statement and the constructor every consumer should use.
+  `IsExactImage.of_relint_closed` is the closed case, which carries the argument; the closedness
+  comes off by Theorem 9.3 (`conj_compLin_eq_conj_compLin_clFn`).
 * `IsExactSum.of_relint` — **Rockafellar, Theorem 16.4**: two *proper convex* functions whose
   effective domains share a relative interior point add exactly. `IsExactSum.of_relint_closed` is
   the closed case, which carries the actual argument.
@@ -159,7 +159,7 @@ linear map whose range meets the relative interior of its effective domain.
 This is the first constructor for `IsExactImage`, and with it Theorem 16.3
 (`IsExactImage.conj_compLin`) and Theorem 23.9 (`IsExactImage.subgradient_compLin`) acquire their
 first supplied instances. -/
-theorem IsExactImage.of_relint [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
+theorem IsExactImage.of_relint_closed [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
     [IsCompatiblePairing B.flip] (hA : IsAdjointPair B B' A A') (hg : ClosedProperConvexFn g)
     {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) :
     IsExactImage B B' A A' hA g := by
@@ -507,17 +507,17 @@ theorem conj_compLin_eq_conj_compLin_clFn (A : E →ₗ[ℝ] G) {x₀ : E}
 exactly along a linear map whose range meets `ri (dom g)`. Closedness is not needed, and
 Rockafellar does not assume it.
 
-`IsExactImage.of_relint` is the closed case, which carries the argument; the reduction is
+`IsExactImage.of_relint_closed` is the closed case, which carries the argument; the reduction is
 Theorem 9.3 in the conjugate form `conj_compLin_eq_conj_compLin_clFn`, together with
 Corollary 7.4.1 (`ConvexFn.relint_dom_clFn`), which says `cl g` has the same relative interior of
 effective domain. This is the image-side counterpart of `IsExactSum.of_relint`, and it is what
 lets Theorem 16.3, its attainment clause and Theorem 23.9 be stated with the book's hypotheses
 without each of them re-running the closure reduction. -/
-theorem IsExactImage.of_relint_proper [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
+theorem IsExactImage.of_relint [IsCompatiblePairing B'] [IsCompatiblePairing B'.flip]
     [IsCompatiblePairing B.flip] (hA : IsAdjointPair B B' A A') (hg : ConvexFn g) (hp : Proper g)
     {x₀ : E} (hx₀ : A x₀ ∈ ri (dom g)) :
     IsExactImage B B' A A' hA g := by
-  have hcl := IsExactImage.of_relint hA
+  have hcl := IsExactImage.of_relint_closed hA
     ⟨convexFn_clFn hg, closedFn_clFn g, hg.proper_clFn hp⟩
     (show A x₀ ∈ ri (dom (clFn g)) by rw [hg.relint_dom_clFn hp]; exact hx₀)
   have heq : conj B (compLin g A) = conj B (compLin (clFn g) A) :=

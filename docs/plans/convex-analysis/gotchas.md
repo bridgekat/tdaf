@@ -1450,13 +1450,19 @@ previous session's file.
 **BLD7. The 100-character bar is not enforced by anything, and both obvious ways of checking it are
 wrong.** `awk 'length > 100'` counts UTF-8 *bytes*, so every line containing `ℝ`, `≤`, `∈`, `•` or
 `₂` looks three to fifteen characters over and a clean file appears to have dozens of violations.
-And **`linter.style.longLine` never fires in this repository**: `lakefile.toml` sets
-`weak.linter.mathlibStandardSet = true`, and the long-line linter is not in that set. Verified
-empirically — a deliberately inserted 120-codepoint theorem signature produces no warning from a
-clean `lake env lean`. Symptom: a file passes `lake build` with zero warnings and still violates the
-bar. **Count codepoints** (`len(line.rstrip('\n')) > 100` in Python) before every commit; there is
-no linter to fall back on. An earlier version of this entry said to build and trust the linter, and
-that advice let two over-long lines through in one round.
+**Corrected.** This entry used to say `linter.style.longLine` never fires here. It does — a full
+`lake build` reports `This line exceeds the 100 character limit`, twice in the round that found
+this. What is true is narrower, and is already **BLD20**: `lake env lean` does not run the style
+linters, and the "verified empirically" experiment behind the old claim was run with `lake env
+lean`. So the symptom is real but the cause is not the linter set: **a file can be silent through
+every iteration and warn only on the final full build.**
+
+Practical consequence: `lake build` is a real check, but it is the *slowest* one and it arrives
+last. **Count codepoints** (`len(line.rstrip('\n')) > 100` in Python) before every commit anyway —
+it is instant, it covers files the build would not rebuild, and it catches the cascade where
+rewrapping one long line pushes the overflow onto the next (three iterations in one paragraph, this
+round). An earlier version of this entry said to build and trust the linter, and that advice let two
+over-long lines through in one round.
 
 **BLD8. `#print axioms` wraps long declaration names, so grepping its output under-counts.** Piping
 through `grep 'depends on axioms: \[propext, Classical.choice, Quot.sound\]'` silently misses every

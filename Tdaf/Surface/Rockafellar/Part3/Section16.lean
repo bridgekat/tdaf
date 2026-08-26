@@ -297,12 +297,12 @@ theorem theorem_16_3_closure (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (h
 closure operation can be omitted and `(gA)* = A*g*`.
 
 Rockafellar's hypotheses are `g` proper convex, not closed. Specialises
-`IsExactImage.of_relint_proper`, which is the backbone constructor carrying that reduction, and
+`IsExactImage.of_relint`, which is the backbone constructor carrying that reduction, and
 `IsExactImage.conj_compLin`. -/
 theorem theorem_16_3_exact (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (hg : ConvexFn g)
     (hp : Proper g) {x₀ : Rn n} (hx₀ : A x₀ ∈ ri (dom g)) :
     conj (pairing n) (compLin g A) = mapLin (LinearMap.adjoint A) (conj (pairing m) g) :=
-  (IsExactImage.of_relint_proper (isAdjointPair_adjoint A) hg hp hx₀).conj_compLin
+  (IsExactImage.of_relint (isAdjointPair_adjoint A) hg hp hx₀).conj_compLin
 
 /-- **Rockafellar, Theorem 16.3**, the attainment: under the same qualification, for each `x*` the
 infimum `inf {g*(y*) | A*y* = x*}` is attained (or is `+∞` vacuously).
@@ -314,7 +314,7 @@ theorem theorem_16_3_attained (A : Rn n →ₗ[ℝ] Rn m) {g : Rn m → EReal} (
     (hy : conj (pairing n) (compLin g A) y < ⊤) :
     ∃ z : Rn m, LinearMap.adjoint A z = y ∧
       conj (pairing m) g z = conj (pairing n) (compLin g A) y :=
-  (IsExactImage.of_relint_proper (isAdjointPair_adjoint A) hg hp hx₀).exists_conj_compLin_eq hy
+  (IsExactImage.of_relint (isAdjointPair_adjoint A) hg hp hx₀).exists_conj_compLin_eq hy
 
 /-- **Rockafellar, §16**, the unnumbered remark at book line 5869: when `g` is *polyhedral*, the
 qualification `Ax ∈ ri (dom g)` of Theorem 16.3 weakens to `Ax ∈ dom g`, and the conclusion is

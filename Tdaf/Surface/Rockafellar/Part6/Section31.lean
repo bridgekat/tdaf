@@ -548,7 +548,7 @@ private theorem isExactImage_neg_of_relint {g : Rn m → EReal} (A : Rn n →ₗ
     (hg : ClosedProperConcaveFn g) {x₀ : Rn n} (hx₀ : A x₀ ∈ ri (domConcave g)) :
     IsExactImage (pairing n) (pairing m) A (LinearMap.adjoint A) (isAdjointPair_adjoint A)
       fun w => -(g w) :=
-  IsExactImage.of_relint (isAdjointPair_adjoint A) hg.neg (by rwa [← domConcave_eq_dom_neg])
+  IsExactImage.of_relint_closed (isAdjointPair_adjoint A) hg.neg (by rwa [← domConcave_eq_dom_neg])
 
 /-- Condition (a) of Corollary 31.2.1, the exact-sum half: **Theorem 16.4**, with the relative
 interior of `dom (-(g A)) = A⁻¹ (dom (-g))` computed by **Theorem 6.7**. -/

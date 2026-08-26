@@ -135,7 +135,8 @@ Every theorem below that needs the agreement carries the properness hypothesis e
 so its conjugate is `-(F* ·)(u*)` by Theorem 38.4's supremum formula, and `g(x) = ⟨Gx, y*⟩` has
 `G* y*` as its concave conjugate by construction. All that is left is that the triple infimum
 defining `((GF)* y*)(u*)` really is `⨅ x (f x - g x)`, which needs the double infimum over `u`
-and `y` to split. It does — `iInf_add_iInf_of_ne_bot` — but the hypothesis is that neither of the
+and `y` to split. It does — `Tdaf.EReal.iInf_add_iInf_of_ne_bot` — but the hypothesis is that
+neither of the
 two *infima* is `-∞`, not that the values avoid `±∞`. That is the mirror image of
 `Tdaf.EReal.biSup_add_biSup`, whose hypothesis is on the values, and it is the form properness
 supplies: `IsExactSum` demands exactly `f x ≠ -∞` and `g x ≠ +∞`.
@@ -412,47 +413,6 @@ private theorem sub_sub_eq_add_sub {a b c : EReal} (ha : a ≠ ⊥) (hc : c ≠ 
   change b + (c + -a) = b + c + -a
   rw [← add_assoc]
 
-/-- A real constant minus an infimum is the supremum of the differences. -/
-private theorem coe_sub_iInf {ι : Sort*} (r : ℝ) (u : ι → EReal) :
-    (r : EReal) - ⨅ i, u i = ⨆ i, ((r : EReal) - u i) := by
-  rw [sub_eq_add_neg, Tdaf.EReal.neg_iInf, add_comm, Tdaf.EReal.iSup_add_coe]
-  exact iSup_congr fun i => by rw [add_comm, ← sub_eq_add_neg]
-
-/-- A constant moves inside an infimum whose value is not `⊥`. Only `c = ⊤` needs an argument, and
-there `⨅ u ≠ ⊥` is what makes every `u i + ⊤` equal to `⊤`. -/
-private theorem add_iInf_of_ne_bot {ι : Sort*} [Nonempty ι] (a : EReal) (u : ι → EReal)
-    (hu : (⨅ i, u i) ≠ ⊥) : a + (⨅ i, u i) = ⨅ i, (a + u i) := by
-  have hui : ∀ i, u i ≠ ⊥ := fun i h => hu (le_bot_iff.1 (h ▸ iInf_le u i))
-  induction a with
-  | bot =>
-    have h : ∀ i, (⊥ : EReal) + u i = ⊥ := fun i => _root_.EReal.bot_add (u i)
-    rw [_root_.EReal.bot_add]
-    simp only [h, iInf_const]
-  | coe r =>
-    rw [add_comm, Tdaf.EReal.iInf_add_coe]
-    exact iInf_congr fun i => add_comm _ _
-  | top =>
-    have h : ∀ i, (⊤ : EReal) + u i = ⊤ := fun i => by
-      rw [add_comm]; exact _root_.EReal.add_top_of_ne_bot (hui i)
-    rw [add_comm, _root_.EReal.add_top_of_ne_bot hu]
-    simp only [h, iInf_const]
-
-/-- The mirror of `add_iInf_of_ne_bot`, with the constant on the right. -/
-private theorem iInf_add_of_ne_bot {ι : Sort*} [Nonempty ι] (u : ι → EReal)
-    (hu : (⨅ i, u i) ≠ ⊥) (c : EReal) : (⨅ i, u i) + c = ⨅ i, (u i + c) := by
-  rw [add_comm, add_iInf_of_ne_bot c u hu]
-  exact iInf_congr fun i => add_comm _ _
-
-/-- **The infimum of a sum splits**, provided neither infimum is `⊥`. This is the infimal mirror
-of `Tdaf.EReal.biSup_add_biSup`, but with a *different* hypothesis: for suprema it is the values
-that must avoid `⊥`, here it is the two infima themselves. Values avoiding `⊤` would do as well,
-but that is not what properness supplies. -/
-private theorem iInf_add_iInf_of_ne_bot {ι κ : Sort*} [Nonempty ι] [Nonempty κ]
-    (u : ι → EReal) (v : κ → EReal) (hu : (⨅ i, u i) ≠ ⊥) (hv : (⨅ j, v j) ≠ ⊥) :
-    (⨅ i, u i) + (⨅ j, v j) = ⨅ i, ⨅ j, (u i + v j) := by
-  rw [iInf_add_of_ne_bot u hu]
-  exact iInf_congr fun i => add_iInf_of_ne_bot (u i) v hv
-
 end ERealAux
 
 /-! ### The image of a convex function under a bifunction -/
@@ -632,7 +592,7 @@ theorem conj_imageBifun_eq_iSup (hbF : ∀ u x, F u x ≠ ⊥) (hbf : ∀ u, f u
   rw [conj_apply]
   calc (⨆ x : X, (((Bx x y : ℝ) : EReal) - imageBifun F f x))
       = ⨆ x : X, ⨆ u : U, (((Bx x y : ℝ) : EReal) - (f u + F u x)) :=
-        iSup_congr fun x => coe_sub_iInf _ _
+        iSup_congr fun x => Tdaf.EReal.coe_sub_iInf _ _
     _ = ⨆ u : U, ⨆ x : X, (((Bx x y : ℝ) : EReal) - (f u + F u x)) := iSup_comm
     _ = ⨆ u : U, (bracket Bx F u y - f u) := iSup_congr hstep
 
@@ -1216,19 +1176,6 @@ section SmulRightBifunAdjoint
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] {l : ℝ}
 
-/-- A positive real factor distributes over a sum whose right summand is real. No side condition
-is needed: `l * ⊤ = ⊤` and `l * ⊥ = ⊥` for `l > 0`, and a real summand cannot cancel either. -/
-private theorem coe_mul_add_coe (hl : 0 < l) (a : EReal) (c : ℝ) :
-    (l : EReal) * (a + (c : EReal)) = (l : EReal) * a + ((l * c : ℝ) : EReal) := by
-  induction a with
-  | bot => simp [EReal.coe_mul_bot_of_pos hl]
-  | coe x =>
-    rw [← _root_.EReal.coe_add, ← _root_.EReal.coe_mul, ← _root_.EReal.coe_mul,
-      ← _root_.EReal.coe_add, mul_add]
-  | top =>
-    rw [EReal.top_add_of_ne_bot (_root_.EReal.coe_ne_bot c), EReal.coe_mul_top_of_pos hl,
-      EReal.top_add_of_ne_bot (_root_.EReal.coe_ne_bot _)]
-
 /-- **Rockafellar, Theorem 38.3**, the adjoint formula: `(Fλ)* = F*λ` for `λ > 0`.
 
 Right scalar multiplication commutes with taking adjoints, and no hypothesis beyond `0 < l` is
@@ -1244,7 +1191,8 @@ theorem adjointBifun_smulRightBifun (hl : 0 < l) (Bu : U →ₗ[ℝ] V →ₗ[�
   rw [smulRight_apply_pos hl, adjointBifun_apply, adjointBifun_apply,
     Tdaf.EReal.coe_mul_iInf hl, ← hsurj.iInf_comp]
   refine iInf_congr fun p => ?_
-  rw [smulRightBifun_apply, smulRight_apply_pos hl, inv_smul_smul₀ hl0, coe_mul_add_coe hl]
+  rw [smulRightBifun_apply, smulRight_apply_pos hl, inv_smul_smul₀ hl0,
+    Tdaf.EReal.coe_mul_add_coe hl]
   have hr : l * (Bu p.1 (l⁻¹ • v) - Bx p.2 y) = Bu p.1 v - Bx (l • p.2) y := by
     simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
     field_simp
@@ -1358,7 +1306,8 @@ difference between the convex `⟨v, F⁎x⟩` and the concave `⟨Gx, z⟩`.
 
 This is the whole `EReal` content of Rockafellar's proof: the triple infimum defining
 `((GF)* z)(v)` is reindexed as `⨅ x ⨅ u ⨅ y`, and the inner double infimum splits
-(`iInf_add_iInf_of_ne_bot`) because neither half is `-∞` — which is exactly the properness that
+(`Tdaf.EReal.iInf_add_iInf_of_ne_bot`) because neither half is `-∞` — which is exactly the
+properness that
 Fenchel's duality theorem will demand of the two functions. -/
 theorem adjointBifun_compBifun_eq_iInf (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (By : Y →ₗ[ℝ] Z →ₗ[ℝ] ℝ)
     (F : Bifun U X) (G : Bifun X Y) {z : Z} {v : V}
@@ -1398,7 +1347,7 @@ theorem adjointBifun_compBifun_eq_iInf (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (B
         rw [iInf_congr hswap, iInf_comm]
     _ = ⨅ x, (concaveBracket Bu.flip (invBifun F) v x - bracket By G x z) := by
         refine iInf_congr fun x => ?_
-        rw [← iInf_add_iInf_of_ne_bot _ _ (by rw [hfa x]; exact hfb x)
+        rw [← Tdaf.EReal.iInf_add_iInf_of_ne_bot _ _ (by rw [hfa x]; exact hfb x)
           (by rw [hgb x]; simpa using hgt x), hfa x, hgb x]
         rfl
 
@@ -1790,7 +1739,7 @@ theorem lowerAdjointBifun_eq_conj_concaveBracket_invBifun (Bu : U →ₗ[ℝ] V 
   rw [lowerAdjointBifun_apply, adjointBifun_apply, Tdaf.EReal.neg_iInf, conj_apply, iSup_prod,
     iSup_comm]
   refine iSup_congr fun y => ?_
-  rw [concaveBracket_invBifun_apply, coe_sub_iInf]
+  rw [concaveBracket_invBifun_apply, Tdaf.EReal.coe_sub_iInf]
   refine iSup_congr fun v => ?_
   have hu : (Bu.flip v u : ℝ) = Bu u v := rfl
   have hx : (Bx.flip y x : ℝ) = Bx x y := rfl

@@ -111,6 +111,39 @@ theorem coe_mul_le_coe_mul_iff {a : ℝ} (ha : 0 < a) {z w : EReal} :
   rwa [← mul_assoc, ← mul_assoc, ← _root_.EReal.coe_mul, inv_mul_cancel₀ ha.ne',
     _root_.EReal.coe_one, one_mul, one_mul] at h'
 
+/-- **If `z` is at most every positive real, then `z ≤ 0`.** The conclusion is genuinely weaker
+than `z ≤ r` for a fixed `r`: `z` may be any non-positive extended real.
+
+Both of §30's counterexamples run on this — it is how "the optimal value is not positive" is
+extracted from a family of feasible solutions whose values tend to `0`. -/
+theorem le_zero_of_forall_le_pos {z : EReal} (h : ∀ ε : ℝ, 0 < ε → z ≤ (ε : EReal)) : z ≤ 0 := by
+  by_contra hc
+  obtain ⟨q, hq0, hqz⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 (not_le.1 hc)
+  exact absurd (h q (by exact_mod_cast hq0)) (not_le.2 hqz)
+
+/-- **A positive real factor distributes over a sum whose right summand is real.** No side
+condition beyond `0 < l` is needed: `l * ⊤ = ⊤` and `l * ⊥ = ⊥` for `l > 0`, and a real summand
+can cancel neither. -/
+theorem coe_mul_add_coe {l : ℝ} (hl : 0 < l) (a : EReal) (c : ℝ) :
+    (l : EReal) * (a + (c : EReal)) = (l : EReal) * a + ((l * c : ℝ) : EReal) := by
+  induction a with
+  | bot => simp [_root_.EReal.coe_mul_bot_of_pos hl]
+  | coe x =>
+    rw [← _root_.EReal.coe_add, coe_mul_coe, coe_mul_coe, ← _root_.EReal.coe_add, mul_add]
+  | top =>
+    rw [_root_.EReal.top_add_of_ne_bot (_root_.EReal.coe_ne_bot c),
+      _root_.EReal.coe_mul_top_of_pos hl,
+      _root_.EReal.top_add_of_ne_bot (_root_.EReal.coe_ne_bot _)]
+
+/-- **Scaling an inequality that carries a real offset**, `cA + ct ≤ cB ↔ A + t ≤ B` for `c > 0`.
+
+`Tdaf.EReal.coe_mul_le_coe_mul_iff` reflects the order through a positive factor but has no
+distribution lemma to feed it; this is that combination. It is what a positive Lagrange multiplier
+does to a constraint, and §28 needed it four times. -/
+theorem coe_mul_add_coe_le_coe_mul_iff {c : ℝ} (hc : 0 < c) (A B : EReal) (t : ℝ) :
+    (c : EReal) * A + ((c * t : ℝ) : EReal) ≤ (c : EReal) * B ↔ A + (t : EReal) ≤ B := by
+  rw [← coe_mul_add_coe hc, coe_mul_le_coe_mul_iff hc]
+
 /-- An extended real is determined by the real numbers that bound it above. -/
 theorem eq_of_forall_le_coe_iff {z w : EReal}
     (h : ∀ r : ℝ, z ≤ (r : EReal) ↔ w ≤ (r : EReal)) : z = w := by
@@ -486,6 +519,96 @@ theorem biSup_add_biSup {α β : Type*} {s : Set α} {t : Set β} {u : α → ER
   refine iSup_congr fun a => iSup_congr fun _ => ?_
   rw [add_comm (u a), biSup_add_of_ne_bot hv]
   exact iSup_congr fun _ => iSup_congr fun _ => add_comm _ _
+
+/-- A *real* constant may be moved in and out of an infimum from the **left**. The mirror of
+`Tdaf.EReal.iInf_add_coe`, which has it on the right. -/
+theorem coe_add_iInf {ι : Sort*} (r : ℝ) (u : ι → EReal) :
+    (r : EReal) + (⨅ i, u i) = ⨅ i, ((r : EReal) + u i) := by
+  rw [add_comm, iInf_add_coe]
+  exact iInf_congr fun i => add_comm _ _
+
+/-- **A real constant subtracted from an infimum turns it into a supremum.** -/
+theorem coe_sub_iInf {ι : Sort*} (r : ℝ) (u : ι → EReal) :
+    (r : EReal) - ⨅ i, u i = ⨆ i, ((r : EReal) - u i) := by
+  rw [sub_eq_add_neg, neg_iInf, add_comm, iSup_add_coe]
+  exact iSup_congr fun i => by rw [add_comm, ← sub_eq_add_neg]
+
+/-- An arbitrary constant may be moved in and out of an infimum **whose value is not `⊥`**.
+
+Note where the hypothesis sits: for suprema (`Tdaf.EReal.biSup_add_of_ne_bot`) it is the *values*
+that must avoid `⊥`; here it is the infimum itself. Only `a = ⊤` needs an argument, and there
+`⨅ u ≠ ⊥` is what makes every `u i + ⊤` equal `⊤`. -/
+theorem add_iInf_of_ne_bot {ι : Sort*} [Nonempty ι] (a : EReal) (u : ι → EReal)
+    (hu : (⨅ i, u i) ≠ ⊥) : a + (⨅ i, u i) = ⨅ i, (a + u i) := by
+  have hui : ∀ i, u i ≠ ⊥ := fun i h => hu (le_bot_iff.1 (h ▸ iInf_le u i))
+  induction a with
+  | bot =>
+    have h : ∀ i, (⊥ : EReal) + u i = ⊥ := fun i => _root_.EReal.bot_add (u i)
+    rw [_root_.EReal.bot_add]
+    simp only [h, iInf_const]
+  | coe r =>
+    rw [add_comm, iInf_add_coe]
+    exact iInf_congr fun i => add_comm _ _
+  | top =>
+    have h : ∀ i, (⊤ : EReal) + u i = ⊤ := fun i => by
+      rw [add_comm]; exact _root_.EReal.add_top_of_ne_bot (hui i)
+    rw [add_comm, _root_.EReal.add_top_of_ne_bot hu]
+    simp only [h, iInf_const]
+
+/-- The mirror of `Tdaf.EReal.add_iInf_of_ne_bot`, with the constant on the right. -/
+theorem iInf_add_of_ne_bot {ι : Sort*} [Nonempty ι] (u : ι → EReal)
+    (hu : (⨅ i, u i) ≠ ⊥) (c : EReal) : (⨅ i, u i) + c = ⨅ i, (u i + c) := by
+  rw [add_comm, add_iInf_of_ne_bot c u hu]
+  exact iInf_congr fun i => add_comm _ _
+
+/-- **An infimum of `⊥` survives adding any constant but `⊤`.** The case the two lemmas above
+cannot state, and the one the product form below needs to dispose of its degenerate corner. -/
+theorem iInf_add_eq_bot {ι : Sort*} [Nonempty ι] {u : ι → EReal} (hu : (⨅ i, u i) = ⊥)
+    {c : EReal} (hc : c ≠ ⊤) : (⨅ i, (u i + c)) = ⊥ := by
+  induction c with
+  | bot => simp
+  | coe r => rw [← iInf_add_coe, hu, _root_.EReal.bot_add]
+  | top => exact absurd rfl hc
+
+/-- **The infimum of a sum splits**, provided neither infimum is `⊥`. The infimal mirror of
+`Tdaf.EReal.biSup_add_biSup`, but with a *different* hypothesis: for suprema it is the values that
+must avoid `⊥`, here it is the two infima themselves. Values avoiding `⊤` would do as well, but
+that is not what properness supplies. -/
+theorem iInf_add_iInf_of_ne_bot {ι κ : Sort*} [Nonempty ι] [Nonempty κ]
+    (u : ι → EReal) (v : κ → EReal) (hu : (⨅ i, u i) ≠ ⊥) (hv : (⨅ j, v j) ≠ ⊥) :
+    (⨅ i, u i) + (⨅ j, v j) = ⨅ i, ⨅ j, (u i + v j) := by
+  rw [iInf_add_of_ne_bot u hu]
+  exact iInf_congr fun i => add_iInf_of_ne_bot (u i) v hv
+
+/-- **An infimum over a product of a separated sum splits**, under the single hypothesis that
+neither infimum is `⊤`.
+
+This is the form a bifunction adjoint needs, and its hypothesis is *not* the one of
+`Tdaf.EReal.iInf_add_iInf_of_ne_bot`: the `⊥` cases are not excluded here but handled, since when
+one infimum is `⊥` the other being below `⊤` forces both sides to `⊥`. Some hypothesis is
+necessary — with `ψ i = -i` on `ℕ` and `φ ≡ ⊤` the left side is `⊤` and the right side is `⊥`. -/
+theorem iInf_prod_add {α β : Type*} [Nonempty α] [Nonempty β] (ψ : α → EReal) (φ : β → EReal)
+    (hψ : (⨅ a, ψ a) ≠ ⊤) (hφ : (⨅ b, φ b) ≠ ⊤) :
+    (⨅ p : α × β, (ψ p.1 + φ p.2)) = (⨅ a, ψ a) + ⨅ b, φ b := by
+  have hprod : (⨅ p : α × β, (ψ p.1 + φ p.2)) = ⨅ a, ⨅ b, (ψ a + φ b) := iInf_prod
+  rw [hprod]
+  by_cases hψb : (⨅ a, ψ a) = ⊥
+  · obtain ⟨b₀, hb₀⟩ : ∃ b, φ b ≠ ⊤ := by
+      by_contra hcon
+      exact hφ (le_antisymm le_top (le_iInf fun b => ge_of_eq (not_not.1 (not_exists.1 hcon b))))
+    rw [hψb, _root_.EReal.bot_add]
+    refine le_antisymm (le_trans (iInf_mono fun a => iInf_le _ b₀) ?_) bot_le
+    exact le_of_eq (iInf_add_eq_bot hψb hb₀)
+  by_cases hφb : (⨅ b, φ b) = ⊥
+  · obtain ⟨a₀, ha₀⟩ : ∃ a, ψ a ≠ ⊤ := by
+      by_contra hcon
+      exact hψ (le_antisymm le_top (le_iInf fun a => ge_of_eq (not_not.1 (not_exists.1 hcon a))))
+    rw [hφb, _root_.EReal.add_bot]
+    refine le_antisymm (le_trans (iInf_le _ a₀) ?_) bot_le
+    refine le_of_eq ?_
+    rw [← iInf_add_eq_bot (u := φ) hφb ha₀]
+    exact iInf_congr fun b => add_comm _ _
+  · exact (iInf_add_iInf_of_ne_bot ψ φ hψb hφb).symm
 
 /-- **A real summand slides out of a difference.** `(p + q) - u = (p - u) + q` for real `p`, `q`
 and arbitrary `u : EReal`.

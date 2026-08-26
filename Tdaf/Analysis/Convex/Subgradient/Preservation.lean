@@ -40,10 +40,10 @@ strict convexity on a set. Theorem 26.3 read backwards returns essential smoothn
 
 **The `ri` hypotheses are carried by the D5 interfaces.** Rockafellar's hypotheses are
 `ri (dom f₁*) ∩ ri (dom f₂*) ≠ ∅` and `∃ y*, A' y* ∈ ri (dom f*)`. Both are *sufficient conditions*
-for `IsExactSum` and `IsExactImage` (`IsExactSum.of_relint`, `IsExactImage.of_relint`), and both
-theorems are stated against the interfaces, with the book's form as a corollary. That is what makes
-the polyhedral (§20) and continuity (§10) qualifications applicable to the same two theorems
-without restating them.
+for `IsExactSum` and `IsExactImage` (`IsExactSum.of_relint`, `IsExactImage.of_relint`), and
+both theorems are stated against the interfaces, with the book's form as a corollary. That is
+what makes the polyhedral (§20) and continuity (§10) qualifications applicable to the same two
+theorems without restating them.
 
 **The transpose is on the left in Corollary 26.3.3.** The identity being used is
 `A f = (f* A')*`, so the *interface* instance is `IsExactImage` for the map `A'` from the dual of
@@ -242,13 +242,13 @@ theorem IsExactImage.essentiallySmooth_mapLin {hA : IsAdjointPair (innerₗ G) (
 
 /-- **Rockafellar, Corollary 26.3.3**, with the book's hypotheses: `A` onto and some `y₀` with
 `A' y₀ ∈ ri (dom f*)`. The first gives injectivity of the transpose, the second the exactness
-(`IsExactImage.of_relint`). -/
+(`IsExactImage.of_relint_closed`). -/
 theorem essentiallySmooth_mapLin_of_relint (hA : IsAdjointPair (innerₗ G) (innerₗ E) A' A)
     (hf : ClosedProperConvexFn f) (hes : EssentiallySmooth f) (hsurj : Function.Surjective A)
     {y₀ : G} (hy₀ : A' y₀ ∈ ri (dom (conj (innerₗ E) f))) :
     EssentiallySmooth (mapLin A f) :=
   IsExactImage.essentiallySmooth_mapLin
-    (IsExactImage.of_relint hA ⟨convexFn_conj _ f, closedFn_conj, proper_conj hf⟩ hy₀) hf hes
+    (IsExactImage.of_relint_closed hA ⟨convexFn_conj _ f, closedFn_conj, proper_conj hf⟩ hy₀) hf hes
     (injective_of_isAdjointPair_of_surjective hA hsurj)
 
 end Image
