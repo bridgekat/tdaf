@@ -471,8 +471,9 @@ def swapLin (E G : Type*) [AddCommGroup E] [Module ℝ E] [AddCommGroup G] [Modu
 /-- Rockafellar's `Ff`, the **image of a convex function under a convex bifunction**:
 `(Ff)(x) = ⨅ u, f u + (Fu)(x)`.
 
-When `F` is the convex indicator bifunction of a linear map `A`, this is the image `Af` of `f`
-under `A`. -/
+When `F` is the convex indicator bifunction of a linear map `A`, this is the image `mapLin A f` of
+`f` under `A` — `ConvexProcess.imageBifun_indicatorBifun_ofLinearMap`, which needs `f` to be
+nowhere `⊥` because off the fibre of `A` the summand is `⊤`. -/
 noncomputable def imageBifun (F : Bifun U X) (f : U → EReal) : X → EReal :=
   fun x => ⨅ u, f u + F u x
 
