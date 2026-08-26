@@ -52,6 +52,9 @@ a gap gets closed once rather than once per surface.
 * `pairing_comm`, `forall_pairing_le_comm`, `forall_pairing_lt_comm` — the pairing is symmetric.
   A book writes a linear system as `⟨aᵢ, x⟩ ≤ αᵢ` and the backbone quantifies the other way round;
   these are the translation.
+* `pairing_eq_sum`, `pairing_two` — the pairing in coordinates, `⟨u, v⟩ = ∑ᵢ uᵢvᵢ` and its `n = 2`
+  instance. Every two-dimensional counterexample in a textbook opens with the second, and three
+  sections wrote it out `private` before it was put here.
 * `separatingRight_pairing` — `(pairing n).SeparatingRight`, which several backbone theorems ask
   for as a hypothesis and which is otherwise re-derived, at every call site, from
   `separatingRight_flip_of_separatingDual`.
@@ -134,6 +137,21 @@ theorem forall_pairing_le_comm {n : ℕ} {ι : Sort*} (a : ι → Rn n) (α : ι
 theorem forall_pairing_lt_comm {n : ℕ} {ι : Sort*} (a : ι → Rn n) (α : ι → ℝ) (x : Rn n) :
     (∀ i, pairing n (a i) x < α i) ↔ ∀ i, pairing n x (a i) < α i :=
   forall_congr' fun i => by rw [pairing_comm]
+
+/-- **The pairing in coordinates**: `⟨u, v⟩ = ∑ᵢ uᵢ vᵢ`. The inner product of
+`EuclideanSpace ℝ (Fin n)` is the `RCLike` sum, and over `ℝ` the conjugation is the identity.
+
+Every explicit computation a book performs on a named vector goes through this, so it is public
+here rather than `private` in whichever section happened to need it first. -/
+theorem pairing_eq_sum {n : ℕ} (u v : Rn n) : pairing n u v = ∑ i, u i * v i := by
+  simp only [pairing_apply, PiLp.inner_apply, RCLike.inner_apply, conj_trivial]
+  exact Finset.sum_congr rfl fun i _ => mul_comm _ _
+
+/-- **The pairing on `ℝ²` in coordinates**: `⟨u, v⟩ = u₀v₀ + u₁v₁`. Rockafellar's
+counterexamples are two-dimensional almost without exception, and this is the first line of every
+one of them. -/
+theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
+  rw [pairing_eq_sum, Fin.sum_univ_two]
 
 /-- **`pairing n` separates on the right**, which is the hypothesis the backbone's level-set and
 recession duality asks for in place of a book's `y ≠ 0`. It follows from

@@ -310,13 +310,8 @@ theorem theorem_23_4_finite_iff {f : Rn n → EReal} (hf : ConvexFn f) (hp : Pro
 
 Theorem 23.4 places the set of points at which a proper convex function is subdifferentiable
 between `ri (dom f)` and `dom f`. Rockafellar immediately observes (p. 218) that it need not be
-convex, and gives the example transcribed here. -/
-
-/-- The pairing on `ℝ²` in coordinates. -/
-private theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
-  simp only [pairing_apply, PiLp.inner_apply, Fin.sum_univ_two, RCLike.inner_apply,
-    conj_trivial]
-  ring
+convex, and gives the example transcribed here. The coordinate formula `⟨u, v⟩ = u₀v₀ + u₁v₁` it
+runs on is `Tdaf.Surface.pairing_two`. -/
 
 /-- **Rockafellar, p. 218.** The function `f(ξ₁, ξ₂) = max {g(ξ₁), |ξ₂|}` on `ℝ²`, where
 `g(ξ₁) = 1 - ξ₁^{1/2}` for `ξ₁ ≥ 0` and `g(ξ₁) = +∞` for `ξ₁ < 0`.

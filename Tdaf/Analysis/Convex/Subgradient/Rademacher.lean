@@ -37,6 +37,9 @@ differentiability are dense there, and the gradient map is continuous where it i
   an inner-product space, which is what lets Corollary 24.5.1 (stated for `innerₗ E`) speak about
   gradients (which live in `StrongDual ℝ E`), and what carries `Subgradient/Legendre.lean`'s
   general-normed-space Theorem 26.4 to a statement about `conj (innerₗ E)`.
+* `normalCone_innerₗ_closedBall` — the normal cone to the unit ball at a boundary point is the ray
+  through it. This is Rockafellar's remark at book line 14061, and it needs neither finite
+  dimension nor completeness — only the equality case of Cauchy–Schwarz.
 
 ## Design notes
 
@@ -366,5 +369,56 @@ theorem continuousOn_fderiv_of_convexOn {C : Set E} {g : E → ℝ} (hC : IsOpen
     (HasGradientAt.fderiv_toReal_eq (hgrad z hz)).symm
 
 end GradientContinuity
+
+/-! ### The normal cone to the unit ball -/
+
+section NormalCone
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- **The normal cone to the unit ball at a boundary point is the ray through that point**:
+`N_B(x) = {λx | λ ≥ 0}` for `‖x‖ = 1`. Rockafellar records this in §32 (book line 14061), where it
+turns Theorem 32.4 at a maximiser over the ball into the "eigenvalue" condition `λx ∈ ∂f(x)`.
+
+Both inclusions are the equality case of Cauchy–Schwarz. For `⊆`, testing the normality
+inequality at the unit vector `y / ‖y‖` gives `‖y‖ ≤ ⟪x, y⟫`, which together with
+`⟪x, y⟫ ≤ ‖x‖‖y‖ = ‖y‖` forces equality, and `inner_eq_norm_mul_iff_real` then reads off
+`y = ‖y‖ • x`. For `⊇`, `⟪z, x⟫ ≤ ‖z‖ ≤ 1 = ⟪x, x⟫`.
+
+No finite-dimensionality and no completeness: the statement is about the inner product alone. -/
+theorem normalCone_innerₗ_closedBall {x : E} (hx : ‖x‖ = 1) :
+    normalCone (innerₗ E) (closedBall (0 : E) 1) x
+      = {y : E | ∃ lam : ℝ, 0 ≤ lam ∧ y = lam • x} := by
+  have hxx : (inner ℝ x x : ℝ) = 1 := by
+    rw [real_inner_self_eq_norm_mul_norm, hx, mul_one]
+  ext y
+  simp only [mem_normalCone, Set.mem_ofPred_eq, map_sub, LinearMap.sub_apply, sub_nonpos,
+    mem_closedBall, dist_zero_right, innerₗ_apply_apply]
+  constructor
+  · intro hy
+    rcases eq_or_ne y 0 with rfl | hy0
+    · exact ⟨0, le_rfl, by simp⟩
+    have hn0 : 0 < ‖y‖ := norm_pos_iff.2 hy0
+    have hmem : ‖(‖y‖⁻¹ : ℝ) • y‖ ≤ 1 := by
+      rw [norm_smul, norm_inv, norm_norm, inv_mul_cancel₀ (ne_of_gt hn0)]
+    have hkey := hy _ hmem
+    rw [real_inner_smul_left, real_inner_self_eq_norm_mul_norm, inv_mul_eq_div, mul_div_assoc,
+      div_self (ne_of_gt hn0), mul_one] at hkey
+    have hcs : (inner ℝ x y : ℝ) ≤ ‖x‖ * ‖y‖ := real_inner_le_norm x y
+    have heq : (inner ℝ x y : ℝ) = ‖x‖ * ‖y‖ := by
+      rw [hx, one_mul] at hcs ⊢
+      exact le_antisymm hcs hkey
+    have hsm : ‖y‖ • x = ‖x‖ • y := inner_eq_norm_mul_iff_real.1 heq
+    rw [hx, one_smul] at hsm
+    exact ⟨‖y‖, hn0.le, hsm.symm⟩
+  · rintro ⟨lam, hlam, rfl⟩ z hz
+    have hcs : (inner ℝ z x : ℝ) ≤ ‖z‖ * ‖x‖ := real_inner_le_norm z x
+    rw [hx, mul_one] at hcs
+    have hzx : (inner ℝ z x : ℝ) ≤ 1 := le_trans hcs hz
+    simp only [real_inner_smul_right]
+    rw [hxx]
+    nlinarith
+
+end NormalCone
 
 end Tdaf.ConvexAnalysis

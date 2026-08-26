@@ -61,7 +61,13 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
   `extremePoints_convexHullPD_subset` and `exists_mem_eq_smul_of_mem_extremeDirections` are the
   two halves of **Corollary 18.3.1**: an extreme point of `conv S` is a point of `S`, and — when
   no half-line meets the points of `S` in an unbounded set — an extreme direction of `conv S` is
-  the direction of a vector of `S`.
+  the direction of a vector of `S`. `finite_extremePoints_convexHullPD` is the counting corollary
+  a finitely generated set wants.
+* `containsNoLine_inter_of_isCompl` — intersecting a closed convex set with a complement `N` of
+  its lineality space leaves a set containing no lines. Together with `eq_add_inter_of_isCompl`
+  (`Recession/Cone.lean`) this is Rockafellar's reduction of a general closed convex set to a
+  line-free one, and it is what makes every "contains no lines" theorem here applicable to
+  `C ∩ N`.
 * `extremePoints_subset_closure_exposedPoints` — **Theorem 18.6, Straszewicz's theorem**: the
   exposed points of a closed convex set are dense in its extreme points. `Mathlib` does not have
   this. `mem_exposedPoints_of_forall_norm_sub_le` is the geometric heart (a farthest point is
@@ -492,6 +498,17 @@ theorem extremePoints_convexHullPD_subset (P D : Set E) :
   exact extremePoints_convexHull_subset
     (mem_extremePoints_of_subset hx (convexHull_subset_convexHullPD P D) (hux ▸ hu))
 
+/-- **A hull of finitely many points and directions has finitely many extreme points**, which is
+the parenthetical "(finitely many)" of Rockafellar's Corollary 32.3.4. Immediate from
+`extremePoints_convexHullPD_subset`, which puts every extreme point among the generating points.
+
+`FinitelyGenerated C` is `∃ P D : Finset E, C = convexHullPD ↑P ↑D`, so this is the whole content
+of "a finitely generated convex set has finitely many extreme points"; the bundled form belongs
+in `Polyhedral/Faces.lean`, the lowest module that sees both `FinitelyGenerated` and this file. -/
+theorem finite_extremePoints_convexHullPD (P D : Finset E) :
+    ((convexHullPD (P : Set E) (D : Set E)).extremePoints ℝ).Finite :=
+  P.finite_toSet.subset (extremePoints_convexHullPD_subset _ _)
+
 end ConeExtreme
 
 /-! ### Faces and directions of recession -/
@@ -574,6 +591,28 @@ theorem containsNoLine_iff_linealitySpace_eq_zero (hC : Convex ℝ C) (hCcl : Is
     have hy : y ∈ linealitySpace C := mem_linealitySpace_of_forall_add_smul_mem hC hCcl hall
     rw [h] at hy
     exact hy0 hy
+
+/-- **Intersecting a closed convex set with a complement of its lineality space kills every
+line.** This is what makes Rockafellar's direct-sum decomposition `C = L + (C ∩ N)`
+(`eq_add_inter_of_isCompl`) useful: the second summand is a set to which every theorem carrying a
+"contains no lines" hypothesis applies.
+
+A line in `C ∩ N` is a line in `C`, so its direction lies in `L`
+(`mem_linealitySpace_of_forall_add_smul_mem`); it is also a difference of two points of the
+subspace `N`, so it lies in `N`; and `L ⊓ N = ⊥`. -/
+theorem containsNoLine_inter_of_isCompl (hC : Convex ℝ C) (hCcl : IsClosed C)
+    {N : Submodule ℝ E} (hN : IsCompl (linealitySubmodule C) N) :
+    ContainsNoLine (C ∩ (N : Set E)) := by
+  intro a y hy0
+  by_contra hcon
+  push Not at hcon
+  have hyL : y ∈ linealitySubmodule C :=
+    mem_linealitySubmodule.2
+      (mem_linealitySpace_of_forall_add_smul_mem hC hCcl fun t => (hcon t).1)
+  have hyN : y ∈ N := by
+    have hdiff := N.sub_mem (hcon 1).2 (hcon 0).2
+    rwa [show a + (1 : ℝ) • y - (a + (0 : ℝ) • y) = y by module] at hdiff
+  exact hy0 (by simpa using hN.disjoint.le_bot ⟨hyL, hyN⟩)
 
 /-- An extreme direction is a direction of recession: **Theorem 8.3** applied to the half-line
 face. -/

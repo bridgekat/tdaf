@@ -376,13 +376,9 @@ Rockafellar's two warnings about the definition are the counterexamples below. -
 
 /-! ### Coordinates on `ℝ²`
 
-The three counterexamples of the section all live on `ℝ²`, and these are the four facts about
-`Rn 2` they need. They are `private`: nothing outside this module should be reading coordinates. -/
-
-/-- Coordinates of the pairing on `ℝ²`. -/
-private theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
-  simp [PiLp.inner_apply, Fin.sum_univ_two]
-  ring
+The three counterexamples of the section all live on `ℝ²`, and these are the facts about `Rn 2`
+they need beyond the shared `Tdaf.Surface.pairing_two`. They are `private`: nothing outside this
+module should be reading coordinates. -/
 
 private theorem sub_apply_two (u v : Rn 2) (i : Fin 2) : (u - v) i = u i - v i := rfl
 

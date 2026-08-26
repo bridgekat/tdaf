@@ -6,6 +6,7 @@ Authors: TDAF contributors
 import Tdaf.Analysis.Convex.Duality.Support
 import Tdaf.Analysis.Convex.Optimization.Maximum
 import Tdaf.Analysis.Convex.Subgradient.Existence
+import Tdaf.Analysis.Convex.Subgradient.Rademacher
 import Tdaf.Surface.Common.Euclidean
 
 /-!
@@ -104,15 +105,16 @@ backbone quotients the lineality space by an *arbitrary* complement rather than 
 backbone's `exists_isMaxOn_of_polyhedral_of_bddAboveOnRays` in fact concludes exactly what the
 book concludes — bare attainment, `∃ z ∈ C, ∀ w ∈ C, f w ≤ f z` — and the arbitrary complement
 never reaches the statement: it is chosen inside the proof by `Submodule.exists_isCompl`.
-`corollary_32_3_3` here is therefore a one-line specialisation with no divergence at all. What
-*does* diverge is **Theorem 32.3**, whose book form indexes the supremum by the extreme points of
-`C ∩ L⊥`; `Maximum.lean`'s own `## What is not here` says so, and gives the reason — fixing `L⊥`
-in the statement would force an inner product on a development that is otherwise free of one.
-**The surface has the inner product, so it restores the book's form**: `theorem_32_3` and
-`theorem_32_3_attained` are stated with `C ∩ (linealitySubmodule C)ᗮ`, exactly as printed at
-13979. The backbone statement is still the more general one — it holds for any complement of the
-lineality space, on any finite-dimensional normed space — and a reader checking alignment should
-read the two together rather than treating either as the correction of the other.
+`corollary_32_3_3` here is therefore a one-line specialisation with no divergence at all. The same
+holds of **Theorem 32.3**, whose book form indexes the supremum by the extreme points of `C ∩ L⊥`:
+the backbone states it for an arbitrary complement `N` of the lineality space
+(`ConvexFn.iSup_extremePoints_inter_of_isCompl`), because fixing `L⊥` would force an inner product
+on a development that is otherwise free of one. **The surface has the inner product, so it
+restores the book's form**: `theorem_32_3` and `theorem_32_3_attained` are the instances at
+`N = (linealitySubmodule C)ᗮ`, exactly as printed at 13979. The backbone statement is the more
+general one — it holds for any complement, on any finite-dimensional normed space — and a reader
+checking alignment should read the two together rather than treating either as the correction of
+the other.
 
 **Corollary 32.4.1 does not go through Theorem 32.2.** Rockafellar passes to `C = conv S` so that
 Theorem 32.4 can be applied to a convex set. The backbone's Theorem 32.4
@@ -179,70 +181,14 @@ about this and the surface states none either.
 
 ## Backbone gaps
 
-None of these blocks a numbered result; each cost a `private` lemma here.
-
-**Theorem 32.3 in a form the surface can specialise.** `Maximum.lean` proves the two ends of
-Theorem 32.3 — the `ContainsNoLine` case and Corollary 32.3.3 — but not the statement in between,
-so restoring the book's `C ∩ L⊥` form meant re-running the lineality-space decomposition here
-(`exists_mem_inter_eq_of_isCompl`, `containsNoLine_inter_of_isCompl`,
-`iSup_extremePoints_inter_of_isCompl`, about forty lines, all copied from the proof of
-`exists_isMaxOn_of_polyhedral_of_bddAboveOnRays`). What is wanted, in
-`Tdaf/Analysis/Convex/Optimization/Maximum.lean`:
-
-```lean
-theorem ConvexFn.iSup_extremePoints_inter_of_isCompl (hf : ConvexFn f) (hC : Convex ℝ C)
-    (hCcl : IsClosed C) (hray : BddAboveOnRays f C) {N : Submodule ℝ E}
-    (hN : IsCompl (linealitySubmodule C) N) :
-    (⨆ x ∈ C, f x) = ⨆ x ∈ (C ∩ (N : Set E)).extremePoints ℝ, f x
-
-theorem exists_mem_extremePoints_inter_eq_of_isMaxOn_of_isCompl (hf : ConvexFn f)
-    (hC : Convex ℝ C) (hCcl : IsClosed C) (hray : BddAboveOnRays f C) {N : Submodule ℝ E}
-    (hN : IsCompl (linealitySubmodule C) N) {x : E} (hx : x ∈ C) (hmax : ∀ w ∈ C, f w ≤ f x) :
-    ∃ z ∈ (C ∩ (N : Set E)).extremePoints ℝ, f z = f x
-```
-
-with `exists_isMaxOn_of_polyhedral_of_bddAboveOnRays` re-derived from the second. These are
-strictly more general than the book's `L⊥` statement, need no inner product, and would make
-`theorem_32_3` and `theorem_32_3_attained` one-line specialisations.
-
-**`ConvexFn.iSup_extremePoints_of_containsNoLine` asks for a uniform bound where its proof needs
-only `BddAboveOnRays`.** `ConvexFn.exists_mem_convexHull_extremePoints_le`, which is the whole
-proof, was already generalised to `BddAboveOnRays`; the supremum statement above it was not, so
-it cannot be used for Theorem 32.3 as the book states it (where `f` may well be unbounded on
-`C` — take `C = {(ξ₁, ξ₂) | ξ₁² ≤ ξ₂}` and `f (ξ₁, ξ₂) = ξ₁`, whose only half-lines are vertical).
-What is wanted, in the same module and replacing the present statement:
-
-```lean
-theorem ConvexFn.iSup_extremePoints_of_containsNoLine (hf : ConvexFn f) (hC : Convex ℝ C)
-    (hCcl : IsClosed C) (hnl : ContainsNoLine C) (hray : BddAboveOnRays f C) :
-    (⨆ x ∈ C, f x) = ⨆ x ∈ C.extremePoints ℝ, f x
-```
-
-The proof does not change; only `bddAboveOnRays_of_forall_le hbdd` disappears from it.
-`iSup_extremePoints_of_bddAboveOnRays` here is that statement, `private`.
-
-**A finitely generated set has finitely many extreme points, and nobody says so.**
-`Maximum.lean` derives it inline inside
-`exists_mem_extremePoints_isMaxOn_of_finitelyGenerated_of_bddAboveOnRays`, and
-`corollary_32_3_4_finite` derives it again, both from `extremePoints_convexHullPD_subset`.
-What is wanted, in `Tdaf/Analysis/Convex/Representation.lean` beside that lemma:
-
-```lean
-theorem FinitelyGenerated.finite_extremePoints (hC : FinitelyGenerated C) :
-    (C.extremePoints ℝ).Finite
-```
-
-**The normal cone to the Euclidean unit ball.** `normalCone_closedBall` — the vectors normal to
-the unit ball at a boundary point `x` are the `λx`, `λ ≥ 0` — is the whole content of the remark
-at 14061 and is not in the backbone. It belongs in
-`Tdaf/Analysis/Convex/Subgradient/Defs.lean` or beside the inner-product bridges in
-`Tdaf/Analysis/Convex/Subgradient/Rademacher.lean`, stated for an arbitrary real inner-product
-space:
-
-```lean
-theorem normalCone_innerₗ_closedBall {x : E} (hx : ‖x‖ = 1) :
-    normalCone (innerₗ E) (Metric.closedBall 0 1) x = {y | ∃ lam : ℝ, 0 ≤ lam ∧ y = lam • x}
-```
+**None.** Every gap the first draft of this file recorded is closed, and the `private` lemmas that
+stood in for them are gone: `ConvexFn.iSup_extremePoints_inter_of_isCompl` and
+`exists_mem_extremePoints_inter_eq_of_isMaxOn_of_isCompl` are Theorem 32.3 for an arbitrary
+complement of the lineality space, `ConvexFn.iSup_extremePoints_of_containsNoLine` now asks for
+`BddAboveOnRays` rather than a uniform bound, `finite_extremePoints_convexHullPD`
+(`Representation.lean`) is the "(finitely many)" of Corollary 32.3.4, and
+`normalCone_innerₗ_closedBall` (`Subgradient/Rademacher.lean`) is the remark at 14061, stated for
+an arbitrary real inner-product space.
 
 ## References
 
@@ -384,105 +330,33 @@ theorem bddAboveOnRays_iff (hCdom : C ⊆ dom f) :
       exact ⟨β, fun t _ => by simpa using hβ.le⟩
     · exact h u v hv hray
 
-private theorem iSup_extremePoints_of_bddAboveOnRays (hf : ConvexFn f) (hC : Convex ℝ C)
-    (hCcl : IsClosed C) (hnl : ContainsNoLine C) (hray : BddAboveOnRays f C) :
-    (⨆ x ∈ C, f x) = ⨆ x ∈ C.extremePoints ℝ, f x := by
-  refine le_antisymm (iSup₂_le fun x hx => ?_)
-    (iSup₂_le fun x hx => le_iSup₂ (f := fun z (_ : z ∈ C) => f z) x (extremePoints_subset hx))
-  obtain ⟨u, hu, hle⟩ := hf.exists_mem_convexHull_extremePoints_le hC hCcl hnl hray hx
-  refine hle.trans ?_
-  rw [← hf.iSup_convexHull (C.extremePoints ℝ)]
-  exact le_iSup₂ (f := fun z (_ : z ∈ convexHull ℝ (C.extremePoints ℝ)) => f z) u hu
-
-private theorem exists_mem_inter_eq_of_isCompl (hf : ConvexFn f) (hray : BddAboveOnRays f C)
-    {N : Submodule ℝ (Rn n)} (hN : IsCompl (linealitySubmodule C) N) {w : Rn n} (hw : w ∈ C) :
-    ∃ q ∈ C ∩ (N : Set (Rn n)), f w = f q := by
-  have hdec : C = (linealitySubmodule C : Set (Rn n)) + (C ∩ (N : Set (Rn n))) :=
-    eq_add_inter_of_isCompl hN
-  obtain ⟨p, hp, q, hq, rfl⟩ :=
-    (hdec ▸ hw : w ∈ (linealitySubmodule C : Set (Rn n)) + (C ∩ (N : Set (Rn n))))
-  refine ⟨q, hq, ?_⟩
-  change f (p + q) = f q
-  rw [show p + q = q + p by abel]
-  exact hf.add_eq_of_mem_linealitySpace hray hq.1 (by simpa using hp)
-
-private theorem containsNoLine_inter_of_isCompl (hCconv : Convex ℝ C) (hCcl : IsClosed C)
-    {N : Submodule ℝ (Rn n)} (hN : IsCompl (linealitySubmodule C) N) :
-    ContainsNoLine (C ∩ (N : Set (Rn n))) := by
-  intro a y hy0
-  by_contra hcon
-  push Not at hcon
-  have hyC : y ∈ recessionCone C :=
-    mem_recessionCone_of_exists_ray hCconv hCcl ⟨a, fun t _ => (hcon t).1⟩
-  have hyC' : -y ∈ recessionCone C := by
-    refine mem_recessionCone_of_exists_ray hCconv hCcl ⟨a, fun t _ => ?_⟩
-    rw [show a + t • (-y) = a + (-t) • y by module]
-    exact (hcon (-t)).1
-  have hyL : y ∈ linealitySubmodule C :=
-    mem_linealitySubmodule.2 (mem_linealitySpace.2 ⟨hyC, hyC'⟩)
-  have hyN : y ∈ N := by
-    have hdiff := N.sub_mem (hcon 1).2 (hcon 0).2
-    rwa [show a + (1 : ℝ) • y - (a + (0 : ℝ) • y) = y by module] at hdiff
-  exact hy0 (by simpa using hN.disjoint.le_bot ⟨hyL, hyN⟩)
-
-private theorem inter_facts {N : Submodule ℝ (Rn n)} (hC : Convex ℝ C) (hCcl : IsClosed C) :
-    Convex ℝ (C ∩ (N : Set (Rn n))) ∧ IsClosed (C ∩ (N : Set (Rn n))) :=
-  ⟨hC.inter (Submodule.convex N), hCcl.inter (Submodule.closed_of_finiteDimensional N)⟩
-
-/-- **Rockafellar, Theorem 32.3** (13973), for an arbitrary complement `N` of the lineality
-space. -/
-private theorem iSup_extremePoints_inter_of_isCompl (hf : ConvexFn f) (hC : Convex ℝ C)
-    (hCcl : IsClosed C) (hray : BddAboveOnRays f C) {N : Submodule ℝ (Rn n)}
-    (hN : IsCompl (linealitySubmodule C) N) :
-    (⨆ x ∈ C, f x) = ⨆ x ∈ (C ∩ (N : Set (Rn n))).extremePoints ℝ, f x := by
-  obtain ⟨hDconv, hDcl⟩ := inter_facts (N := N) hC hCcl
-  have hDnl := containsNoLine_inter_of_isCompl hC hCcl hN
-  rw [← iSup_extremePoints_of_bddAboveOnRays hf hDconv hDcl hDnl
-    (hray.mono Set.inter_subset_left)]
-  refine le_antisymm (iSup₂_le fun x hx => ?_) (iSup₂_le fun x hx =>
-    le_iSup₂ (f := fun z (_ : z ∈ C) => f z) x (Set.inter_subset_left hx))
-  obtain ⟨q, hq, hfq⟩ := exists_mem_inter_eq_of_isCompl hf hray hN hx
-  rw [hfq]
-  exact le_iSup₂ (f := fun z (_ : z ∈ C ∩ (N : Set (Rn n))) => f z) q hq
-
 /-- **Rockafellar, Theorem 32.3** (13973), in the book's own form: `sup_C f = sup_E f`, where
 `E` is the set of extreme points of `C ∩ L⊥` and `L` is the lineality space of `C` (13979).
 
-`Maximum.lean` declines to state this form, because fixing `L⊥` needs an inner product it does
-not want to assume, and proves the two ends instead — `ContainsNoLine` (`L = 0`) and Corollary
-32.3.3. Here the inner product is available, so `L⊥` can be named: the whole content is the
-decomposition `C = L + (C ∩ L⊥)` (`eq_add_inter_of_isCompl` at the complement
-`Submodule.isCompl_orthogonal`), along which `f` is constant, plus Theorem 32.3 applied to
-`C ∩ L⊥`, which contains no lines. See the module docstring, `## Backbone gaps`. -/
+The backbone states this for an *arbitrary* complement `N` of `L`
+(`ConvexFn.iSup_extremePoints_inter_of_isCompl`), since fixing `L⊥` would need an inner product it
+does not want to assume. Here the inner product is available, so `L⊥` can be named, and this is
+that theorem at `N = L⊥` (`Submodule.isCompl_orthogonal`). -/
 theorem theorem_32_3 (hf : ConvexFn f) (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hCdom : C ⊆ dom f) (hray : NoUnboundedHalfLine f C) :
     (⨆ x ∈ C, f x)
       = ⨆ x ∈ (C ∩ ((linealitySubmodule C)ᗮ : Set (Rn n))).extremePoints ℝ, f x :=
-  iSup_extremePoints_inter_of_isCompl hf hC hCcl ((bddAboveOnRays_iff hCdom).2 hray)
+  hf.iSup_extremePoints_inter_of_isCompl hC hCcl ((bddAboveOnRays_iff hCdom).2 hray)
     (Submodule.isCompl_orthogonal _)
 
 /-- **Rockafellar, Theorem 32.3** (13973): "the supremum relative to `C` is attained only when
 the supremum relative to `E` is attained" (13979).
 
 The maximiser is transported to `C ∩ L⊥` along the lineality space, where Corollary 32.3.1
-applies. Rockafellar's `C ⊆ dom f` is what supplies `f x ≠ ⊤` there. -/
+applies; that is `exists_mem_extremePoints_inter_eq_of_isMaxOn_of_isCompl`, again at `N = L⊥`.
+Rockafellar's `C ⊆ dom f` is what supplies `f x ≠ ⊤` there, and the backbone reads it off
+`BddAboveOnRays` rather than taking it as a separate hypothesis. -/
 theorem theorem_32_3_attained (hf : ConvexFn f) (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hCdom : C ⊆ dom f) (hray : NoUnboundedHalfLine f C) {x : Rn n} (hx : x ∈ C)
     (hmax : ∀ w ∈ C, f w ≤ f x) :
-    ∃ z ∈ (C ∩ ((linealitySubmodule C)ᗮ : Set (Rn n))).extremePoints ℝ, f z = f x := by
-  have hray' : BddAboveOnRays f C := (bddAboveOnRays_iff hCdom).2 hray
-  have hN : IsCompl (linealitySubmodule C) (linealitySubmodule C)ᗮ :=
-    Submodule.isCompl_orthogonal _
-  obtain ⟨hDconv, hDcl⟩ := inter_facts (N := (linealitySubmodule C)ᗮ) hC hCcl
-  have hDnl := containsNoLine_inter_of_isCompl hC hCcl hN
-  obtain ⟨q, hq, hfq⟩ := exists_mem_inter_eq_of_isCompl hf hray' hN hx
-  have hqmax : ∀ w ∈ C ∩ ((linealitySubmodule C)ᗮ : Set (Rn n)), f w ≤ f q := by
-    intro w hw
-    rw [← hfq]
-    exact hmax w hw.1
-  obtain ⟨z, hz, hzq⟩ := exists_mem_extremePoints_eq_of_isMaxOn_of_containsNoLine hf hDconv
-    hDcl hDnl hq (by rw [← hfq]; exact (mem_dom.1 (hCdom hx)).ne) hqmax
-  exact ⟨z, hz, by rw [hzq, ← hfq]⟩
+    ∃ z ∈ (C ∩ ((linealitySubmodule C)ᗮ : Set (Rn n))).extremePoints ℝ, f z = f x :=
+  exists_mem_extremePoints_inter_eq_of_isMaxOn_of_isCompl hf hC hCcl
+    ((bddAboveOnRays_iff hCdom).2 hray) (Submodule.isCompl_orthogonal _) hx hmax
 
 /-- **Rockafellar, Corollary 32.3.1** (13995): if the supremum of a convex function over a
 closed convex set containing no lines is attained at all, it is attained at an extreme point.
@@ -556,7 +430,8 @@ set is finitely generated (Theorem 19.1) and the extreme points of `conv P + con
 (Corollary 18.3.1). -/
 theorem corollary_32_3_4_finite (hC : Polyhedral C) : (C.extremePoints ℝ).Finite := by
   obtain ⟨P, D, hCeq⟩ := hC.finitelyGenerated
-  exact P.finite_toSet.subset (by rw [hCeq]; exact extremePoints_convexHullPD_subset _ _)
+  rw [show C = convexHullPD (P : Set (Rn n)) (D : Set (Rn n)) from hCeq]
+  exact finite_extremePoints_convexHullPD P D
 
 /-- **Rockafellar, §32 (13971)**: "Theorem 32.2 can be applied to a given closed convex set `C`
 by representing `C` as the convex hull of its extreme points and extreme directions as in §18."
@@ -583,7 +458,7 @@ is the form Corollary 32.3.1 is read off. -/
 theorem theorem_32_3_containsNoLine (hf : ConvexFn f) (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hCdom : C ⊆ dom f) (hray : NoUnboundedHalfLine f C) (hnl : ContainsNoLine C) :
     (⨆ x ∈ C, f x) = ⨆ x ∈ C.extremePoints ℝ, f x :=
-  iSup_extremePoints_of_bddAboveOnRays hf hC hCcl hnl ((bddAboveOnRays_iff hCdom).2 hray)
+  hf.iSup_extremePoints_of_containsNoLine hC hCcl hnl ((bddAboveOnRays_iff hCdom).2 hray)
 
 /-- **Rockafellar, Corollary 32.3.2** (13999), supremum form: over a compact convex set the
 supremum of a convex function is already the supremum over the extreme points. This is
@@ -690,40 +565,14 @@ theorem corollary_32_4_1 (hp : Proper f) {S : Set (Rn n)} {x : Rn n} (hxri : x �
     (mem_dom.1 (intrinsicInterior_subset hxri)).ne hmax hy) hz
 
 /-- **Rockafellar, §32 (14061)**: the vectors normal to the Euclidean unit ball at a boundary
-point `x` are exactly the `λx` with `λ ≥ 0`. -/
+point `x` are exactly the `λx` with `λ ≥ 0`.
+
+`pairing n` is an `abbrev` for `innerₗ (Rn n)`, so this is the backbone's
+`normalCone_innerₗ_closedBall`, which holds in any real inner-product space. -/
 theorem normalCone_closedBall {x : Rn n} (hx : ‖x‖ = 1) :
     normalCone (pairing n) (Metric.closedBall (0 : Rn n) 1) x
-      = {y : Rn n | ∃ lam : ℝ, 0 ≤ lam ∧ y = lam • x} := by
-  have hxx : (inner ℝ x x : ℝ) = 1 := by
-    rw [real_inner_self_eq_norm_mul_norm, hx, mul_one]
-  ext y
-  simp only [mem_normalCone, Set.mem_ofPred_eq, map_sub, LinearMap.sub_apply,
-    sub_nonpos, Metric.mem_closedBall, dist_zero_right]
-  constructor
-  · intro hy
-    rcases eq_or_ne y 0 with rfl | hy0
-    · exact ⟨0, le_rfl, by simp⟩
-    have hn0 : 0 < ‖y‖ := norm_pos_iff.2 hy0
-    have hmem : ‖(‖y‖⁻¹ : ℝ) • y‖ ≤ 1 := by
-      rw [norm_smul, norm_inv, norm_norm, inv_mul_cancel₀ (ne_of_gt hn0)]
-    have hkey := hy _ hmem
-    rw [pairing_apply, pairing_apply, real_inner_smul_left,
-      real_inner_self_eq_norm_mul_norm, inv_mul_eq_div, mul_div_assoc,
-      div_self (ne_of_gt hn0), mul_one] at hkey
-    have hcs : (inner ℝ x y : ℝ) ≤ ‖x‖ * ‖y‖ := real_inner_le_norm x y
-    have heq : (inner ℝ x y : ℝ) = ‖x‖ * ‖y‖ := by
-      rw [hx, one_mul] at hcs ⊢
-      exact le_antisymm hcs hkey
-    have hsm : ‖y‖ • x = ‖x‖ • y := inner_eq_norm_mul_iff_real.1 heq
-    rw [hx, one_smul] at hsm
-    exact ⟨‖y‖, hn0.le, hsm.symm⟩
-  · rintro ⟨lam, hlam, rfl⟩ z hz
-    have hcs : (inner ℝ z x : ℝ) ≤ ‖z‖ * ‖x‖ := real_inner_le_norm z x
-    rw [hx, mul_one] at hcs
-    have hzx : (inner ℝ z x : ℝ) ≤ 1 := le_trans hcs hz
-    simp only [pairing_apply, real_inner_smul_right]
-    rw [hxx]
-    nlinarith
+      = {y : Rn n | ∃ lam : ℝ, 0 ≤ lam ∧ y = lam • x} :=
+  normalCone_innerₗ_closedBall hx
 
 /-- **Rockafellar, §32 (14061)**: at a maximiser of `f` over the unit Euclidean ball,
 maximisation leads to the "eigenvalue" condition `λx ∈ ∂f(x)`, `|x| = 1`. -/
@@ -742,13 +591,9 @@ theorem theorem_32_4_ball {x : Rn n} (hx : ‖x‖ = 1)
   rintro rfl
   exact hyne (by simp)
 
-/-! ### The two examples of pp. 344–345 -/
+/-! ### The two examples of pp. 344–345
 
-/-- Coordinates of the pairing on `ℝ²`. `private`: nothing outside this module should be
-reading coordinates. -/
-private theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
-  simp [PiLp.inner_apply, Fin.sum_univ_two]
-  ring
+The coordinate formula `⟨u, v⟩ = u₀v₀ + u₁v₁` these run on is `Tdaf.Surface.pairing_two`. -/
 
 /-- **Rockafellar, §32 (14023).** The parabolic convex set
 `K = {(ξ₁, ξ₂) | ξ₁² + 4ξ₂ + 4 ≤ 0}`, whose support function is `parabolicFn`. -/
