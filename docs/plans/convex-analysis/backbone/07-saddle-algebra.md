@@ -550,7 +550,7 @@ noncomputable def fenchelPairing (f : E → EReal) (g : E → EReal) : EReal :=
 **Status: §38 is done.** The second equality of Corollary 38.7.2 and the co-finiteness remark
 need a relative interior and a finite dimension, so they are in `Bifunction/Cofinite.lean` (§7.5a);
 everything else is here. The operations are `infConvBifun`, `infConvFstBifun`, `smulRightBifun`,
-`imageBifun` / `concaveImageBifun`, `compBifun` / `concaveCompBifun`, `invBifun` (`F⫶`) and
+`imageBifun` / `concaveImageBifun`, `compBifun` / `concaveCompBifun`, `inverseBifun` (`F⫶`) and
 `lowerAdjointBifun` (`F⫶*`); the inner product is `fenchelSup` / `fenchelInf` with
 `HasFenchelPairing` and `fenchelPairing`.
 
@@ -561,7 +561,7 @@ everything else is here. The operations are `infConvBifun`, `infConvFstBifun`, `
 | `infConvFstBifun`, `convexBifun_infConvFstBifun`, `lowerAdjointBifun_infConvFstBifun`, `lowerAdjointBifun_infConvFstBifun_lowerAdjointBifun`, `closedBifun_infConvBifun`, `lowerAdjointBifun_infConvBifun_eq_clBifun` | **Cor 38.2.1** | done — packaged convexly, as `(F₁ □ F₂)⁎* = cl (F₁⁎* ⊡ F₂⁎*)`, so no concave closure is needed; the one new theorem is that the lower adjoint of a first-variable convolution is the second-variable convolution of the lower adjoints |
 | `convexBifun_smulRightBifun`, `graphFn_smulRightBifun`, `bracket_smulRightBifun`, `adjointBifun_smulRightBifun` | **Thm 38.3** | done, including the adjoint formula |
 | `convexFn_imageBifun`, `conj_imageBifun`, `exists_conj_imageBifun_eq`, `conj_imageBifun_eq_iSup`, `conj_imageBifun_of_bracket_eq_top`, `lowerAdjointBifun_eq_concaveAdjointBifun`, `convexBifun_lowerAdjointBifun` | **Thm 38.4** | done, against `IsExactSum` |
-| `convexBifun_compBifun`, `invBifun_compBifun`, `adjointBifun_compBifun`, `exists_adjointBifun_compBifun_eq`, `lowerAdjointBifun_compBifun` | **Thm 38.5** | done |
+| `convexBifun_compBifun`, `inverseBifun_compBifun`, `adjointBifun_compBifun`, `exists_adjointBifun_compBifun_eq`, `lowerAdjointBifun_compBifun` | **Thm 38.5** | done |
 | `conj_imageBifun_lowerAdjointBifun`, `closedFn_imageBifun`, `exists_imageBifun_eq`, `conj_imageBifun_eq_clFn` | **Cor 38.4.1** | done |
 | `lowerAdjointBifun_compBifun_lowerAdjointBifun`, `closedBifun_compBifun`, `exists_compBifun_eq`, `lowerAdjointBifun_compBifun_eq_clBifun` | **Cor 38.5.1** | done |
 | `compBifun_slice`, `hasFenchelPairing_adjointBifun_slice`, `bracket_compBifun_eq_fenchelPairing` | **Cor 38.7.2**, 1st equality | done — `⟨GFu, z⟩ = ⟨Fu, G* z⟩` is Cor 38.7.1 at the slice `Fu`, since `(GF)u = G(Fu)` is `rfl`. Rockafellar's derivation from Cor 38.2.1 is not needed |

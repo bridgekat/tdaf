@@ -113,9 +113,10 @@ it. Nothing in §25 does — no statement here mixes the two readings.
   `∇(cl f) = ∇f`. Rockafellar asserts that remark rather than proving it, and his one-line reason
   — that `f` and `cl f` agree on `int (dom f)` — is only half of it: the other half is that `cl f`
   has no *extra* interior points at which to be differentiable, i.e. `int (dom (cl f)) =
-  int (dom f)`. Both halves are now in `Subgradient/Uniqueness.lean`
-  (`ConvexFn.interior_dom_clFn`, `hasGradientAt_clFn_iff`), so both corollaries carry the book's
-  hypotheses verbatim.
+  int (dom f)`. Both halves are in the backbone — `hasGradientAt_clFn_iff` in
+  `Subgradient/Uniqueness.lean` and `ConvexFn.interior_dom_clFn` in `RelativeInterior.lean`, which
+  is where the second moved once `Convex.interior_subset_relint` joined it — so both corollaries
+  carry the book's hypotheses verbatim.
 * **Theorem 25.6's proof does not, here, verify the exercise of line 8477.** The book leaves
   `rec (∂f(x)) = N_{dom f}(x)` as an exercise in §23 and says the verification "will be given later
   as part of the proof of Theorem 25.6". The backbone's proof never computes that recession cone —
@@ -151,7 +152,8 @@ None. The two this section reported have been closed:
 
 * **`∇(cl f) = ∇f`** is `hasGradientAt_clFn_iff` in
   `Tdaf/Analysis/Convex/Subgradient/Uniqueness.lean`, resting on `ConvexFn.interior_dom_clFn`
-  (`int (dom (cl f)) = int (dom f)`, Theorem 7.4's companion for interiors) proved beside it. With
+  (`int (dom (cl f)) = int (dom f)`, Theorem 7.4's companion for interiors), which is not beside it
+  but in `Tdaf/Analysis/Convex/RelativeInterior.lean`, beside `ConvexFn.relint_dom_clFn`. With
   it, `mem_exposedPoints_epi_conj_iff_of_proper` and `mem_exposedPoints_supportSet_iff_of_proper`
   restate Corollaries 25.1.2 and 25.1.3 for an arbitrary compatible pairing with no closedness, and
   `corollary_25_1_2` and `corollary_25_1_3` below are their specializations.

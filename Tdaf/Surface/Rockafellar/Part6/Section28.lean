@@ -128,24 +128,43 @@ the book's `(m, r)` indexing into the backbone's `(ι, κ)` indexing and applies
 
 ## What is not here
 
-**The decomposition principle (lines 11309–11596) is not carried, deliberately.** It is the
-longest unnumbered deposit in the section, and its mathematical core is one sentence: if every
-`fᵢ` is separable, `fᵢ(x) = fᵢ₁(x₁) + ⋯ + f_{is}(x_s)` with `x = (x₁, …, x_s)` and
-`n = n₁ + ⋯ + n_s`, then `h = h₁ + ⋯ + h_s` with `h_k = f_{0k} + λ₁f_{1k} + ⋯ + λ_m f_{mk}`, so
-minimising `h` over `C` — which is what Theorem 28.1 reduces `(P)` to — splits into `s`
-independent problems over the `C^k`. Everything after line 11395 is a worked numerical
-illustration (`q(x) = q₁(ξ₁) + ⋯ + q_n(ξ_n)` on the simplex) and a discussion of computing the
-dual objective `w` from conjugates by a subgradient method: exposition and algorithmics, with no
-statement in it that a later section cites.
+**The decomposition principle (lines 11309–11596) is carried.** Its mathematical core is one
+sentence: if every `fᵢ` is separable, `fᵢ(x) = fᵢ₁(x₁) + ⋯ + f_{is}(x_s)` with
+`x = (x₁, …, x_s)` and `n = n₁ + ⋯ + n_s`, then `h = h₁ + ⋯ + h_s` with
+`h_k = f_{0k} + λ₁f_{1k} + ⋯ + λ_m f_{mk}`, so minimising `h` over `C` — which is what Theorem
+28.1 reduces `(P)` to — splits into `s` independent problems over the `C^k`. Everything after
+line 11395 is a worked numerical illustration (`q(x) = q₁(ξ₁) + ⋯ + q_n(ξ_n)` on the simplex) and
+a discussion of computing the dual objective `w` from conjugates by a subgradient method:
+exposition and algorithmics, with no statement in it that a later section cites, and that part is
+still not carried.
 
-The core sentence *is* a statement worth having, but the cost is entirely in machinery this
-section does not otherwise need: an `s`-fold isometric decomposition `ℝ^{n₁} × ⋯ × ℝ^{n_s} ≃ ℝⁿ`
-with transport of `dom`, `argmin` and `ri` across it. The surface has only the binary
-`euclideanProdEquiv` (`Surface/Common/Euclidean.lean`), and remediation §4.8 lists even the binary
-transport as open. Carrying a binary special case of a genuinely `s`-fold principle would
-misrepresent the book. The honest form of the missing piece is a backbone lemma
-`argmin (fun x => ∑ k, h k (x k)) = ⋂ k, {x | x k ∈ argmin (h k)}` for `EReal`-valued proper `h k`
-on a finite product, and it is recorded under `## Backbone gaps`.
+**This note used to say the principle was too expensive, and it was wrong about the price in
+three separate ways** (remediation §12.31). Each is worth keeping, because the shape recurs.
+
+1. *"an `s`-fold isometric decomposition `ℝ^{n₁} × ⋯ × ℝ^{n_s} ≃ ℝⁿ` with transport of `dom`,
+   `argmin` and `ri`"* — the passage **never mentions `ri`**, and it never uses an isometry. The
+   string `ri` does not occur anywhere in 11309–11385. What it needs is
+   `dom_sepSum` and `argmin_sepSum` on a *dependent* finite product, plus
+   `argmin_comp_of_surjective` for the coordinate change — and a surjection, not an isometry,
+   is what a statement about `argmin` and `dom` transports along. Reading the head symbols is
+   what settles this: they are `dom` and `argmin`, both preimage-shaped.
+2. *"`euclideanProdEquiv` (`Surface/Common/Euclidean.lean`), and remediation §4.8 lists even the
+   binary transport as open"* — `euclideanProdEquiv` is **backbone**, at
+   `Analysis/Convex/EuclideanProd.lean`; this surface file holds only the bridge
+   `pairingProd_euclideanProdEquiv`. And §4.8 is marked **done**: the transport exists, as
+   `conj_comp_euclideanProdEquiv`, `subgradient_comp_euclideanProdEquiv` and
+   `relint_image_euclideanProdEquiv`. Two claims about our own records, both stale.
+3. The backbone form this note proposed spelled the conclusion
+   `⋂ k, {x | x k ∈ argmin (h k)}`. That is `Set.univ.pi` written out longhand, and it discards
+   that entire API — `Set.mem_pi`, `Convex.relint_univ_pi`, and LINT12's porting notes — for
+   nothing.
+
+Two design points in what was actually built. The coordinate splitting is hypothesised as a
+`≃ₗ[ℝ]` and not a bare `≃`, because a bijection `∀ k, Rn (nk k) ≃ Rn n` exists for *any* `nk` —
+both sides have cardinality continuum — so an `≃` would carry none of `n₁ + ⋯ + n_s = n`. And
+separability of `h` is hypothesised rather than derived from separability of each `fᵢ`, because
+**`EReal` is not a semiring**: `Finset.mul_sum` does not apply, so `λᵢ · ∑ₖ fᵢₖ(xₖ)` cannot be
+distributed. The book asserts that step without proof, so the hypothesis is the book's own move.
 
 Also not carried: the remark at line 11045 that `L` is convex in `x` for each `u*`
 (`concaveFn_programLagrangian` carries the concavity in `u*`, which Corollary 28.4.1 needs; the
@@ -155,14 +174,17 @@ pointwise infimum of an explicit family of affine functions, which is a restatem
 
 ## Backbone gaps
 
-One fact is still proved `private` here because the backbone does not carry it; the other eight
-have been hoisted.
+All nine have been hoisted; this section proves nothing `private`.
 
-* `closedProperConvexFn_finsetSum` — a finite sum of closed proper convex functions with a common
-  domain point is closed proper convex; `properConvexFn_finsetSum` exists and the closed version
-  does not. It cannot go where the rest went: its proof needs `ClosedProperConvexFn.add`, which
-  lives in `Recession/Closedness.lean`, and neither `Convex/Closure.lean` nor `Convex/Epigraph.lean`
-  is below that. The home it wants is `Recession/Closedness.lean` itself, beside the binary rule.
+* ~~`closedProperConvexFn_finsetSum`~~ — **closed**: public in `Recession/Closedness.lean`, beside
+  the binary `ClosedProperConvexFn.add`, exactly where this note said it wanted to go. Two things
+  the note got wrong are worth keeping. It said the obstacle was that `Convex/Closure.lean` and
+  `Convex/Epigraph.lean` are not below `Recession/Closedness.lean` — true, but the *binding*
+  obstacle was in the other direction: the private proof cites `properConvexFn_finsetSum`, which
+  lives in `Duality/Relint.lean`, a module that **imports** the home this note proposes. Checking
+  only the prerequisites the note names would have hit that at the first `exact`. The fix was to
+  ask what the unreachable citation was doing — it placed `x₀` in `dom (∑ …)` — and strengthen the
+  induction to carry that point in its conclusion, which removes the dependency altogether.
 * ~~`scaleSnd`, `epi_coe_mul`, `convexFn_coe_mul`, `proper_coe_mul`, `dom_coe_mul`~~ — **closed**:
   all five are public in `Convex/Epigraph.lean`, over an arbitrary real vector space.
 * ~~`closedFn_coe_mul`~~ — **closed**: public in `Convex/Closure.lean`, with `continuous_scaleSnd`
@@ -197,41 +219,10 @@ variable {m n : ℕ}
 
 /-! ### Building blocks: finite sums of closed proper convex functions
 
-One fact the backbone does not carry: a finite sum of closed proper convex functions with a common
-domain point is again one. It is `private` here and recorded in `## Backbone gaps`. The scalar
-multiples and affine functions that used to be proved here are now in `Convex/Epigraph.lean`,
-`Convex/Closure.lean` and `Subgradient/Calculus.lean`. -/
-
-/-- A finite sum of closed proper convex functions sharing a domain point is closed proper convex.
-The `m`-ary form of `ClosedProperConvexFn.add`. -/
-private theorem closedProperConvexFn_finsetSum {ι : Type*} {s : Finset ι} {g : ι → Rn n → EReal}
-    (hg : ∀ i ∈ s, ClosedProperConvexFn (g i)) {x₀ : Rn n} (hx₀ : ∀ i ∈ s, x₀ ∈ dom (g i)) :
-    ClosedProperConvexFn (∑ i ∈ s, g i) := by
-  classical
-  induction s using Finset.cons_induction with
-  | empty =>
-    have h0 : (∑ _i ∈ (∅ : Finset ι), g _i) = fun _ : Rn n => (0 : EReal) := by
-      funext x; simp
-    rw [h0]
-    refine ⟨convexFn_const 0, ?_, ⟨⟨0, ?_⟩, fun _ => by simp⟩⟩
-    · exact (closedFn_iff_lowerSemicontinuous (f := fun _ : Rn n => (0 : EReal))
-        fun _ => by simp).2 lowerSemicontinuous_const
-    · rw [mem_dom]; exact lt_of_le_of_ne le_top (by simp)
-  | cons i t hi ih =>
-    have hgt : ∀ j ∈ t, ClosedProperConvexFn (g j) := fun j hj => hg j (Finset.mem_cons_of_mem hj)
-    have hxt : ∀ j ∈ t, x₀ ∈ dom (g j) := fun j hj => hx₀ j (Finset.mem_cons_of_mem hj)
-    have hall := ih hgt hxt
-    have hdomt : x₀ ∈ dom (∑ j ∈ t, g j) := by
-      rw [(properConvexFn_finsetSum (fun j hj => (hgt j hj).convex)
-        (fun j hj => (hgt j hj).proper) hxt).2.2]
-      exact Set.mem_iInter₂.2 hxt
-    have hi₀ : x₀ ∈ dom (g i) := hx₀ i (Finset.mem_cons_self i t)
-    have hne : (dom (g i + ∑ j ∈ t, g j)).Nonempty := by
-      refine ⟨x₀, ?_⟩
-      rw [mem_dom, Pi.add_apply]
-      exact _root_.EReal.add_lt_top (mem_dom.1 hi₀).ne (mem_dom.1 hdomt).ne
-    rw [Finset.sum_cons]
-    exact ClosedProperConvexFn.add (hg i (Finset.mem_cons_self i t)) hall hne
+Nothing is proved `private` here any more. The scalar multiples and affine functions that used to
+be are in `Convex/Epigraph.lean`, `Convex/Closure.lean` and `Subgradient/Calculus.lean`, and the
+`m`-ary Theorem 9.3 that was the last holdout is `closedProperConvexFn_finsetSum` in
+`Recession/Closedness.lean`, beside the binary rule. -/
 
 /-! ### The ordinary convex program -/
 

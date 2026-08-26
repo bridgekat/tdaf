@@ -358,14 +358,6 @@ end Thm382
 
 section ERealAux
 
-/-- Negation turns a difference around, provided neither of the two `∞ - ∞` collisions occurs. -/
-private theorem neg_sub_swap {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠ ⊤) : -(a - b) = b - a := by
-  rw [_root_.EReal.neg_sub (.inl ha) (.inr hb), sub_eq_add_neg, add_comm]
-
-/-- The companion of `neg_sub_swap` with the other pair of side conditions. -/
-private theorem neg_sub_swap' {a b : EReal} (ha : a ≠ ⊤) (hb : b ≠ ⊥) : -(a - b) = b - a := by
-  rw [_root_.EReal.neg_sub (.inr hb) (.inl ha), sub_eq_add_neg, add_comm]
-
 /-- A constant that is not `⊤` moves inside a supremum. The hypothesis is exactly what rules out
 `(⨆ i, u i) + ⊤` collapsing differently from `⨆ i, (u i + ⊤)`. -/
 private theorem iSup_add_of_ne_top {ι : Sort*} [Nonempty ι] (u : ι → EReal) {c : EReal}
@@ -407,7 +399,7 @@ private theorem add_coe_ne_top {a : EReal} (ha : a ≠ ⊤) (c : ℝ) : a + (c :
 /-- Moving a subtrahend out of a difference of differences. -/
 private theorem sub_sub_eq_add_sub {a b c : EReal} (ha : a ≠ ⊥) (hc : c ≠ ⊤) :
     b - (a - c) = (b + c) - a := by
-  have h : -(a - c) = c - a := neg_sub_swap ha hc
+  have h : -(a - c) = c - a := Tdaf.EReal.neg_sub_comm ha hc
   change b + -(a - c) = b + c + -a
   rw [h]
   change b + (c + -a) = b + c + -a
@@ -583,7 +575,7 @@ theorem conj_imageBifun_eq_neg_iInf (hbF : ∀ u x, F u x ≠ ⊥) (hbf : ∀ u,
     (hgt : ∀ u, bracket Bx F u y ≠ ⊤) :
     conj Bx (imageBifun F f) y = -(⨅ u, (f u - bracket Bx F u y)) := by
   rw [conj_imageBifun_eq_iSup hbF hbf y, Tdaf.EReal.neg_iInf]
-  exact iSup_congr fun u => (neg_sub_swap (hbf u) (hgt u)).symm
+  exact iSup_congr fun u => (Tdaf.EReal.neg_sub_comm (hbf u) (hgt u)).symm
 
 /-- **Rockafellar, Theorem 38.4**: `(Ff)* = F⁎* f*`, in the pointwise form
 `(Ff)*(y) = ⨅ v, f*(v) - (F* y)(v)`.
@@ -611,7 +603,7 @@ theorem conj_imageBifun (hbF : ∀ u x, F u x ≠ ⊥) (hf : Proper f) {y : Y}
       = ⨅ v, (conj Bu f v - concaveConj Bu g v) := by
     rw [Tdaf.EReal.neg_iSup]
     exact iInf_congr fun v =>
-      neg_sub_swap' (concaveConj_ne_top hgd v) (conj_ne_bot hf.dom_nonempty v)
+      Tdaf.EReal.neg_sub_comm' (concaveConj_ne_top hgd v) (conj_ne_bot hf.dom_nonempty v)
   rw [h1, h2, h4]
   exact iInf_congr fun v => by rw [adjointBifun_eq_concaveConj_bracket]
 
@@ -631,7 +623,7 @@ theorem exists_conj_imageBifun_eq (hbF : ∀ u x, F u x ≠ ⊥) (hf : Proper f)
   obtain ⟨v, hv⟩ := exists_concaveConj_sub_conj_eq hex'
   refine ⟨v, ?_⟩
   rw [conj_imageBifun_eq_neg_iInf hbF hf.ne_bot hgt, ← hv,
-    neg_sub_swap' (concaveConj_ne_top hgd v) (conj_ne_bot hf.dom_nonempty v),
+    Tdaf.EReal.neg_sub_comm' (concaveConj_ne_top hgd v) (conj_ne_bot hf.dom_nonempty v),
     adjointBifun_eq_concaveConj_bracket]
 
 /-- **Rockafellar's degenerate branch of Theorem 38.4**, `y ∉ dom F*`: if the bracket `⟨Fu, y⟩` is
@@ -882,7 +874,7 @@ theorem fenchelInf_conj_le_neg_fenchelSup (hf : Proper f) (hg : ProperConcave g)
   have hneg : -(fenchelSup B f g) = ⨅ x : E, (f x - concaveConj B.flip g x) := by
     rw [fenchelSup_apply, Tdaf.EReal.neg_iSup]
     exact iInf_congr fun x =>
-      neg_sub_swap' (concaveConj_ne_top hg.domConcave_nonempty x) (hf.ne_bot x)
+      Tdaf.EReal.neg_sub_comm' (concaveConj_ne_top hg.domConcave_nonempty x) (hf.ne_bot x)
   rw [hneg, fenchelInf_apply]
   exact iInf_mono fun x => add_le_add (biconj_le B f x) le_rfl
 
@@ -892,7 +884,7 @@ theorem neg_fenchelInf_le_fenchelSup_conj (hf : Proper f) (hg : ProperConcave g)
     -(fenchelInf B f g) ≤ fenchelSup B.flip (conj B f) (concaveConj B.flip g) := by
   have hneg : -(fenchelInf B f g) = ⨆ y : F, (g y - conj B f y) := by
     rw [fenchelInf_apply, Tdaf.EReal.neg_iInf]
-    exact iSup_congr fun y => neg_sub_swap (conj_ne_bot hf.dom_nonempty y) (hg.ne_top y)
+    exact iSup_congr fun y => Tdaf.EReal.neg_sub_comm (conj_ne_bot hf.dom_nonempty y) (hg.ne_top y)
   rw [hneg, fenchelSup_apply]
   exact iSup_mono fun y => add_le_add (le_biconcaveConj B.flip g y) le_rfl
 
@@ -940,7 +932,7 @@ theorem fenchelSup_conj_eq_neg_fenchelInf (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) 
   rw [fenchelSup_apply, fenchelInf_apply, Tdaf.EReal.neg_iInf]
   refine iSup_congr fun y => ?_
   rw [LinearMap.flip_flip]
-  exact (neg_sub_swap (conj_ne_bot hd y) (concaveConj_ne_top hh y)).symm
+  exact (Tdaf.EReal.neg_sub_comm (conj_ne_bot hd y) (concaveConj_ne_top hh y)).symm
 
 end Thm387
 
@@ -1046,7 +1038,7 @@ theorem fenchelSup_imageBifun_lowerAdjointBifun (hf : Proper f) (hgd : (domConca
         ((concaveConj Bx g y + adjointBifun Bu Bx F y v) - conj Bu f v) := by
     rw [fenchelInf_apply, Tdaf.EReal.neg_iInf]
     refine iSup_congr fun v => ?_
-    rw [neg_sub_swap (hane v)
+    rw [Tdaf.EReal.neg_sub_comm (hane v)
         (concaveImageBifun_adjointBifun_ne_top Bu Bx hF hgb hgt v),
       concaveImageBifun_apply, Tdaf.EReal.iSup_sub_of_ne_bot _ (hane v)]
   rw [hL, hR, iSup_comm]

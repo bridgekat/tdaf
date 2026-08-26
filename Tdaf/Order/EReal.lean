@@ -400,6 +400,21 @@ theorem neg_coe_sub (r : ℝ) (z : EReal) : -((r : EReal) - z) = z - (r : EReal)
   | coe s => norm_cast; ring
   | top => simp
 
+/-- **Negation turns a difference around**, provided neither of the two `∞ - ∞` collisions occurs.
+`EReal.neg_sub`'s hypotheses are a disjunction each; these are the two ways of satisfying them, and
+the two that come up. `neg_coe_sub` above is the case where a finite minuend satisfies both at
+once.
+
+Public because the pair was written `private` twice, under two different names — `neg_sub_swap` in
+`Bifunction/Algebra.lean` and `neg_sub_comm` in `Optimization/Fenchel.lean` — with byte-identical
+proofs. Neither module imports the other. -/
+theorem neg_sub_comm {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠ ⊤) : -(a - b) = b - a := by
+  rw [_root_.EReal.neg_sub (.inl ha) (.inr hb), sub_eq_add_neg, add_comm]
+
+/-- The companion of `neg_sub_comm` with the other pair of side conditions. -/
+theorem neg_sub_comm' {a b : EReal} (ha : a ≠ ⊤) (hb : b ≠ ⊥) : -(a - b) = b - a := by
+  rw [_root_.EReal.neg_sub (.inr hb) (.inl ha), sub_eq_add_neg, add_comm]
+
 /-- A positive real scalar commutes with a supremum. Mathlib has no `EReal.mul_iSup`; the proof is
 the standard one for an order isomorphism, run by hand because multiplication by `a` is not
 registered as one. -/

@@ -197,6 +197,12 @@ resolves to the theorem *being defined* — `rw [hasSaddleValue_iff]` inside
 `theorem PolyhedralFn.mapLin … : PolyhedralFn (mapLin A f)` reports "application type mismatch …
 expected `PolyhedralFn f`". Write `_root_.foo`, or rename to `polyhedralFn_mapLin`.
 
+A third instance, from the fix round: `PosHomogeneous.clFn` is not a usable name. Inside
+`theorem PosHomogeneous.clFn … : PosHomogeneous (clFn f)` the bare `clFn` in the statement resolves
+to the theorem being defined, and because `clFn` lives in `Tdaf.ConvexAnalysis` rather than at the
+root, `_root_.clFn` does not rescue it either. The prefix spelling `posHomogeneous_clFn` works and
+matches the neighbours `posHomogeneous_indicatorFn` and `posHomogeneous_supportFn`.
+
 **EL15. `rw` at a hypothesis rewrites the scalar in *both* the set action and the vector action,
 and the follow-up `simp` lemma fires on only one.** `rw [hb1, one_smul] at hmem` on
 `hmem : z₁ + b • (v + z₂) ∈ recessionCone C + b • D` replaces `b` by `1` in both places, and then
@@ -415,6 +421,14 @@ cannot line the casts up through it, and the error it prints names the coercion 
 reading is that a `↑` is in the wrong place, and the natural response is to add `push_cast`, which
 does nothing. `beta_reduce` (or `simp only []`) first, then the cast tactic works unchanged. The
 tell is that the reported cast looks *already correct*.
+
+**EL42. In a module with no topology import at all, `[TopologicalSpace E]` reports "invalid binder
+annotation, type is not a class instance ?m.4" — which reads as a `variable`-syntax error.** It is
+not: it is a missing import, and no part of the message says so. `autoImplicit` (BLD18) then makes
+it worse, binding `closure` as an implicit variable and producing *"Function expected at `closure` …
+but this term has type `?m.2`"*. Three cascading errors, only the first of which is real, and none
+of which mentions `Mathlib.Topology.Algebra.ConstMulAction`. When a class in a `variable` line is
+reported as "not a class instance", check the imports before the syntax.
 
 ## LINT — Linters and the zero-warning bar
 
@@ -1096,6 +1110,16 @@ without tripping EL6.
 
 ---
 
+**PAIR11. `include B in` is a symptom of a misfiled statement, not a fix for one.** PAIR4 says the
+section variable is not inserted when the conclusion does not mention `B`, and that `include B in`
+is how you force it. The deeper reading: a theorem whose *statement* names no pairing usually
+belongs in the module where its statement's own vocabulary lives, and there it will not need a
+pairing at all. `posHomogeneous_clFn` names `PosHomogeneous` and `clFn` and nothing else; moved to
+the module where both are in scope it proves in **three lines** with no pairing — and shed two of
+its three hypotheses on the way, since `ConvexFn g` and `∃ y, g y ≠ ⊤` existed only to feed the
+pairing route. Symptom to act on: an `include B in` whose docstring has to warn callers that they
+must pass `(B := B)`.
+
 ## LIB — Working in this library
 
 **LIB1. Grep for the identifier before writing anything, including three-line utilities.** This has
@@ -1492,6 +1516,32 @@ use. When a move into a specific section of a large file fails on "unknown ident
 line number of the thing you are citing against the line number of the section, before looking at
 imports at all.
 
+**LIB40. Compute the import closure against every name the *proof* cites, not against the names the
+row lists.** LIB33 says an import-closure check has two halves; this is the half that bites even
+when both are done. A row named `Recession/Closedness.lean` as a home and listed two prerequisites,
+both of which checked out — and the private proof's real citation was a third name the row never
+mentioned, `properConvexFn_finsetSum`, which lives in a module that **imports** the proposed home.
+Symptom: you verify everything the row names, then the first `exact` reports an unknown identifier
+for something you never looked at. The follow-up question is the useful one: **what was the
+unreachable citation doing?** Here it placed one point in `dom (∑ …)`, and strengthening the
+induction to carry that point in its own conclusion removed the dependency entirely, which is why
+the row's home turned out to be right after all.
+
+**LIB41. A call-site count is irrelevant when the move goes *down* the DAG — check the direction
+before counting.** A relocation note said "three call sites"; there were **24, in 9 modules**, and
+not one needed touching, because every caller already imported the destination. The count only
+matters for a sideways or upward move, where each site must be re-checked for import reach. A
+relocation note that leads with a call-site count is usually describing an upward move, or has not
+worked out which kind it is.
+
+**LIB42. When amending a record, check that the anchor you matched belongs to the record you meant.**
+An `api.md`-style file is a long list of `### <module>` sections with similar prose in each, so a
+distinctive-looking phrase is not evidence of which section you are in: a paragraph about faces
+intended for `Representation.lean` will happily anchor in `Face.lean`, and both files legitimately
+discuss faces. Locate the section header first and assert the insertion offset is after it, or
+match on a phrase that names the module. The same care the code side takes over declaration
+*homes* is owed to record homes, and nothing rebuilds to catch a mistake.
+
 ## BLD — Toolchain, build, worktrees
 
 **BLD1. `lake` keys on content hashes, not mtimes, so `touch` does nothing.** "Touch every file you
@@ -1745,3 +1795,39 @@ string and `os.sep` is the right thing to use anyway. (c) **`$TMPDIR` is unset**
 so `> "$TMPDIR/x.py"` writes to `/x.py` and fails with permission denied — and `/tmp` redirection is
 invisible to the Windows `python` on `PATH`, which resolves the path differently from the shell that
 created it. Use the absolute scratchpad path.
+
+**BLD29. Build staleness reaches a `#print axioms` probe, and there the symptom is `Unknown
+constant`.** A batch of `#print axioms` lines appended to a downstream module reported records for
+seven declarations and *unknown constant* for the eighth — the one added to a dependency that had
+not been rebuilt — which reads as a typo in a fully-qualified name. `lake build <the dependency>`
+first. The record-count cross-check (BLD22) is what catches it: a probe that returns fewer records
+than declarations probed has not proved anything about the missing one. This is BLD21 in the
+`#print axioms` direction.
+
+**BLD30. Do not patch a patch script in place with an offset-based splice.** Rewriting a generated
+script by `s.index(...)` on a marker that also occurs earlier in the file silently duplicates the
+whole body, and the duplicate then re-runs every substitution against already-substituted text and
+fails with an assertion that looks like a bad anchor. Rewrite the script whole. The one saving
+grace in the incident that produced this entry is worth designing for on purpose: **the script did
+all its `assert`-guarded substitutions in memory and wrote the file once at the end**, so the failed
+second pass left the target untouched. Write batch editors that way — read, substitute with
+assertions, write last — and a mid-script failure costs nothing.
+
+**BLD31. A module missing from `Tdaf.lean` builds green forever, because some other module imports
+it.** `Tdaf/Analysis/Convex/Line.lean` sat unregistered for many rounds: `Saddle/Differential.lean`
+imports it directly, so it was always compiled, always up to date, and the aggregator — which
+BLD24 makes the reliable detector of *name collisions* — has nothing to say about a module it never
+hears of. This is the one project invariant with no mechanical check behind it, and no amount of
+building will produce one. Difference the two lists instead, next to the line-length check and just
+as cheap:
+
+```python
+reg = {l.split()[1] for l in open('Tdaf.lean') if l.startswith('import ')}
+mods = {os.path.join(r, f)[:-5].replace(os.sep, '.')
+        for r, _, fs in os.walk('Tdaf') for f in fs if f.endswith('.lean')}
+assert mods == reg, sorted(mods ^ reg)
+```
+
+The same run should assert the import list is sorted, which is the other half of the convention and
+equally invisible to the build.
+

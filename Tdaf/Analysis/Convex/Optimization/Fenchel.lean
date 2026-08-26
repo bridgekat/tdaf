@@ -74,14 +74,6 @@ section Fenchel
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
 
-/-- Negation turns a difference around, provided neither of the two `∞ - ∞` collisions occurs. -/
-private theorem neg_sub_comm {a b : EReal} (ha : a ≠ ⊥) (hb : b ≠ ⊤) : -(a - b) = b - a := by
-  rw [_root_.EReal.neg_sub (.inl ha) (.inr hb), sub_eq_add_neg, add_comm]
-
-/-- The companion of `neg_sub_comm` with the other pair of side conditions. -/
-private theorem neg_sub_comm' {a b : EReal} (ha : a ≠ ⊤) (hb : b ≠ ⊥) : -(a - b) = b - a := by
-  rw [_root_.EReal.neg_sub (.inr hb) (.inl ha), sub_eq_add_neg, add_comm]
-
 omit [Module ℝ E] [Module ℝ F] in
 /-- Reindexing an infimum over a group by negation. -/
 private theorem iInf_neg_comp (ψ : F → EReal) : (⨅ y : F, ψ y) = ⨅ y : F, ψ (-y) :=
@@ -135,7 +127,7 @@ theorem fenchel_duality (hex : IsExactSum B f (-g)) :
     refine iInf_congr fun y => ?_
     rw [zero_sub, neg_neg, ← neg_concaveConj B g y, sub_eq_add_neg]
   rw [hprimal, hdual, Tdaf.EReal.neg_iInf]
-  exact iSup_congr fun y => neg_sub_comm (hex'.conj_left_ne_bot y) (hne y)
+  exact iSup_congr fun y => Tdaf.EReal.neg_sub_comm (hex'.conj_left_ne_bot y) (hne y)
 
 /-- **Rockafellar, Theorem 31.1**, the attainment clause: under exact addition the supremum of
 `g* - f*` is attained. This is the attainment half of Theorem 16.4 read at the origin. -/
@@ -154,7 +146,7 @@ theorem exists_concaveConj_sub_conj_eq (hex : IsExactSum B f (-g)) :
   subst hy2
   rw [← neg_concaveConj B g y₁, ← sub_eq_add_neg] at hval
   refine ⟨y₁, ?_⟩
-  rw [hprimal, ← hval, neg_sub_comm (hex'.conj_left_ne_bot y₁) (hne y₁)]
+  rw [hprimal, ← hval, Tdaf.EReal.neg_sub_comm (hex'.conj_left_ne_bot y₁) (hne y₁)]
 
 /-- **Rockafellar, Theorem 31.1**, packaged: the common value is the *greatest* dual value. -/
 theorem isGreatest_concaveConj_sub_conj (hex : IsExactSum B f (-g)) :
@@ -314,7 +306,7 @@ theorem iInf_sub_eq_neg_iInf_conj_sub (hf : ClosedProperConvexFn f)
         = ⨆ x : E, -(f x - g x) from
       iSup_congr fun x => by
         rw [hbi, hbc]
-        exact (neg_sub_comm (hf.proper.ne_bot x) (hgt x)).symm,
+        exact (Tdaf.EReal.neg_sub_comm (hf.proper.ne_bot x) (hgt x)).symm,
     ← Tdaf.EReal.neg_iInf] at hkey
   rw [hkey, neg_neg]
 
@@ -330,7 +322,7 @@ theorem fenchel_duality_of_closed (hf : ClosedProperConvexFn f)
     exact hg.proper.dom_nonempty
   rw [iInf_sub_eq_neg_iInf_conj_sub hf hg hex, Tdaf.EReal.neg_iInf]
   exact iSup_congr fun y =>
-    neg_sub_comm (conj_ne_bot hf.proper.dom_nonempty y) (concaveConj_ne_top hdc y)
+    Tdaf.EReal.neg_sub_comm (conj_ne_bot hf.proper.dom_nonempty y) (concaveConj_ne_top hdc y)
 
 /-- **Rockafellar, Theorem 31.1**, condition (b)'s attainment clause: the *infimum* of `f - g` is
 attained. It is `exists_concaveConj_sub_conj_eq` on the dual pair. -/
@@ -347,7 +339,7 @@ theorem exists_sub_eq_iInf (hf : ClosedProperConvexFn f)
     (g := concaveConj B g) hex
   rw [hbi, hbc] at hx
   exact ⟨x, by rw [iInf_sub_eq_neg_iInf_conj_sub hf hg hex, ← hx,
-    neg_sub_comm' (hgt x) (hf.proper.ne_bot x)]⟩
+    Tdaf.EReal.neg_sub_comm' (hgt x) (hf.proper.ne_bot x)]⟩
 
 end Closed
 
