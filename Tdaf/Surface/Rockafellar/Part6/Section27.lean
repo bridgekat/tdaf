@@ -161,11 +161,10 @@ keeps every `DecidableEq` out of the statement (`gotchas.md` SET11).
 
 Each is proved as a `private` lemma below and should move.
 
-1. **`proper_indicatorFn`**, in `Tdaf/Analysis/Convex/Indicator.lean`. Wanted:
-   `C.Nonempty → Proper (indicatorFn C)`, or the `↔`. `Indicator.lean` has `dom_indicatorFn` and
-   `indicatorFn_ne_bot`, which are the two fields of `Proper`, and does not package them;
-   `Optimization/Minimum.lean`'s `closedProperConvexFn_indicatorFn` is the only packaging and it
-   also demands `IsClosed C`, which neither constraint qualification of Theorem 27.4 supplies.
+1. **`proper_indicatorFn`** — **done**. It is public in `Tdaf/Analysis/Convex/Indicator.lean`, as
+   the biconditional `Proper (indicatorFn s) ↔ s.Nonempty`, beside `dom_indicatorFn` and
+   `indicatorFn_ne_bot`, which are its two halves. The two call sites here take `.2`.
+
 2. **`Polyhedral.biInter` and `Polyhedral.iInter`**, in
    `Tdaf/Analysis/Convex/Polyhedral/Ops.lean`. Wanted:
    `(∀ i, Polyhedral (S i)) → ∀ s : Finset ι, Polyhedral (⋂ i ∈ s, S i)` and its `[Finite ι]`
@@ -991,14 +990,6 @@ section Theorem274
 
 variable {h : Rn n → EReal} {C : Set (Rn n)} {x : Rn n}
 
-/-- **Backbone gap**: `δ(· | C)` is proper exactly when `C` is nonempty. `Indicator.lean` has
-`dom_indicatorFn` and `indicatorFn_ne_bot`, which are the two fields of `Proper`, but not the
-packaging; `Optimization/Minimum.lean`'s `closedProperConvexFn_indicatorFn` is the only place it
-occurs and it also demands `IsClosed C`, which neither constraint qualification of Theorem 27.4
-supplies. -/
-private theorem proper_indicatorFn (hCne : C.Nonempty) : Proper (indicatorFn C) :=
-  ⟨by rw [dom_indicatorFn]; exact hCne, indicatorFn_ne_bot C⟩
-
 /-- **Rockafellar, Theorem 27.4** (book, line 10651), sufficiency: if some `x* ∈ ∂h(x)` has `-x*`
 normal to `C` at `x`, then `h` attains its infimum relative to `C` at `x`.
 
@@ -1022,7 +1013,7 @@ theorem theorem_27_4_necessary (hh : ConvexFn h) (hp : Proper h) (hC : Convex �
     ∃ y ∈ subgradient (pairing n) h x, -y ∈ normalCone (pairing n) C x :=
   exists_mem_subgradient_neg_mem_normalCone
     (IsExactSum.of_relint (B := pairing n) hh hp (convexFn_indicatorFn.2 hC)
-      (proper_indicatorFn hCne) hx₀h (by rw [dom_indicatorFn]; exact hx₀C)) hx hmin
+      (proper_indicatorFn.2 hCne) hx₀h (by rw [dom_indicatorFn]; exact hx₀C)) hx hmin
 
 /-- **Rockafellar, Theorem 27.4**, necessity under the book's second constraint qualification: `C`
 polyhedral and `ri (dom h)` meets `C` — merely `C`, not `ri C`.
@@ -1037,7 +1028,7 @@ theorem theorem_27_4_necessary_polyhedral (hh : ConvexFn h) (hp : Proper h) (hC 
     ∃ y ∈ subgradient (pairing n) h x, -y ∈ normalCone (pairing n) C x :=
   exists_mem_subgradient_neg_mem_normalCone
     (IsExactSum.symm (IsExactSum.of_polyhedral (B := pairing n) (polyhedralFn_indicatorFn hC)
-      (proper_indicatorFn ⟨x₀, hx₀C⟩) hh hp (by rw [dom_indicatorFn]; exact hx₀C) hx₀h))
+      (proper_indicatorFn.2 ⟨x₀, hx₀C⟩) hh hp (by rw [dom_indicatorFn]; exact hx₀C) hx₀h))
     hx hmin
 
 /-- The quadratic `w(z) = ½⟨z, z⟩` compares two vectors exactly as their norms do. -/

@@ -190,44 +190,21 @@ property of the proximation (13851–13885), which is named here as `prox_contra
 
 ## Backbone gaps
 
-Six private declarations below are backbone lemmas that had to be re-proved locally.
+Three of the six private declarations this file once carried are now in the backbone; the three
+below are still open, and are numbered as they were.
 
-1. **Corollary 30.5.2.** `exists_infBifun_eq_of_concaveStronglyConsistent` is the step that turns
-   dual strong consistency into attainment of the primal infimum, and it is what
-   `corollary_31_2_1_b_attained` runs on. Wanted in
-   `Tdaf/Analysis/Convex/Optimization/Normal.lean`, next to
-   `normal_of_concaveStronglyConsistent_adjointBifun`, as
-
-       theorem exists_infBifun_eq_of_concaveStronglyConsistent (hF : ConvexBifun F)
-           (hcl : ClosedBifun F) (hc : Consistent F) (hbot : infBifun F 0 ≠ ⊥)
-           (hs : ConcaveStronglyConsistent (adjointBifun Bu Bx F)) :
-           ∃ x, F 0 x = infBifun F 0
-
-   with the instance context of `normal_of_concaveStronglyConsistent_adjointBifun` plus whatever
-   `kuhnTucker_nonempty_of_stronglyConsistent` needs on `V`.
-2. **Theorem 30.5, concave side.** `mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq` is the
-   mirror of `mem_kuhnTucker_iff_adjointBifun_zero_eq`; the backbone has
-   `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker` and `concaveAdjointBifun_zero_apply` but never
-   puts them together. Wanted in `Tdaf/Analysis/Convex/Optimization/Normal.lean` as
-
-       theorem mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq (G : Bifun Y V) (x : X) :
-           x ∈ ConcaveKuhnTucker Bx.flip G ↔ supBifun G 0 ≠ ⊤ ∧ supBifun G 0 ≠ ⊥
-             ∧ concaveAdjointBifun Bu Bx G 0 x = supBifun G 0
-
-3. **An `EReal` infimum over a product splits.** `ereal_iInf_prod_add`, with the three helpers
-   `ereal_coe_add_iInf`, `ereal_add_iInf` and `ereal_iInf_add`, is what makes Theorem 31.2's
-   adjoint formula go through. `Tdaf/Order/EReal.lean` has only the *supremum* form
-   `biSup_add_biSup`, whose hypothesis is on the values rather than on the extrema and whose dual
-   is useless here; `Tdaf/Analysis/Convex/Bifunction/Algebra.lean` has `add_iInf_of_ne_bot`,
-   `iInf_add_of_ne_bot` and `iInf_add_iInf_of_ne_bot`, but all three are `private`. Wanted public
-   in `Tdaf/Order/EReal.lean` as
-
-       theorem iInf_prod_add {α β : Type*} [Nonempty α] [Nonempty β] (ψ : α → EReal)
-           (φ : β → EReal) {a₀ : α} {b₀ : β} (ha : ψ a₀ ≠ ⊤) (ha' : ψ a₀ ≠ ⊥) (hb : φ b₀ ≠ ⊤)
-           (hb' : φ b₀ ≠ ⊥) : ⨅ p : α × β, (ψ p.1 + φ p.2) = (⨅ a, ψ a) + ⨅ b, φ b
-
-   Both hypotheses are needed: with `ψ i = -i` on `ℕ` and `φ ≡ ⊤` the left side is `⊤` and the
-   right side is `⊥`.
+1. **Corollary 30.5.2** — **done**. `exists_infBifun_eq_of_concaveStronglyConsistent` is public in
+   `Tdaf/Analysis/Convex/Optimization/Normal.lean`, and `corollary_31_2_1_b_attained` cites it.
+2. **Theorem 30.5, concave side** — **done**. The mirror
+   `mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq` is public in the same module, with `Bu`
+   and `Bx` explicit, and the dual assertion of Theorem 30.5
+   itself (`mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin`) is beside it.
+3. **An `EReal` infimum over a product splits** — **done**. `Tdaf.EReal.iInf_prod_add` is public in
+   `Tdaf/Order/EReal.lean`, together with `coe_add_iInf`, `add_iInf_of_ne_bot` and
+   `iInf_add_of_ne_bot`. It is stated under `⨅ ψ ≠ ⊤` and `⨅ φ ≠ ⊤` rather than under the
+   witness-value hypotheses proposed here — strictly more general, since it *handles* the `⊥`
+   corners instead of excluding them — so the call site derives the two hypotheses from one finite
+   value on each side.
 4. **A polyhedral constructor for `IsExactImage`.** `isExactImage_of_polyhedralFn` is Theorem
    20.1's companion for the image rule; `Tdaf/Analysis/Convex/Polyhedral/Duality.lean` has
    `IsExactSum.of_polyhedral` and `IsExactFinsetSum.of_polyhedral` but nothing for images. Wanted
@@ -1586,60 +1563,9 @@ theorem theorem_31_2_stronglyConsistent_iff (A : Rn n →ₗ[ℝ] Rn m) {f : Rn 
 Rockafellar's calculation (13301–13320) is a change of variable `w = A x + u` followed by a split
 of one infimum over a product into two independent infima.  The split is where `EReal` bites: it
 is *false* without a side condition (take `ψ i = -i` on `ℕ` and `φ ≡ ⊤`; then `⨅ ψ = ⊥`,
-`⨅ φ = ⊤`, the sum is `⊥`, but every `ψ i + φ j` is `⊤`, so the joint infimum is `⊤`).  One
-finite value on each side is enough, and properness supplies it. -/
-
-/-- A real constant moves inside an infimum. -/
-private theorem ereal_coe_add_iInf {ι : Sort*} (r : ℝ) (u : ι → EReal) :
-    (r : EReal) + (⨅ i, u i) = ⨅ i, ((r : EReal) + u i) := by
-  rw [add_comm, Tdaf.EReal.iInf_add_coe]
-  exact iInf_congr fun i => add_comm _ _
-
-/-- A constant moves inside an infimum whose value is not `⊥`. -/
-private theorem ereal_add_iInf {ι : Sort*} [Nonempty ι] (a : EReal) (u : ι → EReal)
-    (hu : (⨅ i, u i) ≠ ⊥) : a + (⨅ i, u i) = ⨅ i, (a + u i) := by
-  have hui : ∀ i, u i ≠ ⊥ := fun i h => hu (le_bot_iff.1 (h ▸ iInf_le u i))
-  induction a with
-  | bot =>
-    have h : ∀ i, (⊥ : EReal) + u i = ⊥ := fun i => _root_.EReal.bot_add (u i)
-    rw [_root_.EReal.bot_add]
-    simp only [h, iInf_const]
-  | coe r => exact ereal_coe_add_iInf r u
-  | top =>
-    have h : ∀ i, (⊤ : EReal) + u i = ⊤ := fun i => by
-      rw [add_comm]; exact _root_.EReal.add_top_of_ne_bot (hui i)
-    rw [add_comm, _root_.EReal.add_top_of_ne_bot hu]
-    simp only [h, iInf_const]
-
-/-- The mirror of `ereal_add_iInf`, with the constant on the right. -/
-private theorem ereal_iInf_add {ι : Sort*} [Nonempty ι] (u : ι → EReal)
-    (hu : (⨅ i, u i) ≠ ⊥) (c : EReal) : (⨅ i, u i) + c = ⨅ i, (u i + c) := by
-  rw [add_comm, ereal_add_iInf c u hu]
-  exact iInf_congr fun i => add_comm _ _
-
-/-- **The infimum over a product of a separated sum splits**, provided each factor is finite
-somewhere.  Both hypotheses are needed; see the section heading for the counterexample. -/
-private theorem ereal_iInf_prod_add {α β : Type*} [Nonempty α] [Nonempty β] (ψ : α → EReal)
-    (φ : β → EReal) {a₀ : α} {b₀ : β} (ha : ψ a₀ ≠ ⊤) (ha' : ψ a₀ ≠ ⊥) (hb : φ b₀ ≠ ⊤)
-    (hb' : φ b₀ ≠ ⊥) : ⨅ p : α × β, (ψ p.1 + φ p.2) = (⨅ a, ψ a) + ⨅ b, φ b := by
-  obtain ⟨r, hr⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top ha' (lt_top_iff_ne_top.2 ha)
-  obtain ⟨s, hs⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top hb' (lt_top_iff_ne_top.2 hb)
-  rw [iInf_prod]
-  dsimp only
-  by_cases hA : (⨅ a, ψ a) = ⊥
-  · have hle : (⨅ a, ⨅ b, (ψ a + φ b)) ≤ ⊥ :=
-      calc (⨅ a, ⨅ b, (ψ a + φ b)) ≤ ⨅ a, (ψ a + φ b₀) := iInf_mono fun a => iInf_le _ b₀
-        _ = (⨅ a, ψ a) + φ b₀ := by rw [hs, Tdaf.EReal.iInf_add_coe]
-        _ = ⊥ := by rw [hA, _root_.EReal.bot_add]
-    rw [le_bot_iff.1 hle, hA, _root_.EReal.bot_add]
-  · by_cases hB : (⨅ b, φ b) = ⊥
-    · have hle : (⨅ a, ⨅ b, (ψ a + φ b)) ≤ ⊥ :=
-        calc (⨅ a, ⨅ b, (ψ a + φ b)) ≤ ⨅ b, (ψ a₀ + φ b) := iInf_le _ a₀
-          _ = ψ a₀ + ⨅ b, φ b := by rw [hr, ereal_coe_add_iInf]
-          _ = ⊥ := by rw [hB, _root_.EReal.add_bot]
-      rw [le_bot_iff.1 hle, hB, _root_.EReal.add_bot]
-    · rw [ereal_iInf_add ψ hA]
-      exact iInf_congr fun a => (ereal_add_iInf (ψ a) φ hB).symm
+`⨅ φ = ⊤`, the sum is `⊥`, but every `ψ i + φ j` is `⊤`, so the joint infimum is `⊤`).
+`Tdaf.EReal.iInf_prod_add` supplies it under `⨅ ψ ≠ ⊤` and `⨅ φ ≠ ⊤`, which properness gives at a
+single point of each effective domain. -/
 
 /-- Regrouping the five terms of Rockafellar's third display.  Both sides are sums of the same
 `EReal`s, so `AddCommMonoid` associativity and commutativity settle it — no finiteness needed. -/
@@ -1693,16 +1619,18 @@ theorem theorem_31_2_adjoint (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g
     exact ereal_regroup (f x) (g w) _ _
   have hb1 : ((pairing m w₀ v : ℝ) : EReal) - g w₀ ≠ ⊤ := by
     rw [hgb, ← EReal.coe_sub]; exact EReal.coe_ne_top _
-  have hb2 : ((pairing m w₀ v : ℝ) : EReal) - g w₀ ≠ ⊥ := by
-    rw [hgb, ← EReal.coe_sub]; exact EReal.coe_ne_bot _
   have hb3 : f x₀ - ((pairing n x₀ (LinearMap.adjoint A v + y) : ℝ) : EReal) ≠ ⊤ := by
     rw [hfa, ← EReal.coe_sub]; exact EReal.coe_ne_top _
-  have hb4 : f x₀ - ((pairing n x₀ (LinearMap.adjoint A v + y) : ℝ) : EReal) ≠ ⊥ := by
-    rw [hfa, ← EReal.coe_sub]; exact EReal.coe_ne_bot _
-  have hsp := ereal_iInf_prod_add
+  have ht1 : (⨅ w : Rn m, (((pairing m w v : ℝ) : EReal) - g w)) ≠ ⊤ := by
+    intro hcon
+    exact hb1 (top_le_iff.1 (by rw [← hcon]; exact iInf_le _ w₀))
+  have ht2 : (⨅ x : Rn n, (f x - ((pairing n x (LinearMap.adjoint A v + y) : ℝ) : EReal)))
+      ≠ ⊤ := by
+    intro hcon
+    exact hb3 (top_le_iff.1 (by rw [← hcon]; exact iInf_le _ x₀))
+  have hsp := Tdaf.EReal.iInf_prod_add
       (fun w : Rn m => (((pairing m w v : ℝ) : EReal) - g w))
-      (fun x : Rn n => f x - ((pairing n x (LinearMap.adjoint A v + y) : ℝ) : EReal))
-      (a₀ := w₀) (b₀ := x₀) hb1 hb2 hb3 hb4
+      (fun x : Rn n => f x - ((pairing n x (LinearMap.adjoint A v + y) : ℝ) : EReal)) ht1 ht2
   have hc1 : (⨅ w : Rn m, (((pairing m w v : ℝ) : EReal) - g w))
       = concaveConj (pairing m) g v := rfl
   have hc2 : (⨅ x : Rn n, (f x - ((pairing n x (LinearMap.adjoint A v + y) : ℝ) : EReal)))
@@ -1821,68 +1749,6 @@ theorem corollary_31_2_1_b (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g :
   rw [← theorem_31_2_infBifun A f g, ← hgap]
   exact theorem_31_2_supBifun_adjoint A hf.proper hg.proper
 
-/-- The concave mirror of `mem_kuhnTucker_iff_adjointBifun_zero_eq`: a Kuhn–Tucker vector for the
-concave program `G` is a point at which the objective of the doubly-adjoint program attains
-`sup G 0`. -/
-private theorem mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq (G : Bifun (Rn n) (Rn m))
-    (x : Rn n) :
-    x ∈ ConcaveKuhnTucker (pairing n).flip G
-      ↔ supBifun G 0 ≠ ⊤ ∧ supBifun G 0 ≠ ⊥
-        ∧ concaveAdjointBifun (pairing m) (pairing n) G 0 x = supBifun G 0 := by
-  have h1 : concaveAdjointBifun (pairing m) (pairing n) G 0 x
-      = ⨆ y, ((((pairing n).flip y x : ℝ) : EReal) + supBifun G y) := by
-    rw [concaveAdjointBifun_zero_apply]
-    exact iSup_congr fun y => by rw [LinearMap.flip_apply]
-  rw [h1]
-  exact Iff.rfl
-
-/-- **Rockafellar, Corollary 30.5.2**, in the shape §31 needs it: for a closed proper convex
-bifunction whose *dual* program is strongly consistent, the primal infimum is attained.
-
-This is a backbone gap — see the module docstring.  The proof is the concave mirror of
-`kuhnTucker_nonempty_of_stronglyConsistent` (Corollary 29.1.4 for `(P*)`), followed by
-Theorem 30.1 in the form `F** = F`, which turns a Kuhn–Tucker vector of `(P*)` into a minimising
-`x` for `(P)`. -/
-private theorem exists_infBifun_eq_of_concaveStronglyConsistent {F : Bifun (Rn m) (Rn n)}
-    (hF : ConvexBifun F) (hcl : ClosedBifun F) (hc : Consistent F)
-    (hbot : infBifun F 0 ≠ ⊥)
-    (hs : ConcaveStronglyConsistent (adjointBifun (pairing m) (pairing n) F)) :
-    ∃ x, F 0 x = infBifun F 0 := by
-  set G := adjointBifun (pairing m) (pairing n) F with hG
-  have hnorm : Normal F := normal_of_concaveStronglyConsistent_adjointBifun hF hcl hs
-  have hgap : supBifun G 0 = infBifun F 0 :=
-    (normal_iff_iSup_adjointBifun_eq (Bu := pairing m) (pairing n) hF).1 hnorm
-  have htop : ∀ y, supBifun G y ≠ ⊤ :=
-    (consistent_iff_forall_supBifun_ne_top (Bu := pairing m) (Bx := pairing n) hF hcl).1 hc
-  have hnegG : ConvexBifun fun y v => -(G y v) := by
-    rw [hG]; exact convexBifun_neg_adjointBifun (pairing m) (pairing n) F
-  have hinfneg : ∀ y, infBifun (fun y' v => -(G y' v)) y = -(supBifun G y) :=
-    fun y => (congrFun (neg_supBifun G) y).symm
-  have hdom : domBifun (fun y' v => -(G y' v)) = domConcaveBifun G := by
-    ext y
-    exact exists_congr fun v => by rw [ne_eq, ne_eq, _root_.EReal.neg_eq_top_iff]
-  have hs' : StronglyConsistent fun y' v => -(G y' v) := by
-    change (0 : Rn n) ∈ ri (domBifun fun y' v => -(G y' v))
-    rw [hdom]
-    exact hs
-  have ht : infBifun (fun y' v => -(G y' v)) 0 ≠ ⊤ := by
-    rw [hinfneg 0, hgap, ne_eq, _root_.EReal.neg_eq_top_iff]
-    exact hbot
-  have hp : Proper (infBifun fun y' v => -(G y' v)) := by
-    refine ⟨⟨0, lt_top_iff_ne_top.2 ht⟩, fun y => ?_⟩
-    rw [hinfneg y, ne_eq, _root_.EReal.neg_eq_bot_iff]
-    exact htop y
-  obtain ⟨w, hw⟩ :=
-    kuhnTucker_nonempty_of_stronglyConsistent (B := (pairing n).flip) hnegG hp hs' ht
-  have hkt : -w ∈ ConcaveKuhnTucker (pairing n).flip G := by
-    rw [mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker, neg_neg]
-    exact hw
-  obtain ⟨-, -, heq⟩ := (mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq G (-w)).1 hkt
-  have hself : concaveAdjointBifun (pairing m) (pairing n) G 0 = F 0 := by
-    rw [hG]
-    exact congrFun (concaveAdjointBifun_adjointBifun_eq_self hF hcl) 0
-  exact ⟨-w, by rw [← hgap, ← heq, hself]⟩
-
 /-- **Rockafellar, Corollary 31.2.1** under condition (b), attainment clause (13377): the
 *infimum* is attained at some `x`. -/
 theorem corollary_31_2_1_b_attained (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → EReal} {g : Rn m → EReal}
@@ -1914,7 +1780,8 @@ theorem corollary_31_2_1_b_attained (A : Rn n →ₗ[ℝ] Rn m) {f : Rn n → ER
       intro h
       exact hv0 (le_bot_iff.1 (h ▸ le_iSup
         (fun v => adjointBifun (pairing m) (pairing n) (fenchelBifun A f g) 0 v) v₀))
-    obtain ⟨x, hx⟩ := exists_infBifun_eq_of_concaveStronglyConsistent hF hcl hc hbot hs
+    obtain ⟨x, hx⟩ := exists_infBifun_eq_of_concaveStronglyConsistent (Bu := pairing m)
+      (Bx := pairing n) hF hcl hc hbot hs
     refine ⟨x, ?_⟩
     rw [← hinf, ← hx, fenchelBifun_apply, add_zero]
   · have h1 : ∀ x : Rn n, f x - g (A x) = ⊤ := by
