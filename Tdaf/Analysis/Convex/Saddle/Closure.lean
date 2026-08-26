@@ -11,7 +11,7 @@ import Tdaf.Analysis.Convex.Saddle.Defs
 Applying the two partial closures of a concave-convex function in the two possible orders gives the
 **lower closure** `lowerCl K = cl₂ (cl₁ K)` and the **upper closure** `upperCl K = cl₁ (cl₂ K)`.
 These do *not* agree in general — the discrepancy is what forces saddle-functions to be grouped
-into equivalence classes — but each is idempotent, which is **Theorem 34.1**.
+into equivalence classes — but each is idempotent.
 
 Both halves run the correspondence between saddle-functions and convex bifunctions twice; the
 iteration stops because the adjoint does not see the closure, `(cl F)* = F*`.
@@ -26,12 +26,13 @@ iteration stops because the adjoint does not see the closure, `(cl F)* = F*`.
 ## Main results
 
 * `fullyClosedFn_iff` — fully closed means lower closed and upper closed.
-* `upperClosedFn_upperCl`, `lowerClosedFn_lowerCl` — **Theorem 34.1**. The pairings occur only in
-  the hypotheses, never in the conclusion, so they must be given explicitly at each use site.
+* `upperClosedFn_upperCl`, `lowerClosedFn_lowerCl` — each closure is idempotent
+  (Theorem 34.1 in [^1]). The pairings occur only in the hypotheses, never in the conclusion, so
+  they must be given explicitly at each use site.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §33–§34.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §33–§34.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -84,7 +85,7 @@ theorem UpperClosedFn.concaveClosedFn (hK : UpperClosedFn K) : ConcaveClosedFn K
   rw [← hK, upperCl_def]
   exact concaveClosedFn_partialCl₁ (partialCl₂ K)
 
-/-- **Rockafellar, §33**: fully closed is exactly lower closed and upper closed. -/
+/-- Fully closed is exactly lower closed and upper closed. -/
 theorem fullyClosedFn_iff : FullyClosedFn K ↔ LowerClosedFn K ∧ UpperClosedFn K := by
   constructor
   · rintro ⟨h2, h1⟩
@@ -174,7 +175,7 @@ theorem lowerClosedFn_iff_upperClosedFn_saddleSwap :
 
 end SwapClosure
 
-/-! ### Corollary 33.1.1, the mirror clause -/
+/-! ### Concave-convexity of the first partial closure -/
 
 section CorMirror
 
@@ -182,8 +183,8 @@ variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Modul
   [AddCommGroup X] [Module ℝ X] [TopologicalSpace U] [IsTopologicalAddGroup U]
   [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U] {K : U × X → EReal}
 
-/-- **Rockafellar, Corollary 33.1.1**, mirroring `concaveConvexFn_partialCl₂`: `cl₁ K` is again
-concave-convex. The pairing needed is the one on the concave variable. -/
+/-- Mirroring `concaveConvexFn_partialCl₂`: `cl₁ K` is again concave-convex. The pairing needed
+is the one on the concave variable. -/
 theorem concaveConvexFn_partialCl₁ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (hK : ConcaveConvexFn K) : ConcaveConvexFn (partialCl₁ K) := by
   have h : partialCl₁ K = saddleSwap (partialCl₂ (saddleSwap K)) := by
@@ -194,7 +195,7 @@ theorem concaveConvexFn_partialCl₁ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsC
 
 end CorMirror
 
-/-! ### Theorem 34.1 -/
+/-! ### Idempotence of the two closures -/
 
 section Thm341
 
@@ -205,7 +206,7 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [TopologicalSpace Y] [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y]
   {K : U × Y → EReal}
 
-/-- **Rockafellar, Theorem 34.1**, upper half: `cl₁ cl₂ cl₁ cl₂ K = cl₁ cl₂ K`.
+/-- The upper closure is idempotent: `cl₁ cl₂ cl₁ cl₂ K = cl₁ cl₂ K`.
 
 `Bu` pairs the concave variable and `Bx` the convex one; `Bx` must be compatible on both sides,
 because Fenchel–Moreau is applied once on `Y` and once on `U × X`. -/
@@ -238,8 +239,8 @@ theorem upperClosedFn_upperCl (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatib
 
 omit [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
   [LocallyConvexSpace ℝ X] in
-/-- **Rockafellar, Theorem 34.1**, lower half: `cl₂ cl₁ cl₂ cl₁ K = cl₂ cl₁ K`. This is the upper
-half at `saddleSwap K`, which is why the pairings are needed on both sides here. -/
+/-- The lower closure is idempotent: `cl₂ cl₁ cl₂ cl₁ K = cl₂ cl₁ K`. This is
+`upperClosedFn_upperCl` at `saddleSwap K`, which is why the pairings are needed on both sides. -/
 theorem lowerClosedFn_lowerCl [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V]
     [LocallyConvexSpace ℝ V] (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip]

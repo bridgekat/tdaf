@@ -9,10 +9,10 @@ import Tdaf.Analysis.Convex.Subgradient.Monotone
 /-!
 # Existence of saddle-values and saddle-points
 
-`Saddle/Conjugate.lean` proves the `D*` halves of Theorem 37.2, Corollary 37.2.1, Theorem 37.3 and
-Corollary 37.3.1; this module supplies the `C*` halves, turns Theorem 37.6 into a statement about
-`K` alone, and then specialises everything to a finite continuous concave-convex function on a
-product of closed convex sets — where **Corollary 37.6.2** is the classical minimax theorem.
+`Saddle/Conjugate.lean` proves the `D*` halves of the criteria for a saddle-value; this module
+supplies the `C*` halves, turns the saddle-point criterion into a statement about `K` alone, and
+then specialises everything to a finite continuous concave-convex function on a product of closed
+convex sets — where the result is the classical **minimax theorem**.
 
 The device is the involution `saddleSwap K (y, u) = -K (u, y)`. Under it the class `Ω (F)` becomes
 the class `Ω (F♯)` for the **negated flipped pairings** `-Bx.flip`, `-Bu.flip`, where `F♯` is the
@@ -21,8 +21,8 @@ is its `D*` companion read at the swapped data, and no new duality is needed. Th
 negated and not merely flipped: `saddleSwap` negates values, and only the negated pairings restore
 the sign of the linear terms in the two conjugates.
 
-The file closes with Theorem 37.5's condition (c), which identifies `∂K` with the subdifferential
-of the graph function of `F`, partially inverted along a linear homeomorphism.
+The file closes with the identification of `∂K` with the subdifferential of the graph function of
+`F`, partially inverted along a linear homeomorphism.
 
 ## Main results
 
@@ -30,30 +30,32 @@ of the graph function of `F`, partially inverted along a linear homeomorphism.
   dictionary: `saddleSwap` carries `Ω (F)` onto `Ω (F♯)`, and the adjoint of `F♯` is `-F`;
   `upperConjSaddle_saddleSwap`, `lowerConjSaddle_saddleSwap` exchange the two conjugates.
 * `proper_graphFn_of_properSaddleFn` — a proper member of `Ω (F)` forces `Proper (graphFn F)`.
-* `zero_mem_interior_dom₁_lowerConjSaddle_iff` — **Corollary 37.2.1**, the `C*` half;
-  `hasSaddleValue_of_no_common_direction_of_recession_neg` — **Theorem 37.3**, condition (b);
-  `hasSaddleValue_of_isBounded_dom₁` — **Corollary 37.3.1** where `C` is bounded.
-* `exists_isSaddlePoint_of_no_common_direction_of_recession` — **Theorem 37.6** with its hypotheses
-  stated on `K` itself; `exists_isSaddlePoint_of_isBounded_domSaddle` — **Corollary 37.6.1**.
+* `zero_mem_interior_dom₁_lowerConjSaddle_iff` — `0 ∈ int C*` in terms of directions of recession;
+  `hasSaddleValue_of_no_common_direction_of_recession_neg` — no common direction of recession in
+  the first variable gives a saddle-value; `hasSaddleValue_of_isBounded_dom₁` — likewise when `C`
+  is bounded.
+* `exists_isSaddlePoint_of_no_common_direction_of_recession` — a saddle-point exists when neither
+  variable has a common direction of recession (Theorem 37.6 in [^1]);
+  `exists_isSaddlePoint_of_isBounded_domSaddle` — likewise for a bounded effective domain.
 * `saddleStructure_lowerSimpleExt`, `maximin_lowerSimpleExt`,
-  `exists_bifunSaddleClass_lowerSimpleExt` — the transfer of §37 to a finite continuous
-  concave-convex function on a closed `C × D`, through Corollaries 34.2.4 and 33.3.3.
-* `biSup_biInf_eq_biInf_biSup_of_isBounded_right` — **Corollary 37.3.2**;
-  `exists_saddlePoint_of_isBounded` — **Corollary 37.6.2**.
+  `exists_bifunSaddleClass_lowerSimpleExt` — the transfer to a finite continuous concave-convex
+  function on a closed `C × D`, through its lower simple extension.
+* `biSup_biInf_eq_biInf_biSup_of_isBounded_right` — `sup inf = inf sup` with one factor bounded;
+  `exists_saddlePoint_of_isBounded` — the **minimax theorem** (Corollary 37.6.2 in [^1]).
 * `isBifunSubgradientPair_iff_mem_subgradient_graphFn`, `setOf_mem_saddleSubgradient_eq_preimage` —
-  **Theorem 37.5**, (c) ⇔ (d), pointwise and as an equality of graphs;
-  `isClosed_setOf_mem_saddleSubgradient` — **Corollary 37.5.1**, closedness clause.
+  `∂K` is `∂f` partially inverted, pointwise and as an equality of graphs;
+  `isClosed_setOf_mem_saddleSubgradient` — the graph of `∂K` is closed.
 
 ## Implementation notes
 
-Corollary 37.3.2 is stated with `EReal`-valued extrema. The book writes
+The `sup inf = inf sup` statements carry `EReal`-valued extrema. The customary display is
 `inf_D sup_C K = sup_C inf_D K` for a finite `K`, but with only one of `C`, `D` bounded the two
-iterated extrema can be `±∞`. Corollary 37.6.2, where both are bounded, is stated with real
-inequalities exactly as the book displays them.
+iterated extrema can be `±∞`. The minimax theorem, where both are bounded, is stated with real
+inequalities.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24, §34, §36, §37.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24, §34, §36, §37.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -149,7 +151,7 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
   [TopologicalSpace V] [IsTopologicalAddGroup V] [TopologicalSpace Y] [IsTopologicalAddGroup Y]
 
-/-- `F♯` is a closed bifunction, by Theorem 30.1 for the adjoint. -/
+/-- `F♯` is a closed bifunction, because an adjoint bifunction is closed. -/
 theorem closedBifun_swapAdjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsContinuousPairing Bu.flip]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsContinuousPairing Bx.flip] (F : Bifun U X) :
     ClosedBifun (swapAdjointBifun Bu Bx F) :=
@@ -175,7 +177,7 @@ theorem adjointBifun_swapAdjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [Is
     adjointBifun_flip_inverseBifun_adjointBifun Bu Bx hF hcl]
 
 /-- **The swap dictionary for equivalence classes**: `saddleSwap` carries `Ω (F)` onto `Ω (F♯)`
-at the negated flipped pairings. Every §37 statement about the first variable is therefore the
+at the negated flipped pairings. Every statement about the first variable is therefore the
 corresponding statement about the second variable, read here. -/
 theorem saddleSwap_mem_bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -245,9 +247,9 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
   {F : Bifun U X} {K : U × Y → EReal}
 
-/-- **A proper member forces a proper bifunction.** Rockafellar never separates the two
-propernesses, but the §37 statements ask for `Proper (graphFn F)` while Theorem 34.3 and
-Corollary 34.2.4 deliver `ProperSaddleFn K`, so the bridge is crossed explicitly.
+/-- **A proper member forces a proper bifunction.** The two propernesses are usually not
+separated, but the results here ask for `Proper (graphFn F)` while the structural theorems deliver
+`ProperSaddleFn K`, so the bridge is crossed explicitly.
 
 `F u x = ⊥` would make the bracket `⟨Fu, y⟩` identically `+∞`, contradicting `dom₂ K ≠ ∅`; and
 `F ≡ +∞` would make the upper bracket `-∞`, contradicting `dom₁ K ≠ ∅`. -/
@@ -285,7 +287,7 @@ theorem proper_graphFn_of_properSaddleFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
 
 end ProperGraph
 
-/-! ### Corollary 37.2.1 and Theorem 37.3, the `C*` half -/
+/-! ### The `C*` half of the saddle-value criteria -/
 
 section SeparatingNeg
 
@@ -310,10 +312,9 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   {F : Bifun U X} {K : U × Y → EReal}
 
 omit [FiniteDimensional ℝ X] in
-/-- **Rockafellar, Corollary 37.2.1** (the `C*` half): the origin is an interior point of `C*` if
-and only if the convex functions `-K (·, v)`, for `v ∈ ri D`, have no common direction of
-recession. This is the `D*` half read at `saddleSwap K`, whose class is `Ω (F♯)` for the negated
-flipped pairings. -/
+/-- The origin is an interior point of `C*` if and only if the convex functions `-K (·, v)`, for
+`v ∈ ri D`, have no common direction of recession. This is the `D*` half read at `saddleSwap K`,
+whose class is `Ω (F♯)` for the negated flipped pairings. -/
 theorem zero_mem_interior_dom₁_lowerConjSaddle_iff (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bu.SeparatingLeft)
@@ -331,8 +332,8 @@ theorem zero_mem_interior_dom₁_lowerConjSaddle_iff (Bu : U →ₗ[ℝ] V →�
   rw [upperConjSaddle_saddleSwap, dom₂_saddleSwap, dom₁_saddleSwap] at hmain
   exact hmain
 
-/-- **Rockafellar, Theorem 37.3**, condition (b): if the convex functions `-K (·, v)` for
-`v ∈ ri D` have no common direction of recession, then the saddle-value of `K` exists. -/
+/-- If the convex functions `-K (·, v)` for `v ∈ ri D` have no common direction of recession,
+then the saddle-value of `K` exists. -/
 theorem hasSaddleValue_of_no_common_direction_of_recession_neg (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bu.SeparatingLeft)
@@ -345,8 +346,7 @@ theorem hasSaddleValue_of_no_common_direction_of_recession_neg (Bu : U →ₗ[�
   exact interior_subset_intrinsicInterior
     ((zero_mem_interior_dom₁_lowerConjSaddle_iff Bu Bx hB hF hcl hK hKcc hp hs).2 hrec)
 
-/-- **Rockafellar, Corollary 37.3.1** (the `C` half): if the first effective domain of `K` is
-bounded, the saddle-value of `K` exists. -/
+/-- If the first effective domain of `K` is bounded, the saddle-value of `K` exists. -/
 theorem hasSaddleValue_of_isBounded_dom₁ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hB : Bu.SeparatingLeft) (hF : ConvexBifun F)
@@ -365,7 +365,7 @@ theorem hasSaddleValue_of_isBounded_dom₁ (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ
 
 end Cor3721Fst
 
-/-! ### Theorem 37.6 and Corollary 37.6.1 -/
+/-! ### Existence of a saddle-point -/
 
 section Thm376
 
@@ -375,9 +375,9 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
   {F : Bifun U X} {K : U × Y → EReal}
 
-/-- **Rockafellar, Theorem 37.6**: if conditions (a) and (b) of Theorem 37.3 both hold, `K` has a
-saddle-point. Corollary 37.2.1 translates them into `0 ∈ int C*` and `0 ∈ int D*`, after which
-Corollary 37.5.3 through Theorem 37.4 concludes. -/
+/-- If neither variable has a common direction of recession, `K` has a saddle-point. The two
+recession conditions translate into `0 ∈ int C*` and `0 ∈ int D*`, and `∂K* (0, 0)` is then a
+nonempty set of saddle-points. -/
 theorem exists_isSaddlePoint_of_no_common_direction_of_recession (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hBu : Bu.SeparatingLeft)
@@ -396,8 +396,7 @@ theorem exists_isSaddlePoint_of_no_common_direction_of_recession (Bu : U →ₗ[
       hs.1).2 hrec₂
   exact exists_isSaddlePoint_of_zero_mem_interior_dom_upperConjSaddle Bu Bx hF hcl hpr hK h₁ h₂
 
-/-- **Rockafellar, Corollary 37.6.1**: if both halves of the effective domain of `K` are bounded,
-`K` has a saddle-point. -/
+/-- If both halves of the effective domain of `K` are bounded, `K` has a saddle-point. -/
 theorem exists_isSaddlePoint_of_isBounded_domSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hBu : Bu.SeparatingLeft)
@@ -419,8 +418,8 @@ theorem exists_isSaddlePoint_of_isBounded_domSaddle (Bu : U →ₗ[ℝ] V →ₗ
     exact ⟨y, hy, lt_recessionFn_of_isBounded_dom (by rw [hdom]; exact hp.dom₁_nonempty)
       (by rw [hdom]; exact hbd₁) hz⟩
 
-/-- **Rockafellar, Corollary 37.6.1**, second clause: the saddle-value is then finite — a value of
-`K` at a saddle-point, and a proper saddle-function is finite on its effective domain. -/
+/-- The saddle-value is then finite — it is a value of `K` at a saddle-point, and a proper
+saddle-function is finite on its effective domain. -/
 theorem exists_maximin_eq_coe_of_isBounded_domSaddle (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hBu : Bu.SeparatingLeft)
@@ -434,7 +433,7 @@ theorem exists_maximin_eq_coe_of_isBounded_domSaddle (Bu : U →ₗ[ℝ] V →�
 
 end Thm376
 
-/-! ### Corollaries 37.3.2 and 37.6.2: a finite continuous saddle-function on `C × D` -/
+/-! ### A finite continuous saddle-function on `C × D` -/
 
 section SimpleExt
 
@@ -446,8 +445,8 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
 
 omit [FiniteDimensional ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [FiniteDimensional ℝ X] in
-/-- **Rockafellar, Theorem 34.3 for the lower simple extension**: it is a closed proper
-concave-convex function, so it has the full structural description. -/
+/-- The lower simple extension is a closed proper concave-convex function, so it has the full
+structural description. -/
 theorem saddleStructure_lowerSimpleExt (hC : Convex ℝ C) (hCcl : IsClosed C) (hDcl : IsClosed D)
     (hCne : C.Nonempty) (hDne : D.Nonempty)
     (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
@@ -462,8 +461,8 @@ theorem saddleStructure_lowerSimpleExt (hC : Convex ℝ C) (hCcl : IsClosed C) (
 
 omit [FiniteDimensional ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [FiniteDimensional ℝ X] in
-/-- **Rockafellar, Theorem 36.3** for the lower simple extension: its `sup inf` over the whole
-space is the book's `sup inf` over `C × D`. -/
+/-- The `sup inf` of the lower simple extension over the whole space is the `sup inf` of `K` over
+`C × D`. -/
 theorem maximin_lowerSimpleExt (hC : Convex ℝ C) (hCcl : IsClosed C) (hDcl : IsClosed D)
     (hCne : C.Nonempty) (hDne : D.Nonempty)
     (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
@@ -480,8 +479,8 @@ theorem maximin_lowerSimpleExt (hC : Convex ℝ C) (hCcl : IsClosed C) (hDcl : I
 
 omit [FiniteDimensional ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [FiniteDimensional ℝ X] in
-/-- **Rockafellar, Theorem 36.3** for the lower simple extension: its `inf sup` over the whole
-space is the book's `inf sup` over `C × D`. -/
+/-- The `inf sup` of the lower simple extension over the whole space is the `inf sup` of `K` over
+`C × D`. -/
 theorem minimax_lowerSimpleExt (hC : Convex ℝ C) (hCcl : IsClosed C) (hDcl : IsClosed D)
     (hCne : C.Nonempty) (hDne : D.Nonempty)
     (hconv : ∀ u ∈ C, ConvexOn ℝ D fun x => K (u, x))
@@ -499,7 +498,7 @@ theorem minimax_lowerSimpleExt (hC : Convex ℝ C) (hCcl : IsClosed C) (hDcl : I
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ V] [FiniteDimensional ℝ X]
   [FiniteDimensional ℝ Y] in
 /-- The unique closed convex bifunction whose lower bracket is the lower simple extension, packaged
-with the membership `K₁ ∈ Ω (F)` that every §37 result consumes. -/
+with the membership `K₁ ∈ Ω (F)` that the results above consume. -/
 theorem exists_bifunSaddleClass_lowerSimpleExt (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
     (hC : Convex ℝ C) (hCcl : IsClosed C) (hDcl : IsClosed D) (hCne : C.Nonempty)
@@ -525,11 +524,10 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
   {C : Set U} {D : Set Y} {K : U × Y → ℝ}
 
-/-- **Rockafellar, Corollary 37.3.2**, the half where `D` is bounded: a finite continuous
-concave-convex function on a product of nonempty closed convex sets, one of them bounded, has
-`sup inf = inf sup` over `C × D`. The lower simple extension is a closed proper concave-convex
-function with effective domain `C × D` (Corollary 34.2.4), so Corollary 37.3.1 gives it a
-saddle-value and Theorem 36.3 identifies its extrema with the restricted ones. -/
+/-- The half where `D` is bounded: a finite continuous concave-convex function on a product of
+nonempty closed convex sets, one of them bounded, has `sup inf = inf sup` over `C × D`. The lower
+simple extension is a closed proper concave-convex function with effective domain `C × D`, so it
+has a saddle-value, and its extrema over the whole space are the restricted ones. -/
 theorem biSup_biInf_eq_biInf_biSup_of_isBounded_right (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bx.SeparatingRight)
@@ -556,7 +554,7 @@ theorem biSup_biInf_eq_biInf_biSup_of_isBounded_right (Bu : U →ₗ[ℝ] V →�
     minimax_lowerSimpleExt hC hCcl hDcl hCne hDne hconv hconc hcontD hcontC] at hsv
   exact hsv
 
-/-- **Rockafellar, Corollary 37.3.2**, the half where `C` is bounded. -/
+/-- The half where `C` is bounded. -/
 theorem biSup_biInf_eq_biInf_biSup_of_isBounded_left (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hB : Bu.SeparatingLeft)
@@ -582,10 +580,10 @@ theorem biSup_biInf_eq_biInf_biSup_of_isBounded_left (Bu : U →ₗ[ℝ] V →�
     minimax_lowerSimpleExt hC hCcl hDcl hCne hDne hconv hconc hcontD hcontC] at hsv
   exact hsv
 
-/-- **Rockafellar, Corollary 37.6.2**: a finite continuous concave-convex function on a product of
-nonempty compact convex sets has a saddle-point relative to that product — the classical minimax
-theorem. Corollary 37.6.1 gives the lower simple extension a saddle-point, Corollary 36.3.1 places
-it in `C × D`, and there the extension agrees with `K`. -/
+/-- **The minimax theorem**: a finite continuous concave-convex function on a product of nonempty
+compact convex sets has a saddle-point relative to that product. The bounded-domain criterion gives
+the lower simple extension a saddle-point, that saddle-point lies in `C × D`, and there the
+extension agrees with `K`. -/
 theorem exists_saddlePoint_of_isBounded (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hBu : Bu.SeparatingLeft) (hBx : Bx.SeparatingRight)
@@ -622,7 +620,7 @@ theorem exists_saddlePoint_of_isBounded (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [
 
 end Cor3732
 
-/-! ### Theorem 37.5, condition (c), and Corollary 37.5.1 -/
+/-! ### `∂K` as the subdifferential of the graph function, partially inverted -/
 
 section Thm375c
 
@@ -634,8 +632,8 @@ private theorem add_coe_right_inj {a b : EReal} {r : ℝ} :
   ⟨fun h => le_antisymm ((_root_.EReal.addLECancellable_coe r).add_le_add_iff_right.1 h.le)
       ((_root_.EReal.addLECancellable_coe r).add_le_add_iff_right.1 h.ge), fun h => by rw [h]⟩
 
-/-- The arithmetic behind Theorem 37.5's (c) ⇔ (d): with `e = c - d`, the equations `-b = e - a`
-and `a - c = b - d` say the same thing, both reducing to `a + d = b + c`. -/
+/-- The arithmetic behind that identification: with `e = c - d`, the equations `-b = e - a` and
+`a - c = b - d` say the same thing, both reducing to `a + d = b + c`. -/
 private theorem neg_eq_coe_sub_iff_sub_coe_eq_sub_coe (a b : EReal) (c d e : ℝ)
     (he : -d + c = e) :
     -b = ((e : ℝ) : EReal) - a ↔ a - ((c : ℝ) : EReal) = b - ((d : ℝ) : EReal) := by
@@ -652,10 +650,10 @@ private theorem neg_eq_coe_sub_iff_sub_coe_eq_sub_coe (a b : EReal) (c d e : ℝ
     exact hkey
   · exact add_coe_right_inj.1 (hkey.trans h.symm)
 
-/-- **Rockafellar, Theorem 37.5**, (c) ⇔ (d): membership in the subdifferential of the class
-`Ω (F)` is membership in the subdifferential of the graph function `f` of `F`, with the pair
-`(u*, v)` **partially inverted** to `(-u*, v)`. No hypothesis on `F` is needed: it is Theorem 23.5
-together with the unconditional identity `(F* v)(u*) = -f*(-u*, v)`. -/
+/-- Membership in the subdifferential of the class `Ω (F)` is membership in the subdifferential
+of the graph function `f` of `F`, with the pair `(u*, v)` **partially inverted** to `(-u*, v)`. No
+hypothesis on `F` is needed: it is the conjugate criterion for a subgradient together with the
+unconditional identity `(F* v)(u*) = -f*(-u*, v)`. -/
 theorem isBifunSubgradientPair_iff_mem_subgradient_graphFn (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (p : U × Y) (q : V × X) :
     IsBifunSubgradientPair Bu Bx F p q ↔
@@ -677,9 +675,9 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X} {K : U × Y → EReal}
 
-/-- **The graph of `∂K` is the graph of `∂f` partially inverted**, `f` the graph function of `F`:
-Theorem 37.5's (a) ⇔ (c) as an equality of sets. The inversion `(u, y, v, x) ↦ ((u, x), (-v, y))`
-is a linear homeomorphism, which is what makes Corollaries 37.5.1 and 37.5.2 transfer from `∂f`. -/
+/-- **The graph of `∂K` is the graph of `∂f` partially inverted**, `f` the graph function of `F`,
+as an equality of sets. The inversion `(u, y, v, x) ↦ ((u, x), (-v, y))` is a linear homeomorphism,
+which is what makes closedness and maximal monotonicity transfer from `∂f`. -/
 theorem setOf_mem_saddleSubgradient_eq_preimage (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -693,9 +691,9 @@ theorem setOf_mem_saddleSubgradient_eq_preimage (Bu : U →ₗ[ℝ] V →ₗ[ℝ
     isBifunSubgradientPair_iff_mem_subgradient_graphFn]
   exact Iff.rfl
 
-/-- **Rockafellar, Corollary 37.5.1**, closedness clause: the graph of `∂K` is closed. It is the
-preimage of the graph of `∂f` under a linear homeomorphism, and Theorem 24.4 says the graph of
-`∂f` is closed. The homeomorphism clause is `saddleSubgradientHomeomorph`. -/
+/-- The graph of `∂K` is closed: it is the preimage of the graph of `∂f` under a linear
+homeomorphism, and the graph of the subdifferential of a closed proper convex function is closed.
+The homeomorphism clause is `saddleSubgradientHomeomorph`. -/
 theorem isClosed_setOf_mem_saddleSubgradient (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hcu : Continuous fun r : U × V => Bu r.1 r.2)
