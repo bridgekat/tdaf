@@ -57,17 +57,13 @@ theorem lscHull_isGreatest (f : Rn n → EReal) :
   isGreatest_lscHull f
 
 /-- **Rockafellar §7**: "For a proper convex function, closedness is thus the same as lower
-semi-continuity."
-
-Only the `≠ -∞` half of properness is used, and convexity is not used at all. -/
+semi-continuity." Only the `≠ -∞` half of properness is used, and convexity is not used at all. -/
 theorem closedFn_iff_lowerSemicontinuous_of_proper (hp : Proper f) :
     ClosedFn f ↔ LowerSemicontinuous f :=
   closedFn_iff_lowerSemicontinuous hp.ne_bot
 
-/-- **Rockafellar §7**: "the only closed improper convex functions are the constant functions
-`+∞` and `−∞`".
-
-Convexity is not needed. -/
+/-- **Rockafellar §7**: "the only closed improper convex functions are the constant functions `+∞`
+and `−∞`". Convexity is not needed. -/
 theorem closed_improper_eq_const (hc : ClosedFn f) (himp : ¬ Proper f) :
     f = (fun _ => (⊥ : EReal)) ∨ f = fun _ => (⊤ : EReal) :=
   eq_const_of_closedFn_of_not_proper hc himp
@@ -118,9 +114,8 @@ theorem theorem_7_1 (f : Rn n → EReal) :
 
 /-- **Theorem 7.2.** If `f` is an improper convex function, then `f x = -∞` for every
 `x ∈ ri (dom f)`. Thus an improper convex function is necessarily infinite except perhaps at
-relative boundary points of its effective domain.
-
-No properness hypothesis is added: the theorem is *about* improper functions. -/
+relative boundary points of its effective domain. No properness hypothesis is added: the theorem is
+*about* improper functions. -/
 theorem theorem_7_2 (hf : ConvexFn f) (himp : ¬ Proper f) {x : Rn n} (hx : x ∈ ri (dom f)) :
     f x = ⊥ :=
   hf.eq_bot_of_mem_relint_dom himp hx
@@ -246,11 +241,9 @@ theorem theorem_7_4 (hf : ConvexFn f) (hp : Proper f) :
       exact hx ⟨hc, hr⟩)
   · exact hf.clFn_eq_of_notMem_closure_dom hp hc
 
-/-- **Corollary 7.4.1.** If `f` is a proper convex function, then `dom (cl f)`
-differs from `dom f` at most by including some additional relative boundary points of `dom f`. In
-particular, `dom (cl f)` and `dom f` have the same closure and relative interior, as well as the
-same dimension.
-
+/-- **Corollary 7.4.1.** If `f` is a proper convex function, then `dom (cl f)` differs from `dom f`
+at most by including some additional relative boundary points of `dom f`. In particular,
+`dom (cl f)` and `dom f` have the same closure and relative interior, as well as the same dimension.
 The dimension clause is `dim_eq_of_closure_eq`, which belongs to §6. -/
 theorem corollary_7_4_1 (hf : ConvexFn f) (hp : Proper f) :
     dom f ⊆ dom (clFn f) ∧ dom (clFn f) ⊆ closure (dom f) ∧
@@ -275,10 +268,9 @@ theorem corollary_7_4_2 (hf : ConvexFn f) (hp : Proper f) (hdom : IsAffineSet (d
 
 /-! ### Theorem 7.5 and its corollary -/
 
-/-- **Theorem 7.5.** Let `f` be a proper convex function, and let `x ∈ ri (dom f)`.
-Then `(cl f) y = lim_{λ ↑ 1} f ((1 - λ) x + λ y)` for every `y`.
-
-The book's `λ ↑ 1` is the filter `𝓝[<] (1 : ℝ)`. -/
+/-- **Theorem 7.5.** Let `f` be a proper convex function, and let `x ∈ ri (dom f)`. Then
+`(cl f) y = lim_{λ ↑ 1} f ((1 - λ) x + λ y)` for every `y`. The book's `λ ↑ 1` is the filter
+`𝓝[<] (1 : ℝ)`. -/
 theorem theorem_7_5 (hf : ConvexFn f) (hp : Proper f) {x : Rn n} (hx : x ∈ ri (dom f))
     (y : Rn n) :
     Tendsto (fun a : ℝ => f ((1 - a) • x + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y)) :=

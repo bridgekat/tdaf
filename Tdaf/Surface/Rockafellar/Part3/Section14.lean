@@ -11,87 +11,32 @@ import Tdaf.Surface.Rockafellar.Part3.Section13
 /-!
 # Rockafellar, §14: Polars of Convex Sets
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §14, pp. 121–127: the polar `K°` of a
-convex cone, obtained by restricting the conjugacy correspondence of §12 to indicator functions of
-cones, and its extension to the polar `C°` of a convex set containing the origin, obtained by
-conjugating gauges instead of indicators.
-
-All eleven numbered results are here, stated over `Rn n = ℝⁿ` and closed by specialising
-`Tdaf/Analysis/Convex/Duality/{Polar, PolarBounded, Gauge, HomConePolar, Level, Barrier}.lean` and
-`Tdaf/Analysis/Convex/Recession/Conjugate.lean`.
-
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 14.1 | `theorem_14_1_nonempty`, `theorem_14_1_convex`, `theorem_14_1_isCone`, |
-| | `theorem_14_1_isClosed`, `theorem_14_1_bipolar`, `theorem_14_1_conj`, |
-| | `theorem_14_1_conj_dual` |
-| Theorem 14.2 | `theorem_14_2`, `theorem_14_2_dual` |
-| Corollary 14.2.1 | `corollary_14_2_1` |
-| Corollary 14.2.2 | `corollary_14_2_2` |
-| Theorem 14.3 | `theorem_14_3`, `theorem_14_3_dual` |
-| Theorem 14.4 | `theorem_14_4` |
-| Theorem 14.5 | `theorem_14_5_isClosed`, `theorem_14_5_convex`, `theorem_14_5_zero_mem`, |
-| | `theorem_14_5_bipolar`, `theorem_14_5_gauge`, `theorem_14_5_gauge_dual` |
-| Corollary 14.5.1 | `corollary_14_5_1`, `corollary_14_5_1_dual` |
-| Theorem 14.6 | `theorem_14_6_recession`, `theorem_14_6_recession_dual`, |
-| | `theorem_14_6_lineality`, `theorem_14_6_lineality_dual` |
-| Corollary 14.6.1 | `corollary_14_6_1_dim`, `corollary_14_6_1_lineality`, `corollary_14_6_1_rank` |
-| Theorem 14.7 | `theorem_14_7_conj_nonneg`, `theorem_14_7_conj_zero`, `theorem_14_7_left`, |
-| | `theorem_14_7_right` |
+The polar `K°` of a convex cone and the polar `C°` of a convex set, the bipolar theorems, and the
+duality between gauges and support functions that polarity carries. All 11 numbered results of §14
+are formalized.
 
 ## The section's definitions
 
 * **The polar of a convex cone** `K° = {x* | ⟨x, x*⟩ ≤ 0 for every x ∈ K}` is the backbone's
   `polarCone (pairing n)`, unfolded here as `mem_polarCone_rn`.
-* **The polar of a convex set** `C° = {x* | ⟨x, x*⟩ ≤ 1 for every x ∈ C}` is `polarSet (pairing n)`,
-  unfolded as `mem_polarSet_rn`. The two agree on cones (`polarCone_eq_polarSet_rn`, the remark
-  following Corollary 14.5.1).
-* **Rank** of a convex set (§8, p. 70) is `rankSet C = dim C - lineality C`, defined here because
+* **The polar of a convex set** `C° = {x* | ⟨x, x*⟩ ≤ 1 for every x ∈ C}` is
+  `polarSet (pairing n)`, unfolded as `mem_polarSet_rn`. The two agree on cones
+  (`polarCone_eq_polarSet_rn`, the remark following Corollary 14.5.1).
+* **Rank** of a convex set is `rankSet C = dim C - lineality C`, defined here because
   Corollary 14.6.1 is its first consumer among sets; §13's `rankFn` is the companion for functions.
 * **The triples of `ℝⁿ⁺²`** that Theorem 14.4 is stated in are `triple λ x μ`, the concatenation
-  `(λ, x, μ)` supplied by `Tdaf/Analysis/Convex/EuclideanProd.lean`, and `endsReflection` is the
-  book's mapping `(λ*, x*, μ*) ↦ (-μ*, x*, -λ*)` read through it.
+  `(λ, x, μ)`, and `endsReflection` is the book's `(λ*, x*, μ*) ↦ (-μ*, x*, -λ*)` read through it.
 
-## Two theorems with no printed proof
+Theorems 14.1 and 14.5 carry no `Proof.` paragraph in the book, each summarising the running text
+before it; both arguments are recovered here. `polarCone_polarCone` is proved by the separation
+route the book mentions as an alternative (Corollary 11.7.1), and `C°° = C` by the same argument
+with the constant normalised to `1`.
 
-Theorem 14.1 and Theorem 14.5 carry **no `Proof.` paragraph** in the book: each summarises the
-running text immediately preceding it (lines 4759–4767 and 4907–4947). Both arguments are recovered
-here. For Theorem 14.1 the text runs: `δ(· | K)` is positively homogeneous, so its conjugate is
-again an indicator (Corollary 13.2.1), of a cone that is closed because a conjugate is closed; and
-`K°° = cl K` because `f** = cl f`. That is exactly `conj_indicatorFn_polarCone` and
-`polarCone_polarCone`, and the backbone proves the latter by the alternative route Rockafellar
-mentions — separation, i.e. Corollary 11.7.1. For Theorem 14.5 the text computes
-`cl γ(· | C) = δ*(· | C°)` from Theorem 13.5 applied to `f = δ(· | C) + 1`, then reads
-`C°° = {x | cl γ(x | C) ≤ 1}` and closes with Corollary 9.7.1; the backbone instead proves
-`C°° = C` by the same separation argument as for cones with the constant normalised to `1`, and
-`γ(· | C°) = δ*(· | C)` directly from the two infima.
-
-## The unnumbered running text
-
-Recorded: `(cl K)° = K°` (`polarCone_closure_rn`) and `K°° = cl K` for an arbitrary bundled cone
-(`polarCone_polarCone_rn`); the examples of pp. 122–123 — the polar of a subspace is its orthogonal
-complement (`polarCone_submodule_rn`), the polar of the non-negative orthant is the non-positive
-orthant (`polarCone_nonnegOrthant_rn`), the polar of the cone generated by `{aᵢ}` is the solution
-set of `⟨aᵢ, x*⟩ ≤ 0` and conversely (`polarCone_hull_range_rn`,
-`polarCone_setOf_forall_le_zero_rn`); that polarity is order-inverting (`polarSet_anti_rn`,
-`polarCone_anti_rn`); that the polar of a cone as a cone and as a set agree
-(`polarCone_eq_polarSet_rn`); that `C° = D°` for `D = cl(conv(C ∪ {0}))`
-(`polarSet_convexHullZero_rn`) and hence the identity `C°° = cl(conv(C ∪ {0}))` of line 4944
-(`polarSet_polarSet_convexHullZero_rn`), which is what makes Theorem 14.5's hypotheses exactly the
-right ones.
-
-## What is not here
-
-* **The example table `C₁°`–`C₄°`** (book, lines 4959–4997) — *omitted with a reason*. Four
-  coordinatewise computations, printed with the words "may be determined to be" and no argument;
-  none is used later and none tests the backbone.
-* **"`K°` consists of all the vectors normal to `K` at `0`"** (book, line 4787) — *deferred by
-  scope* to §23, where the normal cone is defined.
-* **"the polar consists of all non-negative linear combinations when the collection `{aᵢ}` is
-  finite"** (book, line 4805) — *deferred by scope*: it is Theorem 19.1, that a finitely generated
-  cone is closed.
+The unnumbered running text is recorded too: `(cl K)° = K°` and `K°° = cl K` for an arbitrary
+bundled cone; the polar of a subspace as its orthogonal complement, of the non-negative orthant as
+the non-positive orthant, and of a generated cone as the solution set of `⟨aᵢ, x*⟩ ≤ 0`; that
+polarity is order-inverting; and that `C° = D°` for `D = cl (conv (C ∪ {0}))`, whence
+`C°° = cl (conv (C ∪ {0}))` — which is what makes Theorem 14.5's hypotheses exactly the right ones.
 
 ## References
 
@@ -109,9 +54,8 @@ variable {n : ℕ}
 /-! ### The two polars of §14 -/
 
 /-- **Rockafellar's polar of a convex cone** (§14, p. 121):
-`K° = {x* | ⟨x, x*⟩ ≤ 0 for every x ∈ K}`.
-
-This is the backbone's `polarCone (pairing n)`, and the equation is the definition unfolded. -/
+`K° = {x* | ⟨x, x*⟩ ≤ 0 for every x ∈ K}`. This is the backbone's `polarCone (pairing n)`, and the
+equation is the definition unfolded. -/
 theorem mem_polarCone_rn (K : Set (Rn n)) (y : Rn n) :
     y ∈ polarCone (pairing n) K ↔ ∀ x ∈ K, (inner ℝ x y : ℝ) ≤ 0 := Iff.rfl
 
@@ -120,7 +64,7 @@ theorem mem_polarCone_rn (K : Set (Rn n)) (y : Rn n) :
 theorem mem_polarSet_rn (C : Set (Rn n)) (y : Rn n) :
     y ∈ polarSet (pairing n) C ↔ ∀ x ∈ C, (inner ℝ x y : ℝ) ≤ 1 := Iff.rfl
 
-/-- **Polarity is order-inverting** (§14, line 4955): `C₁ ⊆ C₂` implies `C₂° ⊆ C₁°`. -/
+/-- **Polarity is order-inverting** (§14): `C₁ ⊆ C₂` implies `C₂° ⊆ C₁°`. -/
 theorem polarSet_anti_rn {C D : Set (Rn n)} (h : C ⊆ D) :
     polarSet (pairing n) D ⊆ polarSet (pairing n) C :=
   polarSet_anti h
@@ -130,10 +74,9 @@ theorem polarCone_anti_rn {K L : Set (Rn n)} (h : K ⊆ L) :
     polarCone (pairing n) L ⊆ polarCone (pairing n) K :=
   polarCone_anti h
 
-/-- **The polar of a convex cone as a cone and as a set coincide** (§14, line 4953): the half-space
-`{x | ⟨x, x*⟩ ≤ 1}` contains `K` if and only if `{x | ⟨x, x*⟩ ≤ 0}` does.
-
-The hypothesis is Rockafellar's "cone", closure under *positive* scalar multiplication. -/
+/-- **The polar of a convex cone as a cone and as a set coincide** (§14): the half-space
+`{x | ⟨x, x*⟩ ≤ 1}` contains `K` if and only if `{x | ⟨x, x*⟩ ≤ 0}` does. The hypothesis is
+Rockafellar's "cone", closure under *positive* scalar multiplication. -/
 theorem polarCone_eq_polarSet_rn {K : Set (Rn n)} (hK : ∀ a : ℝ, 0 < a → a • K = K) :
     polarCone (pairing n) K = polarSet (pairing n) K :=
   polarCone_eq_polarSet_of_isCone hK
@@ -149,32 +92,25 @@ theorem polarSet_polarSet_rn {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : IsCl
 
 The polarity correspondence for convex cones. The book prints no proof; see the module docstring. -/
 
-/-- **Theorem 14.1**, first assertion: the polar of a convex cone is **non-empty** —
-it always contains the origin.
-
-No hypothesis on `K` is needed. -/
+/-- **Theorem 14.1**, first assertion: the polar of a convex cone is **non-empty** — it always
+contains the origin. No hypothesis on `K` is needed. -/
 theorem theorem_14_1_nonempty (K : Set (Rn n)) : (polarCone (pairing n) K).Nonempty :=
   polarCone_nonempty (pairing n) K
 
-/-- **Theorem 14.1**, first assertion: the polar of a convex cone is **convex**.
-
-No hypothesis on `K` is needed. -/
+/-- **Theorem 14.1**, first assertion: the polar of a convex cone is **convex**. No hypothesis on
+`K` is needed. -/
 theorem theorem_14_1_convex (K : Set (Rn n)) : Convex ℝ (polarCone (pairing n) K) :=
   convex_polarCone (pairing n) K
 
-/-- **Theorem 14.1**, first assertion: the polar of a convex cone is a **cone** in
-Rockafellar's sense, `a K° = K°` for every `a > 0`.
-
-No hypothesis on `K` is needed. -/
+/-- **Theorem 14.1**, first assertion: the polar of a convex cone is a **cone** in Rockafellar's
+sense, `a K° = K°` for every `a > 0`. No hypothesis on `K` is needed. -/
 theorem theorem_14_1_isCone (K : Set (Rn n)) {a : ℝ} (ha : 0 < a) :
     a • polarCone (pairing n) K = polarCone (pairing n) K :=
   smul_polarCone (pairing n) K a ha
 
-/-- **Theorem 14.1**, first assertion: the polar of a convex cone is **closed**, being
-an intersection of homogeneous closed half-spaces — which is Rockafellar's own remark that the
-first assertion could also be derived from Corollary 11.7.1.
-
-No hypothesis on `K` is needed. -/
+/-- **Theorem 14.1**, first assertion: the polar of a convex cone is **closed**, being an
+intersection of homogeneous closed half-spaces — which is Rockafellar's own remark that the first
+assertion could also be derived from Corollary 11.7.1. No hypothesis on `K` is needed. -/
 theorem theorem_14_1_isClosed (K : Set (Rn n)) : IsClosed (polarCone (pairing n) K) :=
   isClosed_polarCone
 
@@ -204,13 +140,13 @@ theorem theorem_14_1_conj_dual (K : PointedCone ℝ (Rn n)) (hcl : IsClosed (K :
       = indicatorFn (K : Set (Rn n)) := by
   simpa using conj_indicatorFn_polarCone_pointedCone (B := pairing n) K hcl
 
-/-- **`(cl K)° = K°`** (§14, line 4763), the invariance that lets Theorem 14.1 be stated for closed
+/-- **`(cl K)° = K°`** (§14), the invariance that lets Theorem 14.1 be stated for closed
 cones without loss. Specialises `polarCone_closure`. -/
 theorem polarCone_closure_rn (K : Set (Rn n)) :
     polarCone (pairing n) (closure K) = polarCone (pairing n) K :=
   polarCone_closure K
 
-/-- **`K°° = cl K`** (§14, line 4763) for a convex cone that need not be closed. -/
+/-- **`K°° = cl K`** (§14) for a convex cone that need not be closed. -/
 theorem polarCone_polarCone_rn (K : PointedCone ℝ (Rn n)) :
     polarCone (pairing n) (polarCone (pairing n) (K : Set (Rn n)))
       = closure (K : Set (Rn n)) := by
@@ -218,16 +154,15 @@ theorem polarCone_polarCone_rn (K : PointedCone ℝ (Rn n)) :
 
 /-! ### The examples of §14 (pp. 122–123) -/
 
-/-- **The polar of a subspace is the orthogonally complementary subspace** (§14, line 4785).
-
-It annihilator description is Mathlib's `Submodule.orthogonal` for the Euclidean pairing. -/
+/-- **The polar of a subspace is the orthogonally complementary subspace** (§14). For the Euclidean
+pairing the annihilator of `L` is Mathlib's `Submodule.orthogonal`. -/
 theorem polarCone_submodule_rn (L : Submodule ℝ (Rn n)) :
     polarCone (pairing n) (L : Set (Rn n)) = (Lᗮ : Set (Rn n)) := by
   rw [polarCone_coe_submodule' (pairing n) L]
   ext y
   simp only [Set.mem_ofPred_eq, pairing_apply, SetLike.mem_coe, Submodule.mem_orthogonal]
 
-/-- **The polar of the non-negative orthant is the non-positive orthant** (§14, line 4789).
+/-- **The polar of the non-negative orthant is the non-positive orthant** (§14).
 
 `nonnegOrthant` is §12's. -/
 theorem polarCone_nonnegOrthant_rn (n : ℕ) :
@@ -235,13 +170,13 @@ theorem polarCone_nonnegOrthant_rn (n : ℕ) :
   polarCone_nonnegOrthant
 
 /-- **The polar of the convex cone generated by a family `{aᵢ}`** is the solution set of the
-homogeneous inequalities `⟨aᵢ, x*⟩ ≤ 0` (§14, line 4791). -/
+homogeneous inequalities `⟨aᵢ, x*⟩ ≤ 0` (§14). -/
 theorem polarCone_hull_range_rn {ι : Sort*} (a : ι → Rn n) :
     polarCone (pairing n) (PointedCone.hull ℝ (Set.range a) : Set (Rn n))
       = {y : Rn n | ∀ i, (inner ℝ (a i) y : ℝ) ≤ 0} :=
   polarCone_hull_range (pairing n) a
 
-/-- **Dually** (§14, line 4801): the polar of `{y | ⟨aᵢ, y⟩ ≤ 0 for every i}` is the closure of the
+/-- **Dually** (§14): the polar of `{y | ⟨aᵢ, y⟩ ≤ 0 for every i}` is the closure of the
 convex cone generated by the `aᵢ`. -/
 theorem polarCone_setOf_forall_le_zero_rn {ι : Sort*} (a : ι → Rn n) :
     polarCone (pairing n) {y : Rn n | ∀ i, (inner ℝ (a i) y : ℝ) ≤ 0}
@@ -292,15 +227,7 @@ Rockafellar's hypothesis `f(0) > 0 > inf f` is self-dual: `f*(0) = -inf f` and `
 
 /-- **Theorem 14.3.** Let `f` be a closed proper convex function with
 `f(0) > 0 > inf f`. The closed convex cones generated by `{x | f x ≤ 0}` and by
-`{x* | f*(x*) ≤ 0}` are polar to each other; this is one of the two directions.
-
-The polar sees neither the closure nor the cone generated (`polarCone_closure`, `polarCone_hull`),
-so the left-hand side is the polar of `{x | f x ≤ 0}` itself, which is the zero sublevel set of its
-support function (`polarCone_eq_setOf_supportFn_le_zero`). Theorem 13.5
-(`supportFn_setOf_le_zero`) identifies that support function with `cl k*`, where `k*` is the
-positively homogeneous convex function generated by `f*`, and `setOf_clFn_posHomGen_le_zero` — the
-backbone form of the geometric step of Rockafellar's proof — identifies its zero sublevel set with
-the closed convex cone generated by `{x* | f*(x*) ≤ 0}`. -/
+`{x* | f*(x*) ≤ 0}` are polar to each other; this is one of the two directions. -/
 theorem theorem_14_3 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (h0 : 0 < f 0)
     (hinf : ⨅ x, f x < 0) :
     polarCone (pairing n) (closure (PointedCone.hull ℝ {x : Rn n | f x ≤ 0} : Set (Rn n)))
@@ -332,17 +259,10 @@ theorem theorem_14_3_dual {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (h0
 
 /-! ### Theorem 14.4
 
-Rockafellar's `K` is the convex cone in `ℝⁿ⁺²` generated by the vectors `(1, x, μ)` with
-`μ ≥ f(x)`, and `K*` is the same cone built from `f*`. The theorem says that `cl K*` is the image
-of `K°` under `(λ*, x*, μ*) ↦ (-μ*, x*, -λ*)`, so that the conjugate of `f` can be read off the
-polar of `K` — the derivation of conjugacy from polarity, in the direction opposite to the rest of
-§14.
-
-The mathematics is `closure_homCone_conj`, proved in `ℝ × ℝⁿ × ℝ` where the cone is `homCone f`;
-`triple` is the concatenation of that space into `ℝⁿ⁺²` and `endsReflection` is the book's map read
-through it. Rockafellar's hypothesis is that `f` is closed proper convex; the backbone needs only
-that `f` is convex with `dom f` and `dom f*` non-empty, and closedness is what supplies the
-second. -/
+`K` is the convex cone in `ℝⁿ⁺²` generated by the `(1, x, μ)` with `μ ≥ f(x)`, and `K*` the same
+cone built from `f*`. The theorem reads the conjugate of `f` off the polar of `K` — conjugacy from
+polarity, the direction opposite to the rest of §14. The mathematics lives in `ℝ × ℝⁿ × ℝ`, where
+the cone is `homCone f`; `triple` concatenates that space into `ℝⁿ⁺²`. -/
 
 /-- The vector `(λ, x, μ) ∈ ℝⁿ⁺²`: a scalar, a vector of `ℝⁿ` and a scalar, concatenated. -/
 noncomputable abbrev triple (l : ℝ) (x : Rn n) (m : ℝ) : Rn (n + 2) :=
@@ -399,7 +319,7 @@ convex cone generated by the `(1, x*, μ*)` with `μ* ≥ f*(x*)`. Then
 
 `cl K* = {(λ*, x*, μ*) | (-μ*, x*, -λ*) ∈ K°}`.
 
-`proper_conj` supplies `dom f* ≠ ∅`, which is the one place closedness of `f` is used. -/
+Closedness of `f` is used in one place only, to give `dom f* ≠ ∅`. -/
 theorem theorem_14_4 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     closure (PointedCone.hull ℝ {z : Rn (n + 2) | ∃ y : Rn n, ∃ ν : ℝ,
         conj (pairing n) f y ≤ (ν : EReal) ∧ z = triple 1 y ν} : Set (Rn (n + 2)))
@@ -460,15 +380,13 @@ theorem theorem_14_5_gauge {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : IsClos
   conv_lhs => rw [← polarSet_polarSet_rn hconv hcl h0]
   exact gaugeFn_polarSet (zero_mem_polarSet (pairing n) C)
 
-/-- **Theorem 14.5**, third assertion: dually, the gauge function of `C°` is the
-support function of `C`.
-
-It needs only `0 ∈ C`. -/
+/-- **Theorem 14.5**, third assertion: dually, the gauge function of `C°` is the support function of
+`C`. It needs only `0 ∈ C`. -/
 theorem theorem_14_5_gauge_dual {C : Set (Rn n)} (h0 : (0 : Rn n) ∈ C) :
     gaugeFn (polarSet (pairing n) C) = supportFn (pairing n) C :=
   gaugeFn_polarSet h0
 
-/-- **`C° = D°` where `D = cl(conv(C ∪ {0}))`** (§14, line 4941): a half-space `{x | ⟨x, x*⟩ ≤ 1}`
+/-- **`C° = D°` where `D = cl(conv(C ∪ {0}))`** (§14): a half-space `{x | ⟨x, x*⟩ ≤ 1}`
 contains `C` if and only if it contains `D`, because such a half-space is closed and convex and
 contains the origin. -/
 theorem polarSet_convexHullZero_rn (C : Set (Rn n)) :
@@ -485,7 +403,7 @@ theorem polarSet_convexHullZero_rn (C : Set (Rn n)) :
     rwa [polarSet_polarSet_rn (convex_polarSet _ _) isClosed_polarSet
       (zero_mem_polarSet (pairing n) C)] at h
 
-/-- **`C°° = cl(conv(C ∪ {0}))`** (§14, line 4944), the identity that makes Theorem 14.5's
+/-- **`C°° = cl(conv(C ∪ {0}))`** (§14), the identity that makes Theorem 14.5's
 hypotheses exactly the right ones: the bipolar of an arbitrary set is the smallest closed convex
 set containing it and the origin. -/
 theorem polarSet_polarSet_convexHullZero_rn (C : Set (Rn n)) :
@@ -495,20 +413,14 @@ theorem polarSet_polarSet_convexHullZero_rn (C : Set (Rn n)) :
   exact subset_closure (subset_convexHull ℝ _ (Set.mem_union_right _ rfl))
 
 /-- **Corollary 14.5.1.** Let `C` be a closed convex set containing the origin. Then
-`C°` is bounded if and only if `0 ∈ int C`.
-
-Its proof identifies the recession cone of `C°` with the polar *cone* of `C` (Theorem 14.6), turns
-"trivial recession cone" into "bounded" (Theorem 8.4), and reads a trivial polar cone as interiority
-of the origin (Corollary 6.4.1). Rockafellar argues instead through Corollary 13.2.2 and the
-finiteness of `γ(· | C)`. -/
+`C°` is bounded if and only if `0 ∈ int C`. -/
 theorem corollary_14_5_1 {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : IsClosed C)
     (h0 : (0 : Rn n) ∈ C) :
     Bornology.IsBounded (polarSet (pairing n) C) ↔ (0 : Rn n) ∈ interior C :=
   isBounded_polarSet_iff_zero_mem_interior hconv hcl h0
 
-/-- **Corollary 14.5.1**, dual form: `C` is bounded if and only if `0 ∈ int C°`.
-
-This is Corollary 14.5.1 applied to `C°` together with `C°° = C`. -/
+/-- **Corollary 14.5.1**, dual form: `C` is bounded if and only if `0 ∈ int C°`. This is Corollary
+14.5.1 applied to `C°` together with `C°° = C`. -/
 theorem corollary_14_5_1_dual {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : IsClosed C)
     (h0 : (0 : Rn n) ∈ C) :
     Bornology.IsBounded C ↔ (0 : Rn n) ∈ interior (polarSet (pairing n) C) :=
@@ -526,10 +438,7 @@ theorem theorem_14_6_recession {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : Is
 
 /-- **Theorem 14.6**, first assertion, in the other direction: the polar of the closed
 convex cone generated by `C°` is the recession cone of `C`. With `theorem_14_6_recession` this is
-the book's "polar to each other".
-
-Specialises `recessionCone_eq_polarCone_polarSet`, after `polarCone_closure` and `polarCone_hull`
-strip the closure and the cone hull, which a polar does not see. -/
+the book's "polar to each other". -/
 theorem theorem_14_6_recession_dual {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : IsClosed C)
     (h0 : (0 : Rn n) ∈ C) :
     polarCone (pairing n) (closure (PointedCone.hull ℝ (polarSet (pairing n) C) : Set (Rn n)))
@@ -583,9 +492,8 @@ theorem corollary_14_6_1_lineality {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl 
   rw [dim_of_nonempty ⟨0, h0⟩]
   omega
 
-/-- **Corollary 14.6.1**, third relation: `rank C° = rank C`.
-
-It is the difference of the other two, both of which read `n`. -/
+/-- **Corollary 14.6.1**, third relation: `rank C° = rank C`. It is the difference of the other two,
+both of which read `n`. -/
 theorem corollary_14_6_1_rank {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : IsClosed C)
     (h0 : (0 : Rn n) ∈ C) :
     rankSet (polarSet (pairing n) C) = rankSet C := by
@@ -595,10 +503,8 @@ theorem corollary_14_6_1_rank {C : Set (Rn n)} (hconv : Convex ℝ C) (hcl : IsC
 
 /-! ### Theorem 14.7 -/
 
-/-- **Theorem 14.7**, first assertion: if `f` is non-negative and vanishes at the
-origin, then `f*` is likewise non-negative.
-
-It needs only `f 0 ≤ 0`. -/
+/-- **Theorem 14.7**, first assertion: if `f` is non-negative and vanishes at the origin, then
+`f*` is likewise non-negative. -/
 theorem theorem_14_7_conj_nonneg {f : Rn n → EReal} (h0 : f 0 = 0) (y : Rn n) :
     0 ≤ conj (pairing n) f y :=
   zero_le_conj (le_of_eq h0) y
@@ -611,9 +517,8 @@ theorem theorem_14_7_conj_zero {f : Rn n → EReal} (hnn : ∀ x, 0 ≤ f x) (h0
 /-- **Theorem 14.7**, first inclusion: `{x | f x ≤ α}° ⊆ α⁻¹ {x* | f* x* ≤ α}` for
 `0 < α < ∞`.
 
-Rockafellar assumes `f` closed and routes the proof through Theorems 13.5 and 9.7; the backbone
-shows that closedness is not needed, and that one inclusion is a rescaling into the level set while
-the other is Fenchel's inequality. The hypothesis is therefore weaker here than in the book. -/
+Stated without the closedness the book assumes: one inclusion is a rescaling into the level set,
+the other is Fenchel's inequality, and neither uses it. -/
 theorem theorem_14_7_left {f : Rn n → EReal} (hf : ConvexFn f) (hnn : ∀ x, 0 ≤ f x)
     (h0 : f 0 = 0) {α : ℝ} (hα : 0 < α) :
     polarSet (pairing n) {x : Rn n | f x ≤ (α : EReal)}

@@ -141,7 +141,7 @@ theorem theorem_8_3_relint {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed 
 /-- **Corollary 8.3.1**: for any non-empty convex set `C`, `0⁺(ri C) = 0⁺(cl C)`.
 
 Non-emptiness is not needed. The inclusion `0⁺C ⊆ 0⁺(ri C)` can be **proper** when `C` is not
-closed: the book's `C₄` (line 2557) has `0⁺(ri C₄)` the closed first quadrant while `0⁺C₄ = C₄`. -/
+closed: the book's `C₄` has `0⁺(ri C₄)` the closed first quadrant while `0⁺C₄ = C₄`. -/
 theorem corollary_8_3_1 {C : Set (Rn n)} (hC : Convex ℝ C) :
     recessionCone (ri C) = recessionCone (closure C) :=
   hC.recessionCone_relint
@@ -185,10 +185,9 @@ theorem corollary_8_3_3 {ι : Type*} {C : ι → Set (Rn n)} (hC : ∀ i, Convex
     recessionCone (⋂ i, C i) = ⋂ i, recessionCone (C i) :=
   recessionCone_iInter hC hCc hne
 
-/-- **Corollary 8.3.4**: let `A` be a linear transformation from `ℝⁿ` to `ℝᵐ` and let
-`C` be a closed convex set in `ℝᵐ` with `A⁻¹C ≠ ∅`. Then `0⁺(A⁻¹C) = A⁻¹(0⁺C)`.
-
-Continuity of `A` is not used: Theorem 8.3 is applied to `C`, not to `A⁻¹C`. -/
+/-- **Corollary 8.3.4**: let `A` be a linear transformation from `ℝⁿ` to `ℝᵐ` and let `C` be a
+closed convex set in `ℝᵐ` with `A⁻¹C ≠ ∅`. Then `0⁺(A⁻¹C) = A⁻¹(0⁺C)`. Continuity of `A` is not
+used: Theorem 8.3 is applied to `C`, not to `A⁻¹C`. -/
 theorem corollary_8_3_4 (A : Rn n →ₗ[ℝ] Rn m) {C : Set (Rn m)} (hC : Convex ℝ C)
     (hCc : IsClosed C) (hne : (A ⁻¹' C).Nonempty) :
     recessionCone (A ⁻¹' C) = A ⁻¹' recessionCone C :=
@@ -213,7 +212,7 @@ theorem corollary_8_4_1 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
 
 /-! ### Lineality space, lineality and rank of a convex set
 
-Unnumbered, book lines 2645–2690. -/
+Unnumbered. -/
 
 /-- **Rockafellar's lineality space of `C`**, `(-0⁺C) ∩ 0⁺C`: the zero vector together with the
 `y ≠ 0` such that, for every `x ∈ C`, the whole line through `x` in the direction of `y` lies in
@@ -222,13 +221,13 @@ theorem mem_linealitySpace_iff (C : Set (Rn n)) (y : Rn n) :
     y ∈ linealitySpace C ↔ y ∈ recessionCone C ∧ y ∈ -recessionCone C :=
   Iff.rfl
 
-/-- **Rockafellar's "elementary exercise"** (book, line 2653): the lineality space of a convex `C`
+/-- **Rockafellar's "elementary exercise"**: the lineality space of a convex `C`
 is the set of vectors `y` such that `C + y = C`. -/
 theorem linealitySpace_eq_add_eq_surface {C : Set (Rn n)} (hC : Convex ℝ C) :
     linealitySpace C = {y : Rn n | C + {y} = C} :=
   linealitySpace_eq_add_eq hC
 
-/-- **Theorem 2.7 applied to `0⁺C`** (book, line 2657): the lineality space of `C` is a subspace,
+/-- **Theorem 2.7 applied to `0⁺C`**: the lineality space of `C` is a subspace,
 the largest subspace contained in the convex cone `0⁺C`. Its dimension is the *lineality* of `C`,
 `lineality C`. -/
 theorem linealitySubmodule_isGreatest_surface (C : Set (Rn n)) :
@@ -237,13 +236,13 @@ theorem linealitySubmodule_isGreatest_surface (C : Set (Rn n)) :
   linealitySubmodule_isGreatest C
 
 /-- **The direct-sum decomposition**: a convex set with lineality space `L` splits as
-`C = L + (C ∩ L^⊥)`. Stated for an *arbitrary* complement of `L`; the orthogonal complement is one
-instance, and the only place §8 would need an inner product. -/
+`C = L + (C ∩ L^⊥)`. Any complement of `L` would do; the orthogonal one is the only place §8 would
+need an inner product. -/
 theorem linealitySpace_add_inter_orthogonal (C : Set (Rn n)) :
     C = (linealitySubmodule C : Set (Rn n)) + C ∩ ((linealitySubmodule C)ᗮ : Set (Rn n)) :=
   eq_add_inter_of_isCompl (Submodule.isCompl_orthogonal _)
 
-/-! ### Examples of recession cones (unnumbered, book lines 2559–2573 and 2691–2698) -/
+/-! ### Examples of recession cones -/
 
 /-- The recession cone of a non-empty affine set `M` is the subspace `L` parallel to `M`. -/
 theorem recessionCone_affine {M : AffineSubspace ℝ (Rn n)} (hne : (M : Set (Rn n)).Nonempty) :
@@ -258,8 +257,8 @@ theorem recessionCone_polyhedron {ι : Type*} (b : ι → Rn n) (β : ι → ℝ
       = {x : Rn n | ∀ i, (0 : ℝ) ≤ pairing n (b i) x} :=
   recessionCone_setOf_forall_le (fun i => pairing n (b i)) β hne
 
-/-- The lineality space of such a `C` is given by the system of *equations* `⟪x, bᵢ⟫ = 0, ∀ i ∈ I`
-(book, line 2696). -/
+/-- The lineality space of such a `C` is the solution set of the *equations*
+`⟪x, bᵢ⟫ = 0, ∀ i ∈ I`. -/
 theorem linealitySpace_polyhedron {ι : Type*} (b : ι → Rn n) (β : ι → ℝ)
     (hne : {x : Rn n | ∀ i, β i ≤ pairing n (b i) x}.Nonempty) :
     linealitySpace {x : Rn n | ∀ i, β i ≤ pairing n (b i) x}
@@ -268,7 +267,7 @@ theorem linealitySpace_polyhedron {ι : Type*} (b : ι → Rn n) (β : ι → �
 
 /-! ### The recession function `f0⁺`
 
-Book lines 2699–2712. Let `f` be a convex function on `ℝⁿ` not identically `+∞`. Then
+Let `f` be a convex function on `ℝⁿ` not identically `+∞`. Then
 `0⁺(epi f)` is itself an epigraph, and the function it is the epigraph of is `f0⁺`. -/
 
 section Functions
@@ -281,14 +280,14 @@ is only needed to make the interpretation interesting, never the identity. -/
 theorem epi_recessionFn_surface (f : Rn n → EReal) : epi (recessionFn f) = recessionCone (epi f) :=
   epi_recessionFn f
 
-/-- **Rockafellar's displayed characterisation** (book, line 2703): `(y, ν) ∈ 0⁺(epi f)` if and only
+/-- **Rockafellar's displayed characterisation**: `(y, ν) ∈ 0⁺(epi f)` if and only
 if `f (x + λ y) ≤ f x + λ ν` for every `x` and every `λ ≥ 0`. -/
 theorem mk_mem_recessionCone_epi_iff_surface (y : Rn n) (ν : ℝ) :
     ((y, ν) : Rn n × ℝ) ∈ recessionCone (epi f) ↔
       ∀ (x : Rn n) (l : ℝ), 0 ≤ l → f (x + l • y) ≤ f x + ((l * ν : ℝ) : EReal) :=
   mk_mem_recessionCone_epi_iff
 
-/-- **Theorem 8.1 transported to epigraphs** (book, line 2707): for a convex `f` the
+/-- **Theorem 8.1 transported to epigraphs**: for a convex `f` the
 displayed inequality holds for every `x` and every `λ ≥ 0` as soon as it holds for every `x` with
 `λ = 1`. -/
 theorem recessionFn_le_coe_iff_surface (hf : ConvexFn f) (y : Rn n) (ν : ℝ) :
@@ -297,16 +296,13 @@ theorem recessionFn_le_coe_iff_surface (hf : ConvexFn f) (y : Rn n) (ν : ℝ) :
 
 /-! ### Theorem 8.5 -/
 
-/-- **Theorem 8.5**, first assertion: the recession function of a proper convex
-function is positively homogeneous.
-
-It needs no hypothesis: `0⁺(λ C) = λ 0⁺C` for `λ > 0`. -/
+/-- **Theorem 8.5**, first assertion: the recession function of a proper convex function is
+positively homogeneous. It needs no hypothesis: `0⁺(λ C) = λ 0⁺C` for `λ > 0`. -/
 theorem theorem_8_5_posHomogeneous (f : Rn n → EReal) : PosHomogeneous (recessionFn f) :=
   posHomogeneous_recessionFn f
 
-/-- **Theorem 8.5**, first assertion continued: `f0⁺` is convex.
-
-Again no hypothesis is needed, since `0⁺` of any set is convex. -/
+/-- **Theorem 8.5**, first assertion continued: `f0⁺` is convex. Again no hypothesis is needed,
+since `0⁺` of any set is convex. -/
 theorem theorem_8_5_convex (f : Rn n → EReal) : ConvexFn (recessionFn f) :=
   convexFn_recessionFn f
 
@@ -375,10 +371,8 @@ theorem theorem_8_6_antitone (hf : ConvexFn f) (x y : Rn n)
     Antitone fun l : ℝ => f (x + l • y) :=
   antitone_along_of_liminf_lt_top hf x y h
 
-/-- **Theorem 8.6**, second assertion: the property holds for *every* `x` if and only
-if `(f0⁺)(y) ≤ 0`.
-
-It needs no hypothesis on `f` at all. -/
+/-- **Theorem 8.6**, second assertion: the property holds for *every* `x` if and only if
+`(f0⁺)(y) ≤ 0`. It needs no hypothesis on `f` at all. -/
 theorem theorem_8_6_iff (f : Rn n → EReal) (y : Rn n) :
     (∀ x : Rn n, Antitone fun l : ℝ => f (x + l • y)) ↔ recessionFn f y ≤ 0 :=
   forall_antitone_iff_recessionFn_nonpos
@@ -427,7 +421,7 @@ theorem corollary_8_6_2 (hf : ConvexFn f) {M : AffineSubspace ℝ (Rn n)} {α : 
 
 /-! ### The recession cone, constancy space and lineality space of a function
 
-Book lines 2849–2860 and 2890–2896. -/
+-/
 
 /-- **The recession cone of `f`**: the set of `y` with `(f0⁺)(y) ≤ 0`, a convex cone containing
 `0` and closed when `f` is. Not to be confused with `0⁺(epi f)`, as the book warns:
@@ -457,13 +451,13 @@ theorem isClosed_recessionConeFn_surface (hf : ClosedProperConvexFn f) :
     IsClosed (recessionConeFn f) :=
   isClosed_recessionConeFn hf.isClosed_epi
 
-/-- **Rockafellar's constancy space of `f`** (book, line 2857): the `y` with `(f0⁺)(y) ≤ 0` and
+/-- **Rockafellar's constancy space of `f`**: the `y` with `(f0⁺)(y) ≤ 0` and
 `(f0⁺)(-y) ≤ 0`, which by Corollary 8.6.1 are the directions in which `f` is constant. -/
 theorem mem_constancySpace_iff (f : Rn n → EReal) (y : Rn n) :
     y ∈ constancySpace f ↔ ∀ (x : Rn n) (l : ℝ), f (x + l • y) = f x :=
   mem_constancySpace_iff_forall_eq
 
-/-- **Theorem 2.7 applied to the recession cone of `f`** (book, line 2857): the constancy space is
+/-- **Theorem 2.7 applied to the recession cone of `f`**: the constancy space is
 the largest subspace contained in the recession cone of `f`. -/
 theorem constancySubmodule_isGreatest_surface (f : Rn n → EReal) :
     IsGreatest {L : Submodule ℝ (Rn n) | (L : Set (Rn n)) ⊆ recessionConeFn f}
@@ -536,7 +530,7 @@ theorem theorem_8_8_closed (hf : ClosedProperConvexFn f) {x y : Rn n} (hx : x �
     ∀ (z : Rn n) (l : ℝ), f (z + l • y) = f z + ((l * ν : ℝ) : EReal) :=
   (forall_eq_add_iff_recessionFn hf.proper).2 (recessionFn_eq_of_affine_along hf hx h)
 
-/-- **Rockafellar's lineality space of `f`** (book, line 2890): the `y` with
+/-- **Rockafellar's lineality space of `f`**: the `y` with
 `(f0⁺)(-y) = -(f0⁺)(y)`. Theorem 8.8 identifies it with the image of the lineality space of
 `epi f` under the projection `(y, ν) ↦ y`; its dimension is the *lineality* of `f`, `linealityFn`.
 -/
@@ -544,17 +538,15 @@ theorem linealitySpaceFn_eq_image_surface (hp : Proper f) :
     linealitySpaceFn f = Prod.fst '' linealitySpace (epi f) :=
   linealitySpaceFn_eq_image hp
 
-/-- The lineality space of `f` is a subspace of `ℝⁿ` (book, line 2891).
-
-Its proof *is* Theorem 8.8. -/
+/-- The lineality space of `f` is a subspace of `ℝⁿ`. Its proof *is* Theorem 8.8. -/
 theorem coe_linealitySubmoduleFn_surface (hp : Proper f) :
     (linealitySubmoduleFn f : Set (Rn n)) = linealitySpaceFn f :=
   coe_linealitySubmoduleFn hp
 
-/-! ### Examples of recession functions (unnumbered, book lines 2807 and 2903) -/
+/-! ### Examples of recession functions -/
 
 /-- **The recession function of an indicator is the indicator of the recession cone**, so that "the
-rank of a convex set coincides with the rank of its indicator function" (book, line 2903) has a
+rank of a convex set coincides with the rank of its indicator function" has a
 meaning. Non-emptiness of `C` is needed: for `C = ∅` the left side is the constant `-∞`. -/
 theorem recessionFn_indicator {C : Set (Rn n)} (hne : C.Nonempty) :
     recessionFn (indicatorFn C) = indicatorFn (recessionCone C) :=

@@ -180,10 +180,9 @@ theorem eq_vectorSpan_add_singleton (h : IsAffineSet M) {a : Rn n} (ha : a ∈ M
     show (z - a : Rn n) = z -ᵥ a from rfl,
     AffineSubspace.vsub_right_mem_direction_iff_mem ha' z, ← SetLike.mem_coe, hspan]
 
-/-- **Theorem 1.2.** Each non-empty affine set `M` is parallel to a unique subspace
-`L`, that is, `M = L + a` for some `a`.
-
-The witness is `vectorSpan ℝ M`; `theorem_1_2_sub` identifies it with `M - M`. -/
+/-- **Theorem 1.2.** Each non-empty affine set `M` is parallel to a unique subspace `L`, that is,
+`M = L + a` for some `a`. The witness is `vectorSpan ℝ M`; `theorem_1_2_sub` identifies it with
+`M - M`. -/
 theorem theorem_1_2 (h : IsAffineSet M) (hne : M.Nonempty) :
     ∃! L : Submodule ℝ (Rn n), ∃ a : Rn n, M = (L : Set (Rn n)) + {a} := by
   obtain ⟨a, ha⟩ := hne
@@ -405,10 +404,9 @@ theorem theorem_1_3_unique {b b' : Rn n} {β β' : ℝ} (hb : b ≠ 0) (hb' : b'
 
 /-! ### Linear systems: Theorem 1.4 and Corollary 1.4.1 -/
 
-/-- **Theorem 1.4**, first sentence. Given `b ∈ ℝᵐ` and a linear `B : ℝⁿ → ℝᵐ`, the
-solution set `{x | Bx = b}` is an affine set in `ℝⁿ`.
-
-The book writes `B` as an `m × n` matrix; a linear map is the same data. -/
+/-- **Theorem 1.4**, first sentence. Given `b ∈ ℝᵐ` and a linear `B : ℝⁿ → ℝᵐ`, the solution set
+`{x | Bx = b}` is an affine set in `ℝⁿ`. The book writes `B` as an `m × n` matrix; a linear map is
+the same data. -/
 theorem theorem_1_4 (B : Rn n →ₗ[ℝ] Rn m) (b : Rn m) : IsAffineSet {x : Rn n | B x = b} := by
   intro x hx y hy l
   have hx' : B x = b := hx
@@ -697,7 +695,7 @@ theorem corollary_1_6_1 {M₁ M₂ : Set (Rn n)} (h₁ : IsAffineSet M₁) (h₂
 
 /-! ### The orthogonal complement of a graph -/
 
-/-- **Rockafellar, §1, unnumbered** (book, lines 531–551). The graph of a linear transformation
+/-- **Rockafellar, §1, unnumbered**. The graph of a linear transformation
 `A : ℝⁿ → ℝᵐ` is a subspace `L` of `ℝⁿ⁺ᵐ`, and its orthogonal complement `L⊥` is the graph of
 `-A*`.
 

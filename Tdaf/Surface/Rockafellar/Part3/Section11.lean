@@ -11,78 +11,36 @@ import Tdaf.Surface.Rockafellar.Part2.Section06
 /-!
 # Rockafellar, §11: Separation Theorems
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §11, pp. 95–101: the three notions of
-separation, the fundamental separation construction, and supporting hyperplanes. All sixteen
-numbered results are here, stated over `Rn n = ℝⁿ` in the book's own vocabulary — a hyperplane is
-`{x | ⟨x, b⟩ = β}` with `b ≠ 0`, and separation is an inclusion of the two sets in the opposing
-closed half-spaces — and closed by specialising the backbone.
-
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 11.1 | `theorem_11_1_ab`, `theorem_11_1_c` |
-| Theorem 11.2 | `theorem_11_2` |
-| Theorem 11.3 | `theorem_11_3` |
-| Theorem 11.4 | `theorem_11_4`, `theorem_11_4_closure` |
-| Corollary 11.4.1 | `corollary_11_4_1` |
-| Corollary 11.4.2 | `corollary_11_4_2` |
-| Theorem 11.5 | `theorem_11_5` |
-| Corollary 11.5.1 | `corollary_11_5_1` |
-| Corollary 11.5.2 | `corollary_11_5_2` |
-| Theorem 11.6 | `theorem_11_6` |
-| Corollary 11.6.1 | `corollary_11_6_1` |
-| Corollary 11.6.2 | `corollary_11_6_2` |
-| Theorem 11.7 | `theorem_11_7`, `theorem_11_7'` |
-| Corollary 11.7.1 | `corollary_11_7_1` |
-| Corollary 11.7.2 | `corollary_11_7_2` |
-| Corollary 11.7.3 | `corollary_11_7_3` |
+The three notions of separation, the fundamental separation construction, and supporting
+hyperplanes. All 16 numbered results of §11 are formalized, in the book's own vocabulary: a
+hyperplane is `{x | ⟨x, b⟩ = β}` with `b ≠ 0`, and separation is an inclusion of the two sets in
+the opposing closed half-spaces.
 
 ## The section's definitions
 
-* `Tdaf.Surface.linFn b` — the vector `b` read as the linear function `⟨·, b⟩`. It lives in the
-  shared surface header, not here, because §13, §14 and §18 want it too. The book quantifies over
-  vectors where the backbone quantifies over continuous linear functionals; `exists_linFn` says the
-  two are the same quantification in `ℝⁿ`, and every statement below is stated over vectors.
-* `Rockafellar.SeparatesRn b β C₁ C₂`, `SeparatesProperlyRn`, `SeparatesStrictlyRn`,
-  `SeparatesStronglyRn` — the four notions of p. 95, each carrying `b ≠ 0` so that
-  `{x | ⟨x, b⟩ = β}` really is a hyperplane (Theorem 1.3). `SeparatesStronglyRn` is written the way
-  the book writes it, with `Cᵢ + εB` inside the *open* half-spaces; `separatesStronglyRn_iff` is
-  the bridge to the backbone's gap definition, and is the substance of Theorem 11.1(c).
-* `Rockafellar.SeparableProperly`, `SeparableStrongly` — "there exists a hyperplane separating `C₁`
-  and `C₂` properly / strongly", which is what every numbered result of the section is about.
-* `Rockafellar.IsSupportingHalfSpace b β C` — the supporting half-space of p. 99. The bridge to
-  the backbone's `IsSupporting` is `isSupportingHalfSpace_iff`.
+* `SeparatesRn b β C₁ C₂`, `SeparatesProperlyRn`, `SeparatesStrictlyRn`, `SeparatesStronglyRn` —
+  the section's four notions, each carrying `b ≠ 0` so that `{x | ⟨x, b⟩ = β}` really is a
+  hyperplane (Theorem 1.3). `SeparatesStronglyRn` is written as the book writes it, with `Cᵢ + εB`
+  inside the *open* half-spaces; `separatesStronglyRn_iff` is the bridge to the backbone's gap
+  definition, and is the substance of Theorem 11.1(c).
+* `SeparableProperly`, `SeparableStrongly` — "there exists a hyperplane separating `C₁` and `C₂`
+  properly / strongly", which is what every numbered result of the section is about.
+* `IsSupportingHalfSpace b β C` — the supporting half-space, bridged to the backbone's
+  `IsSupporting` by `isSupportingHalfSpace_iff`.
+
+The book quantifies over vectors where the backbone quantifies over continuous linear functionals;
+`Tdaf.Surface.exists_linFn` says the two are the same quantification in `ℝⁿ`, and every statement
+below is over vectors.
 
 **Which set lies on which side.** Rockafellar's Theorem 11.1 puts `C₁` in the *upper* half-space
-and `C₂` in the lower one, while the backbone's `Separates f c s t` puts `s` below and `t` above.
+and `C₂` in the lower one, where the backbone's `Separates f c s t` puts `s` below and `t` above.
 The definitions here therefore read `Separates (linFn b) β C₂ C₁`, so that the inequalities in
-every statement are the book's. `separableProperly_iff_exists` and `separableStrongly_iff_exists`
-are the bridges to the backbone's unordered `∃ f c` form, and they absorb the swap through
-`SeparatesProperly.symm`.
+every statement below are the book's.
 
-## What is not here
-
-* **The example of `C₁ = {(ξ₁, ξ₂) | ξ₁ > 0, ξ₂ ≥ ξ₁⁻¹}` and `C₂ = {(ξ₁, 0) | ξ₁ ≥ 0}`** (p. 97) —
-  *omitted*. The unnumbered pair of disjoint closed convex sets in `ℝ²` that can be separated only
-  by a hyperplane containing `C₂`, showing that "properly" cannot be strengthened in Theorem 11.3
-  and that Theorem 11.4 is not implied by disjointness. It proves nothing used later, and
-  transcribing it needs coordinate machinery for no return.
-* **Strict separation** — *omitted*, exactly as in the book. `SeparatesStrictlyRn` is defined
-  because p. 95 defines it; Rockafellar then numbers no result about it, and neither does this
-  module.
-* **The forward references of p. 98** (Corollary 19.3.3, Theorem 20.2, Corollary 20.3.1,
-  Theorem 22.6, and the sharpening of Theorem 11.5 in Theorem 18.8) — *deferred by scope*: they
-  are the polyhedral separation results and belong to their own sections.
-
-## Where the book's hypotheses had to change
-
-**Corollaries 11.5.2 and 11.7.3 need `C` non-empty.** The book's hypothesis is `C ≠ ℝⁿ` alone. In
-`ℝ⁰` the empty set is a convex subset other than `ℝ⁰` and there is no non-zero `b` at all, so the
-conclusion fails; every other §11 result carries Rockafellar's standing non-emptiness hypothesis
-anyway. The backbone's versions of these two are stated with `closure C ≠ univ`, because they are
-false in infinite dimensions; here `Convex.relint_closure` (Theorem 6.3) turns `C ≠ ℝⁿ` back into
-that hypothesis, which is the book's own argument.
+`corollary_11_5_2` and `corollary_11_7_3` need `C` non-empty, where the book assumes only
+`C ≠ ℝⁿ`: in `ℝ⁰` the empty set is a convex set other than `ℝ⁰` and there is no non-zero `b` at
+all, so the conclusion fails. Every other §11 result carries the book's own non-emptiness
+hypothesis anyway.
 
 ## References
 
@@ -99,18 +57,14 @@ variable {n : ℕ}
 
 /-! ### Vectors as linear functions
 
-Rockafellar writes a hyperplane as `{x | ⟨x, b⟩ = β}` and quantifies over the vector `b`; the
-backbone quantifies over a continuous linear functional. In `ℝⁿ` the two quantifications agree, and
-`linFn` together with `exists_linFn` is the translation. Both live in
-`Tdaf/Surface/Common/Euclidean.lean`, since §13, §14 and §18 want them too. -/
+`linFn` and `exists_linFn` live in `Tdaf/Surface/Common/Euclidean.lean`; §§13, 14 and 18 want them
+too. -/
 
 /-! ### The four notions of separation (p. 95) -/
 
 /-- **Rockafellar, §11 (p. 95).** The hyperplane `H = {x | ⟨x, b⟩ = β}`, `b ≠ 0`, *separates* `C₁`
 and `C₂`: `C₁` is contained in the closed half-space `{x | ⟨x, b⟩ ≥ β}` and `C₂` in the opposite
-one.
-
-Recorded through the backbone's `Separates`, whose two sets go in the other order. -/
+one. Recorded through the backbone's `Separates`, whose two sets go in the other order. -/
 def SeparatesRn (b : Rn n) (β : ℝ) (C₁ C₂ : Set (Rn n)) : Prop :=
   b ≠ 0 ∧ Separates (linFn b) β C₂ C₁
 
@@ -128,8 +82,8 @@ def SeparatesStrictlyRn (b : Rn n) (β : ℝ) (C₁ C₂ : Set (Rn n)) : Prop :=
 `C₁ + εB` is contained in one of the open half-spaces associated with `H` and `C₂ + εB` in the
 opposite one, where `B` is the closed Euclidean unit ball.
 
-This is the book's own definition, verbatim; `separatesStronglyRn_iff` identifies it with the
-backbone's gap definition, which is condition (c) of Theorem 11.1. -/
+The book's definition verbatim; `separatesStronglyRn_iff` identifies it with the backbone's gap
+definition, which is condition (c) of Theorem 11.1. -/
 def SeparatesStronglyRn (b : Rn n) (β : ℝ) (C₁ C₂ : Set (Rn n)) : Prop :=
   b ≠ 0 ∧ ∃ ε > 0, (∀ x ∈ C₂ + Metric.closedBall (0 : Rn n) ε, pairing n x b < β) ∧
     ∀ x ∈ C₁ + Metric.closedBall (0 : Rn n) ε, β < pairing n x b
@@ -192,7 +146,7 @@ vector `b` such that
 (b) `sup {⟨x, b⟩ | x ∈ C₁} > inf {⟨x, b⟩ | x ∈ C₂}`.
 
 The extrema are taken in `EReal`, which removes the boundedness side conditions the book leaves
-implicit. Specialises `exists_separatesProperly_iff_iSup_le_iInf`. -/
+implicit. -/
 theorem theorem_11_1_ab {C₁ C₂ : Set (Rn n)} (h₁ : C₁.Nonempty) (h₂ : C₂.Nonempty) :
     SeparableProperly C₁ C₂ ↔ ∃ b : Rn n,
       (⨆ x ∈ C₂, ((pairing n x b : ℝ) : EReal)) ≤ ⨅ x ∈ C₁, ((pairing n x b : ℝ) : EReal) ∧
@@ -232,12 +186,8 @@ theorem theorem_11_1_c {C₁ C₂ : Set (Rn n)} (h₁ : C₁.Nonempty) (h₂ : C
 let `M` be a non-empty affine set in `ℝⁿ` not meeting `C`. Then there exists a hyperplane `H`
 containing `M`, such that one of the open half-spaces associated with `H` contains `C`.
 
-The backbone has this only for *open* `C` (`exists_separates_of_isOpen_of_disjoint_affine`) and, in
-the relatively open form, only for `M` a single point (`exists_lt_of_notMem_relint`). The step from
-the point case to a general affine `M` is here: `C + M.direction` misses the base point of `M`, so
-the point case applies to it, and a functional bounded above on a coset of `M.direction` is
-constant along it (`eq_of_le_on_affineSubspace`). Strictness on `C` is Corollary 11.6.2
-(`notMem_relint_iff_exists_isMaxOn`) applied inside `ri C = C`. -/
+Stated for relatively open `C` and a general affine `M`, where the backbone has the open case and
+the single-point case. -/
 theorem theorem_11_2 {C M : Set (Rn n)} (hC : Convex ℝ C) (hCne : C.Nonempty)
     (hCo : IsRelativelyOpen C) (hM : IsAffineSet M) (hMne : M.Nonempty)
     (hdisj : Disjoint C M) :
@@ -358,11 +308,7 @@ theorem theorem_11_4 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : C
 
 /-- **Corollary 11.4.1.** Let `C₁` and `C₂` be non-empty disjoint closed convex sets
 in `ℝⁿ` having no common directions of recession. Then there exists a hyperplane separating `C₁`
-and `C₂` strongly.
-
-Rockafellar's proof verbatim: `0 ∉ C₁ - C₂` by disjointness, and `cl (C₁ - C₂) = C₁ - C₂` by
-Corollary 9.1.2 (`Convex.isClosed_add_of_neg_notMem_recessionCone`) applied to `C₁` and `-C₂`,
-whose recession cone is `-0⁺C₂` (`recessionCone_neg`). -/
+and `C₂` strongly. -/
 theorem corollary_11_4_1 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (hc₁ : IsClosed C₁)
     (hne₁ : C₁.Nonempty) (h₂ : Convex ℝ C₂) (hc₂ : IsClosed C₂) (hne₂ : C₂.Nonempty)
     (hdisj : Disjoint C₁ C₂) (hrec : recessionCone C₁ ∩ recessionCone C₂ ⊆ {0}) :
@@ -384,8 +330,8 @@ theorem corollary_11_4_1 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (hc�
 closures are disjoint. If either set is bounded, there exists a hyperplane separating `C₁` and `C₂`
 strongly.
 
-Specialises `separatesStrongly_of_disjoint_isCompact_isClosed` and its mirror: a bounded closed set
-in `ℝⁿ` is compact. The book instead deduces this from Corollary 11.4.1. -/
+A bounded closed set in `ℝⁿ` is compact; the book instead deduces this from
+Corollary 11.4.1. -/
 theorem corollary_11_4_2 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂)
     (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty) (hdisj : Disjoint (closure C₁) (closure C₂))
     (hbdd : Bornology.IsBounded C₁ ∨ Bornology.IsBounded C₂) :
@@ -406,9 +352,8 @@ theorem corollary_11_4_2 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂
 /-- **Theorem 11.5.** A closed convex set `C` is the intersection of the closed
 half-spaces which contain it.
 
-Specialises `isClosed_convex_eq_iInter_halfspaces`, reindexed over vectors by `exists_linFn`. The
-degenerate index `b = 0` is harmless: `{x | ⟨x, 0⟩ ≤ β}` is `ℝⁿ` whenever `β ≥ 0`, which is the
-only case in which it contains a non-empty `C`. -/
+Indexed over vectors. The degenerate index `b = 0` is harmless: `{x | ⟨x, 0⟩ ≤ β}` is `ℝⁿ`
+whenever `β ≥ 0`, the only case in which it contains a non-empty `C`. -/
 theorem theorem_11_5 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) :
     ⋂ (b : Rn n) (β : ℝ) (_ : ∀ y ∈ C, pairing n y b ≤ β),
       {x : Rn n | pairing n x b ≤ β} = C := by
@@ -443,9 +388,7 @@ theorem corollary_11_5_1 (S : Set (Rn n)) :
 Then there exists a closed half-space containing `C`; in other words, there exists some `b ∈ ℝⁿ`,
 `b ≠ 0`, such that the linear function `⟨·, b⟩` is bounded above on `C`.
 
-`C.Nonempty` is added to the book's hypotheses — see the module docstring. The book's step
-`cl C ≠ ℝⁿ` is `Convex.relint_closure`, Theorem 6.3. Specialises
-`exists_ne_zero_forall_le_of_closure_ne_univ`. -/
+`C.Nonempty` is added to the book's hypotheses — see the module docstring. -/
 theorem corollary_11_5_2 {C : Set (Rn n)} (hC : Convex ℝ C) (hne : C.Nonempty)
     (h : C ≠ Set.univ) : ∃ (b : Rn n) (β : ℝ), b ≠ 0 ∧ ∀ x ∈ C, pairing n x b ≤ β := by
   have hcl : closure C ≠ Set.univ := by
@@ -482,10 +425,8 @@ theorem isSupportingHalfSpace_iff {b : Rn n} {β : ℝ} {C : Set (Rn n)} :
 subset of `C`. In order that there exist a non-trivial supporting hyperplane to `C` containing `D`,
 it is necessary and sufficient that `D` be disjoint from `ri C`.
 
-The backbone's `exists_isSupporting_iff_disjoint_interior` is the `interior` version, which needs
-`(interior C).Nonempty`; the `ri` version is proved here the way the book proves it — a non-trivial
-supporting hyperplane to `C` through `D` is the same thing as a proper separation of `D` and `C`,
-and `ri D ⊆ D` makes Theorem 11.3's hypothesis follow from the book's. -/
+Stated with `ri C`, where the backbone has the `interior` version; a non-trivial supporting
+hyperplane to `C` through `D` is the same thing as a proper separation of `D` and `C`. -/
 theorem theorem_11_6 {C D : Set (Rn n)} (hC : Convex ℝ C) (hD : Convex ℝ D) (hDC : D ⊆ C)
     (hDne : D.Nonempty) :
     (∃ (b : Rn n) (β : ℝ), IsSupportingHalfSpace b β C ∧ (∀ x ∈ D, pairing n x b = β) ∧
@@ -557,8 +498,7 @@ which is a cone. If there exists a hyperplane which separates `C₁` and `C₂` 
 exists a hyperplane which separates `C₁` and `C₂` properly *and passes through the origin*.
 
 Stated with the cone on the `C₂` side; `SeparatesProperlyRn b 0 C₁ C₂` says the separating
-hyperplane is `{x | ⟨x, b⟩ = 0}`, which contains the origin. Specialises
-`SeparatesProperly.zero_of_isCone_left`. -/
+hyperplane is `{x | ⟨x, b⟩ = 0}`, which contains the origin. -/
 theorem theorem_11_7 {C₁ C₂ : Set (Rn n)} (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty)
     (hcone : IsCone C₂) (h : SeparableProperly C₁ C₂) :
     ∃ b : Rn n, SeparatesProperlyRn b 0 C₁ C₂ := by
@@ -594,9 +534,8 @@ theorem corollary_11_7_1 {K : Set (Rn n)} (hconv : Convex ℝ K) (hcone : IsCone
 the convex cone generated by `S`. Then `K` is the intersection of all the homogeneous closed
 half-spaces containing `S`.
 
-The cone generated by `S` is `PointedCone.hull ℝ S`, which contains the origin. Rockafellar's own
-proof needs that ("a homogeneous closed half-space is in particular a closed convex cone containing
-the origin"), so no generality is lost. Specialises `closure_hull_eq_iInter_halfSpaceCone`. -/
+The cone generated by `S` is `PointedCone.hull ℝ S`, which contains the origin; the book's own
+proof needs that, so no generality is lost. -/
 theorem corollary_11_7_2 (S : Set (Rn n)) :
     ⋂ (b : Rn n) (_ : ∀ y ∈ S, pairing n y b ≤ 0), {x : Rn n | pairing n x b ≤ 0} =
       closure (PointedCone.hull ℝ S : Set (Rn n)) := by
@@ -615,8 +554,7 @@ theorem corollary_11_7_2 (S : Set (Rn n)) :
 Then `K` is contained in some homogeneous closed half-space of `ℝⁿ`; in other words, there exists
 some vector `b ≠ 0` such that `⟨x, b⟩ ≤ 0` for every `x ∈ K`.
 
-`K.Nonempty` is added to the book's hypotheses, exactly as in Corollary 11.5.2. Specialises
-`exists_ne_zero_forall_le_zero_of_closure_ne_univ`. -/
+`K.Nonempty` is added to the book's hypotheses, exactly as in Corollary 11.5.2. -/
 theorem corollary_11_7_3 {K : Set (Rn n)} (hconv : Convex ℝ K) (hcone : IsCone K)
     (hne : K.Nonempty) (h : K ≠ Set.univ) :
     ∃ b : Rn n, b ≠ 0 ∧ ∀ x ∈ K, pairing n x b ≤ 0 := by

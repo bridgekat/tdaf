@@ -10,97 +10,36 @@ import Tdaf.Surface.Rockafellar.Part3.Section13
 /-!
 # Rockafellar, §15: Polars of Convex Functions
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §15, pp. 128–139: the gauge `γ(· | C)` of a
-convex set, the polar `k°` of a gauge, norms and Minkowski metrics, the gauge-like functions and
-their conjugates, the extended polar `f°` of a nonnegative convex function vanishing at the origin,
-and the obverse.
-
-All eleven numbered results are here, stated over `Rn n = ℝⁿ` and closed by specialising
-`Tdaf/Analysis/Convex/Duality/{Gauge, GaugeLike}.lean`.
-
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 15.1 | `theorem_15_1_gaugeFn`, `theorem_15_1_isGauge`, `theorem_15_1_closedFn`,
-  `theorem_15_1_polar_polar` |
-| Corollary 15.1.1 | `corollary_15_1_1`, `corollary_15_1_1_sets` |
-| Corollary 15.1.2 | `corollary_15_1_2`, `corollary_15_1_2_symm` |
-| Theorem 15.2 | `theorem_15_2_isNorm`, `theorem_15_2_setOf_le_one`, `theorem_15_2_gaugeFn`,
-  `theorem_15_2_setOf_gaugeFn_le_one`, `theorem_15_2_polar` |
-| Theorem 15.3 | `theorem_15_3`, `theorem_15_3_conj`, `theorem_15_3_isGaugeLike_conj` |
-| Corollary 15.3.1 | `corollary_15_3_1`, `corollary_15_3_1_conj` |
-| Corollary 15.3.2 | `corollary_15_3_2_isGauge`, `corollary_15_3_2`,
-  `corollary_15_3_2_inequality`, `corollary_15_3_2_polarSet` |
-| Theorem 15.4 | `theorem_15_4_nonneg`, `theorem_15_4_map_zero`, `theorem_15_4_convexFn`,
-  `theorem_15_4_closedFn`, `theorem_15_4_polar_polar` |
-| Corollary 15.4.1 | `corollary_15_4_1` |
-| Theorem 15.5 | `theorem_15_5_isPolarFn`, `theorem_15_5_obverse_obverse`,
-  `theorem_15_5_polarFn_eq_conj_obverse`, `theorem_15_5_conj_eq_polarFn_obverse`,
-  `theorem_15_5_conj_eq_obverse_polarFn`, `theorem_15_5_polarFn_eq_obverse_conj` |
-| Corollary 15.5.1 | `corollary_15_5_1` |
+Gauges and their polars, norms and Minkowski metrics, the gauge-like functions, and the polar `f°`
+and obverse of a nonnegative convex function vanishing at the origin. All 11 numbered results of
+§15 are formalized.
 
 ## The section's definitions
 
-* **A gauge** (p. 128) is a nonnegative positively homogeneous convex `k` with `k 0 = 0`: the
-  backbone's `IsGauge`. `gauge_iff_exists_gaugeFn` is Rockafellar's other description — the gauges
-  are exactly the `γ(· | C) = inf {μ ≥ 0 ∣ x ∈ μ C}` for non-empty convex `C` — and
-  `gaugeFn_apply_rn` is that infimum written out.
-* **The polar `k°` of a gauge** (p. 128) is `polarGauge (pairing n) k`, with `polarGauge_apply_rn`
-  the book's formula `inf {μ* ≥ 0 ∣ ⟨x, x*⟩ ≤ μ* k(x) ∀ x}`.
-* **A norm** (p. 131) is a gauge that is finite, symmetric and positive off the origin: the
-  backbone's `IsNorm`. Its conditions (a)–(d) are the four fields, positive homogeneity and
-  symmetry combining into `IsNorm.apply_smul`; `IsNorm.toSeminorm` says a Rockafellar norm is a
+* **A gauge** is a nonnegative positively homogeneous convex `k` with `k 0 = 0`, the backbone's
+  `IsGauge`. `gauge_iff_exists_gaugeFn` is Rockafellar's other description — the gauges are exactly
+  the `γ(· | C) = inf {μ ≥ 0 | x ∈ μ C}` for non-empty convex `C` — and `gaugeFn_apply_rn` is that
+  infimum written out.
+* **The polar `k°` of a gauge** is `polarGauge (pairing n) k`, with `polarGauge_apply_rn` the
+  book's formula `inf {μ* ≥ 0 | ⟨x, x*⟩ ≤ μ* k(x) for all x}`.
+* **A norm** is a gauge that is finite, symmetric and positive off the origin: `IsNorm`, whose
+  four fields are the book's conditions (a)–(d). `IsNorm.toSeminorm` says a Rockafellar norm is a
   Mathlib `Seminorm`.
-* **A Minkowski metric** (p. 132) is `IsMinkowskiMetric`, defined here: a metric invariant under
-  translation and linear along segments.
-* **Gauge-like** (p. 133) is the backbone's `IsGaugeLike`: `f 0 = inf f`, and the sublevel sets
-  above that infimum are all positive multiples of a single set.
-* **Positively homogeneous of degree `p`** (p. 135) is `PosHomogeneousDeg`.
-* **The polar `f°` of a nonnegative convex function vanishing at the origin** (p. 136) is
-  `polarFn (pairing n) f`; `polarFn_apply_rn` is the book's formula
-  `inf {μ* ≥ 0 ∣ ⟨x, x*⟩ ≤ 1 + μ* f(x) ∀ x}`.
-* **The obverse** (p. 137) is `obverse f = inf {λ > 0 ∣ (fλ)(x) ≤ 1}`; `obverse_apply_rn`.
+* **A Minkowski metric** is `IsMinkowskiMetric`, defined here: a metric invariant under translation
+  and linear along segments.
+* **Gauge-like** is the backbone's `IsGaugeLike`: `f 0 = inf f`, and the sublevel sets above that
+  infimum are all positive multiples of a single set.
+* **Positively homogeneous of degree `p`** is `PosHomogeneousDeg`.
+* **The polar `f°`** of a nonnegative convex function vanishing at the origin is
+  `polarFn (pairing n) f`, with `polarFn_apply_rn` giving the book's
+  `inf {μ* ≥ 0 | ⟨x, x*⟩ ≤ 1 + μ* f(x) for all x}`.
+* **The obverse** is `obverse f = inf {λ > 0 | (fλ)(x) ≤ 1}`, unfolded by `obverse_apply_rn`.
 
-## The unnumbered running text
-
-Recorded: the gauge recovered from its own unit level set (`gaugeFn_setOf_le_one`) and the
-uniqueness of the closed convex set with a given closed gauge
-(`theorem_15_2_setOf_gaugeFn_le_one`, `corollary_15_1_1_gaugeEquiv`); the polar-pair inequality
-`⟨x, x*⟩ ≤ k(x) k°(x*)` on `dom k × dom k°` (`pairing_le_mul_rn`) together with its Schwarz
-instance, the self-polarity of the Euclidean norm (`isNorm_euclideanNorm`,
-`polarGauge_euclideanNorm`, `schwarz_rn`); the correspondence between norms and Minkowski metrics
-(`isMinkowskiMetric_of_isNorm`, `minkowskiMetric_eq_sub`); the level sets of the obverse
-(`setOf_obverse_le_rn`); and the last display of the section, `{f° ≤ α⁻¹} = α⁻¹ {f* ≤ α}`
-(`setOf_polarFn_le_rn`).
-
-## What is not here
-
-* **The polar pair `k(x) = (ξ₁² + ξ₂²)^{1/2} + ξ₁` on `ℝ²`** (book, lines 5143–5149) — *omitted
-  with a reason*. A two-variable computation printed with no argument and used nowhere later; it
-  exercises coordinates, not the polarity correspondence, which is `theorem_15_1_gaugeFn`.
-* **The `ℓ^∞`/`ℓ¹` polar pair of norms** (book, lines 5237–5241) and **the `ℓ^p`/`ℓ^q` and
-  quadratic examples of Corollary 15.3.2** (book, lines 5465–5553) — *omitted with a reason*. Each
-  is `corollary_15_3_2` applied to one explicit function; what they need beyond it is the
-  coordinatewise conjugate of `Σ |ξᵢ|^p / p` and §12's quadratic conjugate
-  `f*(x*) = ⟨x*, Q⁻¹x*⟩ / 2` with its pseudo-inverse. Neither is §15's business.
-* **The "best inequality" construction** (book, lines 5155–5205) — *omitted with a reason*. The
-  passage carries no numbered statement: it observes that the closed gauges polar to each other are
-  the fixed points of a tightening operation on inequalities `⟨x, y⟩ ≤ h(x) j(y)`. Its content is
-  `theorem_15_1_polar_polar` together with `pairing_le_mul_rn`, both here.
-* **The converse half of the Minkowski-metric correspondence** — that every Minkowski metric is
-  `k(x - y)` for a uniquely determined norm `k` (book, line 5297) — *deferred by scope*. The book
-  leaves the pair as "an exercise for the reader"; the direction that uses §15,
-  `isMinkowskiMetric_of_isNorm`, is here, with `minkowskiMetric_eq_sub` as the uniqueness. The
-  reconstruction of a norm from a metric is metric bookkeeping with no convex analysis in it.
-* **The equivalence of every Minkowski metric with the Euclidean metric** (book, lines 5300–5306) —
-  *deferred by scope*: it is `αB ⊆ C ⊆ βB` for the unit ball `C` of the metric, which is
-  `theorem_15_2_setOf_le_one` plus the finite-dimensional norm equivalence already in Mathlib.
-* **`f°` for `f` the indicator of a convex cone `K`** (book, line 5093) and **the obverse pairing
-  of the indicator and the gauge of `C`** (book, line 5613) — *deferred by scope*. Both are
-  computations of `polarFn`/`obverse` on an indicator; the backbone has neither
-  `polarFn_indicatorFn` nor `obverse_indicatorFn`, and supplying them here would mean proving them
-  in the surface.
+The unnumbered running text is recorded too: a gauge recovered from its own unit level set and the
+uniqueness of the closed convex set with a given closed gauge; the polar-pair inequality
+`⟨x, x*⟩ ≤ k(x) k°(x*)` with its Schwarz instance, the Euclidean norm being self-polar; the
+correspondence between norms and Minkowski metrics; the level sets of the obverse; and the closing
+display `{f° ≤ α⁻¹} = α⁻¹ {f* ≤ α}`.
 
 ## References
 
@@ -117,9 +56,8 @@ variable {n : ℕ}
 
 /-! ### The definitions of §15 -/
 
-/-- **Rockafellar's gauge function** (§15, p. 128): `γ(x | C) = inf {μ ≥ 0 | x ∈ μ C}`.
-
-This is the backbone's `gaugeFn C`, and the equation is the definition unfolded. -/
+/-- **Rockafellar's gauge function** (§15, p. 128): `γ(x | C) = inf {μ ≥ 0 | x ∈ μ C}`. This is the
+backbone's `gaugeFn C`, and the equation is the definition unfolded. -/
 theorem gaugeFn_apply_rn (C : Set (Rn n)) (x : Rn n) :
     gaugeFn C x = ⨅ a ∈ {a : ℝ | 0 ≤ a ∧ x ∈ a • C}, (a : EReal) :=
   gaugeFn_apply C x
@@ -131,16 +69,14 @@ theorem gauge_iff_exists_gaugeFn {k : Rn n → EReal} :
   isGauge_iff
 
 /-- **Rockafellar §15, p. 128**: "one always has `γ(· | C) = k` for `C = {x | k(x) ≤ 1}`".
-
-It needs neither convexity nor closedness of `k`. -/
+Closedness of `k` is not needed. -/
 theorem gaugeFn_setOf_le_one {k : Rn n → EReal} (hk : IsGauge k) :
     gaugeFn {x : Rn n | k x ≤ 1} = k :=
   gaugeFn_level_one hk.nonneg hk.posHomogeneous hk.map_zero
 
 /-- **Rockafellar's polar of a gauge** (§15, p. 128):
-`k°(x*) = inf {μ* ≥ 0 | ⟨x, x*⟩ ≤ μ* k(x), ∀ x}`.
-
-This is the backbone's `polarGauge (pairing n) k`, and the equation is the definition unfolded. -/
+`k°(x*) = inf {μ* ≥ 0 | ⟨x, x*⟩ ≤ μ* k(x), ∀ x}`. This is the backbone's `polarGauge (pairing n) k`,
+and the equation is the definition unfolded. -/
 theorem polarGauge_apply_rn (k : Rn n → EReal) (y : Rn n) :
     polarGauge (pairing n) k y
       = ⨅ m ∈ {m : ℝ | 0 ≤ m ∧ ∀ x : Rn n, ((inner ℝ x y : ℝ) : EReal) ≤ (m : EReal) * k x},
@@ -217,10 +153,9 @@ theorem corollary_15_1_1_sets {C D : Set (Rn n)} (hC : Convex ℝ C) (h0 : (0 : 
 
 /-! ### Corollary 15.1.2 -/
 
-/-- **Corollary 15.1.2**: if `C` is a closed convex set containing the origin, the
-gauge function of `C` and the support function of `C` are gauges polar to each other.
-
-It needs only `0 ∈ C`. -/
+/-- **Corollary 15.1.2**: if `C` is a closed convex set containing the origin, the gauge function
+of `C` and the support function of `C` are gauges polar to each other. Stated without the
+closedness the book assumes. -/
 theorem corollary_15_1_2 {C : Set (Rn n)} (hC : Convex ℝ C) (h0 : (0 : Rn n) ∈ C) :
     polarGauge (pairing n) (gaugeFn C) = supportFn (pairing n) C :=
   polarGauge_gaugeFn_eq_supportFn hC h0
@@ -239,9 +174,8 @@ theorem corollary_15_1_2_symm {C : Set (Rn n)} (hC : Convex ℝ C) (h0 : (0 : Rn
 /-! ### The polar-pair inequality -/
 
 /-- **Rockafellar §15, p. 129**: gauges polar to each other satisfy `⟨x, x*⟩ ≤ k(x) k°(x*)` for
-every `x ∈ dom k` and `x* ∈ dom k°`.
-
-The two values are named as reals because the right-hand side is a product of reals. -/
+every `x ∈ dom k` and `x* ∈ dom k°`. The two values are named as reals because the right-hand side
+is a product of reals. -/
 theorem pairing_le_mul_rn {k : Rn n → EReal} (hk : IsGauge k) (hkc : ClosedFn k) {x y : Rn n}
     {c d : ℝ} (hx : k x = (c : EReal)) (hy : polarGauge (pairing n) k y = (d : EReal)) :
     (inner ℝ x y : ℝ) ≤ c * d :=
@@ -333,9 +267,8 @@ theorem theorem_15_2_setOf_gaugeFn_le_one {C : Set (Rn n)} (hC : Convex ℝ C)
     (h0 : (0 : Rn n) ∈ C) (hcl : IsClosed C) : {x : Rn n | gaugeFn C x ≤ 1} = C :=
   setOf_gaugeFn_le_one hC h0 hcl
 
-/-- **Theorem 15.2**, last assertion: the polar of a norm is a norm.
-
-It two hypotheses are the pairing readings of "`C` is bounded" and "`0 ∈ int C`". -/
+/-- **Theorem 15.2**, last assertion: the polar of a norm is a norm. The two side conditions are the
+pairing readings of "`C` is bounded" and "`0 ∈ int C`". -/
 theorem theorem_15_2_polar (hk : IsNorm k) : IsNorm (polarGauge (pairing n) k) := by
   obtain ⟨hconv, h0, hsymm, -, -⟩ := hk.level_one
   have hmain := isNorm_polarGauge_gaugeFn (B := pairing n) hconv h0 hsymm ?_ ?_
@@ -480,11 +413,9 @@ theorem theorem_15_3_isGaugeLike_conj {g : ℝ → EReal} {k : Rn n → EReal} (
 
 /-! ### Corollary 15.3.1 -/
 
-/-- **Corollary 15.3.1**, first assertion: a closed proper convex function `f` is
-positively homogeneous of degree `p`, `1 < p < ∞`, if and only if `f = (1/p) k^p` for a closed
-gauge `k`.
-
-The book's `(1/p) k^p` is `monotoneComp (powHalfLine p) k`. -/
+/-- **Corollary 15.3.1**, first assertion: a closed proper convex function `f` is positively
+homogeneous of degree `p`, `1 < p < ∞`, if and only if `f = (1/p) k^p` for a closed gauge `k`. The
+book's `(1/p) k^p` is `monotoneComp (powHalfLine p) k`. -/
 theorem corollary_15_3_1 {p : ℝ} {f : Rn n → EReal} (hp : 1 < p) (hf : ClosedProperConvexFn f) :
     PosHomogeneousDeg p f ↔
       ∃ k : Rn n → EReal, IsGauge k ∧ ClosedFn k ∧ f = monotoneComp (powHalfLine p) k :=

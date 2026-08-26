@@ -42,10 +42,9 @@ written in `ℝⁿ` can state everything without qualification. Nothing here is 
   rewrite away the `.flip` a bipolar theorem hands back.
 * `pairing_comm`, `forall_pairing_le_comm`, `forall_pairing_lt_comm` — a book writes a linear
   system as `⟨aᵢ, x⟩ ≤ αᵢ` and the backbone puts the variable on the left; these translate.
-* `pairing_eq_sum`, `pairing_two` — the pairing in coordinates.
 * `exists_linFn`, `linFn_eq_toDual` — the Fréchet–Riesz translation between the book's vector `b`
   and the backbone's continuous linear functional.
-* `pairingProd_euclideanProdEquiv` — `pairingProd` is the inner product of `Rn (m + n)` read
+* `pairingProd_euclideanProdEquiv` — `pairingProd` is the inner product of `Rn (m + n)`, read
   through the concatenation of coordinates.
 
 ## Implementation notes
@@ -68,9 +67,8 @@ open Tdaf.ConvexAnalysis
 abbrev Rn (n : ℕ) := EuclideanSpace ℝ (Fin n)
 
 /-- The **standard inner product** on `Rn n`, as a bilinear map, which is the form the backbone's
-duality theory takes. A book that writes `⟨x, x*⟩` for vectors of one space means this.
-
-`abbrev`, not `def`: instance search does not unfold a plain `def`, and every pairing class the
+duality theory takes. A book that writes `⟨x, x*⟩` for vectors of one space means this. An
+`abbrev`, not a `def`: instance search does not unfold a plain `def`, and every pairing class the
 surface needs is stated about `innerₗ`. -/
 noncomputable abbrev pairing (n : ℕ) : Rn n →ₗ[ℝ] Rn n →ₗ[ℝ] ℝ := innerₗ (Rn n)
 
@@ -95,8 +93,7 @@ theorem forall_pairing_lt_comm {n : ℕ} {ι : Sort*} (a : ι → Rn n) (α : ι
     (∀ i, pairing n (a i) x < α i) ↔ ∀ i, pairing n x (a i) < α i :=
   forall_congr' fun i => by rw [pairing_comm]
 
-/-- **The pairing in coordinates**: `⟨u, v⟩ = ∑ᵢ uᵢ vᵢ`. Every explicit computation a book performs
-on a named vector goes through this. -/
+/-- **The pairing in coordinates**: `⟨u, v⟩ = ∑ᵢ uᵢ vᵢ`. -/
 theorem pairing_eq_sum {n : ℕ} (u v : Rn n) : pairing n u v = ∑ i, u i * v i := by
   simp only [pairing_apply, PiLp.inner_apply, RCLike.inner_apply, conj_trivial]
   exact Finset.sum_congr rfl fun i _ => mul_comm _ _
@@ -106,9 +103,8 @@ are two-dimensional almost without exception, and this is the first line of ever
 theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
   rw [pairing_eq_sum, Fin.sum_univ_two]
 
-/-- **Each coordinate of `Rn n` is continuous.** `Rn n` is a `PiLp 2`, whose topology is the
-product topology. A counterexample that cuts a region out of `Rn n` with coordinate inequalities
-needs this to see that the region is open. -/
+/-- **Each coordinate of `Rn n` is continuous**, `Rn n` being a `PiLp 2`. A counterexample that
+cuts a region out of `Rn n` with coordinate inequalities needs this to see the region is open. -/
 theorem continuous_coord {n : ℕ} (i : Fin n) : Continuous fun x : Rn n => x i :=
   PiLp.continuous_apply (p := 2) (fun _ : Fin n => ℝ) i
 
@@ -144,8 +140,8 @@ attribute [simp] finrank_euclideanSpace_fin
 
 /-! ### Instance discharge
 
-Each `example` asserts that a class the surface will need is found by instance search with no
-hypothesis. They are not used; they are the regression test for the instantiation. -/
+Each `example` asserts that a class the surface needs is found by instance search with no
+hypothesis. They are the regression test for the instantiation. -/
 
 section Instances
 
@@ -197,7 +193,7 @@ end Instances
 /-! ### Rewriting `.flip` away
 
 `flip_pairing` is a `simp` lemma, but a `.flip` inside a `conj` or a `subgradient` sits under a
-binder `simp` will not always reach. These are the forms that occur. -/
+binder `simp` will not always reach. -/
 
 section Flip
 
@@ -288,8 +284,7 @@ end LinFn
 /-! ### The canonical adjoint
 
 Between arbitrarily paired spaces a transpose need not exist, so the backbone keeps the adjoint as
-data: `IsAdjointPair B B' A A'` is a hypothesis. On `ℝⁿ` the transpose is canonical and is
-`LinearMap.adjoint`, and `isAdjointPair_adjoint` already covers `innerₗ (Rn n)`; so a surface
-section writes Rockafellar's `A*` as `LinearMap.adjoint A` and discharges the hypothesis with it. -/
+data. On `ℝⁿ` it is canonical, and `isAdjointPair_adjoint` already covers `innerₗ (Rn n)`: a
+surface section writes `A*` as `LinearMap.adjoint A` and discharges the hypothesis with it. -/
 
 end Tdaf.Surface

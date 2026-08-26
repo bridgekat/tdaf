@@ -162,10 +162,8 @@ theorem theorem_10_1 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) {C : Set (
 
 /-! ### Corollary 10.1.1 -/
 
-/-- **Corollary 10.1.1.** A convex function finite on all of `ℝⁿ` is necessarily
-continuous.
-
-"finite on all of `ℝⁿ`" is `dom f = univ` together with properness, which is the `≠ -∞` half. -/
+/-- **Corollary 10.1.1.** A convex function finite on all of `ℝⁿ` is necessarily continuous. "finite
+on all of `ℝⁿ`" is `dom f = univ` together with properness, which is the `≠ -∞` half. -/
 theorem corollary_10_1_1 {n : ℕ} {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hdom : dom f = Set.univ) : Continuous f :=
   hf.continuous_of_dom_eq_univ hp hdom
@@ -327,10 +325,9 @@ theorem theorem_10_7 {n : ℕ} {C : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C
   have h := continuousOn_prod_of_convexOn_relint (C' := C) hC hconv hsub hdense hcont
   rwa [hCro] at h
 
-/-- **Theorem 10.7**, weakened hypothesis: it is enough that `f (x, ·)` be continuous
-for each `x` in some subset `C'` of `C` with `cl C' ⊇ C`.
-
-Specialises `continuousOn_prod_of_convexOn_relint` directly. -/
+/-- **Theorem 10.7**, weakened hypothesis: it is enough that `f (x, ·)` be continuous for each `x`
+in some subset `C'` of `C` with `cl C' ⊇ C`. Specialises `continuousOn_prod_of_convexOn_relint`
+directly. -/
 theorem theorem_10_7_dense {n : ℕ} {C C' : Set (Rn n)} (hC : Convex ℝ C) (hCro : ri C = C)
     {T : Type*} [TopologicalSpace T] [LocallyCompactSpace T] {F : Rn n × T → ℝ}
     (hconv : ∀ t : T, ConvexOn ℝ C fun x => F (x, t)) (hC'sub : C' ⊆ C)

@@ -14,8 +14,8 @@ import Tdaf.Surface.Rockafellar.Part3.Section16
 # Rockafellar, Part III: Duality Correspondences
 
 R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §§11–16. This module only imports the six
-section modules. All 77 numbered results of Part III are formalized. Duality is developed
-throughout for a dual pair of vector spaces rather than for `ℝⁿ` or a topological dual.
+section modules. All 77 numbered results of Part III are formalized. Duality is developed for a
+dual pair of vector spaces rather than for `ℝⁿ` or a topological dual.
 
 | § | module | subject |
 |---|---|---|

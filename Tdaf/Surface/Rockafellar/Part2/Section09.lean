@@ -353,9 +353,8 @@ theorem theorem_9_4_proper {ι : Type*} {f : ι → Rn n → EReal} (hp : ∀ i,
   refine ⟨⟨x, mem_dom.2 (lt_top_iff_ne_top.2 htop)⟩, fun z => ?_⟩
   exact fun hz => (hp i₀).ne_bot z (le_bot_iff.1 (hz ▸ le_iSup (fun i => f i z) i₀))
 
-/-- **Theorem 9.4**, recession formula: `f0⁺ = sup {fᵢ0⁺ | i ∈ I}`.
-
-This is Corollary 8.3.3 read through `epi_recessionFn`. -/
+/-- **Theorem 9.4**, recession formula: `f0⁺ = sup {fᵢ0⁺ | i ∈ I}`. This is Corollary 8.3.3 read
+through `epi_recessionFn`. -/
 theorem theorem_9_4_recession {ι : Type*} {f : ι → Rn n → EReal} (hconv : ∀ i, ConvexFn (f i))
     (hc : ∀ i, IsClosed (epi (f i))) (hne : (epi fun z => ⨆ i, f i z).Nonempty) :
     recessionFn (fun z => ⨆ i, f i z) = fun z => ⨆ i, recessionFn (f i) z :=
@@ -376,9 +375,8 @@ theorem theorem_9_5_closed {g : Rn m → EReal} (hc : IsClosed (epi g)) (A : Rn 
     IsClosed (epi (compLin g A)) :=
   isClosed_epi_compLin hc A
 
-/-- **Theorem 9.5**, recession formula: `(gA)0⁺ = (g0⁺)A`.
-
-This is Corollary 8.3.4 read through `epi_recessionFn`. -/
+/-- **Theorem 9.5**, recession formula: `(gA)0⁺ = (g0⁺)A`. This is Corollary 8.3.4 read through
+`epi_recessionFn`. -/
 theorem theorem_9_5_recession {g : Rn m → EReal} (hg : ConvexFn g) (hc : IsClosed (epi g))
     (A : Rn n →ₗ[ℝ] Rn m) (hne : (dom (compLin g A)).Nonempty) :
     recessionFn (compLin g A) = compLin (recessionFn g) A :=
