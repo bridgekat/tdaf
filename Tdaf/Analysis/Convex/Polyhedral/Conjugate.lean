@@ -9,37 +9,26 @@ import Tdaf.Analysis.Convex.Duality.Conjugate
 /-!
 # Conjugates of polyhedral convex functions
 
-Rockafellar's **Theorem 19.2**: the conjugate of a polyhedral convex function is polyhedral.
+The conjugate of a polyhedral convex function is polyhedral — Rockafellar's **Theorem 19.2**.
 
-The proof is the generator/inequality dictionary of Theorem 19.1 used once in each direction.
-Write `epi f = conv P + cone D` with `P` and `D` finite (`Polyhedral.finitelyGenerated`). An
-affine function `x ↦ ⟨x, y⟩ - c` lies below `f` exactly when the linear functional
-`p ↦ ⟨p.1, y⟩ - p.2` is bounded by `c` on `epi f`, and on a sum of a convex hull and a cone that
-is two *finite* families of conditions: `⟨p.1, y⟩ - c ≤ p.2` for the generating points `p ∈ P`,
-and `⟨d.1, y⟩ ≤ d.2` for the generating directions `d ∈ D`. Both are linear in `(y, c)`, so they
-cut `epi (conj B f)` out of `F × ℝ` as a polyhedral set.
+The proof uses the generator/inequality dictionary of Theorem 19.1 once in each direction. Write
+`epi f = conv P + cone D` with `P` and `D` finite. An affine function `x ↦ ⟨x, y⟩ - c` lies below
+`f` exactly when the linear functional `p ↦ ⟨p.1, y⟩ - p.2` is bounded by `c` on `epi f`, and on a
+sum of a convex hull and a cone that is two *finite* families of conditions: `⟨p.1, y⟩ - c ≤ p.2`
+for the generating points `p ∈ P`, and `⟨d.1, y⟩ ≤ d.2` for the generating directions `d ∈ D`.
+Both are linear in `(y, c)`, so they cut `epi (conj B f)` out of `F × ℝ` as a polyhedral set.
 
 ## Main results
 
-* `mem_epi_conj_iff` — the epigraph of `conj B f`, read off `epi f`. No hypotheses at all.
-* `PolyhedralFn.conj` — **Theorem 19.2**.
-
-## Design notes
-
-**`mem_epi_conj_iff` carries no properness hypothesis.** One might expect `f ≠ ⊥` to be needed —
-the statement quantifies over `epi f`, and `f x = ⊥` puts `(x, μ)` in the epigraph for every `μ`.
-It is not: in that case both sides are false. The proof of the nontrivial direction squeezes a
-real number between `f x` and `⟨x, y⟩ - c` with `EReal.lt_iff_exists_real_btwn`, which is exactly
-the step that handles `⊥` and `⊤` uniformly.
-
-**The empty case is separate but cheap.** If `P = ∅` then `epi f = ∅`, so `f ≡ ⊤`, every affine
-function lies below `f`, and `epi (conj B f)` is all of `F × ℝ` — the empty system. The generator
-side needs `P` nonempty in the other direction, to slide a base point along a recession direction,
-so the split is genuine rather than cosmetic.
+* `mem_epi_conj_iff` — the epigraph of `conj B f`, read off `epi f`, with no hypothesis on `f`. In
+  particular none excluding `f x = ⊥`: in that case both sides are false.
+* `PolyhedralFn.conj` — **Theorem 19.2**. The case `P = ∅` is separate: then `f ≡ ⊤` and
+  `epi (conj B f)` is all of `F × ℝ`, whereas the generator argument needs a base point to slide
+  along a recession direction.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19 (Theorem 19.2).
 -/
 
 open Set

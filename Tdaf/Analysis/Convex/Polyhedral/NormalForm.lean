@@ -15,8 +15,9 @@ restricted to a polyhedral convex set: `f = h + δ(· | C)` with
 
 The two descriptions are the two kinds of closed half-space that can appear in a polyhedral
 description of `epi f ⊆ E × ℝ`: those whose bounding hyperplane is *non-vertical*, which are the
-epigraphs of affine functions, and those that are *vertical*, which constrain only `x`. Reading a
-polyhedral system for `epi f` off in these two groups is the whole proof.
+epigraphs of affine functions, and those that are *vertical*, which constrain only `x`. There is
+no third kind, because `epi f` is upward closed and so no constraint can bound the vertical
+variable above; reading a polyhedral system for `epi f` off in the two groups is the whole proof.
 
 ## Main definitions
 
@@ -25,41 +26,27 @@ polyhedral system for `epi f` off in these two groups is the whole proof.
 
 ## Main results
 
-* `polyhedralFn_maxAffineFn` — a finite maximum of affine functions is polyhedral.
-* `polyhedralFn_maxAffineFn_add_indicatorFn` — the normal form is always polyhedral. No
-  hypothesis: the degenerate `s = ∅` gives the constant `⊥`, whose epigraph is everything.
+* `polyhedralFn_maxAffineFn`, `polyhedralFn_maxAffineFn_add_indicatorFn` — a normal form is always
+  polyhedral, with no hypothesis: the degenerate `s = ∅` gives `⊥`, whose epigraph is everything.
 * `PolyhedralFn.exists_maxAffineFn_add_indicatorFn_dom` — every polyhedral convex function that
-  nowhere takes `⊥` is in normal form, with `dom f` itself as the set.
+  nowhere takes `⊥` is in normal form, with `dom f` itself as the set. The vertical inequalities
+  cut out a polyhedral set that may be strictly larger than `dom f`, but off `dom f` the function
+  is `⊤` anyway.
 * `polyhedralFn_iff_maxAffineFn_add_indicatorFn` — the two together, as an iff.
 
-## Design notes
+## Implementation notes
 
-**The `⊥`-freeness hypothesis is not decoration.** `EReal` has `⊥ + ⊤ = ⊥`, so a normal form can
-only produce the value `⊥` at a point of `C`, never off it. The function that is `⊥` on a proper
-non-empty polyhedral `C` and `⊤` elsewhere is convex with polyhedral epigraph `C ×ˢ univ` and has
-no normal form; `∀ x, f x ≠ ⊥` excludes exactly this. Rockafellar's own convention makes polyhedral
-convex functions proper, so the hypothesis is weaker than the book's.
-
-**A half-space of `epi f` cannot point downward.** If `epi f` is non-empty then no functional in a
-polyhedral system for it can have a *positive* coefficient on the vertical variable, because
-`epi f` is upward closed and such a constraint would bound the vertical variable above. This step,
-inside the proof of the normal form, is what leaves only the two groups above.
-
-**The set may be taken to be `dom f`.** The vertical inequalities cut out a polyhedral set that
-contains `dom f` and may be strictly larger, but off `dom f` the function is `⊤` anyway and the
-indicator of the smaller set does the same work. Taking `dom f` removes the existential over `C`
-from the sharp statement and makes `PolyhedralFn.polyhedral_dom` the only thing needed to recover
-the book's form.
-
-**The forward direction needs no finite-dimensionality**, and carries an `omit` saying so:
-reading a polyhedral system for `epi f` off in the two groups is linear algebra. Only the converse
-uses Theorem 19.1, through `PolyhedralFn.add`. The declaration still sits in the normed section
-because `PolyhedralFn` is declared there.
+The `⊥`-freeness hypothesis is not decoration: `EReal` has `⊥ + ⊤ = ⊥`, so a normal form can take
+the value `⊥` only on `C`. The function that is `⊥` on a proper nonempty polyhedral `C` and `⊤`
+elsewhere is convex with polyhedral epigraph `C ×ˢ univ` and has no normal form. Rockafellar's own
+convention makes polyhedral convex functions proper, so `∀ x, f x ≠ ⊥` is weaker than the book's
+hypothesis. The forward direction needs no finite-dimensionality; only the converse uses
+Theorem 19.1, through `PolyhedralFn.add`.
 
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19 (the unnumbered
-  paragraph on p. 172 introducing polyhedral convex functions).
+  paragraph introducing polyhedral convex functions).
 -/
 
 open Set

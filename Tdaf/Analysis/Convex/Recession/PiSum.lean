@@ -9,46 +9,18 @@ import Tdaf.Analysis.Convex.Recession.Closedness
 # Sums of finitely many convex sets
 
 A sum `C₁ + ⋯ + Cₘ` of subsets of `E` is the image of the product set `∏ Cᵢ ⊆ ι → E` under the
-linear map `(xᵢ) ↦ ∑ xᵢ`. That single observation turns every question about the closure and the
-recession cone of a finite sum into a question about a linear *image*, which the recession calculus
-of a linear map answers.
+sum map `(xᵢ) ↦ ∑ xᵢ`, so every question about the closure and the recession cone of a finite sum
+becomes a question about a linear *image*, which the recession calculus of a linear map answers.
+`Convex.isClosed_sum`, `Convex.closure_sum_eq` and `Convex.recessionCone_sum` are **Corollary
+9.1.1** for a family.
 
-## Main definitions
-
-* `piSum` — the linear map `(ι → E) →ₗ[ℝ] E`, `x ↦ ∑ i, x i`.
-
-## Main results
-
-* `image_piSum_univ_pi` — `∑ i, C i` is the image of `univ.pi C` under `piSum`.
-* `Convex.isClosed_sum`, `Convex.closure_sum_eq`, `Convex.recessionCone_sum` — a finite sum of
-  convex sets is closed, has closure the sum of the closures, and has the sum of the recession
-  cones as its recession cone, as soon as the only way finitely many directions of recession can
-  cancel is inside the lineality spaces.
-
-## Design notes
-
-**This is the two-set development for a family, with the same proofs.** `Convex.isClosed_add` and
-its two companions run `Convex.isClosed_image_closure` on `C ×ˢ D` and the codiagonal
-`(x, y) ↦ x + y`; the only change here is `Set.pi` for `×ˢ` and `piSum` for the codiagonal. The
-binary statements are not consequences of these ones — an `ι` with two elements would deliver them
-only up to a transport — so both are kept.
-
-**The index type is a `Fintype`, and the hypothesis is stated on the family, not on pairs.** The
-cancellation hypothesis for a family is genuinely `m`-ary: a sum of `m` recession directions may
-vanish without any two of them cancelling, so no iteration of the binary hypothesis implies it.
-
-## What is not here
-
-**No `m`-ary Corollary 9.1.2.** The two-set special case "no direction of recession of one is the
-opposite of a direction of recession of the other" has no useful `m`-ary reading: the natural
-strengthening — that the only cancelling family is the zero family — is already the hypothesis
-below with the lineality spaces replaced by `{0}`, and callers with that hypothesis can pass it
-directly.
+The cancellation hypothesis is genuinely `m`-ary: a sum of `m` directions of recession can vanish
+without any two of them cancelling, so it is stated on the family, and the two-set results of
+`Recession/Closedness.lean` are kept separately rather than derived from these.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §9 (Theorem 9.1 and
-  Corollary 9.1.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §9 (Corollary 9.1.1).
 -/
 
 open Set
@@ -61,8 +33,8 @@ section Defs
 
 variable {ι E : Type*} [Fintype ι] [AddCommGroup E] [Module ℝ E]
 
-/-- **The sum map** `(x₁, …, xₘ) ↦ x₁ + ⋯ + xₘ` of a finite product, as a linear map. It is the
-`m`-ary codiagonal, and the sum of finitely many sets is its image on a product set. -/
+/-- **The sum map** `(x₁, …, xₘ) ↦ x₁ + ⋯ + xₘ` of a finite product, as a linear map: the `m`-ary
+codiagonal. -/
 def piSum : (ι → E) →ₗ[ℝ] E where
   toFun x := ∑ i, x i
   map_add' _ _ := by simp [Finset.sum_add_distrib]
@@ -70,9 +42,8 @@ def piSum : (ι → E) →ₗ[ℝ] E where
 
 @[simp] theorem piSum_apply (x : ι → E) : (piSum : (ι → E) →ₗ[ℝ] E) x = ∑ i, x i := rfl
 
-/-- **A sum of finitely many sets is the image of their product under the sum map.** This is what
-turns the `m`-ary form of Rockafellar's Corollary 9.1.1 into an instance of his Theorem 9.1, and it
-is the `Set.pi` form of `image_coprod_id_prod`. -/
+/-- **A sum of finitely many sets is the image of their product under the sum map**: what turns
+Corollary 9.1.1 for a family into an instance of Theorem 9.1. -/
 theorem image_piSum_univ_pi (C : ι → Set E) :
     (piSum : (ι → E) →ₗ[ℝ] E) '' univ.pi C = ∑ i, C i := by
   ext y
@@ -91,9 +62,7 @@ variable {ι E : Type*} [Fintype ι] [NormedAddCommGroup E] [NormedSpace ℝ E]
   [FiniteDimensional ℝ E] {C : ι → Set E}
 
 omit [FiniteDimensional ℝ E] in
-/-- The cancellation hypothesis for a family, transported to the product set. A direction of
-recession of `∏ cl Cᵢ` is a family of directions of recession of the factors, and the sum map
-annihilates it exactly when they cancel. -/
+/-- The cancellation hypothesis for a family, transported to the product set. -/
 theorem forall_mem_linealitySpace_pi (hne : ∀ i, (C i).Nonempty)
     (h : ∀ z : ι → E, (∀ i, z i ∈ recessionCone (closure (C i))) → ∑ i, z i = 0 →
       ∀ i, z i ∈ linealitySpace (closure (C i))) :
