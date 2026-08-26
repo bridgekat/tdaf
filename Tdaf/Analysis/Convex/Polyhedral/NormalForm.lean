@@ -38,15 +38,14 @@ variable above; reading a polyhedral system for `epi f` off in the two groups is
 
 The `⊥`-freeness hypothesis is not decoration: `EReal` has `⊥ + ⊤ = ⊥`, so a normal form can take
 the value `⊥` only on `C`. The function that is `⊥` on a proper nonempty polyhedral `C` and `⊤`
-elsewhere is convex with polyhedral epigraph `C ×ˢ univ` and has no normal form. Rockafellar's own
-convention makes polyhedral convex functions proper, so `∀ x, f x ≠ ⊥` is weaker than the book's
-hypothesis. The forward direction needs no finite-dimensionality; only the converse uses
-Theorem 19.1, through `PolyhedralFn.add`.
+elsewhere is convex with polyhedral epigraph `C ×ˢ univ` and has no normal form. The classical
+convention makes polyhedral convex functions proper, so `∀ x, f x ≠ ⊥` is the weaker hypothesis.
+The forward direction needs no finite-dimensionality; only the converse uses Minkowski–Weyl,
+through `PolyhedralFn.add`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19 (the unnumbered
-  paragraph introducing polyhedral convex functions).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19.
 -/
 
 open Set
@@ -168,9 +167,9 @@ private theorem affine_le_iff_of_neg {A b c μ : ℝ} (hc : c < 0) :
     linarith
 
 omit [FiniteDimensional ℝ E] in
-/-- **Rockafellar, §19, the normal form of a polyhedral convex function.** A polyhedral convex
-function that nowhere takes the value `⊥` is a pointwise maximum of finitely many affine functions
-plus the indicator of a polyhedral convex set, and the set may be taken to be `dom f`.
+/-- **The normal form of a polyhedral convex function.** A polyhedral convex function that nowhere
+takes the value `⊥` is a pointwise maximum of finitely many affine functions plus the indicator of
+a polyhedral convex set, and the set may be taken to be `dom f`.
 
 The affine pieces come from the *non-vertical* inequalities of a polyhedral system for `epi f`,
 each rescaled by minus its (negative) coefficient on the vertical variable. The *vertical*

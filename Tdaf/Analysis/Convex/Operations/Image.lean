@@ -9,11 +9,11 @@ import Tdaf.Analysis.Convex.Operations.Epi
 /-!
 # Images and inverse images of convex functions under a linear map
 
-A linear map `A : E → G` transports convex functions in both directions (Rockafellar's Theorem
-5.7). The *inverse image* `g A = g ∘ A` is the easy one — its epigraph is a preimage — while the
-*image* `(A f) y = inf {f x | A x = y}` is the interesting one: the infimum need not be attained,
-so `A f` is read off `epi f` not as a set image but as the function that image determines in the
-sense of Theorem 5.3. Accordingly `epi (A f) = (A × id) '' epi f` is **false** in general
+A linear map `A : E → G` transports convex functions in both directions. The *inverse image*
+`g A = g ∘ A` is the easy one — its epigraph is a preimage — while the *image*
+`(A f) y = inf {f x | A x = y}` is the interesting one: the infimum need not be attained, so `A f`
+is read off `epi f` not as a set image but as the function that image determines. Accordingly
+`epi (A f) = (A × id) '' epi f` is **false** in general
 (`exists_epi_mapLin_ne_image`); `epi_mapLin` recovers it from `IsEpiLike`, exactly the missing
 attainment.
 
@@ -24,14 +24,14 @@ attainment.
 
 ## Main results
 
-* `convexFn_compLin`, `convexFn_mapLin` — **Theorem 5.7**.
+* `convexFn_compLin`, `convexFn_mapLin` — both directions preserve convexity.
 * `gc_compLin_mapLin` — `g ≤ A f ↔ g A ≤ f`, a *monotone* Galois connection (no `OrderDual`,
   unlike `gc_ofEpi_epi`), giving the monotonicity lemmas, the unit and counit, and — for surjective
   `A`, where it is a `GaloisCoinsertion` — the identity `A (g A) = g`.
 * `mapLin_eq_ofEpi` — the image is the function determined by the image of the epigraph under
-  `(x, μ) ↦ (A x, μ)`: Rockafellar's own proof of Theorem 5.7.
+  `(x, μ) ↦ (A x, μ)`, which is how convexity of the image is proved.
 * `convexFn_iInf_right` — partial minimisation `y ↦ ⨅ z, h (y, z)` of a jointly convex function is
-  convex: the projection case Rockafellar highlights, and the form §29 uses.
+  convex: the projection case, and the form the perturbation function of a convex program takes.
 * `ConvexFn.comp_affine`, `ConvexFn.slice_left`, `ConvexFn.slice_right` — precomposition with an
   affine map, and fixing one variable of a function of two.
 
@@ -148,13 +148,13 @@ theorem dom_mapLin (A : E →ₗ[ℝ] G) (f : E → EReal) : dom (mapLin A f) = 
   · rintro ⟨x, hx, rfl⟩
     exact mapLin_lt_iff.2 ⟨x, rfl, hx⟩
 
-/-! ### Epigraphs, and Theorem 5.7 -/
+/-! ### Epigraphs, and convexity in both directions -/
 
-/-- `epi g` pulled back along `(x, μ) ↦ (A x, μ)`: the whole proof of the easy half of 5.7. -/
+/-- `epi g` pulled back along `(x, μ) ↦ (A x, μ)`: the whole proof of the inverse-image half. -/
 theorem epi_compLin (g : G → EReal) (A : E →ₗ[ℝ] G) :
     epi (compLin g A) = prodMapId A ⁻¹' epi g := rfl
 
-/-- **Rockafellar, Theorem 5.7**, inverse images. -/
+/-- The inverse image of a convex function under a linear map is convex. -/
 theorem convexFn_compLin (A : E →ₗ[ℝ] G) (hg : ConvexFn g) : ConvexFn (compLin g A) := by
   refine ⟨?_⟩
   rw [epi_compLin]
@@ -169,8 +169,9 @@ theorem ConvexFn.comp_affine (hg : ConvexFn g) (A : E →ₗ[ℝ] G) (b : G) :
   rw [heq]
   exact convexFn_compLin A (hg.comp_add_left b)
 
-/-- Rockafellar's own route to Theorem 5.7. This is an equality of *functions*; the corresponding
-equality of *sets*, `epi_mapLin`, needs a hypothesis. -/
+/-- The image of `f` under `A` is the function determined by the image of `epi f` under
+`(x, μ) ↦ (A x, μ)`. This is an equality of *functions*; the corresponding equality of *sets*,
+`epi_mapLin`, needs a hypothesis. -/
 theorem mapLin_eq_ofEpi (A : E →ₗ[ℝ] G) (f : E → EReal) :
     mapLin A f = ofEpi (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f) := by
   funext y
@@ -182,14 +183,14 @@ theorem mapLin_eq_ofEpi (A : E →ₗ[ℝ] G) (f : E → EReal) :
   · conv_rhs => rw [← ofEpi_epi f]
     exact le_ofEpi fun μ hμ => ofEpi_apply_le ⟨(x, μ), hμ, by rw [LinearMap.prodMap_apply, hx]; rfl⟩
 
-/-- **Rockafellar, Theorem 5.7**, images: a linear image of a convex set is convex, and Theorem 5.3
-does the rest. -/
+/-- The image of a convex function under a linear map is convex: a linear image of a convex set is
+convex, and the function it determines is then convex too. -/
 theorem convexFn_mapLin (A : E →ₗ[ℝ] G) (hf : ConvexFn f) : ConvexFn (mapLin A f) := by
   rw [mapLin_eq_ofEpi]
   exact convexFn_ofEpi (hf.convex_epi.linear_image _)
 
-/-- The set equation behind Theorem 5.7, under the hypothesis that makes it true: the infimum
-defining `A f` must be attained wherever it is finite. -/
+/-- The epigraph of the image is the image of the epigraph, under the hypothesis that makes it
+true: the infimum defining `A f` must be attained wherever it is finite. -/
 theorem epi_mapLin (h : IsEpiLike (A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f)) :
     epi (mapLin A f) = A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f := by
   rw [mapLin_eq_ofEpi]
@@ -312,8 +313,8 @@ theorem mapLin_fst (h : Y × Z → EReal) :
     mapLin (LinearMap.fst ℝ Y Z) h = fun y => ⨅ z, h (y, z) :=
   funext (mapLin_fst_apply h)
 
-/-- **Partial minimisation preserves convexity**: Theorem 5.7 with `A` a projection. This is the
-form §29 uses to build the perturbation function of a convex program. -/
+/-- **Partial minimisation preserves convexity**: the image case with `A` a projection. This is the
+form used to build the perturbation function of a convex program. -/
 theorem convexFn_iInf_right (hh : ConvexFn h) : ConvexFn (fun y => ⨅ z, h (y, z)) := by
   rw [← mapLin_fst h]
   exact convexFn_mapLin _ hh

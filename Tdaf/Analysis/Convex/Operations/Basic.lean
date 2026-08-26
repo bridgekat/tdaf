@@ -8,17 +8,17 @@ import Tdaf.Analysis.Convex.Indicator
 /-!
 # Operations that preserve convexity: the epigraph-only ones
 
-The operations of Rockafellar §5 whose convexity proof needs nothing beyond the epigraph API. Those
-built from a convex set in `E × ℝ` by Theorem 5.3 — infimal convolution, convex hulls of families,
-images under linear maps — live elsewhere.
+The operations whose convexity proof needs nothing beyond the epigraph API. Those that instead read
+a function off a convex set in `E × ℝ` — infimal convolution, convex hulls of families, images under
+linear maps — live elsewhere.
 
 ## Main results
 
-* `convexFn_iSup`, `ConvexFn.sup` — **Theorem 5.5**, pointwise suprema, via `epi_iSup`.
-* `ConvexFn.add`, `ConvexFn.sum`, `dom_add` — **Theorem 5.2**, sums.
+* `convexFn_iSup`, `ConvexFn.sup` — pointwise suprema, via `epi_iSup`.
+* `ConvexFn.add`, `ConvexFn.sum`, `dom_add` — sums, and the effective domain of a sum.
 * `ConvexFn.smul` — multiplication by a nonnegative real.
-* `ConvexFn.comp`, `ConvexFn.comp_extendTop` — **Theorem 5.1**, composition with a nondecreasing
-  convex function of one real variable.
+* `ConvexFn.comp`, `ConvexFn.comp_extendTop` — composition with a nondecreasing convex function of
+  one real variable.
 * `ConvexFn.restrict`, `ConvexFn.add_indicatorFn` — restriction to a convex set, the same operation
   as adding an indicator function.
 
@@ -44,7 +44,8 @@ section Basic
 
 variable {E : Type*}
 
-/-- **Theorem 5.5**, set-theoretic content. Support functions are computed this way. -/
+/-- The epigraph of a pointwise supremum is the intersection of the epigraphs. Support functions
+are computed this way. -/
 theorem epi_iSup {ι : Sort*} (f : ι → E → EReal) : epi (fun x => ⨆ i, f i x) = ⋂ i, epi (f i) := by
   ext p
   simp [epi, iSup_le_iff]
@@ -58,8 +59,8 @@ theorem epi_sup (f g : E → EReal) : epi (f ⊔ g) = epi f ∩ epi g := by
   ext p
   simp [epi, sup_le_iff]
 
-/-- The remark after **Theorem 5.2**. Both `≠ ⊥` hypotheses are needed: for `f x = ⊥` and `g x = ⊤`,
-`x` lies in `dom (f + g)` but not in `dom g`. -/
+/-- The effective domain of a sum is the intersection of the effective domains. Both `≠ ⊥`
+hypotheses are needed: for `f x = ⊥` and `g x = ⊤`, `x` lies in `dom (f + g)` but not in `dom g`. -/
 theorem dom_add {f g : E → EReal} (hf : ∀ x, f x ≠ ⊥) (hg : ∀ x, g x ≠ ⊥) :
     dom (f + g) = dom f ∩ dom g := by
   ext x
@@ -101,17 +102,17 @@ theorem convexFn_coe_linearMap (l : E →ₗ[ℝ] ℝ) :
     (l := fun x => l x) (fun x y a b _ => by simp [map_add, map_smul, smul_eq_mul])
   simpa using h
 
-/-! #### Theorem 5.5: pointwise suprema -/
+/-! #### Pointwise suprema -/
 
-/-- **Rockafellar, Theorem 5.5.** The index is a `Sort*`, so the empty family is allowed: the
-supremum is then `⊥`, whose epigraph is all of `E × ℝ`. -/
+/-- A pointwise supremum of convex functions is convex. The index is a `Sort*`, so the empty family
+is allowed: the supremum is then `⊥`, whose epigraph is all of `E × ℝ`. -/
 theorem convexFn_iSup {ι : Sort*} {f : ι → E → EReal} (h : ∀ i, ConvexFn (f i)) :
     ConvexFn (fun x => ⨆ i, f i x) := by
   refine ⟨?_⟩
   rw [epi_iSup]
   exact convex_iInter fun i => (h i).convex_epi
 
-/-- **Rockafellar, Theorem 5.5**, for a family indexed by a set. -/
+/-- A pointwise supremum over an index set of convex functions is convex. -/
 theorem convexFn_biSup {ι : Type*} {s : Set ι} {f : ι → E → EReal}
     (h : ∀ i ∈ s, ConvexFn (f i)) : ConvexFn (fun x => ⨆ i ∈ s, f i x) := by
   refine ⟨?_⟩
@@ -123,10 +124,11 @@ theorem ConvexFn.sup {f g : E → EReal} (hf : ConvexFn f) (hg : ConvexFn g) : C
   rw [epi_sup]
   exact hf.convex_epi.inter hg.convex_epi
 
-/-! #### Theorem 5.2: sums -/
+/-! #### Sums -/
 
-/-- **Rockafellar, Theorem 5.2.** Where the book assumes properness this needs only its `≠ ⊥` half,
-which prevents `∞ - ∞` and cannot be dropped; the module docstring has a counterexample. -/
+/-- A sum of two convex functions is convex. Where the classical statement assumes properness this
+needs only its `≠ ⊥` half, which prevents `∞ - ∞` and cannot be dropped; the module docstring has a
+counterexample. -/
 theorem ConvexFn.add {f g : E → EReal} (hf : ConvexFn f) (hg : ConvexFn g)
     (hf' : ∀ x, f x ≠ ⊥) (hg' : ∀ x, g x ≠ ⊥) : ConvexFn (f + g) := by
   refine convexFn_of_epi_combo (fun x y μ ν hx hy a b ha hb hab => ?_)
@@ -159,7 +161,7 @@ theorem ConvexFn.add {f g : E → EReal} (hf : ConvexFn f) (hg : ConvexFn g)
   have h3 : a * p₁ + b * q₁ + (a * p₂ + b * q₂) = a * (p₁ + p₂) + b * (q₁ + q₂) := by ring
   exact_mod_cast (by linarith : a * p₁ + b * q₁ + (a * p₂ + b * q₂) ≤ a * μ + b * ν)
 
-/-- **Rockafellar, Theorem 5.2**, for a finite sum. -/
+/-- A finite sum of convex functions, none of which takes the value `⊥`, is convex. -/
 theorem ConvexFn.sum {ι : Type*} {s : Finset ι} {f : ι → E → EReal}
     (hf : ∀ i ∈ s, ConvexFn (f i)) (hf' : ∀ i ∈ s, ∀ x, f i x ≠ ⊥) :
     ConvexFn (fun x => ∑ i ∈ s, f i x) := by
@@ -192,10 +194,10 @@ theorem ConvexFn.smul {f : E → EReal} (a : ℝ) (ha : 0 ≤ a) (hf : ConvexFn 
   have harith : c * (μ / a) + d * (ν / a) = (c * μ + d * ν) / a := by ring
   rwa [harith] at hcombo
 
-/-! #### Theorem 5.1: composition with a nondecreasing convex function -/
+/-! #### Composition with a nondecreasing convex function -/
 
 /-- `φ : ℝ → EReal` extended to `EReal → EReal` by `φ (+∞) = +∞` and `φ (-∞) = -∞`, the choice that
-keeps the extension monotone; Theorem 5.1 never applies `φ` at `⊥`. -/
+keeps the extension monotone; the composition rule never applies `φ` at `⊥`. -/
 noncomputable def extendTop (φ : ℝ → EReal) : EReal → EReal :=
   _root_.EReal.rec ⊥ φ ⊤
 
@@ -218,11 +220,12 @@ theorem monotone_extendTop {φ : ℝ → EReal} (h : Monotone φ) : Monotone (ex
     | top => simp
     | coe s => exact h (by exact_mod_cast hzw)
 
-/-- **Rockafellar, Theorem 5.1**, stated for `φ : EReal → EReal` rather than the book's
-`φ : ℝ → (-∞, +∞]`. `EReal` is not an `ℝ`-module, so convexity of `φ` is required only where it is
-statable; off the reals the proof uses just monotonicity and `φ ⊤ = ⊤`. That last is not decoration
-— a monotone convex `φ : ℝ → EReal` bounded above is constant, and gluing a strictly larger finite
-value at `⊤` breaks convexity of `φ ∘ f` as soon as `dom f` has nonconvex complement. -/
+/-- A nondecreasing convex `φ` composed with a convex `f` is convex, stated for `φ : EReal → EReal`
+rather than the classical `φ : ℝ → (-∞, +∞]`. `EReal` is not an `ℝ`-module, so convexity of `φ` is
+required only where it is statable; off the reals the proof uses just monotonicity and `φ ⊤ = ⊤`.
+That last is not decoration — a monotone convex `φ : ℝ → EReal` bounded above is constant, and
+gluing a strictly larger finite value at `⊤` breaks convexity of `φ ∘ f` as soon as `dom f` has
+nonconvex complement. -/
 theorem ConvexFn.comp {f : E → EReal} {φ : EReal → EReal} (hf : ConvexFn f)
     (hf' : ∀ x, f x ≠ ⊥) (hφ : ConvexFn fun r : ℝ => φ (r : EReal)) (hmono : Monotone φ)
     (htop : φ ⊤ = ⊤) : ConvexFn (fun x => φ (f x)) := by
@@ -249,8 +252,8 @@ theorem ConvexFn.comp {f : E → EReal} {φ : EReal → EReal} (hf : ConvexFn f)
   refine (hmono hcombo).trans ?_
   simpa [smul_eq_mul] using hφ.epi_combo hx' hy' ha hb hab
 
-/-- **Rockafellar, Theorem 5.1**, in the book's own shape: `φ` is a nondecreasing convex function
-of one real variable, and `h x = φ (f x)` with the convention `φ (+∞) = +∞`. -/
+/-- The same composition rule in its classical shape: `φ` is a nondecreasing convex function of one
+real variable, and `x ↦ φ (f x)` is convex under the convention `φ (+∞) = +∞`. -/
 theorem ConvexFn.comp_extendTop {f : E → EReal} {φ : ℝ → EReal} (hf : ConvexFn f)
     (hf' : ∀ x, f x ≠ ⊥) (hφ : ConvexFn φ) (hmono : Monotone φ) :
     ConvexFn (fun x => extendTop φ (f x)) :=
@@ -264,7 +267,8 @@ theorem ConvexFn.restrict {f : E → EReal} {s : Set E} (hf : ConvexFn f) (hs : 
   rw [epi_restrict]
   exact hf.convex_epi.inter (hs.prod convex_univ)
 
-/-- Adding an indicator restricts the effective domain: the remark after Theorem 5.2. -/
+/-- Adding the indicator function of a convex set is restriction to that set, and preserves
+convexity. -/
 theorem ConvexFn.add_indicatorFn {f : E → EReal} {s : Set E} (hf : ConvexFn f)
     (hf' : ∀ x, f x ≠ ⊥) (hs : Convex ℝ s) : ConvexFn (f + indicatorFn s) := by
   rw [← restrict_eq_add_indicatorFn hf']

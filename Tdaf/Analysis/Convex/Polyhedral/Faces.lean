@@ -16,9 +16,9 @@ with "finitely generated", and this module adds "closed, with a finite set of fa
 ## Main results
 
 * `FinitelyGenerated.finite_setOf_isFace`, `FinitelyGenerated.of_isFace` — a finitely generated
-  set has finitely many faces, each of them finitely generated. Both come from Theorem 18.3: a
-  face is the hull of the generating points it contains and the generating directions in which it
-  recedes, so the faces are indexed by pairs of subsets of the generators.
+  set has finitely many faces, each of them finitely generated. Both come from the description of
+  a face as the hull of the generating points it contains and the generating directions in which
+  it recedes, so the faces are indexed by pairs of subsets of the generators.
 * `finitelyGenerated_of_finite_setOf_isFace`, `polyhedral_of_finite_setOf_isFace` — the converse
   for a closed convex set, by way of the lineality-zero case
   `finitelyGenerated_of_finite_setOf_isFace_of_containsNoLine`.
@@ -33,8 +33,7 @@ generating set by choosing a direction vector for each half-line face.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19 (Theorem 19.1) and
-  §18 (Theorems 18.3, 18.5).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18 and §19.
 -/
 
 open Set
@@ -93,7 +92,7 @@ theorem exists_finite_generating_extremeDirections
     exact Submodule.span_mono (Set.singleton_subset_iff.2 hgmem) hone
   · exact absurd rfl (hno x y hy)
 
-/-- **A finitely generated set has only finitely many extreme points** — Corollary 18.3.1 counted.
+/-- **A finitely generated set has only finitely many extreme points.**
 `extremePoints_convexHullPD_subset` puts every extreme point among the generating *points*, so a
 `Finset` of generators bounds them. Nothing here is finite-dimensional or even normed. -/
 theorem FinitelyGenerated.finite_extremePoints (hC : FinitelyGenerated C) :
@@ -112,9 +111,9 @@ section Generated
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {C C' : Set E}
 
-/-- **A face of a finitely generated set is finitely generated.** By Theorem 18.3 the face is the
-hull of the generating points it contains and the generating directions in which it recedes, both
-of which are a `Finset.filter` of the original generators. -/
+/-- **A face of a finitely generated set is finitely generated.** The face is the hull of the
+generating points it contains and the generating directions in which it recedes, both of which
+are a `Finset.filter` of the original generators. -/
 theorem FinitelyGenerated.of_isFace (hC : FinitelyGenerated C) (hface : IsFace C C') :
     FinitelyGenerated C' := by
   classical
@@ -130,8 +129,8 @@ theorem FinitelyGenerated.of_isFace (hC : FinitelyGenerated C) (hface : IsFace C
   rw [← convexHullPD_def, hp, hd]
   exact hface.eq_convexHullPD
 
-/-- **A finitely generated set has only finitely many faces.** Theorem 18.3 makes the face map
-factor through the pairs of subsets of the two generating sets. -/
+/-- **A finitely generated set has only finitely many faces**, the same description making the
+face map factor through the pairs of subsets of the two generating sets. -/
 theorem FinitelyGenerated.finite_setOf_isFace (hC : FinitelyGenerated C) :
     {C' : Set E | IsFace C C'}.Finite := by
   classical

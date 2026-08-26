@@ -17,7 +17,7 @@ whose graph is the *lower boundary* of `F`: `ofEpi F x = inf {μ : ℝ | (x, μ)
 `EReal`, hence `⊤` over an empty vertical section and `⊥` over one unbounded below. Infimal
 convolution, right scalar multiplication, the convex hull of a family of functions, the image under
 a linear map and the lower-semicontinuous hull are all `ofEpi` of a set built from epigraphs. No
-structure on `E` is needed; only Theorem 5.3 itself asks for a real vector space.
+structure on `E` is needed; only the convexity statement itself asks for a real vector space.
 
 `epi (ofEpi F) = F` is false in general — only `F ⊆ epi (ofEpi F)` always holds — and `IsEpiLike F`
 names the sets where it does. That predicate is not preserved by the operations that matter most: a
@@ -29,11 +29,11 @@ and nor need the convex hull of a union. Those modules carry it as a hypothesis.
 * `subset_epi_iff_le_ofEpi` — the adjunction `F ⊆ epi g ↔ g ≤ ofEpi F`: `epi` and `ofEpi` form an
   antitone Galois connection (`gc_ofEpi_epi`, `epiClosure`) whose closed elements are the epi-like
   sets, and the order facts below are formal consequences.
-* `convexFn_ofEpi` — **Theorem 5.3**: `ofEpi F` is convex when `F` is.
+* `convexFn_ofEpi` — `ofEpi F` is convex when `F` is.
 * `ofEpi_epi` — `ofEpi (epi f) = f`, with no hypothesis; `epi_ofEpi` is the converse, under
   `IsEpiLike`.
 * `IsEpiLike.iInter`, `.inter`, `.union`, `.of_isClosed`, `.closure` — the stability properties
-  the §5 operations consume.
+  the operations of this section consume.
 
 ## References
 
@@ -201,7 +201,7 @@ theorem isEpiLike_iff_forall :
   ⟨fun h => ⟨fun _ _ _ hμ hμν => h.mem_of_le hμ hμν, fun _ _ hμ => h.mem_of_forall_lt hμ⟩,
     fun h => isEpiLike_of_forall h.1 h.2⟩
 
-/-- The epigraph of the pointwise supremum; the epigraph half of Rockafellar's Theorem 5.5. -/
+/-- An intersection of epigraphs is an epigraph: that of the pointwise supremum. -/
 theorem IsEpiLike.iInter {ι : Sort*} {F : ι → Set (E × ℝ)} (h : ∀ i, IsEpiLike (F i)) :
     IsEpiLike (⋂ i, F i) := by
   choose f hf using h
@@ -227,15 +227,15 @@ theorem IsEpiLike.union (hF : IsEpiLike F) (hG : IsEpiLike G) : IsEpiLike (F ∪
 
 end Basic
 
-/-! ### Theorem 5.3 -/
+/-! ### Convexity of the function determined by a set -/
 
 section Module
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E]
 
-/-- **Rockafellar, Theorem 5.3.** The function whose graph is the lower boundary of a convex set is
-convex. The route is Theorem 4.2 (`convexFn_iff_forall_lt`), which asks only for *strict* upper
-bounds, a non-strict one yielding no witness. -/
+/-- The function whose graph is the lower boundary of a convex set is convex. The route is
+`convexFn_iff_forall_lt`, which asks only for *strict* upper bounds, a non-strict one yielding no
+witness. -/
 theorem convexFn_ofEpi {F : Set (E × ℝ)} (hF : Convex ℝ F) : ConvexFn (ofEpi F) := by
   rw [convexFn_iff_forall_lt]
   intro x y a b ha hb hab α β hx hy

@@ -10,40 +10,40 @@ import Tdaf.Analysis.Convex.Indicator
 /-!
 # Polyhedral constraint qualifications
 
-The constraint qualifications of §16 weaken when one of the two functions is polyhedral: where
-`Duality/Relint.lean` asks for a *common relative interior point* of the two effective domains,
-the polyhedral side here contributes only a point of its effective domain.
+The constraint qualifications for exact conjugate addition weaken when one of the two functions is
+polyhedral: where `Duality/Relint.lean` asks for a *common relative interior point* of the two
+effective domains, the polyhedral side here contributes only a point of its effective domain.
 
 ## Main results
 
 * `IsExactSum.of_polyhedral_pair` — both functions polyhedral: no relative interiors at all, only
   `dom f ∩ dom g ≠ ∅`.
-* `IsExactSum.of_polyhedral` — **Theorem 20.1**: a proper polyhedral `f` and a proper convex `g`
-  add exactly as soon as `dom f` meets `ri (dom g)`. `IsExactSum.of_polyhedral_closed` is the
+* `IsExactSum.of_polyhedral` — a proper polyhedral `f` and a proper convex `g` add exactly as soon
+  as `dom f` meets `ri (dom g)` (Theorem 20.1 in [^1]). `IsExactSum.of_polyhedral_closed` is the
   closed case, which carries the argument, and
   `relint_inter_relint_nonempty_of_subset_affineSpan` is the relative-interior step it turns on.
-* `IsExactFinsetSum.of_polyhedral` — **Theorem 20.1** for `m` summands; `polyhedralFn_finsetSum`
-  (**Theorem 19.4**) is what makes the polyhedral block a single polyhedral summand.
+* `IsExactFinsetSum.of_polyhedral` — the same for `m` summands; `polyhedralFn_finsetSum`, a finite
+  sum of proper polyhedral functions being polyhedral, makes the polyhedral block one summand.
 * `IsExactImage.of_polyhedral` — the same weakening on the *image* side: a proper polyhedral `g`
-  pulls back exactly as soon as the range of `A` meets `dom g`. This is what gives Theorems 16.3
-  and 23.9 their polyhedral clauses.
+  pulls back exactly as soon as the range of `A` meets `dom g`. This is what gives the general
+  image and subgradient rules their polyhedral clauses.
 * `epi_mapLin_of_polyhedralFn`, `polyhedralFn_mapLin`, `exists_mapLin_eq_of_polyhedralFn`,
-  `polyhedralFn_compLin` — **Corollary 19.3.1** in full: the image `Af` is polyhedral, the infimum
-  defining it is attained, and the composite `gA` is polyhedral.
+  `polyhedralFn_compLin` — the image `Af` is polyhedral, the infimum defining it is attained, and
+  the composite `gA` is polyhedral.
 
 ## Implementation notes
 
-The pair case is the proof of `of_relint` with Corollary 9.1.1 replaced by polyhedrality: both
-need `epi f* + epi g*` closed, and here that is free, a sum of polyhedral sets being polyhedral
-(**Corollary 19.3.2**) and closed. `ClosedFn` is a hypothesis on neither side, a proper polyhedral
-convex function being automatically closed. The general case is Rockafellar's own reduction, run
-on an indicator: with `M = aff (dom g)` and `δ = δ(· | M)`, the function `δ + f` is polyhedral and
+The pair case is the proof of `of_relint` with its closedness criterion replaced by polyhedrality:
+both need `epi f* + epi g*` closed, and here that is free, a sum of polyhedral sets being
+polyhedral and closed. `ClosedFn` is a hypothesis on neither side, a proper polyhedral convex
+function being automatically closed. The general case is the classical reduction, run on an
+indicator: with `M = aff (dom g)` and `δ = δ(· | M)`, the function `δ + f` is polyhedral and
 `M ∩ dom f` does meet `ri (dom g)`, so `of_relint` applies to `δ + f` and `g`; the leftover `δ*`
 is then re-absorbed, since `δ + g = g` and `δ + (f + g) = f + g`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §20.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §20.
 -/
 
 open Set
@@ -64,9 +64,9 @@ theorem PolyhedralFn.closedProperConvexFn (hf : PolyhedralFn f) (hpf : Proper f)
     ClosedProperConvexFn f :=
   ⟨hf.convexFn, hf.closedFn hpf.ne_bot, hpf⟩
 
-/-- **The polyhedral case of Rockafellar's Theorem 20.1**, for two polyhedral functions: proper
-polyhedral convex functions add exactly as soon as their effective domains meet, with no relative
-interior on either side. This is the case `k = m`, to which the general form is reduced. -/
+/-- **The all-polyhedral case**: two proper polyhedral convex functions add exactly as soon as
+their effective domains meet, with no relative interior on either side. This is the case `k = m`,
+to which the general form is reduced. -/
 theorem IsExactSum.of_polyhedral_pair [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : PolyhedralFn f) (hpf : Proper f) (hg : PolyhedralFn g) (hpg : Proper g)
     {x₀ : E} (hxf : x₀ ∈ dom f) (hxg : x₀ ∈ dom g) : IsExactSum B f g := by
@@ -74,10 +74,10 @@ theorem IsExactSum.of_polyhedral_pair [IsCompatiblePairing B] [IsCompatiblePairi
   have hgc : ClosedProperConvexFn g := hg.closedProperConvexFn hpg
   have hup : Proper (conj B f) := proper_conj hfc
   have hvp : Proper (conj B g) := proper_conj hgc
-  -- **Corollary 19.3.2**: the sum of the two dual epigraphs is polyhedral, hence closed
+  -- the sum of the two dual epigraphs is polyhedral, hence closed
   have hclosed : IsClosed (epi (conj B f) + epi (conj B g)) :=
     Polyhedral.isClosed (Polyhedral.add (PolyhedralFn.conj hf) (PolyhedralFn.conj hg))
-  -- **Corollary 19.3.4**: so that sum *is* the epigraph of the infimal convolute
+  -- so that sum *is* the epigraph of the infimal convolute
   have hepiEq : epi (infConv (conj B f) (conj B g)) = epi (conj B f) + epi (conj B g) :=
     epi_infConv_of_polyhedralFn (PolyhedralFn.conj hf) (PolyhedralFn.conj hg)
   have hdomne : (dom (f + g)).Nonempty :=
@@ -116,7 +116,7 @@ theorem IsExactSum.of_polyhedral_pair [IsCompatiblePairing B] [IsCompatiblePairi
 
 omit [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
 /-- An indicator function is absorbed by any function whose effective domain it contains. This is
-the algebraic device the proof of Theorem 20.1 runs on: with `M = aff (dom g)` both
+the algebraic device the reduction below runs on: with `M = aff (dom g)` both
 `indicatorFn M + g` and `indicatorFn M + (f + g)` collapse. No properness is needed — off `C` the
 sum is `⊤ + ⊤`. -/
 theorem indicatorFn_add_eq_self {C : Set E} {k : E → EReal}
@@ -131,9 +131,9 @@ theorem indicatorFn_add_eq_self {C : Set E} {k : E → EReal}
     simp
 
 omit [FiniteDimensional ℝ F] in
-/-- **The relative-interior step in Rockafellar's proof of Theorem 20.1.** If a convex set `D₁`
-lies in the affine hull of a convex set `D₂` and the two share a point `x₀` of `ri D₂`, then
-`ri D₁` and `ri D₂` already share a point.
+/-- **The relative-interior step** the reduction below turns on. If a convex set `D₁` lies in the
+affine hull of a convex set `D₂` and the two share a point `x₀` of `ri D₂`, then `ri D₁` and
+`ri D₂` already share a point.
 
 `x₀` need not itself be in `ri D₁`, but `ri D₂` is a relatively open neighbourhood of `x₀` inside
 `aff D₂ ⊇ aff D₁`, so a small push from `x₀` towards any point of `ri D₁` lands in both. -/
@@ -171,9 +171,9 @@ theorem relint_inter_relint_nonempty_of_subset_affineSpan {D₁ D₂ : Set E}
       match_scalars <;> (field_simp; try ring)
     rwa [heq] at hseg
 
-/-- **Rockafellar, Theorem 20.1.** A proper polyhedral convex function and a closed proper convex
-function add exactly as soon as `dom f` meets `ri (dom g)`: the polyhedral side contributes only a
-point of its effective domain, not of its relative interior.
+/-- A proper polyhedral convex function and a closed proper convex function add exactly as soon as
+`dom f` meets `ri (dom g)`: the polyhedral side contributes only a point of its effective domain,
+not of its relative interior.
 
 With `M = aff (dom g)`, `δ = δ(· | M)` and `h = δ + f`, `ri (dom h)` does meet `ri (dom g)`, so
 `of_relint` splits `(h + g)* = (f + g)*` exactly; the pair case splits `h*` as `δ* □ f*`, and
@@ -243,14 +243,14 @@ theorem IsExactSum.of_polyhedral_closed [IsCompatiblePairing B] [IsCompatiblePai
       _ ≤ conj B (δ + f + g) y := hzle
       _ = conj B (f + g) y := by rw [hsum]
 
-/-- **Rockafellar, Theorem 20.1**, with the book's hypotheses: a proper polyhedral convex function
-and a *proper convex* function add exactly as soon as `dom f` meets `ri (dom g)`. Neither closedness
-of `g` nor a relative interior point of `dom f` is needed.
+/-- A proper polyhedral convex function and a *proper convex* function add exactly as soon as
+`dom f` meets `ri (dom g)`. Neither closedness of `g` nor a relative interior point of `dom f` is
+needed.
 
-The reduction to `IsExactSum.of_polyhedral_closed` is Theorem 9.3 in the conjugate form
+The reduction to `IsExactSum.of_polyhedral_closed` runs through the conjugate form
 `conj_add_eq_conj_clFn_add_clFn`, whose two segment hypotheses are met on opposite grounds: `f` is
-closed proper (**Corollary 7.5.1**, only `x₀ ∈ dom f` needed) and `g` is proper convex
-(**Theorem 7.5**, `x₀ ∈ ri (dom g)`). That asymmetry is the asymmetry of Theorem 20.1 itself. -/
+closed proper (only `x₀ ∈ dom f` needed) and `g` is proper convex (`x₀ ∈ ri (dom g)`). That
+asymmetry is the asymmetry of the theorem itself. -/
 theorem IsExactSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hf : PolyhedralFn f) (hpf : Proper f) (hg : ConvexFn g) (hpg : Proper g)
     {x₀ : E} (hxf : x₀ ∈ dom f) (hxg : x₀ ∈ ri (dom g)) : IsExactSum B f g := by
@@ -266,7 +266,7 @@ theorem IsExactSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.
 
 end Sum
 
-/-! ### Theorem 20.1 for `m` summands -/
+/-! ### Exact addition of `m` summands -/
 
 section FinsetSum
 
@@ -276,8 +276,7 @@ variable {ι : Type*} {E F : Type*}
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s t u : Finset ι} {f : ι → E → EReal}
 
 omit [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F] in
-/-- **Rockafellar, Theorem 19.4** for `m` summands: a finite non-empty sum of proper polyhedral
-convex functions is polyhedral. -/
+/-- A finite non-empty sum of proper polyhedral convex functions is polyhedral. -/
 theorem polyhedralFn_finsetSum (hs : s.Nonempty) (hpoly : ∀ i ∈ s, PolyhedralFn (f i))
     (hbot : ∀ i ∈ s, ∀ x, f i x ≠ ⊥) : PolyhedralFn (∑ i ∈ s, f i) := by
   induction s using Finset.cons_induction with
@@ -320,25 +319,24 @@ private theorem isExactFinsetSum_of_polyhedral_pair_aux [IsCompatiblePairing B]
     rw [hdom]
     exact Set.mem_iInter₂.2 fun j hj => hx₀ j (hmt j hj)
 
-/-- **The all-polyhedral case of Theorem 20.1 for `m` summands**: finitely many proper polyhedral
-convex functions add exactly as soon as their effective domains have a point in common. -/
+/-- **The all-polyhedral case, for `m` summands**: finitely many proper polyhedral convex
+functions add exactly as soon as their effective domains have a point in common. -/
 theorem IsExactFinsetSum.of_polyhedral_pair [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hs : s.Nonempty) (hpoly : ∀ i ∈ s, PolyhedralFn (f i)) (hpf : ∀ i ∈ s, Proper (f i))
     {x₀ : E} (hx₀ : ∀ i ∈ s, x₀ ∈ dom (f i)) : IsExactFinsetSum B s f :=
   isExactFinsetSum_of_polyhedral_pair_aux f x₀ s hs hpoly hpf hx₀
 
-/-- **Rockafellar, Theorem 20.1** in the book's own `m`-ary form: let `f₁, …, fₘ` be proper convex
-with `f₁, …, f_k` polyhedral, and suppose
+/-- The `m`-ary form: let `f₁, …, fₘ` be proper convex with `f₁, …, f_k` polyhedral, and suppose
 
 `dom f₁ ∩ ⋯ ∩ dom f_k ∩ ri (dom f_{k+1}) ∩ ⋯ ∩ ri (dom fₘ) ≠ ∅`.
 
 Then `f₁, …, fₘ` add exactly.
 
-`t` is the book's `{1, …, k}` and `u` its complement; the splitting is spelled membership-wise
-rather than as `s = t ∪ u` so that no `DecidableEq` instance enters the statement. `∑_{i ∈ t} fᵢ`
-is polyhedral (**Theorem 19.4**) and adds exactly to `∑_{i ∈ u} fᵢ` by the binary Theorem 20.1,
-while each block adds exactly on its own — the polyhedral one by the all-polyhedral case, the other
-by Theorem 16.4. -/
+`t` is `{1, …, k}` and `u` is its complement; the splitting is spelled membership-wise rather than
+as `s = t ∪ u` so that no `DecidableEq` instance enters the statement. `∑_{i ∈ t} fᵢ` is
+polyhedral and adds exactly to `∑_{i ∈ u} fᵢ` by the binary case, while each block adds exactly on
+its own — the polyhedral one by the all-polyhedral case, the other by the relative-interior
+criterion. -/
 theorem IsExactFinsetSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
     (hs : s.Nonempty) (hdisj : Disjoint t u) (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
     (hpoly : ∀ i ∈ t, PolyhedralFn (f i)) (hconv : ∀ i ∈ u, ConvexFn (f i))
@@ -371,7 +369,7 @@ theorem IsExactFinsetSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePair
 
 end FinsetSum
 
-/-! ### Theorem 16.3's polyhedral companion: images -/
+/-! ### The polyhedral companion of the image rule -/
 
 section PolyhedralImage
 
@@ -379,13 +377,13 @@ variable {E G : Type*}
   [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G] {f : E → EReal}
 
-/-- **Rockafellar, Corollary 19.3.1**, as an identity of epigraphs: for a polyhedral `f` the
-epigraph of the image `Af` really *is* the image of `epi f` under `(x, μ) ↦ (Ax, μ)`.
+/-- An identity of epigraphs: for a polyhedral `f` the epigraph of the image `Af` really *is* the
+image of `epi f` under `(x, μ) ↦ (Ax, μ)`.
 
 In general `epi (Af)` is only the *epigraph closure* of that image, because an infimum need not be
-attained. Here the image is polyhedral (**Theorem 19.3**), hence closed, and a closed set with
-upward-closed vertical sections is already an epigraph. Both halves of Corollary 19.3.1 —
-polyhedrality of `Af` and attainment of the infimum — fall out of this one identity. -/
+attained. Here the image is polyhedral, hence closed, and a closed set with upward-closed vertical
+sections is already an epigraph. Both conclusions — polyhedrality of `Af` and attainment of the
+infimum — fall out of this one identity. -/
 theorem epi_mapLin_of_polyhedralFn (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
     epi (mapLin A f) = A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f := by
   refine epi_mapLin (IsEpiLike.of_isClosed ?_ (Polyhedral.image hf _).isClosed)
@@ -397,9 +395,9 @@ theorem epi_mapLin_of_polyhedralFn (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
   · rw [LinearMap.prodMap_apply, h1]
     rfl
 
-/-- **Rockafellar, Corollary 19.3.1**, the polyhedrality clause: the image of a polyhedral convex
-function under a linear transformation is polyhedral. By `epi_mapLin_of_polyhedralFn`, `epi (Af)`
-*is* the image of `epi f`, and a linear image of a polyhedral set is polyhedral. -/
+/-- The image of a polyhedral convex function under a linear transformation is polyhedral. By
+`epi_mapLin_of_polyhedralFn`, `epi (Af)` *is* the image of `epi f`, and a linear image of a
+polyhedral set is polyhedral. -/
 theorem polyhedralFn_mapLin (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
     PolyhedralFn (mapLin A f) := by
   change Polyhedral (epi (mapLin A f))
@@ -407,9 +405,9 @@ theorem polyhedralFn_mapLin (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
   exact Polyhedral.image hf _
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ G] in
-/-- **Rockafellar, Corollary 19.3.1**, the other half: a polyhedral convex function composed with
-a linear map is polyhedral. `epi (gA)` is `epi g` pulled back along `(x, μ) ↦ (A x, μ)`, and a
-preimage of a polyhedral set under a linear map is polyhedral (`Polyhedral.comap`).
+/-- A polyhedral convex function composed with a linear map is polyhedral. `epi (gA)` is `epi g`
+pulled back along `(x, μ) ↦ (A x, μ)`, and a preimage of a polyhedral set under a linear map is
+polyhedral (`Polyhedral.comap`).
 
 This is much the cheaper direction: pulling back needs neither closedness nor attainment, so no
 finite dimension is used on either side. -/
@@ -419,9 +417,9 @@ theorem polyhedralFn_compLin {g : G → EReal} (hg : PolyhedralFn g) (A : E →�
   rw [epi_compLin]
   exact Polyhedral.comap hg _
 
-/-- **Rockafellar, Corollary 19.3.1**, the attainment clause: wherever `(Af)(y)` is finite the
-infimum defining it is attained, some `x` in the fibre over `y` realising the value. By
-`epi_mapLin_of_polyhedralFn` the point `(y, μ)` of `epi (Af)` is literally an image point. -/
+/-- **The attainment clause**: wherever `(Af)(y)` is finite the infimum defining it is attained,
+some `x` in the fibre over `y` realising the value. By `epi_mapLin_of_polyhedralFn` the point
+`(y, μ)` of `epi (Af)` is literally an image point. -/
 theorem exists_mapLin_eq_of_polyhedralFn (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) {y : G} {μ : ℝ}
     (hy : mapLin A f y = (μ : EReal)) : ∃ x : E, A x = y ∧ f x = mapLin A f y := by
   have hmem : ((y, μ) : G × ℝ) ∈ epi (mapLin A f) := mk_mem_epi.2 (le_of_eq hy)
@@ -445,14 +443,13 @@ variable {E F G H : Type*}
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
-/-- **Theorem 20.1's companion for the image rule** (Rockafellar, §23): a proper *polyhedral* `g`
-pulls back exactly along `A` as soon as the range of `A` meets `dom g` — no relative interior
-anywhere, exactly as on the sum side.
+/-- **The companion on the image side**: a proper *polyhedral* `g` pulls back exactly along `A` as
+soon as the range of `A` meets `dom g` — no relative interior anywhere, exactly as on the sum side.
 
-Nothing of §20 is used. `g*` is polyhedral (**Theorem 19.2**), so `A' g*` is polyhedral
-(**Corollary 19.3.1**) and therefore closed, and Theorem 16.3's *closure* formula has nothing left
-to close; the same corollary attains the infimum over the fibre. Properness of `g` enters twice
-and cheaply: it makes `g` closed, and `A x₀ ∈ dom g` stops `(g A)*` from being `-∞`. -/
+None of the sum theory is used. `g*` is polyhedral, so `A' g*` is polyhedral and therefore closed,
+and the general image rule's *closure* formula has nothing left to close; the same fact attains the
+infimum over the fibre. Properness of `g` enters twice and cheaply: it makes `g` closed, and
+`A x₀ ∈ dom g` stops `(g A)*` from being `-∞`. -/
 theorem IsExactImage.of_polyhedral [IsCompatiblePairing B'] [IsCompatiblePairing B.flip]
     (hA : IsAdjointPair B B' A A') (hg : PolyhedralFn g) (hp : Proper g)
     {x₀ : E} (hx₀ : A x₀ ∈ dom g) :

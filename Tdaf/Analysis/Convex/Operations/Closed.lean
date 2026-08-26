@@ -9,8 +9,8 @@ import Tdaf.Analysis.Convex.Operations.Image
 /-!
 # Closedness of the functional operations
 
-The inverse image of a closed function under a continuous linear map is closed: the closedness half
-of Rockafellar's Theorem 5.7, whose convexity half is `convexFn_compLin`. The supporting
+The inverse image of a closed function under a continuous linear map is closed — the closedness
+counterpart of `convexFn_compLin`, which is the convexity statement. The supporting
 `lowerSemicontinuous_comp` precomposes a lower semicontinuous `g` with a continuous `φ`; Mathlib's
 `Continuous.comp_lowerSemicontinuous` composes on the other side.
 
@@ -48,8 +48,7 @@ theorem lowerSemicontinuous_compLin (hg : LowerSemicontinuous g) (hA : Continuou
     LowerSemicontinuous (compLin g A) :=
   lowerSemicontinuous_comp hg hA
 
-/-- The inverse image of a closed function under a continuous linear map is closed: the closedness
-half of **Rockafellar, Theorem 5.7**. -/
+/-- The inverse image of a closed function under a continuous linear map is closed. -/
 theorem closedFn_compLin (hg : ClosedFn g) (hA : Continuous A) : ClosedFn (compLin g A) := by
   rcases closedFn_iff.1 hg with rfl | ⟨hlsc, hne⟩
   · exact closedFn_iff.2 (Or.inl rfl)

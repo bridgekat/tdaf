@@ -10,15 +10,14 @@ import Tdaf.Analysis.Convex.Recession.Closedness
 # The recession cone of a polyhedral set, read off its generators
 
 The recession cone of a nonempty finitely generated convex set `conv P + cone D` is `cone D`
-itself — **Theorem 19.5** on the *generator* side, where `Polyhedral/Ops.lean` proves it on the
-inequality side. The consequence, `Polyhedral.recessionCone_image`, is that a linear map commutes
-with `0⁺` on polyhedral sets with no hypothesis on the map. The general recession calculus cannot
-supply that: Theorem 9.1 computes `0⁺(A '' C)` only when `A` kills no direction of recession
-of `C`.
+itself — the *generator* side of the description `Polyhedral/Ops.lean` proves on the inequality
+side. The consequence, `Polyhedral.recessionCone_image`, is that a linear map commutes with `0⁺`
+on polyhedral sets with no hypothesis on the map. The general recession calculus cannot supply
+that: it computes `0⁺(A '' C)` only when `A` kills no direction of recession of `C`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19 (Theorem 19.5).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §19.
 -/
 
 open Set Pointwise
@@ -30,9 +29,9 @@ section Generators
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
 
-/-- **Rockafellar, Theorem 19.5**, on the generator side: the recession cone of a nonempty finitely
-generated convex set `conv P + cone D` is `cone D` itself. The inclusion `⊇` needs nothing; `⊆` is
-Corollary 9.1.2, whose hypothesis is vacuous because `conv P` is compact. -/
+/-- The recession cone of a nonempty finitely generated convex set `conv P + cone D` is `cone D`
+itself. The inclusion `⊇` needs nothing; `⊆` is the recession cone of a sum, whose hypothesis is
+vacuous because `conv P` is compact. -/
 theorem recessionCone_of_finitelyGenerated {C : Set E} {P D : Finset E}
     (hPD : C = convexHull ℝ (P : Set E) + (PointedCone.hull ℝ (D : Set E) : Set E))
     (hne : C.Nonempty) :
@@ -65,7 +64,7 @@ theorem recessionCone_of_finitelyGenerated {C : Set E} {P D : Finset E}
 
 /-- **A linear map commutes with `0⁺` on polyhedral sets**: `0⁺(A '' C) = A '' 0⁺C`, with no
 hypothesis whatever on `A`. For a general closed convex `C` this fails — the image need not even
-be closed — and Theorem 9.1 repairs it only under `0⁺C ∩ ker A = {0}`. -/
+be closed — and the general criterion repairs it only under `0⁺C ∩ ker A = {0}`. -/
 theorem Polyhedral.recessionCone_image {C : Set E} (hC : Polyhedral C) (hne : C.Nonempty)
     (A : E →ₗ[ℝ] F) : recessionCone (A '' C) = A '' recessionCone C := by
   classical
