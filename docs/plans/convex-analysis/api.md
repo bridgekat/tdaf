@@ -46,7 +46,16 @@ theorem iSup_add_coe {ι : Sort*} (u : ι → EReal) (r : ℝ) :
 theorem biInf_add_coe {α : Type*} (s : Set α) (u : α → EReal) (r : ℝ) :
     (⨅ a ∈ s, u a) + (r : EReal) = ⨅ a ∈ s, (u a + (r : EReal))
 theorem add_coe_right_cancel {u v : EReal} {r : ℝ} (h : u + (r : EReal) = v + (r : EReal)) : u = v
+theorem le_coe_of_sum_le_coe_sum {s : Finset ι} {c : ι → ℝ} {u : ι → EReal}
+    (hle : ∀ i ∈ s, ((c i : ℝ) : EReal) ≤ u i)
+    (hsum : ∑ i ∈ s, u i ≤ ((∑ i ∈ s, c i : ℝ) : EReal)) {j : ι} (hj : j ∈ s) :
+    u j ≤ ((c j : ℝ) : EReal)          -- the m-ary le_coe_of_add_le_coe_add
 ```
+
+**The `m`-ary form is a lemma, not a corollary.** `EReal` has no subtraction to peel a summand off
+with, so the two-summand version does not iterate. The proof splits `s` as `{j} ∪ s.erase j` and
+applies the two-summand version once, with the two partial sums as the second pair. Its consumer is
+Theorem 23.8 (remediation §12.2).
 
 `coe_add_sub` and `coe_sub_add_coe` are the pair that make **Theorem 12.3** hypothesis-free: a
 *real* summand slides across a difference from either side with no side condition, because it
@@ -204,7 +213,15 @@ theorem restrict_eq_add_indicatorFn {s : Set E} {f : E → EReal} (hf : ∀ x, f
     restrict s f = f + indicatorFn s
 @[simp] theorem indicatorFn_vadd (a : E) (s : Set E) (x : E) :
     indicatorFn (a +ᵥ s) x = indicatorFn s (x - a)
+theorem indicatorFn_finsetSum (C : ι → Set E) (s : Finset ι) :
+    ∑ i ∈ s, indicatorFn (C i) = indicatorFn (⋂ i ∈ s, C i)
 ```
+
+**`indicatorFn_finsetSum` needs no `s.Nonempty`**: over `∅` both sides are `0`, since
+`⋂ i ∈ ∅, C i = univ`. It sits **below layer A** — the `Basic` section needs no algebraic structure
+on `E` at all. It is the `m`-ary `indicatorFn_add`, and the reason that lemma's docstring gives —
+"every intersection corollary in the book is the indicator instance of a statement about sums" —
+applies verbatim to Corollary 23.8.1 (remediation §12.5).
 
 `indicatorFn_vadd` is what turns Rockafellar's normal form for a partial affine function,
 `δ(· | L + a) + ⟨·, a*⟩ + α`, into an instance of the *translation* row of Theorem 12.3; the file
@@ -564,7 +581,10 @@ The only file that *produces* a D5 interface. `IsExactImage.of_relint` (**Thm 16
 they are assembled from: `mem_constancySpace_conj_of_relint`,
 `le_of_mk_mem_recessionCone_epi_conj`, `mk_mem_linealitySpace_epi_conj_of_relint`. Layers differ
 between the two: the image rule needs `FiniteDimensional ℝ G` and `ℝ H` (Thm 9.2 runs in `H`), the
-sum rule needs `FiniteDimensional ℝ F` (Cor 9.1.1 runs in `F × ℝ`); `E` is only ever a normed space.
+sum rule needs `FiniteDimensional ℝ F` (Cor 9.1.1 runs in `F × ℝ`); `E` is at **layer A** in the
+image sections and finite-dimensional in the sum-side `Closure` section. (This sentence used to say
+`E` "is only ever a normed space", which is wrong on both halves — and the record's own next
+paragraph already contradicted it.)
 
 A second section, `Closure`, removes the closedness hypothesis and so makes `IsExactSum.of_relint`
 the book's Theorem 16.4 (*proper convex*, common relative interior point). It also adds
@@ -601,6 +621,21 @@ theorem zero_lt_supportFn_iff  : 0 < supportFn B s y ↔ ∃ x ∈ s, 0 < B x y
 theorem forall_pairing_eq_zero_of_forall_le {L : Submodule ℝ E} (h : ∀ x ∈ L, B x y ≤ c) : …
 theorem intrinsicInterior_coe_submodule (L : Submodule ℝ E) : ri (L : Set E) = (L : Set E)
 ```
+
+**A third section, `ClosureImage`, does for the image rule what `Closure` does for the sum rule.**
+`conj_compLin_eq_conj_compLin_clFn` is **Theorem 9.3 in conjugate form on the image side**:
+`(g A)* = ((cl g) A)*` from `TendstoClFnAlongSegment g (A x₀)` alone. It is strictly cheaper than its
+sum-side twin — one limit rather than two, so **no properness** is used and `EReal`'s discontinuous
+addition never enters — and it keeps `E` at **layer A**, where the book's own form
+`cl (g A) = (cl g) A` (`clFn_compLin`) would force `FiniteDimensional ℝ E`.
+`IsExactImage.of_relint_proper` is then **Theorem 16.3 with the book's hypotheses** (`ConvexFn g`,
+`Proper g`, `A x₀ ∈ ri (dom g)`), which §16's `theorem_16_3_exact` and `theorem_16_3_attained` and
+§23's `theorem_23_9` all now specialise.
+
+**Naming caveat.** Contrary to the convention `Duality/Exact.lean`'s docstring states — "the
+unprimed name is the book's proper-convex statement" — here `of_relint` is the *closed* case and
+`of_relint_proper` the book's. `IsExactSum` follows the convention and `IsExactImage` does not. The
+rename is remediation §12.13, pending on `Subgradient/Preservation.lean`.
 
 **Lemma 16.2 and Corollary 16.2.1** (remediation §10.27), assembled from Theorems 11.1, 11.3 and
 13.3 — the backbone routes around the recession step everywhere else, so the assembly needed a
@@ -1095,6 +1130,18 @@ theorem zero_mem_interior_iff_polarCone_eq_zero …
 theorem isBounded_setOf_le_iff_zero_mem_interior_dom_conj …   -- Cor 14.2.2
 ```
 
+**The image rule.** `IsExactImage.of_polyhedral` (`PolyhedralFn g`, `Proper g`, `A x₀ ∈ dom g`) is
+Theorem 20.1's companion for Theorem 16.3, and it shares **no step** with the sum constructors: `g*`
+is polyhedral (Theorem 19.2), so `A' g*` is polyhedral and hence closed, and the closure in Theorem
+16.3's formula is vacuous. No affine-hull indicator, no
+`relint_inter_relint_nonempty_of_subset_affineSpan`. It runs on two new lemmas that are **Corollary
+19.3.1 in the form that has both halves**: `epi_mapLin_of_polyhedralFn` and
+`exists_mapLin_eq_of_polyhedralFn`, the attainment half having existed only on the surface.
+
+`polyhedralFn_mapLin`, the polyhedrality half, is stranded in `Optimization/Perturbation.lean` (§29)
+— *above* this module in the import order — so `of_polyhedral` carries a three-line local `have`
+until it moves down (remediation §12.14).
+
 **Half of Theorem 14.2 costs nothing.** `recessionConeFn_conj` is Theorem 13.3 read at the zero
 level set — the recession cone of `f*` is the polar of `dom f` — and needs only properness of `f`
 and of `f*`. It is the *other* direction that needs Fenchel–Moreau, and it is got by feeding
@@ -1285,7 +1332,18 @@ theorem normalCone_add_subset (B) (C D : Set E) (x : E) :                       
 theorem IsExactSum.normalCone_inter (h : IsExactSum B (indicatorFn C) (indicatorFn D))
     (hC : x ∈ C) (hD : x ∈ D) :                                                  -- Cor 23.8.1
     normalCone B (C ∩ D) x = normalCone B C x + normalCone B D x
+theorem subgradient_finsetSum_subset (B) (s : Finset ι) (f : ι → E → EReal) (x : E) :
+    ∑ i ∈ s, subgradient B (f i) x ⊆ subgradient B (∑ i ∈ s, f i) x   -- unconditional
+theorem IsExactFinsetSum.subgradient_finsetSum (h : IsExactFinsetSum B s f) (x : E) :
+    subgradient B (∑ i ∈ s, f i) x = ∑ i ∈ s, subgradient B (f i) x   -- Thm 23.8, m-ary
 ```
+
+**The `m`-ary rule is proved for the family, not by iterating the binary one.** Iterating would
+re-derive properness and the constraint qualification for every partial sum, which is exactly what
+`IsExactFinsetSum.cons` exists to do once. Its `EReal` step is `Tdaf.EReal.le_coe_of_sum_le_coe_sum`,
+and it sits at layer A alongside the binary rule. **Still missing**: the `m`-ary normal-cone pair
+(`normalCone_finsetSum_subset`, `IsExactFinsetSum.normalCone_biInter`), so §23's Corollary 23.8.1
+keeps one private induction — remediation §12.15.
 
 The sum rule spends `IsExactSum`'s properness on `Tdaf.EReal.le_coe_of_add_le_coe_add`; the image
 rule uses no properness at all. Theorem 23.10 is absent — it needs `PolyhedralFn` (§19), and it is

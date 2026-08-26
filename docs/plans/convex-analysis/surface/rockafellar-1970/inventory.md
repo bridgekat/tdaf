@@ -276,7 +276,10 @@ No new concepts — the dual-operations dictionary.
 Thm 16.1 (5669) G · Cors 16.1.1–16.1.2 (5673, 5685) G · **Lemma 16.2** (5689) C ·
 Cor 16.2.1 (5709) C · `Corollary 16.2.2` (5725) C · Thm 16.3 (5787) G · Cors 16.3.1–16.3.2 (5831,
 5853) G · Thm 16.4 (5943) G · Cor 16.4.1 (6001) G · `Corollary 16.4.2` (6025) G · Thm 16.5 (6187) G ·
-Cors 16.5.1–16.5.2 (6225, 6239) G. **12 G, 3 C.**
+Cors 16.5.1–16.5.2 (6225, 6239) G · **§16 remark (5869) G** — Theorem 16.3's polyhedral
+qualification, which the book states as unnumbered running text and defers to Cor 19.3.1. It is
+formalisable and is now formalised (`theorem_16_3_polyhedral`, `theorem_16_3_polyhedral_attained`);
+the Part III round had no entry for it. **13 G, 3 C.**
 
 **The uniform pattern worth encoding once**: each theorem is *identity* (general) + *closure-removal
 and attainment under a relative-interior qualification* (finite-dimensional). Splitting each into
