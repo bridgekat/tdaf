@@ -26,6 +26,11 @@ domains; here the polyhedral side contributes only a point of its effective doma
 * `IsExactFinsetSum.of_polyhedral` — **Theorem 20.1** for `m` summands, with
   `IsExactFinsetSum.of_polyhedral_pair` the all-polyhedral case and `polyhedralFn_finsetSum`
   (**Theorem 19.4**) the step that makes the polyhedral block a single polyhedral summand.
+* `IsExactImage.of_polyhedral` — the same weakening on the *image* side: a proper polyhedral `g`
+  pulls back exactly as soon as the range of `A` meets `dom g`. This is what gives Theorems 16.3
+  and 23.9 their polyhedral clauses.
+* `epi_mapLin_of_polyhedralFn`, `exists_mapLin_eq_of_polyhedralFn` — **Corollary 19.3.1**, the
+  attainment half, which is what the image constructor runs on.
 
 ## Design notes
 
@@ -44,6 +49,20 @@ but `of_polyhedral` removes it by Theorem 9.3, exactly as `of_relint` does. The 
 Theorem 20.1 survives the removal because the closure formula is used in its conjugate form
 `conj_add_eq_conj_clFn_add_clFn`, whose two segment hypotheses are met on different grounds:
 Corollary 7.5.1 for the closed polyhedral `f`, Theorem 7.5 for `g`.
+
+**The image rule owes nothing to §20.** `IsExactImage.of_polyhedral` looks like the image-side
+twin of `IsExactSum.of_polyhedral`, but its proof shares not a line: polyhedrality of `A' g*` is
+Corollary 19.3.1 and makes the closure in Theorem 16.3 vacuous outright, so neither the affine-hull
+indicator nor `relint_inter_relint_nonempty_of_subset_affineSpan` appears. It is filed here because
+this is the module that owns the polyhedral constraint qualifications, not because it reuses them.
+
+**Corollary 19.3.1 is proved here a second time, in the form that has both halves.**
+`polyhedralFn_mapLin` states the polyhedrality half and lives in `Optimization/Perturbation.lean`
+(§29), which is *above* this module, so it cannot be cited from here; the attainment half was not
+in the backbone at all. `epi_mapLin_of_polyhedralFn` is the identity both halves come from, and
+`polyhedralFn_mapLin` should move down beside it — everything its proof uses (`Polyhedral.image`,
+`epi_mapLin`, `IsEpiLike.of_isClosed`) is already in this module's import closure, and §29 uses it
+only through `PolyhedralBifun.polyhedralFn_infBifun`.
 
 **The general case is Rockafellar's own reduction, and it runs on an indicator.** With
 `M = aff (dom g)` and `δ = δ(· | M)`, the function `δ + f` is again polyhedral — `M` is polyhedral
@@ -393,5 +412,101 @@ theorem IsExactFinsetSum.of_polyhedral [IsCompatiblePairing B] [IsCompatiblePair
   exact Set.mem_iInter₂.2 hxt
 
 end FinsetSum
+
+/-! ### Theorem 16.3's polyhedral companion: images -/
+
+section PolyhedralImage
+
+variable {E G : Type*}
+  [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G] {f : E → EReal}
+
+/-- **Rockafellar, Corollary 19.3.1**, as an identity of epigraphs: for a polyhedral `f` the
+epigraph of the image `Af` really *is* the image of `epi f` under `(x, μ) ↦ (Ax, μ)`.
+
+In general `epi (Af)` is only the *epigraph closure* of that image, because an infimum need not be
+attained. Here the image is polyhedral (**Theorem 19.3**), hence closed, and a closed set with
+upward-closed vertical sections is already an epigraph — which is what `epi_mapLin` asks for.
+
+Both halves of Corollary 19.3.1 fall out of this one identity: polyhedrality of `Af`, and the
+attainment `exists_mapLin_eq_of_polyhedralFn` below. -/
+theorem epi_mapLin_of_polyhedralFn (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) :
+    epi (mapLin A f) = A.prodMap (LinearMap.id : ℝ →ₗ[ℝ] ℝ) '' epi f := by
+  refine epi_mapLin (IsEpiLike.of_isClosed ?_ (Polyhedral.image hf _).isClosed)
+  rintro y μ ν ⟨⟨x, ρ⟩, hx, hxy⟩ hμν
+  have h1 : A x = y := congrArg Prod.fst hxy
+  have h2 : ρ = μ := congrArg Prod.snd hxy
+  refine ⟨(x, ν), mk_mem_epi.2 ?_, ?_⟩
+  · exact le_trans (h2 ▸ mk_mem_epi.1 hx) (by exact_mod_cast hμν)
+  · rw [LinearMap.prodMap_apply, h1]
+    rfl
+
+/-- **Rockafellar, Corollary 19.3.1**, the attainment clause: wherever `(Af)(y)` is finite the
+infimum defining it is attained, so some `x` in the fibre over `y` realises the value.
+
+Read off `epi_mapLin_of_polyhedralFn`: the point `(y, μ)` of `epi (Af)` is literally the image of a
+point of `epi f`. -/
+theorem exists_mapLin_eq_of_polyhedralFn (hf : PolyhedralFn f) (A : E →ₗ[ℝ] G) {y : G} {μ : ℝ}
+    (hy : mapLin A f y = (μ : EReal)) : ∃ x : E, A x = y ∧ f x = mapLin A f y := by
+  have hmem : ((y, μ) : G × ℝ) ∈ epi (mapLin A f) := mk_mem_epi.2 (le_of_eq hy)
+  rw [epi_mapLin_of_polyhedralFn hf A] at hmem
+  obtain ⟨⟨x, ν⟩, hx, hxy⟩ := hmem
+  have h1 : A x = y := congrArg Prod.fst hxy
+  have h2 : ν = μ := congrArg Prod.snd hxy
+  refine ⟨x, h1, le_antisymm ?_ (mapLin_le h1)⟩
+  rw [hy]
+  exact h2 ▸ mk_mem_epi.1 hx
+
+end PolyhedralImage
+
+section Image
+
+variable {E F G H : Type*}
+  [AddCommGroup E] [Module ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G]
+  [NormedAddCommGroup H] [NormedSpace ℝ H] [FiniteDimensional ℝ H]
+  {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
+  {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
+
+/-- **Theorem 20.1's companion for the image rule** (Rockafellar, §23, p. 222): a proper
+*polyhedral* `g` pulls back exactly along `A` as soon as the range of `A` meets `dom g` — no
+relative interior anywhere, exactly as on the sum side.
+
+Nothing of §20 is used; the proof is entirely §19's, and it is the one Rockafellar points at when
+he says that "the formula for `f*` in terms of `h*` can be obtained still from Theorem 16.3 via
+Corollary 19.3.1". `g*` is polyhedral (**Theorem 19.2**), so `A' g*` is polyhedral
+(**Corollary 19.3.1**) and therefore closed, and Theorem 16.3's *closure* formula
+`conj_compLin_eq_clFn_mapLin` has nothing left to close. The same corollary attains the infimum
+over the fibre, which is what `IsExactImage.exact_le` asks for.
+
+Properness of `g` enters twice and cheaply: a proper polyhedral convex function is closed
+(`PolyhedralFn.closedFn`), and `A x₀ ∈ dom g` keeps `dom (g A)` non-empty, which is what stops
+`(g A)*` from being `-∞`. -/
+theorem IsExactImage.of_polyhedral [IsCompatiblePairing B'] [IsCompatiblePairing B.flip]
+    (hA : IsAdjointPair B B' A A') (hg : PolyhedralFn g) (hp : Proper g)
+    {x₀ : E} (hx₀ : A x₀ ∈ dom g) :
+    IsExactImage B B' A A' hA g := by
+  have hconjpoly : PolyhedralFn (conj B' g) := PolyhedralFn.conj hg
+  -- `polyhedralFn_mapLin` is this fact, but it lives in `Optimization/Perturbation.lean` (§29),
+  -- which this module is below; see the design notes.
+  have hmappoly : PolyhedralFn (mapLin A' (conj B' g)) := by
+    change Polyhedral (epi (mapLin A' (conj B' g)))
+    rw [epi_mapLin_of_polyhedralFn hconjpoly A']
+    exact Polyhedral.image hconjpoly _
+  have hne : (dom (compLin g A)).Nonempty := ⟨x₀, by rwa [mem_dom, compLin_apply]⟩
+  have hbot : ∀ y, conj B (compLin g A) y ≠ ⊥ := fun y => conj_ne_bot hne y
+  have hmapbot : ∀ y, mapLin A' (conj B' g) y ≠ ⊥ := fun y hy =>
+    hbot y (le_bot_iff.1 (hy ▸ conj_compLin_le_mapLin hA g y))
+  have heq : conj B (compLin g A) = mapLin A' (conj B' g) := by
+    rw [conj_compLin_eq_clFn_mapLin hA hg.convexFn (hg.closedFn hp.ne_bot)]
+    exact hmappoly.closedFn hmapbot
+  refine ⟨hp, fun y hy => ?_⟩
+  rw [heq] at hy ⊢
+  obtain ⟨μ, hμ⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hmapbot y) hy
+  obtain ⟨z, hz, hzeq⟩ := exists_mapLin_eq_of_polyhedralFn hconjpoly A' hμ
+  exact ⟨z, hz, le_of_eq hzeq⟩
+
+end Image
 
 end Tdaf.ConvexAnalysis

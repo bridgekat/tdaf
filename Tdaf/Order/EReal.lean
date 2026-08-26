@@ -582,6 +582,33 @@ theorem le_coe_of_add_le_coe_add {p q : ℝ} {u v : EReal} (hp : (p : EReal) ≤
   rw [_root_.EReal.coe_le_coe_iff] at hp hq ⊢
   linarith
 
+/-- **The `m`-ary form of `Tdaf.EReal.le_coe_of_add_le_coe_add`.** If each `u i` is bounded below
+by the real `c i` and the sum of the `u i` is bounded above by the sum of the `c i`, then every
+one of the `m` inequalities is tight.
+
+The two-summand version does not iterate: there is no subtraction on `EReal` to peel a summand off
+with, and `∑_{i ≠ j} u i ≤ ∑_{i ≠ j} c i` is not available. What does work is to split `s` as
+`{j} ∪ s.erase j` and apply the two-summand lemma *once*, with the two partial sums as the second
+pair — which is why this is a lemma and not a corollary.
+
+Rockafellar's Theorem 23.8 for `m` summands is the consumer, exactly as the binary version is the
+consumer of the two-summand one: the exact-sum hypothesis delivers a single *joint* equality in
+Fenchel's inequality, and this splits it into the `m` separate equalities that say
+`y' i ∈ ∂(f i) x`. -/
+theorem le_coe_of_sum_le_coe_sum {ι : Type*} {s : Finset ι} {c : ι → ℝ} {u : ι → EReal}
+    (hle : ∀ i ∈ s, ((c i : ℝ) : EReal) ≤ u i)
+    (hsum : ∑ i ∈ s, u i ≤ ((∑ i ∈ s, c i : ℝ) : EReal)) {j : ι} (hj : j ∈ s) :
+    u j ≤ ((c j : ℝ) : EReal) := by
+  classical
+  have hq : ((∑ i ∈ s.erase j, c i : ℝ) : EReal) ≤ ∑ i ∈ s.erase j, u i := by
+    rw [coe_sum]
+    exact Finset.sum_le_sum fun i hi => hle i (Finset.mem_of_mem_erase hi)
+  have hadd : u j + ∑ i ∈ s.erase j, u i
+      ≤ ((c j + ∑ i ∈ s.erase j, c i : ℝ) : EReal) := by
+    rw [Finset.add_sum_erase s u hj, Finset.add_sum_erase s c hj]
+    exact hsum
+  exact le_coe_of_add_le_coe_add (hle j hj) hq hadd
+
 end EReal
 
 end Tdaf

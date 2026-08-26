@@ -21,7 +21,9 @@ Rockafellar's `ri` versions of Theorems 23.8 and 23.9 are these two theorems com
 
 ## Main results
 
-* `subgradient_add_subset`, `IsExactSum.subgradient_add` — **Theorem 23.8**.
+* `subgradient_add_subset`, `IsExactSum.subgradient_add` — **Theorem 23.8** for two summands.
+* `subgradient_finsetSum_subset`, `IsExactFinsetSum.subgradient_finsetSum` — **Theorem 23.8** in
+  the book's own `m`-ary form.
 * `image_subgradient_subset`, `IsExactImage.subgradient_compLin` — **Theorem 23.9**.
 * `normalCone_add_subset`, `IsExactSum.normalCone_inter` — **Corollary 23.8.1**, the indicator
   instance.
@@ -38,7 +40,10 @@ neither proof ever mentions an epigraph, a directional derivative or a separatin
 **The sum rule needs a genuine `EReal` fact, the image rule does not.** For sums the exact-sum
 hypothesis gives one *joint* equality in Fenchel's inequality, and splitting it into the two
 separate equalities is `Tdaf.EReal.le_coe_of_add_le_coe_add` — two slack inequalities whose sum is
-tight must each be tight. That is where the properness in `IsExactSum` is spent. The image rule has
+tight must each be tight; for `m` summands it is `Tdaf.EReal.le_coe_of_sum_le_coe_sum`, which is a
+lemma in its own right because the two-summand version does not iterate (there is no subtraction on
+`EReal` to peel a summand off with). That is where the properness in `IsExactSum` is spent. The
+image rule has
 no splitting to do, and spends its properness on a single point instead: it must know `g (A x) ≠ ⊥`
 to see that `(g A)* y` is finite, which is what unlocks the `< ⊤`-guarded `IsExactImage.exact_le`.
 
@@ -107,6 +112,67 @@ theorem IsExactSum.subgradient_add (h : IsExactSum B f g) (x : E) :
       (Tdaf.EReal.le_coe_of_add_le_coe_add hg hf hkey'), rfl⟩
 
 end Add
+
+/-! ### Theorem 23.8 for `m` summands -/
+
+section FinsetAdd
+
+variable {ι E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
+variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E → EReal}
+
+/-- **Rockafellar, Theorem 23.8** in the book's own `m`-ary form, unconditional inclusion:
+`∂f₁ x + ⋯ + ∂fₘ x ⊆ ∂(f₁ + ⋯ + fₘ) x`.
+
+No hypothesis at all — the `m` subgradient inequalities simply add. Over the empty `Finset` the
+left side is `{0}` and the right side is `∂(0) x`, which contains `0`. -/
+theorem subgradient_finsetSum_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Finset ι)
+    (f : ι → E → EReal) (x : E) :
+    ∑ i ∈ s, subgradient B (f i) x ⊆ subgradient B (∑ i ∈ s, f i) x := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    intro y hy
+    simp only [Finset.sum_empty, Set.mem_zero] at hy
+    subst hy
+    simp [mem_subgradient]
+  | cons i t hi ih =>
+    rw [Finset.sum_cons, Finset.sum_cons]
+    exact (Set.add_subset_add_left ih).trans (subgradient_add_subset B (f i) _ x)
+
+/-- **Rockafellar, Theorem 23.8**: `∂(f₁ + ⋯ + fₘ) x = ∂f₁ x + ⋯ + ∂fₘ x` whenever the family adds
+exactly.
+
+This is the form Rockafellar states, and it is **not** the binary rule iterated. Going through
+`IsExactSum.subgradient_add` would mean re-deriving properness and the constraint qualification for
+every partial sum `f₁ + ⋯ + fₖ`, which is exactly what `IsExactFinsetSum.cons` exists to do once;
+the argument below is run for the family, in one pass.
+
+That argument is Rockafellar's own. Exactness hands back a splitting `y = y₁ + ⋯ + yₘ` whose
+conjugate values already sum to `(∑ fᵢ)* y`; Fenchel's inequality gives `⟨x, yᵢ⟩ ≤ fᵢ x + fᵢ* yᵢ`
+for each `i`; and `y ∈ ∂(∑ fᵢ) x` makes the *sum* of those `m` inequalities tight, so
+`Tdaf.EReal.le_coe_of_sum_le_coe_sum` makes each of them tight. That lemma is the `m`-ary form of
+the `EReal` fact the binary rule spends its properness on. -/
+theorem IsExactFinsetSum.subgradient_finsetSum (h : IsExactFinsetSum B s f) (x : E) :
+    subgradient B (∑ i ∈ s, f i) x = ∑ i ∈ s, subgradient B (f i) x := by
+  refine Set.Subset.antisymm (fun y hy => ?_) (subgradient_finsetSum_subset B s f x)
+  obtain ⟨y', hy', hle⟩ := h.exact_le y
+  have hfen : ∀ i ∈ s, ((B x (y' i) : ℝ) : EReal) ≤ f i x + conj B (f i) (y' i) :=
+    fun i hi => (h.proper i hi).le_add_conj x (y' i)
+  have hsum : ∑ i ∈ s, (f i x + conj B (f i) (y' i))
+      ≤ ((∑ i ∈ s, B x (y' i) : ℝ) : EReal) := by
+    calc ∑ i ∈ s, (f i x + conj B (f i) (y' i))
+        = (∑ i ∈ s, f i) x + ∑ i ∈ s, conj B (f i) (y' i) := by
+          rw [Finset.sum_add_distrib, Finset.sum_apply]
+      _ ≤ (∑ i ∈ s, f i) x + conj B (∑ i ∈ s, f i) y := add_le_add le_rfl hle
+      _ ≤ ((B x y : ℝ) : EReal) := mem_subgradient_iff_add_conj_le.1 hy
+      _ = ((∑ i ∈ s, B x (y' i) : ℝ) : EReal) := by rw [← hy', map_sum]
+  have hmem : ∀ i ∈ s, y' i ∈ subgradient B (f i) x := fun i hi =>
+    mem_subgradient_iff_add_conj_le.2
+      (Tdaf.EReal.le_coe_of_sum_le_coe_sum (c := fun i => B x (y' i))
+        (u := fun i => f i x + conj B (f i) (y' i)) hfen hsum hi)
+  have hgoal := Set.finsetSum_mem_finsetSum s (fun i => subgradient B (f i) x) y' hmem
+  rwa [hy'] at hgoal
+
+end FinsetAdd
 
 /-! ### Theorem 23.9: linear maps -/
 
