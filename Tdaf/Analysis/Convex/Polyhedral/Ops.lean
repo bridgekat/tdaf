@@ -21,7 +21,9 @@ lets each proof pick its side.
 
 ## Main results
 
-* `Polyhedral.inter`, `Polyhedral.comap` — layer A/B: no finite-dimensionality needed.
+* `Polyhedral.inter`, `polyhedral_biInter`, `polyhedral_iInter`, `Polyhedral.comap` — layer A/B: no
+  finite-dimensionality needed. The indexed intersections are the book's unnumbered sentence at
+  line 6817, and they are what a system of constraints `fᵢ x ≤ 0` needs.
 * `Polyhedral.image`, `Polyhedral.add` — **Theorem 19.3**, through the generator description.
 * `Polyhedral.recessionCone_eq` — **Theorem 19.5**: dropping the right-hand sides of the system
   gives the recession cone.
@@ -57,8 +59,11 @@ theorem polyhedral_univ : Polyhedral (Set.univ : Set E) :=
 theorem polyhedral_halfSpace (φ : E →ₗ[ℝ] ℝ) (b : ℝ) : Polyhedral {x : E | φ x ≤ b} :=
   ⟨{(φ, b)}, by ext x; simp⟩
 
-/-- **Theorem 19.3** (part): an intersection of two polyhedral sets is polyhedral — concatenate the
-two systems. -/
+/-- An intersection of two polyhedral sets is polyhedral — concatenate the two systems.
+
+The book states this for finitely many sets at once, unnumbered, in the sentence that follows
+Corollary 19.2.2 (book, line 6817); `polyhedral_biInter` and `polyhedral_iInter` below are the
+indexed forms. -/
 theorem Polyhedral.inter {C D : Set E} (hC : Polyhedral C) (hD : Polyhedral D) :
     Polyhedral (C ∩ D) := by
   classical
@@ -73,6 +78,29 @@ theorem Polyhedral.inter {C D : Set E} (hC : Polyhedral C) (hD : Polyhedral D) :
     · exact h₂ q hq
   · intro h
     exact ⟨fun q hq => h q (Or.inl hq), fun q hq => h q (Or.inr hq)⟩
+
+/-- **The intersection of finitely many polyhedral sets is polyhedral** (book, line 6817,
+unnumbered): the `Finset`-indexed form, by induction on the index set from `polyhedral_univ` and
+`Polyhedral.inter`.
+
+Stated over a bare index type: neither the index nor the ambient space needs any structure beyond
+the module structure `Polyhedral` itself is stated over. -/
+theorem polyhedral_biInter {ι : Type*} {S : ι → Set E} (hS : ∀ i, Polyhedral (S i))
+    (s : Finset ι) : Polyhedral (⋂ i ∈ s, S i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simpa using polyhedral_univ
+  | insert i t _ ih =>
+      rw [Finset.set_biInter_insert]
+      exact Polyhedral.inter (hS i) ih
+
+/-- The same over a finite index *type*, which is the shape a family of constraints arrives in. -/
+theorem polyhedral_iInter {ι : Type*} [Finite ι] {S : ι → Set E} (hS : ∀ i, Polyhedral (S i)) :
+    Polyhedral (⋂ i, S i) := by
+  obtain ⟨hι⟩ := nonempty_fintype ι
+  have h : (⋂ i, S i) = ⋂ i ∈ (Finset.univ : Finset ι), S i := by simp
+  rw [h]
+  exact polyhedral_biInter hS Finset.univ
 
 /-- **Theorem 19.3** (part): the preimage of a polyhedral set under a linear map is polyhedral —
 compose each functional with the map. -/

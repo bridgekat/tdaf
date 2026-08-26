@@ -159,24 +159,23 @@ keeps every `DecidableEq` out of the statement (`gotchas.md` SET11).
 
 ## Backbone gaps
 
-Each is proved as a `private` lemma below and should move.
+**All four are closed**; no `private` stand-in for a backbone statement survives here. The record
+is kept because each entry names where the statement now lives.
 
 1. **`proper_indicatorFn`** — **done**. It is public in `Tdaf/Analysis/Convex/Indicator.lean`, as
    the biconditional `Proper (indicatorFn s) ↔ s.Nonempty`, beside `dom_indicatorFn` and
    `indicatorFn_ne_bot`, which are its two halves. The two call sites here take `.2`.
 
-2. **`Polyhedral.biInter` and `Polyhedral.iInter`**, in
-   `Tdaf/Analysis/Convex/Polyhedral/Ops.lean`. Wanted:
-   `(∀ i, Polyhedral (S i)) → ∀ s : Finset ι, Polyhedral (⋂ i ∈ s, S i)` and its `[Finite ι]`
-   corollary. That file has only the binary `Polyhedral.inter`, although the defining datum of
-   `Polyhedral` is already a `Finset` of half-spaces, so the indexed forms are a `Finset.union`
-   away if proved there rather than by the induction used here.
-3. **`polyhedralFn_setOf_le`**, in `Tdaf/Analysis/Convex/Polyhedral/Function.lean`. Wanted:
-   `PolyhedralFn f → ∀ α : ℝ, Polyhedral {x | f x ≤ (α : EReal)}` — a level set of a polyhedral
-   convex function is a polyhedral convex set. It is `Polyhedral.comap_affine` applied to
-   `x ↦ (x, α)` and is three lines; `Function.lean` states the epigraph direction
-   (`polyhedralFn_indicatorFn` builds an epigraph *from* a polyhedral set) and never the level-set
-   direction, which is what a constraint system `fᵢ(x) ≤ 0` needs.
+2. **`polyhedral_biInter` and `polyhedral_iInter`** — **done**. They are public in
+   `Tdaf/Analysis/Convex/Polyhedral/Ops.lean`, beside the binary `Polyhedral.inter` and at the
+   same layer A generality — an arbitrary index type over an arbitrary real module, not `Rn n`.
+   They are the book's unnumbered sentence at line 6817, not a part of Theorem 19.3.
+3. **`polyhedralFn_setOf_le`** — **it already existed**, as
+   `PolyhedralFn.polyhedral_sublevel : PolyhedralFn f → ∀ c : ℝ, Polyhedral {x | f x ≤ (c : EReal)}`
+   in `Tdaf/Analysis/Convex/Polyhedral/Function.lean`, listed in that module's own `Main results`
+   and already used by `Part4/Section19.lean` and `Optimization/Perturbation.lean`. The two call
+   sites here take it at `c = 0`. The claim that `Function.lean` "never states the level-set
+   direction" was false when written (`gotchas.md` LIB1, LIB26).
 
 `zero_mem_relint_dom_conj_iff_recessionConeFn_subset_constancySpace` — the last sentence of
 Theorem 27.1(b) — was a fourth gap and is now in `Optimization/Minimum.lean`, beside the
@@ -843,45 +842,6 @@ The book splits the index set as `I = I₀ ⊔ (I ∖ I₀)` with `I₀` finite 
 it. Two index *types* say the same thing and keep every `DecidableEq` out of the statement
 (`gotchas.md` SET11); `ι₀` is the book's `I₀`. -/
 
-/-- **Backbone gap**: `Polyhedral (⋂ i ∈ s, S i)` for a `Finset` of polyhedral sets.
-`Polyhedral/Ops.lean` has the binary `Polyhedral.inter` and nothing indexed. -/
-private theorem polyhedral_biInter {ι : Type*} {S : ι → Set (Rn n)}
-    (hS : ∀ i, Polyhedral (S i)) (s : Finset ι) : Polyhedral (⋂ i ∈ s, S i) := by
-  induction s using Finset.cons_induction with
-  | empty => simpa using polyhedral_univ
-  | cons i t hi ih =>
-      have hsplit : (⋂ j ∈ Finset.cons i t hi, S j) = S i ∩ ⋂ j ∈ t, S j := by
-        ext z
-        simp only [Set.mem_iInter, Set.mem_inter_iff, Finset.mem_cons]
-        constructor
-        · intro hz
-          exact ⟨hz i (Or.inl rfl), fun j hj => hz j (Or.inr hj)⟩
-        · rintro ⟨h₁, h₂⟩ j (rfl | hj)
-          · exact h₁
-          · exact h₂ j hj
-      rw [hsplit]
-      exact Polyhedral.inter (hS i) ih
-
-/-- **Backbone gap**: the same over a finite index *type*, which is the form a family of
-constraints arrives in. -/
-private theorem polyhedral_iInter {ι : Type*} [Finite ι] {S : ι → Set (Rn n)}
-    (hS : ∀ i, Polyhedral (S i)) : Polyhedral (⋂ i, S i) := by
-  obtain ⟨hι⟩ := nonempty_fintype ι
-  have h : (⋂ i, S i) = ⋂ i ∈ (Finset.univ : Finset ι), S i := by simp
-  rw [h]
-  exact polyhedral_biInter hS Finset.univ
-
-/-- **Backbone gap**: a level set of a polyhedral convex function is a polyhedral convex set. It is
-the preimage of `epi g` under `x ↦ (x, 0)`, so `Polyhedral.comap` is the whole proof;
-`Polyhedral/Function.lean` states no level-set lemma. -/
-private theorem polyhedral_setOf_le_zero {g : Rn n → EReal} (hg : PolyhedralFn g) :
-    Polyhedral {x : Rn n | g x ≤ ((0 : ℝ) : EReal)} := by
-  have h : {x : Rn n | g x ≤ ((0 : ℝ) : EReal)} = (LinearMap.inl ℝ (Rn n) ℝ) ⁻¹' epi g := by
-    ext z
-    exact Iff.rfl
-  rw [h]
-  exact Polyhedral.comap hg _
-
 /-- **Rockafellar, Corollary 27.3.3**, the polyhedral refinement (book, line 10527, second
 sentence): the infimum is attained if the constraints split into a *finite* polyhedral family
 `g₀` and an arbitrary family `g₁`, and the only directions of recession common to `f₀` and all the
@@ -919,13 +879,13 @@ theorem corollary_27_3_3_polyhedral {ι₀ ι₁ : Type*} [Finite ι₀]
   have hC0conv : ∀ i, Convex ℝ {z : Rn n | g₀ i z ≤ ((0 : ℝ) : EReal)} := fun i =>
     (hg₀ i).convexFn.convex_le _
   have hC0closed : ∀ i, IsClosed {z : Rn n | g₀ i z ≤ ((0 : ℝ) : EReal)} := fun i =>
-    (polyhedral_setOf_le_zero (hg₀ i)).isClosed
+    ((hg₀ i).polyhedral_sublevel 0).isClosed
   have hD1conv : ∀ i, Convex ℝ {z : Rn n | g₁ i z ≤ ((0 : ℝ) : EReal)} := fun i =>
     (hg₁ i).convex.convex_le _
   have hD1closed : ∀ i, IsClosed {z : Rn n | g₁ i z ≤ ((0 : ℝ) : EReal)} := fun i =>
     lowerSemicontinuous_iff_isClosed_le.1 (hg₁ i).lowerSemicontinuous 0
   have hCpoly : Polyhedral C := by
-    rw [hCdef]; exact polyhedral_iInter fun i => polyhedral_setOf_le_zero (hg₀ i)
+    rw [hCdef]; exact polyhedral_iInter fun i => (hg₀ i).polyhedral_sublevel 0
   have hDconv : Convex ℝ D := by rw [hDdef]; exact convex_iInter hD1conv
   have hDclosed : IsClosed D := by rw [hDdef]; exact isClosed_iInter hD1closed
   have hCrec : recessionCone C = ⋂ i, recessionConeFn (g₀ i) := by
