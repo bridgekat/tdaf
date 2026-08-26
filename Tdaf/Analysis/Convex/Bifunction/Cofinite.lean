@@ -334,7 +334,7 @@ end CofiniteSmulRight
 
 /-! ### Right scalar multiplication, and the co-finiteness criterion -/
 
-section Cofinite342
+section CofiniteCriterion
 
 variable {U V X Y : Type*}
   [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
@@ -411,11 +411,11 @@ theorem cofiniteBifun_iff_domBifun_eq_univ (hF : ConvexBifun F) (hcl : ClosedBif
       CofiniteBifun.domConcaveBifun_adjointBifun_eq_univ Bu Bx h⟩,
     fun h => cofiniteBifun_of_domBifun_eq_univ hF hcl hp h.1 h.2⟩
 
-end Cofinite342
+end CofiniteCriterion
 
 /-! ### The inner product of a product of bifunctions -/
 
-section Cor3872
+section CompBifunBracket
 
 variable {U V X W Y Z : Type*}
   [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
@@ -438,6 +438,6 @@ theorem bracket_compBifun_eq_concaveBracket_concaveCompBifun (Bu : U →ₗ[ℝ]
     concaveBracket_apply]
   exact iInf_congr fun v => by rw [adjointBifun_compBifun Bu Bx By hbF (hex v)]
 
-end Cor3872
+end CompBifunBracket
 
 end Tdaf.ConvexAnalysis

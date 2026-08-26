@@ -972,7 +972,7 @@ theorem supConv_neg_indicatorFn (S T : Set X) :
 
 end SupConvIndicator
 
-section Thm395
+section AdjointAdd
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1027,7 +1027,7 @@ theorem adjointProcess_add (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ
 
 end ConvexProcess
 
-end Thm395
+end AdjointAdd
 
 /-! ### The adjoint of a product of processes -/
 
@@ -1093,7 +1093,7 @@ theorem exists_pairing_sandwich {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {p q : E �
 
 end Sandwich
 
-section Thm398
+section AdjointComp
 
 variable {U V X Y Z W : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] [AddCommGroup Z] [Module ℝ Z]
@@ -1152,13 +1152,13 @@ theorem adjointProcess_comp (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →�
 
 end ConvexProcess
 
-end Thm398
+end AdjointComp
 
 
 
 /-! ### The conjugate of an image under a convex process -/
 
-section Thm397
+section ImageConj
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1232,7 +1232,7 @@ theorem exists_imageBifun_indicatorBifun_adjointProcess_eq (Bu : U →ₗ[ℝ] V
 
 end ConvexProcess
 
-end Thm397
+end ImageConj
 
 
 /-! ### Bounded values force a linear transformation -/

@@ -592,7 +592,7 @@ end PosHomGen
 
 /-! ### Its closure, as an attained infimum -/
 
-section Thm97
+section PosHomGenClosure
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
@@ -816,7 +816,7 @@ theorem posHomGen_eq_iInf_smulRight (hf : ConvexFn f) (hp : Proper f) (hc : IsCl
   rw [epi_recessionFn]
   exact recessionCone_epi_subset_epi_ofEpi_iUnion hp hdom
 
-end Thm97
+end PosHomGenClosure
 
 /-! ### The convex hull of a union of two sets -/
 
