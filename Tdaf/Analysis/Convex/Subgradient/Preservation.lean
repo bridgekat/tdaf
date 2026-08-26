@@ -12,31 +12,30 @@ import Tdaf.Analysis.Convex.Subgradient.StrictlyConvex
 /-!
 # Preservation of essential smoothness
 
-**Corollaries 26.3.2 and 26.3.3**: essential smoothness survives infimal convolution and the image
-under a linear map, under the exactness hypotheses of §16. Both are one argument. Essential
-smoothness of `f` is essential *strict* convexity of `f*` (Theorem 26.3); the dual operation on the
-conjugate side is a sum, for `□`, or composition with the transpose, for the image; Theorems 23.8
-and 23.9 push the domain of the subdifferential of that dual object into `dom ∂f*`; and strict
-convexity there survives adding a convex function or precomposing with an injective linear map.
-Theorem 26.3 read backwards returns essential smoothness.
+Essential smoothness survives infimal convolution and the image under a linear map, under the
+usual exactness hypotheses. Both are one argument. Essential smoothness of `f` is essential
+*strict* convexity of `f*`; the dual operation on the conjugate side is a sum, for `□`, or
+composition with the transpose, for the image; the subdifferential calculus puts the domain of the
+subdifferential of that dual object inside `dom ∂f*`; and strict convexity there survives adding a
+convex function or precomposing with an injective linear map. Read backwards, the same duality
+returns essential smoothness.
 
 ## Main results
 
 * `StrictConvexOnFn.add_convexFn`, `StrictConvexOnFn.compLin` — a strictly convex summand makes a
   sum strictly convex, and strict convexity pulls back along an injective linear map.
-* `IsExactSum.essentiallySmooth_infConv`, `IsExactImage.essentiallySmooth_mapLin` —
-  **Corollaries 26.3.2 and 26.3.3**, with `_of_relint` variants for the book's hypotheses
-  `ri (dom f₁*) ∩ ri (dom f₂*) ≠ ∅` and `∃ y*, A' y* ∈ ri (dom f*)`.
+* `IsExactSum.essentiallySmooth_infConv` — infimal convolution (Corollary 26.3.2 in [^1]).
+* `IsExactImage.essentiallySmooth_mapLin` — linear images (Corollary 26.3.3 in [^1]). Each has an
+  `_of_relint` variant asking `ri (dom f₁*) ∩ ri (dom f₂*) ≠ ∅`, resp. `∃ y*, A' y* ∈ ri (dom f*)`.
 
 ## Implementation notes
 
-Corollary 26.3.3 instantiates the exactness interface for the *transpose* `A'`, because the
+The linear-image result instantiates the exactness interface for the *transpose* `A'`, because the
 identity used is `A f = (f* A')*`; surjectivity of `A` enters only through injectivity of `A'`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26 (Corollaries 26.3.2
-  and 26.3.3).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §26.
 -/
 
 open Pointwise
@@ -87,7 +86,7 @@ theorem StrictConvexOnFn.compLin {A : G →ₗ[ℝ] E} {D : Set G} (h : StrictCo
 
 end StrictConvexOps
 
-/-! ### Corollary 26.3.2: infimal convolution -/
+/-! ### Infimal convolution -/
 
 section InfConv
 
@@ -95,8 +94,8 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDim
   {f₁ f₂ : E → EReal}
 
 omit [FiniteDimensional ℝ E] in
-/-- The conjugate-side content of Corollary 26.3.2: if `g₁` is essentially strictly convex and
-`g₁ + g₂` adds exactly, then `g₁ + g₂` is essentially strictly convex. Theorem 23.8 puts
+/-- The conjugate-side content: if `g₁` is essentially strictly convex and `g₁ + g₂` adds exactly,
+then `g₁ + g₂` is essentially strictly convex. The sum rule for subdifferentials puts
 `dom ∂(g₁ + g₂)` inside `dom ∂g₁`. -/
 theorem IsExactSum.essentiallyStrictlyConvex_add {g₁ g₂ : E → EReal}
     (h : IsExactSum (innerₗ E) g₁ g₂) (hg₂ : ConvexFn g₂)
@@ -112,8 +111,8 @@ theorem IsExactSum.essentiallyStrictlyConvex_add {g₁ g₂ : E → EReal}
   obtain ⟨v₁, hv₁, -, -, -⟩ := hv
   exact ⟨v₁, hv₁⟩
 
-/-- **Corollary 26.3.2**: if `f₁` is essentially smooth and the conjugates `f₁*` and `f₂*` add
-exactly, then `f₁ □ f₂` is essentially smooth. It is `(f₁* + f₂*)*` by Theorem 16.4. -/
+/-- If `f₁` is essentially smooth and the conjugates `f₁*` and `f₂*` add exactly, then `f₁ □ f₂` is
+essentially smooth: it is the conjugate of `f₁* + f₂*`. -/
 theorem IsExactSum.essentiallySmooth_infConv
     (h : IsExactSum (innerₗ E) (conj (innerₗ E) f₁) (conj (innerₗ E) f₂))
     (h₁ : ClosedProperConvexFn f₁) (h₂ : ClosedProperConvexFn f₂)
@@ -128,8 +127,8 @@ theorem IsExactSum.essentiallySmooth_infConv
     hsum.closed).2 (h.essentiallyStrictlyConvex_add (convexFn_conj _ f₂) ?_)
   exact (essentiallyStrictlyConvex_conj_iff_essentiallySmooth h₁.convex h₁.proper h₁.closed).2 hes
 
-/-- **Corollary 26.3.2** with the book's hypothesis: a common relative interior point of `dom f₁*`
-and `dom f₂*` supplies the exactness. -/
+/-- The same under the classical hypothesis: a common relative interior point of `dom f₁*` and
+`dom f₂*` supplies the exactness. -/
 theorem essentiallySmooth_infConv_of_relint (h₁ : ClosedProperConvexFn f₁)
     (h₂ : ClosedProperConvexFn f₂) (hes : EssentiallySmooth f₁) {y₀ : E}
     (hy₁ : y₀ ∈ ri (dom (conj (innerₗ E) f₁))) (hy₂ : y₀ ∈ ri (dom (conj (innerₗ E) f₂))) :
@@ -140,7 +139,7 @@ theorem essentiallySmooth_infConv_of_relint (h₁ : ClosedProperConvexFn f₁)
 
 end InfConv
 
-/-! ### Corollary 26.3.3: linear images -/
+/-! ### Linear images -/
 
 section Image
 
@@ -161,9 +160,9 @@ theorem injective_of_isAdjointPair_of_surjective (hA : IsAdjointPair (innerₗ G
   exact norm_eq_zero.1 (by nlinarith [norm_nonneg y])
 
 omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ G] in
-/-- The conjugate-side content of Corollary 26.3.3: if `g` is essentially strictly convex, `A'` is
-injective and `g` pulls back exactly along `A'`, then `g A'` is essentially strictly convex.
-Theorem 23.9 makes `dom ∂(g A')` the preimage of `dom ∂g`. -/
+/-- The conjugate-side content: if `g` is essentially strictly convex, `A'` is injective and `g`
+pulls back exactly along `A'`, then `g A'` is essentially strictly convex. The chain rule makes
+`dom ∂(g A')` the preimage of `dom ∂g`. -/
 theorem IsExactImage.essentiallyStrictlyConvex_compLin {g : E → EReal}
     {hA : IsAdjointPair (innerₗ G) (innerₗ E) A' A}
     (h : IsExactImage (innerₗ G) (innerₗ E) A' A hA g) (hinj : Function.Injective A')
@@ -177,9 +176,8 @@ theorem IsExactImage.essentiallyStrictlyConvex_compLin {g : E → EReal}
   obtain ⟨w, hw, -⟩ := hv
   exact ⟨w, hw⟩
 
-/-- **Corollary 26.3.3**: if `f` is essentially smooth, `A'` is injective, and `f*` pulls back
-exactly along `A'`, then the image `A f` is essentially smooth. It is `(f* A')*` by
-Theorem 16.3. -/
+/-- If `f` is essentially smooth, `A'` is injective, and `f*` pulls back exactly along `A'`, then
+the image `A f` is essentially smooth: it is the conjugate of `f* A'`. -/
 theorem IsExactImage.essentiallySmooth_mapLin {hA : IsAdjointPair (innerₗ G) (innerₗ E) A' A}
     (h : IsExactImage (innerₗ G) (innerₗ E) A' A hA (conj (innerₗ E) f))
     (hf : ClosedProperConvexFn f) (hes : EssentiallySmooth f) (hinj : Function.Injective A') :
@@ -194,8 +192,8 @@ theorem IsExactImage.essentiallySmooth_mapLin {hA : IsAdjointPair (innerₗ G) (
     (h.essentiallyStrictlyConvex_compLin hinj ?_)
   exact (essentiallyStrictlyConvex_conj_iff_essentiallySmooth hf.convex hf.proper hf.closed).2 hes
 
-/-- **Corollary 26.3.3** with the book's hypotheses: `A` onto and some `y₀` with
-`A' y₀ ∈ ri (dom f*)`. The first gives injectivity of the transpose, the second the exactness. -/
+/-- The same under the classical hypotheses: `A` onto and some `y₀` with `A' y₀ ∈ ri (dom f*)`.
+The first gives injectivity of the transpose, the second the exactness. -/
 theorem essentiallySmooth_mapLin_of_relint (hA : IsAdjointPair (innerₗ G) (innerₗ E) A' A)
     (hf : ClosedProperConvexFn f) (hes : EssentiallySmooth f) (hsurj : Function.Surjective A)
     {y₀ : G} (hy₀ : A' y₀ ∈ ri (dom (conj (innerₗ E) f))) :

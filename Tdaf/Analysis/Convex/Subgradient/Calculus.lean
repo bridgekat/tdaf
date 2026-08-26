@@ -13,23 +13,23 @@ How `∂` interacts with sums and with linear maps. Both rules have the same sha
 unconditional — a subgradient of each piece assembles into a subgradient of the whole — and the
 reverse inclusion, the useful one, needs exactly the constraint qualification that makes the
 corresponding conjugacy rule exact. Both are therefore stated against the `IsExactSum` and
-`IsExactImage` interfaces of §16; the book's `ri` versions of Theorems 23.8 and 23.9 are these
-composed with the `of_relint` constructors.
+`IsExactImage` interfaces; the classical `ri` versions of the two rules are these composed with the
+`of_relint` constructors.
 
 ## Main results
 
-* `IsExactSum.subgradient_add`, `IsExactFinsetSum.subgradient_finsetSum` — **Theorem 23.8**, for
-  two summands and in the book's `m`-ary form.
-* `IsExactImage.subgradient_compLin` — **Theorem 23.9**.
+* `IsExactSum.subgradient_add`, `IsExactFinsetSum.subgradient_finsetSum` — `∂(∑ fᵢ) = ∑ ∂fᵢ`, for
+  two summands and for `m` of them (Theorem 23.8 in [^1]).
+* `IsExactImage.subgradient_compLin` — `∂(g A) x = A' (∂g (A x))` (Theorem 23.9 in [^1]).
 * `subgradient_coe_mul`, `subgradient_coe_affineMap` — `∂(cf) = c ∂f` for `c > 0`, and for
   *arbitrary* `c` when `f` is affine.
-* `IsExactSum.normalCone_inter` — **Corollary 23.8.1**.
+* `IsExactSum.normalCone_inter` — the normal cone to an intersection, as a sum of normal cones.
 * `subgradient_add_normalCone_dom_subset`, `normalCone_dom_eq_zero_of_subgradient_eq_singleton` —
   the normal cone to `dom f`, and what a *unique* subgradient does to it.
 
 ## Implementation notes
 
-Everything reduces to Theorem 23.5 in the unconditional form `y ∈ ∂f x ↔ f x + f* y ≤ ⟨x, y⟩`,
+Everything reduces to the conjugate characterisation `y ∈ ∂f x ↔ f x + f* y ≤ ⟨x, y⟩`,
 written so that no `∞ - ∞` can arise; no epigraph, directional derivative or separating hyperplane
 appears in any proof here. The sum rule additionally needs the `EReal` fact that two slack
 inequalities whose sum is tight must each be tight, and that is where the properness carried by
@@ -38,23 +38,22 @@ binary rule does not iterate: `EReal` has no subtraction to peel a summand off w
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23 (Theorems 23.8, 23.9
-  and Corollary 23.8.1).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23.
 -/
 
 open Pointwise
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Theorem 23.8: sums -/
+/-! ### Sums -/
 
 section Add
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
 
-/-- **Theorem 23.8**, the unconditional inclusion: a subgradient of `f` plus a subgradient of `g`
-is a subgradient of `f + g`. The two subgradient inequalities simply add. -/
+/-- **The unconditional inclusion**: a subgradient of `f` plus a subgradient of `g` is a
+subgradient of `f + g`. The two subgradient inequalities simply add. -/
 theorem subgradient_add_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) (x : E) :
     subgradient B f x + subgradient B g x ⊆ subgradient B (f + g) x := by
   rintro _ ⟨y₁, hy₁, y₂, hy₂, rfl⟩ z
@@ -63,7 +62,7 @@ theorem subgradient_add_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E �
   rw [Pi.add_apply, Pi.add_apply, map_add, _root_.EReal.coe_add, add_add_add_comm]
   exact add_le_add h₁ h₂
 
-/-- **Theorem 23.8**: `∂(f + g) x = ∂f x + ∂g x` whenever the sum is exact. Exactness splits
+/-- `∂(f + g) x = ∂f x + ∂g x` whenever the sum is exact. Exactness splits
 `y = y₁ + y₂` with `f* y₁ + g* y₂ ≤ (f+g)* y`, and tightness of Fenchel's inequality for `f + g`
 then leaves the two inequalities for `f` at `y₁` and `g` at `y₂` no room to be strict. -/
 theorem IsExactSum.subgradient_add (h : IsExactSum B f g) (x : E) :
@@ -92,14 +91,14 @@ theorem IsExactSum.subgradient_add (h : IsExactSum B f g) (x : E) :
 
 end Add
 
-/-! ### Theorem 23.8 for `m` summands -/
+/-! ### Sums of `m` functions -/
 
 section FinsetAdd
 
 variable {ι E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E → EReal}
 
-/-- **Theorem 23.8** in the `m`-ary form, unconditional inclusion:
+/-- **The unconditional inclusion** for `m` summands:
 `∂f₁ x + ⋯ + ∂fₘ x ⊆ ∂(f₁ + ⋯ + fₘ) x`. Over the empty `Finset` the left side is `{0}` and the
 right side is `∂(0) x`, which contains `0`. -/
 theorem subgradient_finsetSum_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Finset ι)
@@ -115,7 +114,7 @@ theorem subgradient_finsetSum_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : 
     rw [Finset.sum_cons, Finset.sum_cons]
     exact (Set.add_subset_add_left ih).trans (subgradient_add_subset B (f i) _ x)
 
-/-- **Theorem 23.8**: `∂(f₁ + ⋯ + fₘ) x = ∂f₁ x + ⋯ + ∂fₘ x` whenever the family adds exactly.
+/-- `∂(f₁ + ⋯ + fₘ) x = ∂f₁ x + ⋯ + ∂fₘ x` whenever the family adds exactly.
 Exactness hands back a splitting `y = y₁ + ⋯ + yₘ` whose conjugate values already sum to
 `(∑ fᵢ)* y`, and `y ∈ ∂(∑ fᵢ) x` makes the sum of the `m` Fenchel inequalities tight, hence each
 of them. This is not the binary rule iterated. -/
@@ -142,7 +141,7 @@ theorem IsExactFinsetSum.subgradient_finsetSum (h : IsExactFinsetSum B s f) (x :
 
 end FinsetAdd
 
-/-! ### Theorem 23.9: linear maps -/
+/-! ### Linear maps -/
 
 section Image
 
@@ -152,7 +151,7 @@ variable {E F G H : Type*}
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
-/-- **Theorem 23.9**, the unconditional inclusion: the transpose carries subgradients of `g` at
+/-- **The unconditional inclusion**: the transpose carries subgradients of `g` at
 `A x` to subgradients of `g A` at `x`. Only the adjointness datum is used; `g` is arbitrary. -/
 theorem image_subgradient_subset (hA : IsAdjointPair B B' A A') (g : G → EReal) (x : E) :
     A' '' subgradient B' g (A x) ⊆ subgradient B (compLin g A) x := by
@@ -160,7 +159,7 @@ theorem image_subgradient_subset (hA : IsAdjointPair B B' A A') (g : G → EReal
   have hw := hz (A w)
   rwa [compLin_apply, compLin_apply, ← hA (w - x) z, map_sub]
 
-/-- **Theorem 23.9**: `∂(g A) x = A' (∂g (A x))` whenever the pullback is exact. Unlike the sum
+/-- `∂(g A) x = A' (∂g (A x))` whenever the pullback is exact. Unlike the sum
 rule this needs no splitting: exactness hands back a single `z` in the fibre with
 `g* z ≤ (g A)* (A' z)`, which slots straight into Fenchel's inequality once a subgradient at `x` is
 seen to force `(g A)* y` finite. -/
@@ -221,8 +220,8 @@ theorem subgradient_coe_mul {c : ℝ} (hc : 0 < c) (f : E → EReal) (x : E) :
 
 /-- `∂(0 · f) x = {0}`: the zero function has the origin as its only subgradient.
 
-This is what the parenthesis "(Omit terms with `λᵢ = 0`.)" in Theorem 28.3 (c) means, and it is why
-the omission is not cosmetic: `∂fᵢ x` may be *empty* at a boundary point of `dom fᵢ`, so the term
+This is what the parenthesis "(Omit terms with `λᵢ = 0`.)" in the Kuhn–Tucker conditions means, and
+why it is not cosmetic: `∂fᵢ x` may be *empty* at a boundary point of `dom fᵢ`, so the term
 `0 · ∂fᵢ x` that the parenthesis drops would be `∅` rather than `{0}`, emptying the whole sum. -/
 theorem subgradient_zero_mul (hB : Function.Injective B.flip) (f : E → EReal) (x : E) :
     subgradient B (fun y => ((0 : ℝ) : EReal) * f y) x = {(0 : F)} := by
@@ -287,7 +286,7 @@ theorem subgradient_coe_affineMap (hB : Function.Injective B.flip) (a : E →ᵃ
 
 /-- `∂(ca) x = c ∂a x` for an *arbitrary* real `c`, when `a` is affine. An affine function satisfies
 the subgradient inequality with *equality*, so scaling by a negative `c` reverses nothing; this is
-what covers the equality-constraint multipliers of §28, which may be negative. -/
+what covers equality-constraint multipliers, which may be negative. -/
 theorem subgradient_coe_mul_affineMap (hB : Function.Injective B.flip) (c : ℝ) (a : E →ᵃ[ℝ] ℝ)
     {b : F} (hb : ∀ w : E, B w b = a.linear w) (x : E) :
     subgradient B (fun y => (c : EReal) * ((a y : ℝ) : EReal)) x
@@ -306,23 +305,23 @@ theorem subgradient_coe_mul_affineMap (hB : Function.Injective B.flip) (c : ℝ)
 
 end Smul
 
-/-! ### Corollary 23.8.1: normal cones to an intersection -/
+/-! ### Normal cones to an intersection -/
 
 section NormalCone
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C D : Set E} {x : E}
 
-/-- **Corollary 23.8.1**, the unconditional inclusion. Proved directly rather than through
-indicators, so that it needs neither `x ∈ C` nor `x ∈ D`. -/
+/-- **The unconditional inclusion**. Proved directly rather than through indicators, so that it
+needs neither `x ∈ C` nor `x ∈ D`. -/
 theorem normalCone_add_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C D : Set E) (x : E) :
     normalCone B C x + normalCone B D x ⊆ normalCone B (C ∩ D) x := by
   rintro _ ⟨y₁, hy₁, y₂, hy₂, rfl⟩ z hz
   rw [map_add]
   exact add_nonpos (hy₁ z hz.1) (hy₂ z hz.2)
 
-/-- **Corollary 23.8.1**: the normal cone to an intersection is the sum of the normal cones, under
-the exact-sum hypothesis for the two indicators. -/
+/-- The normal cone to an intersection is the sum of the normal cones, under the exact-sum
+hypothesis for the two indicators. -/
 theorem IsExactSum.normalCone_inter (h : IsExactSum B (indicatorFn C) (indicatorFn D))
     (hC : x ∈ C) (hD : x ∈ D) :
     normalCone B (C ∩ D) x = normalCone B C x + normalCone B D x := by

@@ -10,8 +10,8 @@ import Tdaf.Analysis.Convex.Subgradient.OneDim
 
 A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite somewhere is squeezed between the two one-sided
 derivatives of a closed proper convex function on `ℝ`, uniquely determined up to an additive
-constant. This is **Theorem 24.2**; its uniqueness clause is in `Subgradient/OneDim.lean` and this
-module supplies the existence clause.
+constant. The uniqueness clause is in `Subgradient/OneDim.lean`; this module supplies the existence
+clause.
 
 The object that carries the construction is the region
 
@@ -20,10 +20,10 @@ The object that carries the construction is the region
 ```
 
 a *complete non-decreasing curve*. It is a chain for the coordinatewise order and it meets every
-antidiagonal `{(u, v) | u + v = s}`, which is exactly what makes it a *maximal* chain. Theorem 24.3
-then produces a closed proper convex `f` with `∂f = Γ(φ)`, and reading the two endpoints of `Γ(φ)ₓ`
-off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f'₊`. No integral appears anywhere: the book's
-`f(x) = ∫ₐˣ φ(t) dt` is replaced by the graph of the subdifferential.
+antidiagonal `{(u, v) | u + v = s}`, which is exactly what makes it a *maximal* chain. A maximal
+monotone relation on the line is a subdifferential, so this yields a closed proper convex `f` with
+`∂f = Γ(φ)`; reading the endpoints of `Γ(φ)ₓ` off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f'₊`. No
+integral appears anywhere: the classical `f(x) = ∫ₐˣ φ(t) dt` is replaced by `∂f` itself.
 
 ## Main results
 
@@ -32,9 +32,9 @@ off `∂f(x)` gives `f'₋ = φ⁻ ≤ φ ≤ φ⁺ = f'₊`. No integral appear
   every `∂f` on the line is the curve of its own right derivative.
 * `exists_monotone_ne_bot_ne_top_monotoneCurve_eq` — every `∂f` is `Γ(φ)` for a `φ` finite at a
   point, since moving `φ` at one point changes neither its monotonicity nor `Γ(φ)`.
-* `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq` — the existence clause of
-  **Theorem 24.2**, with the identification `f'₋ = φ⁻` and `f'₊ = φ⁺`.
-* `exists_closedProperConvexFn_forall_le_le` — **Theorem 24.2** in full.
+* `exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq` — the existence clause, with the
+  identification `f'₋ = φ⁻` and `f'₊ = φ⁺`.
+* `exists_closedProperConvexFn_forall_le_le` — existence with uniqueness (Theorem 24.2 in [^1]).
 
 ## Implementation notes
 
@@ -47,8 +47,7 @@ separated by comparison with a fibre that is not empty.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24 (Theorem 24.2, and
-  the description of complete non-decreasing curves preceding Theorem 24.3).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §24.
 -/
 
 open Set Filter Topology
@@ -118,8 +117,7 @@ variable {φ : ℝ → EReal}
 ```
 
 a **complete non-decreasing curve**. For nondecreasing `φ` it is a chain for the coordinatewise
-order on `ℝ × ℝ`, and Theorem 24.2 identifies it with the graph of `∂f` for a closed proper
-convex `f`. -/
+order on `ℝ × ℝ`, and it is the graph of `∂f` for a closed proper convex `f`. -/
 def monotoneCurve (φ : ℝ → EReal) : SetRel ℝ ℝ :=
   {p : ℝ × ℝ | (⨆ z ∈ Iio p.1, φ z) ≤ (p.2 : EReal) ∧ (p.2 : EReal) ≤ ⨅ z ∈ Ioi p.1, φ z}
 
@@ -213,7 +211,7 @@ theorem isMaximalMonotoneRel_monotoneCurve (hφ : Monotone φ) {a : ℝ} (hb : �
   exact hu
 
 /-- Every subdifferential on the line is such a curve, namely the one of its own right derivative.
-This is the two crossed limit formulas of Theorem 24.1 read through `mem_subgradientRel_iff`. -/
+This is the two crossed one-sided limit formulas read through `mem_subgradientRel_iff`. -/
 theorem subgradientRel_eq_monotoneCurve_rightDeriv {f : ℝ → EReal} (hf : ClosedProperConvexFn f) :
     subgradientRel (innerₗ ℝ) f = monotoneCurve (rightDeriv f) := by
   ext p
@@ -310,7 +308,7 @@ theorem monotoneCurve_eq_of_forall_ne (hφ : Monotone φ) (heq : ∀ z, z ≠ a 
 
 /-- Every subdifferential on the line is the curve of a nondecreasing function that is finite
 somewhere — the implication from the order-theoretic *characterisation* of a complete
-non-decreasing curve back to the book's *definition* of one.
+non-decreasing curve back to the usual *definition* of one.
 
 `subgradientRel_eq_monotoneCurve_rightDeriv` gives `∂f = Γ(f'₊)` with `f'₊` nondecreasing, so only
 finiteness at a point is missing. `f'₊` is finite on `int (dom f)`; the one case that does not cover
@@ -346,17 +344,17 @@ end Perturb
 
 end Curve
 
-/-! ### Theorem 24.2 -/
+/-! ### The convex primitive -/
 
 section Primitive
 
 variable {φ : ℝ → EReal}
 
-/-- **Theorem 24.2**, existence clause, in its sharpest form: a nondecreasing `φ : ℝ → [-∞, +∞]`
-finite at one point is the derivative of a closed proper convex function on the line, in the precise
-sense that the one-sided limits of `φ` *are* the one-sided derivatives of `f`.
+/-- **The existence clause**, in its sharpest form: a nondecreasing `φ : ℝ → [-∞, +∞]` finite at
+one point is the derivative of a closed proper convex function on the line, in the precise sense
+that the one-sided limits of `φ` *are* the one-sided derivatives of `f`.
 
-Theorem 24.3 turns the maximality of `Γ(φ)` into an `f` with `∂f = Γ(φ)`; at a fixed `x` that says
+Maximality of `Γ(φ)` turns it into an `f` with `∂f = Γ(φ)`; at a fixed `x` that says
 the intervals `[φ⁻(x), φ⁺(x)]` and `[f'₋(x), f'₊(x)]` have the same real points, hence the same
 endpoints whenever either has a real point at all. Where neither has, both are `{-∞}` or both
 `{+∞}`, decided by comparison across the point where `φ` is finite. -/
@@ -417,7 +415,7 @@ theorem exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq (hφ : Monotone �
         (lt_irrefl ⊥)
     · exact ⟨g₁.trans h₁.symm, g₂.trans h₂.symm⟩
 
-/-- **Theorem 24.2** in full. A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite at one point lies
+/-- A nondecreasing `φ : ℝ → [-∞, +∞]` that is finite at one point lies
 between the one-sided derivatives of a closed proper convex function on the line, and that function
 is unique up to an additive constant. -/
 theorem exists_closedProperConvexFn_forall_le_le (hφ : Monotone φ) {a : ℝ} (hb : φ a ≠ ⊥)

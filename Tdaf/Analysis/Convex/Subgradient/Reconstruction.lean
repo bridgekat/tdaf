@@ -11,7 +11,7 @@ import Tdaf.Analysis.Convex.Subgradient.Uniqueness
 /-!
 # The subdifferential reconstructed from the gradient mapping
 
-**Theorem 25.6**: for a closed proper convex `f` whose effective domain has interior,
+For a closed proper convex `f` whose effective domain has interior,
 
 ```
 ∂f x = cl (conv (S x)) + N_{dom f}(x)      for every x,
@@ -34,12 +34,13 @@ assembled out of honest gradients and normal directions.
   strictly obtuse angle with every non-zero normal to `dom f` at `x` reaches `int (dom f)`.
 * `exposedPoints_subset_gradientLimits` — the heart of the proof: every exposed point of `∂f x` is
   a limit of gradients.
-* `subgradient_eq_closure_convexHull_gradientLimits_add_normalCone` — **Theorem 25.6**.
+* `subgradient_eq_closure_convexHull_gradientLimits_add_normalCone` — the reconstruction itself
+  (Theorem 25.6 in [^1]).
 
 ## Implementation notes
 
-The recession cone of `∂f x` never has to be computed. The book identifies it with `N_{dom f}(x)`
-and uses the identification three times — to see that `∂f x` contains no lines, to place extreme
+The recession cone of `∂f x` never has to be computed. The classical proof identifies it with
+`N_{dom f}(x)` and uses that three times — to see that `∂f x` contains no lines, to place extreme
 directions in the normal cone, and to bound `⟨y, y*⟩` for normals `y*` — but each of those follows
 more cheaply from the single inclusion `∂f x + N_{dom f}(x) ⊆ ∂f x` of `Subgradient/Calculus.lean`
 together with a "let `λ → ∞` in the subgradient inequality" argument. So
@@ -47,7 +48,7 @@ together with a "let `λ → ∞` in the subgradient inequality" argument. So
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25 (Theorem 25.6).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §25.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -73,8 +74,8 @@ theorem mem_gradientLimits_of_hasGradientAt {v : E}
     (h : HasGradientAt f (InnerProductSpace.toDual ℝ E v) x) : v ∈ gradientLimits f x :=
   ⟨fun _ => x, fun _ => v, tendsto_const_nhds, fun _ => h, tendsto_const_nhds⟩
 
-/-- **`S x ⊆ ∂f x`**, by Theorem 24.4: the graph of `∂f` is closed, so a limit of gradients at
-points tending to `x` is a subgradient at `x`. -/
+/-- **`S x ⊆ ∂f x`**: the graph of `∂f` is closed, so a limit of gradients at points tending to `x`
+is a subgradient at `x`. -/
 theorem gradientLimits_subset_subgradient (hf : ConvexFn f) (hp : Proper f) (hcl : ClosedFn f) :
     gradientLimits f x ⊆ subgradient (innerₗ E) f x := by
   rintro v ⟨xs, vs, hxs, hgrad, hvs⟩
@@ -181,21 +182,20 @@ theorem recessionCone_subgradient_subset_normalCone (hp : Proper f) {v : E}
 
 omit [FiniteDimensional ℝ E] in
 /-- Wherever `∂f x` is non-empty, its recession cone *is* the normal cone to `dom f` at `x`. The
-book leaves this as an exercise in §23 and says the verification will come as part of the proof of
-Theorem 25.6; it does not, since that proof uses only the inclusion
-`recessionCone_subgradient_subset_normalCone`. It is discharged here on its own instead: the other
-inclusion is `∂f x + N_{dom f}(x) ⊆ ∂f x` read at a single normal direction. -/
+reconstruction below uses only the inclusion `recessionCone_subgradient_subset_normalCone`, so this
+equality is discharged here on its own: the other inclusion is `∂f x + N_{dom f}(x) ⊆ ∂f x` read at
+a single normal direction. -/
 theorem recessionCone_subgradient_eq_normalCone (hp : Proper f) {v : E}
     (hv : v ∈ subgradient (innerₗ E) f x) :
     recessionCone (subgradient (innerₗ E) f x) = normalCone (innerₗ E) (dom f) x :=
   Set.Subset.antisymm (recessionCone_subgradient_subset_normalCone hp hv)
     fun _ hw _ hv' _ ha => add_smul_mem_subgradient hv' hw ha
 
-/-- **The separation step of Theorem 25.6.** If every non-zero vector normal to `dom f` at `x`
-makes a strictly obtuse angle with `y`, then the half-line from `x` in the direction `y` reaches
-`int (dom f)`. Contrapositive plus `geometric_hahn_banach_open`: if the half-line missed the open
-convex set `int (dom f)`, the separating functional would be a non-zero normal making a non-obtuse
-angle with `y`. Proper separation, and with it Theorem 11.3, is not needed. -/
+/-- **The separation step.** If every non-zero vector normal to `dom f` at `x` makes a strictly
+obtuse angle with `y`, then the half-line from `x` in the direction `y` reaches `int (dom f)`.
+Contrapositive plus `geometric_hahn_banach_open`: if the half-line missed the open convex set
+`int (dom f)`, the separating functional would be a non-zero normal making a non-obtuse angle with
+`y`. Proper separation is not needed. -/
 theorem exists_mem_interior_dom_of_forall_normalCone (hf : ConvexFn f)
     (hne : (interior (dom f)).Nonempty) {y : E}
     (hy : ∀ w ∈ normalCone (innerₗ E) (dom f) x, w ≠ 0 → ⟪y, w⟫ < 0) :
@@ -300,8 +300,8 @@ theorem exists_mem_interior_dom_of_forall_normalCone (hf : ConvexFn f)
   linarith
 
 /-- **Points of differentiability approaching `x` from the direction `y`.** If the ray from `x` in
-the unit direction `y` enters `int (dom f)`, Theorem 25.5's density clause supplies points of
-differentiability arbitrarily close to it. The tolerance has to be `ε²` at distance `ε`, not `ε`:
+the unit direction `y` enters `int (dom f)`, density of the points of differentiability supplies
+points arbitrarily close to it. The tolerance has to be `ε²` at distance `ε`, not `ε`:
 it is the *direction* of approach that must converge to `y`. -/
 theorem exists_seq_differentiableAtFn_tendsto_dir (hf : ConvexFn f) (hp : Proper f)
     (hx : x ∈ dom f) {y : E} (hy : ‖y‖ = 1) {α : ℝ} (hα : 0 < α)
@@ -396,14 +396,14 @@ theorem exists_seq_differentiableAtFn_tendsto_dir (hf : ConvexFn f) (hp : Proper
     refine squeeze_zero (fun i => norm_nonneg _) hdir ?_
     simpa using hεlim.const_mul (4 : ℝ)
 
-/-- **Theorem 25.6**, the substantive step: an exposed point of `∂f x` is a limit of gradients.
+/-- **The substantive step**: an exposed point of `∂f x` is a limit of gradients.
 
-If the functional exposing `x*` is zero the subdifferential is the single point `x*`, and Theorem
-25.1's converse makes `f` differentiable at `x` itself. Otherwise its Riesz representative `y`,
+If the functional exposing `x*` is zero the subdifferential is the single point `x*`, and a lone
+subgradient makes `f` differentiable at `x` itself. Otherwise its Riesz representative `y`,
 normalised, makes a strictly obtuse angle with every non-zero normal to `dom f` at `x`, so the ray
-`x + α y` enters `int (dom f)`; Theorem 25.5 supplies points of differentiability approaching `x`
-in the direction `y`, and Theorem 24.6 collapses their subdifferentials onto the face of `∂f x`
-exposed by `y`, which is `{x*}`. -/
+`x + α y` enters `int (dom f)`; density supplies points of differentiability approaching `x` in the
+direction `y`, and the boundary convergence theorem collapses their subdifferentials onto the face
+of `∂f x` exposed by `y`, which is `{x*}`. -/
 theorem exposedPoints_subset_gradientLimits (hf : ConvexFn f) (hp : Proper f)
     (hne : (interior (dom f)).Nonempty) :
     (subgradient (innerₗ E) f x).exposedPoints ℝ ⊆ gradientLimits f x := by
@@ -457,7 +457,7 @@ theorem exposedPoints_subset_gradientLimits (hf : ConvexFn f) (hp : Proper f)
         have h1 := hwmax v hv
         rw [hyinner, hyinner] at h1
         exact (hl w hw).2 (le_of_mul_le_mul_left h1 hinvpos)
-    -- The directional derivative is finite in the direction `y`, as Theorem 24.6 requires.
+    -- The directional derivative is finite in the direction `y`, as the collapse step requires.
     have hdirbot : dirDeriv f x y ≠ ⊥ := by
       have h := (mem_subgradient_iff_le_dirDeriv (B := innerₗ E) (mem_dom.1 hx).ne
         (hp.ne_bot x)).1 hv y
@@ -483,8 +483,8 @@ theorem exposedPoints_subset_gradientLimits (hf : ConvexFn f) (hp : Proper f)
     rw [dist_eq_norm, ← hcd, add_sub_cancel_left]
     exact lt_of_le_of_lt hd (half_lt_self hε)
 
-/-- **Theorem 25.6**: for a closed proper convex function whose effective domain has interior, the
-subdifferential at *any* point is reconstructed from the gradient mapping,
+/-- For a closed proper convex function whose effective domain has interior, the subdifferential at
+*any* point is reconstructed from the gradient mapping,
 
 ```
 ∂f x = cl (conv S(x)) + N_{dom f}(x),
@@ -493,10 +493,10 @@ subdifferential at *any* point is reconstructed from the gradient mapping,
 where `S(x)` is the set of limits of gradients at points of differentiability tending to `x`.
 
 The inclusion `⊇` is closedness and convexity of `∂f x` together with
-`∂f x + N_{dom f}(x) ⊆ ∂f x`. The inclusion `⊆` is Theorem 18.5 — `∂f x` contains no lines, so it
-is the convex hull of its extreme points and extreme directions — with Straszewicz's Theorem 18.6
-carrying the extreme points into the closure of the exposed ones, which
-`exposedPoints_subset_gradientLimits` places in `S(x)`, and
+`∂f x + N_{dom f}(x) ⊆ ∂f x`. The inclusion `⊆` is the extreme-point representation of a line-free
+closed convex set — `∂f x` contains no lines, so it is the convex hull of its extreme points and
+extreme directions — with **Straszewicz's theorem** carrying the extreme points into the closure of
+the exposed ones, which `exposedPoints_subset_gradientLimits` places in `S(x)`, and
 `recessionCone_subgradient_subset_normalCone` carrying the extreme directions into the normal
 cone. -/
 theorem subgradient_eq_closure_convexHull_gradientLimits_add_normalCone (hf : ConvexFn f)
@@ -511,7 +511,7 @@ theorem subgradient_eq_closure_convexHull_gradientLimits_add_normalCone (hf : Co
   have hhull : closure (convexHull ℝ (gradientLimits f x)) ⊆ subgradient (innerₗ E) f x :=
     closure_minimal (convexHull_min hSsub hconv) hclosed
   refine subset_antisymm ?_ ?_
-  · -- `⊆`: Theorem 18.5, then Straszewicz and the exposed-point step.
+  · -- `⊆`: the extreme-point representation, then Straszewicz's theorem and exposed points.
     rcases (subgradient (innerₗ E) f x).eq_empty_or_nonempty with hempty | ⟨v₀, hv₀⟩
     · rw [hempty]
       exact Set.empty_subset _

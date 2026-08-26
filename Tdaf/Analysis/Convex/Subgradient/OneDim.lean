@@ -41,7 +41,8 @@ subdifferentials of the closed proper convex functions.
 * `exists_eq_add_coe_of_le_le` — two closed proper convex functions squeezed around a common `φ`
   differ by a constant.
 * `IsMonotoneRel.isCyclicallyMonotone` — on the line the two monotonicity notions coincide.
-* `isMaximalMonotoneRel_iff_exists_closedProperConvexFn` — **Theorem 24.3**.
+* `isMaximalMonotoneRel_iff_exists_closedProperConvexFn` — the maximal monotone relations on the
+  line are exactly the subdifferentials of closed proper convex functions (Theorem 24.3 in [^1]).
 
 ## Implementation notes
 
@@ -53,7 +54,7 @@ difference quotient is `⊤ - ⊤ = ⊥`, so the unguarded infimum would be `-�
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23 and §24.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §23 and §24.
 -/
 
 open Set Filter Topology
@@ -275,9 +276,9 @@ theorem bot_lt_leftDeriv_iff (hp : Proper f) :
   · rw [dirDeriv_eq_bot_of_eq_top (top_le_iff.1 hx), _root_.EReal.neg_bot]
     exact bot_lt_top
 
-/-- **Both one-sided derivatives are finite exactly on the interior of `dom f`.** The book
-states the two halves separately, as `f'₊ < +∞` to the left of the right endpoint and `f'₋ > -∞`
-to the right of the left endpoint; on the line those two conditions together *are* interiority. -/
+/-- **Both one-sided derivatives are finite exactly on the interior of `dom f`.** The two halves
+are usually stated separately, as `f'₊ < +∞` to the left of the right endpoint and `f'₋ > -∞` to
+the right of the left endpoint; on the line those two conditions together *are* interiority. -/
 theorem bot_lt_leftDeriv_and_rightDeriv_lt_top_iff (hf : ConvexFn f) (hp : Proper f) :
     (⊥ < leftDeriv f x ∧ rightDeriv f x < ⊤) ↔ x ∈ interior (dom f) := by
   rw [bot_lt_leftDeriv_iff hp, rightDeriv_lt_top_iff hp]
@@ -348,8 +349,8 @@ theorem leftDeriv_eq_neg_dirDeriv (hx : f x < ⊤) (hb : f x ≠ ⊥) :
 ∂f(x) = {x* ∈ ℝ | f'₋(x) ≤ x* ≤ f'₊(x)}.
 ```
 
-This is a consequence of Theorem 23.2: only the directions `+1` and `-1` carry information,
-because `f'(x; ·)` is positively homogeneous. -/
+This follows from the description of `∂f x` by `f'(x; ·)`: only the directions `+1` and `-1` carry
+information, because `f'(x; ·)` is positively homogeneous. -/
 theorem mem_subgradient_iff_le_rightDeriv_of_lt_top (hx : f x < ⊤) (hb : f x ≠ ⊥) {y : ℝ} :
     y ∈ subgradient (innerₗ ℝ) f x ↔
       leftDeriv f x ≤ (y : EReal) ∧ (y : EReal) ≤ rightDeriv f x := by
@@ -685,7 +686,7 @@ theorem monotone_of_leftDeriv_le_of_le_rightDeriv (hp : Proper f) {φ : ℝ → 
   exact (h₂ y).trans ((rightDeriv_le_leftDeriv hp hlt).trans (h₁ z))
 
 /-- **`φ` determines `f'₊`**: any nondecreasing `φ` between `f'₋` and `f'₊` has `f'₊` as its limit
-from the right; the remark between Theorems 24.1 and 24.2. -/
+from the right. -/
 theorem iInf_Ioi_eq_rightDeriv (hf : ClosedProperConvexFn f) {φ : ℝ → EReal}
     (h₁ : ∀ z, leftDeriv f z ≤ φ z) (h₂ : ∀ z, φ z ≤ rightDeriv f z) (x : ℝ) :
     ⨅ z ∈ Ioi x, φ z = rightDeriv f x := by
@@ -723,7 +724,7 @@ theorem exists_eq_add_coe_of_deriv_eq (hf : ClosedProperConvexFn f) (hg : Closed
   exact eq_add_coe_of_subgradientRel_subset hf hg
     (subgradientRel_eq_of_deriv_eq hf.proper hg.proper hr hl).subset
 
-/-- **Theorem 24.2**, uniqueness clause: a nondecreasing `φ` pins down a closed
+/-- **Uniqueness**: a nondecreasing `φ` between the one-sided derivatives pins down a closed
 proper convex function on the line up to an additive constant. -/
 theorem exists_eq_add_coe_of_le_le (hf : ClosedProperConvexFn f) (hg : ClosedProperConvexFn g)
     {φ : ℝ → EReal} (hf₁ : ∀ z, leftDeriv f z ≤ φ z) (hf₂ : ∀ z, φ z ≤ rightDeriv f z)
@@ -939,7 +940,7 @@ theorem isMaximalMonotoneRel_iff_isMaximalCyclicallyMonotone :
   · rintro ⟨h₁, h₂⟩
     exact ⟨h₁.isMonotoneRel, fun σ hσ hsub => h₂ σ hσ.isCyclicallyMonotone hsub⟩
 
-/-- **Theorem 24.3**: on the line the maximal monotone mappings — the maximal chains for the
+/-- On the line the maximal monotone mappings — the maximal chains for the
 coordinatewise order, the *complete non-decreasing curves* — are exactly the subdifferentials of
 the closed proper convex functions. With `mem_subgradientRel_iff`, a complete non-decreasing curve
 is always the region `f'₋(x) ≤ y ≤ f'₊(x)` between two one-sided derivatives, and conversely. -/
