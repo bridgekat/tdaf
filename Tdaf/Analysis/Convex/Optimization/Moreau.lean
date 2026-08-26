@@ -17,9 +17,9 @@ splits `w` between a closed proper convex function and its conjugate:
 
 `(f □ w) + (f* □ w) = w`.
 
-This is the identity half of **Theorem 31.5**. Attainment, uniqueness and the `prox` operator are
-in `Optimization/Prox.lean`, which needs finite dimensions; the gradient formulas are in
-`Optimization/MoreauGradient.lean`.
+This is the identity half of **Moreau's decomposition**. Attainment, uniqueness and the `prox`
+operator are in `Optimization/Prox.lean`, which needs finite dimensions; the gradient formulas are
+in `Optimization/MoreauGradient.lean`.
 
 ## Main definitions
 
@@ -29,15 +29,15 @@ in `Optimization/Prox.lean`, which needs finite dimensions; the gradient formula
 
 * `conj_quadFn` — the quadratic is self-conjugate under its own pairing.
 * `conj_quadFn_sub` — `(w (z - ·))* y = B z y + w y`.
-* `moreau_add` — **Theorem 31.5 (Moreau)**: `(f □ w) z + (f* □ w) z = w z`.
+* `moreau_add` — **Moreau's decomposition**: `(f □ w) z + (f* □ w) z = w z` (Theorem 31.5 in [^1]).
 * `infConv_quadFn_ne_top`, `infConv_quadFn_ne_bot` — both Moreau envelopes are finite.
-* `mem_subgradient_iff_infConv_eq` — **Theorem 31.5**, the Kuhn–Tucker conditions attached to a
-  splitting `z = x + y`.
+* `mem_subgradient_iff_infConv_eq` — the Kuhn–Tucker conditions attached to a splitting
+  `z = x + y`.
 
 ## Implementation notes
 
-The theorem is Theorem 27.1(a) applied to `f + w (z - ·)`, with the conjugate of that sum split at
-the origin. The constraint qualification is continuity of `w (z - ·)` rather than a
+The identity is `⨅ φ = -φ* 0` applied to `φ = f + w (z - ·)`, with the conjugate of that sum split
+at the origin. The constraint qualification is continuity of `w (z - ·)` rather than a
 relative-interior condition, so no finite-dimensionality is needed. Everything goes through `B` and
 never through the norm, so the theorem applies verbatim on a product space carrying
 `prodPairing (innerₗ U) (innerₗ X)` and no `InnerProductSpace` instance; the inner-product case is
@@ -45,7 +45,7 @@ recovered by `quadFn_innerL`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31 (Theorem 31.5).
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31.
 -/
 
 open RealInnerProductSpace
@@ -160,7 +160,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 end Inner
 
-/-! ### Theorem 31.5: Moreau's decomposition -/
+/-! ### Moreau's decomposition -/
 
 section Moreau
 
@@ -187,9 +187,9 @@ theorem infConv_quadFn_apply (hb : ∀ x, f x ≠ ⊥) (z : E) :
     ← iInf_comp_sub (fun y => f (z - y) + quadFn B y) z]
   exact iInf_congr fun x => by rw [sub_sub_cancel]
 
-/-- **Theorem 31.5 (Moreau)**: infimal convolution with the quadratic splits the quadratic between
-`f` and `f*`. Theorem 27.1(a) applied to `f + w (z - ·)`, with the conjugate of that sum split at
-the origin; the sign flip `y ↦ -y` it produces turns `⟨z, y⟩ + w y` into `w (z - y) - w z`. -/
+/-- **Moreau's decomposition**: infimal convolution with the quadratic splits the quadratic between
+`f` and `f*`. The proof is `⨅ φ = -φ* 0` for `φ = f + w (z - ·)`, with the conjugate of that sum
+split at the origin; the sign flip `y ↦ -y` turns `⟨z, y⟩ + w y` into `w (z - y) - w z`. -/
 theorem moreau_add (hf : ClosedProperConvexFn f) (z : E) :
     infConv f (quadFn B) z + infConv (conj B f) (quadFn B) z = quadFn B z := by
   obtain ⟨x₀, hx₀⟩ := hf.proper.dom_nonempty
@@ -259,8 +259,8 @@ private theorem bot_add_ne_coe (u : EReal) (r : ℝ) : ⊥ + u ≠ (r : EReal) :
   rw [_root_.EReal.bot_add]
   exact (_root_.EReal.coe_ne_bot r).symm
 
-/-- **Theorem 31.5**: the Moreau envelope of a closed proper convex function is never `+∞`. Both
-infima in Moreau's identity are real, since their sum is. -/
+/-- The Moreau envelope of a closed proper convex function is never `+∞`. Both infima in the
+decomposition are real, since their sum is. -/
 theorem infConv_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
     infConv f (quadFn B) z ≠ ⊤ := by
   intro hc
@@ -268,7 +268,7 @@ theorem infConv_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
   rw [hc, quadFn_apply] at h
   exact top_add_ne_coe _ _ h
 
-/-- **Theorem 31.5**: the Moreau envelope never takes `-∞`. -/
+/-- The Moreau envelope never takes `-∞`. -/
 theorem infConv_quadFn_ne_bot (hf : ClosedProperConvexFn f) (z : E) :
     infConv f (quadFn B) z ≠ ⊥ := by
   intro hc
@@ -276,7 +276,7 @@ theorem infConv_quadFn_ne_bot (hf : ClosedProperConvexFn f) (z : E) :
   rw [hc, quadFn_apply] at h
   exact bot_add_ne_coe _ _ h
 
-/-- **Theorem 31.5**: the dual Moreau envelope is finite too. -/
+/-- The dual Moreau envelope is finite too. -/
 theorem infConv_conj_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
     infConv (conj B f) (quadFn B) z ≠ ⊤ := by
   intro hc
@@ -284,7 +284,7 @@ theorem infConv_conj_quadFn_ne_top (hf : ClosedProperConvexFn f) (z : E) :
   rw [hc, _root_.EReal.add_top_of_ne_bot (infConv_quadFn_ne_bot (B := B) hf z), quadFn_apply] at h
   exact absurd h (_root_.EReal.coe_ne_top _).symm
 
-/-- **Theorem 31.5**: the dual Moreau envelope never takes `-∞`. -/
+/-- The dual Moreau envelope never takes `-∞`. -/
 theorem infConv_conj_quadFn_ne_bot (hf : ClosedProperConvexFn f) (z : E) :
     infConv (conj B f) (quadFn B) z ≠ ⊥ := by
   intro hc
@@ -310,8 +310,8 @@ private theorem finite_of_add_eq_coe {A C : EReal} (hA : A ≠ ⊥) (hC : C ≠ 
     (h : A + C = (m : EReal)) : A ≠ ⊤ ∧ C ≠ ⊤ := by
   induction A <;> induction C <;> simp_all
 
-/-- **Theorem 31.5**, the Kuhn–Tucker conditions: for a splitting `z = x + y`, the pair `(x, y)`
-attains both infima exactly when `y ∈ ∂f x`. It follows from `moreau_add`, because
+/-- **The Kuhn–Tucker conditions for the decomposition**: for a splitting `z = x + y`, the pair
+`(x, y)` attains both infima exactly when `y ∈ ∂f x`. It follows from `moreau_add`, because
 `(f x + w y) + (f* y + w x) = (f x + f* y) + (w x + w y)` while `⟨x, y⟩ + w x + w y = w z`, so
 Fenchel's inequality makes the left side at least `w z`, which is the sum of the two infima.
 

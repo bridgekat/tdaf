@@ -11,15 +11,15 @@ import Tdaf.Analysis.Convex.Optimization.Minimum
 
 An *ordinary convex program* minimises `f₀` over `C = dom f₀` subject to finitely many convex
 inequalities `fᵢ x ≤ 0` and finitely many affine constraints. The main result is the **existence of
-Kuhn–Tucker vectors under Slater's condition** (**Theorem 28.2**): if the optimal value is not `-∞`
-and some point of `ri C` satisfies every non-affine constraint strictly, then non-negative
-multipliers exist for which the infimum of the Lagrangian equals the optimal value.
+Kuhn–Tucker vectors under Slater's condition**: if the optimal value is not `-∞` and some point of
+`ri C` satisfies every non-affine constraint strictly, then non-negative multipliers exist for
+which the infimum of the Lagrangian equals the optimal value.
 
 The two families of constraints are kept apart by role. Those indexed by `ι` are the ones Slater's
 condition asks a *strict* inequality of — the indices where `fᵢ` is not affine — and are
 `EReal`-valued convex functions; those indexed by `κ` are affine maps `E →ᵃ[ℝ] ℝ` asked only for a
-weak inequality. That is the split Theorem 21.2 is stated against, so Theorem 28.2 applies it
-directly and Corollary 28.2.2 is the case `ι = Empty`.
+weak inequality. That is the split the theorem of the alternative is stated against, so the
+existence theorem applies it directly and the affine-only case is `ι = Empty`.
 
 ## Main definitions
 
@@ -27,12 +27,12 @@ directly and Corollary 28.2.2 is the case `ι = Empty`.
 
 ## Main results
 
-* `exists_isKuhnTuckerVector_of_slater` — **Theorem 28.2**.
-* `exists_isKuhnTuckerVector_of_mem_dom` — **Corollary 28.2.1**: when every constraint holds
-  strictly somewhere in `C`, the Slater point need not lie in `ri C`.
-* `exists_isKuhnTuckerVector_of_affine` — **Corollary 28.2.2**: with only affine constraints, a
-  feasible point in `ri C` suffices.
-* `exists_multipliers_of_slater_eq` — Theorem 28.2 for affine *equality* constraints, whose
+* `exists_isKuhnTuckerVector_of_slater` — the existence theorem (Theorem 28.2 in [^1]).
+* `exists_isKuhnTuckerVector_of_mem_dom` — when every constraint holds strictly somewhere in `C`,
+  the Slater point need not lie in `ri C`.
+* `exists_isKuhnTuckerVector_of_affine` — with only affine constraints, a feasible point in `ri C`
+  suffices.
+* `exists_multipliers_of_slater_eq` — the same for affine *equality* constraints, whose
   multipliers are then of unrestricted sign.
 
 ## Implementation notes
@@ -43,7 +43,7 @@ multiplier of the objective.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §28.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §28.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -64,7 +64,7 @@ omit [Fintype ι] [Fintype κ] in
     x ∈ feasibleSet f b ↔ (∀ i, f i x ≤ 0) ∧ ∀ j, b j x ≤ 0 := Iff.rfl
 
 /-- The **Lagrangian** of an ordinary convex program at the multipliers `(l, μ)`, namely
-`f₀ + λ₁f₁ + ⋯ + λ_m f_m`. The perturbational Lagrangian of §29 is `lagrangian`. -/
+`f₀ + λ₁f₁ + ⋯ + λ_m f_m`. The perturbational Lagrangian of a bifunction is `lagrangian`. -/
 noncomputable def programLagrangian (f₀ : E → EReal) (f : ι → E → EReal) (b : κ → E →ᵃ[ℝ] ℝ)
     (l : ι → ℝ) (μ : κ → ℝ) : E → EReal :=
   fun x => f₀ x + (∑ i, (l i : EReal) * f i x) + ((∑ j, μ j * b j x : ℝ) : EReal)
@@ -84,8 +84,8 @@ theorem optimalValue_le {f₀ : E → EReal} {f : ι → E → EReal} {b : κ �
   iInf₂_le x hx
 
 /-- `(l, μ)` is a vector of **Kuhn–Tucker coefficients**: the multipliers are non-negative, and the
-infimum of the Lagrangian is finite and equal to the optimal value. This is the §28 definition, not
-the equivalent perturbational inequality `p u + ⟨λ, u⟩ ≥ p 0`. -/
+infimum of the Lagrangian is finite and equal to the optimal value. This is the direct definition,
+not the equivalent perturbational inequality `p u + ⟨λ, u⟩ ≥ p 0`. -/
 structure IsKuhnTuckerVector (f₀ : E → EReal) (f : ι → E → EReal) (b : κ → E →ᵃ[ℝ] ℝ)
     (l : ι → ℝ) (μ : κ → ℝ) : Prop where
   /-- The multipliers of the convex constraints are non-negative. -/
@@ -118,7 +118,7 @@ theorem coe_mul_nonpos {c : ℝ} (hc : 0 ≤ c) {z : EReal} (hz : z ≤ 0) : (c 
       _ = 0 := by simp
 
 /-- A non-negatively weighted sum of strictly negative values with one non-zero weight is strictly
-negative; this rules out a vanishing multiplier on the objective in Theorem 28.2. -/
+negative; this rules out a vanishing multiplier on the objective. -/
 theorem sum_coe_mul_neg (hl : ∀ i, 0 ≤ l i) {v : ι → EReal} (hv : ∀ i, v i < 0) {i₀ : ι}
     (hi₀ : l i₀ ≠ 0) : (∑ i, (l i : EReal) * v i) < 0 := by
   classical
@@ -199,9 +199,9 @@ private theorem add_neg_coe_lt_top_iff {u : EReal} {a : ℝ} :
     rw [← _root_.EReal.coe_add]
     exact iff_of_true (_root_.EReal.coe_lt_top _) (_root_.EReal.coe_lt_top _)
 
-/-- **Theorem 28.2.** If the optimal value is not `-∞` and the program has a feasible solution in
-`ri C`, `C = dom f₀`, satisfying *strictly* every constraint of the first family, then a vector of
-Kuhn–Tucker coefficients exists. -/
+/-- **Existence of Kuhn–Tucker coefficients under Slater's condition.** If the optimal value is
+not `-∞` and the program has a feasible solution in `ri C`, `C = dom f₀`, satisfying *strictly*
+every constraint of the first family, then a vector of Kuhn–Tucker coefficients exists. -/
 theorem exists_isKuhnTuckerVector_of_slater (hf₀ : ConvexFn f₀) (hp₀ : Proper f₀)
     (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i)) (hsub : ∀ i, dom f₀ ⊆ dom (f i))
     (hbot : optimalValue f₀ f b ≠ ⊥)
@@ -236,7 +236,7 @@ theorem exists_isKuhnTuckerVector_of_slater (hf₀ : ConvexFn f₀) (hp₀ : Pro
     rintro (_ | i) x hx
     · exact mem_dom.2 (add_neg_coe_lt_top_iff.2 (mem_dom.1 (intrinsicInterior_subset hx)))
     · exact hsub i (intrinsicInterior_subset hx)
-  -- the strict system is unsolvable, so Theorem 21.2 produces multipliers
+  -- the strict system is unsolvable, so the theorem of the alternative produces multipliers
   have hnoalt : ¬ ∃ x ∈ dom f₀, (∀ i', g i' x < 0) ∧ ∀ j, b j x ≤ 0 := by
     rintro ⟨x, _, hxg, hxb⟩
     have hx0 : f₀ x < (α : EReal) := add_neg_coe_lt_zero_iff.1 (hxg none)
@@ -328,8 +328,8 @@ theorem exists_isKuhnTuckerVector_of_slater (hf₀ : ConvexFn f₀) (hp₀ : Pro
   exact ⟨l, ν, hlnonneg, hνnonneg, by rw [hiInf]; exact _root_.EReal.coe_ne_bot _,
     by rw [hiInf]; exact _root_.EReal.coe_ne_top _, by rw [hiInf, hα]⟩
 
-/-- **Corollary 28.2.2.** With only affine constraints a feasible solution in `ri C` suffices:
-Theorem 28.2 with an empty family of strict constraints. -/
+/-- With only affine constraints a feasible solution in `ri C` suffices: the existence theorem
+with an empty family of strict constraints. -/
 theorem exists_isKuhnTuckerVector_of_affine [IsEmpty ι] (hf₀ : ConvexFn f₀) (hp₀ : Proper f₀)
     (hbot : optimalValue f₀ f b ≠ ⊥) (hfeas : ∃ x ∈ ri (dom f₀), ∀ j, b j x ≤ 0) :
     ∃ (l : ι → ℝ) (μ : κ → ℝ), IsKuhnTuckerVector f₀ f b l μ := by
@@ -338,8 +338,8 @@ theorem exists_isKuhnTuckerVector_of_affine [IsEmpty ι] (hf₀ : ConvexFn f₀)
     (fun i => isEmptyElim i) (fun i => isEmptyElim i) hbot ⟨x, hx, fun i => isEmptyElim i, hxb⟩
 
 omit [FiniteDimensional ℝ E] [Fintype ι] [Fintype κ] in
-/-- An affine map along the segment from `y` to `z`, as used in the prolongation of
-Corollary 28.2.1. -/
+/-- An affine map along the segment from `y` to `z`, as used in the prolongation of a Slater
+point. -/
 theorem affineMap_segment (g : E →ᵃ[ℝ] ℝ) (y z : E) (a : ℝ) :
     g ((1 - a) • y + a • z) = (1 - a) * g y + a * g z := by
   have hseg : (1 - a) • y + a • z = AffineMap.lineMap y z a := by
@@ -350,12 +350,12 @@ theorem affineMap_segment (g : E →ᵃ[ℝ] ℝ) (y z : E) (a : ℝ) :
   simp only [vsub_eq_sub, vadd_eq_add, smul_eq_mul]
   ring
 
-/-- **Corollary 28.2.1.** When every constraint holds *strictly* at some point of `C`, that point
-need not lie in `ri C`: prolonging it towards a relative interior point produces a Slater point.
+/-- When every constraint holds *strictly* at some point of `C`, that point need not lie in
+`ri C`: prolonging it towards a relative interior point produces a Slater point.
 
 The book states this for a program with no affine constraints; affine constraints are allowed here,
 at the price of asking strict inequality of them too, which is what survives the prolongation. The
-hypothesis `hri` is what Theorem 7.5 needs to follow `fᵢ` along the segment. -/
+hypothesis `hri` is what following `fᵢ` along the segment needs. -/
 theorem exists_isKuhnTuckerVector_of_mem_dom (hf₀ : ConvexFn f₀) (hp₀ : Proper f₀)
     (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i)) (hsub : ∀ i, dom f₀ ⊆ dom (f i))
     (hri : ∀ i, ri (dom f₀) ⊆ ri (dom (f i))) (hbot : optimalValue f₀ f b ≠ ⊥)
@@ -389,9 +389,8 @@ theorem exists_isKuhnTuckerVector_of_mem_dom (hf₀ : ConvexFn f₀) (hp₀ : Pr
   exact exists_isKuhnTuckerVector_of_slater hf₀ hp₀ hf hp hsub hbot
     ⟨_, hamem.1, hamem.2, fun j => (hafeas j).le⟩
 
-/-- **Theorem 28.2** for a program whose affine constraints are *equations*. Their multipliers are
-then of unrestricted sign, obtained as `μ' - μ''` from the two inequalities each equation splits
-into. -/
+/-- The same for a program whose affine constraints are *equations*. Their multipliers are then of
+unrestricted sign, obtained as `μ' - μ''` from the two inequalities each equation splits into. -/
 theorem exists_multipliers_of_slater_eq {σ : Type*} [Fintype σ] {a : σ → E →ᵃ[ℝ] ℝ}
     (hf₀ : ConvexFn f₀) (hp₀ : Proper f₀) (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i))
     (hsub : ∀ i, dom f₀ ⊆ dom (f i))

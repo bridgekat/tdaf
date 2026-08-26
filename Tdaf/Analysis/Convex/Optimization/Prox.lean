@@ -12,13 +12,13 @@ import Tdaf.Analysis.Convex.Subgradient.Monotone
 For `f` closed proper convex and `w x = ½ B x x`, the infimum defining the Moreau envelope
 `(f □ w) z` is attained at exactly one point, the **proximal point** `prox (z | f)`, and the
 minimiser is characterised by `z - x ∈ ∂f x`. That is the attainment and uniqueness half of
-**Theorem 31.5**; `Optimization/Moreau.lean` has the identity `(f □ w) + (f* □ w) = w`, and
-`Optimization/MoreauGradient.lean` the gradient formulas.
+**Moreau's decomposition**; `Optimization/Moreau.lean` has the identity `(f □ w) + (f* □ w) = w`,
+and `Optimization/MoreauGradient.lean` the gradient formulas.
 
 Two corollaries follow from the same monotonicity argument. Proximation is nonexpansive, so
-`(x, x*) ↦ x + x*` is a homeomorphism of the graph of `∂f` onto the space (**Corollary 31.5.1**),
-and `∂f` is a *maximal monotone* mapping (**Corollary 31.5.2**) — maximal among monotone relations,
-which is a different statement from the maximal cyclic monotonicity of Theorem 24.9.
+`(x, x*) ↦ x + x*` is a homeomorphism of the graph of `∂f` onto the space, and `∂f` is a *maximal
+monotone* mapping — maximal among monotone relations, which is a different statement from the
+maximal cyclic monotonicity of a subdifferential.
 
 ## Main definitions
 
@@ -31,12 +31,12 @@ which is a different statement from the maximal cyclic monotonicity of Theorem 2
 * `subgradient_quadFn_sub` — `∂(w (z - ·)) x = {x - z}`; `recessionFn_quadFn_sub` — `w (z - ·)`
   recedes in no direction but `0`.
 * `argmin_moreauObj_nonempty`, `mem_argmin_moreauObj_iff`, `existsUnique_sub_mem_subgradient`,
-  `prox_eq_iff` — **Theorem 31.5**: the minimum exists, is unique, and solves `z - x ∈ ∂f x`;
-  `prox_add_prox_conj` — **Theorem 31.5**: `z = prox (z | f) + prox (z | f*)`.
+  `prox_eq_iff` — the minimum exists, is unique, and solves `z - x ∈ ∂f x`
+  (Theorem 31.5 in [^1]); `prox_add_prox_conj` — `z = prox (z | f) + prox (z | f*)`.
 * `pairingNorm_prox_sub_le`, `dist_prox_prox_le`, `lipschitzWith_prox` — proximation is
   nonexpansive.
-* `subgradientRelHomeomorph`, `isMaximalMonotoneRel_subgradientRel` — **Corollaries 31.5.1**
-  and **31.5.2**.
+* `subgradientRelHomeomorph` — the graph of `∂f` is homeomorphic to `E`;
+  `isMaximalMonotoneRel_subgradientRel` — `∂f` is maximal monotone.
 
 ## Implementation notes
 
@@ -44,11 +44,11 @@ Everything runs through the pairing `B`, never through the ambient norm, so `pro
 product spaces carrying no `InnerProductSpace` instance; the norm enters only in `continuous_prox`.
 `prox` is a `Classical` choice from the minimum set, with value `0` where that set is empty; the
 standing hypothesis `ClosedProperConvexFn f` makes the set a singleton. Finite-dimensionality is
-used only for attainment, which is Theorem 27.2.
+used only for attainment of the minimum.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §31.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -142,8 +142,8 @@ theorem recessionFn_quadFn_sub (z : E) {y : E} (hy : y ≠ 0) :
   nlinarith [hkey, mul_le_mul_of_nonneg_left ha3 ha0,
     mul_le_mul_of_nonneg_left (le_abs_self ν) ha0]
 
-/-- **Theorem 31.5**, uniqueness: at most one `x` satisfies `z - x ∈ ∂f x`. Monotonicity of `∂f`
-(Theorem 24.8) gives `0 ≤ B (x₁ - x₂) (-(x₁ - x₂))`, and definiteness finishes. -/
+/-- **Uniqueness of the proximal point**: at most one `x` satisfies `z - x ∈ ∂f x`. Monotonicity
+of `∂f` gives `0 ≤ B (x₁ - x₂) (-(x₁ - x₂))`, and definiteness finishes. -/
 theorem eq_of_sub_mem_subgradient (hp : Proper f) {z x₁ x₂ : E}
     (h₁ : z - x₁ ∈ subgradient B f x₁) (h₂ : z - x₂ ∈ subgradient B f x₂) :
     x₁ = x₂ := by
@@ -160,7 +160,7 @@ noncomputable def prox (B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ) (f : E → EReal) (
 
 end Objective
 
-/-! ### Theorem 31.5: attainment, uniqueness, and `prox` -/
+/-! ### Attainment, uniqueness, and `prox` -/
 
 section Attainment
 
@@ -169,8 +169,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {f : E → EReal}
 
 omit [FiniteDimensional ℝ E] in
-/-- The constraint qualification of Theorem 31.5: `w (z - ·)` is finite and continuous, so the
-conjugate of `f + w (z - ·)` splits and the subgradient sum rule (Theorem 23.8) applies. -/
+/-- The constraint qualification: `w (z - ·)` is finite and continuous, so the conjugate of
+`f + w (z - ·)` splits and the subgradient sum rule applies. -/
 theorem isExactSum_quadFn_sub (hf : ClosedProperConvexFn f) (z : E) :
     IsExactSum B f (fun x => quadFn B (z - x)) := by
   obtain ⟨x₀, hx₀⟩ := hf.proper.dom_nonempty
@@ -179,7 +179,7 @@ theorem isExactSum_quadFn_sub (hf : ClosedProperConvexFn f) (z : E) :
     (continuous_quadFn_sub z).continuousAt).symm
 
 omit [FiniteDimensional ℝ E] in
-/-- The constraint qualification of Theorem 31.5 at the origin: the conjugate of `f + w` splits. -/
+/-- The same at the origin: the conjugate of `f + w` splits. -/
 theorem isExactSum_quadFn (hf : ClosedProperConvexFn f) : IsExactSum B f (quadFn B) := by
   have h := isExactSum_quadFn_sub (B := B) hf 0
   rwa [quadFn_zero_sub] at h
@@ -193,8 +193,8 @@ theorem closedProperConvexFn_moreauObj (hf : ClosedProperConvexFn f) (z : E) :
   exact mem_dom.2 (_root_.EReal.add_lt_top (mem_dom.1 hx₀).ne (quadFn_ne_top _))
 
 omit [FiniteDimensional ℝ E] [IsCompatiblePairing B] in
-/-- **The Moreau objective has no direction of recession.** Theorem 9.3 splits its recession
-function as `f0⁺ + (w (z - ·))0⁺`, where the second term is `+∞` off the origin. -/
+/-- **The Moreau objective has no direction of recession.** Its recession function splits as
+`f0⁺ + (w (z - ·))0⁺`, where the second term is `+∞` off the origin. -/
 theorem recessionConeFn_moreauObj (hf : ClosedProperConvexFn f) (z : E) :
     recessionConeFn (moreauObj B f z) = {0} := by
   have hg := closedProperConvexFn_moreauObj (B := B) hf z
@@ -210,8 +210,8 @@ theorem recessionConeFn_moreauObj (hf : ClosedProperConvexFn f) (z : E) :
     exact recessionFn_apply_zero_le _
 
 omit [IsCompatiblePairing B] in
-/-- **Theorem 31.5**, attainment: the infimum defining `(f □ w) z` is attained. Theorem 27.2
-applied to `f + w (z - ·)`, whose recession cone is `{0}`. -/
+/-- **Attainment**: the infimum defining `(f □ w) z` is attained, because `f + w (z - ·)` is
+closed proper convex with recession cone `{0}`. -/
 theorem argmin_moreauObj_nonempty (hf : ClosedProperConvexFn f) (z : E) :
     (argmin (moreauObj B f z)).Nonempty :=
   argmin_nonempty_of_recessionConeFn_eq_zero (closedProperConvexFn_moreauObj hf z).convex
@@ -219,8 +219,8 @@ theorem argmin_moreauObj_nonempty (hf : ClosedProperConvexFn f) (z : E) :
     (recessionConeFn_moreauObj hf z)
 
 omit [FiniteDimensional ℝ E] in
-/-- **Theorem 31.5**, the characterisation of the minimiser: `x` minimises `f + w (z - ·)` exactly
-when `z - x ∈ ∂f x`. Fermat's rule, the sum rule and `subgradient_quadFn_sub`. -/
+/-- **The characterisation of the minimiser**: `x` minimises `f + w (z - ·)` exactly when
+`z - x ∈ ∂f x`. Fermat's rule, the sum rule and `subgradient_quadFn_sub`. -/
 theorem mem_argmin_moreauObj_iff (hf : ClosedProperConvexFn f) (z x : E) :
     x ∈ argmin (moreauObj B f z) ↔ z - x ∈ subgradient B f x := by
   rw [mem_argmin_iff_zero_mem_subgradient B, moreauObj_def,
@@ -236,7 +236,7 @@ theorem mem_argmin_moreauObj_iff (hf : ClosedProperConvexFn f) (z x : E) :
   · intro h
     exact ⟨z - x, h, x - z, rfl, by abel_nf⟩
 
-/-- **Theorem 31.5**: there is exactly one `x` with `z = x + x*` and `x* ∈ ∂f x`. -/
+/-- There is exactly one `x` with `z = x + x*` and `x* ∈ ∂f x`. -/
 theorem existsUnique_sub_mem_subgradient (hf : ClosedProperConvexFn f) (z : E) :
     ∃! x : E, z - x ∈ subgradient B f x := by
   obtain ⟨x, hx⟩ := argmin_moreauObj_nonempty (B := B) hf z
@@ -249,22 +249,22 @@ theorem prox_mem_argmin (hf : ClosedProperConvexFn f) (z : E) :
     prox B f z ∈ argmin (moreauObj B f z) :=
   Classical.epsilon_spec (argmin_moreauObj_nonempty hf z)
 
-/-- **Theorem 31.5**: the splitting `z = x + x*` with `x* ∈ ∂f x` exists, at `x = prox (z | f)`. -/
+/-- The splitting `z = x + x*` with `x* ∈ ∂f x` exists, at `x = prox (z | f)`. -/
 theorem sub_prox_mem_subgradient (hf : ClosedProperConvexFn f) (z : E) :
     z - prox B f z ∈ subgradient B f (prox B f z) :=
   (mem_argmin_moreauObj_iff hf z _).1 (prox_mem_argmin hf z)
 
-/-- The splitting of Theorem 31.5 determines `prox`. -/
+/-- That splitting determines `prox`. -/
 theorem prox_eq_of_sub_mem_subgradient (hf : ClosedProperConvexFn f) {z x : E}
     (h : z - x ∈ subgradient B f x) : prox B f z = x :=
   eq_of_sub_mem_subgradient hf.proper (sub_prox_mem_subgradient hf z) h
 
-/-- **Theorem 31.5**, attainment and uniqueness in one statement. -/
+/-- Attainment and uniqueness in one statement: `prox (z | f) = x` exactly when `z - x ∈ ∂f x`. -/
 theorem prox_eq_iff (hf : ClosedProperConvexFn f) (z x : E) :
     prox B f z = x ↔ z - x ∈ subgradient B f x :=
   ⟨fun h => h ▸ sub_prox_mem_subgradient hf z, prox_eq_of_sub_mem_subgradient hf⟩
 
-/-- **Theorem 31.5**: the minimum set of the Moreau objective is `{prox (z | f)}`. -/
+/-- The minimum set of the Moreau objective is `{prox (z | f)}`. -/
 theorem argmin_moreauObj_eq_singleton (hf : ClosedProperConvexFn f) (z : E) :
     argmin (moreauObj B f z) = {prox B f z} := by
   refine Set.Subset.antisymm (fun x hx => ?_) ?_
@@ -274,20 +274,20 @@ theorem argmin_moreauObj_eq_singleton (hf : ClosedProperConvexFn f) (z : E) :
     exact prox_mem_argmin hf z
 
 omit [IsCompatiblePairing B] in
-/-- **Theorem 31.5**: the envelope is the value of the objective at the proximal point. -/
+/-- The envelope is the value of the objective at the proximal point. -/
 theorem infConv_quadFn_eq_moreauObj_prox (hf : ClosedProperConvexFn f) (z : E) :
     infConv f (quadFn B) z = f (prox B f z) + quadFn B (z - prox B f z) := by
   rw [infConv_quadFn_apply hf.proper.ne_bot z]
   exact iInf_eq_of_mem_argmin (f := moreauObj B f z) (prox_mem_argmin hf z)
 
 omit [FiniteDimensional ℝ E] in
-/-- **Theorem 12.2**: the conjugate of a closed proper convex function is closed proper convex. -/
+/-- The conjugate of a closed proper convex function is closed proper convex. -/
 theorem closedProperConvexFn_conj (hf : ClosedProperConvexFn f) :
     ClosedProperConvexFn (conj B f) := by
   exact ⟨convexFn_conj _ _, closedFn_conj, proper_conj hf⟩
 
-/-- **Theorem 31.5**: `z` splits as `prox (z | f) + prox (z | f*)`. Corollary 23.5.1 inverts `∂f`
-into `∂f*`, so the second half of `z = x + x*` is the proximal point of `f*`. -/
+/-- **Moreau's decomposition of a point**: `z` splits as `prox (z | f) + prox (z | f*)`. Conjugate
+inversion turns `∂f` into `∂f*`, so the second half of `z = x + x*` is `prox (z | f*)`. -/
 theorem prox_add_prox_conj (hf : ClosedProperConvexFn f) (z : E) :
     prox B f z + prox B (conj B f) z = z := by
   have hx : z - prox B f z ∈ subgradient B f (prox B f z) := sub_prox_mem_subgradient hf z
@@ -299,11 +299,10 @@ theorem prox_add_prox_conj (hf : ClosedProperConvexFn f) (z : E) :
   rw [prox_eq_of_sub_mem_subgradient (closedProperConvexFn_conj hf) hstar]
   abel
 
-/-! ### Corollary 31.5.1: the graph of `∂f` is homeomorphic to the space -/
+/-! ### The graph of `∂f` is homeomorphic to the space -/
 
-/-- **Theorem 31.5**, nonexpansiveness of proximation, in the norm the pairing induces.
-Monotonicity of `∂f` gives `B (x₁ - x₂) (x₁ - x₂) ≤ B (x₁ - x₂) (z₁ - z₂)`, and Cauchy–Schwarz
-finishes. -/
+/-- **Proximation is nonexpansive** in the norm the pairing induces. Monotonicity of `∂f` gives
+`B (x₁ - x₂) (x₁ - x₂) ≤ B (x₁ - x₂) (z₁ - z₂)`, and Cauchy–Schwarz finishes. -/
 theorem pairingNorm_prox_sub_le (hf : ClosedProperConvexFn f) (z₁ z₂ : E) :
     pairingNorm B (prox B f z₁ - prox B f z₂) ≤ pairingNorm B (z₁ - z₂) := by
   have hmono := isMonotoneRel_subgradientRel (B := B) hf.proper
@@ -331,8 +330,8 @@ theorem continuous_prox (hf : ClosedProperConvexFn f) : Continuous (prox B f) :=
   have h3 := hhigh (z₁ - z₂)
   linarith
 
-/-- **Corollary 31.5.1**: `(x, x*) ↦ x + x*` is a homeomorphism of the graph of `∂f` onto `E`. It is
-bijective by Theorem 31.5, continuous because addition is, and its inverse
+/-- `(x, x*) ↦ x + x*` is a homeomorphism of the graph of `∂f` onto `E`. It is bijective because
+every `z` splits uniquely, continuous because addition is, and its inverse
 `z ↦ (prox (z | f), z - prox (z | f))` is continuous because `prox` is nonexpansive. -/
 noncomputable def subgradientRelHomeomorph (hf : ClosedProperConvexFn f) :
     ↥(subgradientRel B f) ≃ₜ E where
@@ -361,11 +360,11 @@ noncomputable def subgradientRelHomeomorph (hf : ClosedProperConvexFn f) :
     (subgradientRelHomeomorph hf).symm z
       = ⟨(prox B f z, z - prox B f z), sub_prox_mem_subgradient hf z⟩ := rfl
 
-/-! ### Corollary 31.5.2: `∂f` is maximal monotone -/
+/-! ### `∂f` is maximal monotone -/
 
-/-- **Corollary 31.5.2**: the subdifferential of a closed proper convex function is *maximal
-monotone*. Given `(y, y*)` monotonically related to the whole graph, Theorem 31.5 produces `(x, x*)`
-in the graph with `x + x* = y + y*`; then `y - x = -(y* - x*)`, so the monotonicity inequality reads
+/-- The subdifferential of a closed proper convex function is *maximal monotone*. Given `(y, y*)`
+monotonically related to the whole graph, the unique splitting of `y + y*` produces `(x, x*)` in
+the graph with `x + x* = y + y*`; then `y - x = -(y* - x*)`, so the monotonicity inequality reads
 `0 ≤ -|y - x|²`. -/
 theorem isMaximalMonotoneRel_subgradientRel (hf : ClosedProperConvexFn f) :
     IsMaximalMonotoneRel B (subgradientRel B f) := by
@@ -394,7 +393,7 @@ section Inner
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   {f : E → EReal}
 
-/-- **Theorem 31.5**, nonexpansiveness in an inner-product space. -/
+/-- The distance between two proximal points is at most the distance between the two points. -/
 theorem dist_prox_prox_le (hf : ClosedProperConvexFn f) (z₁ z₂ : E) :
     dist (prox (innerₗ E) f z₁) (prox (innerₗ E) f z₂) ≤ dist z₁ z₂ := by
   have h := pairingNorm_prox_sub_le (B := innerₗ E) hf z₁ z₂
