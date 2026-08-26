@@ -12,8 +12,8 @@ import Tdaf.Surface.Rockafellar.Part1.Section05
 /-!
 # Rockafellar, Part I: Basic Concepts
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §§1–5. This module imports the five
-section modules and adds nothing of its own.
+R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §§1–5. All 49 numbered results of Part I
+are formalized. This module only imports the five section modules.
 
 | § | module | subject |
 |---|---|---|
@@ -22,6 +22,4 @@ section modules and adds nothing of its own.
 | 3 | `Part1.Section03` | The Algebra of Convex Sets |
 | 4 | `Part1.Section04` | Convex Functions |
 | 5 | `Part1.Section05` | Functional Operations |
-
-All 49 numbered results of Part I are present.
 -/

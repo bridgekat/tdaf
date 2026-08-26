@@ -13,74 +13,28 @@ import Tdaf.Surface.Common.Euclidean
 /-!
 # Rockafellar, §9: Some Closedness Criteria
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §9, pp. 72–81. The section introduces no
-new concepts: it is entirely criteria, built on §8's recession cones, for an operation on convex
-sets or convex functions to preserve closedness.
+Criteria, built on §8's recession cones, for an operation on convex sets or convex functions to
+preserve closedness. The section introduces no new concepts. All 18 numbered results of §9 are
+formalized.
 
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 9.1 | `theorem_9_1_closure`, `theorem_9_1_recession`, `theorem_9_1_isClosed` |
-| Corollary 9.1.1 | `corollary_9_1_1_closure`, `_recession`, `_isClosed` |
-| Corollary 9.1.2 | `corollary_9_1_2_isClosed`, `_recession`, `_isClosed_of_isBounded` |
-| Corollary 9.1.3 | `corollary_9_1_3` |
-| Theorem 9.2 | `theorem_9_2`, `theorem_9_2_attained` |
-| Corollary 9.2.1 | `corollary_9_2_1`, `corollary_9_2_1_recession`, `corollary_9_2_1_attained` |
-| Corollary 9.2.2 | `corollary_9_2_2`, `corollary_9_2_2_recession`, `corollary_9_2_2_attained` |
-| Theorem 9.3 | `theorem_9_3_closed`, `theorem_9_3_recession`, `theorem_9_3_closure` |
-| Theorem 9.4 | `theorem_9_4_closed`, `_proper`, `_recession`, `_closure` |
-| Theorem 9.5 | `theorem_9_5_closed`, `theorem_9_5_recession`, `theorem_9_5_closure` |
-| Theorem 9.6 | `theorem_9_6`, `theorem_9_6_iUnion` |
-| Corollary 9.6.1 | `corollary_9_6_1` |
-| Theorem 9.7 | `theorem_9_7`, `theorem_9_7_proper`, `_attained`, `_closed`, `_iInf_pos` |
-| Corollary 9.7.1 | `corollary_9_7_1_closed`, `corollary_9_7_1_level`, `corollary_9_7_1_zero` |
-| Theorem 9.8 | `theorem_9_8`, `theorem_9_8_recession` |
-| Corollary 9.8.1 | `corollary_9_8_1_isClosed`, `corollary_9_8_1_recession` |
-| Corollary 9.8.2 | `corollary_9_8_2` |
-| Corollary 9.8.3 | `corollary_9_8_3`, `corollary_9_8_3_recession`, `corollary_9_8_3_attained` |
+Where the book states a result for `C₁, …, Cₘ` (or `f₁, …, fₘ`) — Corollaries 9.1.1, 9.1.3 and
+9.2.1, Theorem 9.3, and Theorem 9.8 with its corollaries — what is stated here is the `m = 2`
+instance.
 
 ## The `λ ≥ 0⁺` convention
 
 Rockafellar writes `λ₁C₁ + ⋯ + λₘCₘ` where each `λᵢ` ranges over the non-negative reals *together
-with a formal symbol* `0⁺`, and where `0⁺Cᵢ` denotes the recession cone `0⁺Cᵢ` rather than the
-`{0}` that plain `0 • Cᵢ` would give (book, pp. 79 and 81). The same convention governs the
-infimum in Theorem 9.7, where `f0⁺` is the recession *function*.
+with a formal symbol* `0⁺`, and where `0⁺Cᵢ` denotes the recession cone rather than the `{0}` that
+plain `0 • Cᵢ` would give. The same convention governs the infimum in Theorem 9.7, where `f0⁺` is
+the recession *function*.
 
 That is a genuine extra symbol, not a limit, and it is modelled here as one: `ExtCoeff` is the
 disjoint union of `ℝ` and a formal `0⁺`, with `ExtCoeff.smulSet` acting on sets and
-`ExtCoeff.smulFn` acting on functions. Each carries its bridge to the backbone —
-`ExtCoeff.smulSet_ofReal`, `ExtCoeff.smulSet_zeroPlus`, `ExtCoeff.smulFn_ofReal`,
-`ExtCoeff.smulFn_zeroPlus` — and every theorem below is proved by *reducing to* the backbone form
-rather than by unfolding the convention. `iUnion_extCoeff_pair` is where the reduction has content:
-it identifies Rockafellar's `⋃ {λ₁C₁ + λ₂C₂ | λᵢ ≥ 0⁺, λ₁ + λ₂ = 1}` with the backbone's
-convention-free `conv (C₁ ∪ C₂) + (0⁺C₁ + 0⁺C₂)`.
-
-This is the definition §19 (Theorems 19.5.1, 19.6, 19.7) is expected to inherit.
-
-## What is not here
-
-* **The `m`-ary forms of Corollaries 9.1.1, 9.1.3 and 9.2.1, of Theorem 9.3, and of Theorems 9.8
-  and its corollaries** — *deferred by scope, backbone gap*. The book states each for `C₁, …, Cₘ`
-  (respectively `f₁, …, fₘ`); the backbone proves each for two sets or two functions and no
-  backbone result asks for more, so every `m`-ary statement here is its `m = 2` instance. The
-  `m`-ary version of Corollary 9.1.1 is not a contentless induction — the book's own proof runs
-  Theorem 9.1 on the product `C₁ ⊕ ⋯ ⊕ Cₘ ⊆ ℝᵐⁿ`. `Recession/Cone.lean` now has the coordinatewise
-  half of that, `recessionCone_pi` and `linealitySpace_pi`; what is still missing is the sum map
-  `(xᵢ) ↦ ∑ xᵢ` run against a `Set.pi`. Corollary 9.2.1 goes the same way — the book proves it by
-  running Theorem 9.2 on the separable sum `h(x₁, …, xₘ) = f₁(x₁) + ⋯ + fₘ(xₘ)` over `ℝᵐⁿ` — and it
-  needs, in addition, an `m`-ary infimal convolution and the recession function of a separable sum.
-* **Theorem 9.2's recession formula `(Ah)0⁺ = A(h0⁺)`** — *omitted, backbone gap*.
-  `closedProperConvexFn_mapLin` delivers the epigraph identity, closedness, properness and
-  attainment, but not the recession identity; getting it means re-running Theorem 9.1's
-  recession half on `epi h` and then recognising `B(epi (h0⁺))` as `epi (A(h0⁺))`, which is a
-  second application of the theorem and belongs beside the first, in the backbone.
-* **The two worked examples** (the non-closed image of `exp[-(ξ₁ξ₂)^(1/2)]`'s epigraph, p. 72, and
-  `C = {ξ₂ ≥ ξ₁²}` with `0⁺(AC) ≠ A(0⁺C)`, p. 75) — *omitted*. They are motivation, and the
-  hypotheses they show to be necessary are already carried as hypotheses.
-* **The monotone-hull illustration of Corollary 9.2.2** (`g x = inf {f y | y ≥ x}`, p. 77) —
-  *omitted*. It is Corollary 9.2.2 applied to `δ(· | -C)` for `C` the non-negative orthant, and
-  the orthant is not a §9 notion.
+`ExtCoeff.smulFn` on functions, each carrying its bridge to the backbone
+(`ExtCoeff.smulSet_ofReal`, `ExtCoeff.smulSet_zeroPlus`, and the two `smulFn` analogues). Every
+theorem below reduces to the backbone form rather than unfolding the convention;
+`iUnion_extCoeff_pair` is where that reduction has content, identifying Rockafellar's
+`⋃ {λ₁C₁ + λ₂C₂ | λᵢ ≥ 0⁺, λ₁ + λ₂ = 1}` with `conv (C₁ ∪ C₂) + (0⁺C₁ + 0⁺C₂)`.
 
 ## References
 
@@ -157,42 +111,32 @@ end ExtCoeff
 
 /-! ### Theorem 9.1 and its corollaries -/
 
-/-- **Rockafellar, Theorem 9.1.** Let `C` be a non-empty convex set in `ℝⁿ` and `A` a linear
+/-- **Theorem 9.1.** Let `C` be a non-empty convex set in `ℝⁿ` and `A` a linear
 transformation from `ℝⁿ` to `ℝᵐ`. Assume that every non-zero `z ∈ 0⁺(cl C)` with `Az = 0` belongs
-to the lineality space of `cl C`. Then `cl (AC) = A (cl C)`.
-
-Specialises `Convex.closure_image_eq`, which does not need `C` non-empty. -/
+to the lineality space of `cl C`. Then `cl (AC) = A (cl C)`. `C` need not be non-empty. -/
 theorem theorem_9_1_closure {C : Set (Rn n)} (hC : Convex ℝ C) (A : Rn n →ₗ[ℝ] Rn m)
     (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
     closure (A '' C) = A '' closure C :=
   Convex.closure_image_eq hC A h
 
-/-- **Rockafellar, Theorem 9.1**, second conclusion: `0⁺(A (cl C)) = A (0⁺(cl C))`.
-
-Specialises `Convex.recessionCone_image_closure`. -/
+/-- **Theorem 9.1**, second conclusion: `0⁺(A (cl C)) = A (0⁺(cl C))`. -/
 theorem theorem_9_1_recession {C : Set (Rn n)} (hC : Convex ℝ C) (hne : C.Nonempty)
     (A : Rn n →ₗ[ℝ] Rn m)
     (h : ∀ z ∈ recessionCone (closure C), A z = 0 → z ∈ linealitySpace (closure C)) :
     recessionCone (A '' closure C) = A '' recessionCone (closure C) :=
   Convex.recessionCone_image_closure hC hne A h
 
-/-- **Rockafellar, Theorem 9.1**, the "in particular" clause: if `C` is closed and `z = 0` is the
-only `z ∈ 0⁺C` with `Az = 0`, then `AC` is closed.
-
-Specialises `isClosed_image_of_recessionCone_inter_ker`, whose hypothesis is stated as
-`0⁺C ∩ ker A ⊆ {0}`. -/
+/-- **Theorem 9.1**, the "in particular" clause: if `C` is closed and `z = 0` is the only
+`z ∈ 0⁺C` with `Az = 0` — spelled `0⁺C ∩ ker A ⊆ {0}` — then `AC` is closed. -/
 theorem theorem_9_1_isClosed {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (A : Rn n →ₗ[ℝ] Rn m) (h : ∀ z ∈ recessionCone C, A z = 0 → z = 0) :
     IsClosed (A '' C) := by
   refine isClosed_image_of_recessionCone_inter_ker A hC hCc fun z hz => ?_
   exact Set.mem_singleton_iff.2 (h z hz.1 (LinearMap.mem_ker.1 hz.2))
 
-/-- **Rockafellar, Corollary 9.1.1** for `m = 2`. If the only way a direction of recession of
+/-- **Corollary 9.1.1** for `m = 2`. If the only way a direction of recession of
 `cl C₁` and one of `cl C₂` can cancel is inside the two lineality spaces, then
-`cl (C₁ + C₂) = cl C₁ + cl C₂`.
-
-Specialises `Convex.closure_add_eq`. The book states this for `m` sets; see
-`## What is not here`. -/
+`cl (C₁ + C₂) = cl C₁ + cl C₂`. The book states this for `m` sets. -/
 theorem corollary_9_1_1_closure {C D : Set (Rn n)} (hC : Convex ℝ C) (hCne : C.Nonempty)
     (hD : Convex ℝ D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone (closure C), ∀ w ∈ recessionCone (closure D), z + w = 0 →
@@ -200,10 +144,8 @@ theorem corollary_9_1_1_closure {C D : Set (Rn n)} (hC : Convex ℝ C) (hCne : C
     closure (C + D) = closure C + closure D :=
   Convex.closure_add_eq hC hCne hD hDne h
 
-/-- **Rockafellar, Corollary 9.1.1**, second conclusion:
-`0⁺(cl C₁ + cl C₂) = 0⁺(cl C₁) + 0⁺(cl C₂)`.
-
-Specialises `Convex.recessionCone_add`. -/
+/-- **Corollary 9.1.1**, second conclusion:
+`0⁺(cl C₁ + cl C₂) = 0⁺(cl C₁) + 0⁺(cl C₂)`. -/
 theorem corollary_9_1_1_recession {C D : Set (Rn n)} (hC : Convex ℝ C) (hCne : C.Nonempty)
     (hD : Convex ℝ D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone (closure C), ∀ w ∈ recessionCone (closure D), z + w = 0 →
@@ -212,10 +154,8 @@ theorem corollary_9_1_1_recession {C D : Set (Rn n)} (hC : Convex ℝ C) (hCne :
       recessionCone (closure C) + recessionCone (closure D) :=
   Convex.recessionCone_add hC hCne hD hDne h
 
-/-- **Rockafellar, Corollary 9.1.1**, the "in particular" clause: under the same hypothesis
-`C₁ + C₂` is closed when `C₁` and `C₂` are.
-
-Specialises `Convex.isClosed_add`. -/
+/-- **Corollary 9.1.1**, the "in particular" clause: under the same hypothesis
+`C₁ + C₂` is closed when `C₁` and `C₂` are. -/
 theorem corollary_9_1_1_isClosed {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, ∀ w ∈ recessionCone D, z + w = 0 →
@@ -223,43 +163,34 @@ theorem corollary_9_1_1_isClosed {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : I
     IsClosed (C + D) :=
   Convex.isClosed_add hC hCc hCne hD hDc hDne h
 
-/-- **Rockafellar, Corollary 9.1.2.** Let `C₁` and `C₂` be non-empty closed convex sets in `ℝⁿ`
+/-- **Corollary 9.1.2.** Let `C₁` and `C₂` be non-empty closed convex sets in `ℝⁿ`
 with no direction of recession of `C₁` whose opposite is a direction of recession of `C₂`. Then
-`C₁ + C₂` is closed.
-
-Specialises `Convex.isClosed_add_of_neg_notMem_recessionCone`. -/
+`C₁ + C₂` is closed. -/
 theorem corollary_9_1_2_isClosed {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) :
     IsClosed (C + D) :=
   Convex.isClosed_add_of_neg_notMem_recessionCone hC hCc hCne hD hDc hDne h
 
-/-- **Rockafellar, Corollary 9.1.2**, second conclusion:
-`0⁺(C₁ + C₂) = 0⁺C₁ + 0⁺C₂`.
-
-Specialises `Convex.recessionCone_add_of_neg_notMem_recessionCone`. -/
+/-- **Corollary 9.1.2**, second conclusion:
+`0⁺(C₁ + C₂) = 0⁺C₁ + 0⁺C₂`. -/
 theorem corollary_9_1_2_recession {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, -z ∈ recessionCone D → z = 0) :
     recessionCone (C + D) = recessionCone C + recessionCone D :=
   Convex.recessionCone_add_of_neg_notMem_recessionCone hC hCc hCne hD hDc hDne h
 
-/-- **Rockafellar, Corollary 9.1.2**, the parenthetical clause: the hypothesis holds in particular
-when one of the two sets is bounded.
-
-Specialises `Convex.isClosed_add_of_isBounded`. -/
+/-- **Corollary 9.1.2**, the parenthetical clause: the hypothesis holds in particular
+when one of the two sets is bounded. -/
 theorem corollary_9_1_2_isClosed_of_isBounded {C D : Set (Rn n)} (hC : Convex ℝ C)
     (hCc : IsClosed C) (hCne : C.Nonempty) (hCb : Bornology.IsBounded C) (hD : Convex ℝ D)
     (hDc : IsClosed D) (hDne : D.Nonempty) :
     IsClosed (C + D) :=
   Convex.isClosed_add_of_isBounded hC hCc hCne hCb hD hDc hDne
 
-/-- **Rockafellar, Corollary 9.1.3** for `m = 2`. For convex cones the recession cone of the
+/-- **Corollary 9.1.3** for `m = 2`. For convex cones the recession cone of the
 closure is the closure itself, so Corollary 9.1.1's hypothesis becomes a hypothesis about
-`cl K₁` and `cl K₂`, and `cl (K₁ + K₂) = cl K₁ + cl K₂`.
-
-Specialises `closure_add_coe_pointedCone`. Rockafellar's cones need not contain the origin; the
-backbone models a convex cone as a `PointedCone`, which does. -/
+`cl K₁` and `cl K₂`, and `cl (K₁ + K₂) = cl K₁ + cl K₂`. -/
 theorem corollary_9_1_3 (K L : PointedCone ℝ (Rn n))
     (h : ∀ z ∈ closure (K : Set (Rn n)), ∀ w ∈ closure (L : Set (Rn n)), z + w = 0 →
       z ∈ linealitySpace (closure (K : Set (Rn n))) ∧
@@ -270,25 +201,22 @@ theorem corollary_9_1_3 (K L : PointedCone ℝ (Rn n))
 
 /-! ### Theorem 9.2 and its corollaries -/
 
-/-- **Rockafellar, Theorem 9.2.** Let `h` be a closed proper convex function on `ℝⁿ` and `A` a
+/-- **Theorem 9.2.** Let `h` be a closed proper convex function on `ℝⁿ` and `A` a
 linear transformation from `ℝⁿ` to `ℝᵐ`. Assume `Az ≠ 0` for every `z` with `(h0⁺)(z) ≤ 0` and
 `(h0⁺)(-z) > 0`. Then `Ah`, where `(Ah)(y) = inf {h x | A x = y}`, is a closed proper convex
 function.
 
-Specialises `closedProperConvexFn_mapLin`. The hypothesis is transported by
-`mk_zero_mem_linealitySpace_epi_iff`: "`(h0⁺)(z) ≤ 0` and `(h0⁺)(-z) > 0` force `Az ≠ 0`" is the
-contrapositive of "`(h0⁺)(z) ≤ 0` and `Az = 0` force `z ∈ constancySpace h`". -/
+The hypothesis is transported by `mk_zero_mem_linealitySpace_epi_iff`: "`(h0⁺)(z) ≤ 0` and
+`(h0⁺)(-z) > 0` force `Az ≠ 0`" is the contrapositive of "`(h0⁺)(z) ≤ 0` and `Az = 0` force
+`z ∈ constancySpace h`". -/
 theorem theorem_9_2 {f : Rn n → EReal} (hconv : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) (A : Rn n →ₗ[ℝ] Rn m)
     (hrec : ∀ z, recessionFn f z ≤ 0 → A z = 0 → z ∈ constancySpace f) :
     ClosedProperConvexFn (mapLin A f) :=
   (closedProperConvexFn_mapLin hconv hp hc A hrec).2
 
-/-- **Rockafellar, Theorem 9.2**, last sentence: for each `y` with `(Ah)(y) ≠ +∞` the infimum
-defining `(Ah)(y)` is attained.
-
-Specialises `exists_mapLin_eq`, which reads attainment off the epigraph identity
-`epi (Ah) = B (epi h)`. -/
+/-- **Theorem 9.2**, last sentence: for each `y` with `(Ah)(y) ≠ +∞` the infimum defining
+`(Ah)(y)` is attained. -/
 theorem theorem_9_2_attained {f : Rn n → EReal} (hconv : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) (A : Rn n →ₗ[ℝ] Rn m)
     (hrec : ∀ z, recessionFn f z ≤ 0 → A z = 0 → z ∈ constancySpace f)
@@ -310,7 +238,7 @@ private theorem recessionFn_symm_of_corollary_9_2_1 {f g : Rn n → EReal}
   rw [neg_neg]
   exact not_le.1 hcon
 
-/-- **Rockafellar, Corollary 9.2.1** for `m = 2`. Let `f₁, f₂` be closed proper convex functions on
+/-- **Corollary 9.2.1** for `m = 2`. Let `f₁, f₂` be closed proper convex functions on
 `ℝⁿ` such that `z₁ + z₂ ≠ 0` for every pair of vectors with
 
 `(f₁0⁺)(z₁) + (f₂0⁺)(z₂) ≤ 0` and `(f₁0⁺)(-z₁) + (f₂0⁺)(-z₂) > 0`.
@@ -318,8 +246,7 @@ private theorem recessionFn_symm_of_corollary_9_2_1 {f g : Rn n → EReal}
 Then the infimal convolute `f₁ □ f₂` is a closed proper convex function.
 
 This is genuinely weaker in hypothesis than Corollary 9.2.2, which demands
-`(f₁0⁺)(z) + (f₂0⁺)(-z) > 0` for every `z ≠ 0`: here `f₁ = f₂ = 0` is admitted, and there it is
-not. Specialises `closedProperConvexFn_infConv_of_recessionFn_symm`. -/
+`(f₁0⁺)(z) + (f₂0⁺)(-z) > 0` for every `z ≠ 0`: here `f₁ = f₂ = 0` is admitted, there not. -/
 theorem corollary_9_2_1 {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g)
     (h : ∀ z w : Rn n, recessionFn f z + recessionFn g w ≤ 0 →
@@ -328,7 +255,7 @@ theorem corollary_9_2_1 {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
   (closedProperConvexFn_infConv_of_recessionFn_symm hf hg
     (recessionFn_symm_of_corollary_9_2_1 h)).2.1
 
-/-- **Rockafellar, Corollary 9.2.1**, last formula: `(f₁ □ f₂)0⁺ = f₁0⁺ □ f₂0⁺`. -/
+/-- **Corollary 9.2.1**, last formula: `(f₁ □ f₂)0⁺ = f₁0⁺ □ f₂0⁺`. -/
 theorem corollary_9_2_1_recession {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g)
     (h : ∀ z w : Rn n, recessionFn f z + recessionFn g w ≤ 0 →
@@ -337,11 +264,8 @@ theorem corollary_9_2_1_recession {f g : Rn n → EReal} (hf : ClosedProperConve
   (closedProperConvexFn_infConv_of_recessionFn_symm hf hg
     (recessionFn_symm_of_corollary_9_2_1 h)).2.2
 
-/-- **Rockafellar, Corollary 9.2.1**, attainment: the infimum in the definition of
-`(f₁ □ f₂)(x)` is attained for each `x`.
-
-Specialises `exists_add_eq_of_infConv_le_of_recessionFn_symm`; the epigraph identity
-`epi (f₁ □ f₂) = epi f₁ + epi f₂` *is* the attainment statement. -/
+/-- **Corollary 9.2.1**, attainment: the infimum defining `(f₁ □ f₂)(x)` is attained for each
+`x`. -/
 theorem corollary_9_2_1_attained {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g)
     (h : ∀ z w : Rn n, recessionFn f z + recessionFn g w ≤ 0 →
@@ -352,17 +276,16 @@ theorem corollary_9_2_1_attained {f g : Rn n → EReal} (hf : ClosedProperConvex
   exists_add_eq_of_infConv_le_of_recessionFn_symm hf hg
     (recessionFn_symm_of_corollary_9_2_1 h) hμ
 
-/-- **Rockafellar, Corollary 9.2.2.** Let `f₁, f₂` be closed proper convex functions on `ℝⁿ` with
+/-- **Corollary 9.2.2.** Let `f₁, f₂` be closed proper convex functions on `ℝⁿ` with
 `(f₁0⁺)(z) + (f₂0⁺)(-z) > 0` for every `z ≠ 0`. Then `f₁ □ f₂` is a closed proper convex function.
-
-Specialises `closedProperConvexFn_infConv`. -/
+-/
 theorem corollary_9_2_2 {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g)
     (h : ∀ z : Rn n, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) :
     ClosedProperConvexFn (infConv f g) :=
   (closedProperConvexFn_infConv hf hg h).2.1
 
-/-- **Rockafellar, Corollary 9.2.2**, last formula: `(f₁ □ f₂)0⁺ = f₁0⁺ □ f₂0⁺`.
+/-- **Corollary 9.2.2**, last formula: `(f₁ □ f₂)0⁺ = f₁0⁺ □ f₂0⁺`.
 
 The same formula under the weaker hypothesis of Corollary 9.2.1 is
 `corollary_9_2_1_recession`. -/
@@ -372,11 +295,8 @@ theorem corollary_9_2_2_recession {f g : Rn n → EReal} (hf : ClosedProperConve
     recessionFn (infConv f g) = infConv (recessionFn f) (recessionFn g) :=
   (closedProperConvexFn_infConv hf hg h).2.2
 
-/-- **Rockafellar, Corollary 9.2.2**, attainment: the infimum in
-`(f₁ □ f₂)(x) = inf_y {f₁(x - y) + f₂(y)}` is attained for each `x`.
-
-Specialises `exists_add_eq_of_infConv_le`; the epigraph identity `epi (f □ g) = epi f + epi g`
-*is* the attainment statement. -/
+/-- **Corollary 9.2.2**, attainment: the infimum in `(f₁ □ f₂)(x) = inf_y {f₁(x - y) + f₂(y)}` is
+attained for each `x`. -/
 theorem corollary_9_2_2_attained {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g)
     (h : ∀ z : Rn n, z ≠ 0 → 0 < recessionFn f z + recessionFn g (-z)) {x : Rn n} {μ : ℝ}
@@ -387,30 +307,22 @@ theorem corollary_9_2_2_attained {f g : Rn n → EReal} (hf : ClosedProperConvex
 
 /-! ### Theorem 9.3: sums of functions -/
 
-/-- **Rockafellar, Theorem 9.3** for `m = 2`, closed case. If `f₁` and `f₂` are closed proper
-convex and `f₁ + f₂` is not identically `+∞`, then `f₁ + f₂` is a closed proper convex function.
-
-Specialises `ClosedProperConvexFn.add`. -/
+/-- **Theorem 9.3** for `m = 2`, closed case. If `f₁` and `f₂` are closed proper
+convex and `f₁ + f₂` is not identically `+∞`, then `f₁ + f₂` is a closed proper convex function. -/
 theorem theorem_9_3_closed {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g) (hne : (dom (f + g)).Nonempty) :
     ClosedProperConvexFn (f + g) :=
   hf.add hg hne
 
-/-- **Rockafellar, Theorem 9.3** for `m = 2`, recession formula:
-`(f₁ + f₂)0⁺ = f₁0⁺ + f₂0⁺`.
-
-Specialises `recessionFn_add`, which is the book's own proof: Theorem 8.5's difference quotients
-based at a common point of the two effective domains. -/
+/-- **Theorem 9.3** for `m = 2`, recession formula: `(f₁ + f₂)0⁺ = f₁0⁺ + f₂0⁺`. -/
 theorem theorem_9_3_recession {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g) (hne : (dom (f + g)).Nonempty) :
     recessionFn (f + g) = recessionFn f + recessionFn g :=
   recessionFn_add hf hg hne
 
-/-- **Rockafellar, Theorem 9.3** for `m = 2`, second half: if the `fᵢ` are not all closed but
+/-- **Theorem 9.3** for `m = 2`, second half: if the `fᵢ` are not all closed but
 their effective domains have a common relative interior point, then
-`cl (f₁ + f₂) = cl f₁ + cl f₂`.
-
-Specialises `clFn_add`. -/
+`cl (f₁ + f₂) = cl f₁ + cl f₂`. -/
 theorem theorem_9_3_closure {f g : Rn n → EReal} (hf : ConvexFn f) (hpf : Proper f)
     (hg : ConvexFn g) (hpg : Proper g) {x : Rn n} (hxf : x ∈ ri (dom f)) (hxg : x ∈ ri (dom g)) :
     clFn (f + g) = clFn f + clFn g :=
@@ -418,15 +330,13 @@ theorem theorem_9_3_closure {f g : Rn n → EReal} (hf : ConvexFn f) (hpf : Prop
 
 /-! ### Theorem 9.4: pointwise suprema -/
 
-/-- **Rockafellar, Theorem 9.4**, closed case: a pointwise supremum of closed convex functions is
-closed, because its epigraph is the intersection of their epigraphs.
-
-Specialises `isClosed_epi_iSup`, which needs neither convexity nor finite dimension. -/
+/-- **Theorem 9.4**, closed case: a pointwise supremum of closed functions is closed, its epigraph
+being the intersection of theirs. Neither convexity nor finite dimension is needed. -/
 theorem theorem_9_4_closed {ι : Type*} {f : ι → Rn n → EReal} (hc : ∀ i, IsClosed (epi (f i))) :
     IsClosed (epi fun z => ⨆ i, f i z) :=
   isClosed_epi_iSup hc
 
-/-- **Rockafellar, Theorem 9.4**, properness. `f = sup {fᵢ | i ∈ I}` is proper as soon as every
+/-- **Theorem 9.4**, properness. `f = sup {fᵢ | i ∈ I}` is proper as soon as every
 `fᵢ` is proper and `f` is finite somewhere.
 
 "Finite somewhere" is spelled out as both `≠ ⊥` and `≠ ⊤` at one point; the `≠ ⊥` half is what
@@ -443,19 +353,15 @@ theorem theorem_9_4_proper {ι : Type*} {f : ι → Rn n → EReal} (hp : ∀ i,
   refine ⟨⟨x, mem_dom.2 (lt_top_iff_ne_top.2 htop)⟩, fun z => ?_⟩
   exact fun hz => (hp i₀).ne_bot z (le_bot_iff.1 (hz ▸ le_iSup (fun i => f i z) i₀))
 
-/-- **Rockafellar, Theorem 9.4**, recession formula: `f0⁺ = sup {fᵢ0⁺ | i ∈ I}`.
-
-Specialises `recessionFn_iSup`, which is Corollary 8.3.3 read through `epi_recessionFn`. -/
+/-- **Theorem 9.4**, recession formula: `f0⁺ = sup {fᵢ0⁺ | i ∈ I}`. This is Corollary 8.3.3 read
+through `epi_recessionFn`. -/
 theorem theorem_9_4_recession {ι : Type*} {f : ι → Rn n → EReal} (hconv : ∀ i, ConvexFn (f i))
     (hc : ∀ i, IsClosed (epi (f i))) (hne : (epi fun z => ⨆ i, f i z).Nonempty) :
     recessionFn (fun z => ⨆ i, f i z) = fun z => ⨆ i, recessionFn (f i) z :=
   recessionFn_iSup hconv hc hne
 
-/-- **Rockafellar, Theorem 9.4**, second half: if the `fᵢ` are not all closed but some `x̄` lies in
-every `ri (dom fᵢ)` and `f x̄` is finite, then `cl f = sup {cl fᵢ | i ∈ I}`.
-
-Specialises `lscHull_iSup`; for proper convex functions `cl` and `lscHull` agree
-(`ConvexFn.clFn_eq_lscHull`). -/
+/-- **Theorem 9.4**, second half: if the `fᵢ` are not all closed but some `x̄` lies in every
+`ri (dom fᵢ)` and `f x̄` is finite, then `cl f = sup {cl fᵢ | i ∈ I}`. -/
 theorem theorem_9_4_closure {ι : Type*} {f : ι → Rn n → EReal} (hconv : ∀ i, ConvexFn (f i))
     {x : Rn n} (hx : ∀ i, x ∈ ri (dom (f i))) (hfin : (⨆ i, f i x) < ⊤) :
     lscHull (fun z => ⨆ i, f i z) = fun z => ⨆ i, lscHull (f i) z :=
@@ -463,26 +369,21 @@ theorem theorem_9_4_closure {ι : Type*} {f : ι → Rn n → EReal} (hconv : �
 
 /-! ### Theorem 9.5: composition with a linear transformation -/
 
-/-- **Rockafellar, Theorem 9.5**, closed case: if `g` is closed then so is `gA`.
-
-Specialises `isClosed_epi_compLin`: `epi (gA)` is the preimage of `epi g` under the continuous
-linear map `(x, μ) ↦ (Ax, μ)`, so no relative interior hypothesis is needed. -/
+/-- **Theorem 9.5**, closed case: if `g` is closed then so is `gA`. No relative interior
+hypothesis is needed — `epi (gA)` is a preimage of `epi g` under a continuous linear map. -/
 theorem theorem_9_5_closed {g : Rn m → EReal} (hc : IsClosed (epi g)) (A : Rn n →ₗ[ℝ] Rn m) :
     IsClosed (epi (compLin g A)) :=
   isClosed_epi_compLin hc A
 
-/-- **Rockafellar, Theorem 9.5**, recession formula: `(gA)0⁺ = (g0⁺)A`.
-
-Specialises `recessionFn_compLin`, which is Corollary 8.3.4 read through `epi_recessionFn`. -/
+/-- **Theorem 9.5**, recession formula: `(gA)0⁺ = (g0⁺)A`. This is Corollary 8.3.4 read through
+`epi_recessionFn`. -/
 theorem theorem_9_5_recession {g : Rn m → EReal} (hg : ConvexFn g) (hc : IsClosed (epi g))
     (A : Rn n →ₗ[ℝ] Rn m) (hne : (dom (compLin g A)).Nonempty) :
     recessionFn (compLin g A) = compLin (recessionFn g) A :=
   recessionFn_compLin hg hc A hne
 
-/-- **Rockafellar, Theorem 9.5**, second half: if `g` is not closed but `Ax ∈ ri (dom g)` for some
-`x`, then `cl (gA) = (cl g)A`.
-
-Specialises `clFn_compLin`, which is Theorem 6.7 applied to `epi g`. -/
+/-- **Theorem 9.5**, second half: if `g` is not closed but `Ax ∈ ri (dom g)` for some `x`, then
+`cl (gA) = (cl g)A`. -/
 theorem theorem_9_5_closure {g : Rn m → EReal} (hg : ConvexFn g) (hp : Proper g)
     (A : Rn n →ₗ[ℝ] Rn m) {x : Rn n} (hx : A x ∈ ri (dom g)) :
     clFn (compLin g A) = compLin (clFn g) A :=
@@ -490,22 +391,17 @@ theorem theorem_9_5_closure {g : Rn m → EReal} (hg : ConvexFn g) (hp : Proper 
 
 /-! ### Theorem 9.6: the convex cone generated by a set -/
 
-/-- **Rockafellar, Theorem 9.6.** Let `C` be a non-empty closed convex set not containing the
-origin and let `K` be the convex cone generated by `C`. Then `cl K = K ∪ 0⁺C`.
-
-Specialises `closure_coe_hull_eq_union`. The backbone models "the convex cone generated by `C`" as
-`PointedCone.hull ℝ C`. -/
+/-- **Theorem 9.6.** For a non-empty closed convex `C` not containing the origin and `K` the
+convex cone generated by `C` (modelled as `PointedCone.hull ℝ C`), `cl K = K ∪ 0⁺C`. -/
 theorem theorem_9_6 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) (hne : C.Nonempty)
     (h0 : (0 : Rn n) ∉ C) :
     closure (PointedCone.hull ℝ C : Set (Rn n))
       = (PointedCone.hull ℝ C : Set (Rn n)) ∪ recessionCone C :=
   closure_coe_hull_eq_union hC hCc hne h0
 
-/-- **Rockafellar, Theorem 9.6**, in the `λ ≥ 0⁺` form the book gives it:
-`cl K = ⋃ {λC | λ > 0 or λ = 0⁺}`.
-
-The union is indexed by `ExtCoeff.Pos`, and `ExtCoeff.smulSet` is what makes `λ = 0⁺` contribute
-`0⁺C` rather than `{0}`. Specialises `closure_coe_hull`. -/
+/-- **Theorem 9.6** in the book's `λ ≥ 0⁺` form: `cl K = ⋃ {λC | λ > 0 or λ = 0⁺}`. The union is
+indexed by `ExtCoeff.Pos`, and `ExtCoeff.smulSet` is what makes `λ = 0⁺` contribute `0⁺C` rather
+than `{0}`. -/
 theorem theorem_9_6_iUnion {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hne : C.Nonempty) (h0 : (0 : Rn n) ∉ C) :
     closure (PointedCone.hull ℝ C : Set (Rn n))
@@ -521,10 +417,8 @@ theorem theorem_9_6_iUnion {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed 
     | ofReal t => exact Or.inl ⟨t, hl, hy⟩
     | zeroPlus => exact Or.inr hy
 
-/-- **Rockafellar, Corollary 9.6.1.** If `C` is a non-empty closed *bounded* convex set not
-containing the origin, the convex cone generated by `C` is closed.
-
-Specialises `isClosed_coe_hull_of_isBounded`. -/
+/-- **Corollary 9.6.1.** If `C` is a non-empty closed *bounded* convex set not
+containing the origin, the convex cone generated by `C` is closed. -/
 theorem corollary_9_6_1 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) (hne : C.Nonempty)
     (h0 : (0 : Rn n) ∉ C) (hb : Bornology.IsBounded C) :
     IsClosed (PointedCone.hull ℝ C : Set (Rn n)) :=
@@ -532,20 +426,15 @@ theorem corollary_9_6_1 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) 
 
 /-! ### Theorem 9.7: the positively homogeneous convex function generated by `f` -/
 
-/-- **Rockafellar, Theorem 9.7.** For a closed proper convex `f` on `ℝⁿ` with `f 0 > 0`, the
-positively homogeneous convex function `k` generated by `f` is proper.
-
-Specialises `proper_posHomGen`; the backbone's `posHomGen` *is* §5's `k`. -/
+/-- **Theorem 9.7.** For closed proper convex `f` with `f 0 > 0`, the positively homogeneous
+convex function `k` generated by `f` — the backbone's `posHomGen` — is proper. -/
 theorem theorem_9_7_proper {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) (h0 : 0 < f 0) :
     Proper (posHomGen f) :=
   proper_posHomGen hf hp hc h0
 
-/-- **Rockafellar, Theorem 9.7**, the formula
-`(cl k)(x) = inf {(fλ)(x) | λ > 0 or λ = 0⁺}`, in the `λ ≥ 0⁺` convention.
-
-Specialises `lscHull_posHomGen`, which states the same infimum split into its `λ > 0` part and its
-`λ = 0⁺` part; `ExtCoeff.smulFn` puts the two back under one index. -/
+/-- **Theorem 9.7**: `(cl k)(x) = inf {(fλ)(x) | λ > 0 or λ = 0⁺}`, in the `λ ≥ 0⁺` convention,
+with `ExtCoeff.smulFn` putting the `λ > 0` and `λ = 0⁺` parts under one index. -/
 theorem theorem_9_7 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) (hc : IsClosed (epi f))
     (h0 : 0 < f 0) :
     lscHull (posHomGen f) = ⨅ l : ExtCoeff, ⨅ _ : l.Pos, l.smulFn f := by
@@ -557,12 +446,9 @@ theorem theorem_9_7 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) (hc :
   · exact le_iInf₂ fun t ht => iInf₂_le (ExtCoeff.ofReal t) ht
   · exact iInf₂_le ExtCoeff.zeroPlus trivial
 
-/-- **Rockafellar, Theorem 9.7**, attainment: the infimum
-`inf {(fλ)(x) | λ > 0 or λ = 0⁺}` is attained for each `x`.
-
-Specialises `exists_smulRight_le_of_lscHull_posHomGen_le`. Attainment is the assertion that the
-right-hand side of Theorem 9.7 is a *union of epigraphs* rather than merely the epigraph of the
-infimum, so it is stated at each real bound `μ`. -/
+/-- **Theorem 9.7**, attainment: the infimum `inf {(fλ)(x) | λ > 0 or λ = 0⁺}` is attained for
+each `x`. Stated at each real bound `μ`, since the assertion is that the right-hand side is a
+*union of epigraphs* and not merely the epigraph of the infimum. -/
 theorem theorem_9_7_attained {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) (h0 : 0 < f 0) {x : Rn n} {μ : ℝ}
     (hμ : lscHull (posHomGen f) x ≤ (μ : EReal)) :
@@ -571,47 +457,34 @@ theorem theorem_9_7_attained {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper
   · exact ⟨ExtCoeff.ofReal t, ht, hle⟩
   · exact ⟨ExtCoeff.zeroPlus, trivial, hle⟩
 
-/-- **Rockafellar, Theorem 9.7**, last sentence: if `0 ∈ dom f` then `k` is itself closed.
-
-Specialises `lscHull_posHomGen_eq`. -/
+/-- **Theorem 9.7**, last sentence: if `0 ∈ dom f` then `k` is itself closed. -/
 theorem theorem_9_7_closed {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) (h0 : 0 < f 0) (hdom : f 0 ≠ ⊤) :
     lscHull (posHomGen f) = posHomGen f :=
   lscHull_posHomGen_eq hf hp hc h0 hdom
 
-/-- **Rockafellar, Theorem 9.7**, last sentence: if `0 ∈ dom f` then `λ = 0⁺` may be omitted from
-the infimum — though the infimum then need not be attained.
-
-Specialises `posHomGen_eq_iInf_smulRight`. -/
+/-- **Theorem 9.7**, last sentence: if `0 ∈ dom f` then `λ = 0⁺` may be omitted from
+the infimum — though the infimum then need not be attained. -/
 theorem theorem_9_7_iInf_pos {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) (h0 : 0 < f 0) (hdom : f 0 ≠ ⊤) :
     posHomGen f = ⨅ t : ℝ, ⨅ _ : (0 : ℝ) < t, smulRight f t :=
   posHomGen_eq_iInf_smulRight hf hp hc h0 hdom
 
-/-- **Rockafellar, Corollary 9.7.1.** For a closed convex set `C` containing `0`, the gauge
-`γ(· | C)` is closed.
-
-Specialises `closedFn_gaugeFn`. The backbone takes the *computed* formula
-`γ(x | C) = inf {λ ≥ 0 | x ∈ λC}` as its definition of `gaugeFn`, where the book defines `γ` as
-the positively homogeneous convex function generated by `δ(· | C) + 1`; the bridge between the two
-is a recorded backbone gap (see `Section05.lean`). -/
+/-- **Corollary 9.7.1.** For a closed convex set `C` containing `0`, the gauge `γ(· | C)` is
+closed. `gaugeFn` is defined by the computed formula `inf {λ ≥ 0 | x ∈ λC}`, where the book defines
+`γ` as the positively homogeneous convex function generated by `δ(· | C) + 1`. -/
 theorem corollary_9_7_1_closed {C : Set (Rn n)} (hC : Convex ℝ C) (h0 : (0 : Rn n) ∈ C)
     (hcl : IsClosed C) :
     ClosedFn (gaugeFn C) :=
   closedFn_gaugeFn hC h0 hcl
 
-/-- **Rockafellar, Corollary 9.7.1**, first formula: `{x | γ(x | C) ≤ λ} = λC` for `λ > 0`.
-
-Specialises `setOf_gaugeFn_le_pos`. -/
+/-- **Corollary 9.7.1**, first formula: `{x | γ(x | C) ≤ λ} = λC` for `λ > 0`. -/
 theorem corollary_9_7_1_level {C : Set (Rn n)} (hC : Convex ℝ C) (h0 : (0 : Rn n) ∈ C)
     (hcl : IsClosed C) {c : ℝ} (hc : 0 < c) :
     {x : Rn n | gaugeFn C x ≤ (c : EReal)} = c • C :=
   setOf_gaugeFn_le_pos hC h0 hcl hc
 
-/-- **Rockafellar, Corollary 9.7.1**, second formula: `{x | γ(x | C) = 0} = 0⁺C`.
-
-The level sets of `γ` at every positive height are the sets `λC` (`setOf_gaugeFn_le_pos`), and
-`0⁺C` is their intersection (`recessionCone_eq_iInter_smul`). -/
+/-- **Corollary 9.7.1**, second formula: `{x | γ(x | C) = 0} = 0⁺C`. -/
 theorem corollary_9_7_1_zero {C : Set (Rn n)} (hC : Convex ℝ C) (h0 : (0 : Rn n) ∈ C)
     (hcl : IsClosed C) :
     {x : Rn n | gaugeFn C x = 0} = recessionCone C := by
@@ -640,10 +513,8 @@ theorem corollary_9_7_1_zero {C : Set (Rn n)} (hC : Convex ℝ C) (h0 : (0 : Rn 
 Rockafellar's `⋃ {λ₁C₁ + λ₂C₂ | λᵢ ≥ 0⁺, λ₁ + λ₂ = 1}` is exactly
 `conv (C₁ ∪ C₂) + (0⁺C₁ + 0⁺C₂)`.
 
-This is the one place where the convention has to be *earned* rather than unfolded, and it is what
-makes Theorem 9.8 below a statement in the book's own terms. Both `λᵢ = 0⁺` is excluded by
-`λ₁ + λ₂ = 1`; the mixed cases are the two summands `0⁺C₁ + C₂` and `C₁ + 0⁺C₂`, and the case with
-both `λᵢ` real and positive absorbs the recession cones into `Cᵢ` because
+Both `λᵢ = 0⁺` is excluded by `λ₁ + λ₂ = 1`; the mixed cases give the summands `0⁺C₁ + C₂` and
+`C₁ + 0⁺C₂`; and with both `λᵢ` real and positive the recession cones are absorbed, since
 `Cᵢ + 0⁺Cᵢ = Cᵢ`. -/
 theorem iUnion_extCoeff_pair {C D : Set (Rn n)} (hC : Convex ℝ C) (hCne : C.Nonempty)
     (hD : Convex ℝ D) (hDne : D.Nonempty) :
@@ -740,15 +611,13 @@ theorem iUnion_extCoeff_pair {C D : Set (Rn n)} (hC : Convex ℝ C) (hCne : C.No
           abel
         rwa [hval] at hmem
 
-/-- **Rockafellar, Theorem 9.8** for `m = 2`. Let `C₁, C₂` be non-empty closed convex sets in `ℝⁿ`
+/-- **Theorem 9.8** for `m = 2`. Let `C₁, C₂` be non-empty closed convex sets in `ℝⁿ`
 such that the only way a direction of recession of one can cancel a direction of recession of the
 other is inside the two lineality spaces, and let `C = conv (C₁ ∪ C₂)`. Then
 
 `cl C = ⋃ {λ₁C₁ + λ₂C₂ | λᵢ ≥ 0⁺, λ₁ + λ₂ = 1}`,
 
-where `λᵢ ≥ 0⁺` means that `λᵢCᵢ` is taken to be `0⁺Cᵢ` rather than `{0}` when `λᵢ = 0`.
-
-Specialises `closure_convexHull_union` through `iUnion_extCoeff_pair`. -/
+where `λᵢ ≥ 0⁺` means that `λᵢCᵢ` is taken to be `0⁺Cᵢ` rather than `{0}` when `λᵢ = 0`. -/
 theorem theorem_9_8 {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
     (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, ∀ w ∈ recessionCone D, z + w = 0 →
@@ -760,9 +629,7 @@ theorem theorem_9_8 {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) (h
   rw [iUnion_extCoeff_pair hC hCne hD hDne]
   exact closure_convexHull_union hC hCc hCne hD hDc hDne h
 
-/-- **Rockafellar, Theorem 9.8**, second conclusion: `0⁺(cl C) = 0⁺C₁ + 0⁺C₂`.
-
-Specialises `recessionCone_closure_convexHull_union`. -/
+/-- **Theorem 9.8**, second conclusion: `0⁺(cl C) = 0⁺C₁ + 0⁺C₂`. -/
 theorem theorem_9_8_recession {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (h : ∀ z ∈ recessionCone C, ∀ w ∈ recessionCone D, z + w = 0 →
@@ -770,29 +637,24 @@ theorem theorem_9_8_recession {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsCl
     recessionCone (closure (convexHull ℝ (C ∪ D))) = recessionCone C + recessionCone D :=
   recessionCone_closure_convexHull_union hC hCc hCne hD hDc hDne h
 
-/-- **Rockafellar, Corollary 9.8.1** for `m = 2`. If `C₁, C₂` are non-empty closed convex sets with
-the *same* recession cone `K`, then `C = conv (C₁ ∪ C₂)` is closed.
-
-Specialises `isClosed_convexHull_union_of_recessionCone_eq`. -/
+/-- **Corollary 9.8.1** for `m = 2`. If `C₁, C₂` are non-empty closed convex sets with
+the *same* recession cone `K`, then `C = conv (C₁ ∪ C₂)` is closed. -/
 theorem corollary_9_8_1_isClosed {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (heq : recessionCone C = recessionCone D) :
     IsClosed (convexHull ℝ (C ∪ D)) :=
   (isClosed_convexHull_union_of_recessionCone_eq hC hCc hCne hD hDc hDne heq).1
 
-/-- **Rockafellar, Corollary 9.8.1**, second conclusion: `C` has `K` as its recession cone. -/
+/-- **Corollary 9.8.1**, second conclusion: `C` has `K` as its recession cone. -/
 theorem corollary_9_8_1_recession {C D : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hCne : C.Nonempty) (hD : Convex ℝ D) (hDc : IsClosed D) (hDne : D.Nonempty)
     (heq : recessionCone C = recessionCone D) :
     recessionCone (convexHull ℝ (C ∪ D)) = recessionCone C :=
   (isClosed_convexHull_union_of_recessionCone_eq hC hCc hCne hD hDc hDne heq).2
 
-/-- **Rockafellar, Corollary 9.8.2.** If `C₁, C₂` are closed bounded convex sets in `ℝⁿ`, then
-`conv (C₁ ∪ C₂)` is closed and bounded.
-
-The backbone route is not Theorem 9.8 but Corollary 17.2.1: in `ℝⁿ` closed and bounded is compact,
-and `IsCompact.isCompact_convexHull` does the rest. Convexity of the `Cᵢ` is not needed, and
-neither is non-emptiness — which is why the book's proof has to discard the empty `Cᵢ` by hand. -/
+/-- **Corollary 9.8.2.** If `C₁, C₂` are closed and bounded then `conv (C₁ ∪ C₂)` is closed and
+bounded. Stated without the convexity or non-emptiness the book assumes; the book's own proof has
+to discard an empty `Cᵢ` by hand. -/
 theorem corollary_9_8_2 {C D : Set (Rn n)} (hCc : IsClosed C) (hCb : Bornology.IsBounded C)
     (hDc : IsClosed D) (hDb : Bornology.IsBounded D) :
     IsClosed (convexHull ℝ (C ∪ D)) ∧ Bornology.IsBounded (convexHull ℝ (C ∪ D)) := by
@@ -802,27 +664,22 @@ theorem corollary_9_8_2 {C D : Set (Rn n)} (hCc : IsClosed C) (hCb : Bornology.I
   have h := IsCompact.isCompact_convexHull hcpt
   exact ⟨h.isClosed, h.isBounded⟩
 
-/-- **Rockafellar, Corollary 9.8.3** for `m = 2`. If `f₁, f₂` are closed proper convex functions on
-`ℝⁿ` all having the same recession function `k`, then `f = conv {f₁, f₂}` is closed and proper.
-
-Specialises `closedProperConvexFn_convFn₂`. -/
+/-- **Corollary 9.8.3** for `m = 2`. If `f₁, f₂` are closed proper convex functions on
+`ℝⁿ` all having the same recession function `k`, then `f = conv {f₁, f₂}` is closed and proper. -/
 theorem corollary_9_8_3 {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g) (heq : recessionFn f = recessionFn g) :
     ClosedProperConvexFn (convFn₂ f g) :=
   (closedProperConvexFn_convFn₂ hf hg heq).2.1
 
-/-- **Rockafellar, Corollary 9.8.3**, second conclusion: `f` has `k` as its recession function. -/
+/-- **Corollary 9.8.3**, second conclusion: `f` has `k` as its recession function. -/
 theorem corollary_9_8_3_recession {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g) (heq : recessionFn f = recessionFn g) :
     recessionFn (convFn₂ f g) = recessionFn f :=
   (closedProperConvexFn_convFn₂ hf hg heq).2.2
 
-/-- **Rockafellar, Corollary 9.8.3**, last sentence: in the formula for `f(x)` of Theorem 5.6 the
-infimum is attained for each `x` by some convex combination.
-
-Specialises `exists_combo_of_convFn₂_le`. Attainment is stated against a real upper bound, which is
-the `EReal`-faithful reading of "the infimum is attained": the value `conv {f₁, f₂} x` itself may
-be `+∞`, and then there is nothing to attain. -/
+/-- **Corollary 9.8.3**, last sentence: the infimum in Theorem 5.6's formula for `f(x)` is
+attained by some convex combination. Stated against a real upper bound, the `EReal`-faithful
+reading: `conv {f₁, f₂} x` may itself be `+∞`, and then there is nothing to attain. -/
 theorem corollary_9_8_3_attained {f g : Rn n → EReal} (hf : ClosedProperConvexFn f)
     (hg : ClosedProperConvexFn g) (heq : recessionFn f = recessionFn g) {x : Rn n} {μ : ℝ}
     (hμ : convFn₂ f g x ≤ (μ : EReal)) :

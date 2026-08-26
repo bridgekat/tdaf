@@ -13,77 +13,29 @@ import Tdaf.Surface.Rockafellar.Part1.Section01
 /-!
 # Rockafellar, §13: Support Functions
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §13, pp. 112–120: the support function
-`δ*(· | C)` of a convex set, the one-to-one correspondence between closed convex sets and closed
-proper positively homogeneous convex functions, and the derivation of the support functions of
-`dom f`, `dom f*` and of a level set `{x | f x ≤ 0}` from the conjugate `f*`.
-
-All fifteen numbered results are here, stated over `Rn n = ℝⁿ` and closed by specialising
-`Tdaf/Analysis/Convex/Duality/{Support, SupportRelint, Level, Barrier}.lean` and
-`Recession/Conjugate.lean`.
-
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 13.1 | `theorem_13_1_cl`, `theorem_13_1_ri`, `theorem_13_1_int`, `theorem_13_1_aff` |
-| Corollary 13.1.1 | `corollary_13_1_1` |
-| Theorem 13.2 | `theorem_13_2_conj_indicator`, `theorem_13_2_conj`, `theorem_13_2` |
-| Corollary 13.2.1 | `corollary_13_2_1` |
-| Corollary 13.2.2 | `corollary_13_2_2` |
-| Theorem 13.3 | `theorem_13_3`, `theorem_13_3_dual` |
-| Corollary 13.3.1 | `corollary_13_3_1` |
-| Corollary 13.3.2 | `corollary_13_3_2` |
-| Corollary 13.3.3 | `corollary_13_3_3`, `corollary_13_3_3_least`, `corollary_13_3_3_finite` |
-| Corollary 13.3.4 | `corollary_13_3_4_a`–`corollary_13_3_4_d` |
-| Theorem 13.4 | `theorem_13_4`, `theorem_13_4_dual`, `theorem_13_4_lineality`,
-  `theorem_13_4_dimension` |
-| Corollary 13.4.1 | `corollary_13_4_1` |
-| Corollary 13.4.2 | `corollary_13_4_2` |
-| Theorem 13.5 | `theorem_13_5`, `theorem_13_5_dual` |
-| Corollary 13.5.1 | `corollary_13_5_1` |
-
-Theorem 13.2's bijection is `theorem_13_2_correspondence`.
+The support function `δ*(· | C)` of a convex set, the bijection between closed convex sets and
+closed proper positively homogeneous convex functions, and the derivation of the support functions
+of `dom f`, `dom f*` and of a level set `{x | f x ≤ 0}` from the conjugate `f*`. All 15 numbered
+results of §13 are formalized. Theorem 13.2's bijection is `theorem_13_2_correspondence`.
 
 ## The section's definitions
 
-* **The support function** `δ*(x* | C) = sup {⟨x, x*⟩ | x ∈ C}` is the backbone's `supportFn`, and
+* **The support function** `δ*(x* | C) = sup {⟨x, x*⟩ | x ∈ C}` is the backbone's `supportFn`;
   `supportFn_apply_rn` records that it is the book's formula verbatim.
-* **The barrier cone** of `C` (p. 112) is `dom δ*(· | C)`, recorded as `barrierCone` with the
-  bridge `barrierCone_eq_dom_supportFn` and the unfolded form `mem_barrierCone_iff`.
-* **Co-finite** (p. 116) is the backbone's `Cofinite`: closed, proper, convex, and `f0⁺ = +∞` in
-  every non-zero direction — the epigraph contains no non-vertical half-line.
-* **Rank** (§8, p. 70) is `rankFn f = dim (dom f) - lineality f`, defined here because §8's surface
-  deferred it for want of §1's affine-hull dimension `dim`; Corollary 13.4.1 is its first consumer.
+* **The barrier cone** of `C` is `dom δ*(· | C)`, recorded as `barrierCone`, with the bridge
+  `barrierCone_eq_dom_supportFn` and the unfolded form `mem_barrierCone_iff`.
+* **Co-finite** is the backbone's `Cofinite`: closed, proper, convex, and `f0⁺ = +∞` in every
+  non-zero direction — the epigraph contains no non-vertical half-line.
+* **Rank** is `rankFn f = dim (dom f) - lineality f`, defined here rather than in §8 because it
+  needs §1's affine-hull dimension `dim`; Corollary 13.4.1 is its first consumer.
 
-## The unnumbered running text
-
-Recorded: the infimum formula `inf {⟨x, x*⟩ | x ∈ C} = -δ*(-x* | C)`
-(`infimum_eq_neg_supportFn_neg`); the half-space description `C ⊆ {x | ⟨x, x*⟩ ≤ β} ↔ β ≥ δ*(x*|C)`
-(`subset_halfspace_iff`); the invariance `δ*(·|C) = δ*(·|cl C) = δ*(·|ri C)`
-(`supportFn_closure_rn`, `supportFn_relint_rn`); the additivity `δ*(·|C₁+C₂) = δ*(·|C₁)+δ*(·|C₂)`
-(`supportFn_add_rn`); the recovery of a closed convex set from its support function
-(`eq_setOf_le_supportFn`); the subadditivity noted after Theorem 13.2
-(`theorem_13_2_subadditive`); and the Euclidean-norm example `|x| = δ*(x | B)` together with its
-translate-and-scale form (`supportFn_unitBall`, `supportFn_ball`).
-
-## What is not here
-
-* **The example table `δ*(·|C₁)`–`δ*(·|C₄)`** (book, lines 4528–4561) — *omitted with a reason*.
-  Four coordinatewise computations — the simplex, the cross-polytope, a hyperbolic region and a
-  parabolic region — carried out "readily" in the book with no argument printed. None is used
-  later, and none tests the backbone: they exercise `Fin n` arithmetic and one-variable calculus,
-  not convex analysis.
-* **The "elliptic" set worked example** (book, lines 4722–4753) — *omitted with a reason*. It is
-  Theorem 13.5 (`theorem_13_5`) plus §12's quadratic conjugate plus the minimisation of
-  `λ ↦ (2λ)⁻¹⟨x*, Q⁻¹x*⟩ + ⟨b, x*⟩ + λβ` over `λ > 0`. The first is here, the second is §12's, and
-  the third is calculus.
-* **`Q′`, the pseudo-inverse of §12** — *deferred by scope*: §12's business, not §13's.
-* **The remark that gauge functions are positively homogeneous too** (book, line 4563) — *deferred
-  by scope* to §14/§15, where gauges are defined.
-* **The three-case formula for `k (λ, x)` in Corollary 13.5.1** — *deferred by scope*.
-  `corollary_13_5_1` states the conclusion for `cl (hom f)`; identifying that with the book's
-  display is **Corollary 8.5.2**, a §8 statement, and the backbone records the same split.
+The unnumbered running text of the section is recorded too: the infimum formula
+`inf {⟨x, x*⟩ | x ∈ C} = -δ*(-x* | C)` (`infimum_eq_neg_supportFn_neg`); the half-space description
+`C ⊆ {x | ⟨x, x*⟩ ≤ β} ↔ β ≥ δ*(x* | C)` (`subset_halfspace_iff`); the invariance
+`δ*(·|C) = δ*(·|cl C) = δ*(·|ri C)`; the additivity `δ*(·|C₁+C₂) = δ*(·|C₁) + δ*(·|C₂)`; the
+recovery of a closed convex set from its support function (`eq_setOf_le_supportFn`); the
+subadditivity noted after Theorem 13.2; and the Euclidean-norm example `|x| = δ*(x | B)` with its
+translate-and-scale form.
 
 ## References
 
@@ -100,9 +52,8 @@ variable {n : ℕ}
 
 /-! ### The definitions of §13 -/
 
-/-- **Rockafellar's support function** (§13, p. 112): `δ*(x* | C) = sup {⟨x, x*⟩ | x ∈ C}`.
-
-This is the backbone's `supportFn (pairing n) C`, and the equation is the definition unfolded. -/
+/-- **Rockafellar's support function** (§13, p. 112): `δ*(x* | C) = sup {⟨x, x*⟩ | x ∈ C}`. This is
+the backbone's `supportFn (pairing n) C`, and the equation is the definition unfolded. -/
 theorem supportFn_apply_rn (C : Set (Rn n)) (y : Rn n) :
     supportFn (pairing n) C y = ⨆ x ∈ C, ((inner ℝ x y : ℝ) : EReal) :=
   supportFn_apply (pairing n) C y
@@ -123,9 +74,8 @@ theorem mem_barrierCone_iff (C : Set (Rn n)) (y : Rn n) :
   exact Iff.rfl
 
 /-- **Rockafellar's co-finite convex functions** (§13, p. 116): closed proper convex functions whose
-epigraph contains no non-vertical half-line, i.e. with `(f0⁺)(y) = +∞` for every `y ≠ 0`.
-
-This is the backbone's `Cofinite`, transcribed without change. -/
+epigraph contains no non-vertical half-line, i.e. with `(f0⁺)(y) = +∞` for every `y ≠ 0`. This is
+the backbone's `Cofinite`, transcribed without change. -/
 theorem cofinite_iff_rn (f : Rn n → EReal) :
     Cofinite f ↔ ClosedProperConvexFn f ∧ ∀ y : Rn n, y ≠ 0 → recessionFn f y = ⊤ :=
   ⟨fun h => ⟨h.toClosedProperConvexFn, h.recessionFn_eq_top⟩,
@@ -133,10 +83,8 @@ theorem cofinite_iff_rn (f : Rn n → EReal) :
 
 /-- **Rockafellar's rank of a convex function** (§8, p. 70): `rank f = dim f - lineality f`, where
 `dim f` is the dimension of `dom f` and the lineality of `f` is the dimension of its lineality
-space.
-
-§8's surface module deferred `rank` for want of §1's `dim`; Corollary 13.4.1 is the first result
-that needs it, so it is defined here. -/
+space. Defined here rather than in §8 because it needs §1's `dim`; Corollary 13.4.1 is the first
+result that uses it. -/
 noncomputable def rankFn (f : Rn n → EReal) : ℤ := dim (dom f) - (linealityFn f : ℤ)
 
 /-! ### Properness of the conjugate
@@ -201,7 +149,7 @@ theorem supportFn_ball (a : Rn n) {lam : ℝ} (hlam : 0 ≤ lam) (x : Rn n) :
 
 /-! ### Theorem 13.1 -/
 
-/-- **Rockafellar, Theorem 13.1**, first clause. Let `C` be a convex set. Then `x ∈ cl C` if and
+/-- **Theorem 13.1**, first clause. Let `C` be a convex set. Then `x ∈ cl C` if and
 only if `⟨x, x*⟩ ≤ δ*(x* | C)` for every vector `x*`.
 
 Specialises `mem_closure_convexHull_iff_le_supportFn` — Corollary 11.5.1 read through the
@@ -212,40 +160,37 @@ theorem theorem_13_1_cl {C : Set (Rn n)} (hC : Convex ℝ C) (x : Rn n) :
   rw [hC.convexHull_eq] at h
   exact h
 
-/-- **Rockafellar, Theorem 13.1**, second clause. `x ∈ ri C` if and only if the same condition
-holds, with strict inequality for each `x*` such that `-δ*(-x* | C) ≠ δ*(x* | C)`.
-
-Specialises `mem_relint_iff_lt_supportFn` — Corollary 11.6.2 read through the pairing. -/
+/-- **Theorem 13.1**, second clause. `x ∈ ri C` if and only if the same condition holds, with strict
+inequality for each `x*` such that `-δ*(-x* | C) ≠ δ*(x* | C)`. Specialises
+`mem_relint_iff_lt_supportFn` — Corollary 11.6.2 read through the pairing. -/
 theorem theorem_13_1_ri {C : Set (Rn n)} (hC : Convex ℝ C) (x : Rn n) :
     x ∈ ri C ↔ (∀ y : Rn n, ((inner ℝ x y : ℝ) : EReal) ≤ supportFn (pairing n) C y) ∧
       ∀ y : Rn n, -supportFn (pairing n) C (-y) ≠ supportFn (pairing n) C y →
         ((inner ℝ x y : ℝ) : EReal) < supportFn (pairing n) C y :=
   mem_relint_iff_lt_supportFn (B := pairing n) hC x
 
-/-- **Rockafellar, Theorem 13.1**, third clause. `x ∈ int C` if and only if `⟨x, x*⟩ < δ*(x* | C)`
+/-- **Theorem 13.1**, third clause. `x ∈ int C` if and only if `⟨x, x*⟩ < δ*(x* | C)`
 for every `x* ≠ 0`.
 
-Specialises `mem_interior_iff_lt_supportFn`. **The book omits `C ≠ ∅`**, and the clause is false
-without it — over the zero space the condition is vacuous while `int ∅ = ∅`. -/
+**The book omits `C ≠ ∅`**, and the clause is false without it — over the zero space the condition
+is vacuous while `int ∅ = ∅`. -/
 theorem theorem_13_1_int {C : Set (Rn n)} (hC : Convex ℝ C) (hne : C.Nonempty) (x : Rn n) :
     x ∈ interior C ↔
       ∀ y : Rn n, y ≠ 0 → ((inner ℝ x y : ℝ) : EReal) < supportFn (pairing n) C y := by
   exact mem_interior_iff_lt_supportFn (B := pairing n) hC hne (separatingRight_pairing n) x
 
-/-- **Rockafellar, Theorem 13.1**, fourth clause. Assuming `C ≠ ∅`, `x ∈ aff C` if and only if
+/-- **Theorem 13.1**, fourth clause. Assuming `C ≠ ∅`, `x ∈ aff C` if and only if
 `⟨x, x*⟩ = δ*(x* | C)` for every `x*` with `-δ*(-x* | C) = δ*(x* | C)`.
 
-Specialises `mem_affineSpan_iff_eq_supportFn`, which needs no convexity: the reversible directions
-describe the hyperplanes containing `C`, and Corollary 1.4.1 intersects them. -/
+It needs no convexity: the reversible directions describe the hyperplanes containing `C`, and
+Corollary 1.4.1 intersects them. -/
 theorem theorem_13_1_aff {C : Set (Rn n)} (hne : C.Nonempty) (x : Rn n) :
     x ∈ affineSpan ℝ C ↔ ∀ y : Rn n, -supportFn (pairing n) C (-y) = supportFn (pairing n) C y →
       ((inner ℝ x y : ℝ) : EReal) = supportFn (pairing n) C y :=
   mem_affineSpan_iff_eq_supportFn (B := pairing n) hne x
 
-/-- **Rockafellar, Corollary 13.1.1.** For convex sets `C₁` and `C₂` in `ℝⁿ`, one has
-`cl C₁ ⊆ cl C₂` if and only if `δ*(· | C₁) ≤ δ*(· | C₂)`.
-
-Specialises `closure_convexHull_subset_iff_supportFn_le`. -/
+/-- **Corollary 13.1.1.** For convex sets `C₁` and `C₂` in `ℝⁿ`, one has
+`cl C₁ ⊆ cl C₂` if and only if `δ*(· | C₁) ≤ δ*(· | C₂)`. -/
 theorem corollary_13_1_1 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) :
     closure C₁ ⊆ closure C₂ ↔ supportFn (pairing n) C₁ ≤ supportFn (pairing n) C₂ := by
   have h := closure_convexHull_subset_iff_supportFn_le (B := pairing n) C₁ C₂
@@ -254,37 +199,32 @@ theorem corollary_13_1_1 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂
 
 /-! ### Theorem 13.2 -/
 
-/-- **Rockafellar, Theorem 13.2**, first assertion, one direction: the support function of a set is
+/-- **Theorem 13.2**, first assertion, one direction: the support function of a set is
 the conjugate of its indicator function. -/
 theorem theorem_13_2_conj_indicator (C : Set (Rn n)) :
     conj (pairing n) (indicatorFn C) = supportFn (pairing n) C :=
   (supportFn_eq_conj_indicatorFn (pairing n) C).symm
 
-/-- **Rockafellar, Theorem 13.2**, first assertion: the indicator function and the support function
-of a closed convex set are conjugate to each other.
-
-Specialises `conj_supportFn`. -/
+/-- **Theorem 13.2**, first assertion: the indicator function and the support function
+of a closed convex set are conjugate to each other. -/
 theorem theorem_13_2_conj {C : Set (Rn n)} (hC : Convex ℝ C) (hCcl : IsClosed C) :
     conj (pairing n) (supportFn (pairing n) C) = indicatorFn C := by
   rw [← conj_flip_pairing]
   exact conj_supportFn hC hCcl
 
-/-- **Rockafellar, Theorem 13.2**, second assertion: the functions which are the support functions
+/-- **Theorem 13.2**, second assertion: the functions which are the support functions
 of non-empty convex sets are exactly the closed proper convex functions which are positively
 homogeneous.
 
-Specialises `exists_supportFn_iff`. Since `δ*` sees neither the closure nor the convex hull, the
-class of sets may be narrowed to the non-empty *closed convex* ones, and that is what makes the
-correspondence one-to-one. -/
+Since `δ*` sees neither the closure nor the convex hull, the class of sets may be narrowed to the
+non-empty *closed convex* ones, and that is what makes the correspondence one-to-one. -/
 theorem theorem_13_2 (g : Rn n → EReal) :
     (∃ C : Set (Rn n), C.Nonempty ∧ Convex ℝ C ∧ IsClosed C ∧ g = supportFn (pairing n) C) ↔
       ClosedProperConvexFn g ∧ PosHomogeneous g :=
   exists_supportFn_iff
 
-/-- **Rockafellar, Theorem 13.2** as the "important one-to-one correspondence between the closed
-convex sets in `ℝⁿ` and objects of quite a different sort, certain functions on `ℝⁿ`".
-
-Specialises `supportEquiv`. -/
+/-- **Theorem 13.2** as the "important one-to-one correspondence between the closed
+convex sets in `ℝⁿ` and objects of quite a different sort, certain functions on `ℝⁿ`". -/
 noncomputable def theorem_13_2_correspondence (n : ℕ) :
     {C : Set (Rn n) // C.Nonempty ∧ Convex ℝ C ∧ IsClosed C} ≃
       {g : Rn n → EReal // ClosedProperConvexFn g ∧ PosHomogeneous g} :=
@@ -297,12 +237,12 @@ theorem theorem_13_2_subadditive {C : Set (Rn n)} (hne : C.Nonempty) (y₁ y₂ 
       supportFn (pairing n) C y₁ + supportFn (pairing n) C y₂ :=
   supportFn_add_le hne y₁ y₂
 
-/-- **Rockafellar, Corollary 13.2.1.** Let `f` be a positively homogeneous convex function which is
+/-- **Corollary 13.2.1.** Let `f` be a positively homogeneous convex function which is
 not identically `+∞`. Then `cl f` is the support function of the closed convex set
 `C = {x* | ∀ x, ⟨x, x*⟩ ≤ f x}`.
 
-Specialises `clFn_eq_supportFn_of_posHomogeneous`. The improper case is included: if `f` takes
-`-∞` then `cl f ≡ -∞`, `C` is empty, and both sides are `δ*(· | ∅)`. -/
+The improper case is included: if `f` takes `-∞` then `cl f ≡ -∞`, `C` is empty, and both sides are
+`δ*(· | ∅)`. -/
 theorem corollary_13_2_1 {f : Rn n → EReal} (hf : PosHomogeneous f) (hconv : ConvexFn f)
     (hne : ∃ x, f x ≠ ⊤) :
     clFn f =
@@ -310,14 +250,12 @@ theorem corollary_13_2_1 {f : Rn n → EReal} (hf : PosHomogeneous f) (hconv : C
   have h := clFn_eq_supportFn_of_posHomogeneous (B := pairing n) hf hconv hne
   rwa [flip_pairing] at h
 
-/-- **Rockafellar, Corollary 13.2.2.** The support functions of the non-empty bounded convex sets
+/-- **Corollary 13.2.2.** The support functions of the non-empty bounded convex sets
 are the finite positively homogeneous convex functions.
 
-Specialises `exists_supportFn_finite_iff` together with `isBounded_iff_forall_bddAbove`, which
-turns the pairing-sense boundedness of the general statement into boundedness in the norm.
-**`ClosedFn` is not redundant in the backbone's general form** — a discontinuous linear functional
-is finite, convex and positively homogeneous without being a support function — but in `ℝⁿ` it is
-free, by Corollary 7.4.2, which is why the book does not state it. -/
+Closedness is not part of the statement, being free in `ℝⁿ` by Corollary 7.4.2; in general it is
+not redundant, a discontinuous linear functional being finite, convex and positively homogeneous
+without being a support function. -/
 theorem corollary_13_2_2 (g : Rn n → EReal) :
     (∃ C : Set (Rn n), C.Nonempty ∧ Bornology.IsBounded C ∧ g = supportFn (pairing n) C) ↔
       ((∀ y, g y ≠ ⊥) ∧ (∀ y, g y ≠ ⊤) ∧ ConvexFn g ∧ ClosedFn g ∧ PosHomogeneous g) := by
@@ -327,44 +265,34 @@ theorem corollary_13_2_2 (g : Rn n → EReal) :
 
 /-! ### Theorem 13.3 -/
 
-/-- **Rockafellar, Theorem 13.3**, first assertion. Let `f` be a proper convex function. The support
-function of `dom f` is the recession function `f*0⁺` of `f*`.
-
-Specialises `recessionFn_conj`; the extra properness hypothesis the backbone carries is discharged
-here by `proper_conj_of_proper`. -/
+/-- **Theorem 13.3**, first assertion. Let `f` be a proper convex function. The support function of
+`dom f` is the recession function `f*0⁺` of `f*`. The extra properness hypothesis the backbone
+carries is discharged here by `proper_conj_of_proper`. -/
 theorem theorem_13_3 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
     supportFn (pairing n) (dom f) = recessionFn (conj (pairing n) f) :=
   (recessionFn_conj hp (proper_conj_of_proper hf hp)).symm
 
-/-- **Rockafellar, Theorem 13.3**, second assertion. If `f` is closed, the support function of
-`dom f*` is the recession function `f0⁺` of `f`.
-
-Specialises `recessionFn_eq_supportFn_dom_conj`. -/
+/-- **Theorem 13.3**, second assertion. If `f` is closed, the support function of
+`dom f*` is the recession function `f0⁺` of `f`. -/
 theorem theorem_13_3_dual {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     supportFn (pairing n) (dom (conj (pairing n) f)) = recessionFn f := by
   have h := recessionFn_eq_supportFn_dom_conj (B := pairing n) hf
   rw [flip_pairing] at h
   exact h.symm
 
-/-- **Rockafellar, Corollary 13.3.1.** Let `f` be a closed convex function on `ℝⁿ`. In order that
+/-- **Corollary 13.3.1.** Let `f` be a closed convex function on `ℝⁿ`. In order that
 `f*` be finite everywhere, so that `dom f* = ℝⁿ`, it is necessary and sufficient that `f` be
-co-finite.
-
-Specialises `cofinite_iff_dom_conj_eq_univ`. -/
+co-finite. -/
 theorem corollary_13_3_1 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     dom (conj (pairing n) f) = univ ↔ Cofinite f :=
   (cofinite_iff_dom_conj_eq_univ hf).symm
 
 /-! ### Corollary 13.3.2
 
-The book delegates the key step — "as an exercise in separation theory, it can be shown that a
-convex set `C` is affine if and only if every linear function which is bounded above on `C` is
-constant on `C`" — and it is recovered here as `affine_iff_forall_reversible`. No separation is
-needed beyond what Theorem 13.1 already supplies: one direction runs a line inside the affine set
-against the bound, the other reads Theorem 13.1's `aff` and `cl` clauses against each other and
-closes with Theorem 6.1's line-segment principle. -/
+The book leaves its key step as an exercise: a convex set is affine iff every linear function
+bounded above on it is constant on it. That is `affine_iff_forall_reversible` below. -/
 
-/-- **The step Rockafellar leaves as an exercise** (book, line 4591): a non-empty convex set `C` is
+/-- **The step Rockafellar leaves as an exercise**: a non-empty convex set `C` is
 affine if and only if every linear function bounded above on `C` is constant on it — that is, if
 and only if `-δ*(-x* | C) = δ*(x* | C)` whenever `δ*(x* | C) < +∞`. -/
 theorem affine_iff_forall_reversible {C : Set (Rn n)} (hC : Convex ℝ C) (hne : C.Nonempty) :
@@ -417,13 +345,10 @@ theorem affine_iff_forall_reversible {C : Set (Rn n)} (hC : Convex ℝ C) (hne :
     rw [hmid] at hseg
     exact intrinsicInterior_subset hseg
 
-/-- **Rockafellar, Corollary 13.3.2.** Let `f` be a closed proper convex function. In order that
-`dom f*` be an affine set, it is necessary and sufficient that `(f0⁺)(y) = +∞` for every `y` which
-is not actually in the lineality space of `f`.
-
-The book's proof delegates its main step to the reader; it is `affine_iff_forall_reversible` above,
-applied to `C = dom f*` through Theorem 13.3 (`theorem_13_3_dual`), which identifies
-`δ*(· | dom f*)` with `f0⁺` and hence the reversible directions with the lineality space of `f`. -/
+/-- **Corollary 13.3.2.** Let `f` be a closed proper convex function. In order that `dom f*` be an
+affine set, it is necessary and sufficient that `(f0⁺)(y) = +∞` for every `y` which is not actually
+in the lineality space of `f`. The step the book leaves as an exercise is
+`affine_iff_forall_reversible` above. -/
 theorem corollary_13_3_2 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     (affineSpan ℝ (dom (conj (pairing n) f)) : Set (Rn n)) = dom (conj (pairing n) f) ↔
       ∀ y : Rn n, y ∉ linealitySpaceFn f → recessionFn f y = ⊤ := by
@@ -441,13 +366,9 @@ theorem corollary_13_3_2 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
 
 /-! ### Corollary 13.3.3 -/
 
-/-- **Rockafellar, Corollary 13.3.3**, the quantitative half: for `α ≥ 0`, the Lipschitz condition
+/-- **Corollary 13.3.3**, the quantitative half: for `α ≥ 0`, the Lipschitz condition
 `f(z) ≤ f(x) + α|z - x|` holds for all `x` and `z` exactly when `dom f*` is contained in the ball
-of radius `α`. This is what "the smallest such `α` is `sup {|x*| : x* ∈ dom f*}`" means.
-
-Corollary 8.5.1 (`recessionFn_isLeast`) turns the Lipschitz condition into `f0⁺ ≤ α|·|`; Theorem
-13.3 identifies `f0⁺` with `δ*(· | dom f*)`; `α|·|` is `δ*(· | αB)` (`supportFn_closedBall`); and
-Corollary 13.1.1 turns the inequality of support functions into the inclusion of closures. -/
+of radius `α`. This is what "the smallest such `α` is `sup {|x*| : x* ∈ dom f*}`" means. -/
 theorem corollary_13_3_3_least {f : Rn n → EReal} (hf : ClosedProperConvexFn f) {α : ℝ}
     (hα : 0 ≤ α) :
     (∀ x z : Rn n, f z ≤ f x + ((α * ‖z - x‖ : ℝ) : EReal)) ↔
@@ -475,7 +396,7 @@ theorem corollary_13_3_3_least {f : Rn n → EReal} (hf : ClosedProperConvexFn f
     exact ((recessionFn_isLeast hf.convex hf.proper).1 x z).trans
       (add_le_add le_rfl (hle (z - x)))
 
-/-- **Rockafellar, Corollary 13.3.3**, first assertion: `dom f*` is bounded if and only if `f`
+/-- **Corollary 13.3.3**, first assertion: `dom f*` is bounded if and only if `f`
 satisfies a global Lipschitz condition. -/
 theorem corollary_13_3_3 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     Bornology.IsBounded (dom (conj (pairing n) f)) ↔
@@ -493,7 +414,7 @@ theorem corollary_13_3_3 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     exact (Metric.isBounded_iff_subset_closedBall (0 : Rn n)).2
       ⟨α, (corollary_13_3_3_least hf hα).1 hlip⟩
 
-/-- **Rockafellar, Corollary 13.3.3**, the "`f` is finite everywhere" clause: the Lipschitz
+/-- **Corollary 13.3.3**, the "`f` is finite everywhere" clause: the Lipschitz
 condition forces a proper `f` to be real-valued. -/
 theorem corollary_13_3_3_finite {f : Rn n → EReal} (hf : ClosedProperConvexFn f) {α : ℝ}
     (hlip : ∀ x z : Rn n, f z ≤ f x + ((α * ‖z - x‖ : ℝ) : EReal)) (z : Rn n) :
@@ -511,14 +432,14 @@ The book sets `g (x) = f (x) - ⟨x, x*⟩`, so that `(g0⁺)(y) = (f0⁺)(y) - 
 below are stated through `f0⁺` and `⟨y, x*⟩` directly, which makes the translation by `-x*`
 disappear. Rockafellar's exception set in (b) is `y`-independent for this reason. -/
 
-/-- **Rockafellar, Corollary 13.3.4(a).** `x* ∈ cl (dom f*)` if and only if `(g0⁺)(y) ≥ 0` for
+/-- **Corollary 13.3.4(a).** `x* ∈ cl (dom f*)` if and only if `(g0⁺)(y) ≥ 0` for
 every `y`. Specialises `mem_closure_dom_conj_iff`. -/
 theorem corollary_13_3_4_a {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (y₀ : Rn n) :
     y₀ ∈ closure (dom (conj (pairing n) f)) ↔
       ∀ y : Rn n, ((inner ℝ y y₀ : ℝ) : EReal) ≤ recessionFn f y :=
   mem_closure_dom_conj_iff hf y₀
 
-/-- **Rockafellar, Corollary 13.3.4(b).** `x* ∈ ri (dom f*)` if and only if `(g0⁺)(y) > 0` for all
+/-- **Corollary 13.3.4(b).** `x* ∈ ri (dom f*)` if and only if `(g0⁺)(y) > 0` for all
 `y` except those with `-(g0⁺)(-y) = (g0⁺)(y) = 0`. Specialises `mem_relint_dom_conj_iff`. -/
 theorem corollary_13_3_4_b {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (y₀ : Rn n) :
     y₀ ∈ ri (dom (conj (pairing n) f)) ↔
@@ -527,14 +448,14 @@ theorem corollary_13_3_4_b {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (y
         ((inner ℝ y y₀ : ℝ) : EReal) < recessionFn f y :=
   mem_relint_dom_conj_iff hf y₀
 
-/-- **Rockafellar, Corollary 13.3.4(c).** `x* ∈ int (dom f*)` if and only if `(g0⁺)(y) > 0` for
+/-- **Corollary 13.3.4(c).** `x* ∈ int (dom f*)` if and only if `(g0⁺)(y) > 0` for
 every `y ≠ 0`. Specialises `mem_interior_dom_conj_iff`. -/
 theorem corollary_13_3_4_c {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (y₀ : Rn n) :
     y₀ ∈ interior (dom (conj (pairing n) f)) ↔
       ∀ y : Rn n, y ≠ 0 → ((inner ℝ y y₀ : ℝ) : EReal) < recessionFn f y :=
   mem_interior_dom_conj_iff hf y₀
 
-/-- **Rockafellar, Corollary 13.3.4(d).** `x* ∈ aff (dom f*)` if and only if `(g0⁺)(y) = 0` for
+/-- **Corollary 13.3.4(d).** `x* ∈ aff (dom f*)` if and only if `(g0⁺)(y) = 0` for
 every `y` with `-(g0⁺)(-y) = (g0⁺)(y)`. Specialises `mem_affineSpan_dom_conj_iff`. -/
 theorem corollary_13_3_4_d {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (y₀ : Rn n) :
     y₀ ∈ affineSpan ℝ (dom (conj (pairing n) f)) ↔
@@ -544,13 +465,12 @@ theorem corollary_13_3_4_d {f : Rn n → EReal} (hf : ClosedProperConvexFn f) (y
 
 /-! ### Theorem 13.4 -/
 
-/-- **Rockafellar, Theorem 13.4**, first assertion. Let `f` be a proper convex function on `ℝⁿ`.
+/-- **Theorem 13.4**, first assertion. Let `f` be a proper convex function on `ℝⁿ`.
 The lineality space of `f*` is the orthogonal complement of the subspace parallel to
 `aff (dom f)`.
 
-Specialises `linealitySpaceFn_conj_eq_annihilator`; in an inner-product space the annihilator of a
-subspace is its orthogonal complement, which is the book's phrasing, and `vectorSpan ℝ (dom f)` is
-the subspace parallel to `aff (dom f)`. -/
+In an inner-product space the annihilator of a subspace is its orthogonal complement, which is the
+book's phrasing, and `vectorSpan ℝ (dom f)` is the subspace parallel to `aff (dom f)`. -/
 theorem theorem_13_4 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
     linealitySpaceFn (conj (pairing n) f) = ((vectorSpan ℝ (dom f))ᗮ : Set (Rn n)) := by
   rw [linealitySpaceFn_conj_eq_annihilator hp (proper_conj_of_proper hf hp)]
@@ -558,12 +478,11 @@ theorem theorem_13_4 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
   simp only [Set.mem_ofPred_eq, SetLike.mem_coe, Submodule.mem_orthogonal]
   exact forall₂_congr fun v _ => by rw [pairing_apply, real_inner_comm]
 
-/-- **Rockafellar, Theorem 13.4**, second assertion. If `f` is closed, the subspace parallel to
+/-- **Theorem 13.4**, second assertion. If `f` is closed, the subspace parallel to
 `aff (dom f*)` is the orthogonal complement of the lineality space of `f`.
 
-Specialises `linealitySpaceFn_eq_annihilator_dom_conj`, stated in the equivalent form
-`lineality f = (vectorSpan (dom f*))ᗮ`; taking orthogonal complements of both sides recovers the
-book's phrasing, since a subspace of `ℝⁿ` is its own double complement. -/
+Stated in the equivalent form `lineality f = (vectorSpan (dom f*))ᗮ`; a subspace of `ℝⁿ` is its
+own double complement, so this is the book's phrasing. -/
 theorem theorem_13_4_dual {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     linealitySpaceFn f = ((vectorSpan ℝ (dom (conj (pairing n) f)))ᗮ : Set (Rn n)) := by
   rw [linealitySpaceFn_eq_annihilator_dom_conj (B := pairing n) hf]
@@ -571,7 +490,7 @@ theorem theorem_13_4_dual {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
   simp only [Set.mem_ofPred_eq, SetLike.mem_coe, Submodule.mem_orthogonal]
   exact forall₂_congr fun v _ => by rw [pairing_apply, real_inner_comm]
 
-/-- **Rockafellar, Theorem 13.4**, first dimensionality formula:
+/-- **Theorem 13.4**, first dimensionality formula:
 `lineality f* = n - dimension f`. -/
 theorem theorem_13_4_lineality {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) :
     (linealityFn (conj (pairing n) f) : ℤ) = (n : ℤ) - dim (dom f) := by
@@ -583,7 +502,7 @@ theorem theorem_13_4_lineality {f : Rn n → EReal} (hf : ConvexFn f) (hp : Prop
   rw [linealityFn, hsub, dim_of_nonempty hp.dom_nonempty]
   omega
 
-/-- **Rockafellar, Theorem 13.4**, second dimensionality formula:
+/-- **Theorem 13.4**, second dimensionality formula:
 `dimension f* = n - lineality f`. -/
 theorem theorem_13_4_dimension {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     dim (dom (conj (pairing n) f)) = (n : ℤ) - (linealityFn f : ℤ) := by
@@ -595,7 +514,7 @@ theorem theorem_13_4_dimension {f : Rn n → EReal} (hf : ClosedProperConvexFn f
   rw [linealityFn, hsub, dim_of_nonempty (proper_conj (B := pairing n) hf).dom_nonempty]
   omega
 
-/-- **Rockafellar, Corollary 13.4.1.** Closed proper convex functions conjugate to each other have
+/-- **Corollary 13.4.1.** Closed proper convex functions conjugate to each other have
 the same rank.
 
 Immediate from the two dimensionality formulas of Theorem 13.4 and the definition of rank:
@@ -605,41 +524,38 @@ theorem corollary_13_4_1 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
   rw [rankFn, rankFn, theorem_13_4_dimension hf, theorem_13_4_lineality hf.convex hf.proper]
   omega
 
-/-- **Rockafellar, Corollary 13.4.2.** Let `f` be a closed proper convex function. Then `dom f*` has
-a non-empty interior if and only if there are no lines along which `f` is (finite and) affine.
-
-Specialises `interior_dom_conj_nonempty_iff`. -/
+/-- **Corollary 13.4.2.** Let `f` be a closed proper convex function. Then `dom f*` has
+a non-empty interior if and only if there are no lines along which `f` is (finite and) affine. -/
 theorem corollary_13_4_2 {f : Rn n → EReal} (hf : ClosedProperConvexFn f) :
     (interior (dom (conj (pairing n) f))).Nonempty ↔ linealitySpaceFn f = {0} :=
   interior_dom_conj_nonempty_iff hf
 
 /-! ### Theorem 13.5 -/
 
-/-- **Rockafellar, Theorem 13.5**, first assertion. Let `f` be a closed proper convex function. The
+/-- **Theorem 13.5**, first assertion. Let `f` be a closed proper convex function. The
 support function of `{x | f x ≤ 0}` is `cl g`, where `g` is the positively homogeneous convex
 function generated by `f*`.
 
-Specialises `supportFn_setOf_le_zero`. Properness is not needed: Fenchel–Moreau in the form
-`biconj_eq_self` already covers the improper cases. -/
+Properness is not needed: Fenchel–Moreau in the form `biconj_eq_self` already covers the improper
+cases. -/
 theorem theorem_13_5 {f : Rn n → EReal} (hf : ConvexFn f) (hc : ClosedFn f) :
     supportFn (pairing n) {x : Rn n | f x ≤ 0} = clFn (posHomGen (conj (pairing n) f)) :=
   supportFn_setOf_le_zero hf hc
 
-/-- **Rockafellar, Theorem 13.5**, second assertion. The closure of the positively homogeneous
-convex function `k` generated by `f` is the support function of `{x* | f*(x*) ≤ 0}`.
-
-Specialises `clFn_posHomGen`, which needs no hypothesis at all. -/
+/-- **Theorem 13.5**, second assertion. The closure of the positively homogeneous convex function
+`k` generated by `f` is the support function of `{x* | f*(x*) ≤ 0}`. It needs no hypothesis at
+all. -/
 theorem theorem_13_5_dual (f : Rn n → EReal) :
     clFn (posHomGen f) = supportFn (pairing n) {y : Rn n | conj (pairing n) f y ≤ 0} := by
   have h := clFn_posHomGen (B := pairing n) f
   rwa [flip_pairing] at h
 
-/-- **Rockafellar, Corollary 13.5.1.** Let `f` be a closed proper convex function on `ℝⁿ`. The
+/-- **Corollary 13.5.1.** Let `f` be a closed proper convex function on `ℝⁿ`. The
 function `k` on `ℝⁿ⁺¹` given by `k (λ, x) = (fλ)(x)` for `λ > 0`, `(f0⁺)(x)` for `λ = 0` and `+∞`
 for `λ < 0` is the support function of `C = {(λ*, x*) | λ* ≤ -f*(x*)}`.
 
-Specialises `clFn_hom`. Identifying the book's three-case `k` with `cl (hom f)` is Corollary 8.5.2,
-a §8 statement, and is not repeated here. -/
+Identifying the book's three-case `k` with `cl (hom f)` is Corollary 8.5.2, a §8 statement, and is
+not repeated here. -/
 theorem corollary_13_5_1 {f : Rn n → EReal} (hf : ConvexFn f) (hdom : (dom f).Nonempty) :
     clFn (hom f) = supportFn (prodPairing (innerₗ ℝ) (pairing n)).flip
       {q : ℝ × Rn n | conj (pairing n) f q.2 ≤ ((-q.1 : ℝ) : EReal)} :=

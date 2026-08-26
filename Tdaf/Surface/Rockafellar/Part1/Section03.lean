@@ -9,85 +9,36 @@ import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 import Tdaf.Surface.Common.Euclidean
 
 /-!
-# Rockafellar §3 — The Algebra of Convex Sets
+# Rockafellar, §3: The Algebra of Convex Sets
 
-The nine numbered results of R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §3, stated in
-the book's own terms over `Rn n = ℝⁿ`.
+Operations that preserve convexity: scalar multiples, sums, convex combinations of a family of
+sets, images and inverse images under linear maps, direct sums, partial addition, and the inverse
+sum. All 9 numbered results of §3 are formalized.
 
 ## Main definitions
 
-* `Rockafellar.convexCombinations` — the right-hand side of Theorem 3.3: the union of all finite
-  convex combinations `∑ λᵢ Cᵢ` of a family of sets.
-* `Rockafellar.partialAdd` — the operation of Theorem 3.6, **partial addition**: adding in the
-  second argument and intersecting in the first.
-* `Rockafellar.invSum` — Rockafellar's **inverse sum** `C₁ # C₂`.
-* `Rockafellar.coneLift` — the convex cone in `ℝⁿ⁺¹` with cross-section `C`, through which the
-  book derives `#` from partial addition.
+* `convexCombinations` — the union of all finite convex combinations `∑ λᵢ Cᵢ` of a family of
+  sets, which is the right-hand side of Theorem 3.3.
+* `partialAdd` — the **partial addition** of Theorem 3.6: add in the second argument, intersect in
+  the first. The book describes the operation informally and fixes no symbol for it, so its
+  commutativity, associativity and two extreme cases (`m = 0` is ordinary addition, `p = 0` is
+  intersection) are proved here; §5 rests on them.
+* `invSum` — Rockafellar's **inverse sum** `C₁ # C₂`. It has no backbone counterpart, so it comes
+  with three bridges: `mem_invSum_iff_exists`, `invSum_eq_iUnion_singleton`, and
+  `invSum_eq_partialAdd_coneLift`, the derivation from partial addition that Theorem 3.7's
+  one-line proof appeals to.
+* `coneLift` — the convex cone in `ℝⁿ⁺¹` with cross-section `C`, through which the book derives
+  `#` from partial addition.
 
-## Main results
-
-* `theorem_3_1` — `C₁ + C₂` is convex.
-* `theorem_3_2` — `(λ₁ + λ₂) C = λ₁ C + λ₂ C` for convex `C` and `λ₁, λ₂ ≥ 0`.
-* `theorem_3_3` — `conv (⋃ Cᵢ)` is the union of the finite convex combinations `∑ λᵢ Cᵢ`.
-* `theorem_3_4_image`, `theorem_3_4_preimage` — images and inverse images under a linear map.
-* `corollary_3_4_1` — the orthogonal projection of a convex set on a subspace is convex.
-* `theorem_3_5` — the direct sum `C ⊕ D` is convex.
-* `theorem_3_6` — partial addition preserves convexity.
-* `theorem_3_7` — the inverse sum `C₁ # C₂` is convex.
-* `theorem_3_8_add`, `theorem_3_8_invSum` — `K₁ + K₂ = conv (K₁ ∪ K₂)` and `K₁ # K₂ = K₁ ∩ K₂`
-  for convex cones containing the origin.
-
-## Design notes
-
-**`λC`, `−C` and `C₁ + C₂` need no surface definition.** They are Mathlib's pointwise `a • s`,
-`-s` and `s + t` (`open scoped Pointwise`), and the book's displayed formulas for them are the
-definitions of `Set.smul_set`, `Set.neg` and `Set.add` on the nose.
-
-**`ℝᵐ⁺ᵖ` is `Rn m × Rn p` here.** Rockafellar moves freely between `ℝᵐ × ℝᵖ` and `ℝᵐ⁺ᵖ`; those are
-different types in Lean, and the transport between them is separate work (remediation §4.8, noted
-in `Tdaf/Surface/Common/Euclidean.lean`). Theorems 3.5 and 3.6 are therefore stated on the
-product, which is the shape in which the book actually uses them: a vector of `ℝᵐ⁺ᵖ` is *written*
-`(y, z)` throughout §3.
-
-**Theorem 3.4's two clauses are not lettered in the book**, so they are `theorem_3_4_image` and
-`theorem_3_4_preimage` rather than `theorem_3_4_a` / `theorem_3_4_b`. Theorem 3.8's two displayed
-equations are split the same way.
-
-**Theorem 3.6 is described informally in the book.** The text (pp. 19–20) presents partial addition
-as "the operation of adding in the `z` argument alone", one operation for each way of writing `ℝⁿ`
-as a direct sum of two subspaces, and never fixes a symbol for it. The construction is formalized
-here as `partialAdd`, and the book's structural claims — commutativity, associativity, and the two
-extreme cases (`m = 0` is ordinary addition, `p = 0` is intersection) — are proved rather than
-asserted, because §5's "eight natural operations" and the proof of Theorem 5.8 rest on them.
-
-**The inverse sum has no backbone counterpart.** `Tdaf/Analysis/Convex/` has the *function*-level
-infimal convolution `infConv f g = ofEpi (epi f + epi g)`, whose set-level shadow is the ordinary
-sum `C₁ + C₂`, but nothing dual to it. `invSum` is therefore a genuine surface definition, and it
-comes with three bridges: `mem_invSum_iff_exists` (the book's own pointwise reformulation,
-p. 21), `invSum_eq_iUnion_singleton` (the "in parallel with the formula for `C₁ + C₂`" identity)
-and `invSum_eq_partialAdd_coneLift` (the derivation from partial addition that Theorem 3.7's
-one-line proof — "by the preceding remarks" — appeals to).
-
-## What is not here
-
-* **The umbra and the penumbra** (book 1029–1038) are set as an exercise for the reader and carry
-  no number. Omitted.
-* **`coneLift C` is not identified with `PointedCone.hull ℝ {(x, 1) | x ∈ C}`.** What is proved is
-  that `coneLift C` is convex, contains the origin, is closed under non-negative scaling, has
-  cross-section `C` at height `1`, and is exactly the union of the non-negative multiples of that
-  cross-section (`coneLift_eq_iUnion_smul`) — which is the content the book uses. The
-  identification with the bundled `PointedCone` hull is deferred: it is §5 bookkeeping, and the
-  backbone's `liftAt` lives in `Polyhedral/Defs.lean`, a module this section should not depend on.
-* **Theorem 3.8's second equation is stated without convexity**, which its proof does not use;
-  see the docstring of `theorem_3_8_invSum`. The first equation keeps it.
-* **The direct-sum criterion `(C - C) ∩ (D - D) = {0}`** for uniqueness of the decomposition
-  `x = y + z` (book 937–941) is stated in the book with "it can be shown that…" and no proof;
-  the criterion itself is `directSum_iff_unique` below, but the parenthetical claim that `ℝⁿ` then
-  splits as a direct sum of two subspaces, one containing `C` and the other `D`, is omitted.
+`λC`, `−C` and `C₁ + C₂` need no definition of their own: they are Mathlib's pointwise `a • s`,
+`-s` and `s + t`, and the book's displayed formulas for them are those definitions on the nose.
+`ℝᵐ⁺ᵖ` is `Rn m × Rn p` here, which is the shape in which §3 actually uses it — a vector of
+`ℝᵐ⁺ᵖ` is written `(y, z)` throughout. `theorem_3_8_invSum` drops the convexity the book assumes,
+its proof not using it; `theorem_3_8_add` keeps it.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §3 (pp. 16–22).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §3.
 -/
 
 namespace Rockafellar
@@ -99,8 +50,8 @@ variable {n m p : ℕ}
 
 /-! ### Scalar multiples, reflections and sums -/
 
-/-- **Rockafellar, §3 (p. 16).** A non-empty symmetric convex set contains the origin: along with
-each `x` it contains `-x`, hence the whole segment between them. -/
+/-- A non-empty symmetric convex set contains the origin: along with each `x` it contains `-x`,
+hence the whole segment between them. -/
 theorem zero_mem_of_neg_eq_self {C : Set (Rn n)} (hC : Convex ℝ C) (hne : C.Nonempty)
     (hsym : -C = C) : (0 : Rn n) ∈ C := by
   obtain ⟨x, hx⟩ := hne
@@ -108,28 +59,21 @@ theorem zero_mem_of_neg_eq_self {C : Set (Rn n)} (hC : Convex ℝ C) (hne : C.No
   have h := hC hx hneg (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num)
   simpa using h
 
-/-- **Rockafellar, Theorem 3.1.** If `C₁` and `C₂` are convex sets in `ℝⁿ`, then so is their sum
-`C₁ + C₂ = {x₁ + x₂ | x₁ ∈ C₁, x₂ ∈ C₂}`.
-
-Specialises Mathlib's `Convex.add`. -/
+/-- **Theorem 3.1.** The sum `C₁ + C₂ = {x₁ + x₂ | x₁ ∈ C₁, x₂ ∈ C₂}` of two convex sets is
+convex. -/
 theorem theorem_3_1 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) :
     Convex ℝ (C₁ + C₂) :=
   Convex.add h₁ h₂
 
-/-- **Rockafellar, §3 (p. 18).** Additive inverses do not exist for sets with more than one point;
-the best one can say in general is that `0 ∈ C + (-C)` when `C ≠ ∅`. -/
+/-- Additive inverses do not exist for sets with more than one point; the best one can say in
+general is that `0 ∈ C + (-C)` when `C ≠ ∅`. -/
 theorem zero_mem_add_neg {C : Set (Rn n)} (hne : C.Nonempty) : (0 : Rn n) ∈ C + -C := by
   obtain ⟨x, hx⟩ := hne
   exact ⟨x, hx, -x, Set.neg_mem_neg.2 hx, by simp⟩
 
-/-- **Rockafellar, Theorem 3.2.** If `C` is a convex set and `λ₁ ≥ 0`, `λ₂ ≥ 0`, then
-`(λ₁ + λ₂) C = λ₁ C + λ₂ C`.
-
-This is the one law of set algebra in §3 that genuinely depends on convexity: the inclusion `⊆`
-holds whether or not `C` is convex, and the reverse inclusion is the convexity relation
-`C ⊇ (λ₁/(λ₁+λ₂)) C + (λ₂/(λ₁+λ₂)) C` multiplied through by `λ₁ + λ₂`.
-
-Specialises Mathlib's `Convex.add_smul`. -/
+/-- **Theorem 3.2.** `(λ₁ + λ₂) C = λ₁ C + λ₂ C` for convex `C` and `λ₁, λ₂ ≥ 0`. This is the one
+law of set algebra in §3 that depends on convexity: `⊆` holds for any `C`, and `⊇` is the
+convexity relation `C ⊇ (λ₁/(λ₁+λ₂)) C + (λ₂/(λ₁+λ₂)) C` multiplied through by `λ₁ + λ₂`. -/
 theorem theorem_3_2 {C : Set (Rn n)} (hC : Convex ℝ C) {l₁ l₂ : ℝ} (h₁ : 0 ≤ l₁) (h₂ : 0 ≤ l₂) :
     (l₁ + l₂) • C = l₁ • C + l₂ • C :=
   Convex.add_smul hC h₁ h₂
@@ -147,7 +91,7 @@ theorem add_self_eq_two_smul {C : Set (Rn n)} (hC : Convex ℝ C) : C + C = (2 :
 
 /-! ### Theorem 3.3: the convex hull of a union -/
 
-/-- The right-hand side of **Rockafellar, Theorem 3.3**: the union of all *finite convex
+/-- The right-hand side of **Theorem 3.3**: the union of all *finite convex
 combinations* `λ₁ C_{i₁} + ⋯ + λ_m C_{i_m}` of the family `C`, taken over all non-negative choices
 of the coefficients `λᵢ` of which only finitely many are non-zero and which add up to `1`. -/
 def convexCombinations {I : Type*} (C : I → Set (Rn n)) : Set (Rn n) :=
@@ -247,13 +191,9 @@ private theorem convex_convexCombinations {I : Type*} {C : I → Set (Rn n)}
     rw [← hsum]
     exact Set.finsetSum_mem_finsetSum _ _ _ hmem
 
-/-- **Rockafellar, Theorem 3.3.** Let `{Cᵢ | i ∈ I}` be an arbitrary collection of non-empty convex
-sets in `ℝⁿ`, and let `C` be the convex hull of the union of the collection. Then
-
-`C = ⋃ {∑_{i ∈ I} λᵢ Cᵢ}`,
-
-the union being taken over all finite convex combinations, i.e. over all non-negative choices of
-the coefficients `λᵢ` of which only finitely many are non-zero and which add up to `1`. -/
+/-- **Theorem 3.3.** The convex hull of the union of a collection of non-empty convex sets `Cᵢ`
+is `⋃ ∑ᵢ λᵢ Cᵢ`, the union over all non-negative coefficient families with finite support summing
+to `1`. -/
 theorem theorem_3_3 {I : Type*} {C : I → Set (Rn n)} (hC : ∀ i, Convex ℝ (C i))
     (hne : ∀ i, (C i).Nonempty) :
     convexHull ℝ (⋃ i, C i) = convexCombinations C := by
@@ -265,24 +205,19 @@ theorem theorem_3_3 {I : Type*} {C : I → Set (Rn n)} (hC : ∀ i, Convex ℝ (
 
 /-! ### Theorem 3.4: images and inverse images -/
 
-/-- **Rockafellar, Theorem 3.4** (first clause). Let `A` be a linear transformation from `ℝⁿ` to
-`ℝᵐ`. Then `AC = {Ax | x ∈ C}` is a convex set in `ℝᵐ` for every convex set `C` in `ℝⁿ`.
-
-The book's proof is "an elementary exercise". Specialises Mathlib's `Convex.linear_image`. -/
+/-- **Theorem 3.4** (first clause). The image `AC = {Ax | x ∈ C}` of a convex set under a linear
+transformation is convex. -/
 theorem theorem_3_4_image (A : Rn n →ₗ[ℝ] Rn m) {C : Set (Rn n)} (hC : Convex ℝ C) :
     Convex ℝ (A '' C) :=
   Convex.linear_image hC A
 
-/-- **Rockafellar, Theorem 3.4** (second clause). `A⁻¹D = {x | Ax ∈ D}` is a convex set in `ℝⁿ`
-for every convex set `D` in `ℝᵐ`. The notation `A⁻¹D` does not imply that the inverse linear
-transformation exists as a single-valued mapping.
-
-Specialises Mathlib's `Convex.linear_preimage`. -/
+/-- **Theorem 3.4** (second clause). The inverse image `A⁻¹D = {x | Ax ∈ D}` of a convex set is
+convex. The notation does not imply that `A` is invertible. -/
 theorem theorem_3_4_preimage (A : Rn n →ₗ[ℝ] Rn m) {D : Set (Rn m)} (hD : Convex ℝ D) :
     Convex ℝ (A ⁻¹' D) :=
   Convex.linear_preimage hD A
 
-/-- **Rockafellar, Corollary 3.4.1.** The orthogonal projection of a convex set `C` on a subspace
+/-- **Corollary 3.4.1.** The orthogonal projection of a convex set `C` on a subspace
 `L` is another convex set: the projection assigns to each `x` the unique `y ∈ L` with `x - y ⊥ L`,
 and that assignment is linear, so Theorem 3.4 applies. -/
 theorem corollary_3_4_1 (L : Submodule ℝ (Rn n)) [L.HasOrthogonalProjection] {C : Set (Rn n)}
@@ -292,22 +227,15 @@ theorem corollary_3_4_1 (L : Submodule ℝ (Rn n)) [L.HasOrthogonalProjection] {
 
 /-! ### Theorem 3.5: the direct sum -/
 
-/-- **Rockafellar, Theorem 3.5.** Let `C` and `D` be convex sets in `ℝᵐ` and `ℝᵖ` respectively.
-Then the *direct sum* `C ⊕ D = {x = (y, z) | y ∈ C, z ∈ D}` is a convex set in `ℝᵐ⁺ᵖ`.
-
-`C ⊕ D` is Mathlib's `C ×ˢ D`; see the module's design note on `ℝᵐ⁺ᵖ` versus `ℝᵐ × ℝᵖ`. The book's
-proof is "trivial". Specialises Mathlib's `Convex.prod`. -/
+/-- **Theorem 3.5.** The *direct sum* `C ⊕ D = {(y, z) | y ∈ C, z ∈ D}` of convex sets is convex.
+`C ⊕ D` is Mathlib's `C ×ˢ D`, on `Rn m × Rn p` rather than `Rn (m + p)`. -/
 theorem theorem_3_5 {C : Set (Rn m)} {D : Set (Rn p)} (hC : Convex ℝ C) (hD : Convex ℝ D) :
     Convex ℝ (C ×ˢ D) :=
   Convex.prod hC hD
 
-/-- **Rockafellar, §3 (pp. 18–19).** The name *direct sum* is also applied to an ordinary sum
-`C + D` of two subsets of `ℝⁿ` when each `x ∈ C + D` is uniquely `x = y + z` with `y ∈ C`,
-`z ∈ D`. That happens if and only if the symmetric sets `C - C` and `D - D` have only the zero
-vector in common.
-
-The book states this without proof (and adds a further parenthetical claim which is omitted here;
-see the module docstring). -/
+/-- Each `x ∈ C + D` decomposes uniquely as `x = y + z` with `y ∈ C`, `z ∈ D` — the case in which
+`C + D` is also called a *direct sum* — iff `(C - C) ∩ (D - D) = {0}`. The book states this
+without proof. -/
 theorem directSum_iff_unique {C D : Set (Rn n)} (hC : C.Nonempty) (hD : D.Nonempty) :
     (∀ y₁ ∈ C, ∀ z₁ ∈ D, ∀ y₂ ∈ C, ∀ z₂ ∈ D, y₁ + z₁ = y₂ + z₂ → y₁ = y₂ ∧ z₁ = z₂) ↔
       (C - C) ∩ (D - D) = {0} := by
@@ -344,13 +272,10 @@ section PartialAdd
 
 variable {Y Z : Type*}
 
-/-- **Rockafellar, Theorem 3.6 and §3 (pp. 19–20): partial addition.** Given `C₁, C₂ ⊆ ℝᵐ⁺ᵖ`,
-`partialAdd C₁ C₂` is the set of vectors `x = (y, z)` (with `y ∈ ℝᵐ`, `z ∈ ℝᵖ`) such that there
-exist `z₁` and `z₂` with `(y, z₁) ∈ C₁`, `(y, z₂) ∈ C₂` and `z₁ + z₂ = z`.
-
-The book fixes no symbol for this operation and describes it only in words, as "adding in the `z`
-argument alone"; there is one such operation for each way of decomposing `ℝⁿ` into a direct sum of
-two subspaces. See the module docstring. -/
+/-- **Partial addition**, the operation of Theorem 3.6: `partialAdd C₁ C₂` is the set of `(y, z)`
+for which there are `z₁, z₂` with `(y, z₁) ∈ C₁`, `(y, z₂) ∈ C₂` and `z₁ + z₂ = z`. The book
+describes this in words as "adding in the `z` argument alone" and fixes no symbol for it; there is
+one such operation for each decomposition of `ℝⁿ` into a direct sum of two subspaces. -/
 def partialAdd [Add Z] (C₁ C₂ : Set (Y × Z)) : Set (Y × Z) :=
   {q | ∃ z₁ z₂, (q.1, z₁) ∈ C₁ ∧ (q.1, z₂) ∈ C₂ ∧ z₁ + z₂ = q.2}
 
@@ -405,7 +330,7 @@ theorem partialAdd_eq_inter [Add Z] [Subsingleton Z] (C₁ C₂ : Set (Y × Z)) 
 
 end PartialAdd
 
-/-- **Rockafellar, Theorem 3.6.** Let `C₁` and `C₂` be convex sets in `ℝᵐ⁺ᵖ`, and let `C` be the
+/-- **Theorem 3.6.** Let `C₁` and `C₂` be convex sets in `ℝᵐ⁺ᵖ`, and let `C` be the
 set of vectors `x = (y, z)` such that there exist `z₁` and `z₂` with `(y, z₁) ∈ C₁`,
 `(y, z₂) ∈ C₂` and `z₁ + z₂ = z`. Then `C` is a convex set in `ℝᵐ⁺ᵖ`. -/
 theorem theorem_3_6 {C₁ C₂ : Set (Rn m × Rn p)} (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) :
@@ -431,12 +356,9 @@ theorem theorem_3_6_inter (C₁ C₂ : Set (Rn m × Rn 0)) : partialAdd C₁ C�
 
 /-! ### Theorem 3.7: the inverse sum -/
 
-/-- **Rockafellar, §3 (p. 21): inverse addition.** The set
-
-`C₁ # C₂ = ⋃ {(1 - λ) C₁ ∩ λ C₂ | 0 ≤ λ ≤ 1}`.
-
-The book obtains it as the partial addition "in the `λ` argument alone" of the convex cones in
-`ℝⁿ⁺¹` corresponding to `C₁` and `C₂`; that derivation is `invSum_eq_partialAdd_coneLift`. -/
+/-- Rockafellar's **inverse sum** `C₁ # C₂ = ⋃ {(1 - λ) C₁ ∩ λ C₂ | 0 ≤ λ ≤ 1}`. The book obtains
+it as the partial addition "in the `λ` argument alone" of the cones in `ℝⁿ⁺¹` corresponding to
+`C₁` and `C₂`; that derivation is `invSum_eq_partialAdd_coneLift`. -/
 def invSum (C₁ C₂ : Set (Rn n)) : Set (Rn n) :=
   ⋃ l ∈ Set.Icc (0 : ℝ) 1, ((1 - l) • C₁ ∩ l • C₂)
 
@@ -464,10 +386,9 @@ theorem invSum_mono {C₁ C₂ D₁ D₂ : Set (Rn n)} (h₁ : C₁ ⊆ D₁) (h
   obtain ⟨l, hl₀, hl₁, hxa, hxb⟩ := mem_invSum.1 hx
   exact mem_invSum.2 ⟨l, hl₀, hl₁, Set.smul_set_mono h₁ hxa, Set.smul_set_mono h₂ hxb⟩
 
-/-- **Rockafellar, §3 (p. 21).** Inverse addition of sets is the pointwise operation
-`C₁ # C₂ = {x₁ # x₂ | x₁ ∈ C₁, x₂ ∈ C₂}`, in parallel with the formula for `C₁ + C₂` — where
-`{x₁} # {x₂}` is the inverse sum of the two vectors, non-empty exactly when they lie on a common
-ray through the origin. -/
+/-- Inverse addition is pointwise, `C₁ # C₂ = {x₁ # x₂ | x₁ ∈ C₁, x₂ ∈ C₂}`, in parallel with the
+formula for `C₁ + C₂`; `{x₁} # {x₂}` is non-empty exactly when `x₁` and `x₂` lie on a common ray
+through the origin. -/
 theorem invSum_eq_iUnion_singleton (C₁ C₂ : Set (Rn n)) :
     invSum C₁ C₂ = ⋃ x₁ ∈ C₁, ⋃ x₂ ∈ C₂, invSum {x₁} {x₂} := by
   refine Set.Subset.antisymm ?_ ?_
@@ -478,16 +399,10 @@ theorem invSum_eq_iUnion_singleton (C₁ C₂ : Set (Rn n)) :
   · refine Set.iUnion₂_subset fun x₁ hx₁ => Set.iUnion₂_subset fun x₂ hx₂ => ?_
     exact invSum_mono (Set.singleton_subset_iff.2 hx₁) (Set.singleton_subset_iff.2 hx₂)
 
-/-- **Rockafellar, §3 (p. 21).** The inverse sum of two vectors on a common ray: for `α₁, α₂ ≥ 0`,
-
-`{α₁ e} # {α₂ e} = {[α₁ α₂ / (α₁ + α₂)] e}`.
-
-The book writes the coefficient as `(α₁⁻¹ + α₂⁻¹)⁻¹` and adds the parenthetical "the last
-coefficient may be interpreted as `0` if `α₁ = 0` or `α₂ = 0`". That caveat is not decoration: in
-Lean `0⁻¹ = 0`, so the literal harmonic expression evaluates to `α₂` at `α₁ = 0` and is *wrong*
-there, while the product form `α₁ α₂ / (α₁ + α₂)` is correct throughout (including `0 / 0 = 0`).
-This is the formula that makes `#` an *inverse* addition, and with
-`invSum_eq_iUnion_singleton` it is the book's pointwise description of `C₁ # C₂`. -/
+/-- The inverse sum of two vectors on a common ray: `{α₁ e} # {α₂ e} = {[α₁α₂/(α₁+α₂)] e}` for
+`α₁, α₂ ≥ 0`. The coefficient is stated as a product, not as the book's harmonic `(α₁⁻¹+α₂⁻¹)⁻¹`:
+since `0⁻¹ = 0` in Lean the harmonic form evaluates to `α₂` at `α₁ = 0`, which is wrong, whereas
+the product form is correct throughout (`0 / 0 = 0`). -/
 theorem invSum_singleton_smul (e : Rn n) {a₁ a₂ : ℝ} (h₁ : 0 ≤ a₁) (h₂ : 0 ≤ a₂) :
     invSum ({a₁ • e} : Set (Rn n)) {a₂ • e} = {(a₁ * a₂ / (a₁ + a₂)) • e} := by
   have key : ∀ l : ℝ, (1 - l) • ({a₁ • e} : Set (Rn n)) = {((1 - l) * a₁) • e} := by
@@ -529,12 +444,7 @@ theorem invSum_singleton_smul (e : Rn n) {a₁ a₂ : ℝ} (h₁ : 0 ≤ a₁) (
         congr 1
         field_simp
 
-/-- **Rockafellar, Theorem 3.7.** If `C₁` and `C₂` are convex sets in `ℝⁿ`, then so is their
-inverse sum `C₁ # C₂`.
-
-The book's proof is "by the preceding remarks", i.e. via the cone correspondence; the direct
-argument below is Theorem 3.2 applied twice, once in each factor, with the parameter `λ` moving
-convexly along with the point. -/
+/-- **Theorem 3.7.** The inverse sum `C₁ # C₂` of two convex sets is convex. -/
 theorem theorem_3_7 {C₁ C₂ : Set (Rn n)} (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂) :
     Convex ℝ (invSum C₁ C₂) := by
   intro x hx y hy a b ha hb hab
@@ -625,10 +535,8 @@ theorem convex_coneLift {C : Set (Rn n)} (hC : Convex ℝ C) : Convex ℝ (coneL
   rw [← theorem_3_2 hC (mul_nonneg ha hl') (mul_nonneg hb hk')] at hsmul
   exact hsmul
 
-/-- **Rockafellar, §3 (pp. 20–21).** The inverse sum is the partial addition "in the `λ` argument
-alone" of the cones `coneLift C₁` and `coneLift C₂`, read off at height `1`. This is the
-derivation that Theorem 3.7's proof ("by the preceding remarks") refers to, and it is the bridge
-between the surface definition `invSum` and the operation of Theorem 3.6. -/
+/-- The inverse sum is the partial addition "in the `λ` argument alone" of `coneLift C₁` and
+`coneLift C₂`, read off at height `1`: the bridge between `invSum` and Theorem 3.6. -/
 theorem invSum_eq_partialAdd_coneLift (C₁ C₂ : Set (Rn n)) :
     invSum C₁ C₂ = {x : Rn n | (x, (1 : ℝ)) ∈ partialAdd (coneLift C₁) (coneLift C₂)} := by
   ext x
@@ -651,12 +559,8 @@ private theorem smul_eq_self_of_cone {K : Set (Rn n)} (hs : ∀ c : ℝ, 0 < c �
   change c • c⁻¹ • x = x
   rw [← mul_smul, mul_inv_cancel₀ hc.ne', one_smul]
 
-/-- **Rockafellar, Theorem 3.8** (first equation). If `K₁` and `K₂` are convex cones containing
-the origin, then `K₁ + K₂ = conv (K₁ ∪ K₂)`.
-
-The book argues through Theorem 3.3: `conv (K₁ ∪ K₂)` is the union over `λ ∈ [0,1]` of
-`(1-λ) K₁ + λ K₂`, which is `K₁ + K₂` for `0 < λ < 1`, `K₁` at `λ = 0` and `K₂` at `λ = 1`, and
-`K₁ + K₂` contains both `K₁` and `K₂` because both contain the origin. -/
+/-- **Theorem 3.8** (first equation). For convex cones `K₁`, `K₂` containing the origin,
+`K₁ + K₂ = conv (K₁ ∪ K₂)`. -/
 theorem theorem_3_8_add {K₁ K₂ : Set (Rn n)} (hc₁ : Convex ℝ K₁) (hc₂ : Convex ℝ K₂)
     (hs₁ : ∀ c : ℝ, 0 < c → c • K₁ ⊆ K₁) (hs₂ : ∀ c : ℝ, 0 < c → c • K₂ ⊆ K₂)
     (h0₁ : (0 : Rn n) ∈ K₁) (h0₂ : (0 : Rn n) ∈ K₂) :
@@ -678,14 +582,9 @@ theorem theorem_3_8_add {K₁ K₂ : Set (Rn n)} (hc₁ : Convex ℝ K₁) (hc�
   rw [smul_add, ← mul_smul, ← mul_smul]
   norm_num
 
-/-- **Rockafellar, Theorem 3.8** (second equation). If `K₁` and `K₂` are convex cones containing
-the origin, then `K₁ # K₂ = K₁ ∩ K₂`: inverse addition reduces to the lattice meet for cones,
-because positive scalar multiplication is trivial on a cone and the two endpoints `λ = 0`,
-`λ = 1` contribute only `{0}`.
-
-Note that **convexity of `K₁` and `K₂` is not used**: closure under positive scaling and
-membership of the origin suffice. The book states the two equations of Theorem 3.8 together and
-so carries convexity into both; only the first equation needs it. -/
+/-- **Theorem 3.8** (second equation). For cones `K₁`, `K₂` containing the origin,
+`K₁ # K₂ = K₁ ∩ K₂`. Stated without the convexity the book carries over from the first equation:
+closure under positive scaling and membership of the origin suffice. -/
 theorem theorem_3_8_invSum {K₁ K₂ : Set (Rn n)} (hs₁ : ∀ c : ℝ, 0 < c → c • K₁ ⊆ K₁)
     (hs₂ : ∀ c : ℝ, 0 < c → c • K₂ ⊆ K₂) (h0₁ : (0 : Rn n) ∈ K₁) (h0₂ : (0 : Rn n) ∈ K₂) :
     invSum K₁ K₂ = K₁ ∩ K₂ := by

@@ -11,91 +11,33 @@ import Tdaf.Surface.Rockafellar.Part1.Section02
 /-!
 # Rockafellar, §8: Recession Cones and Unboundedness
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §8, pp. 60–71: the directions in which an
-unbounded convex set recedes, and the recession function of a convex function. All eighteen
-numbered results are here, stated over `Rn n = ℝⁿ` with extended-real-valued functions and closed
-by specialising `Tdaf/Analysis/Convex/Recession/{Cone,Function,ConeHull}.lean`.
+The directions in which an unbounded convex set recedes, and the recession function of a convex
+function. All 18 numbered results of §8 are formalized.
 
-## Contents
+The section's definitions are recorded alongside: `0⁺C` (`recessionCone`), the lineality space and
+lineality of a set, `f0⁺` (`recessionFn`), and the recession cone, constancy space and lineality
+space of a function.
 
-| label | declaration |
-|---|---|
-| Theorem 8.1 | `theorem_8_1_cone`, `theorem_8_1_add_subset` |
-| Theorem 8.2 | `theorem_8_2_isClosed`, `theorem_8_2_mem_iff`, `theorem_8_2_closure_cone` |
-| Theorem 8.3 | `theorem_8_3`, `theorem_8_3_relint` |
-| Corollary 8.3.1 | `corollary_8_3_1`, `corollary_8_3_1_mem_iff` |
-| Corollary 8.3.2 | `corollary_8_3_2_iInter`, `corollary_8_3_2_forall` |
-| Corollary 8.3.3 | `corollary_8_3_3` |
-| Corollary 8.3.4 | `corollary_8_3_4` |
-| Theorem 8.4 | `theorem_8_4` |
-| Corollary 8.4.1 | `corollary_8_4_1` |
-| Theorem 8.5 | `theorem_8_5_posHomogeneous`, `theorem_8_5_convex`, `theorem_8_5_proper`, |
-| | `theorem_8_5_sup`, `theorem_8_5_closed`, `theorem_8_5_sup_quotient`, `theorem_8_5_lim` |
-| Corollary 8.5.1 | `corollary_8_5_1` |
-| Corollary 8.5.2 | `corollary_8_5_2`, `corollary_8_5_2_zero_mem_dom` |
-| Theorem 8.6 | `theorem_8_6_antitone`, `theorem_8_6_iff`, `theorem_8_6_closed` |
-| Corollary 8.6.1 | `corollary_8_6_1`, `corollary_8_6_1_closed` |
-| Corollary 8.6.2 | `corollary_8_6_2` |
-| Theorem 8.7 | `theorem_8_7_recessionCone`, `theorem_8_7_linealitySpace` |
-| Corollary 8.7.1 | `corollary_8_7_1` |
-| Theorem 8.8 | `theorem_8_8_a_iff_b`, `theorem_8_8_b_iff_c`, `theorem_8_8_a_iff_c`, |
-| | `theorem_8_8_closed` |
+Rockafellar's *direction* is an equivalence class of closed half-lines under translation, a
+quotient he never formally types. None is introduced here: every statement about "the direction of
+`y`" is a statement about the vector `y` that is invariant under `y ↦ λ y` for `λ > 0`, and `0⁺C`
+is a cone precisely because of that invariance.
 
-The section's *definitions* are recorded alongside — `0⁺C` (`recessionCone`), the lineality space
-and lineality of a set, `f0⁺` (`recessionFn`), the recession cone, constancy space and lineality
-space of a function — each with the identification that makes it Rockafellar's own notion.
+## Two overloads to watch
 
-## Directions are modelled by vectors, not by a quotient
+**`f0⁺` deliberately overloads §5's right scalar multiplication `fλ`.** Here `f0⁺` is
+`recessionFn f` and `fλ` is `smulRight f λ`, and `corollary_8_5_2` is the bridge: for a closed
+proper convex `f` the value `(f0⁺) y` really is the limit of `(fλ) y` as `λ ↓ 0`.
 
-Rockafellar's *direction* (book, line 2495) is an equivalence class of closed half-lines under
-translation, a quotient object he never formally types. Nothing in §8 needs the quotient: every
-statement about "the direction of `y`" is a statement about the *vector* `y` that is invariant
-under `y ↦ λ y` for `λ > 0`, and `0⁺C` is a cone precisely because of that invariance. The
-homogenisation route the book sketches — the directions of `ℝⁿ` as the rays `{λ (0, y) | λ ≥ 0}` in
-`ℝ × ℝⁿ` — is `theorem_8_2_closure_cone` here, and `HullDirections.lean` is where the backbone
-takes that same route for the one place the object is really needed (§17's `conv S` for a set
-mixing points and directions). No competing model is introduced.
+**The "recession cone of `f`" is neither `0⁺(dom f)` nor `0⁺(epi f)`**, as the book itself warns.
+It is `recessionConeFn f = {y | (f0⁺) y ≤ 0}`: the horizontal slice `{y | (y, 0) ∈ 0⁺(epi f)}` of
+the epigraph's recession cone (`recessionConeFn_eq_slice`), and a subset of `0⁺(dom f)` that is
+properly smaller in general — for `f x = ⟪a, x⟫` with `a ≠ 0` one has `0⁺(dom f) = ℝⁿ` while
+`recessionConeFn f` is a closed half-space.
 
-## `f0⁺` and the three cones that are not it
+## References
 
-**`f0⁺` deliberately overloads §5's right scalar multiplication `fλ`** (book, line 2703). The
-overload is licensed by Corollary 8.5.2, `corollary_8_5_2`: for a closed proper convex `f` the
-value `(f0⁺) y` really is the limit of `(fλ) y` as `λ ↓ 0`. In this file `f0⁺` is `recessionFn f`
-and `fλ` is `smulRight f λ`, and `corollary_8_5_2` is the bridge between them.
-
-**The "recession cone of `f`" is neither `0⁺(dom f)` nor `0⁺(epi f)`** — the book warns of this
-itself at line 2849. It is `recessionConeFn f = {y | (f0⁺) y ≤ 0}`, and:
-
-* `recessionConeFn_eq_slice` — it is the *horizontal slice* `{y | (y, 0) ∈ 0⁺(epi f)}` of the
-  recession cone of the epigraph, which lives one dimension up;
-* `recessionConeFn_subset_recessionCone_dom` — it is contained in `0⁺(dom f)`, and the inclusion is
-  proper in general: for `f x = ⟪a, x⟫` with `a ≠ 0` one has `dom f = ℝⁿ`, so `0⁺(dom f) = ℝⁿ`,
-  while `recessionConeFn f = {y | ⟪a, y⟫ ≤ 0}` is a closed half-space.
-
-## What is not here
-
-* **The `cl g` display between Corollary 8.5.1 and Corollary 8.5.2** (book, lines 2731–2748),
-  identifying the closure of the positively homogeneous convex function generated by
-  `h (λ, x) = f x + δ(λ | 1)` — *omitted, backbone gap*. `Recession/Function.lean` records why:
-  `homCone f ≠ epi (hom f)`, so Rockafellar's `g` is `cl (hom f)` rather than `hom f`, and
-  identifying `cl (hom f)` needs both the `cl K` formula of Theorem 8.2 in epigraph form and
-  Theorem 7.4. The bridge belongs beside `Homogenize.lean`, not here. Corollary 8.5.2 itself is
-  proved directly and *is* here.
-* **The examples `C₁`–`C₄` in `ℝ²`** (book, lines 2523–2557) and **`f₁`, `f₂`, `f₃`** (lines
-  2773–2819) — *omitted*. They are coordinate computations with no backbone content: `f₃` is
-  log-sum-exp, whose convexity the book itself defers to §16. The two *load-bearing* remarks that
-  ride on them — that `0⁺C` can fail to be closed for non-closed `C`, and that `0⁺(ri C)` can be
-  properly larger than `0⁺C` — are recorded as the hypotheses they force, in the docstrings of
-  `theorem_8_2_isClosed`, `theorem_8_3` and `corollary_8_3_1`. What *is* recorded in full is the
-  family of examples that generalises: affine sets, systems of weak linear inequalities,
-  indicators, and proper convex functions with bounded effective domain (`f0⁺ = δ(· | 0)`, the
-  book's remark at line 2807).
-* **`rank`** — *deferred by scope*. `rank C = dim C - lineality C` and
-  `rank f = dim f - lineality f` need §6's affine-hull dimension calculus to say anything;
-  `lineality` and `linealityFn` are here, `dim` is §6's. The two assertions the book makes about
-  rank — that the convex sets of rank `0` are the affine sets, and that the proper convex functions
-  of rank `0` are the partial affine functions — are printed without proof (lines 2680 and 2900)
-  and belong to §19 and §23 respectively.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §8.
 -/
 
 open Bornology Filter Set Topology
@@ -122,65 +64,44 @@ theorem mem_recessionCone_iff (C : Set (Rn n)) (y : Rn n) :
 
 /-! ### Theorem 8.1 -/
 
-/-- **Rockafellar, Theorem 8.1**, first assertion. Let `C` be a non-empty convex set. The recession
-cone `0⁺C` is then a convex cone containing the origin.
-
-`IsCone` is §2's — closed under **positive** scalar multiplication — so "convex cone containing the
-origin" is genuinely three claims, and the surface makes all three. Neither convexity nor
-non-emptiness of `C` is used: the backbone bundles `0⁺C` as a `PointedCone ℝ (Rn n)` with no
-hypothesis at all (`recessionPointedCone`). -/
+/-- **Theorem 8.1**, first assertion. The recession cone `0⁺C` of a non-empty convex set is a
+convex cone containing the origin — three claims, since `IsCone` is §2's, closed under *positive*
+scaling only. Neither convexity nor non-emptiness of `C` is used. -/
 theorem theorem_8_1_cone (C : Set (Rn n)) :
     IsCone (recessionCone C) ∧ Convex ℝ (recessionCone C) ∧ (0 : Rn n) ∈ recessionCone C :=
   ⟨fun _ hl _ hy => smul_mem_recessionCone hl.le hy, convex_recessionCone C,
     zero_mem_recessionCone C⟩
 
-/-- **Rockafellar, Theorem 8.1**, second assertion: `0⁺C` is the same as the set of vectors `y`
-such that `C + y ⊆ C`.
-
-Specialises `recessionCone_eq_add_subset`. The book's standing non-emptiness of `C` is not needed
-(both sides are everything for `C = ∅`), but convexity is: it is what lets the recession condition
-be tested at `λ = 1` alone. -/
+/-- **Theorem 8.1**, second assertion: `0⁺C = {y | C + y ⊆ C}`. The book's standing non-emptiness
+is not needed, but convexity is: it is what lets the condition be tested at `λ = 1` alone. -/
 theorem theorem_8_1_add_subset {C : Set (Rn n)} (hC : Convex ℝ C) :
     recessionCone C = {y : Rn n | C + {y} ⊆ C} :=
   recessionCone_eq_add_subset hC
 
 /-! ### Theorem 8.2 -/
 
-/-- **Rockafellar, Theorem 8.2**, first assertion: for a non-empty closed convex set `C` the
-recession cone `0⁺C` is closed.
-
-Specialises `isClosed_recessionCone`, which needs neither convexity nor non-emptiness: writing
-`0⁺C = ⋂ x ∈ C, ⋂ λ ≥ 0, (fun y => x + λ • y) ⁻¹' C` exhibits it as an intersection of preimages of
-`C` under continuous maps. Closedness of `C` is essential — the book's `C₄` (line 2557) is a convex
+/-- **Theorem 8.2**, first assertion: the recession cone of a closed convex set is closed. Neither
+convexity nor non-emptiness is needed; closedness of `C` is essential — the book's `C₄` is a convex
 set whose recession cone is `C₄` itself, which is not closed. -/
 theorem theorem_8_2_isClosed {C : Set (Rn n)} (hCc : IsClosed C) : IsClosed (recessionCone C) :=
   isClosed_recessionCone hCc
 
-/-- **Rockafellar, Theorem 8.2**, second assertion: for a non-empty closed convex `C` the recession
-cone `0⁺C` consists of all possible limits of sequences `λ₁ x₁, λ₂ x₂, …` with `xᵢ ∈ C` and
-`λᵢ ↓ 0`.
-
-Specialises `mem_recessionCone_iff_exists_tendsto`. "`λᵢ ↓ 0`" is read as `λᵢ > 0` together with
-`λᵢ → 0`; monotonicity of the sequence is not used in the book's argument either. -/
+/-- **Theorem 8.2**, second assertion: for non-empty closed convex `C`, `0⁺C` is the set of limits
+of sequences `λᵢ xᵢ` with `xᵢ ∈ C` and `λᵢ ↓ 0`. "`λᵢ ↓ 0`" is read as `λᵢ > 0` with `λᵢ → 0`;
+monotonicity is not used in the book's argument either. -/
 theorem theorem_8_2_mem_iff {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hne : C.Nonempty) (y : Rn n) :
     y ∈ recessionCone C ↔ ∃ (l : ℕ → ℝ) (u : ℕ → Rn n), (∀ i, u i ∈ C) ∧ (∀ i, 0 < l i) ∧
       Tendsto l atTop (𝓝 0) ∧ Tendsto (fun i => l i • u i) atTop (𝓝 y) :=
   mem_recessionCone_iff_exists_tendsto hC hCc hne
 
-/-- **Rockafellar, Theorem 8.2**, third assertion: for the convex cone `K` in `ℝⁿ⁺¹` generated by
-`{(1, x) | x ∈ C}`,
+/-- **Theorem 8.2**, third assertion: for `K` the convex cone in `ℝⁿ⁺¹` generated by
+`{(1, x) | x ∈ C}`, `cl K = K ∪ {(0, x) | x ∈ 0⁺C}`.
 
-`cl K = K ∪ {(0, x) | x ∈ 0⁺C}`.
-
-This is the homogenisation picture of the section's opening: a point of `ℝⁿ` is the ray through
-`(1, x)`, a *direction* of `ℝⁿ` is a ray through `(0, y)` with `y ≠ 0`, and the directions adjoined
-to `K` in the limit are exactly those in which `C` recedes. It is the model of "direction" this
-file uses.
-
-Specialises `closure_coe_hull_prodMk_one` (stated there as `cl K = closedConeOver C`) together with
-`coe_hull_prodMk_one`. `ℝⁿ⁺¹` is `ℝ × Rn n`, with the homogenising coordinate first, matching the
-book's `(λ, x)`. -/
+This is the homogenisation picture: a point of `ℝⁿ` is the ray through `(1, x)`, a *direction* is a
+ray through `(0, y)` with `y ≠ 0`, and the directions adjoined to `K` in the limit are exactly those
+in which `C` recedes. `ℝⁿ⁺¹` is `ℝ × Rn n`, the homogenising coordinate first as in the book's
+`(λ, x)`. -/
 theorem theorem_8_2_closure_cone {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (hne : C.Nonempty) :
     closure (PointedCone.hull ℝ (Prod.mk (1 : ℝ) '' C) : Set (ℝ × Rn n))
@@ -201,43 +122,32 @@ theorem theorem_8_2_closure_cone {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsC
 
 /-! ### Theorem 8.3 and its corollaries -/
 
-/-- **Rockafellar, Theorem 8.3**, first assertion: let `C` be a non-empty closed convex set and let
-`y ≠ 0`. If there exists even one `x` such that the half-line `{x + λ y | λ ≥ 0}` is contained in
-`C`, then the same is true for every `x ∈ C`, that is, `y ∈ 0⁺C`.
-
-Specialises `mem_recessionCone_of_exists_ray`. `y ≠ 0` is not needed — it is the book's standing
-convention that the zero vector has no direction — and neither is non-emptiness, which the
-hypothesis already supplies. Closedness is essential: the book's `C₄` (line 2557) contains the
-half-line through `(1, 1)` in the direction `(1, 0)` without receding in it. -/
+/-- **Theorem 8.3**, first assertion: for closed convex `C`, if one half-line `{x + λ y | λ ≥ 0}`
+lies in `C` then `y ∈ 0⁺C`, so every such half-line does. The book's `y ≠ 0` is not needed — it is
+its convention that the zero vector has no direction — nor is non-emptiness. Closedness is
+essential: the book's `C₄` contains a half-line in direction `(1, 0)` without receding in it. -/
 theorem theorem_8_3 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) {y : Rn n}
     (h : ∃ x, ∀ l : ℝ, 0 ≤ l → x + l • y ∈ C) : y ∈ recessionCone C :=
   mem_recessionCone_of_exists_ray hC hCc h
 
-/-- **Rockafellar, Theorem 8.3**, second assertion: under the same hypotheses,
-`{x + λ y | λ ≥ 0}` is actually contained in `ri C` for each `x ∈ ri C`, so `y ∈ 0⁺(ri C)`.
-
-Specialises `Convex.recessionCone_relint` (the backbone's Corollary 8.3.1), which is where finite
-dimension enters, through Theorem 6.2. -/
+/-- **Theorem 8.3**, second assertion: under the same hypotheses `{x + λ y | λ ≥ 0} ⊆ ri C` for
+each `x ∈ ri C`, so `y ∈ 0⁺(ri C)`. Finite dimension enters here, through Theorem 6.2. -/
 theorem theorem_8_3_relint {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) {y : Rn n}
     (h : ∃ x, ∀ l : ℝ, 0 ≤ l → x + l • y ∈ C) :
     y ∈ recessionCone (ri C) := by
   rw [hC.recessionCone_relint, hCc.closure_eq]
   exact mem_recessionCone_of_exists_ray hC hCc h
 
-/-- **Rockafellar, Corollary 8.3.1**: for any non-empty convex set `C`, `0⁺(ri C) = 0⁺(cl C)`.
+/-- **Corollary 8.3.1**: for any non-empty convex set `C`, `0⁺(ri C) = 0⁺(cl C)`.
 
-Specialises `Convex.recessionCone_relint`; non-emptiness is not needed. The inclusion
-`0⁺C ⊆ 0⁺(ri C)` can be **proper** when `C` is not closed: the book's `C₄` (line 2557) has
-`0⁺(ri C₄)` the closed first quadrant while `0⁺C₄ = C₄`. -/
+Non-emptiness is not needed. The inclusion `0⁺C ⊆ 0⁺(ri C)` can be **proper** when `C` is not
+closed: the book's `C₄` has `0⁺(ri C₄)` the closed first quadrant while `0⁺C₄ = C₄`. -/
 theorem corollary_8_3_1 {C : Set (Rn n)} (hC : Convex ℝ C) :
     recessionCone (ri C) = recessionCone (closure C) :=
   hC.recessionCone_relint
 
-/-- **Rockafellar, Corollary 8.3.1**, second assertion: given any `x ∈ ri C`, one has
-`y ∈ 0⁺(cl C)` if and only if `x + λ y ∈ C` for every `λ > 0`.
-
-The forward direction is Corollary 8.3.1 together with `ri C ⊆ C`; the reverse is Theorem 8.3
-applied to `cl C`, the half-line's endpoint `x` lying in `C` because `x ∈ ri C`. -/
+/-- **Corollary 8.3.1**, second assertion: for `x ∈ ri C`, `y ∈ 0⁺(cl C)` iff `x + λ y ∈ C` for
+every `λ > 0`. -/
 theorem corollary_8_3_1_mem_iff {C : Set (Rn n)} (hC : Convex ℝ C) {x : Rn n} (hx : x ∈ ri C)
     (y : Rn n) :
     y ∈ recessionCone (closure C) ↔ ∀ l : ℝ, 0 < l → x + l • y ∈ C := by
@@ -251,16 +161,14 @@ theorem corollary_8_3_1_mem_iff {C : Set (Rn n)} (hC : Convex ℝ C) {x : Rn n} 
     · simpa using subset_closure (intrinsicInterior_subset hx)
     · exact subset_closure (hy l hl')
 
-/-- **Rockafellar, Corollary 8.3.2**: if `C` is a closed convex set containing the origin, then
-`0⁺C = ⋂_{ε > 0} ε C`.
-
-Specialises `recessionCone_eq_iInter_smul`. -/
+/-- **Corollary 8.3.2**: if `C` is a closed convex set containing the origin, then
+`0⁺C = ⋂_{ε > 0} ε C`. -/
 theorem corollary_8_3_2_iInter {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (h0 : (0 : Rn n) ∈ C) :
     recessionCone C = ⋂ ε ∈ Ioi (0 : ℝ), ε • C :=
   recessionCone_eq_iInter_smul hC hCc h0
 
-/-- **Rockafellar, Corollary 8.3.2**, in the book's first spelling:
+/-- **Corollary 8.3.2**, in the book's first spelling:
 `0⁺C = {y | ε⁻¹ y ∈ C for every ε > 0}`. -/
 theorem corollary_8_3_2_forall {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     (h0 : (0 : Rn n) ∈ C) :
@@ -270,20 +178,16 @@ theorem corollary_8_3_2_forall {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClo
   simp only [Set.mem_iInter, Set.mem_Ioi, Set.mem_ofPred_eq]
   exact forall₂_congr fun ε hε => Set.mem_smul_set_iff_inv_smul_mem₀ hε.ne' C y
 
-/-- **Rockafellar, Corollary 8.3.3**: if `{Cᵢ | i ∈ I}` is an arbitrary collection of closed convex
-sets in `ℝⁿ` whose intersection is not empty, then `0⁺(⋂ᵢ Cᵢ) = ⋂ᵢ 0⁺Cᵢ`.
-
-Specialises `recessionCone_iInter`. -/
+/-- **Corollary 8.3.3**: if `{Cᵢ | i ∈ I}` is an arbitrary collection of closed convex
+sets in `ℝⁿ` whose intersection is not empty, then `0⁺(⋂ᵢ Cᵢ) = ⋂ᵢ 0⁺Cᵢ`. -/
 theorem corollary_8_3_3 {ι : Type*} {C : ι → Set (Rn n)} (hC : ∀ i, Convex ℝ (C i))
     (hCc : ∀ i, IsClosed (C i)) (hne : (⋂ i, C i).Nonempty) :
     recessionCone (⋂ i, C i) = ⋂ i, recessionCone (C i) :=
   recessionCone_iInter hC hCc hne
 
-/-- **Rockafellar, Corollary 8.3.4**: let `A` be a linear transformation from `ℝⁿ` to `ℝᵐ` and let
-`C` be a closed convex set in `ℝᵐ` with `A⁻¹C ≠ ∅`. Then `0⁺(A⁻¹C) = A⁻¹(0⁺C)`.
-
-Specialises `recessionCone_preimage`. Continuity of `A` is not used: Theorem 8.3 is applied to `C`,
-not to `A⁻¹C`. -/
+/-- **Corollary 8.3.4**: let `A` be a linear transformation from `ℝⁿ` to `ℝᵐ` and let `C` be a
+closed convex set in `ℝᵐ` with `A⁻¹C ≠ ∅`. Then `0⁺(A⁻¹C) = A⁻¹(0⁺C)`. Continuity of `A` is not
+used: Theorem 8.3 is applied to `C`, not to `A⁻¹C`. -/
 theorem corollary_8_3_4 (A : Rn n →ₗ[ℝ] Rn m) {C : Set (Rn m)} (hC : Convex ℝ C)
     (hCc : IsClosed C) (hne : (A ⁻¹' C).Nonempty) :
     recessionCone (A ⁻¹' C) = A ⁻¹' recessionCone C :=
@@ -291,22 +195,15 @@ theorem corollary_8_3_4 (A : Rn n →ₗ[ℝ] Rn m) {C : Set (Rn m)} (hC : Conve
 
 /-! ### Theorem 8.4: unboundedness -/
 
-/-- **Rockafellar, Theorem 8.4**: a non-empty closed convex set `C` in `ℝⁿ` is bounded if and only
-if its recession cone `0⁺C` consists of the zero vector alone.
-
-Specialises `isBounded_iff_recessionCone_eq_zero`. This is the one place in §8 where finite
-dimension is genuinely used, and it is what makes the unboundedness of a closed convex set "really
-of the simplest sort that can be hoped for". -/
+/-- **Theorem 8.4.** A non-empty closed convex set is bounded iff `0⁺C = {0}`. The one place in
+§8 where finite dimension is genuinely used on the set side. -/
 theorem theorem_8_4 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C) (hne : C.Nonempty) :
     IsBounded C ↔ recessionCone C = {0} :=
   isBounded_iff_recessionCone_eq_zero hC hCc hne
 
-/-- **Rockafellar, Corollary 8.4.1**: let `C` be a closed convex set and `M` an affine set such
-that `M ∩ C` is non-empty and bounded. Then `M' ∩ C` is bounded for every affine set `M'` parallel
-to `M`.
-
-Specialises `isBounded_inter_of_direction_eq`. "`M'` parallel to `M`" is
-`M.direction = M'.direction`, which is the book's own definition of parallel. -/
+/-- **Corollary 8.4.1.** For closed convex `C` and an affine `M` with `M ∩ C` non-empty and
+bounded, `M' ∩ C` is bounded for every affine `M'` parallel to `M`. "Parallel" is
+`M.direction = M'.direction`, the book's own definition. -/
 theorem corollary_8_4_1 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
     {M M' : AffineSubspace ℝ (Rn n)} (hpar : M.direction = M'.direction)
     (hne : ((M : Set (Rn n)) ∩ C).Nonempty) (hb : IsBounded ((M : Set (Rn n)) ∩ C)) :
@@ -315,7 +212,7 @@ theorem corollary_8_4_1 {C : Set (Rn n)} (hC : Convex ℝ C) (hCc : IsClosed C)
 
 /-! ### Lineality space, lineality and rank of a convex set
 
-Unnumbered, book lines 2645–2690. -/
+Unnumbered. -/
 
 /-- **Rockafellar's lineality space of `C`**, `(-0⁺C) ∩ 0⁺C`: the zero vector together with the
 `y ≠ 0` such that, for every `x ∈ C`, the whole line through `x` in the direction of `y` lies in
@@ -324,58 +221,44 @@ theorem mem_linealitySpace_iff (C : Set (Rn n)) (y : Rn n) :
     y ∈ linealitySpace C ↔ y ∈ recessionCone C ∧ y ∈ -recessionCone C :=
   Iff.rfl
 
-/-- **Rockafellar's "elementary exercise"** (book, line 2653): the lineality space of a convex `C`
-is the set of vectors `y` such that `C + y = C`.
-
-Specialises `linealitySpace_eq_add_eq`. -/
+/-- **Rockafellar's "elementary exercise"**: the lineality space of a convex `C`
+is the set of vectors `y` such that `C + y = C`. -/
 theorem linealitySpace_eq_add_eq_surface {C : Set (Rn n)} (hC : Convex ℝ C) :
     linealitySpace C = {y : Rn n | C + {y} = C} :=
   linealitySpace_eq_add_eq hC
 
-/-- **Theorem 2.7 applied to `0⁺C`** (book, line 2657): the lineality space of `C` is a subspace,
+/-- **Theorem 2.7 applied to `0⁺C`**: the lineality space of `C` is a subspace,
 the largest subspace contained in the convex cone `0⁺C`. Its dimension is the *lineality* of `C`,
-`lineality C`.
-
-Specialises `linealitySubmodule_isGreatest`. -/
+`lineality C`. -/
 theorem linealitySubmodule_isGreatest_surface (C : Set (Rn n)) :
     IsGreatest {L : Submodule ℝ (Rn n) | (L : Set (Rn n)) ⊆ recessionCone C}
       (linealitySubmodule C) :=
   linealitySubmodule_isGreatest C
 
-/-- **Rockafellar's direct-sum decomposition** (book, line 2673): a convex set with lineality space
-`L` splits as `C = L + (C ∩ L^⊥)`.
-
-Specialises `eq_add_inter_of_isCompl`, which is stated for an *arbitrary* complement of `L`; the
-orthogonal complement is the instance `Submodule.isCompl_orthogonal`
-supplies, and it is the only place §8 would need an inner product. -/
+/-- **The direct-sum decomposition**: a convex set with lineality space `L` splits as
+`C = L + (C ∩ L^⊥)`. Any complement of `L` would do; the orthogonal one is the only place §8 would
+need an inner product. -/
 theorem linealitySpace_add_inter_orthogonal (C : Set (Rn n)) :
     C = (linealitySubmodule C : Set (Rn n)) + C ∩ ((linealitySubmodule C)ᗮ : Set (Rn n)) :=
   eq_add_inter_of_isCompl (Submodule.isCompl_orthogonal _)
 
-/-! ### Examples of recession cones (unnumbered, book lines 2559–2573 and 2691–2698) -/
+/-! ### Examples of recession cones -/
 
-/-- The recession cone of a non-empty affine set `M` is the subspace `L` parallel to `M`.
-
-Specialises `recessionCone_coe_affineSubspace`. -/
+/-- The recession cone of a non-empty affine set `M` is the subspace `L` parallel to `M`. -/
 theorem recessionCone_affine {M : AffineSubspace ℝ (Rn n)} (hne : (M : Set (Rn n)).Nonempty) :
     recessionCone (M : Set (Rn n)) = (M.direction : Set (Rn n)) :=
   recessionCone_coe_affineSubspace hne
 
-/-- If `C = {x | ⟪x, bᵢ⟫ ≥ βᵢ, ∀ i ∈ I} ≠ ∅` is the solution set of a system of weak linear
-inequalities, then `0⁺C` is the solution set of the corresponding homogeneous system.
-
-Specialises `recessionCone_setOf_forall_le`, which is stated for a family of linear functionals;
-over `Rn n` the functional `⟪·, bᵢ⟫` is `pairing n (b i)`. -/
+/-- If `C = {x | ⟪x, bᵢ⟫ ≥ βᵢ for all i}` is non-empty, then `0⁺C` is the solution set of the
+corresponding homogeneous system. -/
 theorem recessionCone_polyhedron {ι : Type*} (b : ι → Rn n) (β : ι → ℝ)
     (hne : {x : Rn n | ∀ i, β i ≤ pairing n (b i) x}.Nonempty) :
     recessionCone {x : Rn n | ∀ i, β i ≤ pairing n (b i) x}
       = {x : Rn n | ∀ i, (0 : ℝ) ≤ pairing n (b i) x} :=
   recessionCone_setOf_forall_le (fun i => pairing n (b i)) β hne
 
-/-- The lineality space of such a `C` is given by the system of *equations* `⟪x, bᵢ⟫ = 0, ∀ i ∈ I`
-(book, line 2696).
-
-Specialises `linealitySpace_setOf_forall_le`. -/
+/-- The lineality space of such a `C` is the solution set of the *equations*
+`⟪x, bᵢ⟫ = 0, ∀ i ∈ I`. -/
 theorem linealitySpace_polyhedron {ι : Type*} (b : ι → Rn n) (β : ι → ℝ)
     (hne : {x : Rn n | ∀ i, β i ≤ pairing n (b i) x}.Nonempty) :
     linealitySpace {x : Rn n | ∀ i, β i ≤ pairing n (b i) x}
@@ -384,137 +267,95 @@ theorem linealitySpace_polyhedron {ι : Type*} (b : ι → Rn n) (β : ι → �
 
 /-! ### The recession function `f0⁺`
 
-Book lines 2699–2712. Let `f` be a convex function on `ℝⁿ` not identically `+∞`. Then
+Let `f` be a convex function on `ℝⁿ` not identically `+∞`. Then
 `0⁺(epi f)` is itself an epigraph, and the function it is the epigraph of is `f0⁺`. -/
 
 section Functions
 
 variable {f : Rn n → EReal}
 
-/-- **The defining property of `f0⁺`** (book, line 2712): `epi (f0⁺) = 0⁺(epi f)`.
-
-Specialises `epi_recessionFn`, which carries **no hypothesis at all** — the recession cone of an
-epigraph is an epigraph for every `f`, so the book's "not identically `+∞`" is only needed to make
-the *interpretation* interesting, never the identity. -/
+/-- **The defining property of `f0⁺`**: `epi (f0⁺) = 0⁺(epi f)`. No hypothesis at all — the
+recession cone of an epigraph is an epigraph for every `f`, so the book's "not identically `+∞`"
+is only needed to make the interpretation interesting, never the identity. -/
 theorem epi_recessionFn_surface (f : Rn n → EReal) : epi (recessionFn f) = recessionCone (epi f) :=
   epi_recessionFn f
 
-/-- **Rockafellar's displayed characterisation** (book, line 2703): `(y, ν) ∈ 0⁺(epi f)` if and only
-if `f (x + λ y) ≤ f x + λ ν` for every `x` and every `λ ≥ 0`.
-
-Specialises `mk_mem_recessionCone_epi_iff`. -/
+/-- **Rockafellar's displayed characterisation**: `(y, ν) ∈ 0⁺(epi f)` if and only
+if `f (x + λ y) ≤ f x + λ ν` for every `x` and every `λ ≥ 0`. -/
 theorem mk_mem_recessionCone_epi_iff_surface (y : Rn n) (ν : ℝ) :
     ((y, ν) : Rn n × ℝ) ∈ recessionCone (epi f) ↔
       ∀ (x : Rn n) (l : ℝ), 0 ≤ l → f (x + l • y) ≤ f x + ((l * ν : ℝ) : EReal) :=
   mk_mem_recessionCone_epi_iff
 
-/-- **Rockafellar, Theorem 8.1 transported to epigraphs** (book, line 2707): for a convex `f` the
+/-- **Theorem 8.1 transported to epigraphs**: for a convex `f` the
 displayed inequality holds for every `x` and every `λ ≥ 0` as soon as it holds for every `x` with
-`λ = 1`.
-
-Specialises `recessionFn_le_coe_iff_of_convexFn`. -/
+`λ = 1`. -/
 theorem recessionFn_le_coe_iff_surface (hf : ConvexFn f) (y : Rn n) (ν : ℝ) :
     recessionFn f y ≤ (ν : EReal) ↔ ∀ x : Rn n, f (x + y) ≤ f x + (ν : EReal) :=
   recessionFn_le_coe_iff_of_convexFn hf
 
 /-! ### Theorem 8.5 -/
 
-/-- **Rockafellar, Theorem 8.5**, first assertion: the recession function of a proper convex
-function is positively homogeneous.
-
-Specialises `posHomogeneous_recessionFn`, which needs no hypothesis: `0⁺(λ C) = λ 0⁺C` for
-`λ > 0`. -/
+/-- **Theorem 8.5**, first assertion: the recession function of a proper convex function is
+positively homogeneous. It needs no hypothesis: `0⁺(λ C) = λ 0⁺C` for `λ > 0`. -/
 theorem theorem_8_5_posHomogeneous (f : Rn n → EReal) : PosHomogeneous (recessionFn f) :=
   posHomogeneous_recessionFn f
 
-/-- **Rockafellar, Theorem 8.5**, first assertion continued: `f0⁺` is convex.
-
-Specialises `convexFn_recessionFn`; again no hypothesis is needed, since `0⁺` of any set is
-convex. -/
+/-- **Theorem 8.5**, first assertion continued: `f0⁺` is convex. Again no hypothesis is needed,
+since `0⁺` of any set is convex. -/
 theorem theorem_8_5_convex (f : Rn n → EReal) : ConvexFn (recessionFn f) :=
   convexFn_recessionFn f
 
-/-- **Rockafellar, Theorem 8.5**, first assertion continued: `f0⁺` is proper when `f` is.
+/-- **Theorem 8.5**, first assertion continued: `f0⁺` is proper when `f` is.
 
-Specialises `proper_recessionFn`. Properness of `f` is exactly what is needed: `(f0⁺) 0 = 0` puts
-`0` in `dom (f0⁺)`, and the book's parenthetical "note that `(f0⁺)(y)` cannot be `-∞`" is
-`recessionFn_ne_bot`. -/
+Properness of `f` is exactly what is needed: `(f0⁺) 0 = 0` puts `0` in `dom (f0⁺)`, and the book's
+parenthetical "note that `(f0⁺)(y)` cannot be `-∞`" is `recessionFn_ne_bot`. -/
 theorem theorem_8_5_proper (hp : Proper f) : Proper (recessionFn f) :=
   proper_recessionFn hp
 
-/-- **Rockafellar, Theorem 8.5**, the difference formula: for every vector `y`,
+/-- **Theorem 8.5**, the difference formula: `(f0⁺)(y) = sup {f (x + y) - f x | x ∈ dom f}`.
 
-`(f0⁺)(y) = sup {f (x + y) - f x | x ∈ dom f}`.
-
-Specialises `recessionFn_apply_eq_iSup_sub`. **The `∞ - ∞` hazard is disarmed by the hypotheses,
-not by a convention.** Mathlib totalises `EReal` addition with `⊤ + ⊥ = ⊥`, hence subtraction with
-`⊤ - ⊤ = ⊥` and `⊥ - ⊥ = ⊥`; Rockafellar leaves `∞ - ∞` undefined and fixes it per operator, so the
-two disagree. Here the junk value is never consulted: the supremum runs over `x ∈ dom f`, so
-`f x < ⊤`, and the book's own properness gives `f x ≠ ⊥`, whence `f x` is real and
-`f (x + y) - f x` is `⊤ - r` or `r' - r`, never `⊤ - ⊤` or `⊥ - ⊥`. The hypothesis that carries
-this is `hp.ne_bot` — it is the book's, and it has not been weakened away. -/
+The `∞ - ∞` hazard is disarmed by the hypotheses, not by a convention. Mathlib totalises `EReal`
+subtraction with `⊤ - ⊤ = ⊥`, where the book leaves it undefined; here the junk value is never
+consulted, since the supremum runs over `x ∈ dom f` and properness makes `f x` real. -/
 theorem theorem_8_5_sup (hf : ConvexFn f) (hp : Proper f) (y : Rn n) :
     recessionFn f y = ⨆ x ∈ dom f, (f (x + y) - f x) :=
   recessionFn_apply_eq_iSup_sub hf hp.ne_bot y
 
-/-- **Rockafellar, Theorem 8.5**, third assertion: if `f` is closed, `f0⁺` is closed too.
-
-Specialises `closedFn_recessionFn`. -/
+/-- **Theorem 8.5**, third assertion: if `f` is closed, `f0⁺` is closed too. -/
 theorem theorem_8_5_closed (hf : ClosedProperConvexFn f) : ClosedFn (recessionFn f) :=
   closedFn_recessionFn hf.proper hf.isClosed_epi
 
-/-- **Rockafellar, Theorem 8.5**, the difference-quotient formula: for a closed proper convex `f`
-and **any** `x ∈ dom f`,
-
-`(f0⁺)(y) = sup_{λ > 0} [f (x + λ y) - f x] / λ`.
-
-Specialises `recessionFn_apply_eq_iSup_inv_mul`. Closedness is what makes the answer independent of
-`x` (Theorem 8.3). The difference is again taken at a point of `dom f`, where `f x` is real, so the
-`∞ - ∞` collision of `theorem_8_5_sup` cannot arise here either. -/
+/-- **Theorem 8.5**, the difference-quotient formula: for closed proper convex `f` and **any**
+`x ∈ dom f`, `(f0⁺)(y) = sup_{λ > 0} [f (x + λ y) - f x] / λ`. Closedness is what makes the answer
+independent of `x`. -/
 theorem theorem_8_5_sup_quotient (hf : ClosedProperConvexFn f) {x : Rn n} (hx : x ∈ dom f)
     (y : Rn n) :
     recessionFn f y = ⨆ l : ℝ, ⨆ _ : 0 < l, ((l⁻¹ : ℝ) : EReal) * (f (x + l • y) - f x) :=
   recessionFn_apply_eq_iSup_inv_mul hf.convex hf.isClosed_epi hf.proper.ne_bot hx y
 
-/-- **Rockafellar, Theorem 8.5**, the limit form of the same formula:
-
-`(f0⁺)(y) = lim_{λ → ∞} [f (x + λ y) - f x] / λ`.
-
-Specialises `tendsto_coe_inv_mul_sub_atTop`. The supremum is a limit because the difference
-quotient is a nondecreasing function of `λ`; the book defers that to Theorem 23.1, while the
-backbone proves it directly (`monotone_coe_inv_mul_sub`). -/
+/-- **Theorem 8.5**, limit form: `(f0⁺)(y) = lim_{λ → ∞} [f (x + λ y) - f x] / λ`. The supremum
+is a limit because the difference quotient is nondecreasing in `λ`. -/
 theorem theorem_8_5_lim (hf : ClosedProperConvexFn f) {x : Rn n} (hx : x ∈ dom f) (y : Rn n) :
     Tendsto (fun l : ℝ => ((l⁻¹ : ℝ) : EReal) * (f (x + l • y) - f x)) atTop
       (𝓝 (recessionFn f y)) :=
   tendsto_coe_inv_mul_sub_atTop hf.convex hf.isClosed_epi hf.proper.ne_bot hx y
 
-/-- **Rockafellar, Corollary 8.5.1**: for a proper convex `f`, `f0⁺` is the least of the functions
-`h` such that `f z ≤ f x + h (z - x)` for all `z` and all `x`.
-
-Specialises `recessionFn_isLeast`. -/
+/-- **Corollary 8.5.1**: for a proper convex `f`, `f0⁺` is the least of the functions
+`h` such that `f z ≤ f x + h (z - x)` for all `z` and all `x`. -/
 theorem corollary_8_5_1 (hf : ConvexFn f) (hp : Proper f) :
     IsLeast {h : Rn n → EReal | ∀ x z : Rn n, f z ≤ f x + h (z - x)} (recessionFn f) :=
   recessionFn_isLeast hf hp
 
-/-- **Rockafellar, Corollary 8.5.2**: for a closed proper convex `f`,
-
-`(f0⁺)(y) = lim_{λ ↓ 0} (fλ)(y)`
-
-for every `y ∈ dom f`. This is what licenses the deliberate overload of `f0⁺` with §5's right
-scalar multiplication `fλ` (`smulRight`): the notation names a limit that really exists.
-
-Specialises `tendsto_smulRight_recessionFn`. Rockafellar derives it from Corollary 7.5.1 applied to
-the closure of the positively homogeneous convex function generated by `f x + δ(λ | 1)`; that route
-does not close with what §8 has available (see `## What is not here`), and the backbone proves it
-directly instead. -/
+/-- **Corollary 8.5.2.** For closed proper convex `f` and `y ∈ dom f`,
+`(f0⁺)(y) = lim_{λ ↓ 0} (fλ)(y)`. This is what licenses the overload of `f0⁺` with §5's right
+scalar multiplication `fλ`: the notation names a limit that really exists. -/
 theorem corollary_8_5_2 (hf : ClosedProperConvexFn f) {y : Rn n} (hy : y ∈ dom f) :
     Tendsto (fun l : ℝ => smulRight f l y) (𝓝[>] (0 : ℝ)) (𝓝 (recessionFn f y)) :=
   tendsto_smulRight_recessionFn hf hy
 
-/-- **Rockafellar, Corollary 8.5.2**, second assertion: if `0 ∈ dom f` the formula holds for every
-`y ∈ ℝⁿ`, with no condition on `y`.
-
-Specialises `tendsto_smulRight_recessionFn_of_zero_mem_dom`. -/
+/-- **Corollary 8.5.2**, second assertion: if `0 ∈ dom f` the formula holds for every
+`y ∈ ℝⁿ`, with no condition on `y`. -/
 theorem corollary_8_5_2_zero_mem_dom (hf : ClosedProperConvexFn f) (h0 : (0 : Rn n) ∈ dom f)
     (y : Rn n) :
     Tendsto (fun l : ℝ => smulRight f l y) (𝓝[>] (0 : ℝ)) (𝓝 (recessionFn f y)) :=
@@ -522,51 +363,36 @@ theorem corollary_8_5_2_zero_mem_dom (hf : ClosedProperConvexFn f) (h0 : (0 : Rn
 
 /-! ### Theorem 8.6 and its corollaries -/
 
-/-- **Rockafellar, Theorem 8.6**, first assertion: let `f` be a proper convex function and `y` a
-vector. If `liminf_{λ → +∞} f (x + λ y) < +∞` for a given `x`, then `f (x + λ y)` is a
-nonincreasing function of `λ` on all of `ℝ`.
-
-Specialises `antitone_along_of_liminf_lt_top`. Rockafellar proves this by passing to the closure of
-the one-dimensional restriction and invoking Theorems 8.3 and 7.4; the backbone's proof is a direct
-convexity estimate, needs neither, and does not use properness. -/
+/-- **Theorem 8.6**, first assertion: for convex `f`, if `liminf_{λ → +∞} f (x + λ y) < +∞` for
+one `x`, then `f (x + λ y)` is nonincreasing in `λ` on all of `ℝ`. Stated without the properness
+the book assumes. -/
 theorem theorem_8_6_antitone (hf : ConvexFn f) (x y : Rn n)
     (h : liminf (fun l : ℝ => f (x + l • y)) atTop < ⊤) :
     Antitone fun l : ℝ => f (x + l • y) :=
   antitone_along_of_liminf_lt_top hf x y h
 
-/-- **Rockafellar, Theorem 8.6**, second assertion: the property holds for *every* `x` if and only
-if `(f0⁺)(y) ≤ 0`.
-
-Specialises `forall_antitone_iff_recessionFn_nonpos`, which needs no hypothesis on `f` at all. -/
+/-- **Theorem 8.6**, second assertion: the property holds for *every* `x` if and only if
+`(f0⁺)(y) ≤ 0`. It needs no hypothesis on `f` at all. -/
 theorem theorem_8_6_iff (f : Rn n → EReal) (y : Rn n) :
     (∀ x : Rn n, Antitone fun l : ℝ => f (x + l • y)) ↔ recessionFn f y ≤ 0 :=
   forall_antitone_iff_recessionFn_nonpos
 
-/-- **Rockafellar, Theorem 8.6**, third assertion: when `f` is closed, the property holds for every
-`x` if it holds for even one `x ∈ dom f`.
-
-Specialises `recessionFn_nonpos_of_antitone` composed with `theorem_8_6_iff`. Closedness is what
-makes one base point enough, via the difference-quotient formula of Theorem 8.5. -/
+/-- **Theorem 8.6**, third assertion: when `f` is closed, the property holds for every `x` as soon
+as it holds for one `x ∈ dom f`. -/
 theorem theorem_8_6_closed (hf : ClosedProperConvexFn f) {x y : Rn n} (hx : x ∈ dom f)
     (h : Antitone fun l : ℝ => f (x + l • y)) :
     ∀ z : Rn n, Antitone fun l : ℝ => f (z + l • y) :=
   forall_antitone_iff_recessionFn_nonpos.2 (recessionFn_nonpos_of_antitone hf hx h)
 
-/-- **Rockafellar, Corollary 8.6.1**: for a proper convex `f` and a vector `y`, in order that
-`f (x + λ y)` be a constant function of `λ` on `ℝ` for every `x`, it is necessary and sufficient
-that `(f0⁺)(y) ≤ 0` and `(f0⁺)(-y) ≤ 0`.
-
-Specialises `forall_eq_iff_recessionFn_nonpos`, which needs no hypothesis on `f`. -/
+/-- **Corollary 8.6.1.** `f (x + λ y)` is constant in `λ` for every `x` iff `(f0⁺)(y) ≤ 0` and
+`(f0⁺)(-y) ≤ 0`. Stated without the properness and convexity the book assumes. -/
 theorem corollary_8_6_1 (f : Rn n → EReal) (y : Rn n) :
     (∀ (x : Rn n) (l : ℝ), f (x + l • y) = f x) ↔
       recessionFn f y ≤ 0 ∧ recessionFn f (-y) ≤ 0 :=
   forall_eq_iff_recessionFn_nonpos
 
-/-- **Rockafellar, Corollary 8.6.1**, second assertion: when `f` is closed, the condition is
-satisfied as soon as there is one `x` and one real `α` with `f (x + λ y) ≤ α` for every `λ ∈ ℝ`.
-
-Theorem 8.6 is applied in the two opposite directions `y` and `-y` from the single base point `x`,
-which lies in `dom f` because `f x ≤ α < +∞`. -/
+/-- **Corollary 8.6.1**, second assertion: when `f` is closed, the condition holds as soon as
+there is one `x` and one real `α` with `f (x + λ y) ≤ α` for every `λ ∈ ℝ`. -/
 theorem corollary_8_6_1_closed (hf : ClosedProperConvexFn f) {x y : Rn n} {α : ℝ}
     (h : ∀ l : ℝ, f (x + l • y) ≤ (α : EReal)) :
     ∀ (z : Rn n) (l : ℝ), f (z + l • y) = f z := by
@@ -587,28 +413,19 @@ theorem corollary_8_6_1_closed (hf : ClosedProperConvexFn f) {x y : Rn n} {α : 
     ⟨recessionFn_nonpos_of_antitone hf hx (hbdd x y h),
       recessionFn_nonpos_of_antitone hf hx (hbdd x (-y) hneg)⟩
 
-/-- **Rockafellar, Corollary 8.6.2**: a convex function is constant on any affine set `M` where it
-is finite and bounded above.
-
-Specialises `ConvexFn.eq_of_le_on_affineSubspace`. Rockafellar's proof redefines `f` to be `+∞` off
-`M`, notes that the restriction is closed by Corollary 7.4.2 and appeals to Corollary 8.6.1; the
-backbone's proof is Theorem 8.6 along each line of `M` and needs neither closures nor relative
-interiors. It also drops the book's *finiteness* hypothesis, which is not used: boundedness above
-by a real is all that the two inequalities need. -/
+/-- **Corollary 8.6.2.** A convex function is constant on any affine set where it is bounded
+above. Stated without the book's finiteness hypothesis, which the proof does not use. -/
 theorem corollary_8_6_2 (hf : ConvexFn f) {M : AffineSubspace ℝ (Rn n)} {α : ℝ}
     (hM : ∀ w ∈ M, f w ≤ (α : EReal)) {x z : Rn n} (hx : x ∈ M) (hz : z ∈ M) : f z = f x :=
   hf.eq_of_le_on_affineSubspace hM hx hz
 
 /-! ### The recession cone, constancy space and lineality space of a function
 
-Book lines 2849–2860 and 2890–2896. -/
+-/
 
-/-- **Rockafellar's recession cone of `f`** (book, line 2849): the set of vectors `y` with
-`(f0⁺)(y) ≤ 0`. It is a convex cone containing `0`, closed when `f` is closed.
-
-The book warns in the same sentence that it is **not to be confused with `0⁺(epi f)`**, and
-`recessionConeFn_eq_slice` says exactly how the two are related: it is the horizontal slice of
-`0⁺(epi f)` at height `0`, an object one dimension down. -/
+/-- **The recession cone of `f`**: the set of `y` with `(f0⁺)(y) ≤ 0`, a convex cone containing
+`0` and closed when `f` is. Not to be confused with `0⁺(epi f)`, as the book warns:
+`recessionConeFn_eq_slice` gives the relation, the horizontal slice at height `0`. -/
 theorem recessionConeFn_eq_slice (f : Rn n → EReal) :
     recessionConeFn f = {y : Rn n | ((y, (0 : ℝ)) : Rn n × ℝ) ∈ recessionCone (epi f)} := by
   ext y
@@ -629,25 +446,19 @@ theorem recessionConeFn_cone (f : Rn n → EReal) :
   refine ⟨fun l hl y hy => ?_, convex_recessionConeFn f, (recessionPointedConeFn f).zero_mem⟩
   exact Submodule.smul_mem (recessionPointedConeFn f) (⟨l, hl.le⟩ : {c : ℝ // 0 ≤ c}) hy
 
-/-- The recession cone of a closed function is closed.
-
-Specialises `isClosed_recessionConeFn`. -/
+/-- The recession cone of a closed function is closed. -/
 theorem isClosed_recessionConeFn_surface (hf : ClosedProperConvexFn f) :
     IsClosed (recessionConeFn f) :=
   isClosed_recessionConeFn hf.isClosed_epi
 
-/-- **Rockafellar's constancy space of `f`** (book, line 2857): the `y` with `(f0⁺)(y) ≤ 0` and
-`(f0⁺)(-y) ≤ 0`, which by Corollary 8.6.1 are the directions in which `f` is constant.
-
-Specialises `mem_constancySpace_iff_forall_eq`. -/
+/-- **Rockafellar's constancy space of `f`**: the `y` with `(f0⁺)(y) ≤ 0` and
+`(f0⁺)(-y) ≤ 0`, which by Corollary 8.6.1 are the directions in which `f` is constant. -/
 theorem mem_constancySpace_iff (f : Rn n → EReal) (y : Rn n) :
     y ∈ constancySpace f ↔ ∀ (x : Rn n) (l : ℝ), f (x + l • y) = f x :=
   mem_constancySpace_iff_forall_eq
 
-/-- **Theorem 2.7 applied to the recession cone of `f`** (book, line 2857): the constancy space is
-the largest subspace contained in the recession cone of `f`.
-
-Specialises `constancySubmodule_isGreatest`. -/
+/-- **Theorem 2.7 applied to the recession cone of `f`**: the constancy space is
+the largest subspace contained in the recession cone of `f`. -/
 theorem constancySubmodule_isGreatest_surface (f : Rn n → EReal) :
     IsGreatest {L : Submodule ℝ (Rn n) | (L : Set (Rn n)) ⊆ recessionConeFn f}
       (constancySubmodule f) :=
@@ -655,30 +466,23 @@ theorem constancySubmodule_isGreatest_surface (f : Rn n → EReal) :
 
 /-! ### Theorem 8.7 -/
 
-/-- **Rockafellar, Theorem 8.7**, first assertion: for a closed proper convex `f`, all the
-non-empty level sets `{x | f x ≤ α}`, `α ∈ ℝ`, have the same recession cone, namely the recession
-cone of `f`.
-
-Specialises `recessionCone_setOf_le`, which needs only `ConvexFn f` and `IsClosed (epi f)`. -/
+/-- **Theorem 8.7**, first assertion: for a closed proper convex `f`, all the non-empty level
+sets `{x | f x ≤ α}` have the same recession cone, namely that of `f`. -/
 theorem theorem_8_7_recessionCone (hf : ClosedProperConvexFn f) {α : ℝ}
     (hne : {x : Rn n | f x ≤ (α : EReal)}.Nonempty) :
     recessionCone {x : Rn n | f x ≤ (α : EReal)} = recessionConeFn f :=
   recessionCone_setOf_le hf.convex hf.isClosed_epi hne
 
-/-- **Rockafellar, Theorem 8.7**, second assertion: those level sets also all have the same
-lineality space, namely the constancy space of `f`.
-
-Specialises `linealitySpace_setOf_le`. -/
+/-- **Theorem 8.7**, second assertion: those level sets also all have the same
+lineality space, namely the constancy space of `f`. -/
 theorem theorem_8_7_linealitySpace (hf : ClosedProperConvexFn f) {α : ℝ}
     (hne : {x : Rn n | f x ≤ (α : EReal)}.Nonempty) :
     linealitySpace {x : Rn n | f x ≤ (α : EReal)} = constancySpace f :=
   linealitySpace_setOf_le hf.convex hf.isClosed_epi hne
 
-/-- **Rockafellar, Corollary 8.7.1**: for a closed proper convex `f`, if the level set
-`{x | f x ≤ α}` is non-empty and bounded for one `α`, it is bounded for every `α`.
-
-Specialises `isBounded_setOf_le`, which is Theorem 8.7 followed by Theorem 8.4 — the only place
-finite dimension enters on the function side of §8. -/
+/-- **Corollary 8.7.1.** For closed proper convex `f`, if one level set `{x | f x ≤ α}` is
+non-empty and bounded then all of them are. The only place finite dimension enters on the function
+side of §8. -/
 theorem corollary_8_7_1 (hf : ClosedProperConvexFn f) {α β : ℝ}
     (hneα : {x : Rn n | f x ≤ (α : EReal)}.Nonempty)
     (hbα : IsBounded {x : Rn n | f x ≤ (α : EReal)})
@@ -688,26 +492,16 @@ theorem corollary_8_7_1 (hf : ClosedProperConvexFn f) {α β : ℝ}
 
 /-! ### Theorem 8.8 -/
 
-/-- **Rockafellar, Theorem 8.8**, the equivalence (a) ⟺ (b): for any proper convex `f`, a vector
-`y` and a real `ν`,
-
-* (a) `f (x + λ y) = f x + λ ν` for every vector `x` and every `λ ∈ ℝ`;
-* (b) `(y, ν)` belongs to the lineality space of `epi f`.
-
-Specialises `forall_eq_add_iff_mk_mem_linealitySpace_epi`, which needs no hypothesis on `f`. -/
+/-- **Theorem 8.8**, (a) ⟺ (b): `f (x + λ y) = f x + λ ν` for every `x` and every `λ ∈ ℝ` iff
+`(y, ν)` lies in the lineality space of `epi f`. Stated without the properness and convexity the
+book assumes. -/
 theorem theorem_8_8_a_iff_b (f : Rn n → EReal) (y : Rn n) (ν : ℝ) :
     (∀ (x : Rn n) (l : ℝ), f (x + l • y) = f x + ((l * ν : ℝ) : EReal)) ↔
       ((y, ν) : Rn n × ℝ) ∈ linealitySpace (epi f) :=
   forall_eq_add_iff_mk_mem_linealitySpace_epi
 
-/-- **Rockafellar, Theorem 8.8**, the equivalence (b) ⟺ (c), where
-
-* (c) `-(f0⁺)(-y) = (f0⁺)(y) = ν`.
-
-Specialises `mk_mem_linealitySpace_epi_iff`, which states (c) as the pair of equations
-`(f0⁺)(y) = ν` and `(f0⁺)(-y) = -ν`; the two spellings agree because `EReal` negation is
-involutive, and the surface carries the book's own one-line form. Properness is what upgrades the
-two recession *inequalities* to equalities. -/
+/-- **Theorem 8.8**, (b) ⟺ (c), where (c) is `-(f0⁺)(-y) = (f0⁺)(y) = ν`. Properness is what
+upgrades the two recession *inequalities* to equalities. -/
 theorem theorem_8_8_b_iff_c (hp : Proper f) (y : Rn n) (ν : ℝ) :
     ((y, ν) : Rn n × ℝ) ∈ linealitySpace (epi f) ↔
       (-recessionFn f (-y) = recessionFn f y ∧ recessionFn f y = (ν : EReal)) := by
@@ -720,7 +514,7 @@ theorem theorem_8_8_b_iff_c (hp : Proper f) (y : Rn n) (ν : ℝ) :
     refine ⟨h2, ?_⟩
     rw [← neg_neg (recessionFn f (-y)), h1, h2, ← _root_.EReal.coe_neg]
 
-/-- **Rockafellar, Theorem 8.8**, the equivalence (a) ⟺ (c).
+/-- **Theorem 8.8**, the equivalence (a) ⟺ (c).
 
 Specialises `forall_eq_add_iff_recessionFn`, composed with the change of spelling of
 `theorem_8_8_b_iff_c`. -/
@@ -729,51 +523,38 @@ theorem theorem_8_8_a_iff_c (hp : Proper f) (y : Rn n) (ν : ℝ) :
       (-recessionFn f (-y) = recessionFn f y ∧ recessionFn f y = (ν : EReal)) :=
   (theorem_8_8_a_iff_b f y ν).trans (theorem_8_8_b_iff_c hp y ν)
 
-/-- **Rockafellar, Theorem 8.8**, last assertion: when `f` is closed, `y` satisfies the three
-conditions with `ν = (f0⁺)(y)` as soon as there is even one `x ∈ dom f` such that `f (x + λ y)` is
-an affine function of `λ`.
-
-Specialises `recessionFn_eq_of_affine_along`, restated through the (a) ⟺ (c) equivalence so that
-the conclusion is the book's condition (a) at every `x`. -/
+/-- **Theorem 8.8**, last assertion: when `f` is closed, `y` satisfies the three conditions with
+`ν = (f0⁺)(y)` as soon as `f (x + λ y)` is affine in `λ` for one `x ∈ dom f`. -/
 theorem theorem_8_8_closed (hf : ClosedProperConvexFn f) {x y : Rn n} (hx : x ∈ dom f) {ν : ℝ}
     (h : ∀ l : ℝ, f (x + l • y) = f x + ((l * ν : ℝ) : EReal)) :
     ∀ (z : Rn n) (l : ℝ), f (z + l • y) = f z + ((l * ν : ℝ) : EReal) :=
   (forall_eq_add_iff_recessionFn hf.proper).2 (recessionFn_eq_of_affine_along hf hx h)
 
-/-- **Rockafellar's lineality space of `f`** (book, line 2890): the `y` with
+/-- **Rockafellar's lineality space of `f`**: the `y` with
 `(f0⁺)(-y) = -(f0⁺)(y)`. Theorem 8.8 identifies it with the image of the lineality space of
 `epi f` under the projection `(y, ν) ↦ y`; its dimension is the *lineality* of `f`, `linealityFn`.
-
-Specialises `linealitySpaceFn_eq_image`. -/
+-/
 theorem linealitySpaceFn_eq_image_surface (hp : Proper f) :
     linealitySpaceFn f = Prod.fst '' linealitySpace (epi f) :=
   linealitySpaceFn_eq_image hp
 
-/-- The lineality space of `f` is a subspace of `ℝⁿ` (book, line 2891).
-
-Specialises `coe_linealitySubmoduleFn`, whose proof *is* Theorem 8.8. -/
+/-- The lineality space of `f` is a subspace of `ℝⁿ`. Its proof *is* Theorem 8.8. -/
 theorem coe_linealitySubmoduleFn_surface (hp : Proper f) :
     (linealitySubmoduleFn f : Set (Rn n)) = linealitySpaceFn f :=
   coe_linealitySubmoduleFn hp
 
-/-! ### Examples of recession functions (unnumbered, book lines 2807 and 2903) -/
+/-! ### Examples of recession functions -/
 
 /-- **The recession function of an indicator is the indicator of the recession cone**, so that "the
-rank of a convex set coincides with the rank of its indicator function" (book, line 2903) has a
-meaning. Non-emptiness of `C` is needed: for `C = ∅` the left side is the constant `-∞`.
-
-Specialises `recessionFn_indicatorFn`. -/
+rank of a convex set coincides with the rank of its indicator function" has a
+meaning. Non-emptiness of `C` is needed: for `C = ∅` the left side is the constant `-∞`. -/
 theorem recessionFn_indicator {C : Set (Rn n)} (hne : C.Nonempty) :
     recessionFn (indicatorFn C) = indicatorFn (recessionCone C) :=
   recessionFn_indicatorFn hne
 
-/-- **`f0⁺ = δ(· | 0)` for any proper convex function whose effective domain is bounded** (book,
-line 2807, stated there for `f₂` with `Q` positive definite and then generalised in the next
-sentence).
-
-No convexity or closedness is needed. If `(f0⁺)(y) < +∞` then some `(y, ν)` recedes from `epi f`,
-so `dom f` recedes in the direction `y`; a bounded non-empty `dom f` recedes in no direction but
-`0`, by the easy half of Theorem 8.4. -/
+/-- **`f0⁺ = δ(· | 0)` for a proper convex function with bounded effective domain.** No convexity
+or closedness is needed: if `(f0⁺)(y) < +∞` then `dom f` recedes in direction `y`, and a bounded
+non-empty `dom f` recedes in no direction but `0`. -/
 theorem recessionFn_eq_indicator_zero_of_isBounded_dom (hp : Proper f) (hb : IsBounded (dom f)) :
     recessionFn f = indicatorFn ({0} : Set (Rn n)) := by
   have hzero : recessionCone (dom f) = {0} :=

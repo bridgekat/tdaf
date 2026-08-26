@@ -9,72 +9,31 @@ import Tdaf.Surface.Common.Euclidean
 /-!
 # Rockafellar, §1: Affine Sets
 
-The surface transcription of §1 of R. T. Rockafellar, *Convex Analysis* (Princeton, 1970),
-pp. 3–9. Every numbered result of the section is stated in the book's own terms and closed by
-Mathlib's affine-space and inner-product API; §1 is the one section of Part I that specialises
-almost nothing from the backbone, because its content is linear algebra.
+Affine sets in `ℝⁿ`: the unique subspace each is parallel to, dimension, hyperplanes and the
+linear systems whose solution sets affine sets are, and affine transformations. All 8 numbered
+results of §1 are formalized. The content is linear algebra, so §1 specialises almost nothing from
+the backbone and is closed by Mathlib's affine-space and inner-product API.
 
 ## Main definitions
 
-* `Rockafellar.IsAffineSet` — the book's *affine set*: `(1-λ)x + λy ∈ M` for all `x, y ∈ M` and
-  all `λ ∈ ℝ`. Bridged to Mathlib by `isAffineSet_iff_coe_affineSpan` and
-  `IsAffineSet.toAffineSubspace`; a set containing `0` is bridged to `Submodule` by
-  `IsAffineSet.toSubmodule` (Theorem 1.1).
-* `Rockafellar.dim` — the book's *dimension*, the dimension of the subspace parallel to `aff S`.
-  It is `ℤ`-valued because Rockafellar's convention is `dim ∅ = -1`; `dim_of_nonempty` and
-  `dim_eq_finrank_direction` identify it with the `finrank` of the direction otherwise. Later
-  sections import this definition.
-* `Rockafellar.IsHyperplane` — an affine set of dimension `n - 1`.
-* `Rockafellar.IsAffineMap` — the book's *affine transformation*.
+* `IsAffineSet M` — `(1-λ)x + λy ∈ M` for all `x, y ∈ M` and all `λ ∈ ℝ`. Bridged to Mathlib by
+  `isAffineSet_iff_coe_affineSpan` and `IsAffineSet.toAffineSubspace`, and to `Submodule` by
+  `IsAffineSet.toSubmodule` when `M` contains the origin.
+* `dim S` — the dimension of the subspace parallel to `aff S`. It is `ℤ`-valued because
+  Rockafellar's convention is `dim ∅ = -1`; `dim_eq_finrank_direction` identifies it with the
+  `finrank` of the direction otherwise. Later sections use this definition.
+* `IsHyperplane` — an affine set of dimension `n - 1`.
+* `IsAffineMap` — the book's *affine transformation*.
 
-## Main results
+The converse half of `theorem_1_3` carries `0 < n`, which the book does not: in `ℝ⁰` the empty set
+has dimension `-1 = n - 1` and so is a hyperplane, yet there is no non-zero `b ∈ ℝ⁰` to represent
+it with. For `n ≥ 1` the hypothesis is vacuous, and `corollary_1_4_1` needs none. Theorem 1.4's
+`B` is a linear map `ℝⁿ →ₗ[ℝ] ℝᵐ` rather than an `m × n` matrix; the row decomposition the book
+writes is what `corollary_1_4_1` makes explicit, through a basis of `L⊥`.
 
-* `theorem_1_1` — subspaces are the affine sets containing the origin.
-* `theorem_1_2`, `theorem_1_2_sub` — a non-empty affine set is parallel to a unique subspace,
-  namely `M - M`.
-* `theorem_1_3`, `theorem_1_3_exists`, `theorem_1_3_unique` — hyperplanes are the sets
-  `{x | ⟨x, b⟩ = β}` with `b ≠ 0`, and `(b, β)` is unique up to a common non-zero multiple.
-* `theorem_1_4`, `theorem_1_4_exists` — affine sets are the solution sets of linear systems.
-* `corollary_1_4_1` — every affine set is an intersection of finitely many hyperplanes.
-* `theorem_1_5` — affine transformations are the maps `x ↦ Ax + a`.
-* `theorem_1_6`, `theorem_1_6_unique`, `corollary_1_6_1` — affinely independent sets of the same
-  size, and affine sets of the same dimension, are carried onto one another by a bijective affine
-  transformation of `ℝⁿ`.
-* `orthogonal_graph_eq_graph_neg_adjoint` — the unnumbered identity `L⊥ = graph(-A*)` of book
-  lines 531–551, which §22 depends on.
+## References
 
-## Modelling notes
-
-**Theorem 1.3's converse carries `0 < n`, which the book does not.** In `ℝ⁰` the empty set has
-dimension `-1 = n - 1`, so it is a hyperplane by the book's definition, and there is no non-zero
-`b ∈ ℝ⁰` to represent it with. For `n ≥ 1` a hyperplane is automatically non-empty and the
-hypothesis is vacuous. Corollary 1.4.1 needs no such hypothesis: in `ℝ⁰` the empty set *is* the
-one hyperplane, so it is the intersection of a one-element collection.
-
-**Theorem 1.4's `B` is a linear map, not a matrix.** The book writes an `m × n` matrix and its
-rows; a linear map `ℝⁿ →ₗ[ℝ] ℝᵐ` is the same data, and the row decomposition is exactly what
-Corollary 1.4.1 makes explicit, through a basis of `L⊥`.
-
-**Theorems 1.6 and 1.6.1 produce a bare function with `IsAffineMap` and `Function.Bijective`**,
-rather than an `AffineEquiv`, because that is what the book asserts: "a one-to-one affine
-transformation `T` of `ℝⁿ` onto itself".
-
-## What is not here
-
-* **Tucker representations** (book, lines 553–581) — *deferred by scope*. The book describes them
-  only procedurally ("solve the system for `ξ_{n+1}, …, ξ_N` in terms of `ξ_1, …, ξ_n`, where
-  `1̄, …, N̄` is some permutation"), and formalizing the construction is genuinely new work rather
-  than a specialisation of anything in the backbone: it needs a choice of `n` independent
-  coordinate positions, the resulting change of basis, and the count of at most `N!` such
-  representations. They are used in §22 (Theorems 22.6 and 22.7) and in Corollary 31.4.2, so this
-  is a real debt, recorded here rather than discharged.
-* **Barycentric coordinates** (book, lines 480–500) — *deferred by scope*, for the same reason:
-  the book introduces them as a named construction on an affinely independent set, and Mathlib's
-  `AffineBasis.coord` is the construction, but nothing in §1 or §2 is stated in terms of it.
-  §2's simplices are stated through `AffineIndependent` and `convexHull` instead.
-* The **exercise** that `aff S` is the set of affine combinations of points of `S` (book, line
-  455) is unnumbered and left as an exercise by the book; it is Mathlib's
-  `affineSpan_eq_affineCombination` family and is not restated here.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §1.
 -/
 
 namespace Rockafellar
@@ -142,7 +101,7 @@ def IsAffineSet.toSubmodule (h : IsAffineSet M) (h0 : (0 : Rn n) ∈ M) : Submod
 @[simp] theorem IsAffineSet.coe_toSubmodule (h : IsAffineSet M) (h0 : (0 : Rn n) ∈ M) :
     (h.toSubmodule h0 : Set (Rn n)) = M := rfl
 
-/-- **Rockafellar, Theorem 1.1.** The subspaces of `ℝⁿ` are the affine sets which contain the
+/-- **Theorem 1.1.** The subspaces of `ℝⁿ` are the affine sets which contain the
 origin. -/
 theorem theorem_1_1 (M : Set (Rn n)) :
     (∃ L : Submodule ℝ (Rn n), (L : Set (Rn n)) = M) ↔ IsAffineSet M ∧ (0 : Rn n) ∈ M := by
@@ -221,10 +180,9 @@ theorem eq_vectorSpan_add_singleton (h : IsAffineSet M) {a : Rn n} (ha : a ∈ M
     show (z - a : Rn n) = z -ᵥ a from rfl,
     AffineSubspace.vsub_right_mem_direction_iff_mem ha' z, ← SetLike.mem_coe, hspan]
 
-/-- **Rockafellar, Theorem 1.2.** Each non-empty affine set `M` is parallel to a unique subspace
-`L`, that is, `M = L + a` for some `a`.
-
-The witness is `vectorSpan ℝ M`; `theorem_1_2_sub` identifies it with `M - M`. -/
+/-- **Theorem 1.2.** Each non-empty affine set `M` is parallel to a unique subspace `L`, that is,
+`M = L + a` for some `a`. The witness is `vectorSpan ℝ M`; `theorem_1_2_sub` identifies it with
+`M - M`. -/
 theorem theorem_1_2 (h : IsAffineSet M) (hne : M.Nonempty) :
     ∃! L : Submodule ℝ (Rn n), ∃ a : Rn n, M = (L : Set (Rn n)) + {a} := by
   obtain ⟨a, ha⟩ := hne
@@ -232,7 +190,7 @@ theorem theorem_1_2 (h : IsAffineSet M) (hne : M.Nonempty) :
   rintro L ⟨c, hc⟩
   rw [hc, vectorSpan_coe_add_singleton]
 
-/-- **Rockafellar, Theorem 1.2**, second sentence: a subspace parallel to `M` is `M - M`. -/
+/-- **Theorem 1.2**, second sentence: a subspace parallel to `M` is `M - M`. -/
 theorem theorem_1_2_sub {L : Submodule ℝ (Rn n)} {a : Rn n} (hL : M = (L : Set (Rn n)) + {a}) :
     (L : Set (Rn n)) = M - M := by
   ext z
@@ -363,7 +321,7 @@ theorem finrank_orthogonal_span_singleton_add_one (b : Rn n) (hb : b ≠ 0) :
   rw [finrank_span_singleton hb, finrank_euclideanSpace_fin] at h
   omega
 
-/-- **Rockafellar, Theorem 1.3**, first sentence. Given `β ∈ ℝ` and a non-zero `b ∈ ℝⁿ`, the set
+/-- **Theorem 1.3**, first sentence. Given `β ∈ ℝ` and a non-zero `b ∈ ℝⁿ`, the set
 `H = {x | ⟨x, b⟩ = β}` is a hyperplane in `ℝⁿ`. -/
 theorem theorem_1_3 (b : Rn n) (hb : b ≠ 0) (β : ℝ) :
     IsHyperplane {x : Rn n | pairing n x b = β} := by
@@ -373,7 +331,7 @@ theorem theorem_1_3 (b : Rn n) (hb : b ≠ 0) (β : ℝ) :
   rw [dim_coe_add_singleton]
   omega
 
-/-- **Rockafellar, Theorem 1.3**, second sentence: every hyperplane is of that form.
+/-- **Theorem 1.3**, second sentence: every hyperplane is of that form.
 
 The hypothesis `0 < n` is not in the book, and is genuinely needed: in `ℝ⁰` the empty set has
 dimension `-1 = n - 1`, so it is a hyperplane in Rockafellar's sense, yet there is no non-zero
@@ -412,7 +370,7 @@ theorem theorem_1_3_exists (hn : 0 < n) {H : Set (Rn n)} (h : IsHyperplane H) :
   rw [hH, mem_add_singleton, SetLike.mem_coe, hLeq, sub_mem_orthogonal_span_singleton_iff]
   exact Iff.rfl
 
-/-- **Rockafellar, Theorem 1.3**, third sentence: `b` and `β` are unique up to a common non-zero
+/-- **Theorem 1.3**, third sentence: `b` and `β` are unique up to a common non-zero
 multiple. -/
 theorem theorem_1_3_unique {b b' : Rn n} {β β' : ℝ} (hb : b ≠ 0) (hb' : b' ≠ 0)
     (h : {x : Rn n | pairing n x b = β} = {x : Rn n | pairing n x b' = β'}) :
@@ -446,10 +404,9 @@ theorem theorem_1_3_unique {b b' : Rn n} {β β' : ℝ} (hb : b ≠ 0) (hb' : b'
 
 /-! ### Linear systems: Theorem 1.4 and Corollary 1.4.1 -/
 
-/-- **Rockafellar, Theorem 1.4**, first sentence. Given `b ∈ ℝᵐ` and a linear `B : ℝⁿ → ℝᵐ`, the
-solution set `{x | Bx = b}` is an affine set in `ℝⁿ`.
-
-The book writes `B` as an `m × n` matrix; a linear map is the same data. -/
+/-- **Theorem 1.4**, first sentence. Given `b ∈ ℝᵐ` and a linear `B : ℝⁿ → ℝᵐ`, the solution set
+`{x | Bx = b}` is an affine set in `ℝⁿ`. The book writes `B` as an `m × n` matrix; a linear map is
+the same data. -/
 theorem theorem_1_4 (B : Rn n →ₗ[ℝ] Rn m) (b : Rn m) : IsAffineSet {x : Rn n | B x = b} := by
   intro x hx y hy l
   have hx' : B x = b := hx
@@ -458,7 +415,7 @@ theorem theorem_1_4 (B : Rn n →ₗ[ℝ] Rn m) (b : Rn m) : IsAffineSet {x : Rn
   rw [map_add, map_smul, map_smul, hx', hy', ← add_smul]
   simp
 
-/-- **Rockafellar, Theorem 1.4**, second sentence: every affine set is such a solution set. The
+/-- **Theorem 1.4**, second sentence: every affine set is such a solution set. The
 empty set and `ℝⁿ` are covered, by degenerate choices of `B`. -/
 theorem theorem_1_4_exists (h : IsAffineSet M) :
     ∃ (k : ℕ) (B : Rn n →ₗ[ℝ] Rn k) (b : Rn k), M = {x : Rn n | B x = b} := by
@@ -499,7 +456,7 @@ theorem mem_orthogonal_span_iff {S : Set (Rn n)} {v : Rn n} :
     exact fun z hz => Submodule.mem_orthogonal_singleton_iff_inner_left.2 (h z hz)
   exact Submodule.mem_orthogonal_singleton_iff_inner_left.1 (hle hu)
 
-/-- **Rockafellar, Corollary 1.4.1.** Every affine subset of `ℝⁿ` is an intersection of a finite
+/-- **Corollary 1.4.1.** Every affine subset of `ℝⁿ` is an intersection of a finite
 collection of hyperplanes.
 
 `ℝⁿ` itself is the intersection of the empty collection; `∅` is the intersection of two parallel
@@ -552,7 +509,7 @@ theorem corollary_1_4_1 (h : IsAffineSet M) :
 def IsAffineMap (T : Rn n → Rn m) : Prop :=
   ∀ (x y : Rn n) (l : ℝ), T ((1 - l) • x + l • y) = (1 - l) • T x + l • T y
 
-/-- **Rockafellar, Theorem 1.5.** The affine transformations from `ℝⁿ` to `ℝᵐ` are the mappings
+/-- **Theorem 1.5.** The affine transformations from `ℝⁿ` to `ℝᵐ` are the mappings
 `T` of the form `Tx = Ax + a` with `A` linear and `a ∈ ℝᵐ`. -/
 theorem theorem_1_5 (T : Rn n → Rn m) :
     IsAffineMap T ↔ ∃ (A : Rn n →ₗ[ℝ] Rn m) (a : Rn m), ∀ x, T x = A x + a := by
@@ -615,7 +572,7 @@ theorem exists_linearEquiv_apply_eq {ι : Type} {v v' : ι → Rn n}
   rwa [Module.Basis.coe_span_apply, Module.Basis.equiv_apply, Equiv.refl_apply,
     Module.Basis.coe_span_apply] at h1
 
-/-- **Rockafellar, Theorem 1.6.** Two affinely independent sets of `m + 1` points of `ℝⁿ` are
+/-- **Theorem 1.6.** Two affinely independent sets of `m + 1` points of `ℝⁿ` are
 carried onto each other, in order, by a one-to-one affine transformation of `ℝⁿ` onto itself. -/
 theorem theorem_1_6 {k : ℕ} {b b' : Fin (k + 1) → Rn n}
     (hb : AffineIndependent ℝ b) (hb' : AffineIndependent ℝ b') :
@@ -634,7 +591,7 @@ theorem theorem_1_6 {k : ℕ} {b b' : Fin (k + 1) → Rn n}
   · have h1 : A (b i - b 0) = b' i - b' 0 := hA ⟨i, hi⟩
     simp [h1]
 
-/-- **Rockafellar, Theorem 1.6**, last sentence: when the affinely independent set has `n + 1`
+/-- **Theorem 1.6**, last sentence: when the affinely independent set has `n + 1`
 points, the transformation is unique. -/
 theorem theorem_1_6_unique {b : Fin (n + 1) → Rn n} (hb : AffineIndependent ℝ b)
     {T₁ T₂ : Rn n → Rn n} (h₁ : IsAffineMap T₁) (h₂ : IsAffineMap T₂)
@@ -689,7 +646,7 @@ theorem image_linear_translate (A : Rn n ≃ₗ[ℝ] Rn m) (S : Set (Rn n)) (c :
       exact hu
     · simp [hue]
 
-/-- **Rockafellar, Corollary 1.6.1.** Any two affine sets of `ℝⁿ` of the same dimension are
+/-- **Corollary 1.6.1.** Any two affine sets of `ℝⁿ` of the same dimension are
 carried onto each other by a one-to-one affine transformation of `ℝⁿ` onto itself. -/
 theorem corollary_1_6_1 {M₁ M₂ : Set (Rn n)} (h₁ : IsAffineSet M₁) (h₂ : IsAffineSet M₂)
     (hdim : dim M₁ = dim M₂) :
@@ -738,7 +695,7 @@ theorem corollary_1_6_1 {M₁ M₂ : Set (Rn n)} (h₁ : IsAffineSet M₁) (h₂
 
 /-! ### The orthogonal complement of a graph -/
 
-/-- **Rockafellar, §1, unnumbered** (book, lines 531–551). The graph of a linear transformation
+/-- **Rockafellar, §1, unnumbered**. The graph of a linear transformation
 `A : ℝⁿ → ℝᵐ` is a subspace `L` of `ℝⁿ⁺ᵐ`, and its orthogonal complement `L⊥` is the graph of
 `-A*`.
 

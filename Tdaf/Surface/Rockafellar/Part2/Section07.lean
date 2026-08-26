@@ -12,75 +12,28 @@ import Tdaf.Surface.Rockafellar.Part1.Section01
 /-!
 # Rockafellar, §7: Closures of Convex Functions
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §7, pp. 51–59: lower semicontinuity, the
-lower semicontinuous hull, the closure `cl f` of a convex function, and closed convex functions.
-Every numbered result of the section is here, stated in the book's own terms over
-`Rn n = ℝⁿ` with extended-real values, and closed by specialising the backbone.
+Lower semicontinuity, the lower semicontinuous hull, the closure `cl f` of a convex function, and
+closed convex functions. All 17 numbered results of §7 are formalized.
 
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 7.1 | `theorem_7_1` — lsc ↔ closed level sets ↔ closed epigraph |
-| Theorem 7.2 | `theorem_7_2` — an improper convex function is `−∞` on `ri (dom f)` |
-| Corollary 7.2.1 | `corollary_7_2_1` — a lsc improper convex function has no finite values |
-| Corollary 7.2.2 | `corollary_7_2_2` — `cl f` for improper `f` |
-| Corollary 7.2.3 | `corollary_7_2_3` — relatively open effective domain |
-| Lemma 7.3 | `lemma_7_3` — `ri (epi f)` |
-| Corollary 7.3.1 | `corollary_7_3_1` |
-| Corollary 7.3.2 | `corollary_7_3_2` |
-| Corollary 7.3.3 | `corollary_7_3_3` |
-| Corollary 7.3.4 | `corollary_7_3_4` — `cl f` depends only on `f` on `ri (dom f)` |
-| Theorem 7.4 | `theorem_7_4` — `cl f` is a closed proper convex function |
-| Corollary 7.4.1 | `corollary_7_4_1` — `dom (cl f)` versus `dom f` |
-| Corollary 7.4.2 | `corollary_7_4_2` — an affine effective domain forces closedness |
-| Theorem 7.5 | `theorem_7_5`, `theorem_7_5_improper` — `cl f` as a limit along a segment |
-| Corollary 7.5.1 | `corollary_7_5_1` |
-| Theorem 7.6 | `theorem_7_6` — closures, relative interiors and dimensions of level sets |
-| Corollary 7.6.1 | `corollary_7_6_1` |
-
-The section's *definitions* are recorded alongside: lower semicontinuity is Mathlib's
-`LowerSemicontinuous`, the lower semicontinuous hull is `lscHull` (`lscHull_isGreatest` is the
-book's characterisation of it as the greatest lsc minorant), the closure of a convex function is
-`clFn`, and a closed convex function is one with `ClosedFn f`. Two unnumbered claims of the text
-are recorded as `closedFn_iff_lowerSemicontinuous_of_proper` ("for a proper convex function,
-closedness is the same as lower semicontinuity") and `closed_improper_eq_const` ("the only closed
-improper convex functions are the constant functions `+∞` and `−∞`").
+Lower semicontinuity is Mathlib's `LowerSemicontinuous`; the lower semicontinuous hull is
+`lscHull`, characterised as the greatest lsc minorant by `lscHull_isGreatest`; the closure of a
+convex function is `clFn`; and a closed convex function is one with `ClosedFn f`. Two unnumbered
+claims of the text are recorded as `closedFn_iff_lowerSemicontinuous_of_proper` and
+`closed_improper_eq_const` — the only closed improper convex functions are the constants `+∞`
+and `−∞`.
 
 ## The `cl f` case split, and the book's slip about `epi (cl f)`
 
-Rockafellar defines `cl f` by cases (p. 52): the lower semicontinuous hull when `f` is nowhere
-`−∞`, and the constant `−∞` otherwise. The backbone's `clFn` branches on the *hull* taking `−∞`
-rather than on `f` doing so, which is the standard Γ-regularisation and the only branch that keeps
-`f** = cl f` true; `ConvexFn.clFn_eq_lscHull` (`RelativeInterior.lean`) is the proof that the two
-descriptions agree, and it is cited here rather than reproved.
+Rockafellar defines `cl f` by cases: the lower semicontinuous hull when `f` is nowhere `−∞`, and
+the constant `−∞` otherwise. The backbone's `clFn` branches on the *hull* taking `−∞` rather than
+on `f` doing so, which is the standard Γ-regularisation and the only branch that keeps
+`f** = cl f` true; `ConvexFn.clFn_eq_lscHull` is the proof that the two descriptions agree.
 
-The book then asserts `epi (cl f) = cl (epi f)` "by definition" (p. 52). **That is false for
-improper `f`**: when `f` takes the value `−∞`, `cl f ≡ −∞` and `epi (cl f)` is all of `ℝⁿ⁺¹`,
-while `cl (epi f)` is `cl (dom f) × ℝ`. The identity holds for the *hull* with no hypothesis at
-all (`epi_lscHull`), and for `cl f` exactly when `f` is proper. No statement below inherits the
-slip: every use of it here goes through `epi_lscHull` or through properness.
-
-## What is not here
-
-* **The dimension bookkeeping helpers `dim_eq_of_affineSpan_eq` and `dim_eq_of_closure_eq` are
-  §6's, not §7's** — the second is Rockafellar's Corollary 6.3.1 ("`cl C` and `ri C` have the same
-  affine hull, hence the same dimension as `C`"), needed here by `corollary_7_4_1`.
-  `Section06.lean` is being written in parallel and is not importable; the merge should
-  de-duplicate. `affineSpan_relint_dom_lt`, the step Theorem 7.6's dimension clause needs, is
-  proved here directly rather than through the slice dimension count of Theorem 6.8 that
-  Rockafellar invokes, which the backbone does not carry.
-* **The worked examples** — *omitted*. The four unnumbered illustrations (the closure of the
-  half-line indicator, the disk with arbitrary boundary values, `f x = -(1 - |x|²)^{1/2}`, and
-  `f x = 1/x` as a closed function with a non-closed effective domain) are computations in fixed
-  low dimensions rather than statements of the theory.
-* **The non-convex counterexample after Corollary 7.6.1** — *omitted*. The book exhibits a lsc
-  non-convex `f : ℝ → ℝ` with convex level sets for which the two formulas of Corollary 7.6.1
-  fail. Nothing later in the book cites it.
-* **The application of Corollary 7.2.3 to `g ξ₁ = inf_{ξ₂} f (ξ₁, ξ₂)`** — *deferred by scope*.
-  It is an illustration resting on the partial-infimum construction of §5, and it needs the
-  transport between `Rn 2` and `Rn 1 × Rn 1`, which `Section05.lean` deliberately does not
-  attempt.
+The book then asserts `epi (cl f) = cl (epi f)` "by definition". **That is false for improper
+`f`**: when `f` takes the value `−∞`, `cl f ≡ −∞` and `epi (cl f)` is all of `ℝⁿ⁺¹`, while
+`cl (epi f)` is `cl (dom f) × ℝ`. The identity holds for the *hull* with no hypothesis at all
+(`epi_lscHull`), and for `cl f` exactly when `f` is proper. No statement below inherits the slip:
+every use of it goes through `epi_lscHull` or through properness.
 
 ## References
 
@@ -98,42 +51,33 @@ variable {n : ℕ} {f g : Rn n → EReal}
 /-! ### The definitions of §7 -/
 
 /-- **Rockafellar §7**, the sentence defining the lower semicontinuous hull: "there exists a
-greatest lower semi-continuous function (not necessarily finite) majorized by `f`".
-
-Specialises `isGreatest_lscHull`. -/
+greatest lower semi-continuous function (not necessarily finite) majorized by `f`". -/
 theorem lscHull_isGreatest (f : Rn n → EReal) :
     IsGreatest {g : Rn n → EReal | LowerSemicontinuous g ∧ g ≤ f} (lscHull f) :=
   isGreatest_lscHull f
 
 /-- **Rockafellar §7**: "For a proper convex function, closedness is thus the same as lower
-semi-continuity."
-
-Specialises `closedFn_iff_lowerSemicontinuous`; only the `≠ -∞` half of properness is used, and
-convexity is not used at all. -/
+semi-continuity." Only the `≠ -∞` half of properness is used, and convexity is not used at all. -/
 theorem closedFn_iff_lowerSemicontinuous_of_proper (hp : Proper f) :
     ClosedFn f ↔ LowerSemicontinuous f :=
   closedFn_iff_lowerSemicontinuous hp.ne_bot
 
-/-- **Rockafellar §7**: "the only closed improper convex functions are the constant functions
-`+∞` and `−∞`".
-
-Specialises `eq_const_of_closedFn_of_not_proper`; convexity is not needed. -/
+/-- **Rockafellar §7**: "the only closed improper convex functions are the constant functions `+∞`
+and `−∞`". Convexity is not needed. -/
 theorem closed_improper_eq_const (hc : ClosedFn f) (himp : ¬ Proper f) :
     f = (fun _ => (⊥ : EReal)) ∨ f = fun _ => (⊤ : EReal) :=
   eq_const_of_closedFn_of_not_proper hc himp
 
 /-! ### Dimension bookkeeping
 
-`dim_eq_of_affineSpan_eq` and `dim_eq_of_closure_eq` are Rockafellar's Corollary 6.3.1 in the form
-Corollary 7.4.1 and Theorem 7.6 need. Neither is a §7 statement; both are two lines over the
-backbone's `vectorSpan_eq_of_affineSpan_eq`, and `dim` itself is §1's. -/
+Corollary 6.3.1 in the form Corollary 7.4.1 and Theorem 7.6 need; `dim` itself is §1's. -/
 
 /-- Non-empty sets with the same affine hull have the same dimension. -/
 theorem dim_eq_of_affineSpan_eq {S T : Set (Rn n)} (hS : S.Nonempty) (hT : T.Nonempty)
     (h : affineSpan ℝ S = affineSpan ℝ T) : dim S = dim T := by
   rw [dim_eq_finrank_direction hS, dim_eq_finrank_direction hT, h]
 
-/-- **Rockafellar, Corollary 6.3.1**, dimension half: sets with the same closure have the same
+/-- **Corollary 6.3.1**, dimension half: sets with the same closure have the same
 dimension, because they have the same affine hull. -/
 theorem dim_eq_of_closure_eq {S T : Set (Rn n)} (h : closure S = closure T) : dim S = dim T := by
   have hspan : affineSpan ℝ S = affineSpan ℝ T := by
@@ -149,7 +93,7 @@ theorem dim_eq_of_closure_eq {S T : Set (Rn n)} (h : closure S = closure T) : di
 
 /-! ### Theorem 7.1 -/
 
-/-- **Rockafellar, Theorem 7.1.** Let `f` be an arbitrary function from `ℝⁿ` to `[-∞, +∞]`. Then
+/-- **Theorem 7.1.** Let `f` be an arbitrary function from `ℝⁿ` to `[-∞, +∞]`. Then
 the following conditions are equivalent:
 
 (a) `f` is lower semi-continuous throughout `ℝⁿ`;
@@ -158,7 +102,6 @@ the following conditions are equivalent:
 
 (c) the epigraph of `f` is a closed set in `ℝⁿ⁺¹`.
 
-Specialises `lowerSemicontinuous_iff_isClosed_le` and `lowerSemicontinuous_iff_isClosed_epi`.
 Neither convexity nor finite dimension enters; the book's `ℝⁿ⁺¹` is `Rn n × ℝ`. -/
 theorem theorem_7_1 (f : Rn n → EReal) :
     List.TFAE [LowerSemicontinuous f, ∀ α : ℝ, IsClosed {x | f x ≤ (α : EReal)},
@@ -169,21 +112,16 @@ theorem theorem_7_1 (f : Rn n → EReal) :
 
 /-! ### Theorem 7.2 and its corollaries -/
 
-/-- **Rockafellar, Theorem 7.2.** If `f` is an improper convex function, then `f x = -∞` for every
+/-- **Theorem 7.2.** If `f` is an improper convex function, then `f x = -∞` for every
 `x ∈ ri (dom f)`. Thus an improper convex function is necessarily infinite except perhaps at
-relative boundary points of its effective domain.
-
-Specialises `ConvexFn.eq_bot_of_mem_relint_dom`. No properness hypothesis is added: the theorem is
+relative boundary points of its effective domain. No properness hypothesis is added: the theorem is
 *about* improper functions. -/
 theorem theorem_7_2 (hf : ConvexFn f) (himp : ¬ Proper f) {x : Rn n} (hx : x ∈ ri (dom f)) :
     f x = ⊥ :=
   hf.eq_bot_of_mem_relint_dom himp hx
 
-/-- **Rockafellar, Corollary 7.2.1.** A lower semi-continuous improper convex function can have no
-finite values.
-
-Rockafellar's own proof: the set where `f = -∞` includes `cl (ri (dom f)) = cl (dom f) ⊇ dom f`
-(`ConvexFn.eq_bot_of_mem_closure_dom`), and off `cl (dom f)` the value is `+∞`. -/
+/-- **Corollary 7.2.1.** A lower semicontinuous improper convex function has no finite
+values. -/
 theorem corollary_7_2_1 (hf : ConvexFn f) (hl : LowerSemicontinuous f) (himp : ¬ Proper f)
     (x : Rn n) : f x = ⊥ ∨ f x = ⊤ := by
   by_cases hx : x ∈ closure (dom f)
@@ -192,53 +130,43 @@ theorem corollary_7_2_1 (hf : ConvexFn f) (hl : LowerSemicontinuous f) (himp : �
     by_contra h
     exact hx (subset_closure (mem_dom.2 (lt_of_le_of_ne le_top h)))
 
-/-- **Rockafellar, Corollary 7.2.2.** Let `f` be an improper convex function. Then `cl f` is a
+/-- **Corollary 7.2.2.** Let `f` be an improper convex function. Then `cl f` is a
 closed improper convex function which agrees with `f` on `ri (dom f)`.
 
-Specialises `convexFn_clFn`, `closedFn_clFn`, `not_proper_clFn` and
-`ConvexFn.clFn_eq_of_mem_relint_dom`. Note that the agreement is *not* obtained from
-`epi (cl f) = cl (epi f)`, which fails exactly in this improper case. -/
+Note that the agreement is *not* obtained from `epi (cl f) = cl (epi f)`, which fails exactly in
+this improper case. -/
 theorem corollary_7_2_2 (hf : ConvexFn f) (himp : ¬ Proper f) :
     ConvexFn (clFn f) ∧ ClosedFn (clFn f) ∧ ¬ Proper (clFn f) ∧
       ∀ x ∈ ri (dom f), clFn f x = f x :=
   ⟨convexFn_clFn hf, closedFn_clFn f, not_proper_clFn himp,
     fun _ hx => hf.clFn_eq_of_mem_relint_dom hx⟩
 
-/-- **Rockafellar, Corollary 7.2.3.** If `f` is a convex function whose effective domain is
+/-- **Corollary 7.2.3.** If `f` is a convex function whose effective domain is
 relatively open (for instance if `dom f = ℝⁿ`), then either `f x > -∞` for every `x`, or `f x` is
-infinite for every `x`.
-
-Specialises `ConvexFn.forall_ne_bot_or_forall_infinite`. -/
+infinite for every `x`. -/
 theorem corollary_7_2_3 (hf : ConvexFn f) (hopen : ri (dom f) = dom f) :
     (∀ x, f x ≠ ⊥) ∨ ∀ x, f x = ⊥ ∨ f x = ⊤ :=
   hf.forall_ne_bot_or_forall_infinite hopen
 
 /-! ### Lemma 7.3 and its corollaries -/
 
-/-- **Rockafellar, Lemma 7.3.** For any convex function `f`, `ri (epi f)` consists of the pairs
+/-- **Lemma 7.3.** For any convex function `f`, `ri (epi f)` consists of the pairs
 `(x, μ)` such that `x ∈ ri (dom f)` and `f x < μ < ∞`.
 
-Specialises `ConvexFn.relint_epi`. The book's `μ < ∞` is carried by the type: the second component
-of a point of `ℝⁿ⁺¹ = Rn n × ℝ` is a real number. -/
+The book's `μ < ∞` is carried by the type: the second component of a point of `ℝⁿ⁺¹ = Rn n × ℝ` is a
+real number. -/
 theorem lemma_7_3 (hf : ConvexFn f) :
     ri (epi f) = {p : Rn n × ℝ | p.1 ∈ ri (dom f) ∧ f p.1 < (p.2 : EReal)} :=
   hf.relint_epi
 
-/-- **Rockafellar, Corollary 7.3.1.** Let `α` be a real number, and let `f` be a convex function
-such that, for some `x`, `f x < α`. Then actually `f x < α` for some `x ∈ ri (dom f)`.
-
-Specialises `ConvexFn.exists_mem_relint_dom_lt`. -/
+/-- **Corollary 7.3.1.** Let `α` be a real number, and let `f` be a convex function
+such that, for some `x`, `f x < α`. Then actually `f x < α` for some `x ∈ ri (dom f)`. -/
 theorem corollary_7_3_1 (hf : ConvexFn f) {α : ℝ} (h : ∃ x, f x < (α : EReal)) :
     ∃ x ∈ ri (dom f), f x < (α : EReal) :=
   hf.exists_mem_relint_dom_lt h
 
-/-- **Rockafellar, Corollary 7.3.2.** Let `f` be a convex function, and let `C` be a convex set
-such that `ri C ⊆ dom f`. Let `α` be a real number such that `f x < α` for some `x ∈ cl C`. Then
-actually `f x < α` for some `x ∈ ri C`.
-
-Rockafellar's own proof: restrict `f` to `cl C` (the backbone's `restrict`), whose effective
-domain is squeezed between `ri C` and `cl C` and therefore has relative interior `ri C`, and apply
-Corollary 7.3.1 to the restriction. -/
+/-- **Corollary 7.3.2.** For convex `f` and convex `C` with `ri C ⊆ dom f`: if `f x < α` for some
+`x ∈ cl C`, then `f x < α` for some `x ∈ ri C`. -/
 theorem corollary_7_3_2 (hf : ConvexFn f) {C : Set (Rn n)} (hC : Convex ℝ C)
     (hsub : ri C ⊆ dom f) {α : ℝ} (h : ∃ x ∈ closure C, f x < (α : EReal)) :
     ∃ x ∈ ri C, f x < (α : EReal) := by
@@ -263,15 +191,9 @@ theorem corollary_7_3_2 (hf : ConvexFn f) {C : Set (Rn n)} (hC : Convex ℝ C)
   rw [restrict_of_mem (subset_closure (intrinsicInterior_subset hz))] at hzα
   exact ⟨z, hz, hzα⟩
 
-/-- **Rockafellar, Corollary 7.3.3.** Let `f` be a convex function on `ℝⁿ`, and let `C` be a
-convex set on which `f` is finite. If `f x ≥ α` for every `x ∈ C`, then also `f x ≥ α` for every
-`x ∈ cl C`.
-
-Rockafellar's proof is "obvious from the preceding corollary", and so it is: negate the
-conclusion, feed `x ∈ cl C` to Corollary 7.3.2, and contradict the bound at the resulting point of
-`ri C ⊆ C`. Going through Corollary 7.3.2 is what makes the statement come out in the book's own
-form; the backbone's `ConvexFn.le_of_mem_closure` proves it directly but has to assume
-`∀ z, f z ≠ ⊥` globally, which the book does not. -/
+/-- **Corollary 7.3.3.** For convex `f` finite on a convex set `C`: if `f x ≥ α` throughout `C`,
+then `f x ≥ α` throughout `cl C`. Stated in the book's form, which needs `f ≠ -∞` only on `C`,
+where the backbone's `ConvexFn.le_of_mem_closure` assumes it globally. -/
 theorem corollary_7_3_3 (hf : ConvexFn f) {C : Set (Rn n)} (hC : Convex ℝ C)
     (hfin : ∀ x ∈ C, f x ≠ ⊥ ∧ f x ≠ ⊤) {α : ℝ} (hge : ∀ x ∈ C, (α : EReal) ≤ f x) {x : Rn n}
     (hx : x ∈ closure C) : (α : EReal) ≤ f x := by
@@ -281,14 +203,9 @@ theorem corollary_7_3_3 (hf : ConvexFn f) {C : Set (Rn n)} (hC : Convex ℝ C)
     ⟨x, hx, not_le.1 hlt⟩
   exact absurd (hge z (intrinsicInterior_subset hz)) (not_le.2 hzα)
 
-/-- **Rockafellar, Corollary 7.3.4.** If `f` and `g` are convex functions on `ℝⁿ` such that
-`ri (dom f) = ri (dom g)` and `f` and `g` agree on the latter set, then `cl f = cl g`.
-
-Rockafellar's proof: Lemma 7.3 turns the hypothesis into `ri (epi f) = ri (epi g)`, Theorem 6.3
-turns that into `cl (epi f) = cl (epi g)`, and the hull is determined by the closed epigraph
-(`epi_lscHull` and `epi_injective`). The book then has to treat improper `f` separately, because
-it reads the last step off `epi (cl f) = cl (epi f)`; here no such split is needed, since `clFn` is
-a function of `lscHull` alone. -/
+/-- **Corollary 7.3.4.** If convex `f` and `g` have `ri (dom f) = ri (dom g)` and agree there,
+then `cl f = cl g`. No improper case split is needed, unlike in the book, because `clFn` is a
+function of `lscHull` alone. -/
 theorem corollary_7_3_4 (hf : ConvexFn f) (hg : ConvexFn g) (hdom : ri (dom f) = ri (dom g))
     (hagree : ∀ x ∈ ri (dom f), f x = g x) : clFn f = clFn g := by
   have hri : ri (epi f) = ri (epi g) := by
@@ -312,12 +229,9 @@ theorem corollary_7_3_4 (hf : ConvexFn f) (hg : ConvexFn g) (hdom : ri (dom f) =
 
 /-! ### Theorem 7.4 and its corollaries -/
 
-/-- **Rockafellar, Theorem 7.4.** Let `f` be a proper convex function on `ℝⁿ`. Then `cl f` is a
+/-- **Theorem 7.4.** Let `f` be a proper convex function on `ℝⁿ`. Then `cl f` is a
 closed proper convex function. Moreover, `cl f` agrees with `f` except perhaps at relative
-boundary points of `dom f` — that is, off `cl (dom f) \ ri (dom f)`.
-
-Specialises `convexFn_clFn`, `closedFn_clFn`, `ConvexFn.proper_clFn`,
-`ConvexFn.clFn_eq_of_mem_relint_dom` and `ConvexFn.clFn_eq_of_notMem_closure_dom`. -/
+boundary points of `dom f` — that is, off `cl (dom f) \ ri (dom f)`. -/
 theorem theorem_7_4 (hf : ConvexFn f) (hp : Proper f) :
     ClosedProperConvexFn (clFn f) ∧ ∀ x ∉ closure (dom f) \ ri (dom f), clFn f x = f x := by
   refine ⟨⟨convexFn_clFn hf, closedFn_clFn f, hf.proper_clFn hp⟩, fun x hx => ?_⟩
@@ -327,14 +241,10 @@ theorem theorem_7_4 (hf : ConvexFn f) (hp : Proper f) :
       exact hx ⟨hc, hr⟩)
   · exact hf.clFn_eq_of_notMem_closure_dom hp hc
 
-/-- **Rockafellar, Corollary 7.4.1.** If `f` is a proper convex function, then `dom (cl f)`
-differs from `dom f` at most by including some additional relative boundary points of `dom f`. In
-particular, `dom (cl f)` and `dom f` have the same closure and relative interior, as well as the
-same dimension.
-
-Specialises `dom_subset_dom_lscHull`, `dom_lscHull_subset_closure_dom`,
-`Convex.closure_eq_of_relint_subset_of_subset_closure` and `ConvexFn.relint_dom_clFn`; the
-dimension clause is `dim_eq_of_closure_eq`, which belongs to §6. -/
+/-- **Corollary 7.4.1.** If `f` is a proper convex function, then `dom (cl f)` differs from `dom f`
+at most by including some additional relative boundary points of `dom f`. In particular,
+`dom (cl f)` and `dom f` have the same closure and relative interior, as well as the same dimension.
+The dimension clause is `dim_eq_of_closure_eq`, which belongs to §6. -/
 theorem corollary_7_4_1 (hf : ConvexFn f) (hp : Proper f) :
     dom f ⊆ dom (clFn f) ∧ dom (clFn f) ⊆ closure (dom f) ∧
       closure (dom (clFn f)) = closure (dom f) ∧ ri (dom (clFn f)) = ri (dom f) ∧
@@ -348,34 +258,27 @@ theorem corollary_7_4_1 (hf : ConvexFn f) (hp : Proper f) :
       (intrinsicInterior_subset.trans hsub) hsup
   exact ⟨hsub, hsup, hcl, hf.relint_dom_clFn hp, dim_eq_of_closure_eq hcl⟩
 
-/-- **Rockafellar, Corollary 7.4.2.** If `f` is a proper convex function such that `dom f` is an
+/-- **Corollary 7.4.2.** If `f` is a proper convex function such that `dom f` is an
 affine set (which is true in particular if `f` is finite throughout `ℝⁿ`), then `f` is closed.
 
-Specialises `ConvexFn.closedFn_of_dom_eq_coe`; `IsAffineSet` and its bridge to `AffineSubspace`
-are §1's (`Section01.lean`). -/
+`IsAffineSet` and its bridge to `AffineSubspace` are §1's (`Section01.lean`). -/
 theorem corollary_7_4_2 (hf : ConvexFn f) (hp : Proper f) (hdom : IsAffineSet (dom f)) :
     ClosedFn f :=
   hf.closedFn_of_dom_eq_coe hp hdom.coe_toAffineSubspace.symm
 
 /-! ### Theorem 7.5 and its corollary -/
 
-/-- **Rockafellar, Theorem 7.5.** Let `f` be a proper convex function, and let `x ∈ ri (dom f)`.
-Then `(cl f) y = lim_{λ ↑ 1} f ((1 - λ) x + λ y)` for every `y`.
-
-Specialises `ConvexFn.tendsto_clFn_along_segment_relint`. The book's `λ ↑ 1` is the filter
+/-- **Theorem 7.5.** Let `f` be a proper convex function, and let `x ∈ ri (dom f)`. Then
+`(cl f) y = lim_{λ ↑ 1} f ((1 - λ) x + λ y)` for every `y`. The book's `λ ↑ 1` is the filter
 `𝓝[<] (1 : ℝ)`. -/
 theorem theorem_7_5 (hf : ConvexFn f) (hp : Proper f) {x : Rn n} (hx : x ∈ ri (dom f))
     (y : Rn n) :
     Tendsto (fun a : ℝ => f ((1 - a) • x + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y)) :=
   hf.tendsto_clFn_along_segment_relint hp hx y
 
-/-- **Rockafellar, Theorem 7.5**, the parenthetical clause: "the formula is also valid when `f` is
-improper and `y ∈ cl (dom f)`".
-
-Rockafellar's own argument: by Theorem 6.1 the half-open segment from `x ∈ ri (dom f)` towards
-`y ∈ cl (dom f)` stays in `ri (dom f)`, where Theorem 7.2 makes `f` equal to `-∞`, while `cl f` is
-the constant `-∞`. The restriction to `y ∈ cl (dom f)` is not decorative: off `cl (dom f)` the
-function along the segment is eventually `+∞`. -/
+/-- **Theorem 7.5**, parenthetical clause: the formula is also valid for improper `f` and
+`y ∈ cl (dom f)`. The restriction to `cl (dom f)` is not decorative — off it the function along
+the segment is eventually `+∞`. -/
 theorem theorem_7_5_improper (hf : ConvexFn f) (himp : ¬ Proper f) {x : Rn n}
     (hx : x ∈ ri (dom f)) {y : Rn n} (hy : y ∈ closure (dom f)) :
     Tendsto (fun a : ℝ => f ((1 - a) • x + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (clFn f y)) := by
@@ -387,26 +290,20 @@ theorem theorem_7_5_improper (hf : ConvexFn f) (himp : ¬ Proper f) {x : Rn n}
   exact (hf.eq_bot_of_mem_relint_dom himp
     (Convex.segment_mem_relint hf.convex_dom hx hy ha.1 ha.2)).symm
 
-/-- **Rockafellar, Corollary 7.5.1.** For a closed proper convex function `f`, one has
+/-- **Corollary 7.5.1.** For a closed proper convex function `f`, one has
 `f y = lim_{λ ↑ 1} f ((1 - λ) x + λ y)` for every `x ∈ dom f` and every `y`.
 
-Specialises `tendsto_along_segment_of_closed_proper`. The backbone proves this directly rather
-than through Theorem 7.5 and a restriction to a line, so no relative interiors appear. -/
+The backbone proves this directly rather than through Theorem 7.5 and a restriction to a line, so no
+relative interiors appear. -/
 theorem corollary_7_5_1 (hf : ClosedProperConvexFn f) {x : Rn n} (hx : x ∈ dom f) (y : Rn n) :
     Tendsto (fun a : ℝ => f ((1 - a) • x + a • y)) (𝓝[<] (1 : ℝ)) (𝓝 (f y)) :=
   tendsto_along_segment_of_closed_proper hf hx y
 
 /-! ### Theorem 7.6 and its corollary -/
 
-/-- The step Rockafellar takes by a slice dimension count: for `α` above the infimum of a convex
-`f`, the set `{x ∈ ri (dom f) | f x < α}` has the same affine hull as `dom f`, and therefore the
-same dimension.
-
-The direct argument is the line segment principle. `ri (dom f)` already spans `aff (dom f)`
-(Theorem 6.2), so it is enough to reach every `x ∈ ri (dom f)` from the set; and given a point `y`
-of the set (Corollary 7.3.1), a short enough step from `y` towards `x` lands back in it, because
-the convexity inequality keeps the value below `α`. Prolonging that step past `x` is
-`combo_prolong`. -/
+/-- For `α` above the infimum of a convex `f`, the set `{x ∈ ri (dom f) | f x < α}` has the same
+affine hull as `dom f`, hence the same dimension. The step Theorem 7.6's dimension clause needs;
+the book takes it by a slice dimension count, this by the line segment principle. -/
 theorem affineSpan_relint_dom_lt (hf : ConvexFn f) {α : ℝ} (hα : ⨅ x, f x < (α : EReal)) :
     affineSpan ℝ {x ∈ ri (dom f) | f x < (α : EReal)} = affineSpan ℝ (dom f) := by
   obtain ⟨y, hy, hyα⟩ := hf.exists_mem_relint_dom_lt (iInf_lt_iff.1 hα)
@@ -439,16 +336,9 @@ theorem affineSpan_relint_dom_lt (hf : ConvexFn f) {α : ℝ} (hα : ⨅ x, f x 
   rwa [combo_prolong y x ht0.ne'] at hmem
 
 
-/-- **Rockafellar, Theorem 7.6.** Let `f` be any proper convex function, and let `α ∈ R`,
-`α > inf f`. The convex level sets `{x | f x ≤ α}` and `{x | f x < α}` then have the same closure
-and the same relative interior, namely `{x | (cl f) x ≤ α}` and `{x ∈ ri (dom f) | f x < α}`
-respectively.
-
-Furthermore, they have the same dimension as `dom f`.
-
-Specialises `ConvexFn.closure_setOf_le_clFn`, `ConvexFn.closure_setOf_lt`,
-`ConvexFn.relint_setOf_le` and `ConvexFn.relint_setOf_lt`; the dimension clause is
-`affineSpan_relint_dom_lt` together with Theorem 6.2 (`Convex.affineSpan_relint`). -/
+/-- **Theorem 7.6.** For proper convex `f` and real `α > inf f`, the level sets `{x | f x ≤ α}`
+and `{x | f x < α}` have the same closure `{x | (cl f) x ≤ α}`, the same relative interior
+`{x ∈ ri (dom f) | f x < α}`, and the same dimension as `dom f`. -/
 theorem theorem_7_6 (hf : ConvexFn f) (hp : Proper f) {α : ℝ} (hα : ⨅ x, f x < (α : EReal)) :
     closure {x | f x ≤ (α : EReal)} = {x | clFn f x ≤ (α : EReal)} ∧
       closure {x | f x < (α : EReal)} = {x | clFn f x ≤ (α : EReal)} ∧
@@ -468,15 +358,13 @@ theorem theorem_7_6 (hf : ConvexFn f) (hp : Proper f) {α : ℝ} (hα : ⨅ x, f
     hdim _ (hf.convex_le _) ⟨y, hyα.le⟩ (hf.relint_setOf_le hα),
     hdim _ (hf.convex_lt _) ⟨y, hyα⟩ (hf.relint_setOf_lt hα)⟩
 
-/-- **Rockafellar, Corollary 7.6.1.** If `f` is a closed proper convex function whose effective
+/-- **Corollary 7.6.1.** If `f` is a closed proper convex function whose effective
 domain is relatively open (in particular if `dom f` is an affine set), then for
 `inf f < α < +∞` one has `ri {x | f x ≤ α} = {x | f x < α}` and
 `cl {x | f x < α} = {x | f x ≤ α}`.
 
-Specialises `ConvexFn.relint_setOf_le_of_relint_dom_eq` and
-`ConvexFn.closure_setOf_lt_of_closedFn`. The book's `α < +∞` is carried by `α : ℝ`. The two
-hypotheses split: the first formula needs only relative openness of `dom f`, and the second only
-closedness. -/
+The book's `α < +∞` is carried by `α : ℝ`. The two hypotheses split: the first formula needs only
+relative openness of `dom f`, and the second only closedness. -/
 theorem corollary_7_6_1 (hf : ConvexFn f) (hp : Proper f) (hc : ClosedFn f)
     (hopen : ri (dom f) = dom f) {α : ℝ} (hα : ⨅ x, f x < (α : EReal)) :
     ri {x | f x ≤ (α : EReal)} = {x | f x < (α : EReal)} ∧
