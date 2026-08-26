@@ -83,7 +83,13 @@ indicator bifunction of an oriented process, the adjoint `A*`, and `⟨C, D⟩`,
   simultaneously expressible: a global convention — of the kind §36 imposes for saddle-functions —
   cannot even state Theorem 39.5. Rockafellar makes the orientation a formal *pair* (16945–16965);
   the surface must do the same. This is the one place in the book where the orientation apparatus
-  is unavoidable rather than merely convenient, and it is why the backbone carries it as a field.
+  is unavoidable rather than merely convenient. **Correction, from building it:** this plan said
+  it "is why the backbone carries it as a field". The backbone does not, deliberately —
+  `Bifunction/Process.lean`'s design note is explicit that orientation is a *second adjoint*, not a
+  flag, and declines to bundle it into the structure. So the pair is the surface's to build, and
+  `Section39.lean` builds it: `Orientation`, `OrientedProcess`, and the dispatch
+  `Orientation.adjointProcess`. It carried cleanly — `theorem_39_5` and `theorem_39_8` take
+  `hor : A₁.orientation = A₂.orientation` and `subst` it, and `theorem_39_2_orientation` is `rfl`.
 * **Theorem 39.1 is restated with `A0 = {0}`.** The book's hypothesis is that `A0` is *bounded*, but
   boundedness is used only to force `A0 = {0}` (a convex cone that is bounded is trivial). Stating
   it the intended way is strictly more general and drops a finite-dimensional dependency. Record the
