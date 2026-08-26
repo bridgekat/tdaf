@@ -14,11 +14,12 @@ import Tdaf.Analysis.Convex.Recession.Cone
 /-!
 # Internal representation of a closed convex set
 
-The second half of Rockafellar's §18: the theorems that recover a closed convex set from its
-extremal structure. `Face.lean` supplies the faces themselves (Theorems 18.1 and 18.2), and
-`HullDirections.lean` supplies `convexHullPD`, the convex hull of a set of points together with a
-set of directions, which is what "`C = conv S`" means once `S` may contain directions. The
-*exposed* representation (Theorem 18.7) is in `Exposed.lean`, and Theorem 18.8 in `Tangent.lean`.
+The theorems that recover a closed convex set from its extremal structure: once it contains no
+line it is the convex hull of its extreme points and extreme directions, its faces are themselves
+such hulls, and its exposed points are dense in its extreme points. `Face.lean` supplies the faces
+themselves, and `HullDirections.lean` supplies `convexHullPD`, the convex hull of a set of points
+together with a set of directions, which is what "`C = conv S`" means once `S` may contain
+directions. The *exposed* representation is in `Exposed.lean`.
 
 ## Main definitions
 
@@ -27,57 +28,57 @@ set of directions, which is what "`C = conv S`" means once `S` may contain direc
   half-line in the direction of `y` is a face of `C`. `extremeDirections C` is the set of such `y`.
 * `IsAffineHalf C` — `C` is an affine set or a closed half of one: the intersection of `aff C`
   with a closed half-space. Allowing the functional to vanish makes the affine case the case
-  `φ = 0`, so Rockafellar's two exceptional families in Theorem 18.4 become one predicate.
+  `φ = 0`, so the two exceptional families of the segment theorem below become one predicate.
 
 ## Main results
 
-* `exists_notMem_relint_mem_segment_of_not_isAffineHalf` — **Theorem 18.4** in general: in a
-  closed convex set that is not an affine set or a closed half of one, every relative interior
-  point lies on a segment joining two relative boundary points. The analytic core is
+* `exists_notMem_relint_mem_segment_of_not_isAffineHalf` — in a closed convex set that is neither
+  an affine set nor a closed half of one, every relative interior point lies on a segment joining
+  two relative boundary points (Theorem 18.4 in [^1]). The analytic core is
   `exists_notMem_relint_mem_segment_of_isBounded`, the geometric input
-  `exists_notMem_relint_mem_segment_of_not_convex` (through Corollary 8.4.1), and
-  `isAffineHalf_of_convex_sdiff_relint` identifies the exceptions.
-* `convexHullPD_extremePoints_extremeDirections` — **Theorem 18.5**, the Minkowski–Klee
-  representation: a closed convex set containing no lines is the convex hull of its extreme points
-  and extreme directions. `extremePoints_nonempty_of_containsNoLine` is **Corollary 18.5.3**,
-  `coneHull_extremeDirections_eq` and `coneHull_of_forall_extremeDirection` are
-  **Corollary 18.5.2**, and **Corollary 18.5.1** (Minkowski, for compact sets) is
-  `convexHull_extremePoints` in `Face.lean`, used here as the base case of the induction.
+  `exists_notMem_relint_mem_segment_of_not_convex`, and `isAffineHalf_of_convex_sdiff_relint`
+  identifies the exceptions.
+* `convexHullPD_extremePoints_extremeDirections` — the **Minkowski–Klee representation**: a closed
+  convex set containing no lines is the convex hull of its extreme points and extreme directions
+  (Theorem 18.5 in [^1]). `extremePoints_nonempty_of_containsNoLine` extracts an extreme point,
+  `coneHull_extremeDirections_eq` and `coneHull_of_forall_extremeDirection` treat cones, and
+  **Minkowski's theorem** for compact sets is `convexHull_extremePoints` in `Face.lean`, used here
+  as the base case of the induction.
 * `isFace_recessionCone` — the recession cone of a face is a face of the recession cone, given
   that it is contained in it. `extremeDirections_subset_extremeDirections_recessionCone` is the
-  consequence Rockafellar records in §18; `isExtremeDirection_recessionCone` needs no topology.
+  consequence for extreme directions; `isExtremeDirection_recessionCone` needs no topology.
 * `isFaceEquivInter` — the face correspondence: for `N` a subspace of the lineality space of `C`
   and `M` a complement of `N`, the faces of `C` correspond one-to-one with the faces of `C ∩ M`.
   The mechanism is `IsFace.linealitySpace_subset`: a face is linear in every direction in which
   `C` is.
-* `IsFace.eq_convexHullPD` — **Theorem 18.3**: a nonempty face of `conv S` is the hull of the
-  points of `S` it contains and the directions of `S` in which it recedes.
-  `extremePoints_convexHullPD_subset` and `exists_mem_eq_smul_of_mem_extremeDirections` are the
-  two halves of **Corollary 18.3.1**, and `finite_extremePoints_convexHullPD` the counting
-  corollary a finitely generated set wants.
+* `IsFace.eq_convexHullPD` — a nonempty face of `conv S` is the hull of the points of `S` it
+  contains and the directions of `S` in which it recedes. `extremePoints_convexHullPD_subset` and
+  `exists_mem_eq_smul_of_mem_extremeDirections` are the two corollaries — every extreme point is a
+  generating point, every extreme direction a generating direction — and
+  `finite_extremePoints_convexHullPD` the counting corollary a finitely generated set wants.
 * `containsNoLine_inter_of_isCompl` — intersecting a closed convex set with a complement of its
-  lineality space leaves a set containing no lines. With `eq_add_inter_of_isCompl` this is
-  Rockafellar's reduction of a general closed convex set to a line-free one.
-* `extremePoints_subset_closure_exposedPoints` — **Theorem 18.6, Straszewicz's theorem**: the
-  exposed points of a closed convex set are dense in its extreme points; Mathlib does not have
+  lineality space leaves a set containing no lines. With `eq_add_inter_of_isCompl` this is the
+  reduction of a general closed convex set to a line-free one.
+* `extremePoints_subset_closure_exposedPoints` — **Straszewicz's theorem**: the exposed points of a
+  closed convex set are dense in its extreme points (Theorem 18.6 in [^1]); Mathlib does not have
   this. `mem_exposedPoints_of_forall_norm_sub_le` is the geometric heart (a farthest point is
   exposed) and `closure_convexHull_exposedPoints` the representation `C = cl (conv (exp C))`.
 
 ## Implementation notes
 
-Theorem 18.3 avoids Rockafellar's appeal to Theorem 6.4 — which would need the
-positive-coefficient description of `ri (conv S)` — by splitting the generating points into those
-inside the face and those outside (`IsExtreme.mem_convexHull_inter`) and handling the directions by
-an induction over the cone hull. The induction proving Theorem 18.5 splits on
-`finrank ℝ (vectorSpan ℝ C)`: dimension `≤ 1` is settled by `exists_eq_halfLine`, the bounded case
-in every dimension by Minkowski's theorem, and only the unbounded case of dimension `≥ 2` uses
-Theorem 18.4. Straszewicz is proved in a Euclidean space, its farthest-point construction being
-inner-product geometry, and transported to a general finite-dimensional normed space through
-`toEuclidean`.
+The description of a face of `conv S` avoids the appeal to the prolongation principle — which
+would need the positive-coefficient description of `ri (conv S)` — by splitting the generating
+points into those inside the face and those outside (`IsExtreme.mem_convexHull_inter`) and handling
+the directions by an induction over the cone hull. The induction proving the Minkowski–Klee
+representation splits on `finrank ℝ (vectorSpan ℝ C)`: dimension `≤ 1` is settled by
+`exists_eq_halfLine`, the bounded case in every dimension by Minkowski's theorem, and only the
+unbounded case of dimension `≥ 2` uses the segment theorem. Straszewicz is proved in a Euclidean
+space, its farthest-point construction being inner-product geometry, and transported to a general
+finite-dimensional normed space through `toEuclidean`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §18.
 -/
 
 open Set Bornology
@@ -92,10 +93,10 @@ section Directions
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C C' : Set E} {x y : E}
 
-/-- `C` **contains no line**: no full line lies in `C`. Rockafellar's standing hypothesis in
-Theorems 18.5 and 18.7. For a nonempty closed convex set it says that the lineality space is
-trivial (`containsNoLine_iff_linealitySpace_eq_zero`), but unlike that formulation it is also
-correct for `C = ∅`. -/
+/-- `C` **contains no line**: no full line lies in `C`. This is the standing hypothesis of the
+extreme and exposed representation theorems. For a nonempty closed convex set it says that the
+lineality space is trivial (`containsNoLine_iff_linealitySpace_eq_zero`), but unlike that
+formulation it is also correct for `C = ∅`. -/
 def ContainsNoLine (C : Set E) : Prop := ∀ x y : E, y ≠ 0 → ∃ t : ℝ, x + t • y ∉ C
 
 /-- A subset of a set containing no line contains no line. -/
@@ -150,9 +151,9 @@ theorem recessionCone_halfLine_eq_halfLine_zero (x y : E) :
 
 /-- **The recession cone of a face is a face of the recession cone.** The inclusion `0⁺C' ⊆ 0⁺C` is
 genuinely a hypothesis: the recession cone is not monotone in general, and for a nonempty subset of
-a closed convex set it is Theorem 8.3 that supplies it. Everything else is algebraic — no topology,
-no convexity of `C`, no nonemptiness. Rockafellar uses the half-line case: if `C'` is a half-line
-face with endpoint `x`, then `C' - x` is an extreme ray of `0⁺C`. -/
+a closed convex set it comes from the description of recession by unbounded directions. Everything
+else is algebraic — no topology, no convexity of `C`, no nonemptiness. The case that matters is a
+half-line face: if `C'` has endpoint `x`, then `C' - x` is an extreme ray of `0⁺C`. -/
 theorem isFace_recessionCone (h : IsFace C C') (hrec : recessionCone C' ⊆ recessionCone C) :
     IsFace (recessionCone C) (recessionCone C') := by
   refine ⟨⟨hrec, ?_⟩, convex_recessionCone C'⟩
@@ -167,10 +168,10 @@ theorem isFace_recessionCone (h : IsFace C C') (hrec : recessionCone C' ⊆ rece
     (add_smul_mem_of_mem_recessionCone hv hwC ht)
     (add_smul_mem_of_mem_recessionCone hz hw ht) hseg
 
-/-- **An extreme direction in which `C` recedes is an extreme direction of `0⁺C`** (Rockafellar
-§18). The half-line face `x + ℝ₊ y` of `C` becomes the half-line face `ℝ₊ y` of `0⁺C`, an extreme
-ray of that cone. The hypothesis `y ∈ 0⁺C` is automatic for a closed convex `C` by Theorem 8.3;
-assuming it directly keeps the statement free of topology. -/
+/-- **An extreme direction in which `C` recedes is an extreme direction of `0⁺C`.** The half-line
+face `x + ℝ₊ y` of `C` becomes the half-line face `ℝ₊ y` of `0⁺C`, an extreme ray of that cone. The
+hypothesis `y ∈ 0⁺C` is automatic for a closed convex `C`; assuming it directly keeps the statement
+free of topology. -/
 theorem isExtremeDirection_recessionCone (h : IsExtremeDirection C y)
     (hy : y ∈ recessionCone C) : IsExtremeDirection (recessionCone C) y := by
   obtain ⟨hy0, x, hface⟩ := h
@@ -274,10 +275,10 @@ theorem isFace_add_of_isFace_inter (hN : (N : Set E) ⊆ linealitySpace C) (hcom
   rw [← hpu']
   exact Set.add_mem_add hp hu₀C₀
 
-/-- **Rockafellar's face correspondence** (§18): for `N` a subspace of the lineality space of `C`
-and `M` a complement of `N`, the faces of `C` are in one-to-one correspondence with the faces of
-`C ∩ M`, by `C' ↦ C' ∩ M` and `C₀ ↦ N + C₀`. The book takes `N` the full lineality space `L` and
-`M = L^⊥` in `ℝⁿ`; every subspace of `L` and every complement of it works, and no closedness or
+/-- **The face correspondence**: for `N` a subspace of the lineality space of `C` and `M` a
+complement of `N`, the faces of `C` are in one-to-one correspondence with the faces of `C ∩ M`, by
+`C' ↦ C' ∩ M` and `C₀ ↦ N + C₀`. Rockafellar takes `N` the full lineality space `L` and `M = L^⊥`
+in `ℝⁿ`; every subspace of `L` and every complement of it works, and no closedness or
 finite-dimensionality is used. -/
 def isFaceEquivInter (hN : (N : Set E) ⊆ linealitySpace C) (hcompl : IsCompl N M) :
     {C' : Set E // IsFace C C'} ≃ {C₀ : Set E // IsFace (C ∩ (M : Set E)) C₀} where
@@ -304,9 +305,9 @@ theorem mem_extremePoints_of_subset (hx : x ∈ C.extremePoints ℝ) (hKC : K �
 
 /-- **An extreme set absorbs the vertices of a convex combination it contains.** If `u` lies in an
 extreme subset `C'` of `C` and is a convex combination of points of `P ⊆ C`, then `u` is already a
-convex combination of those points of `P` that lie in `C'`. This is the mechanism behind
-Theorem 18.3; Rockafellar instead puts `u` in the relative interior of the hull of the points
-actually used and appeals to Theorem 18.1. -/
+convex combination of those points of `P` that lie in `C'`. This is the mechanism behind the
+description of a face of a hull below; the textbook argument instead puts `u` in the relative
+interior of the hull of the points actually used. -/
 theorem IsExtreme.mem_convexHull_inter {C C' P : Set E} (h : IsExtreme ℝ C C')
     (hCconv : Convex ℝ C) (hPC : P ⊆ C) {u : E} (hu : u ∈ C')
     (huP : u ∈ convexHull ℝ P) : u ∈ convexHull ℝ (P ∩ C') := by
@@ -348,7 +349,7 @@ theorem IsExtreme.mem_convexHull_inter {C C' P : Set E} (h : IsExtreme ℝ C C')
 
 end ExtremeSubset
 
-/-! ### Convex cones, and Corollary 18.3.1 -/
+/-! ### Convex cones, and the extreme points and directions of a hull -/
 
 section ConeExtreme
 
@@ -423,10 +424,10 @@ theorem extremePoints_eq_singleton_zero (hne : K.Nonempty)
       rw [h2]
       exact hcone b hb _ hc
 
-/-- **Corollary 18.3.1**, first half: every extreme point of a hull of points and directions is
-one of its points. Rockafellar deduces this from Theorem 18.3 by taking the face to be a single
-point; directly, a nonzero direction of recession at an extreme point would place that point
-strictly inside a segment. -/
+/-- **Every extreme point of a hull of points and directions is one of its points.** It can be
+deduced from the description of a face of such a hull by taking the face to be a single point;
+directly, a nonzero direction of recession at an extreme point would place that point strictly
+inside a segment. -/
 theorem extremePoints_convexHullPD_subset (P D : Set E) :
     (convexHullPD P D).extremePoints ℝ ⊆ P := by
   intro x hx
@@ -442,9 +443,9 @@ theorem extremePoints_convexHullPD_subset (P D : Set E) :
   exact extremePoints_convexHull_subset
     (mem_extremePoints_of_subset hx (convexHull_subset_convexHullPD P D) (hux ▸ hu))
 
-/-- **A hull of finitely many points and directions has finitely many extreme points**, the
-parenthetical "(finitely many)" of Rockafellar's Corollary 32.3.4. Immediate from
-`extremePoints_convexHullPD_subset`, which puts every extreme point among the generating points. -/
+/-- **A hull of finitely many points and directions has finitely many extreme points.** Immediate
+from `extremePoints_convexHullPD_subset`, which puts every extreme point among the generating
+points. -/
 theorem finite_extremePoints_convexHullPD (P D : Finset E) :
     ((convexHullPD (P : Set E) (D : Set E)).extremePoints ℝ).Finite :=
   P.finite_toSet.subset (extremePoints_convexHullPD_subset _ _)
@@ -550,17 +551,17 @@ theorem containsNoLine_inter_of_isCompl (hC : Convex ℝ C) (hCcl : IsClosed C)
     rwa [show a + (1 : ℝ) • y - (a + (0 : ℝ) • y) = y by module] at hdiff
   exact hy0 (by simpa using hN.disjoint.le_bot ⟨hyL, hyN⟩)
 
-/-- An extreme direction is a direction of recession: **Theorem 8.3** applied to the half-line
-face. -/
+/-- An extreme direction is a direction of recession: a closed convex set recedes in every
+direction in which it contains a half-line. -/
 theorem extremeDirections_subset_recessionCone (hC : Convex ℝ C) (hCcl : IsClosed C) :
     extremeDirections C ⊆ recessionCone C := by
   rintro y ⟨-, x, hx⟩
   exact mem_recessionCone_of_exists_ray hC hCcl ⟨x, fun a ha => hx.subset ⟨a, ha, rfl⟩⟩
 
-/-- **Every extreme direction of a closed convex set is an extreme direction of its recession cone**
-(Rockafellar §18). This sharpens `extremeDirections_subset_recessionCone`, which says only that an
-extreme direction *is* a direction of recession. The converse fails: a parabolic region in the
-plane has no half-line faces at all, while its recession cone is a ray. -/
+/-- **Every extreme direction of a closed convex set is an extreme direction of its recession
+cone.** This sharpens `extremeDirections_subset_recessionCone`, which says only that an extreme
+direction *is* a direction of recession. The converse fails: a parabolic region in the plane has no
+half-line faces at all, while its recession cone is a ray. -/
 theorem extremeDirections_subset_extremeDirections_recessionCone (hC : Convex ℝ C)
     (hCcl : IsClosed C) : extremeDirections C ⊆ extremeDirections (recessionCone C) :=
   fun _ hy =>
@@ -578,7 +579,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
 omit [FiniteDimensional ℝ E] in
 /-- **A closed convex set that coincides with its relative interior contains whole lines.** If
 `C ⊆ ri C` then, for every `x ∈ C` and every direction `d` of the affine hull, the entire line
-`x + ℝ d` lies in `C`. This is what makes the exceptional cases of Theorem 18.4 exceptional. -/
+`x + ℝ d` lies in `C`. This is what makes the exceptional sets below exceptional. -/
 theorem forall_add_smul_mem_of_subset_relint (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hsub : C ⊆ ri C) (hx : x ∈ C) (hd : d ∈ vectorSpan ℝ C) (t : ℝ) : x + t • d ∈ C := by
   rcases eq_or_ne d 0 with rfl | hd0
@@ -671,7 +672,7 @@ theorem affineSpan_subset_of_subset_relint (hC : Convex ℝ C) (hCcl : IsClosed 
 
 end Affine
 
-/-! ### Theorem 18.4 -/
+/-! ### Relative interior points on segments between relative boundary points -/
 
 section Segment
 
@@ -679,10 +680,10 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C : Set E} {x d : E}
 
 omit [FiniteDimensional ℝ E] in
-/-- **The analytic core of Theorem 18.4.** If the line through a relative interior point `x` of a
-closed set `C`, in a direction of the affine hull of `C`, meets `C` in a bounded set, then `x` lies
-on a segment joining the two ends of that intersection, neither of which is a relative interior
-point. Convexity of `C` is not used. -/
+/-- **The analytic core of the segment theorem.** If the line through a relative interior point `x`
+of a closed set `C`, in a direction of the affine hull of `C`, meets `C` in a bounded set, then `x`
+lies on a segment joining the two ends of that intersection, neither of which is a relative
+interior point. Convexity of `C` is not used. -/
 theorem exists_notMem_relint_mem_segment_of_isBounded (hCcl : IsClosed C) (hd0 : d ≠ 0)
     (hd : d ∈ vectorSpan ℝ C) (hx : x ∈ ri C)
     (hbdd : IsBounded {t : ℝ | x + t • d ∈ C}) :
@@ -742,14 +743,13 @@ theorem exists_notMem_relint_mem_segment_of_isBounded (hCcl : IsClosed C) (hd0 :
       div_nonneg (neg_nonneg.2 htmneg.le) hgap.le, by field_simp; ring, ?_⟩
     match_scalars <;> field_simp <;> ring
 
-/-- **Rockafellar, Theorem 18.4**, in the form the proof produces: if the relative boundary of a
-closed convex set `C` is *not convex*, then every relative interior point of `C` lies on a segment
-joining two relative boundary points. Rockafellar's own hypothesis — that `C` is neither an affine
-set nor a closed half of one — is equivalent; see
-`exists_notMem_relint_mem_segment_of_not_isAffineHalf`. Non-convexity of the relative boundary
-produces two relative boundary points whose segment meets `ri C`, the line through them meets `C`
-in exactly that segment (Theorem 6.1), so every parallel line meets `C` in a bounded set
-(**Corollary 8.4.1**). -/
+/-- **The segment theorem** in the form the proof produces: if the relative boundary of a closed
+convex set `C` is *not convex*, then every relative interior point of `C` lies on a segment joining
+two relative boundary points. Rockafellar's own hypothesis — that `C` is neither an affine set nor
+a closed half of one — is equivalent; see `exists_notMem_relint_mem_segment_of_not_isAffineHalf`.
+Non-convexity of the relative boundary produces two relative boundary points whose segment meets
+`ri C`; the line through them meets `C` in exactly that segment, by the line segment principle, so
+every parallel line meets `C` in a bounded set. -/
 theorem exists_notMem_relint_mem_segment_of_not_convex (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hD : ¬ Convex ℝ (C \ ri C)) (hx : x ∈ ri C) :
     ∃ a ∈ C, ∃ b ∈ C, a ∉ ri C ∧ b ∉ ri C ∧ x ∈ segment ℝ a b := by
@@ -838,7 +838,7 @@ theorem exists_notMem_relint_mem_segment_of_not_convex (hC : Convex ℝ C) (hCcl
       have hpq : p + (q - p) = q := by abel
       rw [hpq] at hmem
       exact hq.2 hmem
-  -- hence every parallel line meets `C` in a bounded set (Corollary 8.4.1)
+  -- hence every parallel line meets `C` in a bounded set
   set W : Submodule ℝ E := Submodule.span ℝ {d} with hWdef
   set M : AffineSubspace ℝ E := AffineSubspace.mk' p W with hMdef
   set N : AffineSubspace ℝ E := AffineSubspace.mk' x W with hNdef
@@ -886,8 +886,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C : Set E} {x : E}
 
 /-- `C` is **an affine set or a closed half of an affine set**: the intersection of its own affine
-hull with a closed half-space. Rockafellar's two exceptional cases in Theorem 18.4 are one
-predicate here, because the degenerate choice `φ = 0`, `α = 0` gives exactly the affine sets. -/
+hull with a closed half-space. The two exceptional cases of the segment theorem are one predicate
+here, because the degenerate choice `φ = 0`, `α = 0` gives exactly the affine sets. -/
 def IsAffineHalf (C : Set E) : Prop :=
   ∃ (φ : E →ₗ[ℝ] ℝ) (α : ℝ), C = (affineSpan ℝ C : Set E) ∩ {x | φ x ≤ α}
 
@@ -896,12 +896,11 @@ omit [FiniteDimensional ℝ E] in
 theorem isAffineHalf_of_affineSpan_subset (h : (affineSpan ℝ C : Set E) ⊆ C) : IsAffineHalf C :=
   ⟨0, 0, subset_antisymm (fun x hx => ⟨subset_affineSpan ℝ C hx, by simp⟩) fun _ hx => h hx.1⟩
 
-/-- **The exceptional sets of Theorem 18.4 are exactly those whose relative boundary is convex.** If
-the relative boundary of a closed convex set `C` is convex, then `C` is an affine set or a closed
-half of one. This is the first half of Rockafellar's proof of Theorem 18.4, run forwards: a
-supporting hyperplane at a relative interior point of the relative boundary (**Corollary 11.6.2**)
-contains the whole relative boundary, `ri C` lies strictly on one side, and every point of `aff C`
-strictly on that side already lies in `C`. -/
+/-- **The exceptional sets are exactly those whose relative boundary is convex.** If the relative
+boundary of a closed convex set `C` is convex, then `C` is an affine set or a closed half of one.
+A supporting hyperplane at a relative interior point of the relative boundary contains the whole
+relative boundary, `ri C` lies strictly on one side, and every point of `aff C` strictly on that
+side already lies in `C`. -/
 theorem isAffineHalf_of_convex_sdiff_relint (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hD : Convex ℝ (C \ ri C)) : IsAffineHalf C := by
   rcases Set.eq_empty_or_nonempty (C \ ri C) with hempty | hDne
@@ -1015,9 +1014,9 @@ theorem isAffineHalf_of_convex_sdiff_relint (hC : Convex ℝ C) (hCcl : IsClosed
   rw [hCcl.closure_eq, hKcl.closure_eq] at hcl
   exact hcl
 
-/-- **Rockafellar, Theorem 18.4**, as stated in the book: if a closed convex set is neither an
-affine set nor a closed half of an affine set, then each of its relative interior points lies on a
-line segment joining two relative boundary points. -/
+/-- **The segment theorem**: if a closed convex set is neither an affine set nor a closed half of
+an affine set, then each of its relative interior points lies on a line segment joining two
+relative boundary points. -/
 theorem exists_notMem_relint_mem_segment_of_not_isAffineHalf (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hhalf : ¬ IsAffineHalf C) (hx : x ∈ ri C) :
     ∃ a ∈ C, ∃ b ∈ C, a ∉ ri C ∧ b ∉ ri C ∧ x ∈ segment ℝ a b :=
@@ -1025,9 +1024,9 @@ theorem exists_notMem_relint_mem_segment_of_not_isAffineHalf (hC : Convex ℝ C)
     (fun hconv => hhalf (isAffineHalf_of_convex_sdiff_relint hC hCcl hconv)) hx
 
 /-- **An affine set, or a closed half of an affine set, of dimension at least two contains a
-line.** This is why Theorem 18.4 applies to every closed convex set of dimension at least two that
-contains no lines, and hence why the induction in Theorem 18.5 only has to treat dimensions `0`
-and `1` separately. -/
+line.** This is why the segment theorem applies to every closed convex set of dimension at least
+two that contains no lines, and hence why the induction below only has to treat dimensions `0` and
+`1` separately. -/
 theorem not_containsNoLine_of_isAffineHalf (h : IsAffineHalf C) (hne : C.Nonempty)
     (hdim : 2 ≤ Module.finrank ℝ (vectorSpan ℝ C)) : ¬ ContainsNoLine C := by
   obtain ⟨φ, α, hCeq⟩ := h
@@ -1063,7 +1062,7 @@ theorem not_containsNoLine_of_isAffineHalf (h : IsAffineHalf C) (hne : C.Nonempt
 
 end AffineHalf
 
-/-! ### Half-lines: the one-dimensional case of Theorem 18.5 -/
+/-! ### Half-lines: the one-dimensional unbounded case -/
 
 section HalfLine
 
@@ -1094,7 +1093,7 @@ theorem mem_extremeDirections_halfLine (x y : E) (hy : y ≠ 0) :
   ⟨hy, x, Convex.isFace_self (convex_halfLine x y)⟩
 
 /-- A closed half-line is the convex hull of its unique extreme point and its unique extreme
-direction: **Theorem 18.5** in the one-dimensional unbounded case. -/
+direction. -/
 theorem halfLine_subset_convexHullPD (x y : E) (hy : y ≠ 0) :
     halfLine x y ⊆
       convexHullPD ((halfLine x y).extremePoints ℝ) (extremeDirections (halfLine x y)) := by
@@ -1104,7 +1103,7 @@ theorem halfLine_subset_convexHullPD (x y : E) (hy : y ≠ 0) :
 
 end HalfLine
 
-/-! ### Theorem 18.3 -/
+/-! ### The faces of a hull of points and directions -/
 
 section FaceHull
 
@@ -1112,9 +1111,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C C' P D : Set E}
 
 /-- A direction of recession of `C` that carries a point of `C` into the face `C'` is a direction
-of recession of `C'` itself. This is the delicate step inside Rockafellar's proof of Theorem 18.3:
-the face contains a whole half-line in that direction, so `cl C'` recedes in it by Theorem 8.3,
-and `C' = C ∩ cl C'` by Corollary 18.1.1. -/
+of recession of `C'` itself. This is the delicate step: the face contains a whole half-line in that
+direction, so `cl C'` recedes in it, and a face is the trace on `C` of its own closure. -/
 theorem IsFace.mem_recessionCone_of_eq_add_smul (hCconv : Convex ℝ C) (hface : IsFace C C')
     {x w y : E} (hx : x ∈ C') (hw : w ∈ C) (hy : y ∈ recessionCone C) {t : ℝ} (ht : 0 < t)
     (hxwv : x = w + t • y) : y ∈ recessionCone C' := by
@@ -1172,8 +1170,8 @@ private theorem mem_coneHull_filter_of_isFace (hface : IsFace (convexHullPD P D)
       change w + t • ((c : ℝ) • v₁) = w + (t * (c : ℝ)) • v₁
       rw [smul_smul]
 
-/-- **Rockafellar, Theorem 18.3**: a face of a convex hull of points and directions is itself the
-convex hull of the points it contains and the directions in which it recedes. -/
+/-- A face of a convex hull of points and directions is itself the convex hull of the points it
+contains and the directions in which it recedes. -/
 theorem IsFace.eq_convexHullPD (hface : IsFace (convexHullPD P D) C') :
     C' = convexHullPD (P ∩ C') {y ∈ D | y ∈ recessionCone C'} := by
   have hCconv : Convex ℝ (convexHullPD P D) := convex_convexHullPD P D
@@ -1191,8 +1189,8 @@ theorem IsFace.eq_convexHullPD (hface : IsFace (convexHullPD P D) C') :
     mem_coneHull_filter_of_isFace hface v hv 1 one_pos x hx u huC (by rw [one_smul, huv])
   exact mem_convexHullPD.2 ⟨u, huhull, v, hvhull, huv⟩
 
-/-- **Corollary 18.3.1**, second half: if no half-line meets the points of `S` in an unbounded
-set, then every extreme direction of `conv S` is the direction of one of the vectors of `S`. -/
+/-- If no half-line meets the points of `S` in an unbounded set, then every extreme direction of
+`conv S` is the direction of one of the vectors of `S`. -/
 theorem exists_mem_eq_smul_of_mem_extremeDirections (P D : Set E)
     (hP : ∀ x z : E, IsBounded (P ∩ halfLine x z)) {y : E}
     (hy : y ∈ extremeDirections (convexHullPD P D)) :
@@ -1226,8 +1224,8 @@ theorem exists_mem_eq_smul_of_mem_extremeDirections (P D : Set E)
   rw [heq]
   exact (isBounded_convexHull.2 (hP x y)).subset hsub
 
-/-- **Corollary 18.3.1**, second half, in the form Rockafellar highlights: if the points of `S`
-form a bounded set, every extreme direction of `conv S` is the direction of a vector of `S`. -/
+/-- The same under the hypothesis Rockafellar highlights: if the points of `S` form a bounded set,
+every extreme direction of `conv S` is the direction of a vector of `S`. -/
 theorem exists_mem_eq_smul_of_mem_extremeDirections_of_isBounded (P D : Set E)
     (hP : IsBounded P) {y : E} (hy : y ∈ extremeDirections (convexHullPD P D)) :
     ∃ z ∈ D, ∃ a : ℝ, 0 < a ∧ y = a • z :=
@@ -1235,7 +1233,7 @@ theorem exists_mem_eq_smul_of_mem_extremeDirections_of_isBounded (P D : Set E)
 
 end FaceHull
 
-/-! ### Theorem 18.5 -/
+/-! ### The Minkowski–Klee representation -/
 
 section Representation
 
@@ -1243,8 +1241,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C : Set E}
 
 /-- **An unbounded closed convex set of dimension at most one that contains no line is a closed
-half-line.** This is the only case of Theorem 18.5 that the induction cannot reduce, and
-Rockafellar dismisses it as trivial. -/
+half-line.** This is the only case the induction below cannot reduce, and it is trivial. -/
 theorem exists_eq_halfLine (hC : Convex ℝ C) (hCcl : IsClosed C) (hne : C.Nonempty)
     (hnl : ContainsNoLine C) (hdim : Module.finrank ℝ (vectorSpan ℝ C) ≤ 1)
     (hb : ¬ IsBounded C) : ∃ x y : E, y ≠ 0 ∧ C = halfLine x y := by
@@ -1303,8 +1300,8 @@ theorem exists_eq_halfLine (hC : Convex ℝ C) (hCcl : IsClosed C) (hne : C.None
     rw [heq]
     exact hmem
 
-/-- **Theorem 18.5** for bounded sets: Minkowski's theorem, `convexHull_extremePoints`, with the
-extreme directions (of which there are none) carried along. -/
+/-- The representation for bounded sets: **Minkowski's theorem**, `convexHull_extremePoints`, with
+the extreme directions (of which there are none) carried along. -/
 theorem subset_convexHullPD_of_isBounded (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hb : IsBounded C) :
     C ⊆ convexHullPD (C.extremePoints ℝ) (extremeDirections C) := by
@@ -1313,7 +1310,7 @@ theorem subset_convexHullPD_of_isBounded (hC : Convex ℝ C) (hCcl : IsClosed C)
   rw [← convexHull_extremePoints hcomp hC] at hz
   exact convexHull_subset_convexHullPD _ _ hz
 
-/-- **Theorem 18.5** in dimension at most one: `C` is empty, a point, a segment, or a half-line. -/
+/-- The representation in dimension `≤ 1`: `C` is empty, a point, a segment, or a half-line. -/
 theorem subset_convexHullPD_of_finrank_le_one (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hnl : ContainsNoLine C) (hdim : Module.finrank ℝ (vectorSpan ℝ C) ≤ 1) :
     C ⊆ convexHullPD (C.extremePoints ℝ) (extremeDirections C) := by
@@ -1324,7 +1321,7 @@ theorem subset_convexHullPD_of_finrank_le_one (hC : Convex ℝ C) (hCcl : IsClos
   obtain ⟨x, y, hy0, rfl⟩ := exists_eq_halfLine hC hCcl hne hnl hdim hb
   exact halfLine_subset_convexHullPD x y hy0
 
-/-- The induction behind **Theorem 18.5**, on the dimension of `C`. -/
+/-- The induction behind the representation theorem, on the dimension of `C`. -/
 private theorem subset_convexHullPD_aux :
     ∀ (n : ℕ) (C : Set E), Module.finrank ℝ (vectorSpan ℝ C) ≤ n → Convex ℝ C → IsClosed C →
       ContainsNoLine C → C ⊆ convexHullPD (C.extremePoints ℝ) (extremeDirections C) := by
@@ -1365,12 +1362,12 @@ private theorem subset_convexHullPD_aux :
       exact (convex_convexHullPD _ _).segment_subset (hbd a haC hari) (hbd b hbC hbri) hseg
     · exact hbd w hw hwri
 
-/-- **Rockafellar, Theorem 18.5**: a closed convex set containing no lines is the convex hull of its
-extreme points and extreme directions. The proof is his induction on `dim C`: for a set of
-dimension at least two the relative boundary is not convex, so every relative interior point lies
-on a segment joining two relative boundary points, and each of those lies in the relative interior
-of a face of strictly smaller dimension (Theorem 18.2), again closed and line-free. Dimensions `0`
-and `1` are the base cases: a bounded set by Minkowski's theorem, an unbounded one a half-line. -/
+/-- **The Minkowski–Klee representation**: a closed convex set containing no lines is the convex
+hull of its extreme points and extreme directions. The proof is an induction on `dim C`: for a set
+of dimension at least two the relative boundary is not convex, so every relative interior point
+lies on a segment joining two relative boundary points, and each of those lies in the relative
+interior of a face of strictly smaller dimension, again closed and line-free. Dimensions `0` and
+`1` are the base cases: a bounded set by Minkowski's theorem, an unbounded one a half-line. -/
 theorem convexHullPD_extremePoints_extremeDirections (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hnl : ContainsNoLine C) :
     convexHullPD (C.extremePoints ℝ) (extremeDirections C) = C :=
@@ -1378,8 +1375,8 @@ theorem convexHullPD_extremePoints_extremeDirections (hC : Convex ℝ C) (hCcl :
     (convexHullPD_min hC extremePoints_subset (extremeDirections_subset_recessionCone hC hCcl))
     (subset_convexHullPD_aux _ C le_rfl hC hCcl hnl)
 
-/-- **Rockafellar, Corollary 18.5.3**: a nonempty closed convex set containing no lines has at
-least one extreme point. Rockafellar's own derivation — a hull of directions alone is empty. -/
+/-- A nonempty closed convex set containing no lines has at least one extreme point: a hull of
+directions alone would be empty. -/
 theorem extremePoints_nonempty_of_containsNoLine (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hnl : ContainsNoLine C) (hne : C.Nonempty) : (C.extremePoints ℝ).Nonempty := by
   rcases (C.extremePoints ℝ).eq_empty_or_nonempty with hem | h
@@ -1389,19 +1386,19 @@ theorem extremePoints_nonempty_of_containsNoLine (hC : Convex ℝ C) (hCcl : IsC
   · exact h
 
 
-/-- **Corollary 18.5.2.** A closed convex cone containing no lines is the cone generated by its
-extreme directions. (Rockafellar phrases it for an arbitrary set of generators of the extreme
-rays; that version follows by monotonicity of the cone hull.) -/
+/-- **A closed convex cone containing no lines is the cone generated by its extreme directions.**
+The version for an arbitrary set of generators of the extreme rays follows by monotonicity of the
+cone hull; it is `coneHull_of_forall_extremeDirection` below. -/
 theorem coneHull_extremeDirections_eq (hC : Convex ℝ C) (hCcl : IsClosed C) (hne : C.Nonempty)
     (hcone : ∀ x ∈ C, ∀ a : ℝ, 0 ≤ a → a • x ∈ C) (hnl : ContainsNoLine C) :
     (PointedCone.hull ℝ (extremeDirections C) : Set E) = C := by
   have h := convexHullPD_extremePoints_extremeDirections hC hCcl hnl
   rwa [extremePoints_eq_singleton_zero hne hcone hnl, convexHullPD_zero_singleton] at h
 
-/-- **Rockafellar, Corollary 18.5.2** in his own phrasing: if every extreme ray of a closed convex
-cone `C` containing no lines is generated by some vector of a subset `T` of `C`, then `T` generates
-`C`. Rockafellar assumes the cone contains more than the origin; that is unnecessary, since the
-zero cone has no extreme directions and both sides are `{0}`. -/
+/-- The same for an arbitrary generating set: if every extreme ray of a closed convex cone `C`
+containing no lines is generated by some vector of a subset `T` of `C`, then `T` generates `C`.
+Rockafellar assumes the cone contains more than the origin; that is unnecessary, since the zero
+cone has no extreme directions and both sides are `{0}`. -/
 theorem coneHull_of_forall_extremeDirection {T : Set E} (hC : Convex ℝ C) (hCcl : IsClosed C)
     (hne : C.Nonempty) (hcone : ∀ x ∈ C, ∀ a : ℝ, 0 ≤ a → a • x ∈ C) (hnl : ContainsNoLine C)
     (hTC : T ⊆ C) (hgen : ∀ y ∈ extremeDirections C, ∃ x ∈ T, ∃ a : ℝ, 0 < a ∧ y = a • x) :
@@ -1417,7 +1414,7 @@ theorem coneHull_of_forall_extremeDirection {T : Set E} (hC : Convex ℝ C) (hCc
 end Representation
 
 
-/-! ### Theorem 18.6: Straszewicz's theorem, the Euclidean core -/
+/-! ### Straszewicz's theorem, the Euclidean core -/
 
 section Euclidean
 
@@ -1455,9 +1452,9 @@ private theorem exposedPoints_nonempty_aux (hC : IsCompact C) (hne : C.Nonempty)
 
 variable [FiniteDimensional ℝ E]
 
-/-- Straszewicz's theorem for a *compact* convex set in a Euclidean space. This is the substance
-of Rockafellar's Theorem 18.6; the general statements below are obtained from it by transport
-along `toEuclidean` and by truncating an unbounded set with a ball. -/
+/-- **Straszewicz's theorem** for a *compact* convex set in a Euclidean space. This is the
+substance of the theorem; the general statements below are obtained from it by transport along
+`toEuclidean` and by truncating an unbounded set with a ball. -/
 private theorem extremePoints_subset_closure_exposedPoints_aux
     (hC : Convex ℝ C) (hCcomp : IsCompact C) :
     C.extremePoints ℝ ⊆ closure (C.exposedPoints ℝ) := by
@@ -1564,7 +1561,7 @@ theorem image_exposedPoints (f : E ≃L[ℝ] F) (s : Set E) :
 
 end Transport
 
-/-! ### Theorem 18.6 in a general finite-dimensional space -/
+/-! ### Straszewicz's theorem in a general finite-dimensional space -/
 
 section Straszewicz
 
@@ -1573,7 +1570,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {C : Set E}
 /-- **Exposedness is a local property of a convex set.** A point exposed in the truncation
 `C ∩ closedBall c r` that lies in the *open* ball is already exposed in `C`.
 
-This is the reduction to the bounded case in Rockafellar's proof of Theorem 18.6. -/
+This is the reduction of Straszewicz's theorem to the bounded case. -/
 theorem mem_exposedPoints_of_mem_exposedPoints_inter_closedBall (hC : Convex ℝ C) {c : E} {r : ℝ}
     {p : E} (hp : p ∈ (C ∩ Metric.closedBall c r).exposedPoints ℝ) (hlt : dist p c < r) :
     p ∈ C.exposedPoints ℝ := by
@@ -1620,8 +1617,8 @@ theorem exposedPoints_nonempty_of_isCompact (hC : IsCompact C) (hne : C.Nonempty
   rw [← image_exposedPoints] at hb
   exact ⟨_, hb.choose_spec.1⟩
 
-/-- **Straszewicz's theorem for a compact convex set** (Rockafellar, Theorem 18.6): every extreme
-point is a limit of exposed points. -/
+/-- **Straszewicz's theorem for a compact convex set**: every extreme point is a limit of exposed
+points. -/
 theorem extremePoints_subset_closure_exposedPoints_of_isCompact
     (hC : Convex ℝ C) (hCcomp : IsCompact C) :
     C.extremePoints ℝ ⊆ closure (C.exposedPoints ℝ) := by
@@ -1643,10 +1640,9 @@ theorem extremePoints_subset_closure_exposedPoints_of_isCompact
   obtain ⟨y, hy, hfy⟩ := h2
   rwa [(toEuclidean (E := E)).injective hfy] at hy
 
-/-- **Straszewicz's theorem** (Rockafellar, Theorem 18.6). For a closed convex set `C`, every
-extreme point of `C` is a limit of exposed points of `C`. Together with
-`Set.exposedPoints_subset_extremePoints` this says that the exposed points of `C` form a dense
-subset of its extreme points. -/
+/-- **Straszewicz's theorem.** For a closed convex set `C`, every extreme point of `C` is a limit
+of exposed points of `C`. Together with `Set.exposedPoints_subset_extremePoints` this says that the
+exposed points of `C` form a dense subset of its extreme points. -/
 theorem extremePoints_subset_closure_exposedPoints (hC : Convex ℝ C) (hCcl : IsClosed C) :
     C.extremePoints ℝ ⊆ closure (C.exposedPoints ℝ) := by
   intro x hx
@@ -1664,17 +1660,16 @@ theorem extremePoints_subset_closure_exposedPoints (hC : Convex ℝ C) (hCcl : I
     (by rwa [dist_comm]), hdist⟩
 
 /-- Straszewicz's theorem, in the form "the exposed points and the extreme points of a closed
-convex set have the same closure" (Rockafellar, Theorem 18.6). -/
+convex set have the same closure". -/
 theorem closure_exposedPoints_eq_closure_extremePoints (hC : Convex ℝ C) (hCcl : IsClosed C) :
     closure (C.exposedPoints ℝ) = closure (C.extremePoints ℝ) :=
   Subset.antisymm (closure_mono exposedPoints_subset_extremePoints)
     (closure_minimal (extremePoints_subset_closure_exposedPoints hC hCcl) isClosed_closure)
 
-/-- **Rockafellar, Theorem 18.6** in the representation form he draws from it: a compact convex
-set is the *closed* convex hull of its exposed points. The closure cannot be dropped — the
-exposed points of a compact convex set need not be closed — which is why the exposed
-representation of Theorem 18.7 carries a closure where the extreme representation of Theorem 18.5
-does not. -/
+/-- Straszewicz's theorem in representation form: a compact convex set is the *closed* convex hull
+of its exposed points. The closure cannot be dropped — the exposed points of a compact convex set
+need not be closed — which is why the exposed representation carries a closure where the extreme
+representation does not. -/
 theorem closure_convexHull_exposedPoints (hC : Convex ℝ C) (hCcomp : IsCompact C) :
     closure (convexHull ℝ (C.exposedPoints ℝ)) = C := by
   refine subset_antisymm
