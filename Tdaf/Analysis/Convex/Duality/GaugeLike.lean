@@ -41,7 +41,7 @@ inequality, read as a conjugacy.
 ## Main results
 
 * `monotoneHalfLineFn_monotoneConj`, `monotoneConj_monotoneConj` — the class is stable under
-  `monotoneConj`, and `g⁺⁺ = g`.
+  `monotoneConj`, and `g⁺⁺ = g` (Theorem 12.4 in [^1]).
 * `closedProperConvexFn_monotoneComp`, `setOf_monotoneComp_le_eq_smul` — for a non-constant `g`,
   `g ∘ k` is closed proper convex, and its sublevel sets are all dilates of `{k ≤ 1}`.
 * `conj_monotoneComp` — `(g ∘ k)* = g⁺ ∘ k°` for a closed gauge `k`.
@@ -49,12 +49,12 @@ inequality, read as a conjugacy.
 * `posHomogeneousDeg_iff_exists_isGauge` — a closed proper convex function is positively
   homogeneous of degree `p` exactly when it is `(1/p) k^p` for a closed gauge `k`.
 * `conj_monotoneComp_powHalfLine`, `polarGauge_degGauge`, `pairing_le_rpow_mul_rpow`,
-  `polarSet_setOf_le_inv` — **Corollaries 15.3.1 and 15.3.2**: the conjugate of `(1/p) k^p` is
-  `(1/q) (k°)^q`, the gauges `(p f)^{1/p}` and `(q f*)^{1/q}` are polar, and the level sets
-  `{f ≤ 1/p}` and `{f* ≤ 1/q}` are polar sets.
-* `closedProperConvexFn_and_isGaugeLike_iff` — **Theorem 15.3**: a function is closed proper convex
-  and gauge-like exactly when it is `g ∘ k` for a closed gauge `k` and a non-constant
-  `MonotoneHalfLineFn g`. `IsGaugeLike.exists_eq_monotoneComp` is the reconstruction half.
+  `polarSet_setOf_le_inv` — the conjugate of `(1/p) k^p` is `(1/q) (k°)^q`, the gauges
+  `(p f)^{1/p}` and `(q f*)^{1/q}` are polar, and the level sets `{f ≤ 1/p}` and `{f* ≤ 1/q}` are
+  polar sets.
+* `closedProperConvexFn_and_isGaugeLike_iff` — a function is closed proper convex and gauge-like
+  exactly when it is `g ∘ k` for a closed gauge `k` and a non-constant `MonotoneHalfLineFn g`
+  (Theorem 15.3 in [^1]). `IsGaugeLike.exists_eq_monotoneComp` is the reconstruction half.
 
 ## Implementation notes
 
@@ -65,8 +65,7 @@ conjugacy formula itself does not need it.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, Theorem 12.4 and
-  Theorem 15.3 with Corollaries 15.3.1 and 15.3.2.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §12 and §15.
 -/
 
 open scoped Pointwise
@@ -113,7 +112,7 @@ nondecreasing on `[0, ∞)`, convex, closed, and finite at the origin.
 
 Convexity and closedness are asked of `g` as a function on all of `ℝ`; because `g` is `+∞` to the
 left of the origin, that is the same as asking them on the half-line. This is exactly the class on
-which monotone conjugacy is an involution — **Rockafellar, Theorem 12.4**, in one dimension. -/
+which monotone conjugacy is an involution. -/
 structure MonotoneHalfLineFn (g : ℝ → EReal) : Prop where
   /-- `g` is `+∞` to the left of the origin. -/
   top_of_neg : ∀ ⦃t : ℝ⦄, t < 0 → g t = ⊤
@@ -231,8 +230,7 @@ theorem conj_mulPairing_of_nonpos (hg : MonotoneHalfLineFn g) (hs : s ≤ 0) :
 theorem monotoneConj_zero (hg : MonotoneHalfLineFn g) : monotoneConj g 0 = -g 0 := by
   rw [monotoneConj_of_nonneg' hg.top_of_neg le_rfl, conj_mulPairing_of_nonpos hg le_rfl]
 
-/-- **The class is stable under monotone conjugacy** — the first half of Rockafellar's
-Theorem 12.4. -/
+/-- **The class is stable under monotone conjugacy.** -/
 theorem monotoneHalfLineFn_monotoneConj (hg : MonotoneHalfLineFn g) :
     MonotoneHalfLineFn (monotoneConj g) where
   top_of_neg _ ht := monotoneConj_of_neg g ht
@@ -271,8 +269,8 @@ theorem iSup_sub_monotoneConj (hg : MonotoneHalfLineFn g) (ht : 0 ≤ t) :
           add_le_add (by exact_mod_cast mul_nonpos_of_nonpos_of_nonneg hs.le ht) le_rfl
       _ = g 0 := zero_add _
 
-/-- **Rockafellar, Theorem 12.4.** Monotone conjugacy is an involution on the nondecreasing closed
-convex functions of one nonnegative variable that are finite at the origin.
+/-- **Monotone conjugacy is an involution** on the nondecreasing closed convex functions of one
+nonnegative variable that are finite at the origin.
 
 The proof is the Fenchel–Moreau theorem for `mulPairing` together with `iSup_sub_monotoneConj`,
 which says that truncating the conjugate to the half-line does not change the second conjugate at
@@ -385,8 +383,8 @@ end MonotoneCompConvex
 /-! ### Growth of a non-constant function of the half-line
 
 A convex nondecreasing function of the half-line that is not constant grows at least linearly, so
-its monotone conjugate is finite at small positive arguments. That is the exact content of
-Rockafellar's "non-constant" hypothesis in Theorem 15.3: it is what makes `g ∘ k` closed. -/
+its monotone conjugate is finite at small positive arguments. That is the exact content of the
+"non-constant" hypothesis: it is what makes `g ∘ k` closed. -/
 
 section Growth
 
@@ -663,7 +661,7 @@ theorem pairing_nonpos_of_gauge_eq_zero (hk : IsGauge k) (hx : k x = 0)
   rw [div_mul_eq_mul_div, le_div_iff₀ (by linarith : (0 : ℝ) < 2 * (c + 1))] at hb
   nlinarith
 
-/-- **The core lower bound for Theorem 15.3.** On the dilate `ζ • {k ≤ 1}` the composite `g ∘ k`
+/-- **The core lower bound.** On the dilate `ζ • {k ≤ 1}` the composite `g ∘ k`
 is at most `g ζ`, and the supremum of the pairing over that dilate is `ζ k°(y)`; so
 `ζ k°(y) - g ζ` is a lower bound for the conjugate of `g ∘ k`, at every level `ζ > 0` where `g` is
 finite.
@@ -781,9 +779,8 @@ theorem conj_monotoneComp_le (hk : IsGauge k) (hkc : ClosedFn k) (hg : MonotoneH
         le_trans (le_iSup (fun _ : (0 : ℝ) ≤ c' => ((c' * c : ℝ) : EReal) - g c') hc'0)
           (le_iSup (fun t : ℝ => ⨆ _ : (0 : ℝ) ≤ t, ((t * c : ℝ) : EReal) - g t) c')
 
-/-- **Rockafellar, Theorem 15.3**, the conjugacy formula: for a closed gauge `k` and a
-nondecreasing closed convex `g` on the half-line that is finite at some positive level, the
-conjugate of `g ∘ k` is `g⁺ ∘ k°`.
+/-- **The conjugacy formula**: for a closed gauge `k` and a nondecreasing closed convex `g` on the
+half-line that is finite at some positive level, the conjugate of `g ∘ k` is `g⁺ ∘ k°`.
 
 The finiteness hypothesis is used **only** where `k°(y) = +∞`, to force the conjugate to be `+∞`
 there; both halves of the finite case hold without it. It cannot be dropped: for `g` the indicator
@@ -811,9 +808,9 @@ theorem conj_monotoneComp (hk : IsGauge k) (hkc : ClosedFn k) (hg : MonotoneHalf
 
 end GaugeComp
 
-/-! ### `g ∘ k` is a closed proper convex function — Theorem 15.3, first assertion
+/-! ### `g ∘ k` is a closed proper convex function
 
-Closedness is obtained the way Rockafellar obtains it: by applying the conjugacy formula twice.
+Closedness is obtained the way the book obtains it: by applying the conjugacy formula twice.
 `(g ∘ k)** = g⁺⁺ ∘ k°° = g ∘ k`, and a convex function equal to its own biconjugate is closed. The
 second application needs `g⁺` to be finite somewhere on the positive axis, which is exactly what
 `g` non-constant provides. -/
@@ -825,8 +822,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [AddCommGroup F] [Module ℝ F] [TopologicalSpace F] [IsTopologicalAddGroup F]
   [ContinuousSMul ℝ F] {g : ℝ → EReal} {k : E → EReal}
 
-/-- **Rockafellar, Theorem 15.3**, first assertion: `g ∘ k` is closed, for a closed gauge `k` and a
-non-constant nondecreasing closed convex `g` on the half-line finite at some positive level.
+/-- **`g ∘ k` is closed**, for a closed gauge `k` and a non-constant nondecreasing closed convex
+`g` on the half-line finite at some positive level.
 
 Non-constancy is essential and is exactly what the proof consumes, through
 `MonotoneHalfLineFn.exists_monotoneConj_ne_top`: for constant `g` the composite is `g 0` on
@@ -852,8 +849,7 @@ theorem closedFn_monotoneComp (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatibl
   change clFn (monotoneComp g k) = monotoneComp g k
   rw [← biconj_eq_clFn (B := B) (convexFn_monotoneComp hg.convex hk.convexFn), hbi]
 
-/-- **Rockafellar, Theorem 15.3**, first assertion in full: `g ∘ k` is a closed proper convex
-function. -/
+/-- **`g ∘ k` is a closed proper convex function.** -/
 theorem closedProperConvexFn_monotoneComp (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatiblePairing B]
     [IsContinuousPairing B.flip] (hk : IsGauge k) (hkc : ClosedFn k)
     (hg : MonotoneHalfLineFn g) (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤)
@@ -934,8 +930,8 @@ theorem monotoneHalfLineFn_powHalfLine (hp : 1 ≤ p) : MonotoneHalfLineFn (powH
       (fun _ => EReal.coe_ne_bot _) isClosed_Ici
   zero_ne_top := powHalfLine_ne_top p le_rfl
 
-/-- **Young's inequality, as a conjugacy** (Rockafellar, Corollary 15.3.1): the monotone conjugate
-of `ζ ↦ ζ^p / p` is `σ ↦ σ^q / q`, for Hölder conjugate exponents `p` and `q`.
+/-- **Young's inequality, as a conjugacy**: the monotone conjugate of `ζ ↦ ζ^p / p` is
+`σ ↦ σ^q / q`, for Hölder conjugate exponents `p` and `q`.
 
 The supremum `sup {ζ σ - ζ^p / p ∣ ζ ≥ 0}` is bounded above by `σ^q / q` by Young's inequality and
 attained at `ζ = σ^{q-1}`, where `ζ σ = ζ^p = σ^q`. -/
@@ -1149,7 +1145,7 @@ theorem monotoneComp_powHalfLine_degGauge (hp : 0 < p) (hnn : ∀ z, 0 ≤ f z) 
       powHalfLine_of_nonneg p hd0, hval, hz]
 
 /-- **`(p · (1/p) k^p)^{1/p} = k`**: the gauge is recovered from the composite, so the
-representation of Corollary 15.3.1 is unique. -/
+representation is unique. -/
 theorem degGauge_monotoneComp_powHalfLine (hp : 0 < p) (hk : IsGauge k) :
     degGauge p (monotoneComp (powHalfLine p) k) = k := by
   funext z
@@ -1232,9 +1228,9 @@ theorem monotoneComp_powHalfLine_degGauge_eq_self (hp : 1 < p) (hconv : ConvexFn
     (PosHomogeneousDeg.nonneg hp hconv hpr.ne_bot hf
       (PosHomogeneousDeg.map_zero_eq_zero (lt_trans zero_lt_one hp) hcl hpr hf))
 
-/-- **Rockafellar, Corollary 15.3.1**, first assertion: a closed proper convex function is
-positively homogeneous of degree `p ∈ (1, ∞)` exactly when it is `(1/p) k^p` for a closed gauge
-`k`. The gauge is unique — it is `(p f)^{1/p}`, by `degGauge_monotoneComp_powHalfLine`. -/
+/-- **A closed proper convex function is positively homogeneous of degree `p ∈ (1, ∞)` exactly
+when it is `(1/p) k^p` for a closed gauge `k`.** The gauge is unique — it is `(p f)^{1/p}`, by
+`degGauge_monotoneComp_powHalfLine`. -/
 theorem posHomogeneousDeg_iff_exists_isGauge (hp : 1 < p) (hconv : ConvexFn f) (hcl : ClosedFn f)
     (hpr : Proper f) :
     PosHomogeneousDeg p f ↔
@@ -1262,7 +1258,7 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f k : E → EReal} {x : E} {y : F} {p q : ℝ}
 
-/-- **Rockafellar, Corollary 15.3.1**, second assertion: `[(1/p) k^p]* = (1/q) (k°)^q`. -/
+/-- **`[(1/p) k^p]* = (1/q) (k°)^q`.** -/
 theorem conj_monotoneComp_powHalfLine (hpq : p.HolderConjugate q) (hk : IsGauge k)
     (hkc : ClosedFn k) :
     conj B (monotoneComp (powHalfLine p) k) = monotoneComp (powHalfLine q) (polarGauge B k) := by
@@ -1295,8 +1291,7 @@ theorem conj_eq_monotoneComp_powHalfLine :
   exact conj_monotoneComp_powHalfLine hpq (isGauge_degGauge hpq.pos hconv hnn hf h0)
     (closedFn_degGauge hpq.pos hconv hcl hnn hf h0)
 
-/-- **Rockafellar, Corollary 15.3.2**: `(p f)^{1/p}` is a closed gauge whose polar is
-`(q f*)^{1/q}`. -/
+/-- **`(p f)^{1/p}` is a closed gauge whose polar is `(q f*)^{1/q}`.** -/
 theorem polarGauge_degGauge : polarGauge B (degGauge p f) = degGauge q (conj B f) := by
   have h0 : f 0 = 0 := PosHomogeneousDeg.map_zero_eq_zero hpq.pos hcl hpr hf
   have hnn : ∀ z, 0 ≤ f z := PosHomogeneousDeg.nonneg hpq.lt hconv hpr.ne_bot hf h0
@@ -1305,8 +1300,8 @@ theorem polarGauge_degGauge : polarGauge B (degGauge p f) = degGauge q (conj B f
       (isGauge_polarGauge (B := B) (degGauge_nonneg hpq.pos hnn)
         (posHomogeneous_degGauge hpq.pos hnn hf) (degGauge_map_zero hpq.pos h0))]
 
-/-- **Rockafellar, Corollary 15.3.2**, the Hölder-type inequality
-`⟨x, y⟩ ≤ [p f(x)]^{1/p} [q f*(y)]^{1/q}` on `dom f × dom f*`. -/
+/-- **The Hölder-type inequality** `⟨x, y⟩ ≤ [p f(x)]^{1/p} [q f*(y)]^{1/q}` on
+`dom f × dom f*`. -/
 theorem pairing_le_rpow_mul_rpow {a b : ℝ} (hx : f x = (a : EReal))
     (hy : conj B f y = (b : EReal)) : B x y ≤ (p * a) ^ p⁻¹ * (q * b) ^ q⁻¹ := by
   have h0 : f 0 = 0 := PosHomogeneousDeg.map_zero_eq_zero hpq.pos hcl hpr hf
@@ -1324,8 +1319,7 @@ theorem pairing_le_rpow_mul_rpow {a b : ℝ} (hx : f x = (a : EReal))
   rw [polarGauge_degGauge hpq hconv hcl hpr hf]
   exact degGauge_of_eq_coe hpq.symm.pos hb0 hy
 
-/-- **Rockafellar, Corollary 15.3.2**: the closed convex sets `{f ≤ 1/p}` and `{f* ≤ 1/q}` are
-polar to each other. -/
+/-- **The closed convex sets `{f ≤ 1/p}` and `{f* ≤ 1/q}` are polar to each other.** -/
 theorem polarSet_setOf_le_inv :
     polarSet B {x : E | f x ≤ ((p⁻¹ : ℝ) : EReal)}
       = {y : F | conj B f y ≤ ((q⁻¹ : ℝ) : EReal)} := by
@@ -1339,7 +1333,7 @@ theorem polarSet_setOf_le_inv :
 end PowConj
 
 
-/-! ### Gauge-like functions, and the converse half of Theorem 15.3
+/-! ### Gauge-like functions, and the converse half
 
 `f` is **gauge-like** when `f 0 = inf f` and the sublevel sets `{f ≤ α}` above that infimum are all
 positive multiples of one set. `setOf_monotoneComp_le_eq_smul` says that `g ∘ k` is gauge-like;
@@ -1356,9 +1350,8 @@ section IsGaugeLike
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f k : E → EReal} {a₀ : ℝ}
 
-/-- **A gauge-like function** (Rockafellar §15, the paragraph before Theorem 15.3): the infimum of
-`f` is attained at the origin, and the sublevel sets strictly above that infimum are all positive
-multiples of a single set. -/
+/-- **A gauge-like function**, Rockafellar's term: the infimum of `f` is attained at the origin,
+and the sublevel sets strictly above that infimum are all positive multiples of a single set. -/
 structure IsGaugeLike (f : E → EReal) : Prop where
   /-- The infimum of `f` is attained at the origin. -/
   map_zero_eq_iInf : f 0 = ⨅ x, f x
@@ -1491,9 +1484,9 @@ theorem IsGaugeLike.exists_isGauge_setOf_le_eq (hgl : IsGaugeLike f) (hconv : Co
   obtain ⟨c, hc, hset⟩ := hgl.exists_setOf_le_eq_smul_setOf_le hα' hβ
   exact ⟨c, hc, by rw [hset, setOf_gaugeFn_le_pos hDconv hD0 hDcl hc]⟩
 
-/-- **Rockafellar, Theorem 15.3**, the converse half: a gauge-like closed proper convex function is
-`g ∘ k` for a closed gauge `k` and a non-constant nondecreasing closed convex function `g` of the
-half-line that is finite at some positive level. -/
+/-- **The converse half**: a gauge-like closed proper convex function is `g ∘ k` for a closed
+gauge `k` and a non-constant nondecreasing closed convex function `g` of the half-line that is
+finite at some positive level. -/
 theorem IsGaugeLike.exists_eq_monotoneComp (hgl : IsGaugeLike f) (hconv : ConvexFn f)
     (hcl : ClosedFn f) (hpr : Proper f) :
     ∃ (g : ℝ → EReal) (k : E → EReal), MonotoneHalfLineFn g ∧
@@ -1589,8 +1582,8 @@ theorem IsGaugeLike.exists_eq_monotoneComp (hgl : IsGaugeLike f) (hconv : Convex
       · rw [monotoneComp_of_eq_top _ hx]
         exact htop x hx
 
-/-- **Rockafellar, Theorem 15.3**, the forward half in the packaging the converse produces: `g ∘ k`
-is gauge-like. This is `setOf_monotoneComp_le_eq_smul` with the auxiliary set named. -/
+/-- **The forward half, in the packaging the converse produces**: `g ∘ k` is gauge-like. This is
+`setOf_monotoneComp_le_eq_smul` with the auxiliary set named. -/
 theorem isGaugeLike_monotoneComp (hk : IsGauge k) (hkc : ClosedFn k) (hg : MonotoneHalfLineFn g)
     (hne : ∃ t : ℝ, 0 < t ∧ g 0 < g t) (hfin : ∃ ζ : ℝ, 0 < ζ ∧ g ζ ≠ ⊤) :
     IsGaugeLike (monotoneComp g k) := by
@@ -1606,7 +1599,7 @@ theorem isGaugeLike_monotoneComp (hk : IsGauge k) (hkc : ClosedFn k) (hg : Monot
 
 end IsGaugeLikeTopology
 
-/-! ### Theorem 15.3
+/-! ### The characterisation of gauge-like functions
 
 The two halves, assembled. The pairing enters only through the forward implication, where
 closedness of `g ∘ k` comes from Fenchel–Moreau. -/
@@ -1619,8 +1612,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
   [ContinuousSMul ℝ F] {f : E → EReal}
 
 omit [LocallyConvexSpace ℝ E] in
-/-- **Rockafellar, Theorem 15.3**, the second assertion: the conjugate of a gauge-like closed
-proper convex function is gauge-like too. `conj_monotoneComp` says which composite it is; what has
+/-- **The conjugate of a gauge-like closed proper convex function is gauge-like too.**
+`conj_monotoneComp` says which composite it is; what has
 to be checked is that `g⁺` satisfies the same two side conditions as `g`, and conjugacy *exchanges*
 them — `g` finite at a positive level makes `g⁺` non-constant, and `g` non-constant makes `g⁺`
 finite at a positive level. -/
@@ -1634,9 +1627,9 @@ theorem isGaugeLike_conj_monotoneComp (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsC
     (monotoneHalfLineFn_monotoneConj hg) (MonotoneHalfLineFn.exists_lt_monotoneConj hg hfin)
     (MonotoneHalfLineFn.exists_monotoneConj_ne_top hg hne)
 
-/-- **Rockafellar, Theorem 15.3.** A function is a gauge-like closed proper convex function exactly
-when it is `g ∘ k` for a closed gauge `k` and a non-constant nondecreasing closed convex function
-`g` of the half-line which is finite at some positive level.
+/-- **A function is a gauge-like closed proper convex function exactly when it is `g ∘ k`** for a
+closed gauge `k` and a non-constant nondecreasing closed convex function `g` of the half-line which
+is finite at some positive level.
 
 The conjugacy formula that accompanies the theorem is `conj_monotoneComp`, `(g ∘ k)* = g⁺ ∘ k°`;
 it needs neither the pairing hypotheses of the forward implication nor non-constancy. -/
