@@ -28,10 +28,26 @@ bifunction is `mapLin`, and the adjoint of the process is a transpose of the lin
 
 **The adjoint entry is the only place in the convex algebra where a transpose occurs.** The adjoint
 of a convex process, of a convex bifunction and of a convex function are all defined outright from
-a pair of pairings — `adjointProcess`, `adjointBifun`, `conj` — and none of them mentions a linear
-map. A transpose enters only here, where the process happens to be linear, and then it enters as
-what it is: a hypothesis `IsAdjointPair Bu Bx T T'` supplying the datum, because between
-arbitrarily paired spaces a linear map need not have a transpose at all.
+a pair of pairings — `adjointProcess`, `coadjointProcess`, `adjointBifun`, `lowerAdjointBifun`,
+`conj` — and none of them mentions a linear map. A transpose enters only here, where the process
+happens to be linear, and then it enters as what it is: a hypothesis `IsAdjointPair Bu Bx T T'`
+supplying the datum, because between arbitrarily paired spaces a linear map need not have a
+transpose at all.
+
+**Which is why the transpose is not bundled into a class.** Making it an instance — a
+`HasTranspose B B' A` class with a `transpose` field and a finite-dimensional inner-product
+instance, so that search supplies `A'` — has been proposed and measured, and declined on three
+grounds. *It is not canonical*: the field is data, unique only when `B` is right-separating
+(`IsAdjointPair.unique`), so two instances could disagree and every statement written with `Aᵀ`
+would silently depend on which one search found. *It would make a type depend on an instance*:
+`IsExactImage B B' A A' hA g` takes the transpose as an index, so bundling would put an instance
+inside the structure's type and let two syntactically different instances give two incompatible
+structures. *And it would buy almost nothing*: the datum reaches **32** declarations in the whole
+library, all of them in the conjugate-of-an-image family — `Duality/{Conjugate, Exact, Ops, Relint,
+RelintSeparation}.lean`, `Optimization/Fenchel.lean`, `Subgradient/{Calculus, Preservation}.lean`,
+`EuclideanProd.lean` — where it costs one hypothesis binder each and nothing else, the transpose
+itself already being a section variable in every one of those files. Nothing in `Bifunction/`
+carries it except the two theorems below.
 
 **Both orientations give the same answer.** `adjointProcess` and `coadjointProcess` differ by the
 direction of the defining inequality and must be kept apart — that is what makes `A** = cl A` come

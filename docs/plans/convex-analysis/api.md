@@ -439,6 +439,18 @@ could reach them without importing §18.
 `E × ℝ`, which Mathlib lacks). The dual precomposition datum is Mathlib's
 `ContinuousLinearMap.precomp ℝ A` — see gotcha DEP5.
 
+**`IsAdjointPair` is deliberately not a class**, and the case for bundling it has been measured and
+closed. The datum reaches **32** declarations in the whole library — `Duality/{Conjugate, Exact,
+Ops, Relint, RelintSeparation}.lean` (§12 and §16), `Optimization/Fenchel.lean` (§31),
+`Subgradient/{Calculus, Preservation}.lean` (§23, §26) and `EuclideanProd.lean` (§29) — costing one
+hypothesis binder each, since `A'` is a section variable in every one of those files; and Parts
+I–IV of the surface discharge it at **8** call sites in total, all `isAdjointPair_adjoint A`. A
+class would besides be the wrong shape: the transpose is data, unique only under
+`B.SeparatingRight` (`IsAdjointPair.unique`), and `IsExactImage B B' A A' hA g` takes it as an
+*index*, so bundling would make a structure's type depend on an instance. The full argument is in
+the design notes of `Bifunction/LinearProcess.lean`, which is where the transpose meets the convex
+algebra — and where it meets it exactly once.
+
 ### `Tdaf/Analysis/Convex/Duality/Conjugate.lean`
 
 `conj B f`, `biconj`; `sub_le_conj` (**unconditional**), `le_add_conj` (Fenchel's inequality —
@@ -4632,6 +4644,36 @@ Theorem 38.3's second clause, which the library does not have); that `GF` and `F
 (each needs a co-finite specialization of Theorem 38.5 with `IsExactSum` instances over four
 spaces); and Theorem 34.2, "a closed convex bifunction is co-finite iff `dom F = U` and
 `dom F* = Y`".
+
+### `Tdaf/Analysis/Convex/Bifunction/LinearProcess.lean`
+
+**Linear transformations inside the convex algebra**: the dictionary induced by
+`ConvexProcess.ofLinearMap`, which reads a linear map as a single-valued convex process.
+
+```lean
+theorem ConvexProcess.image_ofLinearMap … ; theorem ConvexProcess.range_ofLinearMap …
+theorem ConvexProcess.comp_ofLinearMap … ; theorem ConvexProcess.ofLinearMap_injective …
+theorem ConvexProcess.imageBifun_indicatorBifun_ofLinearMap …   -- `Af = mapLin A f`
+theorem ConvexProcess.adjointProcess_ofLinearMap …              -- `A* = Aᵀ`
+theorem ConvexProcess.coadjointProcess_ofLinearMap …            -- and in the other orientation
+```
+
+**This is the only place in the whole bifunction and convex-process development where a transpose
+of a linear map occurs.** `conj`, `adjointBifun`, `lowerAdjointBifun`, `adjointProcess` and
+`coadjointProcess` are all defined outright from a pair of pairings and mention no linear map, so
+`IsAdjointPair` appears nowhere else in `Bifunction/`. Here it appears once, as the hypothesis
+`IsAdjointPair Bu Bx T T'` supplying the datum — the D3 shape, and the reason the transpose is not
+worth bundling into a class.
+
+**Both orientations give the same adjoint.** `adjointProcess` and `coadjointProcess` must stay
+separate definitions in general — that is what makes `A** = cl A` come out right — but the graph of
+a linear process is a *subspace*, so applying the defining inequality at `-u` reverses it and both
+conditions collapse to `⟨T u, y⟩ = ⟨u, v⟩`. `Bu.SeparatingRight` is what then pins `v = T' y`; it
+is the same hypothesis that makes the transpose itself unique (`IsAdjointPair.unique`).
+
+**`imageBifun_indicatorBifun_ofLinearMap` needs `f` nowhere `⊥`.** Off the fibre of `T` the summand
+is `⊤`, and `⊥ + ⊤ = ⊥` would drag the infimum to `⊥` at every point. `imageBifun`'s doc comment
+had claimed the identity since §38 was written, with nothing proving it.
 
 ### `Tdaf/Analysis/Convex/Bifunction/Process.lean`
 
