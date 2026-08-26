@@ -260,7 +260,7 @@ is one of the most quoted sentences in the book. -/
 
 section Opening
 
-variable {f : Rn n → EReal}
+variable {f : Rn n → EReal} {x : Rn n}
 
 /-- **Book, line 10405**: the minimum set of `f` is a convex subset of `ℝⁿ`.
 
@@ -326,7 +326,7 @@ Rockafellar routes it through Theorem 23.2 — the directional derivatives see o
 small neighbourhood, so `f'(x; y) ≥ 0` for every `y`, and `0 ∈ ∂f(x)`. The proof here is the
 underlying convexity estimate directly: for any `z`, a short enough step from `x` towards `z` stays
 in the ball, and the convexity inequality along `[x, z]` transfers the local bound to `z`. -/
-theorem mem_argmin_of_localMin (hf : ConvexFn f) (hp : Proper f) {x : Rn n} (hx : x ∈ dom f)
+theorem mem_argmin_of_localMin (hf : ConvexFn f) (hp : Proper f) (hx : x ∈ dom f)
     {ε : ℝ} (hε : 0 < ε) (hloc : ∀ z : Rn n, dist z x < ε → f x ≤ f z) : x ∈ argmin f := by
   obtain ⟨μ, hμ⟩ := Tdaf.EReal.exists_coe_of_ne_bot_of_lt_top (hp.ne_bot x) (mem_dom.1 hx)
   intro z
