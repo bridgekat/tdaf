@@ -907,10 +907,15 @@ the lineality space out by an arbitrary complement (`eq_add_inter_of_isCompl`) i
 it needs no inner product; and Theorem 15.3's converse is layer B, using no pairing, no local
 convexity and no conjugation, though the book's proof and the biconditional both do.
 
-The remaining planned work is the **surface library** (`08-surface.md`) and then the **D10**
-refactor, which decouples the backbone's naming and docstrings from Rockafellar. D10 is scheduled
-*after* the surface work, deliberately: the surface layer is what shows which of the backbone's
-Rockafellar-shaped statements are the ones applications actually reach for.
+**The surface library is now complete too** — all eight Parts, 466 of the book's 471 numbered
+results, the other five deferred by scope (§22's matroid theory). So the remaining planned work is
+the **D10** refactor, which decouples the backbone's naming and docstrings from Rockafellar. D10 was
+scheduled *after* the surface work deliberately, on the reasoning that the surface layer is what
+shows which of the backbone's Rockafellar-shaped statements are the ones applications actually reach
+for. That reasoning held: what the surface voted for is in
+[`backbone/08-remediation.md`](backbone/08-remediation.md) §13, and the single loudest vote — three
+consecutive sections of Part VII asking for a bundled closed-proper-saddle-function hypothesis — is
+a shape question D10 should answer rather than a rename.
 
 | section | state |
 |---|---|

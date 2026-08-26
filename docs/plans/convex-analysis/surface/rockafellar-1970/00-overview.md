@@ -238,9 +238,12 @@ needs.
 | 8 | §27–§32 | §27 needs §4.6; §28 is the thickest file and comes last in this group |
 | 9 | §33–§39 | §29–§30 need §4.2 and §4.8 |
 
-**Groups 0 through 7 are done** — §§1–26, in that order, with §22's elementary-vector development
-the one scope deferral. Group 8 (§§27–32) is next; its gate, remediation §4.6, is still open, and
-group 9's gates §4.2 and §4.8 are both closed.
+**All ten groups are done** — §§1–39, in that order, with §22's elementary-vector development the
+one scope deferral. Group 8's gate (remediation §4.6, Theorem 27.1(e)) turned out to need five
+declarations; group 9's listed gates §4.2 and §4.8 were closed before it began and were then used
+by nothing in Part VI, while §4.1 and §4.4 were **un-scheduled by measurement** rather than closed.
+Group 9 was run in three stages rather than one fan-out, because §33 supplies the vocabulary
+§§34–37 import and Lean cannot import across sibling worktrees.
 
 §38 and §39 are the two sections that are **entirely** general (12/0 and 9/0 on the G/C split), so
 they are also the natural first target if a general non-`ℝⁿ` second surface is ever wanted.
@@ -399,16 +402,76 @@ Parts I–IV. Three findings are worth promoting out of the remediation list:
   nothing discharges it on the way; §25 discharges it directly instead, in four lines and
   independently of Theorem 25.6, and §23 assumes it nowhere.
 
-## 8. Where §§1–26 stand
+**Part VI — all six sections written**, 612 declarations for all 63 of the Part's numbered
+results, together with all 30 of its clause rows — the highest clause density in the book.
 
-**324 of the 329 numbered results have declarations, and the five that do not are deferred by
-scope, not blocked.** They are §22's elementary-vector development — Lemmas 22.4 and 22.5, Corollary
-22.4.1, and Theorems 22.6 and 22.7 — which is combinatorial matroid theory that the book itself
-presents as independent of all convexity theory.
+| § | module | declarations | labels |
+|---|---|---|---|
+| 27 | `Part6/Section27.lean` | 58 | 11 |
+| 28 | `Part6/Section28.lean` | 159 | 10 |
+| 29 | `Part6/Section29.lean` | 82 | 15 |
+| 30 | `Part6/Section30.lean` | 101 | 10 |
+| 31 | `Part6/Section31.lean` | 122 | 14 |
+| 32 | `Part6/Section32.lean` | 90 | 11 |
 
-**Parts I, II, III and V are complete**, and Part IV is complete apart from that one deferral.
-Nothing in §§1–26 is waiting on a backbone gap. That is 1138 declarations across 26 modules,
-five Part aggregators and the shared header.
+**Part VI is complete.** Its findings are recorded in `Tdaf/Surface/Rockafellar/Part6.lean` and are
+not repeated here; the headline is that **three of its four gates were not gates**, each closed by
+measurement rather than by Lean work, and that the Part carries seven counterexamples transcribed
+as Lean definitions rather than paraphrased — including a refutation, on `ℝ¹`, of Corollary 29.4.1
+as the book prints it.
+
+**Part VII — all five sections written**, 305 declarations for all 58 of the Part's numbered
+results and all 12 of its clause rows.
+
+| § | module | declarations | labels |
+|---|---|---|---|
+| 33 | `Part7/Section33.lean` | 66 | 11 |
+| 34 | `Part7/Section34.lean` | 81 | 10 |
+| 35 | `Part7/Section35.lean` | 38 | 12 |
+| 36 | `Part7/Section36.lean` | 34 | 7 |
+| 37 | `Part7/Section37.lean` | 86 | 18 |
+
+**Part VII is complete apart from one half of one result** — the `C*` support-function formula of
+Theorem 37.2, whose `D*` half landed. Its difficulty was never the mathematics but the
+**orientation**: three separate conventions, each able to invert every downstream statement
+silently. The working answer was to state each one exactly once, in the module where the book
+introduces it, and cite it thereafter — `cl₁`/`cl₂` in `Section33.lean`'s docstring, the
+minimise-in-the-convex-argument convention in `Section36.lean`'s, and the sign that convention
+forces as a single named lemma in §35, `mem_subgrad₁_iff_neg_mem_subgradient_neg`. §37 quoted that
+lemma for Corollary 37.5.2 rather than re-deriving the sign, which is what the arrangement was for.
+
+**Part VIII — both sections written**, 160 declarations for all 21 of the Part's numbered results.
+
+| § | module | declarations | labels |
+|---|---|---|---|
+| 38 | `Part8/Section38.lean` | 59 | 12 |
+| 39 | `Part8/Section39.lean` | 101 | 9 |
+
+**Part VIII is complete**, and it is the only Part of the book that is entirely `G` — every one of
+its 21 results survives generalisation beyond `ℝⁿ`. Both modules are therefore thin, and every
+result closes in one to five lines. It is also where the surface had to build something the
+backbone deliberately does not carry: `Section39.lean` defines the **orientation pair**, because
+Theorems 39.5 and 39.8 need two processes with the *same* orientation while Theorem 39.2 *flips*
+it, so no global convention can even state Theorem 39.5.
+
+## 8. Where the surface stands
+
+**All eight Parts are complete. 466 of the book's 471 numbered results have declarations, and the
+five that do not are deferred by scope, not blocked** — §22's elementary-vector development
+(Lemmas 22.4 and 22.5, Corollary 22.4.1, Theorems 22.6 and 22.7), which is combinatorial matroid
+theory the book itself presents as independent of all convexity theory. One further half-result,
+the `C*` half of Theorem 37.2, is absent and recorded with the backbone declaration it wants.
+
+That is **2 218 declarations across 39 section modules**, eight Part aggregators and the shared
+header. Nothing in the surface is waiting on a backbone gap: every open item in
+[`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) is a simplification, a
+placement, or a strengthening that some section proved for itself and the backbone should own.
+
+Two labels that a reader may go looking for and will not find, both correctly: **`Corollary 21.3.3`
+does not exist** — the book cites it in its own Comments (17309) and the text has 21.3.2 — and the
+research-programme sketch closing §39 (17199–17268) contains no numbered result and produced no
+declaration.
+
 
 What is left in [`../../backbone/08-remediation.md`](../../backbone/08-remediation.md) is no longer
 blocking anything: `recessionFn` of a separable sum (§9.18's last piece), two relative-interior

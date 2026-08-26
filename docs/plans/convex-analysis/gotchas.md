@@ -430,6 +430,55 @@ but this term has type `?m.2`"*. Three cascading errors, only the first of which
 of which mentions `Mathlib.Topology.Algebra.ConstMulAction`. When a class in a `variable` line is
 reported as "not a class instance", check the imports before the syntax.
 
+**EL43. A reducible surface `abbrev` renaming a backbone operator is transparent to `exact` and
+opaque to `rw` — in *both* directions.** `Rockafellar.cl₁` for `partialCl₁`, `Rockafellar.dualProgram`
+for `adjointBifun Bu Bx`, `Rockafellar.subgrad₁` for `concaveSubgradient (pairing m)`: unification
+sees through all of them, `rw` does not. When the goal carries the surface name and the lemma the
+backbone one, `rw` reports "did not find an occurrence"; when the goal carries the *backbone* name
+and the lemma the surface one it reports "motive is not type correct" instead, which reads like a
+different bug and is not. Fix by restating the equation as a typed `have` with the **backbone** head
+constant and closing with `exact`, or by `show`ing the backbone form. Never add an unfolding `simp`
+lemma for the abbrev: it fires everywhere and leaves neighbouring abbrevs expanded in the goal.
+Found in §33, confirmed in the other direction in §34, and flagged forward in every Part VII brief.
+Cost: ~15 minutes the first time, ~10 the second.
+
+**EL44. `EReal.neg_add` is stated with a `Sub` on the right, so the second `neg_neg` in a rewrite
+chain fails.** The lemma reads `-(x + y) = -x - y`, not `-x + -y`. `rw [EReal.neg_add h₁ h₂, neg_neg,
+neg_neg]` therefore closes the first `neg_neg` and then stalls: the goal has become `a - -b`, and
+EL3's rule that `Sub` is a separate head from `Neg` applies. Bind the equation in a `have` with the
+`+ -` shape you want — `have h : -(-a + -b) = - -a + - -b := EReal.neg_add h₁ h₂` — and rewrite by
+that. See also ER20 for the shorter fix once you are already looking at `a - -b`.
+
+**EL45. `simpa using h` is the wrong tool for a goal that differs from `h` only by a reducible
+abbrev or by `flip_pairing`.** `simp` normalises both sides and *then* tries to match, so it can
+drive the two apart: seen with `innerProduct` (a reducible `abbrev` for `fenchelPairing`, itself a
+`def` for `fenchelInf`), and seen again turning `Bx.flip`/`Bu.flip` back into `pairing n` when the
+goal also carried `closure ↑A.graph`, where `simp` chased the `SetLike` coercion instead.
+`simp only [flip_pairing] at h; exact h` is the safe form, because `exact` takes the defeq step that
+`simpa`'s closing tactic will not. Used at every such site in `Part8/Section39.lean`.
+
+**EL46. `simpa using h` on a `ConvexFn`/`ConcaveFn` goal unfolds the predicate and then cannot match
+a bundled hypothesis.** `rw [concaveBifun_iff, concaveFn_iff_convexFn_neg]; simpa using h` reports
+the goal as `Convex ℝ (epi fun x ↦ -graphFn (inverseBifun F) x)` against
+`h : ConvexBifun (flipBifun F)` — `simp` unfolded `ConvexFn` to its `epi` definition on the goal side
+and left `h` bundled. Fix the *function* first with a `funext` `have`, `rw` that, and finish with
+`exact`. Cost: ~10 minutes, in `concaveBifun_inverseBifun`.
+
+**EL47. `continuous_const.smul continuous_fst` leaves `TopologicalSpace ?m` stuck.** For
+`fun p : E × F => (l • p.1, p.2)` the codomain of `continuous_const` is not determined by the
+expected type of the `Continuous.smul` application, so instance search has nothing to work with.
+`(continuous_fst.const_smul l).prodMk continuous_snd` elaborates immediately.
+
+**EL48. `simpa … using h` fails where `exact h` would succeed, when the mismatch is a plain
+`def`.** `simpa` closes with `assumption`-style matching at *reducible* transparency: a surface
+`abbrev` (`subgrad`, `upperConj`, `pairing`) is reducible and is seen through, but a backbone `def`
+(`bifunSaddleClass`, `saddleOfBifun`, `bifunOfSaddle`) is not. The symptom is "Type mismatch: After
+simplification, term `h` has type … but is expected to have type …", naming two spellings that are
+visibly the same object. Fix with a typed intermediate:
+`have h' : <the goal's own spelling> := by simpa … using h; exact h'`. This is the **third face** of
+EL43: reducible abbrevs block `rw`, plain `def`s block `simpa`, and EL45 is the case where `simp`
+normalises the two sides apart. Used twice in `Section37.lean`.
+
 ## LINT — Linters and the zero-warning bar
 
 The bar is **no errors and no warnings**, deprecations included. These are the linters that fail a
@@ -544,6 +593,25 @@ section that matches its real hypotheses, not to `omit` the instance and stay pu
 came out of one round's duplicate removal this way, and three of the four were found by the linter
 rather than by a person.
 
+**LINT14. `omit … in` must precede the doc comment, not sit between it and the declaration.** The
+latter is a parse error reading `unexpected token 'omit'; expected 'lemma'`, which names the wrong
+token. Related, and more expensive: the unused-section-variable linter reports only what is unused
+*given the omits already present*, so each new `omit` can expose the next unused instance and
+closing the warning takes several build cycles rather than one. Four cycles on
+`Bifunction/Cofinite.lean`.
+
+**LINT15. A hypothesis kept only for faithfulness to the book must be bound as `_hC`, not `hC`.**
+Surface statements routinely carry a hypothesis the backbone does not need — Theorem 35.6 keeps
+`Convex ℝ C` because the book states it, and uses only `IsOpen C`. Naming it `hC` trips the
+unused-variable linter and fails the zero-warning bar. The leading underscore is the whole fix, and
+the docstring should say why the hypothesis is there at all. Established practice:
+`Rockafellar.corollary_10_5_2`'s `_hg`.
+
+**LINT16. A `show` that changes the goal is rejected by `linter.style.show`.** The message is
+"The `show` tactic should only be used to indicate intermediate goal states for readability… Please
+use `change` instead", and it fails the zero-warning bar. Any `show` used to unfold an `abbrev` —
+the fix EL43 recommends — must therefore be spelled `change`.
+
 ## DEP — Deprecated and renamed Mathlib
 
 A deprecation warning fails the bar, so these are hard errors in practice. The suggested replacement
@@ -641,6 +709,11 @@ fails the bar.
 nothing, because both are `to_additive`-generated from `mabs_mul_le` — DEP3 in its purest form.
 
 ---
+
+**DEP9. `Set.mem_setOf_eq` is deprecated in this Mathlib in favour of `Set.mem_ofPred_eq`.** It is
+easy to reintroduce because the old name is sitting in the `simp only` lists of older surface
+modules, ready to copy. It was the only deprecation either §39 or §37 tripped, and both
+tripped it: §39 inside a `simp only` list, §37 in `corollary_37_5_2`.
 
 ## ER — `EReal`
 
@@ -851,6 +924,13 @@ side condition on the `λᵢ` alone that rescues it. Hypothesise the separabilit
 instead — which is what Rockafellar does, asserting the step without proof. Related: ER1, `EReal` is
 not cancellative.
 
+**ER20. On `EReal`, `a - -b` yields to `rw [sub_eq_add_neg, neg_neg]`.** EL3 records that `rw
+[neg_neg]` alone finds nothing there, because `Sub` is a separate head from `Neg`, and suggests
+`change`. There is a shorter route: `EReal` is enough of a `SubNegMonoid` for Mathlib's generic
+`sub_eq_add_neg` to apply, so the pair closes it in one step. What is *not* available is
+`EReal.sub_neg`, which is the **order** lemma `a < b ↔ a - b < 0` and unifies against almost
+anything — an easy and misleading wrong guess. Hit in `saddleLagrangian_eq_inverseBifunBracket`.
+
 ## SET — Sets, products, cones
 
 **SET1. Pointwise `+`, `•` and `-` on `Set` need `open scoped Pointwise`, and no error says so.** In a
@@ -1011,6 +1091,15 @@ on the open segment needs only `0 < a`, `0 < b`, while the identification of `a�
 of the segment needs `a + b = 1`. Proving them in one pass means carrying the normalisation
 hypothesis through steps that do not use it, and the resulting proof will not generalise to the
 `a + b ≤ 1` statements that arise from epigraph arguments. Do the positivity half first, unnormalised.
+
+**SET19. `(volume : Measure (E × F)).IsAddHaarMeasure` is not found by instance search.** Mathlib
+has `IsAddHaarMeasure (volume : Measure E)` for a finite-dimensional inner-product space, and
+`MeasureTheory.Measure.prod.instIsAddHaarMeasure` for a product of Haar measures, but the
+composition through `Prod.instMeasureSpace` is not automatic. Supply it by hand:
+`have : (volume : Measure (E × F)).IsAddHaarMeasure := Measure.prod.instIsAddHaarMeasure volume volume`.
+Use `have`, not `haveI` — `linter.style.haveILetI` rejects `haveI` on a proposition, and a local
+hypothesis of class type is registered as a local instance either way. Needed by Theorem 35.9,
+which is Rademacher on a product.
 
 ## PAIR — The pairing classes
 
@@ -1542,6 +1631,20 @@ discuss faces. Locate the section header first and assert the insertion offset i
 match on a phrase that names the module. The same care the code side takes over declaration
 *homes* is owed to record homes, and nothing rebuilds to catch a mistake.
 
+**LIB43. A line-length check on a surface file must count codepoints, not bytes.** A byte-counting
+`awk 'length($0) > 100'` reports dozens of false positives on a file full of `□`, `⁎`, `ℝ` and
+`⟨⟩` that the Lean linter passes clean — 44 of them on `Part7/Section33.lean`, every one spurious.
+Count in Python (`len(line)` on text read as UTF-8) or trust the linter, but do not trust `awk`,
+`wc -L`, or anything else that measures the encoded form.
+
+**LIB44. There is no `LinearMap.separatingRight_iff_flip_separatingLeft`.** Neither Mathlib nor
+`Duality/Pairing.lean` has it; the latter's docstring treats non-degeneracy as the conjunction
+`SeparatingLeft B ∧ SeparatingRight B` and introduces no predicate relating the two through `flip`.
+For a self-paired Euclidean space prove `SeparatingLeft` directly —
+`fun _ hx => inner_self_eq_zero.1 (hx _)` — and see the ledger item asking for
+`separatingLeft_pairing` beside `separatingRight_pairing` in `Surface/Common/Euclidean.lean`.
+Guessing the `iff` name cost ~10 minutes.
+
 ## BLD — Toolchain, build, worktrees
 
 **BLD1. `lake` keys on content hashes, not mtimes, so `touch` does nothing.** "Touch every file you
@@ -1607,7 +1710,10 @@ generalisation pass that caught three places where the obvious substitution woul
 **BLD6. Bash heredocs break at roughly 8 KB.** The command is cut mid-string, leaving a quote open,
 and bash reports "unexpected EOF while looking for matching quote" at a line number in the *middle*
 of a valid script. Use the `Write` tool for a new file, or `Write` the Python script to the
-scratchpad and run it with `python <path>`. Related: `/tmp` in the Bash tool is Git Bash's `/tmp`,
+scratchpad and run it with `python <path>`. Confirmed again in the Part VII round, this time
+carrying a **Lean** file rather than a script: it failed with `unexpected EOF while looking for
+matching ''` *even though the delimiter was quoted*, so quoting is not the variable — size is.
+`Write` the chunk to the scratchpad and `cat` it onto the target. Related: `/tmp` in the Bash tool is Git Bash's `/tmp`,
 which the Windows `python` on PATH **cannot see** — put anything a Python script will read in the
 scratchpad directory, which is a real Windows path. The scratchpad is shared across sessions, so
 prefix scratch filenames with the task or `Write` fails with "File has not been read yet" against a

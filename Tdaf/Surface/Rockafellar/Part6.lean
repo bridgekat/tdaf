@@ -18,14 +18,14 @@ section modules and adds nothing of its own.
 
 | § | module | subject | declarations |
 |---|---|---|---|
-| 27 | `Part6.Section27` | The Minimum of a Convex Function | 61 |
-| 28 | `Part6.Section28` | Ordinary Convex Programs and Lagrange Multipliers | 172 |
+| 27 | `Part6.Section27` | The Minimum of a Convex Function | 58 |
+| 28 | `Part6.Section28` | Ordinary Convex Programs and Lagrange Multipliers | 159 |
 | 29 | `Part6.Section29` | Bifunctions and Generalized Convex Programs | 82 |
-| 30 | `Part6.Section30` | Adjoint Bifunctions and Dual Programs | 103 |
-| 31 | `Part6.Section31` | Fenchel's Duality Theorem | 127 |
-| 32 | `Part6.Section32` | The Maximum of a Convex Function | 101 |
+| 30 | `Part6.Section30` | Adjoint Bifunctions and Dual Programs | 101 |
+| 31 | `Part6.Section31` | Fenchel's Duality Theorem | 122 |
+| 32 | `Part6.Section32` | The Maximum of a Convex Function | 90 |
 
-**All 63 of Part VI's numbered results have declarations**, in 646 of them, together with all 30 of
+**All 63 of Part VI's numbered results have declarations**, in 612 of them, together with all 30 of
 the Part's clause rows — the highest clause density in the book. Nothing here is deferred by scope
 and nothing was blocked. `Part6.Section28` is the thickest module of the surface at 2432 lines,
 twice the next.

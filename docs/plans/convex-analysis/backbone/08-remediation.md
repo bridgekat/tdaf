@@ -897,4 +897,91 @@ header too.
   plain monotonicity, with no bridge, and the `n = 1` coincidence separately — which is exactly why
   Theorem 24.3 can be stated for maximal chains at all.
 
+## 13. Gaps reported by the Parts VII–VIII surface round
+
+The §§33–39 round, seven agents in three stages: §33 (the vocabulary gate), §38 and §39 first;
+then §§34–36 against §33; then §37 against all four. **Parts VII and VIII are complete — all 79
+numbered results have declarations, together with all 12 clause rows, and nothing is deferred by
+scope.** One *half* of one result is absent, the `C*` support-function formula of Theorem 37.2,
+which is row 13.1 below.
+
+Staging was forced rather than chosen. Lean cannot import across sibling worktrees, and the surface
+namespace is flat, so seven parallel agents would have had four of them redefining §33's vocabulary
+and colliding at the `Part7.lean` aggregator rather than merging quietly. **The dependency that
+matters between surface sections is vocabulary, not mathematics** — every section proves its results
+against the backbone, and wants an earlier section only for the book's names. That is why §38 and
+§39 could run in stage 1 alongside §33 despite §39 citing §38's notions: they took them from
+`Bifunction/Algebra.lean` directly.
+
+| # | item | reported by | status |
+|---|---|---|---|
+| 13.1 | **`supportFn_dom₁_lowerConjSaddle`**, in `Saddle/Existence.lean` — the `C*` half of Theorem 37.2. Blocked at the surface by a missing `supportFn_neg` plus nested-`iSup` `EReal` sign work, which is backbone-shaped. Nothing downstream is affected: Corollary 37.2.1's `C*` half exists and lands | §37 | open — the only half of a numbered result missing from Part VII |
+| 13.2 | **`SaddleEquiv.saddleTilt`** — `cl (f − ℓ) = cl f − ℓ` — **missing entirely**. This is the row that changed a proof: without it Corollary 37.4.1 cannot follow Rockafellar's route and is proved from Theorem 37.5 instead, carrying a closedness hypothesis the book does not state, and Theorem 37.5 (b) and Corollary 37.5.3 are stated for the canonical `upperConj K` rather than for an arbitrary conjugate | §37 | open — the highest-value item in this section |
+| 13.3 | **`isClosed_concaveSubgradient` and `isClosed_saddleSubgradient`**, in `Saddle/Subgradient.lean`. `convex_subgrad` carries only half of the book's 15160 remark; the closedness half is a **full half of a numbered result** (Rockafellar's "closed convex set `∂₁K × ∂₂K`", and Corollary 37.5.3's "closed convex product set"). Written as a `private` lemma in `Section37.lean` | §35, §37 | open — §35 flagged it, §37 is the consumer |
+| 13.4 | **`ConvexProcess.adjointProcess_add_of_relint`** and three siblings (`_comp_of_relint`, and the two `coadjoint*` mirrors), in `Bifunction/Process.lean`. **Theorems 39.5's and 39.8's hypotheses exclude §39's own running example.** `adjointProcess_add` asks for `∀ y, IsExactSum …` on `u ↦ -⟨Aᵢ u, x*⟩`, and `IsExactSum` carries properness of both summands as *fields*, so the hypothesis silently asserts `dom Aᵢ* = ℝⁿ`; for the book's own `Au = {x \| x ≤ Bu}` it fails at every `x*` with a negative coordinate. `Process.lean`'s design note says the reduction to Rockafellar's `ri (dom A₁) ∩ ri (dom A₂) ≠ ∅` "is available and simply has not been done" via `IsExactSum.of_relint`; **it is not available**, because `of_relint` takes the properness as an argument. `adjointProcess_comp`, both `coadjoint*` mirrors, the four closed halves, and `Algebra.lean`'s `adjointBifun_infConvBifun_eq_supConvBifun` all inherit it | §39 | open — verified against `Duality/Exact.lean` and `Duality/Relint.lean` before filing. The design note is now the thing to fix first |
+| 13.5 | **`adjointBifun_infConvBifun_of_relint`** and three siblings, in `Bifunction/Algebra.lean` — the same `IsExactSum`-versus-`ri` friction as 13.4, on the §38 side, where it affects **fourteen** surface statements. Three surface `abbrev`s (`IsExactSumCor3821`, `IsExactSumCor3841`, `IsExactSumCor3851`) exist only to keep those hypotheses on one page | §38 | open — schedule with 13.4; they are one problem in two files |
+| 13.6 | **`dom₂_concaveBracket`**, in `Saddle/Conjugate.lean`: `dom₂ (fun p => concaveBracket Bu G p.1 p.2) = domConcaveBifun G`, the mirror of the existing `dom₁_bracket`. **Two sections in a row wrote a `private` duplicate of it** | §33, §34 | open — the clearest "same lemma twice" signal of the round |
+| 13.7 | **A bundled closed-proper-saddle-function hypothesis.** `exists_unique_bifun_of_simpleExt`'s nine unbundled hypotheses are repeated across seven clauses in §33; §34 wants the same; in `Section37.lean` four plumbing expressions account for **45 argument occurrences**. A `FiniteContinuousSaddleFn C D K` structure would collapse ~60 lines in §33 alone | §33, §34, §37 | open — **three consecutive sections asked for it**, which is the strongest shape signal the Part produced |
+| 13.8 | **`mem_saddleClass_of_saddleEquiv`** — the maximality half of Theorem 34.2 — is spelled out three times inside `Saddle/Kernel.lean` rather than once in `Saddle/Equiv.lean`, where it belongs | §34 | open |
+| 13.9 | **`concaveConj_clConcave`**, the concave mirror of `conj_clFn`; and the concave **`proper_conj_of_proper`**, without which Lemma 38.6's second assertion `⟨cl f, cl g⟩ = ⟨f, g⟩` cannot be stated. Both are `Duality/` items on the concave side | §34, §38 | open — §38's half is why one numbered result is partial |
+| 13.10 | **`concaveAdjointBifun_neg_indicatorBifun`**, in `Bifunction/Process.lean` — the infimum-oriented half of Theorem 39.2's last assertion, about twenty lines of cone computation. The only clause of §39's nine that is half-stated, and the book itself says only "argued similarly" | §39 | open |
+| 13.11 | **`§12.12`'s remainder**: `cofiniteBifun_compBifun` for `GF` (needs the co-finite specialisation of Theorem 38.5 over six spaces — `Cofinite.isExactSum_conj`'s trick does not transfer, because co-finiteness says nothing about `dom F⁎`), and `F*` co-finite, which is blocked on **vocabulary**: `CofiniteBifun` is a predicate on convex bifunctions and `lowerAdjointBifun` is the wrong reindexing, so a `CofiniteConcaveBifun` predicate is needed first | §38 | open — see §12.12, which is otherwise closed |
+| 13.12 | **`subgradientFst_eq_concaveSubgradient`**, in `Saddle/Differential.lean`. The existing `subgradientFst_eq_neg_subgradient` bridges through a raw negation rather than through `concaveSubgradient`, so **the orientation sign now appears twice in the library in two different shapes** | §35 | open — a correctness hazard, not just duplication |
+| 13.13 | **`separatingLeft_pairing`**, beside the existing `separatingRight_pairing` in `Surface/Common/Euclidean.lean` — eight `C*`-side call sites in `Section37.lean` alone. Related: there is no `LinearMap.separatingRight_iff_flip_separatingLeft` anywhere (gotcha LIB44) | §37 | open — cheap |
+| 13.14 | **`(volume : Measure (Rn m × Rn n)).IsAddHaarMeasure`** is not found by instance search and is supplied by hand in `theorem_35_9_measure`. Candidate for `Surface/Common/Euclidean.lean`, whose promise is that every instance a surface needs is already discharged there | §35 | open — see gotcha SET19 |
+| 13.15 | **`ConvexProcess.comp_assoc`, `id_comp`, `comp_id`, a `CompleteLattice (ConvexProcess U X)` instance, and `imageBifun_indicatorBifun_apply`**, all in `Bifunction/Process.lean` — written as surface theorems in `Section39.lean` because they were not upstream. The lattice cost a six-line `Equiv` and one application of Mathlib's `Equiv.completeLattice`, so **D12 held**: no order-theoretic content was rebuilt | §39 | open — a move, not new mathematics |
+| 13.16 | **`zero_mem_saddleSubgradient_iff_isSaddlePoint`** (two lines; `Saddle/Subgradient.lean` already inlines that rewrite three times), **`concaveBifun_inverseBifun`** (`Saddle/Minimax.lean`, the mirror of `convexBifun_inverseBifun`, both halves stated in one sentence by the book), and **`adjointBifun_eq_iInf_lagrangian_sub`** (`Optimization/Lagrangian.lean`, the only §36 display not carried) | §36 | open |
+| 13.17 | **A support-function API for `dirDerivReal`**, and §10's surface `LipschitzianOn` / `EquiLipschitzianOn` / `PointwiseBoundedOn` / `UniformlyBoundedOn`, which are hard-coded at `Rn n → ℝ` and cannot reach a product — §35 spells all four out again and re-does `lipschitzianOn_iff` privately. The support-function API is what a minimax reading of `K′` over `∂K` would need | §35 | open |
+| 13.18 | **`exists_linearMap_of_isBounded` restated with `A.eval 0 = {0}` over a bare `Module ℝ X`**, which would drop `Bornology.IsBounded` and the `NormedAddCommGroup X` from `Bifunction/Process.lean:1445` entirely. The surface already states Theorem 39.1 the general way; the backbone lemma behind it still does not | §39 | open — the backbone trailing its own surface |
+| 13.19 | **Placement, three items.** `bifunSaddleClass` *is* Rockafellar's `Ω (F)` from §34 but lives in `Saddle/Minimax.lean` (§36); `dom₁_bracket` lives in `Saddle/Conjugate.lean` (§37); and Corollary 33.2.1's dual half lives in `Bifunction/ProcessDuality.lean` (§39) while its primal half is in `Saddle/Kernel.lean`. These are the only reason a §33 surface module imports two later-section backbone modules | §33, §34 | open — no mathematics, only homes |
+| 13.20 | **`PolyhedralCone.map_of_linearEquiv`**, in `Polyhedral/Cone.lean`. "`A⁻¹` is polyhedral" was dropped when the hand proof reached eighteen lines. **No numbered result needs it** | §39 | open — lowest priority in this section |
+
+### What the round settled
+
+**§2.1 and §2.2 were real gates and paid for themselves.** The `saddleSwap` transport meant §33 had
+one orientation-flipping lemma to cite rather than two parallel developments to keep aligned; the
+`reflect` de-leak meant `coadjointProcess_add` and `coadjointProcess_comp` were usable **verbatim**
+in `theorem_39_5` and `theorem_39_8`, with no transport step at either site.
+
+**§4.1 and §4.4 were not gates, and §4.1's listing in `part8.md` was a confusion of two different
+stars** — §38's `F*` and §39's `A*` are *defined operations* of a pair of pairings, carrying no
+adjoint datum, and `IsAdjointPair` occurs nowhere in `Bifunction/{Algebra, Cofinite, Process,
+ProcessDuality}.lean`. This is the second Part in a row to un-schedule §4.1 by measurement.
+
+**§5.6 was listed as a Part VII gate and was deliberately not done**, per D10: the backbone should
+not be tied to Rockafellar, and the rename is a refactor to run *after* the surface, not before it.
+Nothing in Part VII was harder for its absence.
+
+### Where a plan was wrong
+
+**`part8.md` said the backbone "carries [orientation] as a field". It does not, deliberately** —
+`Bifunction/Process.lean`'s design note treats orientation as a second adjoint rather than a flag.
+The brief written from that plan repeated the error, and the §39 agent caught it by reading the
+file. The plan is corrected in place. `inventory.md`'s §39 entry was checked for the same error and
+does not have it.
+
+**The plan's framing implied `saddleSwap` converts convex-concave to concave-convex. It preserves
+each class.** The translation for Rockafellar's convex-concave convention is plain negation. This
+one was caught by §33 and carried forward into all four stage-2 and stage-3 briefs, where it stayed
+live: §37 reports that a surface-level swap would have produced the wrong `C*` statement.
+
+**Three predictions in the handoff between sections did not survive contact**, which is worth
+recording because the handoff otherwise worked. §35's "one gap that matters for §37" does not
+matter for §37 — Corollary 37.5.2's differentiable clause only ever needs `C = D = univ`, where
+`saddleSubgradient_eq_subgradientSaddle` already exists. §36's two hypothesis-free helpers,
+described as made for §37, **were not used and could not have been**: Corollary 37.5.3 is about the
+*conjugate's* subdifferential at the origin, which the backbone already carries. And §34's contract
+omitted `theorem_34_2_maximal`, which turned out to be its load-bearing export — Corollary 37.4.1
+exists because of it. Everything else in all four contracts held, and nothing in them was wrong.
+
+### Book findings from the round
+
+Recorded in full in the two aggregator docstrings, `Tdaf/Surface/Rockafellar/Part7.lean` and
+`Part8.lean`, rather than duplicated here. The three that bear on the backbone: **Theorem 34.2's
+`dom K = dom F × dom F*` is a product identity only** — the printed proof argues the factors
+separately and that step is false for improper `F`; **Theorem 34.1 and Theorem 37.4's first
+sentence need no hypotheses at all**, which is stronger than the book states them and puts 34.1 at
+layer B; and **Theorem 38.1's domain formula is misprinted** at 16214, `∩` where `□` is meant.
+
+
 ---
