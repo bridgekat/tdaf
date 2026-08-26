@@ -9,76 +9,29 @@ import Tdaf.Surface.Common.Euclidean
 /-!
 # Rockafellar, §21: Helly's Theorem and Systems of Inequalities
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §21, pp. 185–197: existence theorems for
-systems of convex inequalities, stated as pairs of mutually exclusive alternatives, and the four
-forms of Helly's theorem that come out of them.
+Existence theorems for systems of convex inequalities, stated as pairs of mutually exclusive
+alternatives, and the four forms of Helly's theorem that come out of them.
 
-## The section's own vocabulary
+All ten numbered results of §21 are formalized over `Rn n = ℝⁿ`: Theorems 21.1–21.6 and
+Corollaries 21.3.1, 21.3.2, 21.6.1, 21.6.2, together with the unnumbered exercise after Corollary
+21.3.2 (`helly_recession_iff_exists_isBounded`). Theorems 21.1, 21.2 and 21.3 read "one and only
+one of the following alternatives holds": `theorem_21_k` is the disjunction, the half with content,
+and `theorem_21_k_exclusive` says the alternatives cannot both hold.
 
 A **system of convex inequalities** is `fᵢ(x) ≤ αᵢ` for `i ∈ I₁` together with `fᵢ(x) < αᵢ` for
-`i ∈ I₂`, where `I₁` and `I₂` are arbitrary index sets, each `fᵢ` is a convex function on all of
-`ℝⁿ` and `-∞ ≤ αᵢ ≤ +∞`. `ConvexSystem` is that data, `ConvexSystem.solutions` its solution set and
-`ConvexSystem.Consistent` the book's "consistent". The three facts the book states about it in
-prose — the solution set is an intersection of level sets, it is convex, and it is closed when
-there are no strict inequalities and the `fᵢ` are closed — are `solutions_eq_iInter`,
-`convex_solutions` and `isClosed_solutions`.
+`i ∈ I₂`, with arbitrary index sets and `-∞ ≤ αᵢ ≤ +∞`. That data is `ConvexSystem`, its solution
+set `ConvexSystem.solutions`, and the book's "consistent" `ConvexSystem.Consistent`. Every numbered
+theorem is stated with right-hand sides `0`, which `solutions_normalize` justifies.
 
-The numbered theorems below are all stated with right-hand sides `0`, which is what the book does
-after observing that `fᵢ(x) ≤ αᵢ` is `gᵢ(x) ≤ 0` for `gᵢ = fᵢ - αᵢ` when `αᵢ` is finite:
-`solutions_normalize` is that observation. `pairing_eq_iff` is the other translation device of the
-opening pages, the one that writes a linear *equation* as two inequalities.
+Two hypotheses look like slips and are not. **Theorem 21.1 asks `dom fᵢ ⊇ ri C`, not
+`dom fᵢ ⊇ C`**: separation produces the inequality only where every `fᵢ` is finite, and Corollary
+7.3.3 carries it from `ri C` to `cl C ⊇ C`. **Alternative (b) is read in `EReal`, where
+`0 · (+∞) = 0`**; without that convention a vanishing multiplier could not drop a constraint whose
+`fᵢ` is `+∞` somewhere, and Corollary 21.6.2, which extends a short multiplier vector by zeros,
+would be false as stated. No `0⁺` bookkeeping appears in this section.
 
-## The shape of the results
-
-Theorems 21.1, 21.2 and 21.3 are "one and only one of the following alternatives holds". Each is
-two declarations: `theorem_21_k` is the disjunction — the half with content — and
-`theorem_21_k_exclusive` is the half that says the alternatives cannot both hold.
-
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 21.1 | `theorem_21_1`, `theorem_21_1_exclusive` |
-| Theorem 21.2 | `theorem_21_2`, `theorem_21_2_exclusive` |
-| Theorem 21.3 | `theorem_21_3`, `theorem_21_3_exclusive` |
-| Corollary 21.3.1 | `corollary_21_3_1` |
-| Corollary 21.3.2 | `corollary_21_3_2` |
-| the exercise after Corollary 21.3.2 (7593) | `helly_recession_iff_exists_isBounded` |
-| Theorem 21.4 | `theorem_21_4`, `theorem_21_4_subsystem` |
-| Theorem 21.5 | `theorem_21_5` |
-| Theorem 21.6 | `theorem_21_6` |
-| Corollary 21.6.1 | `corollary_21_6_1` |
-| Corollary 21.6.2 | `corollary_21_6_2`, `corollary_21_6_2_affine` |
-
-## Two hypotheses that look like typos and are not
-
-**Theorem 21.1 asks for `dom fᵢ ⊇ ri C`, not `dom fᵢ ⊇ C`.** The weaker hypothesis is deliberate
-and is exactly what the proof uses: separation only produces the inequality where every `fᵢ` is
-finite, and Corollary 7.3.3 carries it from `ri C` to `cl (ri C) = cl C ⊇ C`. The book gives the
-counterexample that shows some such condition is needed — `f₁(x) = -x^(1/2)` for `x ≥ 0` and `+∞`
-otherwise, `f₂(x) = x`, `C = R` — where neither alternative holds.
-
-**Alternative (b) is read in `EReal`, where `0 · (+∞) = 0`.** That convention is load-bearing:
-without it a vanishing multiplier could not drop a constraint whose `fᵢ` is `+∞` somewhere, and
-Corollary 21.6.2 — which extends a short multiplier vector by zeros — would be false as stated.
-No `0⁺` bookkeeping appears anywhere in this section.
-
-## What is not here
-
-* **The two hyperbola counterexamples** (book, pp. 190–191) — *omitted with a reason*. On `R²`
-  with `f₁(x) = (ξ₁² + 1)^(1/2) - ξ₂` and `f₂(x) = (ξ₂² + 1)^(1/2) - ξ₁`, neither alternative of
-  Theorem 21.3 holds, and the derived family `C_{k,ε} = {x | fₖ(x) ≤ ε}` has the
-  `(n+1)`-intersection property with empty intersection, so Corollary 21.3.2 fails too. Both are
-  unnumbered prose showing that the recession hypothesis cannot be dropped. Transcribing them is
-  a one-variable calculus computation about `Real.sqrt (ξ² + 1)`, not convex analysis, and nothing
-  later in the book cites them. The same holds for the `-x^(1/2)` example after Theorem 21.1.
-Everything else in the section's range is here.
-
-## A citation the book gets wrong
-
-Rockafellar's Comments and References for Part IV (book line 17309) cite a **"Corollary 21.3.3"**.
-No such result exists: §21 has Corollaries 21.3.1 and 21.3.2 and nothing further. The intended
-reference is Corollary 21.3.2, Helly's theorem.
+The "Corollary 21.3.3" cited in the book's Comments and References for Part IV does not exist; the
+intended reference is Corollary 21.3.2, Helly's theorem.
 
 ## References
 
@@ -93,21 +46,11 @@ open Tdaf.ConvexAnalysis Tdaf.Surface
 
 variable {n : ℕ}
 
-/-! ### A system of convex inequalities
+/-! ### A system of convex inequalities -/
 
-The book's opening definition, together with the three facts it states about the solution set and
-the two translation devices of the same pages. -/
-
-/-- Rockafellar's **system of convex inequalities** in `ℝⁿ`:
-
-```
-fᵢ(x) ≤ αᵢ,  ∀ i ∈ I₁,
-fᵢ(x) < αᵢ,  ∀ i ∈ I₂,
-```
-
-with `I₁` and `I₂` arbitrary index sets and `-∞ ≤ αᵢ ≤ +∞`. Convexity of the `fᵢ` is *not* a field:
-the book's own statements about the solution set carry it as a hypothesis, and the numbered
-theorems below quantify over families directly rather than over this structure. -/
+/-- Rockafellar's **system of convex inequalities** in `ℝⁿ`: `fᵢ(x) ≤ αᵢ` for `i ∈ I₁` together
+with `fᵢ(x) < αᵢ` for `i ∈ I₂`, with `I₁`, `I₂` arbitrary and `-∞ ≤ αᵢ ≤ +∞`. Convexity of the `fᵢ`
+is not a field: the book's own statements about the solution set carry it as a hypothesis. -/
 structure ConvexSystem (n : ℕ) (ι κ : Type*) where
   /-- The functions of the weak part, `fᵢ(x) ≤ αᵢ` for `i ∈ I₁`. -/
   weakFn : ι → Rn n → EReal
@@ -126,29 +69,26 @@ variable {ι κ : Type*}
 def solutions (S : ConvexSystem n ι κ) : Set (Rn n) :=
   {x | (∀ i, S.weakFn i x ≤ S.weakBound i) ∧ ∀ j, S.strictFn j x < S.strictBound j}
 
-/-- The book's **consistent**: the system has at least one solution. A system is *inconsistent*
-when it is not consistent, i.e. when its solution set is empty. -/
+/-- The book's **consistent**: the system has at least one solution. -/
 def Consistent (S : ConvexSystem n ι κ) : Prop := S.solutions.Nonempty
 
-/-- **Rockafellar, §21, p. 185.** The solution set is the intersection of the level sets
-`{x | fᵢ(x) ≤ αᵢ}`, `i ∈ I₁`, and `{x | fᵢ(x) < αᵢ}`, `i ∈ I₂`. -/
+/-- **§21 (p. 185).** The solution set is the intersection of the level sets of the
+constraints. -/
 theorem solutions_eq_iInter (S : ConvexSystem n ι κ) :
     S.solutions = (⋂ i, {x | S.weakFn i x ≤ S.weakBound i})
       ∩ ⋂ j, {x | S.strictFn j x < S.strictBound j} := by
   ext x
   simp [solutions]
 
-/-- **Rockafellar, §21, p. 185**: "The set of solutions `x` to such a system is, of course, a
-certain convex set in `ℝⁿ`." -/
+/-- **§21 (p. 185).** The solution set of a system of convex inequalities is convex. -/
 theorem convex_solutions (S : ConvexSystem n ι κ) (hw : ∀ i, ConvexFn (S.weakFn i))
     (hs : ∀ j, ConvexFn (S.strictFn j)) : Convex ℝ S.solutions := by
   rw [solutions_eq_iInter]
   exact Convex.inter (convex_iInter fun i => (hw i).convex_le _)
     (convex_iInter fun j => (hs j).convex_lt _)
 
-/-- A level set `{x | f x ≤ α}` of a closed function is closed, for an *extended-real* level `α`.
-`lowerSemicontinuous_iff_isClosed_le` covers only the finite levels; the two infinite ones are the
-two cases of `closedFn_iff`. -/
+/-- A level set `{x | f x ≤ α}` of a closed function is closed, for an *extended-real* level `α`;
+`lowerSemicontinuous_iff_isClosed_le` covers only the finite levels. -/
 theorem isClosed_setOf_le {f : Rn n → EReal} (hf : ClosedFn f) (a : EReal) :
     IsClosed {x : Rn n | f x ≤ a} := by
   induction a using EReal.rec with
@@ -163,8 +103,8 @@ theorem isClosed_setOf_le {f : Rn n → EReal} (hf : ClosedFn f) (a : EReal) :
   | coe r => exact lowerSemicontinuous_iff_isClosed_le.1 hf.lowerSemicontinuous r
   | top => simp
 
-/-- **Rockafellar, §21, p. 185**: "If every `fᵢ` is closed and there are no strict inequalities
-(i.e. `I₂ = ∅`), the set of solutions is closed." -/
+/-- **§21 (p. 185).** With no strict inequalities and every `fᵢ` closed, the solution set is
+closed. -/
 theorem isClosed_solutions [IsEmpty κ] (S : ConvexSystem n ι κ)
     (hw : ∀ i, ClosedFn (S.weakFn i)) : IsClosed S.solutions := by
   rw [solutions_eq_iInter]
@@ -173,9 +113,8 @@ theorem isClosed_solutions [IsEmpty κ] (S : ConvexSystem n ι κ)
   rw [hstrict, Set.inter_univ]
   exact isClosed_iInter fun i => isClosed_setOf_le (hw i) _
 
-/-- **Rockafellar, §21, p. 186**: for a *finite* right-hand side `α`, the inequality `f(x) ≤ α` is
-the inequality `g(x) ≤ 0` for `g = f - α`, and likewise for the strict form. This is why every
-numbered theorem of the section may be stated with all right-hand sides `0`. -/
+/-- **§21 (p. 186).** For a *finite* right-hand side `α`, `f(x) ≤ α` is `g(x) ≤ 0` for `g = f - α`,
+and likewise for the strict form. This is why every numbered theorem takes right-hand sides `0`. -/
 theorem solutions_normalize (f : Rn n → EReal) (a : ℝ) (x : Rn n) :
     (f x ≤ (a : EReal) ↔ f x - (a : EReal) ≤ 0) ∧ (f x < (a : EReal) ↔ f x - (a : EReal) < 0) := by
   generalize f x = y
@@ -190,9 +129,8 @@ theorem solutions_normalize (f : Rn n → EReal) (a : ℝ) (x : Rn n) :
 
 end ConvexSystem
 
-/-- **Rockafellar, §21, p. 186**: "Linear equations may be incorporated into a system of convex
-inequalities by the device of writing `⟨x, b⟩ = β` as a pair of inequalities: `⟨x, b⟩ ≤ β` and
-`⟨x, -b⟩ ≤ -β`." -/
+/-- **§21 (p. 186).** A linear equation enters a system of convex inequalities as a pair of
+inequalities: `⟨x, b⟩ = β` is `⟨x, b⟩ ≤ β` and `⟨x, -b⟩ ≤ -β`. -/
 theorem pairing_eq_iff (x b : Rn n) (β : ℝ) :
     pairing n x b = β ↔ pairing n x b ≤ β ∧ pairing n x (-b) ≤ -β := by
   rw [map_neg]
@@ -204,19 +142,15 @@ theorem pairing_eq_iff (x b : Rn n) (β : ℝ) :
 
 /-! ### Theorem 21.1 -/
 
-/-- **Rockafellar, Theorem 21.1.** Let `C` be a convex set, and let `f₁, …, f_m` be proper convex
-functions such that `dom fᵢ ⊇ ri C`. Then one and only one of the following alternatives holds:
+/-- **Theorem 21.1**. For `C` convex and `f₁, …, f_m` proper convex with `dom fᵢ ⊇ ri C`, one and
+only one of the following holds:
 
-(a) there exists some `x ∈ C` such that `f₁(x) < 0, …, f_m(x) < 0`;
+(a) `f₁(x) < 0, …, f_m(x) < 0` for some `x ∈ C`;
 
-(b) there exist non-negative real numbers `λ₁, …, λ_m`, not all zero, such that
-`λ₁f₁(x) + ⋯ + λ_mf_m(x) ≥ 0` for every `x ∈ C`.
+(b) `λ₁f₁(x) + ⋯ + λ_mf_m(x) ≥ 0` for every `x ∈ C`, for some `λᵢ ≥ 0` not all zero.
 
-This is the disjunction; `theorem_21_1_exclusive` is the exclusivity. The hypothesis is
-`ri C ⊆ dom fᵢ` and not `C ⊆ dom fᵢ` — see the module docstring — and the weighted sum is read in
-`EReal`, where `0 · (+∞) = 0`.
-
-Specialises `alternative_of_convex_system`. -/
+This is the disjunction; `theorem_21_1_exclusive` is the exclusivity. The hypothesis is `ri C` and
+not `C`, and the weighted sum is read in `EReal`, where `0 · (+∞) = 0`. -/
 theorem theorem_21_1 {ι : Type*} [Fintype ι] [Nonempty ι] {C : Set (Rn n)}
     {f : ι → Rn n → EReal} (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i))
     (hdom : ∀ i, ri C ⊆ dom (f i)) :
@@ -225,11 +159,9 @@ theorem theorem_21_1 {ι : Type*} [Fintype ι] [Nonempty ι] {C : Set (Rn n)}
         ∀ x ∈ C, (0 : EReal) ≤ ∑ i, (l i : EReal) * f i x :=
   alternative_of_convex_system hC hf hp hdom
 
-/-- **Rockafellar, Theorem 21.1**, the "only one" half: alternatives (a) and (b) cannot both hold.
-No hypothesis on the `fᵢ` or on `C` is needed — at a point where every `fᵢ` is negative, every term
-`λᵢfᵢ(x)` is non-positive and the terms with `λᵢ ≠ 0` are strictly negative.
-
-Specialises `not_exists_forall_neg_of_forall_zero_le_weighted`. -/
+/-- **Theorem 21.1**, the "only one" half: (a) and (b) cannot both hold. Nothing is assumed about
+the `fᵢ` or `C` — at a point where every `fᵢ` is negative, every term `λᵢfᵢ(x)` is non-positive and
+those with `λᵢ ≠ 0` are strictly negative. -/
 theorem theorem_21_1_exclusive {ι : Type*} [Fintype ι] {C : Set (Rn n)} {f : ι → Rn n → EReal}
     {l : ι → ℝ} (hl : ∀ i, 0 ≤ l i) (hl0 : l ≠ 0)
     (h : ∀ x ∈ C, (0 : EReal) ≤ ∑ i, (l i : EReal) * f i x) :
@@ -238,22 +170,18 @@ theorem theorem_21_1_exclusive {ι : Type*} [Fintype ι] {C : Set (Rn n)} {f : �
 
 /-! ### Theorem 21.2 -/
 
-/-- **Rockafellar, Theorem 21.2.** Let `C` be a convex set, let `f₁, …, f_k` be proper convex
-functions with `dom fᵢ ⊇ ri C`, and let `f_{k+1}, …, f_m` be affine functions such that the system
-`f_{k+1}(x) ≤ 0, …, f_m(x) ≤ 0` has at least one solution in `ri C`. Then one and only one of the
-following alternatives holds:
+/-- **Theorem 21.2**. For `C` convex, `f₁, …, f_k` proper convex with `dom fᵢ ⊇ ri C`, and
+`f_{k+1}, …, f_m` affine with `f_{k+1}(x) ≤ 0, …, f_m(x) ≤ 0` solvable in `ri C`, one and only one
+of the following holds:
 
-(a) there exists `x ∈ C` with `f₁(x) < 0, …, f_k(x) < 0` and `f_{k+1}(x) ≤ 0, …, f_m(x) ≤ 0`;
+(a) `x ∈ C` with `f₁(x) < 0, …, f_k(x) < 0` and `f_{k+1}(x) ≤ 0, …, f_m(x) ≤ 0`;
 
-(b) there exist non-negative `λ₁, …, λ_m` with at least one of `λ₁, …, λ_k` non-zero and
+(b) non-negative `λ₁, …, λ_m`, at least one of `λ₁, …, λ_k` non-zero, with
 `λ₁f₁(x) + ⋯ + λ_mf_m(x) ≥ 0` for every `x ∈ C`.
 
-The book cuts the range `1, …, m` at `k`; here the convex constraints are indexed by `ι` and the
-affine ones by `κ`, and the affine constraints are `Rn n →ᵃ[ℝ] ℝ` rather than `EReal`-valued, which
-is what "affine function" means. Theorem 21.1 is the case `κ = Empty`, but it is not derived from
-this one: 21.1 needs only Theorem 11.3, while 21.2 needs the polyhedral separation of Theorem 20.2.
-
-Specialises `alternative_of_convex_system_affine`. -/
+The convex constraints are indexed by `ι` and the affine ones by `κ`, the latter as `Rn n →ᵃ[ℝ] ℝ`.
+Theorem 21.1 is the case `κ = Empty` but is not derived from this one: 21.1 needs only Theorem
+11.3, while 21.2 needs the polyhedral separation of Theorem 20.2. -/
 theorem theorem_21_2 {ι κ : Type*} [Fintype ι] [Fintype κ] {C : Set (Rn n)}
     {f : ι → Rn n → EReal} {a : κ → (Rn n →ᵃ[ℝ] ℝ)} (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
     (hp : ∀ i, Proper (f i)) (hdom : ∀ i, ri C ⊆ dom (f i))
@@ -264,9 +192,8 @@ theorem theorem_21_2 {ι κ : Type*} [Fintype ι] [Fintype κ] {C : Set (Rn n)}
           ≤ (∑ i, (l i : EReal) * f i x) + ((∑ j, μ j * a j x : ℝ) : EReal) :=
   alternative_of_convex_system_affine hC hf hp hdom hfeas
 
-/-- **Rockafellar, Theorem 21.2**, the "only one" half. At a point of `C` solving the mixed system,
-the convex part of the weighted sum is strictly negative — that is Theorem 21.1's exclusivity
-applied to the singleton `{x}` — and the affine part is non-positive, so the total is negative. -/
+/-- **Theorem 21.2**, the "only one" half: at a point of `C` solving the mixed system the convex
+part of the weighted sum is strictly negative and the affine part is non-positive. -/
 theorem theorem_21_2_exclusive {ι κ : Type*} [Fintype ι] [Fintype κ] {C : Set (Rn n)}
     {f : ι → Rn n → EReal} {a : κ → (Rn n →ᵃ[ℝ] ℝ)} {l : ι → ℝ} {μ : κ → ℝ}
     (hl : ∀ i, 0 ≤ l i) (hμ : ∀ j, 0 ≤ μ j) (hl0 : l ≠ 0)
@@ -297,20 +224,15 @@ theorem theorem_21_2_exclusive {ι κ : Type*} [Fintype ι] [Fintype κ] {C : Se
 
 /-! ### Theorem 21.3 and its corollaries -/
 
-/-- **Rockafellar, Theorem 21.3.** Let `{fᵢ | i ∈ I}` be a collection of closed proper convex
-functions on `ℝⁿ`, `I` an arbitrary index set, and let `C` be a non-empty closed convex set.
-Assume the `fᵢ` have no common direction of recession which is also a direction of recession of
-`C`. Then one and only one of the following alternatives holds:
+/-- **Theorem 21.3**. Let `{fᵢ | i ∈ I}` be closed proper convex functions on `ℝⁿ`, `I` arbitrary,
+and `C` a non-empty closed convex set; assume the `fᵢ` have no common direction of recession which
+also recedes in `C`. Then one and only one of the following holds:
 
-(a) there is a vector `x ∈ C` with `fᵢ(x) ≤ 0` for every `i ∈ I`;
+(a) `x ∈ C` with `fᵢ(x) ≤ 0` for every `i ∈ I`;
 
-(b) there exist non-negative `λᵢ`, only finitely many non-zero, such that for some `ε > 0` one has
-`∑ᵢ λᵢfᵢ(x) ≥ ε` for every `x ∈ C`.
+(b) non-negative `λᵢ`, finitely many non-zero, and `ε > 0` with `∑ᵢ λᵢfᵢ(x) ≥ ε` for every `x ∈ C`.
 
-If (b) holds, the `λᵢ` can be chosen so that at most `n + 1` of them are non-zero — the last clause
-of the book's statement, carried here as `t.card ≤ n + 1`.
-
-Specialises `alternative_infinite_system`. -/
+In case (b) at most `n + 1` of the `λᵢ` need be non-zero, which is the `t.card ≤ n + 1` clause. -/
 theorem theorem_21_3 {ι : Type*} {C : Set (Rn n)} {f : ι → Rn n → EReal}
     (hf : ∀ i, ClosedProperConvexFn (f i)) (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
     (hrec : ∀ y : Rn n, (∀ i, recessionFn (f i) y ≤ 0) → y ∈ recessionCone C → y = 0) :
@@ -320,8 +242,8 @@ theorem theorem_21_3 {ι : Type*} {C : Set (Rn n)} {f : ι → Rn n → EReal}
   simpa only [finrank_euclideanSpace_fin] using
     alternative_infinite_system (B := pairing n) hf hC hCc hCne hrec
 
-/-- **Rockafellar, Theorem 21.3**, the "only one" half: at a solution of the weak system every term
-`λᵢfᵢ(x)` is non-positive, so the sum cannot be bounded below by a positive `ε`. -/
+/-- **Theorem 21.3**, the "only one" half: at a solution of the weak system every term `λᵢfᵢ(x)` is
+non-positive, so the sum cannot be bounded below by a positive `ε`. -/
 theorem theorem_21_3_exclusive {ι : Type*} {C : Set (Rn n)} {f : ι → Rn n → EReal}
     {t : Finset ι} {l : ι → ℝ} {ε : ℝ} (hl : ∀ i, 0 ≤ l i) (hε : 0 < ε)
     (h : ∀ x ∈ C, (ε : EReal) ≤ ∑ i ∈ t, (l i : EReal) * f i x) :
@@ -338,12 +260,10 @@ theorem theorem_21_3_exclusive {ι : Type*} {C : Set (Rn n)} {f : ι → Rn n �
     simpa using le_trans (h x hx) hsum
   exact absurd (EReal.coe_le_coe_iff.1 hle0) (not_le.2 hε)
 
-/-- **Rockafellar, Corollary 21.3.1.** Under the recession hypothesis of Theorem 21.3, existence
-for an infinite system reduces to existence for its finite subsystems: if for every `ε > 0` and
-every set of `m ≤ n + 1` indices `i₁, …, i_m` the system `f_{i₁}(x) < ε, …, f_{i_m}(x) < ε` has a
-solution in `C`, then there is an `x ∈ C` with `fᵢ(x) ≤ 0` for every `i ∈ I`.
-
-Specialises `exists_forall_le_zero_of_forall_subsystem`. -/
+/-- **Corollary 21.3.1**. Under the recession hypothesis of Theorem 21.3, existence for an
+infinite system reduces to existence for its finite subsystems: if for every `ε > 0` and every set
+of at most `n + 1` indices the system `f_{i₁}(x) < ε, …, f_{i_m}(x) < ε` is solvable in `C`, then
+`fᵢ(x) ≤ 0` for all `i ∈ I` is solvable in `C`. -/
 theorem corollary_21_3_1 {ι : Type*} {C : Set (Rn n)} {f : ι → Rn n → EReal}
     (hf : ∀ i, ClosedProperConvexFn (f i)) (hC : Convex ℝ C) (hCc : IsClosed C) (hCne : C.Nonempty)
     (hrec : ∀ y : Rn n, (∀ i, recessionFn (f i) y ≤ 0) → y ∈ recessionCone C → y = 0)
@@ -353,16 +273,11 @@ theorem corollary_21_3_1 {ι : Type*} {C : Set (Rn n)} {f : ι → Rn n → ERea
   refine exists_forall_le_zero_of_forall_subsystem (B := pairing n) hf hC hCc hCne hrec ?_
   simpa only [finrank_euclideanSpace_fin] using hsub
 
-/-- **Rockafellar, Corollary 21.3.2 (Helly's Theorem).** Let `{Cᵢ | i ∈ I}` be a collection of
-non-empty closed convex sets in `ℝⁿ`, `I` an arbitrary index set, and assume the `Cᵢ` have no
-common direction of recession. If every subcollection consisting of `n + 1` or fewer sets has a
-non-empty intersection, then the entire collection has a non-empty intersection.
-
-The recession hypothesis cannot be dropped; the book's counterexample is discussed in the module
-docstring. Compare `theorem_21_6`, where the collection is finite and neither closedness nor a
-recession hypothesis is needed.
-
-Specialises `helly_of_no_common_recession`. -/
+/-- **Corollary 21.3.2** (Helly's Theorem). Let `{Cᵢ | i ∈ I}` be non-empty closed convex sets in
+`ℝⁿ`, `I` arbitrary, with no common direction of recession. If every subcollection of `n + 1` or
+fewer sets has non-empty intersection, so does the whole collection. The recession hypothesis
+cannot be dropped. Compare `theorem_21_6`, where the collection is finite and neither closedness
+nor a recession hypothesis is needed. -/
 theorem corollary_21_3_2 {ι : Type*} {K : ι → Set (Rn n)} (hconv : ∀ i, Convex ℝ (K i))
     (hcl : ∀ i, IsClosed (K i)) (hne : ∀ i, (K i).Nonempty)
     (hrec : ∀ y : Rn n, (∀ i, y ∈ recessionCone (K i)) → y = 0)
@@ -371,17 +286,10 @@ theorem corollary_21_3_2 {ι : Type*} {K : ι → Set (Rn n)} (hconv : ∀ i, Co
   refine helly_of_no_common_recession (B := pairing n) hconv hcl hne hrec ?_
   simpa only [finrank_euclideanSpace_fin] using hinter
 
-/-- **Rockafellar, §21, book line 7593** — the unnumbered exercise stated after Corollary 21.3.2.
-"The recession hypothesis in Helly's Theorem … is satisfied if and only if some finite
-subcollection of the `Cᵢ`'s has a bounded intersection, assuming that every finite subcollection has
-a non-empty intersection."
-
-Taking `S = {i}` recovers the sentence before it: the hypothesis holds as soon as one of the `Cᵢ`
-is bounded.
-
-Specialises `iInter_recessionCone_eq_zero_iff_exists_isBounded`; the left-hand side is written in
-the `∀ y` form so that it is literally `corollary_21_3_2`'s `hrec`, and
-`helly_of_exists_isBounded_biInter` is Corollary 21.3.2 with the two hypotheses already traded. -/
+/-- **§21**, the unnumbered exercise after Corollary 21.3.2: assuming every finite subcollection
+has a non-empty intersection, the recession hypothesis of Helly's theorem holds if and only if some
+finite subcollection has a bounded intersection. Taking `S = {i}` recovers the sentence before it,
+that the hypothesis holds as soon as one `Cᵢ` is bounded. -/
 theorem helly_recession_iff_exists_isBounded {ι : Type*} {K : ι → Set (Rn n)}
     (hconv : ∀ i, Convex ℝ (K i)) (hcl : ∀ i, IsClosed (K i))
     (hne : ∀ S : Finset ι, (⋂ i ∈ S, K i).Nonempty) :
@@ -395,16 +303,12 @@ theorem helly_recession_iff_exists_isBounded {ι : Type*} {K : ι → Set (Rn n)
 
 /-! ### Theorems 21.4 and 21.5: the polyhedral refinements -/
 
-/-- The book's "`fᵢ` is an affine function", for a function that Rockafellar takes to be
-`EReal`-valued and defined on all of `ℝⁿ`: `f(x) = ⟨x, b⟩ - β`.
-
-`isAffineFn_iff_eq_affineFn` is the bridge to the backbone's `affineFn`, which is the same thing
-written against a pairing. -/
+/-- The book's "`fᵢ` is an affine function", for a function `EReal`-valued on all of `ℝⁿ`:
+`f(x) = ⟨x, b⟩ - β`. -/
 def IsAffineFn (f : Rn n → EReal) : Prop :=
   ∃ (b : Rn n) (β : ℝ), ∀ x, f x = ((inner ℝ x b - β : ℝ) : EReal)
 
-/-- The bridge lemma for `IsAffineFn`: an affine function of `ℝⁿ` in the book's sense is exactly an
-`affineFn` of the standard pairing. -/
+/-- An affine function of `ℝⁿ` in the book's sense is exactly an `affineFn` of the pairing. -/
 theorem isAffineFn_iff_eq_affineFn {f : Rn n → EReal} :
     IsAffineFn f ↔ ∃ (b : Rn n) (β : ℝ), f = affineFn (pairing n) b β := by
   constructor
@@ -413,16 +317,11 @@ theorem isAffineFn_iff_eq_affineFn {f : Rn n → EReal} :
   · rintro ⟨b, β, rfl⟩
     exact ⟨b, β, fun x => by rw [affineFn_eq_coe, pairing_apply]⟩
 
-/-- **Rockafellar, Theorem 21.4.** The hypothesis about directions of recession in Theorem 21.3
-and Corollary 21.3.1 may be replaced by the following weaker hypothesis if `C = ℝⁿ`: there exists a
-finite subset `I₀` of `I` such that `fᵢ` is affine for each `i ∈ I₀`, and such that each direction
-which is a direction of recession of `fᵢ` for every `i ∈ I` is actually a direction in which `fᵢ`
-is constant for every `i ∈ I \ I₀`.
-
-"Direction in which `fᵢ` is constant" is `constancySpace (f i)`. Compare `theorem_21_3`, whose
-hypothesis is this one with `I₀ = ∅`, since `0` lies in every constancy space.
-
-Specialises `alternative_infinite_system_univ_of_affine_tail`. -/
+/-- **Theorem 21.4**. When `C = ℝⁿ`, the recession hypothesis of Theorem 21.3 and Corollary 21.3.1
+may be weakened to: there is a finite `I₀ ⊆ I` with `fᵢ` affine for `i ∈ I₀`, such that every
+direction of recession common to all the `fᵢ` is a direction in which `fᵢ` is constant for each
+`i ∈ I \ I₀`. "Direction in which `fᵢ` is constant" is `constancySpace (f i)`; `theorem_21_3` is
+the case `I₀ = ∅`, since `0` lies in every constancy space. -/
 theorem theorem_21_4 {ι : Type*} {f : ι → Rn n → EReal} (hf : ∀ i, ClosedProperConvexFn (f i))
     (I₀ : Finset ι) (haff : ∀ i ∈ I₀, IsAffineFn (f i))
     (hrec : ∀ y : Rn n, (∀ i, recessionFn (f i) y ≤ 0) → ∀ i ∉ I₀, y ∈ constancySpace (f i)) :
@@ -434,11 +333,9 @@ theorem theorem_21_4 {ι : Type*} {f : ι → Rn n → EReal} (hf : ∀ i, Close
     alternative_infinite_system_univ_of_affine_tail (B := pairing n) hB hf I₀
       (fun i hi => isAffineFn_iff_eq_affineFn.1 (haff i hi)) hrec
 
-/-- **Rockafellar, Theorem 21.4** for Corollary 21.3.1: under the affine-tail hypothesis, an
-infinite system of weak convex inequalities on `ℝⁿ` is solvable as soon as every subsystem of at
-most `n + 1` of the inequalities is solvable to within an arbitrarily small tolerance.
-
-Specialises `exists_forall_le_zero_of_forall_subsystem_of_affine_tail`. -/
+/-- **Theorem 21.4** for Corollary 21.3.1: under the affine-tail hypothesis, an infinite system of
+weak convex inequalities on `ℝⁿ` is solvable as soon as every subsystem of at most `n + 1` of the
+inequalities is solvable to within an arbitrarily small tolerance. -/
 theorem theorem_21_4_subsystem {ι : Type*} {f : ι → Rn n → EReal}
     (hf : ∀ i, ClosedProperConvexFn (f i)) (I₀ : Finset ι) (haff : ∀ i ∈ I₀, IsAffineFn (f i))
     (hrec : ∀ y : Rn n, (∀ i, recessionFn (f i) y ≤ 0) → ∀ i ∉ I₀, y ∈ constancySpace (f i))
@@ -450,15 +347,10 @@ theorem theorem_21_4_subsystem {ι : Type*} {f : ι → Rn n → EReal}
     (fun i hi => isAffineFn_iff_eq_affineFn.1 (haff i hi)) hrec ?_
   simpa only [finrank_euclideanSpace_fin] using hsub
 
-/-- **Rockafellar, Theorem 21.5.** The hypothesis in Helly's Theorem (Corollary 21.3.2) about
-directions of recession may be replaced by the following weaker hypothesis: there exists a finite
-subset `I₀` of `I` such that `Cᵢ` is polyhedral for every `i ∈ I₀`, and such that each direction
-which is a direction of recession of `Cᵢ` for every `i ∈ I` is actually a direction in which `Cᵢ`
-is linear for every `i ∈ I \ I₀`.
-
-"Direction in which `Cᵢ` is linear" is `linealitySpace (K i)`.
-
-Specialises `helly_of_polyhedral_tail`. -/
+/-- **Theorem 21.5**. The recession hypothesis in Helly's theorem may be weakened to: there is a
+finite `I₀ ⊆ I` with `Cᵢ` polyhedral for `i ∈ I₀`, such that every direction of recession common to
+all the `Cᵢ` is a direction in which `Cᵢ` is linear for each `i ∈ I \ I₀`. "Direction in which `Cᵢ`
+is linear" is `linealitySpace (K i)`. -/
 theorem theorem_21_5 {ι : Type*} {K : ι → Set (Rn n)} (hconv : ∀ i, Convex ℝ (K i))
     (hcl : ∀ i, IsClosed (K i)) (hne : ∀ i, (K i).Nonempty) (I₀ : Finset ι)
     (hpoly : ∀ i ∈ I₀, Polyhedral (K i))
@@ -471,15 +363,10 @@ theorem theorem_21_5 {ι : Type*} {K : ι → Set (Rn n)} (hconv : ∀ i, Convex
 
 /-! ### Theorem 21.6 and its corollaries: finite collections -/
 
-/-- **Rockafellar, Theorem 21.6.** Let `{Cᵢ | i ∈ I}` be a *finite* collection of convex sets in
-`ℝⁿ` (not necessarily closed). If every subcollection consisting of `n + 1` or fewer sets has a
-non-empty intersection, then the entire collection has a non-empty intersection.
-
-Rockafellar derives this from Corollary 21.3.2 by replacing each `Cᵢ` with the convex hull of a
-finite selection; the backbone takes Mathlib's route through Radon's theorem instead, which is why
-`corollary_21_6_1` and `corollary_21_6_2` below do not depend on Theorem 21.3.
-
-Specialises `helly_finite`. -/
+/-- **Theorem 21.6**. For a *finite* collection of convex sets in `ℝⁿ`, not necessarily closed, if
+every subcollection of `n + 1` or fewer sets has non-empty intersection then so does the whole
+collection. Rockafellar derives this from Corollary 21.3.2; the proof here goes through Radon's
+theorem instead, so Corollaries 21.6.1 and 21.6.2 do not depend on Theorem 21.3. -/
 theorem theorem_21_6 {ι : Type*} {K : ι → Set (Rn n)} {s : Finset ι}
     (hconv : ∀ i ∈ s, Convex ℝ (K i))
     (hinter : ∀ t ⊆ s, t.card ≤ n + 1 → (⋂ i ∈ t, K i).Nonempty) :
@@ -487,17 +374,10 @@ theorem theorem_21_6 {ι : Type*} {K : ι → Set (Rn n)} {s : Finset ι}
   refine helly_finite hconv ?_
   simpa only [finrank_euclideanSpace_fin] using hinter
 
-/-- **Rockafellar, Corollary 21.6.1.** Given a system
-`f₁(x) < 0, …, f_k(x) < 0, f_{k+1}(x) ≤ 0, …, f_m(x) ≤ 0` with all `fᵢ` convex on `ℝⁿ` (the
-inequalities may be all strict or all weak): if every subsystem consisting of `n + 1` or fewer
-inequalities has a solution in a given convex set `C`, then the system as a whole has a solution
-in `C`.
-
-The book's `1, …, k` is the index type `ι` and its `k+1, …, m` is `κ`, so "`n + 1` or fewer
-inequalities" is `S.card + T.card ≤ n + 1`. Rockafellar's proof, verbatim: apply Theorem 21.6 to
-`C` together with the level sets.
-
-Specialises `exists_mem_of_forall_subsystem`. -/
+/-- **Corollary 21.6.1**. For a system `f₁(x) < 0, …, f_k(x) < 0, f_{k+1}(x) ≤ 0, …, f_m(x) ≤ 0`
+with every `fᵢ` convex on `ℝⁿ`: if every subsystem of `n + 1` or fewer inequalities has a solution
+in a convex set `C`, the whole system has one in `C`. The book's `1, …, k` is the index type `ι`
+and its `k+1, …, m` is `κ`, so "`n + 1` or fewer inequalities" is `S.card + T.card ≤ n + 1`. -/
 theorem corollary_21_6_1 {ι κ : Type*} [Finite ι] [Finite κ] {C : Set (Rn n)}
     {f : ι → Rn n → EReal} {g : κ → Rn n → EReal} (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
     (hg : ∀ j, ConvexFn (g j))
@@ -507,17 +387,11 @@ theorem corollary_21_6_1 {ι κ : Type*} [Finite ι] [Finite κ] {C : Set (Rn n)
   refine exists_mem_of_forall_subsystem hC hf hg ?_
   simpa only [finrank_euclideanSpace_fin] using hsub
 
-/-- **Rockafellar, Corollary 21.6.2.** If alternative (b) holds in Theorem 21.1, the numbers `λᵢ`
-can actually be chosen so that no more than `n + 1` of them differ from `0`.
-
-The sparsity is stated as a `Finset` `S` of size at most `n + 1` outside which every `λᵢ` vanishes,
-which avoids having to decide `λᵢ ≠ 0`. Extending a short multiplier vector by zeros is harmless
-precisely because `0 · (+∞) = 0` in `EReal`.
-
-**The book states this for Theorem 21.2 as well**; that half is `corollary_21_6_2_affine`, which
-the backbone does not have and which is proved here from Corollary 21.6.1 and Theorem 21.2.
-
-Specialises `sparse_alternative_of_convex_system`. -/
+/-- **Corollary 21.6.2**. If alternative (b) of Theorem 21.1 holds, the `λᵢ` may be chosen with at
+most `n + 1` of them non-zero. The sparsity is stated as a `Finset` `S` of size at most `n + 1`
+outside which every `λᵢ` vanishes, which avoids deciding `λᵢ ≠ 0`; extending a short multiplier
+vector by zeros is harmless precisely because `0 · (+∞) = 0` in `EReal`. The book states this for
+Theorem 21.2 as well — that half is `corollary_21_6_2_affine`. -/
 theorem corollary_21_6_2 {ι : Type*} [Fintype ι] [Nonempty ι] {C : Set (Rn n)}
     {f : ι → Rn n → EReal} (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i)) (hp : ∀ i, Proper (f i))
     (hdom : ∀ i, ri C ⊆ dom (f i)) :
@@ -527,8 +401,8 @@ theorem corollary_21_6_2 {ι : Type*} [Fintype ι] [Nonempty ι] {C : Set (Rn n)
   simpa only [finrank_euclideanSpace_fin] using
     sparse_alternative_of_convex_system hC hf hp hdom
 
-/-- A real affine function of `ℝⁿ`, read into `EReal`, is a convex function. This is what lets the
-affine constraints of Theorem 21.2 enter Corollary 21.6.1's finite collection of convex sets. -/
+/-- A real affine function of `ℝⁿ`, read into `EReal`, is convex. This is what lets the affine
+constraints of Theorem 21.2 enter Corollary 21.6.1's collection of convex sets. -/
 theorem convexFn_coe_affineMap (g : Rn n →ᵃ[ℝ] ℝ) : ConvexFn (fun x => ((g x : ℝ) : EReal)) := by
   refine convexFn_of_epi_combo fun x y p q hx hy s t hs ht hst => ?_
   rw [_root_.EReal.coe_le_coe_iff] at hx hy ⊢
@@ -536,16 +410,11 @@ theorem convexFn_coe_affineMap (g : Rn n →ᵃ[ℝ] ℝ) : ConvexFn (fun x => (
   simp only [smul_eq_mul]
   nlinarith
 
-/-- **Rockafellar, Corollary 21.6.2** for **Theorem 21.2**: if alternative (b) holds there, the
-`λ₁, …, λ_m` can be chosen so that no more than `n + 1` of them differ from `0` — the count running
-over the affine multipliers as well as the convex ones, since the book's `λ₁, …, λ_m` is one list.
-
-The book's proof, verbatim: if alternative (a) fails it already fails for a subsystem of at most
-`n + 1` inequalities (Corollary 21.6.1, with the affine constraints read as the convex functions
-`x ↦ ⟨aⱼ, x⟩ - αⱼ`), and Theorem 21.2 applied to that subsystem produces multipliers which extend
-by zero. Unlike `corollary_21_6_2` there is no degenerate case to dispose of: an *empty* convex
-part would make the subsystem solvable at the feasible point supplied by `hfeas`, contradicting
-its selection. -/
+/-- **Corollary 21.6.2** for **Theorem 21.2**: if alternative (b) holds there, at most `n + 1` of
+`λ₁, …, λ_m` need be non-zero, the count running over the affine multipliers as well as the convex
+ones, since the book's `λ₁, …, λ_m` is one list. The book's proof, verbatim: if (a) fails it
+already fails for a subsystem of at most `n + 1` inequalities, and Theorem 21.2 applied to that
+subsystem produces multipliers which extend by zero. -/
 theorem corollary_21_6_2_affine {ι κ : Type*} [Fintype ι] [Fintype κ] {C : Set (Rn n)}
     {f : ι → Rn n → EReal} {a : κ → (Rn n →ᵃ[ℝ] ℝ)} (hC : Convex ℝ C) (hf : ∀ i, ConvexFn (f i))
     (hp : ∀ i, Proper (f i)) (hdom : ∀ i, ri C ⊆ dom (f i))

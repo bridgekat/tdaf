@@ -16,113 +16,20 @@ import Tdaf.Surface.Rockafellar.Part4.Section19
 /-!
 # Rockafellar, §23: Directional Derivatives and Subgradients
 
-R. T. Rockafellar, *Convex Analysis* (Princeton, 1970), §23, pp. 213–222: the one-sided
-directional derivative `f'(x; y)`, the subdifferential `∂f(x)`, and the duality
-`x* ∈ ∂f(x) ⟺ f(x) + f*(x*) = ⟨x, x*⟩` that makes the two calculable.
+The one-sided directional derivative `f'(x; y)`, the subdifferential `∂f(x)`, and the duality
+`x* ∈ ∂f(x) ⟺ f(x) + f*(x*) = ⟨x, x*⟩` that makes the two calculable. This is where Parts II and
+III are cashed in: Theorem 23.2 is Corollary 13.2.1 applied to `f'(x; ·)`, Theorem 23.4 is Theorem
+7.2 with Corollary 7.4.2, Theorem 23.8 is Theorem 16.4, and Theorem 23.9 is Theorem 16.3.
 
-This is the first section of Part V, and it is where Parts II and III are cashed in: Theorem 23.2
-is Corollary 13.2.1 applied to `f'(x; ·)`, Theorem 23.4 is Theorem 7.2 plus Corollary 7.4.2,
-Theorem 23.8 is Theorem 16.4 (or the Alternative Proof's Theorem 11.3), and Theorem 23.9 is
-Theorem 16.3.
+All sixteen numbered results of §23 are formalized over `Rn n = ℝⁿ`: Theorems 23.1–23.10 and
+Corollaries 23.5.1–23.5.4, 23.7.1, 23.8.1.
 
-## Contents
-
-| label | declaration |
-|---|---|
-| Theorem 23.1 | `theorem_23_1_monotone`, `theorem_23_1_iInf`, `theorem_23_1_posHomogeneous`,
-  `theorem_23_1_convex`, `theorem_23_1_zero`, `theorem_23_1_neg_le` |
-| Theorem 23.2 | `theorem_23_2`, `theorem_23_2_closure` |
-| Theorem 23.3 | `theorem_23_3_proper`, `theorem_23_3_two_sided`, `theorem_23_3_relint` |
-| Theorem 23.4 | `theorem_23_4_notMem_dom`, `theorem_23_4_nonempty`, `theorem_23_4_proper`,
-  `theorem_23_4_closed`, `theorem_23_4_supportFn`, `theorem_23_4_isBounded_iff`,
-  `theorem_23_4_finite_iff` |
-| p. 218 example | `nonsmoothMaxFn`, `notConvex_domSubgradient_nonsmoothMaxFn`,
-  `proper_convexFn_nonsmoothMaxFn` |
-| Theorem 23.5 | `theorem_23_5_a`, `theorem_23_5_b`, `theorem_23_5_c`, `theorem_23_5_d`,
-  `theorem_23_5_a_star`, `theorem_23_5_b_star`, `theorem_23_5_a_star_star` |
-| Corollary 23.5.1 | `corollary_23_5_1`, `corollary_23_5_1_mem` |
-| Corollary 23.5.2 | `corollary_23_5_2_clFn`, `corollary_23_5_2_subgradient` |
-| Corollary 23.5.3 | `corollary_23_5_3` |
-| Corollary 23.5.4 | `corollary_23_5_4`, `corollary_23_5_4_inv` |
-| Theorem 23.6 | `theorem_23_6` |
-| Theorem 23.7 | `theorem_23_7` |
-| Corollary 23.7.1 | `corollary_23_7_1`, `corollary_23_7_1_smul` |
-| Theorem 23.8 | `theorem_23_8_subset`, `theorem_23_8`, `theorem_23_8_polyhedral` |
-| Corollary 23.8.1 | `corollary_23_8_1_subset`, `corollary_23_8_1` |
-| Theorem 23.9 | `theorem_23_9_subset`, `theorem_23_9`, `theorem_23_9_polyhedral` |
-| Theorem 23.10 | `theorem_23_10_nonempty`, `theorem_23_10_polyhedral`,
-  `theorem_23_10_dirDeriv_polyhedral`, `theorem_23_10_dirDeriv_proper`,
-  `theorem_23_10_supportFn` |
-
-## The section's definitions
-
-Both of the section's objects are backbone definitions and are used without a surface copy.
-
-* `Tdaf.ConvexAnalysis.dirDeriv f x y` is Rockafellar's `f'(x; y)`, defined as the infimum of the
-  difference quotient over `λ > 0`. The book defines it as the limit as `λ ↓ 0` and *proves* in
-  Theorem 23.1 that the two agree; the backbone takes the infimum as the definition, and
-  `theorem_23_1_monotone` supplies the monotonicity that identifies it with the limit.
-* `Tdaf.ConvexAnalysis.subgradient (pairing n) f x` is `∂f(x)`, and
-  `Tdaf.ConvexAnalysis.subgradientRel (pairing n) f` is the multivalued mapping `∂f` itself, as a
-  `SetRel`. Corollary 23.5.1 is `SetRel.inv` applied to the latter, which is what the book's "in
-  the sense of multivalued mappings" means.
-* `Tdaf.ConvexAnalysis.normalCone (pairing n) C x` is `N_C(x)`, and
-  `Tdaf.ConvexAnalysis.epsSubgradient (pairing n) ε f x` is `∂_ε f(x)`. The unnumbered facts the
-  book records about `∂_ε` — it is closed and convex, it shrinks with `ε`, and its intersection
-  over `ε > 0` is `∂f(x)` — are `epsSubgradient_convex_closed` and
-  `epsSubgradient_iInter` below.
-
-The one definition introduced here is `Rockafellar.nonsmoothMaxFn`, the book's counterexample of
-p. 218: `f(ξ₁, ξ₂) = max {1 - ξ₁^{1/2}, |ξ₂|}` on the right half-plane, `+∞` off it. It is kept as a
-*test case* rather than as a remark — `notConvex_domSubgradient_nonsmoothMaxFn` proves that
-`dom ∂f` is not convex, which is the sentence the book uses it for, and
-`proper_convexFn_nonsmoothMaxFn` checks that it really is a proper convex function so that the
-counterexample is to the statement the book makes. The three points that do the work are `(0, 1)`,
-`(0, -1)` and their midpoint `(0, 0)`; the failure at the midpoint is the vertical tangent of `√`.
-
-## Where the book's hypotheses had to change
-
-**Theorem 23.5, clauses (a), (b) and (c), need neither convexity nor properness.** The book states
-the whole theorem for a proper convex `f`. Clauses (a)–(c) are three readings of one system of weak
-linear inequalities, and the backbone proves their equivalence with no hypothesis at all
-(`mem_subgradient_iff_forall_sub_le`, `mem_subgradient_iff_conj_le`,
-`mem_subgradient_iff_add_conj_le`); only the passage from the inequality (c) to the *equality* (d)
-consumes `Proper`, because `f x + f* x*` can otherwise be `⊥`. The declarations below carry the
-hypotheses that are used and record the difference here rather than re-adding them.
-
-**Theorem 23.6 asks `IsClosed (epi f)` where the book says "closed".** For a proper convex function
-those are the same condition; the backbone spells it as the epigraph because `ClosedFn` is defined
-as the fixed-point equation `cl f = f`, whose unification behaviour is a known hazard
-(`gotchas.md` EL13).
-
-**Theorem 23.6 is an infimum, not a limit.** The book writes `lim_{ε ↓ 0} δ*(y | ∂_ε f(x))`. The
-sets `∂_ε f(x)` increase with `ε`, so the limit is a monotone infimum and the backbone states it as
-one; nothing is lost, and no filter is needed.
-
-**Corollary 23.7.1 is stated twice.** `corollary_23_7_1` gives the normal cone as the convex cone
-generated by `∂f(x)`, which is the backbone's conclusion, and `corollary_23_7_1_smul` gives the
-book's own reading `∃ λ ≥ 0, x* ∈ λ ∂f(x)`. The two agree by Corollary 9.6.1's description of the
-cone generated by a *convex* set (`mem_coe_hull_iff_of_convex`), plus the non-emptiness of `∂f(x)`
-that the hypothesis `x ∈ int (dom f)` supplies.
-
-**Theorem 23.9's two constructors are backbone constructors.** `IsExactImage.of_relint`
-(`Duality/Relint.lean`) carries the book's own hypotheses — `h` proper convex, not closed — and
-`IsExactImage.of_polyhedral` (`Polyhedral/Duality.lean`) is the polyhedral clause, which is
-Theorem 19.2 plus Corollary 19.3.1. Both theorems below are one-line specialisations of
-`IsExactImage.subgradient_compLin` at one of the two.
-
-## What is not here
-
-* **`rec (∂f(x)) = N_{dom f}(x)`** (book, p. 218, line 8477) — *omitted with a reason*: the book
-  leaves it "as an exercise" and verifies it only later, inside the proof of Theorem 25.6. It is
-  unnumbered, and it is **not** assumed anywhere in this file. What the backbone does have is the
-  one-sided fact `subgradient_add_normalCone_dom_subset` (`∂f(x) + N_{dom f}(x) ⊆ ∂f(x)`, with no
-  hypothesis), which is the easy half; the converse is §25's obligation, and §25 should discharge
-  it rather than inherit it.
-* **The complementary-slackness description of `∂δ(· | ℝⁿ₊)`** (book, p. 222) — *omitted with a
-  reason*: it is unnumbered, and it is the instance of `corollary_23_5_4` at the non-negative
-  orthant. What it needs beyond this file is the identification of the orthant's polar with the
-  non-positive orthant, which belongs to §14 and not here.
+Both of the section's objects are backbone definitions. `dirDeriv f x y` is `f'(x; y)`, *defined*
+as the infimum of the difference quotient over `λ > 0`; the book defines it as the limit as `λ ↓ 0`
+and proves in Theorem 23.1 that the two agree, which here is `theorem_23_1_monotone`.
+`subgradient (pairing n) f x` is `∂f(x)`, and `subgradientRel (pairing n) f` is the multivalued
+mapping `∂f` as a `SetRel`, so that Corollary 23.5.1 is `SetRel.inv` applied to it. `normalCone` is
+`N_C(x)` and `epsSubgradient` is `∂_ε f(x)`.
 
 ## References
 
@@ -139,73 +46,54 @@ variable {m n : ℕ}
 
 /-! ### Theorem 23.1: the one-sided directional derivative -/
 
-/-- **Rockafellar, Theorem 23.1**, first assertion. For a convex `f` finite at `x`, the difference
-quotient `[f(x + λy) - f(x)] / λ` is a non-decreasing function of `λ > 0`.
-
-This is what identifies the book's `lim_{λ ↓ 0}` with the backbone's `⨅_{λ > 0}`: a monotone
-function's limit at the left endpoint is its infimum. Specialises `monotoneOn_sub_div`. -/
+/-- **Theorem 23.1**, first assertion. For convex `f` finite at `x`, the difference quotient
+`[f(x + λy) - f(x)] / λ` is non-decreasing in `λ > 0`. This is what identifies the book's
+`lim_{λ ↓ 0}` with the infimum that defines `dirDeriv`. -/
 theorem theorem_23_1_monotone {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} {r : ℝ}
     (hr : f x = (r : EReal)) (y : Rn n) :
     MonotoneOn (fun a : ℝ => (f (x + a • y) - f x) / (a : EReal)) (Ioi 0) :=
   monotoneOn_sub_div hf hr y
 
-/-- **Rockafellar, Theorem 23.1**, the formula `f'(x; y) = inf_{λ > 0} [f(x + λy) - f(x)] / λ`.
-
-In the backbone this is the *definition* of `dirDeriv`, so the content of the book's sentence is
-`theorem_23_1_monotone`, which says the infimum is a limit. -/
+/-- **Theorem 23.1**, the formula `f'(x; y) = inf_{λ > 0} [f(x + λy) - f(x)] / λ`, which here is
+the definition of `dirDeriv`. -/
 theorem theorem_23_1_iInf (f : Rn n → EReal) (x y : Rn n) :
     dirDeriv f x y = ⨅ a ∈ Ioi (0 : ℝ), (f (x + a • y) - f x) / (a : EReal) :=
   dirDeriv_apply f x y
 
-/-- **Rockafellar, Theorem 23.1**: `f'(x; ·)` is positively homogeneous.
-
-This clause needs nothing at all — neither convexity of `f` nor finiteness at `x` — because it is a
-reindexing of the infimum. Specialises `posHomogeneous_dirDeriv`. -/
+/-- **Theorem 23.1**: `f'(x; ·)` is positively homogeneous. This clause needs neither convexity of
+`f` nor finiteness at `x`, being a reindexing of the infimum. -/
 theorem theorem_23_1_posHomogeneous (f : Rn n → EReal) (x : Rn n) :
     PosHomogeneous (dirDeriv f x) :=
   posHomogeneous_dirDeriv f x
 
-/-- **Rockafellar, Theorem 23.1**: `f'(x; ·)` is a convex function of `y`.
-
-Specialises `convexFn_dirDeriv`. The finiteness of `f` at `x` is not removable: off `dom f` the
-difference quotient is `⊤ - ⊤ = ⊥` in every direction. -/
+/-- **Theorem 23.1**: `f'(x; ·)` is a convex function of `y`. Finiteness of `f` at `x` is not
+removable: off `dom f` the difference quotient is `⊤ - ⊤ = ⊥` in every direction. -/
 theorem theorem_23_1_convex {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} (ht : f x ≠ ⊤)
     (hb : f x ≠ ⊥) : ConvexFn (dirDeriv f x) :=
   convexFn_dirDeriv hf ht hb
 
-/-- **Rockafellar, Theorem 23.1**: `f'(x; 0) = 0`.
-
-Specialises `dirDeriv_zero`. -/
+/-- **Theorem 23.1**: `f'(x; 0) = 0`. -/
 theorem theorem_23_1_zero {f : Rn n → EReal} {x : Rn n} (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     dirDeriv f x 0 = 0 :=
   dirDeriv_zero ht hb
 
-/-- **Rockafellar, Theorem 23.1**, last assertion: `-f'(x; -y) ≤ f'(x; y)` for every `y`.
-
-Specialises `neg_dirDeriv_neg_le`. -/
+/-- **Theorem 23.1**, last assertion: `-f'(x; -y) ≤ f'(x; y)` for every `y`. -/
 theorem theorem_23_1_neg_le {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} (ht : f x ≠ ⊤)
     (hb : f x ≠ ⊥) (y : Rn n) : -dirDeriv f x (-y) ≤ dirDeriv f x y :=
   neg_dirDeriv_neg_le hf ht hb y
 
 /-! ### Theorem 23.2: subgradients and directional derivatives -/
 
-/-- **Rockafellar, Theorem 23.2.** For a convex `f` finite at `x`, a vector `x*` is a subgradient
-of `f` at `x` if and only if `f'(x; y) ≥ ⟨x*, y⟩` for every `y`.
-
-Specialises `mem_subgradient_iff_le_dirDeriv`; convexity of `f` is not used, because the
-subgradient inequality and the infimum of difference quotients are two spellings of the same
-system. -/
+/-- **Theorem 23.2**. For convex `f` finite at `x`, `x* ∈ ∂f(x)` iff `f'(x; y) ≥ ⟨x*, y⟩` for
+every `y`. Convexity is not used: the subgradient inequality and the infimum of difference
+quotients are two spellings of the same system. -/
 theorem theorem_23_2 {f : Rn n → EReal} {x : Rn n} (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) {y : Rn n} :
     y ∈ subgradient (pairing n) f x ↔
       ∀ v : Rn n, ((pairing n v y : ℝ) : EReal) ≤ dirDeriv f x v :=
   mem_subgradient_iff_le_dirDeriv ht hb
 
-/-- **Rockafellar, Theorem 23.2**, second assertion: the closure of `f'(x; ·)` as a convex function
-of `y` is the support function of the closed convex set `∂f(x)`.
-
-Specialises `clFn_dirDeriv`, which is Corollary 13.2.1 applied to the positively homogeneous convex
-function `f'(x; ·)`. The `.flip` the backbone hands back is `pairing n` again
-(`supportFn_flip_pairing`). -/
+/-- **Theorem 23.2**, second assertion: the closure of `f'(x; ·)` as a convex function of `y` is
+the support function of the closed convex set `∂f(x)`. -/
 theorem theorem_23_2_closure {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} (ht : f x ≠ ⊤)
     (hb : f x ≠ ⊥) :
     clFn (dirDeriv f x) = supportFn (pairing n) (subgradient (pairing n) f x) := by
@@ -214,30 +102,22 @@ theorem theorem_23_2_closure {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} (
 
 /-! ### Theorem 23.3: when subgradients exist -/
 
-/-- **Rockafellar, Theorem 23.3**, first assertion: if `f` is subdifferentiable at a point where it
-is finite, then `f` is proper.
-
-Specialises `proper_of_subgradient_nonempty`: a subgradient exhibits an affine minorant, and a
-convex function with an affine minorant cannot take the value `-∞`. -/
+/-- **Theorem 23.3**, first assertion: a function subdifferentiable at a point where it is finite
+is proper — a subgradient exhibits an affine minorant. -/
 theorem theorem_23_3_proper {f : Rn n → EReal} {x : Rn n} (ht : f x ≠ ⊤) (hb : f x ≠ ⊥)
     (h : (subgradient (pairing n) f x).Nonempty) : Proper f :=
   proper_of_subgradient_nonempty ht hb h
 
-/-- **Rockafellar, Theorem 23.3**, second assertion: if `f` is *not* subdifferentiable at `x`,
-there is an infinite two-sided directional derivative there — some `y` with
-`f'(x; y) = -f'(x; -y) = -∞`.
-
-Specialises `exists_dirDeriv_eq_bot_and_dirDeriv_neg_eq_top`. The book's `-f'(x; -y) = -∞` is
-`f'(x; -y) = +∞`, which is how it is stated here. -/
+/-- **Theorem 23.3**, second assertion: if `f` is *not* subdifferentiable at `x`, some direction
+has `f'(x; y) = -f'(x; -y) = -∞`. The book's `-f'(x; -y) = -∞` is stated here as
+`f'(x; -y) = +∞`. -/
 theorem theorem_23_3_two_sided {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} (ht : f x ≠ ⊤)
     (hb : f x ≠ ⊥) (hsub : subgradient (pairing n) f x = ∅) :
     ∃ y : Rn n, dirDeriv f x y = ⊥ ∧ dirDeriv f x (-y) = ⊤ :=
   exists_dirDeriv_eq_bot_and_dirDeriv_neg_eq_top hf ht hb hsub
 
-/-- **Rockafellar, Theorem 23.3**, last assertion: if `f` is not subdifferentiable at `x` then
-`f'(x; z - x) = -∞` for *every* `z ∈ ri (dom f)`.
-
-Specialises `dirDeriv_eq_bot_of_subgradient_eq_empty`. -/
+/-- **Theorem 23.3**, last assertion: if `f` is not subdifferentiable at `x` then
+`f'(x; z - x) = -∞` for *every* `z ∈ ri (dom f)`. -/
 theorem theorem_23_3_relint {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} (ht : f x ≠ ⊤)
     (hb : f x ≠ ⊥) (hsub : subgradient (pairing n) f x = ∅) {z : Rn n} (hz : z ∈ ri (dom f)) :
     dirDeriv f x (z - x) = ⊥ :=
@@ -245,63 +125,45 @@ theorem theorem_23_3_relint {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} (h
 
 /-! ### Theorem 23.4: existence, closedness and boundedness -/
 
-/-- **Rockafellar, Theorem 23.4**, first assertion: for a proper convex `f` and `x ∉ dom f`, the
-set `∂f(x)` is empty.
-
-Specialises `subgradient_eq_empty_of_notMem_dom`; convexity is not used. -/
+/-- **Theorem 23.4**, first assertion: `∂f(x) = ∅` for `x ∉ dom f`. Convexity is not used. -/
 theorem theorem_23_4_notMem_dom {f : Rn n → EReal} (hp : Proper f) {x : Rn n} (hx : x ∉ dom f) :
     subgradient (pairing n) f x = ∅ :=
   subgradient_eq_empty_of_notMem_dom hp hx
 
-/-- **Rockafellar, Theorem 23.4**: a proper convex function is subdifferentiable at every point of
-`ri (dom f)`.
-
-Specialises `subgradient_nonempty_of_mem_relint_dom`. -/
+/-- **Theorem 23.4**: a proper convex function is subdifferentiable at every point of
+`ri (dom f)`. -/
 theorem theorem_23_4_nonempty {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n}
     (hx : x ∈ ri (dom f)) : (subgradient (pairing n) f x).Nonempty :=
   subgradient_nonempty_of_mem_relint_dom hf hp hx
 
-/-- **Rockafellar, Theorem 23.4**: for `x ∈ ri (dom f)`, `f'(x; ·)` is proper.
-
-Specialises `proper_dirDeriv_of_mem_relint_dom`, which is Theorem 7.2 applied to `f'(x; ·)`: its
-effective domain is the subspace parallel to `aff (dom f)`, and it vanishes at the origin. -/
+/-- **Theorem 23.4**: for `x ∈ ri (dom f)`, `f'(x; ·)` is proper. -/
 theorem theorem_23_4_proper {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n}
     (hx : x ∈ ri (dom f)) : Proper (dirDeriv f x) :=
   proper_dirDeriv_of_mem_relint_dom hf hp hx
 
-/-- **Rockafellar, Theorem 23.4**: for `x ∈ ri (dom f)`, `f'(x; ·)` is closed.
-
-Specialises `closedFn_dirDeriv_of_mem_relint_dom`, which is Corollary 7.4.2. -/
+/-- **Theorem 23.4**: for `x ∈ ri (dom f)`, `f'(x; ·)` is closed. -/
 theorem theorem_23_4_closed {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n}
     (hx : x ∈ ri (dom f)) : ClosedFn (dirDeriv f x) :=
   closedFn_dirDeriv_of_mem_relint_dom hf hp hx
 
-/-- **Rockafellar, Theorem 23.4**: for `x ∈ ri (dom f)`,
-`f'(x; y) = sup {⟨x*, y⟩ | x* ∈ ∂f(x)} = δ*(y | ∂f(x))`.
-
-Specialises `dirDeriv_eq_supportFn_of_mem_relint_dom`. Because `f'(x; ·)` is already closed there,
-no closure operation appears — this is the sharpening of Theorem 23.2 that the relative interior
-buys. -/
+/-- **Theorem 23.4**: for `x ∈ ri (dom f)`, `f'(x; y) = δ*(y | ∂f(x))`. Because `f'(x; ·)` is
+already closed there no closure appears — this is the sharpening of Theorem 23.2 that the relative
+interior buys. -/
 theorem theorem_23_4_supportFn {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n}
     (hx : x ∈ ri (dom f)) :
     dirDeriv f x = supportFn (pairing n) (subgradient (pairing n) f x) := by
   have h := dirDeriv_eq_supportFn_of_mem_relint_dom (B := pairing n) hf hp hx
   rwa [supportFn_flip_pairing] at h
 
-/-- **Rockafellar, Theorem 23.4**, last assertion: `∂f(x)` is a non-empty *bounded* set if and only
-if `x ∈ int (dom f)`.
-
-Specialises `isBounded_subgradient_iff_mem_interior_dom`; the non-emptiness is
-`theorem_23_4_nonempty`, so only the boundedness is at issue. -/
+/-- **Theorem 23.4**, last assertion: `∂f(x)` is non-empty and *bounded* iff
+`x ∈ int (dom f)`. -/
 theorem theorem_23_4_isBounded_iff {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     {x : Rn n} (hx : x ∈ ri (dom f)) :
     Bornology.IsBounded (subgradient (pairing n) f x) ↔ x ∈ interior (dom f) :=
   isBounded_subgradient_iff_mem_interior_dom hf hp hx
 
-/-- **Rockafellar, Theorem 23.4**, last clause: in that case `f'(x; y)` is finite for every `y`.
-
-Specialises `dom_dirDeriv_eq_univ_iff_mem_interior_dom`; "finite for every `y`" is
-`dom (f'(x; ·)) = ℝⁿ` together with properness (`theorem_23_4_proper`), which rules out `-∞`. -/
+/-- **Theorem 23.4**, last clause: in that case `f'(x; y)` is finite for every `y`. "Finite" is
+`dom (f'(x; ·)) = ℝⁿ` together with properness, which rules out `-∞`. -/
 theorem theorem_23_4_finite_iff {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n}
     (hx : x ∈ ri (dom f)) : dom (dirDeriv f x) = univ ↔ x ∈ interior (dom f) :=
   dom_dirDeriv_eq_univ_iff_mem_interior_dom hf hp hx
@@ -309,24 +171,17 @@ theorem theorem_23_4_finite_iff {f : Rn n → EReal} (hf : ConvexFn f) (hp : Pro
 /-! ### `dom ∂f` need not be convex
 
 Theorem 23.4 places the set of points at which a proper convex function is subdifferentiable
-between `ri (dom f)` and `dom f`. Rockafellar immediately observes (p. 218) that it need not be
-convex, and gives the example transcribed here. The coordinate formula `⟨u, v⟩ = u₀v₀ + u₁v₁` it
-runs on is `Tdaf.Surface.pairing_two`. -/
+between `ri (dom f)` and `dom f`. Rockafellar observes (p. 218) that it need not be convex, and
+gives the example transcribed here. -/
 
-/-- **Rockafellar, p. 218.** The function `f(ξ₁, ξ₂) = max {g(ξ₁), |ξ₂|}` on `ℝ²`, where
-`g(ξ₁) = 1 - ξ₁^{1/2}` for `ξ₁ ≥ 0` and `g(ξ₁) = +∞` for `ξ₁ < 0`.
-
-Its effective domain is the closed right half-plane, and it is subdifferentiable everywhere on that
-half-plane **except** in the relative interior of the segment joining `(0, 1)` and `(0, -1)` — so
-`dom ∂f` is not convex. The three points that witness this are `(0, 1)`, `(0, -1)` and their
-midpoint `(0, 0)`; see `notConvex_domSubgradient_nonsmoothMaxFn`. -/
+/-- **p. 218.** The function `f(ξ₁, ξ₂) = max {g(ξ₁), |ξ₂|}` on `ℝ²`, where `g(ξ₁) = 1 - ξ₁^{1/2}`
+for `ξ₁ ≥ 0` and `+∞` for `ξ₁ < 0`. Its effective domain is the closed right half-plane, and it is
+subdifferentiable everywhere on that half-plane **except** in the relative interior of the segment
+joining `(0, 1)` and `(0, -1)`, so `dom ∂f` is not convex. -/
 noncomputable def nonsmoothMaxFn : Rn 2 → EReal :=
   Tdaf.ConvexAnalysis.restrict {x : Rn 2 | 0 ≤ x 0}
     fun x => ((max (1 - Real.sqrt (x 0)) |x 1| : ℝ) : EReal)
 
-/-- The real-valued function underneath `nonsmoothMaxFn` is convex on the right half-plane. The
-first component is convex because `√` is concave (`Real.strictConcaveOn_sqrt`), the second because
-`|·|` is a norm, and a maximum of convex functions is convex. -/
 private theorem convexOn_nonsmoothMax :
     ConvexOn ℝ {x : Rn 2 | 0 ≤ x 0} fun x => max (1 - Real.sqrt (x 0)) |x 1| := by
   have hconv : Convex ℝ {x : Rn 2 | 0 ≤ x 0} := by
@@ -363,27 +218,20 @@ private theorem convexOn_nonsmoothMax :
   · exact habs.trans (add_le_add (mul_le_mul_of_nonneg_left (le_max_right _ _) ha)
       (mul_le_mul_of_nonneg_left (le_max_right _ _) hb))
 
-/-- The book's example is a convex function. -/
 private theorem convexFn_nonsmoothMaxFn : ConvexFn nonsmoothMaxFn :=
   (convexOn_iff_convexFn _ _).1 convexOn_nonsmoothMax
 
-/-- The value of the example at a point of the right half-plane. -/
 private theorem nonsmoothMaxFn_of_nonneg {x : Rn 2} (hx : 0 ≤ x 0) :
     nonsmoothMaxFn x = ((max (1 - Real.sqrt (x 0)) |x 1| : ℝ) : EReal) :=
   Tdaf.ConvexAnalysis.restrict_of_mem hx
 
-/-- Off the right half-plane the example is `+∞`. -/
 private theorem nonsmoothMaxFn_of_neg {x : Rn 2} (hx : ¬ 0 ≤ x 0) : nonsmoothMaxFn x = ⊤ :=
   Tdaf.ConvexAnalysis.restrict_of_notMem hx
 
-/-- The upper vertex `(0, 1)` of the book's segment. -/
 private noncomputable def upperPoint : Rn 2 := WithLp.toLp 2 ![(0 : ℝ), 1]
 
-/-- The lower vertex `(0, -1)` of the book's segment. -/
 private noncomputable def lowerPoint : Rn 2 := WithLp.toLp 2 ![(0 : ℝ), -1]
 
-/-- `(0, 1)` is a subgradient of the example at `(0, 1)`: the affine function `z ↦ ζ₂` minorizes
-`f` and is exact there. -/
 private theorem mem_subgradient_upperPoint :
     upperPoint ∈ subgradient (pairing 2) nonsmoothMaxFn upperPoint := by
   have h0 : upperPoint 0 = (0 : ℝ) := rfl
@@ -404,7 +252,6 @@ private theorem mem_subgradient_upperPoint :
   · rw [nonsmoothMaxFn_of_neg hz]
     exact le_top
 
-/-- `(0, -1)` is a subgradient of the example at `(0, -1)`. -/
 private theorem mem_subgradient_lowerPoint :
     lowerPoint ∈ subgradient (pairing 2) nonsmoothMaxFn lowerPoint := by
   have h0 : lowerPoint 0 = (0 : ℝ) := rfl
@@ -425,10 +272,8 @@ private theorem mem_subgradient_lowerPoint :
   · rw [nonsmoothMaxFn_of_neg hz]
     exact le_top
 
-/-- **The origin is the point Rockafellar's example is about.** `f` is finite at `(0, 0)`, but the
-difference quotient in the direction `(1, 0)` behaves like `-λ^{-1/2}`, so `f'(0; (1,0)) = -∞` and
-`∂f(0) = ∅` by Theorem 23.3. The argument here is the direct one: a subgradient `y` would have to
-satisfy `t · y₁ ≤ -1` for every `t ∈ (0, 1]`, which fails at `t = 1 / (|y₁| + 1)`. -/
+/-- `f` is finite at the origin, but the difference quotient in the direction `(1, 0)` behaves like
+`-λ^{-1/2}`, so `f'(0; (1,0)) = -∞` and `∂f(0) = ∅`. -/
 private theorem subgradient_nonsmoothMaxFn_zero :
     subgradient (pairing 2) nonsmoothMaxFn 0 = ∅ := by
   rw [Set.eq_empty_iff_forall_notMem]
@@ -472,12 +317,9 @@ private theorem subgradient_nonsmoothMaxFn_zero :
     linarith
   linarith
 
-/-- **Rockafellar, p. 218**: the set of points at which a proper convex function is
-subdifferentiable need not be convex.
-
-`dom ∂f` contains `(0, 1)` and `(0, -1)` but not their midpoint `(0, 0)`. This is the test case the
-book supplies immediately after Theorem 23.4, and it is why that theorem can only *sandwich*
-`dom ∂f` between `ri (dom f)` and `dom f`. -/
+/-- **p. 218**: the set of points at which a proper convex function is subdifferentiable need not
+be convex. `dom ∂f` contains `(0, 1)` and `(0, -1)` but not their midpoint `(0, 0)`; this is why
+Theorem 23.4 can only *sandwich* `dom ∂f` between `ri (dom f)` and `dom f`. -/
 theorem notConvex_domSubgradient_nonsmoothMaxFn :
     ¬ Convex ℝ (domSubgradient (pairing 2) nonsmoothMaxFn) := by
   intro hconv
@@ -495,8 +337,8 @@ theorem notConvex_domSubgradient_nonsmoothMaxFn :
   rw [subgradient_nonsmoothMaxFn_zero] at hy
   exact hy
 
-/-- The example really is a *proper convex* function, so it is a witness for the statement the book
-makes and not for a weaker one. -/
+/-- The example really is a *proper convex* function, so it witnesses the statement the book
+makes. -/
 theorem proper_convexFn_nonsmoothMaxFn : ConvexFn nonsmoothMaxFn ∧ Proper nonsmoothMaxFn := by
   refine ⟨convexFn_nonsmoothMaxFn, ⟨⟨0, ?_⟩, fun x => ?_⟩⟩
   · have hz0 : (0 : Rn 2) 0 = (0 : ℝ) := rfl
@@ -510,51 +352,38 @@ theorem proper_convexFn_nonsmoothMaxFn : ConvexFn nonsmoothMaxFn ∧ Proper nons
 
 /-! ### Theorem 23.5: the four conditions, and the three starred ones -/
 
-/-- **Rockafellar, Theorem 23.5**, condition (a): `x* ∈ ∂f(x)`, i.e. the subgradient inequality
-`f(z) ≥ f(x) + ⟨x*, z - x⟩` for every `z`.
-
-This is the definition of `subgradient`, recorded as a clause so that the seven conditions can be
-read off one list. -/
+/-- **Theorem 23.5**, condition (a): `x* ∈ ∂f(x)`, that is `f(z) ≥ f(x) + ⟨x*, z - x⟩` for every
+`z`. Recorded as a clause so that the seven conditions read off one list. -/
 theorem theorem_23_5_a {f : Rn n → EReal} {x y : Rn n} :
     y ∈ subgradient (pairing n) f x ↔
       ∀ z : Rn n, f x + ((pairing n (z - x) y : ℝ) : EReal) ≤ f z :=
   mem_subgradient
 
-/-- **Rockafellar, Theorem 23.5**, condition (b): `⟨z, x*⟩ - f(z)` achieves its supremum in `z` at
-`z = x`.
-
-Specialises `mem_subgradient_iff_forall_sub_le`. Neither convexity nor properness is used: this is
-the subgradient inequality with the terms moved across, and `⟨z, x*⟩ - f(z)` is finite-minus-`EReal`
-so no `∞ - ∞` can arise. -/
+/-- **Theorem 23.5**, condition (b): `⟨z, x*⟩ - f(z)` attains its supremum in `z` at `z = x`.
+Neither convexity nor properness is used, this being the subgradient inequality with the terms
+moved across. -/
 theorem theorem_23_5_b {f : Rn n → EReal} {x y : Rn n} :
     y ∈ subgradient (pairing n) f x ↔
       ∀ z : Rn n, ((pairing n z y : ℝ) : EReal) - f z ≤ ((pairing n x y : ℝ) : EReal) - f x :=
   mem_subgradient_iff_forall_sub_le
 
-/-- **Rockafellar, Theorem 23.5**, condition (c): `f(x) + f*(x*) ≤ ⟨x, x*⟩`.
-
-Specialises `mem_subgradient_iff_add_conj_le`. Since the supremum in (b) *is* `f*(x*)`, this is (b)
-restated; again no hypothesis is needed. -/
+/-- **Theorem 23.5**, condition (c): `f(x) + f*(x*) ≤ ⟨x, x*⟩`. Since the supremum in (b) *is*
+`f*(x*)`, this is (b) restated; again no hypothesis is needed. -/
 theorem theorem_23_5_c {f : Rn n → EReal} {x y : Rn n} :
     y ∈ subgradient (pairing n) f x ↔
       f x + conj (pairing n) f y ≤ ((pairing n x y : ℝ) : EReal) :=
   mem_subgradient_iff_add_conj_le
 
-/-- **Rockafellar, Theorem 23.5**, condition (d): `f(x) + f*(x*) = ⟨x, x*⟩`.
-
-Specialises `Proper.mem_subgradient_iff_add_conj_eq`. This is the one clause of (a)–(d) that
-genuinely consumes properness: Fenchel's inequality `⟨x, x*⟩ ≤ f(x) + f*(x*)` is false for
+/-- **Theorem 23.5**, condition (d): `f(x) + f*(x*) = ⟨x, x*⟩`. This is the one clause of (a)–(d)
+that genuinely consumes properness: Fenchel's inequality `⟨x, x*⟩ ≤ f(x) + f*(x*)` is false for
 `f ≡ +∞`, since `⊤ + ⊥ = ⊥` in `EReal`. -/
 theorem theorem_23_5_d {f : Rn n → EReal} (hp : Proper f) {x y : Rn n} :
     y ∈ subgradient (pairing n) f x ↔
       f x + conj (pairing n) f y = ((pairing n x y : ℝ) : EReal) :=
   hp.mem_subgradient_iff_add_conj_eq
 
-/-- **Rockafellar, Theorem 23.5**, condition (a*): `x ∈ ∂f*(x*)`, available when
-`(cl f)(x) = f(x)`.
-
-Specialises `mem_subgradient_conj_iff`, whose hypothesis is `f** x = f x`; for convex `f` that is
-`(cl f)(x) = f(x)` by Fenchel–Moreau (`biconj_eq_clFn`). -/
+/-- **Theorem 23.5**, condition (a*): `x ∈ ∂f*(x*)`, available when `(cl f)(x) = f(x)` — which for
+convex `f` is Fenchel–Moreau's `f** x = f x`. -/
 theorem theorem_23_5_a_star {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n}
     (hx : clFn f x = f x) {y : Rn n} :
     x ∈ subgradient (pairing n) (conj (pairing n) f) y ↔ y ∈ subgradient (pairing n) f x := by
@@ -562,10 +391,8 @@ theorem theorem_23_5_a_star {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n}
   have h := mem_subgradient_conj_iff (B := pairing n) (f := f) (x := x) (y := y) hbi
   rwa [subgradient_flip_pairing] at h
 
-/-- **Rockafellar, Theorem 23.5**, condition (b*): `⟨x, z*⟩ - f*(z*)` achieves its supremum in `z*`
-at `z* = x*`, available when `(cl f)(x) = f(x)`.
-
-This is condition (b) for `f*` at the point `x`, reached through (a*). -/
+/-- **Theorem 23.5**, condition (b*): `⟨x, z*⟩ - f*(z*)` attains its supremum in `z*` at `z* = x*`,
+available when `(cl f)(x) = f(x)`. -/
 theorem theorem_23_5_b_star {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n}
     (hx : clFn f x = f x) {y : Rn n} :
     y ∈ subgradient (pairing n) f x ↔
@@ -574,60 +401,42 @@ theorem theorem_23_5_b_star {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n}
   rw [← theorem_23_5_a_star hf hx, theorem_23_5_b]
   exact forall_congr' fun w => by rw [pairing_comm w x, pairing_comm y x]
 
-/-- **Rockafellar, Theorem 23.5**, condition (a**): `x* ∈ ∂(cl f)(x)`, available when
-`(cl f)(x) = f(x)`.
-
-Specialises `mem_subgradient_clFn_iff`. -/
+/-- **Theorem 23.5**, condition (a**): `x* ∈ ∂(cl f)(x)`, available when `(cl f)(x) = f(x)`. -/
 theorem theorem_23_5_a_star_star {f : Rn n → EReal} {x : Rn n} (hx : clFn f x = f x)
     {y : Rn n} :
     y ∈ subgradient (pairing n) (clFn f) x ↔ y ∈ subgradient (pairing n) f x :=
   mem_subgradient_clFn_iff hx
 
-/-- **Rockafellar, Corollary 23.5.1.** For a closed proper convex `f`, the multivalued mapping
-`∂f*` is the inverse of `∂f`.
-
-`subgradientRel` is `∂f` as a `SetRel ℝⁿ ℝⁿ`, so the corollary is literally `SetRel.inv` applied to
-it — which is why the backbone bundles the graph as well as the pointwise sets.
-
-**The book states this corollary with no proof at all.** It follows from the equivalence of (a) and
-(a*) in Theorem 23.5, whose hypothesis `(cl f)(x) = f(x)` is automatic for a closed `f`. -/
+/-- **Corollary 23.5.1**. For a closed proper convex `f`, the multivalued mapping `∂f*` is the
+inverse of `∂f` — literally `SetRel.inv` applied to `subgradientRel`. **The book states this
+corollary with no proof**; it follows from the equivalence of (a) and (a*) in Theorem 23.5, whose
+hypothesis `(cl f)(x) = f(x)` is automatic for a closed `f`. -/
 theorem corollary_23_5_1 {f : Rn n → EReal} (hf : ConvexFn f) (hc : ClosedFn f) :
     subgradientRel (pairing n) (conj (pairing n) f) = (subgradientRel (pairing n) f).inv := by
   have h := subgradientRel_conj_eq_inv (B := pairing n) hf hc
   rwa [flip_pairing] at h
 
-/-- **Rockafellar, Corollary 23.5.1**, pointwise: `x ∈ ∂f*(x*)` if and only if `x* ∈ ∂f(x)`.
-
-**Stated without proof in the book**; see `corollary_23_5_1`. -/
+/-- **Corollary 23.5.1**, pointwise: `x ∈ ∂f*(x*)` iff `x* ∈ ∂f(x)`. -/
 theorem corollary_23_5_1_mem {f : Rn n → EReal} (hf : ConvexFn f) (hc : ClosedFn f)
     {x y : Rn n} :
     x ∈ subgradient (pairing n) (conj (pairing n) f) y ↔ y ∈ subgradient (pairing n) f x := by
   have h := mem_subgradient_conj_iff_of_closedFn (B := pairing n) (x := x) (y := y) hf hc
   rwa [subgradient_flip_pairing] at h
 
-/-- **Rockafellar, Corollary 23.5.2**, first assertion: if the proper convex `f` is
-subdifferentiable at `x` then `(cl f)(x) = f(x)`.
-
-Specialises `clFn_eq_of_mem_subgradient`. Properness is not needed: a subgradient already forces
-the biconjugate to agree with `f` at `x`. -/
+/-- **Corollary 23.5.2**, first assertion: if `f` is subdifferentiable at `x` then
+`(cl f)(x) = f(x)`. Properness is not needed. -/
 theorem corollary_23_5_2_clFn {f : Rn n → EReal} (hf : ConvexFn f) {x y : Rn n}
     (hy : y ∈ subgradient (pairing n) f x) : clFn f x = f x :=
   clFn_eq_of_mem_subgradient hf hy
 
-/-- **Rockafellar, Corollary 23.5.2**, second assertion: and then `∂(cl f)(x) = ∂f(x)`.
-
-Specialises `subgradient_clFn`, which is the equivalence of (a) and (a**) in Theorem 23.5. -/
+/-- **Corollary 23.5.2**, second assertion: and then `∂(cl f)(x) = ∂f(x)`. -/
 theorem corollary_23_5_2_subgradient {f : Rn n → EReal} (hf : ConvexFn f) {x y : Rn n}
     (hy : y ∈ subgradient (pairing n) f x) :
     subgradient (pairing n) (clFn f) x = subgradient (pairing n) f x :=
   subgradient_clFn hf hy
 
-/-- **Rockafellar, Corollary 23.5.3.** For a non-empty closed convex `C` and any `x*`, the set
-`∂δ*(x* | C)` consists of the points `x` (if any) at which the linear function `⟨·, x*⟩` achieves
-its maximum over `C`.
-
-Specialises `subgradient_supportFn`, which is the equivalence of (a*) and (b) at
-`f = δ(· | C)`. -/
+/-- **Corollary 23.5.3**. For a non-empty closed convex `C`, `∂δ*(x* | C)` consists of the points
+of `C` (if any) at which `⟨·, x*⟩ ` attains its maximum over `C`. -/
 theorem corollary_23_5_3 {C : Set (Rn n)} (hC : IsClosed C) (hCc : Convex ℝ C)
     (hCne : C.Nonempty) (y : Rn n) :
     subgradient (pairing n) (supportFn (pairing n) C) y
@@ -635,30 +444,23 @@ theorem corollary_23_5_3 {C : Set (Rn n)} (hC : IsClosed C) (hCc : Convex ℝ C)
   have h := subgradient_supportFn (B := pairing n) hC hCc hCne y
   rwa [subgradient_flip_pairing] at h
 
-/-- The normal cone to a set at the origin is its polar cone. -/
 private theorem normalCone_zero (C : Set (Rn n)) :
     normalCone (pairing n) C 0 = polarCone (pairing n) C := by
   ext y
   simp only [mem_normalCone, mem_polarCone, sub_zero]
 
-/-- **Rockafellar, Corollary 23.5.4.** For a convex cone `K`, one has `x* ∈ ∂δ(x | K)` if and only
-if `x ∈ K`, `x* ∈ K°` and `⟨x, x*⟩ = 0` — the complementary-slackness form.
-
-Specialises `mem_subgradient_indicatorFn_pointedCone`. **Rockafellar assumes `K` non-empty and
-closed and neither hypothesis is used**: he derives the corollary from `δ(· | K)* = δ(· | K°)`,
-which needs closedness, while the direct argument — put `z = 0` and `z = x + x` into the subgradient
-inequality — does not. -/
+/-- **Corollary 23.5.4**. For a convex cone `K`, `x* ∈ ∂δ(x | K)` iff `x ∈ K`, `x* ∈ K°` and
+`⟨x, x*⟩ = 0` — the complementary-slackness form. **Rockafellar assumes `K` non-empty and closed
+and neither hypothesis is used**: he derives the corollary from `δ(· | K)* = δ(· | K°)`, which needs
+closedness, whereas putting `z = 0` and `z = x + x` into the subgradient inequality does not. -/
 theorem corollary_23_5_4 (K : PointedCone ℝ (Rn n)) {x y : Rn n} :
     y ∈ subgradient (pairing n) (indicatorFn (K : Set (Rn n))) x ↔
       x ∈ K ∧ y ∈ polarCone (pairing n) (K : Set (Rn n)) ∧ pairing n x y = 0 := by
   rw [mem_subgradient_indicatorFn_pointedCone, normalCone_zero]
 
-/-- **Rockafellar, Corollary 23.5.4**, the duality: for a closed convex cone `K`,
-`x* ∈ ∂δ(x | K)` if and only if `x ∈ ∂δ(x* | K°)`.
-
-Both sides unfold by `corollary_23_5_4` to the same three conditions, once `K°° = K`
-(**Theorem 14.1**) has identified the polar of `K°` with `K`. Closedness and non-emptiness are used
-here, and only here. -/
+/-- **Corollary 23.5.4**, the duality: for a *closed* convex cone `K`, `x* ∈ ∂δ(x | K)` iff
+`x ∈ ∂δ(x* | K°)`. Both sides unfold to the same three conditions once `K°° = K` (Theorem 14.1)
+identifies the polar of `K°` with `K`. Closedness is used here and only here. -/
 theorem corollary_23_5_4_inv {K : PointedCone ℝ (Rn n)} (hK : IsClosed (K : Set (Rn n)))
     {x y : Rn n} :
     y ∈ subgradient (pairing n) (indicatorFn (K : Set (Rn n))) x ↔
@@ -678,31 +480,23 @@ theorem corollary_23_5_4_inv {K : PointedCone ℝ (Rn n)} (hK : IsClosed (K : Se
 
 /-! ### Theorem 23.6: `ε`-subgradients -/
 
-/-- The unnumbered facts the book records about `∂_ε f(x)` immediately before Theorem 23.6: it is a
-closed convex set for every `ε`.
-
-`epsSubgradient` is the backbone's `∂_ε f(x)`, and the description
-`∂_ε f(x) = {x* | h*(x*) ≤ ε}` with `h(y) = f(x + y) - f(x)` is `epsSubgradient_eq_setOf_conj_le`,
-from which both clauses follow. -/
+/-- An unnumbered fact recorded before Theorem 23.6: `∂_ε f(x)` is a closed convex set for every
+`ε`, being `{x* | h*(x*) ≤ ε}` for `h(y) = f(x + y) - f(x)`. -/
 theorem epsSubgradient_convex_closed {f : Rn n → EReal} {x : Rn n} {r : ℝ}
     (hr : f x = (r : EReal)) (ε : ℝ) :
     Convex ℝ (epsSubgradient (pairing n) ε f x) ∧
       IsClosed (epsSubgradient (pairing n) ε f x) :=
   ⟨convex_epsSubgradient hr ε, isClosed_epsSubgradient hr ε⟩
 
-/-- The other unnumbered fact: the nest `∂_ε f(x)`, `ε > 0`, has intersection `∂f(x)`.
-
-Specialises `iInter_epsSubgradient`. -/
+/-- The other unnumbered fact: the nest `∂_ε f(x)`, `ε > 0`, has intersection `∂f(x)`. -/
 theorem epsSubgradient_iInter (f : Rn n → EReal) (x : Rn n) :
     ⋂ ε ∈ Ioi (0 : ℝ), epsSubgradient (pairing n) ε f x = subgradient (pairing n) f x :=
   iInter_epsSubgradient (pairing n) f x
 
-/-- **Rockafellar, Theorem 23.6.** For a closed proper convex `f` finite at `x`,
-`f'(x; y) = lim_{ε ↓ 0} δ*(y | ∂_ε f(x))`.
-
-Specialises `dirDeriv_eq_iInf_supportFn_epsSubgradient`. Two departures from the printed statement,
-both recorded in the module docstring: the limit is written as the infimum it is (the sets increase
-with `ε`), and "closed" is spelled as `IsClosed (epi f)`. -/
+/-- **Theorem 23.6**. For a closed proper convex `f` finite at `x`,
+`f'(x; y) = lim_{ε ↓ 0} δ*(y | ∂_ε f(x))`. The sets `∂_ε f(x)` increase with `ε`, so the book's
+limit is written here as the infimum it is; and "closed" is spelled as `IsClosed (epi f)`, which
+for a proper convex function is the same condition. -/
 theorem theorem_23_6 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
     (hc : IsClosed (epi f)) {x : Rn n} {r : ℝ} (hr : f x = (r : EReal)) (v : Rn n) :
     ⨅ ε ∈ Ioi (0 : ℝ), supportFn (pairing n) (epsSubgradient (pairing n) ε f x) v
@@ -712,12 +506,9 @@ theorem theorem_23_6 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f)
 
 /-! ### Theorem 23.7: normals to a level set -/
 
-/-- **Rockafellar, Theorem 23.7.** Let `f` be a proper convex function and let `x` be a point at
-which `f` is subdifferentiable but does not achieve its minimum. Then the normal cone to
-`C = {z | f(z) ≤ f(x)}` at `x` is the closure of the convex cone generated by `∂f(x)`.
-
-Specialises `normalCone_setOf_le_eq_closure_coe_hull_subgradient`. The hypothesis
-`⨅ z, f z < f x` is the book's "f does not achieve its minimum at `x`". -/
+/-- **Theorem 23.7**. If `f` is proper convex and subdifferentiable at `x` but does not attain its
+minimum there, the normal cone at `x` to `C = {z | f(z) ≤ f(x)}` is the closure of the convex cone
+generated by `∂f(x)`. The hypothesis `⨅ z, f z < f x` is "does not attain its minimum". -/
 theorem theorem_23_7 {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} {r : ℝ}
     (hr : f x = (r : EReal)) (hinf : ⨅ z, f z < (r : EReal))
     (hne : (subgradient (pairing n) f x).Nonempty) :
@@ -725,25 +516,20 @@ theorem theorem_23_7 {f : Rn n → EReal} (hf : ConvexFn f) {x : Rn n} {r : ℝ}
       = closure ((PointedCone.hull ℝ (subgradient (pairing n) f x) : Set (Rn n))) :=
   normalCone_setOf_le_eq_closure_coe_hull_subgradient hf hr hinf hne
 
-/-- **Rockafellar, Corollary 23.7.1.** If `x` is an interior point of `dom f` at which `f` does not
-achieve its minimum, the closure in Theorem 23.7 is unnecessary: the normal cone to
-`C = {z | f(z) ≤ f(x)}` at `x` is the convex cone generated by `∂f(x)`.
-
-Specialises `normalCone_setOf_le_eq_coe_hull_subgradient_of_mem_interior_dom`; what makes the
-closure redundant is that `∂f(x)` is then non-empty, closed, bounded and misses the origin, so
-Corollary 9.6.1 applies. -/
+/-- **Corollary 23.7.1**. If `x ∈ int (dom f)` and `f` does not attain its minimum there, the
+closure in Theorem 23.7 is unnecessary: the normal cone is the convex cone generated by `∂f(x)`.
+What makes the closure redundant is that `∂f(x)` is then non-empty, closed, bounded and misses the
+origin, so Corollary 9.6.1 applies. -/
 theorem corollary_23_7_1 {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n} {r : ℝ}
     (hr : f x = (r : EReal)) (hinf : ⨅ z, f z < (r : EReal)) (hx : x ∈ interior (dom f)) :
     normalCone (pairing n) {z | f z ≤ (r : EReal)} x
       = (PointedCone.hull ℝ (subgradient (pairing n) f x) : Set (Rn n)) :=
   normalCone_setOf_le_eq_coe_hull_subgradient_of_mem_interior_dom hf hp hr hinf hx
 
-/-- **Rockafellar, Corollary 23.7.1** in the book's own words: `x*` is normal to
-`C = {z | f(z) ≤ f(x)}` at `x` if and only if there exists a `λ ≥ 0` with `x* ∈ λ ∂f(x)`.
-
-The convex cone generated by a *convex* set is the union of its non-negative multiples
-(`mem_coe_hull_iff_of_convex`, Corollary 9.6.1); `∂f(x)` is convex with no hypothesis, and it is
-non-empty because `x ∈ int (dom f) ⊆ ri (dom f)`, which is what turns `λ > 0` into `λ ≥ 0`. -/
+/-- **Corollary 23.7.1** in the book's own words: `x*` is normal to `C = {z | f(z) ≤ f(x)}` at `x`
+iff `x* ∈ λ ∂f(x)` for some `λ ≥ 0`. The convex cone generated by a *convex* set is the union of
+its non-negative multiples (Corollary 9.6.1), and `∂f(x)` is non-empty here, which is what turns
+`λ > 0` into `λ ≥ 0`. -/
 theorem corollary_23_7_1_smul {f : Rn n → EReal} (hf : ConvexFn f) (hp : Proper f) {x : Rn n}
     {r : ℝ} (hr : f x = (r : EReal)) (hinf : ⨅ z, f z < (r : EReal))
     (hx : x ∈ interior (dom f)) {y : Rn n} :
@@ -765,41 +551,28 @@ theorem corollary_23_7_1_smul {f : Rn n → EReal} (hf : ConvexFn f) (hp : Prope
 
 /-! ### Theorem 23.8: the sum rule -/
 
-/-- **Rockafellar, Theorem 23.8**, the unconditional inclusion: for proper convex `f₁, …, fₘ` and
-`f = f₁ + ⋯ + fₘ`, one has `∂f(x) ⊇ ∂f₁(x) + ⋯ + ∂fₘ(x)` for every `x`.
-
-No hypothesis at all — the `m` subgradient inequalities simply add. -/
+/-- **Theorem 23.8**, the unconditional inclusion: `∂(f₁ + ⋯ + fₘ)(x) ⊇ ∂f₁(x) + ⋯ + ∂fₘ(x)`, with
+no hypothesis — the `m` subgradient inequalities simply add. -/
 theorem theorem_23_8_subset {ι : Type*} (s : Finset ι) (f : ι → Rn n → EReal) (x : Rn n) :
     ∑ i ∈ s, subgradient (pairing n) (f i) x ⊆ subgradient (pairing n) (∑ i ∈ s, f i) x :=
   subgradient_finsetSum_subset (pairing n) s f x
 
-/-- **Rockafellar, Theorem 23.8.** If the convex sets `ri (dom fᵢ)`, `i = 1, …, m`, have a point in
-common, then `∂(f₁ + ⋯ + fₘ)(x) = ∂f₁(x) + ⋯ + ∂fₘ(x)` for every `x`.
-
-Stated for a `Finset` of summands, as the book states it, and **not** by induction on `m`:
-`IsExactFinsetSum.of_relint` is Theorem 16.4 in the same `m`-ary form, so the constraint
-qualification is discharged once.
-
-The book gives two proofs. The printed one goes through Theorem 16.4, which is the route taken
-here; the ALTERNATIVE PROOF (p. 220) uses only proper separation of the two convex sets
-`{(x, μ) | μ ≥ f₁ x}` and `{(x, μ) | μ ≤ -f₂ x}` in `ℝⁿ⁺¹`, and reduces `m` to `2` by induction on
-Theorem 6.5. It is the more elementary argument, but it is also the one that *needs* the induction:
-the backbone's `IsExactFinsetSum` interface already carries the `m`-ary statement, and running the
-separation argument instead would put the induction back. -/
+/-- **Theorem 23.8**. If the sets `ri (dom fᵢ)` have a point in common, then
+`∂(f₁ + ⋯ + fₘ)(x) = ∂f₁(x) + ⋯ + ∂fₘ(x)` for every `x`. Stated for a `Finset` of summands, as the
+book states it, and **not** by induction on `m`: the constraint qualification is discharged once,
+by Theorem 16.4 in the same `m`-ary form. The book's ALTERNATIVE PROOF (p. 220) is more elementary
+— proper separation of `{(x, μ) | μ ≥ f₁ x}` from `{(x, μ) | μ ≤ -f₂ x}` in `ℝⁿ⁺¹` — but reduces
+`m` to `2` by an induction this route avoids. -/
 theorem theorem_23_8 {ι : Type*} {s : Finset ι} (hs : s.Nonempty) {f : ι → Rn n → EReal}
     (hf : ∀ i ∈ s, ConvexFn (f i)) (hpf : ∀ i ∈ s, Proper (f i)) {x₀ : Rn n}
     (hx₀ : ∀ i ∈ s, x₀ ∈ ri (dom (f i))) (x : Rn n) :
     subgradient (pairing n) (∑ i ∈ s, f i) x = ∑ i ∈ s, subgradient (pairing n) (f i) x :=
   (IsExactFinsetSum.of_relint hs hf hpf hx₀).subgradient_finsetSum x
 
-/-- **Rockafellar, Theorem 23.8**, last sentence: the condition for equality weakens when some of
-the `fᵢ` are polyhedral. If `f₁, …, f_k` are polyhedral it is enough that
-`dom f₁, …, dom f_k, ri (dom f_{k+1}), …, ri (dom fₘ)` have a point in common.
-
-`t` is the book's `{1, …, k}` and `u` its complement; the index set is split membership-wise so
-that no `DecidableEq` instance reaches the statement (`gotchas.md` SET11). Specialises
-`IsExactFinsetSum.of_polyhedral`, which is Theorem 20.1. The book's ALTERNATIVE PROOF explicitly
-does *not* cover this clause. -/
+/-- **Theorem 23.8**, last sentence: the condition for equality weakens when some `fᵢ` are
+polyhedral. If `f₁, …, f_k` are polyhedral it is enough that `dom f₁, …, dom f_k`,
+`ri (dom f_{k+1}), …, ri (dom fₘ)` have a point in common — Theorem 20.1. Here `t` is the book's
+`{1, …, k}` and `u` its complement. The book's ALTERNATIVE PROOF does not cover this clause. -/
 theorem theorem_23_8_polyhedral {ι : Type*} {s t u : Finset ι} (hs : s.Nonempty)
     (hdisj : Disjoint t u) (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u) {f : ι → Rn n → EReal}
     (hpoly : ∀ i ∈ t, PolyhedralFn (f i)) (hconv : ∀ i ∈ u, ConvexFn (f i))
@@ -810,7 +583,6 @@ theorem theorem_23_8_polyhedral {ι : Type*} {s t u : Finset ι} (hs : s.Nonempt
 
 /-! ### Corollary 23.8.1: normals to an intersection -/
 
-/-- Splitting off one index from an intersection over a `Finset`. -/
 private theorem biInter_cons {ι : Type*} {i : ι} {t : Finset ι} (hi : i ∉ t)
     (C : ι → Set (Rn n)) : (⋂ j ∈ Finset.cons i t hi, C j) = C i ∩ ⋂ j ∈ t, C j := by
   ext z
@@ -822,11 +594,8 @@ private theorem biInter_cons {ι : Type*} {i : ι} {t : Finset ι} (hi : i ∉ t
     · exact h₁
     · exact h₂ j hj
 
-/-- **Rockafellar, Corollary 23.8.1**, the unconditional inclusion: the sum of the normal cones is
-contained in the normal cone to the intersection.
-
-Proved directly rather than through indicators, so that it needs no hypothesis on the sets or on
-the point. -/
+/-- **Corollary 23.8.1**, the unconditional inclusion: the sum of the normal cones is contained in
+the normal cone to the intersection. Proved directly, so no hypothesis is needed. -/
 theorem corollary_23_8_1_subset {ι : Type*} (C : ι → Set (Rn n)) (x : Rn n) :
     ∀ s : Finset ι,
       ∑ i ∈ s, normalCone (pairing n) (C i) x ⊆ normalCone (pairing n) (⋂ i ∈ s, C i) x := by
@@ -841,16 +610,11 @@ theorem corollary_23_8_1_subset {ι : Type*} (C : ι → Set (Rn n)) (x : Rn n) 
       rw [Finset.sum_cons, biInter_cons hi C]
       exact (Set.add_subset_add_left ih).trans (normalCone_add_subset (pairing n) (C i) _ x)
 
-/-- **Rockafellar, Corollary 23.8.1.** Let `C₁, …, Cₘ` be convex sets whose relative interiors have
-a point in common. Then the normal cone to `C₁ ∩ ⋯ ∩ Cₘ` at any `x` is `K₁ + ⋯ + Kₘ`, where `Kᵢ` is
-the normal cone to `Cᵢ` at `x`.
-
-The indicator instance of Theorem 23.8, via `indicatorFn_finsetSum`
-(`δ(·|C₁) + ⋯ + δ(·|Cₘ) = δ(·| ⋂ Cᵢ)`, with no side condition) and `subgradient_indicatorFn`. The
-hypothesis `x ∈ Cᵢ` is not in the book, and it is not removable here: Rockafellar's `N_C(x)` is
-`∂δ(x | C)`, which is *empty* off `C`, whereas the backbone's `normalCone` is defined at every point
-and always contains `0`. The two agree exactly on `C`, so `x ∈ ⋂ Cᵢ` is where the transcription is
-faithful; off it the identity is false for the backbone's `normalCone`. -/
+/-- **Corollary 23.8.1**. If the convex sets `C₁, …, Cₘ` have a common relative interior point, the
+normal cone to `C₁ ∩ ⋯ ∩ Cₘ` at `x` is the sum of the normal cones to the `Cᵢ` at `x`. This is the
+indicator instance of Theorem 23.8. **The hypothesis `x ∈ Cᵢ` is not in the book and is not
+removable**: Rockafellar's `N_C(x)` is `∂δ(x | C)`, which is empty off `C`, whereas `normalCone` is
+defined everywhere and always contains `0`; the two agree exactly on `C`. -/
 theorem corollary_23_8_1 {ι : Type*} {s : Finset ι} (hs : s.Nonempty) {C : ι → Set (Rn n)}
     (hC : ∀ i ∈ s, Convex ℝ (C i)) {x₀ : Rn n} (hx₀ : ∀ i ∈ s, x₀ ∈ ri (C i)) {x : Rn n}
     (hx : ∀ i ∈ s, x ∈ C i) :
@@ -871,38 +635,26 @@ theorem corollary_23_8_1 {ι : Type*} {s : Finset ι} (hs : s.Nonempty) {C : ι 
 
 /-! ### Theorem 23.9: composition with a linear transformation -/
 
-/-- **Rockafellar, Theorem 23.9**, the unconditional inclusion: for `f(x) = h(Ax)` one has
-`∂f(x) ⊇ A*∂h(Ax)` for every `x`.
-
-Specialises `image_subgradient_subset`; `h` is arbitrary and only the adjointness is used. -/
+/-- **Theorem 23.9**, the unconditional inclusion: for `f(x) = h(Ax)`, `∂f(x) ⊇ A*∂h(Ax)`. Here
+`h` is arbitrary and only the adjointness is used. -/
 theorem theorem_23_9_subset (A : Rn n →ₗ[ℝ] Rn m) (h : Rn m → EReal) (x : Rn n) :
     LinearMap.adjoint A '' subgradient (pairing m) h (A x)
       ⊆ subgradient (pairing n) (compLin h A) x :=
   image_subgradient_subset (isAdjointPair_adjoint A) h x
 
-/-- **Rockafellar, Theorem 23.9.** Let `f(x) = h(Ax)` with `h` a proper convex function on `ℝᵐ` and
-`A` a linear transformation from `ℝⁿ` to `ℝᵐ`. If the range of `A` contains a point of
-`ri (dom h)`, then `∂f(x) = A*∂h(Ax)` for every `x`.
-
-Specialises `IsExactImage.subgradient_compLin`, which is Theorem 23.5 applied to the exact
-conjugacy formula of Theorem 16.3. Rockafellar's `A*` is `LinearMap.adjoint A`; on `ℝⁿ` the
-adjointness hypothesis the backbone carries as data is `isAdjointPair_adjoint`.
-
-The constraint qualification is discharged by `IsExactImage.of_relint`, which carries the
-book's hypotheses; the polyhedral clause is `theorem_23_9_polyhedral` below. -/
+/-- **Theorem 23.9**. For `f(x) = h(Ax)` with `h` proper convex on `ℝᵐ`: if the range of `A`
+contains a point of `ri (dom h)`, then `∂f(x) = A*∂h(Ax)` for every `x`. This is Theorem 23.5
+applied to the exact conjugacy formula of Theorem 16.3; Rockafellar's `A*` is
+`LinearMap.adjoint A`. -/
 theorem theorem_23_9 (A : Rn n →ₗ[ℝ] Rn m) {h : Rn m → EReal} (hh : ConvexFn h) (hp : Proper h)
     {x₀ : Rn n} (hx₀ : A x₀ ∈ ri (dom h)) (x : Rn n) :
     subgradient (pairing n) (compLin h A) x
       = LinearMap.adjoint A '' subgradient (pairing m) h (A x) :=
   (IsExactImage.of_relint (isAdjointPair_adjoint A) hh hp hx₀).subgradient_compLin x
 
-/-- **Rockafellar, Theorem 23.9**, last clause: if `h` is *polyhedral* and the range of `A` merely
-contains a point of `dom h` — no relative interior — then `∂f(x) = A*∂h(Ax)` for every `x`.
-
-The book proves this by observing that "the formula for `f*` in terms of `h*` can be obtained still
-from Theorem 16.3 via Corollary 19.3.1", which is exactly the route the backbone's
-`IsExactImage.of_polyhedral` takes; `theorem_16_3_polyhedral` is the conjugacy formula it produces
-on the way. -/
+/-- **Theorem 23.9**, last clause: if `h` is *polyhedral* and the range of `A` merely meets
+`dom h` — no relative interior — then `∂f(x) = A*∂h(Ax)`. The book's route is Theorem 16.3 via
+Corollary 19.3.1, which is the one taken here. -/
 theorem theorem_23_9_polyhedral (A : Rn n →ₗ[ℝ] Rn m) {h : Rn m → EReal} (hh : PolyhedralFn h)
     (hp : Proper h) {x₀ : Rn n} (hx₀ : A x₀ ∈ dom h) (x : Rn n) :
     subgradient (pairing n) (compLin h A) x
@@ -911,42 +663,31 @@ theorem theorem_23_9_polyhedral (A : Rn n →ₗ[ℝ] Rn m) {h : Rn m → EReal}
 
 /-! ### Theorem 23.10: the polyhedral case -/
 
-/-- **Rockafellar, Theorem 23.10**, first assertion: a polyhedral convex function is
-subdifferentiable at every point where it is finite.
-
-Specialises `subgradient_nonempty_of_polyhedralFn`. No relative interior is needed: the cone
-generated by `epi f - (x, f x)` is polyhedral, hence closed (Corollary 19.7.1), so `f'(x; ·)` is
-already closed and Theorem 23.2 gives a subgradient. -/
+/-- **Theorem 23.10**, first assertion: a polyhedral convex function is subdifferentiable wherever
+it is finite. No relative interior is needed: the cone generated by `epi f - (x, f x)` is
+polyhedral, hence closed (Corollary 19.7.1), so `f'(x; ·)` is already closed. -/
 theorem theorem_23_10_nonempty {f : Rn n → EReal} (hf : PolyhedralFn f) {x : Rn n}
     (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) : (subgradient (pairing n) f x).Nonempty :=
   subgradient_nonempty_of_polyhedralFn hf ht hb
 
-/-- **Rockafellar, Theorem 23.10**: and `∂f(x)` is a polyhedral convex set.
-
-Specialises `polyhedral_subgradient_of_polyhedralFn` (Corollary 19.2.1). -/
+/-- **Theorem 23.10**: and `∂f(x)` is a polyhedral convex set. -/
 theorem theorem_23_10_polyhedral {f : Rn n → EReal} (hf : PolyhedralFn f) {x : Rn n}
     (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) : Polyhedral (subgradient (pairing n) f x) :=
   polyhedral_subgradient_of_polyhedralFn hf ht hb
 
-/-- **Rockafellar, Theorem 23.10**: `f'(x; ·)` is a polyhedral convex function.
-
-Specialises `polyhedralFn_dirDeriv`. -/
+/-- **Theorem 23.10**: `f'(x; ·)` is a polyhedral convex function. -/
 theorem theorem_23_10_dirDeriv_polyhedral {f : Rn n → EReal} (hf : PolyhedralFn f) {x : Rn n}
     (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) : PolyhedralFn (dirDeriv f x) :=
   polyhedralFn_dirDeriv hf ht hb
 
-/-- **Rockafellar, Theorem 23.10**: `f'(x; ·)` is proper.
-
-Specialises `proper_dirDeriv_of_polyhedralFn`. The book's reason is worth keeping: `f'(x; 0) = 0`,
-and a polyhedral convex function taking the value `-∞` somewhere has no finite values at all. -/
+/-- **Theorem 23.10**: `f'(x; ·)` is proper. The book's reason: `f'(x; 0) = 0`, and a polyhedral
+convex function taking the value `-∞` somewhere has no finite values at all. -/
 theorem theorem_23_10_dirDeriv_proper {f : Rn n → EReal} (hf : PolyhedralFn f) {x : Rn n}
     (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) : Proper (dirDeriv f x) :=
   proper_dirDeriv_of_polyhedralFn hf ht hb
 
-/-- **Rockafellar, Theorem 23.10**, last assertion: `f'(x; ·)` is the support function of `∂f(x)`,
-with no closure operation.
-
-Specialises `dirDeriv_eq_supportFn_of_polyhedralFn`. -/
+/-- **Theorem 23.10**, last assertion: `f'(x; ·)` is the support function of `∂f(x)`, with no
+closure operation. -/
 theorem theorem_23_10_supportFn {f : Rn n → EReal} (hf : PolyhedralFn f) {x : Rn n}
     (ht : f x ≠ ⊤) (hb : f x ≠ ⊥) :
     dirDeriv f x = supportFn (pairing n) (subgradient (pairing n) f x) := by
