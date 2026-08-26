@@ -13,133 +13,65 @@ import Mathlib.Analysis.Convex.Gauge
 /-!
 # Gauges, polars of convex functions, and obverses
 
-Rockafellar's §15, together with the two results of §14 — Theorems 14.6 and 14.7 — that belong
-with it. Four correspondences live here, all of them involutions on a characterised class:
-
-| correspondence | class | book |
-|---|---|---|
-| `C ↦ γ(· ∣ C)` (`gaugeEquiv`) | closed convex sets containing `0` ↔ closed gauges | §15 |
-| `k ↦ k°` (`polarGaugeEquiv`) | closed gauges | Thm 15.1, Cor 15.1.1 |
-| `f ↦ f°` (`polarFnEquiv`) | `IsPolarFn` | Thm 15.4, Cor 15.4.1 |
-| `f ↦ fᵒ` (`obverse_obverse`) | `IsPolarFn` | Thm 15.5 |
+The **gauge** of a set `C` is `γ(x ∣ C) = inf {a ≥ 0 ∣ x ∈ a • C}`: the least dilation of `C` that
+swallows `x`, and `+∞` when none does. Gauges are exactly the nonnegative positively homogeneous
+convex functions vanishing at `0`, and `C ↦ γ(· ∣ C)` is a bijection from closed convex sets
+containing `0` to closed gauges. Three polarity operations act here, each an involution on its
+class: the polar `k°(y) = inf {μ ≥ 0 ∣ ⟨x, y⟩ ≤ μ k(x)}` of a gauge, the polar
+`f°(y) = inf {μ ≥ 0 ∣ ⟨x, y⟩ ≤ 1 + μ f(x)}` of a nonnegative closed convex `f` with `f 0 = 0`, and
+the obverse `fᵒ(x) = inf {λ > 0 ∣ λ f(x / λ) ≤ 1}`. On a gauge the first two agree, and the obverse
+ties them to the Fenchel conjugate: `f* = (f°)ᵒ`. Theorems 14.6 and 14.7 — the recession cone of a
+polar set, and the level sets of a nonnegative convex function — are proved here too, because the
+gauge is what makes them short.
 
 ## Main definitions
 
-* `gaugeFn C` — Rockafellar's gauge `γ(· ∣ C) = inf {a ≥ 0 ∣ x ∈ a • C}`, `EReal`-valued.
-* `IsGauge k` — nonnegative, positively homogeneous, convex, `k 0 = 0`.
-* `polarGauge B k` — the polar `k°(y) = inf {μ ≥ 0 ∣ ⟨x, y⟩ ≤ μ k(x) ∀ x}` of a gauge.
-* `polarFn B f` — the polar `f°(y) = inf {μ ≥ 0 ∣ ⟨x, y⟩ ≤ 1 + μ f(x) ∀ x}` of a nonnegative
-  convex function, in the `∞`-free epigraph form; `polarFn_apply_eq` is the book's formula.
-* `IsPolarFn f` — nonnegative, closed, convex, `f 0 = 0`: the class of Corollary 15.4.1.
-* `obverse f` — `inf {λ > 0 ∣ (fλ)(x) ≤ 1}`, Rockafellar's obverse.
-* `IsNorm k` — a gauge that is finite, symmetric and positive off the origin (§15).
-* `IsNorm.toSeminorm` — a norm in Rockafellar's sense is a Mathlib `Seminorm`, with
-  `IsNorm.apply_smul` (absolute homogeneity) as the step positive homogeneity does not give.
-* `AbsorbsAll C`, `RayFree C` — the two conditions on `C` that make `γ(· ∣ C)` a norm.
-* `epiPairing B`, `vNeg X`, `mulPairing` — the pairing of `E × ℝ` with `F × ℝ` and the vertical
-  reflection, the apparatus in which Theorem 15.4 is proved.
+* `gaugeFn C`, `IsGauge k` — the gauge, `EReal`-valued, and its characterising properties.
+* `polarGauge B k`, `polarFn B f`, `obverse f` — the three operations above. `polarFn` infimises
+  over `epi f`; `polarFn_apply_eq` recovers the book's formula.
+* `IsPolarFn f` — nonnegative, closed, convex, `f 0 = 0`: the class `polarFn` inverts.
+* `IsNorm k` — a gauge that is finite, symmetric and positive off `0`; `IsNorm.toSeminorm` builds
+  the Mathlib `Seminorm`. `AbsorbsAll C` and `RayFree C` make `γ(· ∣ C)` a norm.
+* `epiPairing B`, `vNeg X` — the pairing of `E × ℝ` with `F × ℝ`, and vertical reflection.
 * `UpClosed S` — upward closed subsets of `ℝ`, the shape of every admissible-scalar set here.
 
 ## Main results
 
-* `gaugeEquiv` — §15, the correspondence `k(x) = γ(x ∣ C)`, `C = {x ∣ k x ≤ 1}`.
-* `isGauge_iff` — a function is a gauge exactly when it is the gauge of a nonempty convex set.
-* `recessionCone_eq_polarCone_polarSet`, `recessionCone_polarSet`, `polarCone_recessionCone`,
-  `polarCone_linealitySpace` — **Theorem 14.6**.
-* `finrank_vectorSpan_polarSet_add_lineality`, `finrank_vectorSpan_add_lineality_polarSet` —
-  **Corollary 14.6.1**, the dimension relations `dim C° = n - lin C` and `lin C° = n - dim C`,
-  stated without truncated subtraction. `finrank_add_finrank_polarSubmodule` is the underlying
-  fact that the polar of a subspace has the complementary dimension.
-* `polarSet_setOf_le_subset_and_subset` — **Theorem 14.7**.
-* `polarGauge_eq_supportFn`, `isGauge_polarGauge`, `polarGauge_gaugeFn`, `polarGauge_polarGauge`,
-  `polarGaugeEquiv`, `polarSet_eq_iff_polarGauge_gaugeFn_eq` — **Theorem 15.1**, **Cor 15.1.1**.
-* `polarGauge_gaugeFn_eq_supportFn` — **Corollary 15.1.2**.
-* `isNorm_iff`, `isNorm_polarGauge_gaugeFn` — **Theorem 15.2**.
-* `epi_polarFn`, `polarFn_polarFn`, `polarFnEquiv` — **Theorem 15.4**, **Cor 15.4.1**.
-* `obverse_obverse`, `conj_eq_obverse_polarFn`, `polarFn_eq_obverse_conj`, `polarFn_obverse`,
-  `conj_obverse` — **Theorem 15.5**; `polarFn_conj_eq_conj_polarFn` is **Cor 15.5.1**.
-* `setOf_polarFn_le` — the last display of §15, `{f° ≤ α⁻¹} = α⁻¹ {f* ≤ α}`, whose right-hand
-  side is the middle set of Theorem 14.7.
-* `gaugeFn_eq_gauge` — the bridge to Mathlib's `gauge`.
+* `gaugeEquiv`, `isGauge_iff` — the correspondence `k = γ(· ∣ C)`, `C = {k ≤ 1}`.
+* `recessionCone_eq_polarCone_polarSet`, `polarCone_linealitySpace` — **Theorem 14.6**;
+  `finrank_vectorSpan_polarSet_add_lineality` and its companion are **Corollary 14.6.1**,
+  `dim C° = n - lin C` and `lin C° = n - dim C`. `polarSet_setOf_le_subset_and_subset` is
+  **Theorem 14.7**.
+* `polarGauge_eq_supportFn`, `polarGauge_polarGauge`, `polarGaugeEquiv` — **Theorem 15.1** and
+  **Corollary 15.1.1**: `k°° = cl k`. `isNorm_iff` is **Theorem 15.2**.
+* `polarFn_polarFn`, `polarFnEquiv` — **Theorem 15.4** and **Corollary 15.4.1**.
+* `obverse_obverse`, `conj_eq_obverse_polarFn`, `polarFn_eq_obverse_conj` — **Theorem 15.5**;
+  `polarFn_conj_eq_conj_polarFn` is **Corollary 15.5.1**, and `setOf_polarFn_le` is the closing
+  display of §15, `{f° ≤ α⁻¹} = α⁻¹ {f* ≤ α}`.
 
-## Design notes
+## Implementation notes
 
-### Why a third gauge
+`gaugeFn` is `EReal`-valued and infimises over `a ≥ 0`, so it is `+∞` off `⋃ a • C`; that is what
+makes `{γ ≤ c}` equal `c • C`. Mathlib's `gauge` infimises over `a > 0` into `ℝ` and returns `0`
+there instead — the two agree under absorbency (`gaugeFn_eq_gauge`) — while `egauge` is this same
+infimum taken in `ℝ≥0∞`, whereas every function in this library is `EReal`-valued.
 
-Mathlib has two Minkowski functionals and this file adds a third, `gaugeFn`. The reasons:
+The book's admissible set for `f°`, `{μ ≥ 0 ∣ ⟨x, y⟩ ≤ 1 + μ f(x) ∀ x}`, is not closed: at `μ = 0`
+the convention `0 · (+∞) = 0` imposes `⟨x, y⟩ ≤ 1` where `f x = +∞`, which nearby positive `μ` do
+not. Quantifying over `epi f` gives a closed, upward closed set with the same infimum.
 
-* Mathlib's `gauge s x = sInf {r ∣ 0 < r ∧ x ∈ r • s}` is `ℝ`-valued and takes the infimum over
-  *positive* scalars, so on a set that does not absorb `x` it returns `sInf ∅ = 0` rather than
-  `+∞`. Rockafellar's gauge is `+∞` there, and §15 depends on that: the level sets `{γ ≤ c}` are
-  the dilates `c • C` exactly because the value is `+∞` off `⋃ c • C`. Under absorbency the two
-  agree — `gaugeFn_eq_gauge`.
-* Mathlib's `egauge ℝ≥0 s x = ⨅ (c : ℝ≥0) (_ : x ∈ c • s), ‖c‖ₑ` **is** Rockafellar's gauge, but
-  it is `ℝ≥0∞`-valued, and every function in this library — `ConvexFn`, `ClosedFn`, `epi`, `conj`,
-  `supportFn`, `clFn` — is `EReal`-valued. Reusing `egauge` would mean transporting each of those
-  along `ENNReal.toEReal`, and Mathlib has no lemma commuting that coercion with `iInf`, so the
-  bridge would have to be built before any of §15 could start. `gaugeFn` is the same infimum taken
-  in `EReal` in the first place; it is a definitional convenience, not a different notion.
+## Divergences from the reference
 
-### Placement of Theorems 14.6 and 14.7
-
-Both are here rather than in `Duality/Polar.lean`. Theorem 14.6 is about sets, but its statement
-is the polarity between the recession cone and the cone generated by the polar, and the gauge is
-what makes that computation short; Theorem 14.7 is about functions and about the level sets that
-Theorem 15.5 identifies (`setOf_polarFn_le`), so it is in its natural neighbourhood. Neither
-result is used by `Duality/Polar.lean`.
-
-### The definition of `polarFn`
-
-Rockafellar's admissible set `{μ ≥ 0 ∣ ⟨x, y⟩ ≤ 1 + μ f(x) ∀ x}` is **not closed** in `ℝ`: at
-`μ = 0` the convention `0 · (+∞) = 0` imposes `⟨x, y⟩ ≤ 1` at points where `f x = +∞`, a condition
-that the nearby positive `μ` do not impose. `polarFn` therefore quantifies over `epi f` instead,
-which is closed and up-closed, and `polarFn_apply_eq` shows the infima agree.
-
-### Theorem 15.1 from Theorem 15.4
-
-`k°° = cl k` is *not* proved by Rockafellar's route through Theorem 14.5 and the unit level set.
-Instead `polarFn_eq_polarGauge` shows the two polar operations agree on gauges — the `1 +` is
-invisible to a positively homogeneous function — and Theorem 15.4 does the rest.
-
-## Corrections to Rockafellar
-
-* **Theorem 14.7 needs no closedness and no Theorem 13.5.** Rockafellar routes it through
-  Theorems 13.5 and 9.7. The elementary proof here scales `x ↦ (α / f x) • x` into the level set
-  for the first inclusion and uses Fenchel's inequality for the second, and works for any
-  nonnegative convex `f` with `f 0 ≤ 0`.
-* **Theorem 15.5 needs no cone in `R^(n+2)`.** Rockafellar's proof rests on the symmetry of the
-  homogenizing cone under exchanging two coordinates. Here `obverse f x = γ((x, 1) ∣ epi f)`
-  (`obverse_eq_gaugeFn`) reduces the whole theorem to the closed gauge API, and `f* = (f°)ᵒ`
-  (`conj_eq_obverse_polarFn`) is a level-set comparison.
-* **Theorem 15.2 is stated finite-dimensionally.** "`0 ∈ int C`" and "`C` is bounded" are, by
-  Corollary 6.4.1 and Theorem 8.4, the `Rⁿ` readings of `AbsorbsAll C` and `RayFree C`; those are
-  what the correspondence uses. Closedness of a norm is *not* available in general: Rockafellar
-  gets it from Theorem 10.1, which is finite-dimensional.
-* **`gaugeFn {k ≤ 1} = k` needs only nonnegativity, positive homogeneity and `k 0 = 0`** — not
-  convexity and not closedness (`gaugeFn_level_one`).
-* **Theorem 14.5, second assertion (`γ(· ∣ C°) = δ*(· ∣ C)`) needs only `0 ∈ C`** — no convexity,
-  no closedness, no topology (`gaugeFn_polarSet`, proved in this file since §14 does not have it).
-
-## What is not here
-
-* **Theorem 15.3** and its corollaries — **but only in this file.** The one-dimensional theory
-  they quantify over (the nondecreasing lower semicontinuous convex functions on `[0, +∞]` and
-  their monotone conjugates `g⁺`) is real, and it is built: `Duality/GaugeLike.lean` has
-  `IsGaugeLike`, `MonotoneHalfLineFn`, `monotoneConj`, `conj_monotoneComp` and the full
-  `closedProperConvexFn_and_isGaugeLike_iff`, together with the power / Young's-inequality cluster
-  that Corollaries 15.3.1 and 15.3.2 need. This note previously said the results were absent, and
-  a surface section reading only this file deferred §15's centrepiece on the strength of it.
-* A bridge to `egauge` — see the design note above.
-* A `NormedSpace` instance from `IsNorm`. A Rockafellar norm need not be continuous, so it does
-  not make `E` a normed space for the ambient topology. The **`Seminorm` is here**
-  (`IsNorm.toSeminorm`): `Seminorm ℝ E` is purely algebraic and asks nothing about a topology, and
-  an earlier note in this file wrongly declined it on the continuity grounds that apply only to
-  `NormedSpace`.
+**Theorem 14.7** is stated for any nonnegative convex `f` with `f 0 ≤ 0`, with no closedness.
+**Theorem 15.2** uses `AbsorbsAll C` and `RayFree C` where the book has `0 ∈ int C` and `C` bounded
+— equivalent readings in `ℝⁿ` — and does not assert that a norm is closed, which the book obtains
+from the finite-dimensional Theorem 10.1. `gaugeFn_level_one` needs only nonnegativity, positive
+homogeneity and `k 0 = 0`, and `gaugeFn_polarSet` (`γ(· ∣ C°) = δ*(· ∣ C)`, Theorem 14.5's second
+assertion) needs only `0 ∈ C`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §14 (Theorems 14.6,
-  14.7, Corollary 14.6.1) and §15.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §14 and §15.
 -/
 
 open Set Pointwise
@@ -219,30 +151,23 @@ section GaugeFn
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C D : Set E} {x : E} {a c t : ℝ}
 
-/-- **Rockafellar's gauge** of a set `C`: `γ(x | C) = inf {a ≥ 0 | x ∈ a • C}`.
+/-- **The gauge** of a set `C`: `γ(x | C) = inf {a ≥ 0 | x ∈ a • C}`.
 
-Named `gaugeFn` because Mathlib already has two Minkowski functionals, and this is neither of
-them: `gauge` (`Mathlib/Analysis/Convex/Gauge.lean`) is `ℝ`-valued and takes the infimum over
-*positive* scalars only, returning `0` rather than `+∞` off the absorbed set, and `egauge`
-(`Mathlib/Analysis/Convex/EGauge.lean`) is `ℝ≥0∞`-valued. See the module docstring for why the
-`EReal`-valued version is the one this development needs; `gaugeFn_eq_gauge` and
-`gaugeFn_eq_egauge` are the bridges. -/
+Named `gaugeFn` because it is neither of Mathlib's two Minkowski functionals; `gaugeFn_eq_gauge`
+and `gaugeFn_eq_egauge` are the bridges, and the module docstring says why the `EReal`-valued
+version is the one this development needs. -/
 noncomputable def gaugeFn (C : Set E) : E → EReal :=
   fun x => ⨅ a ∈ {a : ℝ | 0 ≤ a ∧ x ∈ a • C}, (a : EReal)
 
-/-- The defining formula for the gauge. -/
 theorem gaugeFn_apply (C : Set E) (x : E) :
     gaugeFn C x = ⨅ a ∈ {a : ℝ | 0 ≤ a ∧ x ∈ a • C}, (a : EReal) := rfl
 
-/-- Any admissible scalar bounds the gauge from above. -/
 theorem gaugeFn_le_of_mem_smul (ha : 0 ≤ a) (h : x ∈ a • C) : gaugeFn C x ≤ (a : EReal) :=
   iInf₂_le a ⟨ha, h⟩
 
-/-- The gauge is nonnegative. -/
 theorem gaugeFn_nonneg (C : Set E) (x : E) : 0 ≤ gaugeFn C x :=
   zero_le_biInf_coe fun _ ha => ha.1
 
-/-- The gauge never takes the value `-∞`. -/
 theorem gaugeFn_ne_bot (C : Set E) (x : E) : gaugeFn C x ≠ ⊥ :=
   fun h => by simpa [h] using gaugeFn_nonneg C x
 
@@ -259,11 +184,9 @@ theorem gaugeFn_lt_iff {z : EReal} :
   · rintro ⟨a, ha0, hmem, halt⟩
     exact ⟨a, by rw [iInf_lt_iff]; exact ⟨⟨ha0, hmem⟩, halt⟩⟩
 
-/-- The gauge is order-reversing in the set. -/
 theorem gaugeFn_anti (h : C ⊆ D) : gaugeFn D ≤ gaugeFn C :=
   fun _ => iInf₂_mono' fun a ha => ⟨a, ⟨ha.1, smul_set_mono h ha.2⟩, le_rfl⟩
 
-/-- The gauge of the empty set is identically `+∞`. -/
 @[simp] theorem gaugeFn_empty : gaugeFn (∅ : Set E) = fun _ => (⊤ : EReal) := by
   funext x
   simp [gaugeFn_apply]
@@ -274,7 +197,6 @@ theorem gaugeFn_anti (h : C ⊆ D) : gaugeFn D ≤ gaugeFn C :=
   obtain ⟨z, hz⟩ := hne
   simpa using gaugeFn_le_of_mem_smul (C := C) le_rfl ⟨z, hz, by simp⟩
 
-/-- Scaling the argument scales the gauge, one inequality. -/
 theorem gaugeFn_smul_le (ht : 0 < t) (C : Set E) (x : E) :
     gaugeFn C (t • x) ≤ (t : EReal) * gaugeFn C x := by
   rw [gaugeFn_apply C x, Tdaf.EReal.coe_mul_iInf ht]
@@ -288,7 +210,6 @@ theorem gaugeFn_smul_le (ht : 0 < t) (C : Set E) (x : E) :
   rw [mul_smul]
   exact congrArg (t • ·) hzx
 
-/-- **The gauge is positively homogeneous** (Rockafellar §15). -/
 theorem posHomogeneous_gaugeFn (C : Set E) : PosHomogeneous (gaugeFn C) := by
   intro t ht x
   refine le_antisymm (gaugeFn_smul_le ht C x) ?_
@@ -298,7 +219,6 @@ theorem posHomogeneous_gaugeFn (C : Set E) : PosHomogeneous (gaugeFn C) := by
     mul_le_mul_of_nonneg_left h (EReal.coe_nonneg.2 ht.le)
   rwa [← mul_assoc, Tdaf.EReal.coe_mul_coe, mul_inv_cancel₀ ht.ne', EReal.coe_one, one_mul] at h2
 
-/-- **The gauge of a convex set is convex** (Rockafellar §15). -/
 theorem convexFn_gaugeFn (hC : Convex ℝ C) : ConvexFn (gaugeFn C) := by
   refine convexFn_of_epi_combo fun x y μ ν hx hy a b ha hb hab => ?_
   rcases eq_or_lt_of_le ha with rfl | ha'
@@ -360,22 +280,18 @@ structure IsGauge (k : E → EReal) : Prop where
   which satisfies the other three. -/
   map_zero : k 0 = 0
 
-/-- A gauge never takes the value `-∞`. -/
 theorem IsGauge.ne_bot (hk : IsGauge k) (x : E) : k x ≠ ⊥ :=
   fun h => by simpa [h] using hk.nonneg x
 
-/-- The gauge of a nonempty convex set is a gauge. -/
 theorem isGauge_gaugeFn (hC : Convex ℝ C) (hne : C.Nonempty) : IsGauge (gaugeFn C) where
   nonneg := gaugeFn_nonneg C
   posHomogeneous := posHomogeneous_gaugeFn C
   convexFn := convexFn_gaugeFn hC
   map_zero := gaugeFn_zero hne
 
-/-- The unit level set of a gauge is convex. -/
 theorem IsGauge.convex_level_one (hk : IsGauge k) : Convex ℝ {x : E | k x ≤ 1} :=
   hk.convexFn.convex_le 1
 
-/-- The unit level set of a gauge contains the origin. -/
 theorem IsGauge.zero_mem_level_one (hk : IsGauge k) : (0 : E) ∈ {x : E | k x ≤ 1} := by
   change k 0 ≤ 1
   rw [hk.map_zero]
@@ -445,8 +361,6 @@ section ZeroMem
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {C : Set E} {x : E} {a b c : ℝ}
 
-/-- For a convex set containing the origin, scaling by a larger nonnegative factor gives a larger
-set. -/
 theorem smul_subset_smul_of_le (hC : Convex ℝ C) (h0 : (0 : E) ∈ C) (ha : 0 ≤ a) (hab : a ≤ b) :
     a • C ⊆ b • C := by
   rintro _ ⟨z, hz, rfl⟩
@@ -560,13 +474,11 @@ theorem lowerSemicontinuous_gaugeFn (hC : Convex ℝ C) (h0 : (0 : E) ∈ C) (hc
 
 variable [IsTopologicalAddGroup E]
 
-/-- The gauge of a closed convex set containing the origin is a **closed** function. -/
 theorem closedFn_gaugeFn (hC : Convex ℝ C) (h0 : (0 : E) ∈ C) (hcl : IsClosed C) :
     ClosedFn (gaugeFn C) :=
   (closedFn_iff_lowerSemicontinuous (gaugeFn_ne_bot C)).2 (lowerSemicontinuous_gaugeFn hC h0 hcl)
 
 omit [Module ℝ E] [ContinuousSMul ℝ E] in
-/-- The unit level set of a closed function is closed. -/
 theorem isClosed_setOf_le_one {k : E → EReal} (hc : ClosedFn k) :
     IsClosed {x : E | k x ≤ 1} :=
   ClosedFn.lowerSemicontinuous hc |>.isClosed_preimage 1
@@ -994,18 +906,15 @@ an up-set in `[0, ∞)`. -/
 noncomputable def polarGauge (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (k : E → EReal) : F → EReal :=
   fun y => ⨅ μ ∈ {μ : ℝ | 0 ≤ μ ∧ ∀ x : E, ((B x y : ℝ) : EReal) ≤ (μ : EReal) * k x}, (μ : EReal)
 
-/-- The defining formula for the polar of a gauge. -/
 theorem polarGauge_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (k : E → EReal) (y : F) :
     polarGauge B k y =
       ⨅ μ ∈ {μ : ℝ | 0 ≤ μ ∧ ∀ x : E, ((B x y : ℝ) : EReal) ≤ (μ : EReal) * k x}, (μ : EReal) :=
   rfl
 
-/-- Any admissible multiplier bounds the polar gauge from above. -/
 theorem polarGauge_le_of_forall {μ : ℝ} (hμ : 0 ≤ μ)
     (h : ∀ x : E, ((B x y : ℝ) : EReal) ≤ (μ : EReal) * k x) : polarGauge B k y ≤ (μ : EReal) :=
   iInf₂_le μ ⟨hμ, h⟩
 
-/-- The polar of a gauge is nonnegative. -/
 theorem polarGauge_nonneg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (k : E → EReal) (y : F) :
     0 ≤ polarGauge B k y :=
   zero_le_biInf_coe fun _ hμ => hμ.1
@@ -1090,7 +999,6 @@ theorem closedFn_polarGauge [TopologicalSpace F] [IsTopologicalAddGroup F]
   rw [polarGauge_eq_supportFn hnn hph h0]
   exact closedFn_supportFn
 
-/-- The polar set does not see the passage to the unit level set of the gauge. -/
 theorem polarSet_setOf_gaugeFn_le_one (C : Set E) :
     polarSet B {x : E | gaugeFn C x ≤ 1} = polarSet B C := by
   refine subset_antisymm (polarSet_anti fun x hx => ?_) fun y hy x hx => ?_
@@ -1141,7 +1049,6 @@ def mulPairing : ℝ →ₗ[ℝ] ℝ →ₗ[ℝ] ℝ := LinearMap.mul ℝ ℝ
 
 @[simp] theorem mulPairing_apply (a b : ℝ) : mulPairing a b = a * b := rfl
 
-/-- Multiplication is symmetric, so `mulPairing` is its own flip. -/
 @[simp] theorem mulPairing_flip : mulPairing.flip = mulPairing :=
   LinearMap.ext fun a => LinearMap.ext fun b => mul_comm b a
 
@@ -1168,7 +1075,6 @@ abbrev epiPairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : (E × ℝ) →ₗ[ℝ]
 @[simp] theorem epiPairing_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (p : E × ℝ) (q : F × ℝ) :
     epiPairing B p q = B p.1 q.1 + p.2 * q.2 := rfl
 
-/-- Flipping `epiPairing` flips the underlying pairing. -/
 theorem epiPairing_flip (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : (epiPairing B).flip = epiPairing B.flip := by
   rw [epiPairing, prodPairing_flip, mulPairing_flip]
 
@@ -1183,7 +1089,6 @@ def vNeg (X : Type*) [AddCommGroup X] [Module ℝ X] : (X × ℝ) →ₗ[ℝ] X 
     vNeg X (vNeg X p) = p := by
   simp
 
-/-- The image of a set under the vertical reflection is its preimage. -/
 theorem image_vNeg_eq_preimage (X : Type*) [AddCommGroup X] [Module ℝ X] (S : Set (X × ℝ)) :
     vNeg X '' S = vNeg X ⁻¹' S := by
   ext p
@@ -1226,7 +1131,6 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
 noncomputable def polarFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) : F → EReal :=
   fun y => ⨅ μ ∈ {μ : ℝ | ∀ (x : E) (ν : ℝ), f x ≤ (ν : EReal) → B x y - ν * μ ≤ 1}, (μ : EReal)
 
-/-- The admissible-multiplier set of `polarFn`. -/
 def polarFnSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f : E → EReal) (y : F) : Set ℝ :=
   {μ : ℝ | ∀ (x : E) (ν : ℝ), f x ≤ (ν : EReal) → B x y - ν * μ ≤ 1}
 
@@ -1259,7 +1163,6 @@ theorem polarFn_le_coe_iff (hnn : ∀ x, 0 ≤ f x) :
     polarFn B f y ≤ (μ : EReal) ↔ ∀ (x : E) (ν : ℝ), f x ≤ (ν : EReal) → B x y - ν * μ ≤ 1 :=
   biInf_coe_le_coe_iff (upClosed_polarFnSet hnn y) (isClosed_polarFnSet B f y) μ
 
-/-- The polar of a function that is nonpositive at the origin is nonnegative. -/
 theorem polarFn_nonneg (h0 : f 0 ≤ 0) (y : F) : 0 ≤ polarFn B f y := by
   refine zero_le_biInf_coe fun a ha => ?_
   by_contra hcon
@@ -1354,7 +1257,6 @@ theorem nonneg_of_mem_closure_epi (hnn : ∀ x, 0 ≤ f x) {p : E × ℝ} (hp : 
   have h : (0 : EReal) ≤ (q.2 : EReal) := le_trans (hnn q.1) hq
   exact_mod_cast h
 
-/-- The lower semicontinuous hull of a nonnegative function is nonnegative. -/
 theorem lscHull_nonneg (hnn : ∀ x, 0 ≤ f x) (x : E) : 0 ≤ lscHull f x := by
   refine le_ofEpi fun μ hμ => ?_
   have h := nonneg_of_mem_closure_epi hnn hμ
@@ -1368,7 +1270,6 @@ theorem clFn_eq_lscHull_of_nonneg (hnn : ∀ x, 0 ≤ f x) : clFn f = lscHull f 
     rw [h, le_bot_iff] at h0
     exact absurd h0 (by simp)
 
-/-- The closure of a nonnegative function is nonnegative. -/
 theorem clFn_nonneg (hnn : ∀ x, 0 ≤ f x) (x : E) : 0 ≤ clFn f x := by
   rw [clFn_eq_lscHull_of_nonneg hnn]
   exact lscHull_nonneg hnn x
@@ -1505,7 +1406,6 @@ structure IsPolarFn (f : E → EReal) : Prop where
   /-- A polar is closed. -/
   closedFn : ClosedFn f
 
-/-- The hypothesis in which Theorem 15.4 states the vanishing at the origin. -/
 theorem IsPolarFn.map_zero_le (h : IsPolarFn f) : f 0 ≤ 0 := le_of_eq h.map_zero
 
 /-- A closed gauge belongs to the class of Corollary 15.4.1. -/
@@ -1696,14 +1596,12 @@ section Obverse
 
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {f : E → EReal} {a : ℝ}
 
-/-- Membership in a positive dilate of an epigraph, unfolded. -/
 theorem mk_mem_smul_epi_iff (ha : 0 < a) (f : E → EReal) (x : E) (r : ℝ) :
     (x, r) ∈ a • epi f ↔ f (a⁻¹ • x) ≤ ((a⁻¹ * r : ℝ) : EReal) := by
   rw [mem_smul_set_iff_inv_smul_mem₀ ha.ne']
   exact Iff.rfl
 
 omit [AddCommGroup E] [Module ℝ E] in
-/-- A point at height one lies in the epigraph exactly when the value is at most one. -/
 theorem mk_one_mem_epi_iff (f : E → EReal) (x : E) : (x, (1 : ℝ)) ∈ epi f ↔ f x ≤ 1 := by
   rw [mem_epi]
   exact_mod_cast Iff.rfl
@@ -1712,7 +1610,6 @@ theorem mk_one_mem_epi_iff (f : E → EReal) (x : E) : (x, (1 : ℝ)) ∈ epi f 
 noncomputable def obverse (f : E → EReal) : E → EReal :=
   fun x => ⨅ l ∈ {l : ℝ | 0 < l ∧ smulRight f l x ≤ 1}, (l : EReal)
 
-/-- The defining formula for the obverse. -/
 theorem obverse_apply (f : E → EReal) (x : E) :
     obverse f x = ⨅ l ∈ {l : ℝ | 0 < l ∧ smulRight f l x ≤ 1}, (l : EReal) := rfl
 
@@ -1743,12 +1640,10 @@ theorem epi_obverse (f : E → EReal) :
   ext p
   simp only [Set.mem_preimage, mem_epi, obverse_eq_gaugeFn]
 
-/-- The obverse is nonnegative. -/
 theorem obverse_nonneg (f : E → EReal) (x : E) : 0 ≤ obverse f x := by
   rw [obverse_eq_gaugeFn]
   exact gaugeFn_nonneg _ _
 
-/-- The obverse never takes the value `⊥`. -/
 theorem obverse_ne_bot (f : E → EReal) (x : E) : obverse f x ≠ ⊥ := by
   rw [obverse_eq_gaugeFn]
   exact gaugeFn_ne_bot _ _
@@ -1759,7 +1654,6 @@ end Obverse
 
 section ErealAux
 
-/-- An infimum over the positive reals above `z` is `z` itself, for `z ≥ 0`. -/
 theorem biInf_coe_pos_ge_eq {z : EReal} (hz : 0 ≤ z) :
     (⨅ ν ∈ {ν : ℝ | 0 < ν ∧ z ≤ (ν : EReal)}, (ν : EReal)) = z := by
   refine le_antisymm ?_ (le_iInf₂ fun ν hν => hν.2)
@@ -1775,7 +1669,6 @@ theorem biInf_coe_pos_ge_eq {z : EReal} (hz : 0 ≤ z) :
   rw [hr]
   exact_mod_cast hd.le
 
-/-- Two nonnegative extended reals with the same real upper bounds above zero are equal. -/
 theorem eq_of_forall_pos_le_iff {A B : EReal} (hA : 0 ≤ A) (hB : 0 ≤ B)
     (h : ∀ ν : ℝ, 0 < ν → (A ≤ (ν : EReal) ↔ B ≤ (ν : EReal))) : A = B := by
   refine le_antisymm ?_ ?_
@@ -1826,7 +1719,6 @@ theorem obverse_le_coe_iff (h : IsPolarFn f) (hν : 0 < ν) (z : E) :
   exact_mod_cast le_of_lt (inv_pos.2 hd0)
 
 omit [ContinuousSMul ℝ E] [IsTopologicalAddGroup E] in
-/-- The obverse is convex. -/
 theorem convexFn_obverse (h : IsPolarFn f) : ConvexFn (obverse f) := by
   have hk : ConvexFn (gaugeFn (epi f)) := convexFn_gaugeFn h.convexFn.convex_epi
   refine convexFn_iff_convex_epi.2 fun p hp q hq s t hs ht hst => ?_
@@ -1839,7 +1731,6 @@ theorem convexFn_obverse (h : IsPolarFn f) : ConvexFn (obverse f) := by
   rw [hkey] at hcomb
   exact hcomb
 
-/-- The obverse is closed. -/
 theorem closedFn_obverse (h : IsPolarFn f) : ClosedFn (obverse f) := by
   obtain ⟨hC, hCcl, hC0⟩ := h.epi_closed_convex_zero
   refine closedFn_of_isClosed_epi (obverse_nonneg f) ?_
@@ -2064,14 +1955,12 @@ structure IsNorm (k : E → EReal) : Prop extends IsGauge k where
   /-- A norm is positive away from the origin. -/
   pos : ∀ x, x ≠ 0 → 0 < k x
 
-/-- The gauge of the reflected set (compare Mathlib's `gauge_neg_set_eq_gauge_neg`). -/
 theorem gaugeFn_neg_set (C : Set E) (x : E) : gaugeFn (-C) x = gaugeFn C (-x) := by
   have hset : {a : ℝ | 0 ≤ a ∧ x ∈ a • (-C)} = {a : ℝ | 0 ≤ a ∧ -x ∈ a • C} := by
     ext a
     simp only [Set.mem_ofPred, Set.smul_set_neg, Set.mem_neg]
   rw [gaugeFn_apply, gaugeFn_apply, hset]
 
-/-- A symmetric set has a symmetric gauge. -/
 theorem gaugeFn_map_neg (hsymm : -C = C) (x : E) : gaugeFn C (-x) = gaugeFn C x := by
   rw [← gaugeFn_neg_set, hsymm]
 
@@ -2166,7 +2055,6 @@ about a topology — so a Rockafellar norm is one on the nose. It is *not* a `No
 unless it happens to be continuous, which in general it is not; that is the distinction, and it is
 the only one. -/
 
-/-- A norm is real-valued: the `EReal` value coerces back. -/
 theorem IsNorm.coe_toReal (hk : IsNorm k) (x : E) : (((k x).toReal : ℝ) : EReal) = k x :=
   _root_.EReal.coe_toReal (hk.ne_top x) (hk.toIsGauge.ne_bot x)
 
@@ -2217,7 +2105,6 @@ section NormPolar
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {C : Set E}
 
-/-- The polar of a symmetric set is symmetric. -/
 theorem polarSet_neg_eq (hsymm : -C = C) : -polarSet B C = polarSet B C := by
   have hnegC : ∀ x ∈ C, -x ∈ C := fun x hx => by
     rw [← hsymm]

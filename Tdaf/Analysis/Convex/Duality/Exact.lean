@@ -10,97 +10,63 @@ import Tdaf.Analysis.Convex.Operations.Image
 /-!
 # Exact duality: when the closure may be omitted
 
-Almost every "exact" duality statement in Rockafellar has the shape
+Almost every "exact" duality statement has the shape
 
 > if `ri (dom f₁) ∩ … ∩ ri (dom fₘ) ≠ ∅` then the closure operation can be dropped and the
 > infimum defining the dual operation is attained
 
-(Theorems 16.3, 16.4, 16.5, 20.1, 23.8, 23.9, 31.1, 38.2, 38.4, 38.5, 39.5, 39.7 …). The relative
-interior condition is one sufficient condition among several — there are polyhedral variants (§20),
-a continuity variant valid in any topological vector space, and, outside the book,
-Attouch–Brezis/Rockafellar–Robinson conditions in Banach spaces.
+(Theorems 16.3, 16.4, 16.5, 20.1, 23.8, 23.9, 31.1, 38.2, 38.4, 38.5 …). The relative interior
+condition is one sufficient condition among several; there are polyhedral variants, a continuity
+variant valid in any topological vector space, and Attouch–Brezis conditions in Banach spaces.
 
-This file names the **conclusion**. `IsExactSum` and `IsExactImage` are hypothesis-only interfaces;
-the sufficient conditions for them are proved elsewhere, each in the module that owns its
-hypothesis (`IsExactSum.of_relint` in `Duality/Relint.lean`, `IsExactSum.of_polyhedral` in
-`Polyhedral/Duality.lean`, and so on; each has an `…_closed` variant carrying the argument, and the
-unprimed name is the book's proper-convex statement). Downstream — Theorems 16.3 and 16.4,
-Theorems 23.8 and 23.9, Fenchel's duality theorem, and §38 — every consumer is reduced to these two
-interfaces once and for all.
+This file names the **conclusion**. `IsExactSum` and `IsExactImage` are hypothesis-only interfaces,
+and the sufficient conditions for them are proved in the module that owns each hypothesis
+(`IsExactSum.of_relint` in `Duality/Relint.lean`, `.of_polyhedral` in `Polyhedral/Duality.lean`).
 
 ## Main definitions
 
 * `IsExactSum B f g` — `f` and `g` **add exactly**: both are proper, and the infimal convolution
   defining `(f + g)*` is attained.
-* `IsExactFinsetSum B s f` — the same for a finite family: `(fᵢ)_{i ∈ s}` are proper and the
-  `m`-fold infimal convolution defining `(∑ fᵢ)*` is attained. This is the form Rockafellar states
-  Theorems 16.4, 20.1 and 23.8 in.
+* `IsExactFinsetSum B s f` — the same for a finite family, the form the book states Theorems 16.4,
+  20.1 and 23.8 in.
 * `IsExactImage B B' A A' hA g` — `g` **pulls back exactly** along `A`: `g` is proper, and the
   infimum defining `(g A)*` over the fibres of the transpose `A'` is attained.
 
 ## Main results
 
-* `conj_add_le_infConv` — the *unconditional* half: `(f + g)* ≤ f* □ g*`, with no hypothesis
-  whatsoever on `f` and `g`.
-* `conj_compLin_le_mapLin` — the unconditional half on the image side: `(g A)* ≤ A' (g*)`.
-* `IsExactSum.conj_add`, `IsExactSum.exists_conj_add_eq` — **Rockafellar's Theorem 16.4**,
-  exact half: `(f + g)* = f* □ g*`, with the infimal convolution attained.
-* `IsExactImage.conj_compLin`, `IsExactImage.exists_conj_compLin_eq` — **Rockafellar's
-  Theorem 16.3**, exact half: `(g A)* = A' (g*)`, with the infimum over the fibre attained.
-* `conj_finsetSum_le_sum_toInfConvFn` — the unconditional half for `m` summands.
-* `IsExactFinsetSum.conj_finsetSum`, `IsExactFinsetSum.exists_conj_finsetSum_eq` —
-  **Theorem 16.4** in the book's `m`-ary form: `(f₁ + ⋯ + fₘ)* = f₁* □ ⋯ □ fₘ*`, attained.
-* `IsExactFinsetSum.singleton`, `IsExactFinsetSum.cons`, `IsExactFinsetSum.of_split` — the family
-  interface built out of binary ones, which is how every `m`-ary constraint qualification is
-  discharged.
+* `conj_add_le_infConv`, `conj_compLin_le_mapLin`, `conj_finsetSum_le_sum_toInfConvFn` — the
+  *unconditional* halves: `(f + g)* ≤ f* □ g*` and `(g A)* ≤ A' (g*)`, with no hypothesis at all.
+* `IsExactSum.conj_add`, `IsExactSum.exists_conj_add_eq` — **Theorem 16.4**, exact half:
+  `(f + g)* = f* □ g*` with the infimal convolution attained; `IsExactFinsetSum.conj_finsetSum` is
+  the book's `m`-ary form.
+* `IsExactImage.conj_compLin`, `IsExactImage.exists_conj_compLin_eq` — **Theorem 16.3**, exact
+  half: `(g A)* = A' (g*)` with the infimum over the fibre attained.
+* `IsExactFinsetSum.singleton`, `.cons`, `.of_split` — the family interface built out of binary
+  ones, which is how every `m`-ary constraint qualification is discharged.
 * `IsExactSum.proper_add`, `IsExactFinsetSum.proper_finsetSum`, `IsExactImage.proper_compLin` —
-  the interfaces are not vacuous, and they are unsatisfiable when the effective domains miss each
-  other.
+  the interfaces are unsatisfiable when the effective domains miss each other.
 
-## Design notes
+## Implementation notes
 
-**The equality is a theorem, not a field.** The inequality `(f + g)* ≤ f* □ g*` holds for arbitrary
-`f` and `g` (`conj_add_le_infConv`), so an interface asking for both inequalities would be
-redundant. Worse, an interface *stating the equality* would be unsatisfiable exactly where it looks
-most innocent: when `dom f ∩ dom g = ∅` we have `f + g ≡ +∞`, hence `(f + g)* ≡ -∞`, while the
-conjugate of a proper function is never `-∞`. What the interface must carry is the *attainment*,
-which is `exact_le`.
+The equality is a theorem, not a field of the structure. `(f + g)* ≤ f* □ g*` holds for arbitrary
+`f` and `g`, and an interface *stating the equality* would be unsatisfiable where it looks most
+innocent: when `dom f ∩ dom g = ∅` we have `(f + g)* ≡ -∞`, while the conjugate of a proper
+function is never `-∞`. What the interface carries is the *attainment*, `exact_le`.
 
-**Properness is a genuine hypothesis**, not decoration. It is Rockafellar's own hypothesis in
-Theorems 16.3 and 16.4, it is what keeps the pointwise sum `f + g` from hiding an `∞ - ∞`, and it
-is what makes `f*` and `g*` never `-∞` — without which the infimal convolution of the conjugates is
-not given by the infimum formula. Properness of `f` and `g` *individually* is assumed; properness
-of `f + g` is then a consequence (`IsExactSum.proper_add`).
+`IsExactImage.exact_le` asks for a point of the fibre `A' ⁻¹' {y}` only where `(g A)* y` is finite.
+Without that guard the interface is unsatisfiable whenever `A'` is not surjective: at a `y` outside
+the range of `A'` there is no `z` to produce, while both sides of Theorem 16.3 are legitimately
+`+∞` there.
 
-**The image interface must be guarded by `< ⊤`.** `IsExactImage.exact_le` asks for a point of the
-fibre `A' ⁻¹' {y}` only where `(g A)* y` is finite. Dropping the guard makes the interface
-*unsatisfiable whenever `A'` is not surjective*, for a reason that has nothing to do with convexity:
-at a `y` outside the range of `A'` there is no `z` to produce at all, while both sides of Theorem
-16.3 are legitimately `+∞` there (`mapLin_of_notMem_range`). Taking `A = 0` between nonzero spaces
-already breaks it. The guard costs nothing downstream: every consumer, from
-`exists_conj_compLin_eq` to `IsExactImage.subgradient_compLin`, is looking at a point where the
-value is finite anyway, and
-properness of `g A` supplies the missing `≠ ⊥` on the other side.
-
-**The family interface is not an iterated binary one, and it is empty at `s = ∅`.** Its
-consequences are proved once for the family rather than by re-entering the binary lemma: the
-`m`-ary infimum bound `sum_toInfConvFn_le_sum` (`Operations/InfConv.lean`) puts its `≠ ⊥`
-hypothesis on each `fᵢ` and never on a partial convolute, because `□` does not preserve `≠ ⊥`, so
-the binary `infConv_le_add` cannot be iterated at all. What *does* iterate is the construction:
-`IsExactFinsetSum.cons` reduces a family to a binary hypothesis about `fᵢ` and `∑_{j ∈ t} fⱼ`, and
-that is where each constraint qualification does its work. Note that `exact_le` demands a splitting
-`y = ∑_{i ∈ s} yᵢ` for *every* `y`, so `IsExactFinsetSum B ∅ f` forces every `y : F` to be `0`:
-the empty family is not exact, in the same way and for the same reason that two functions with
-disjoint effective domains are not.
-
-**The transpose is data, not a function of `A`.** Between arbitrarily paired spaces a linear map
-need not have an adjoint, so `IsExactImage` carries `A'` and the adjointness datum
-`hA : IsAdjointPair B B' A A'` as parameters. See the design notes of `Duality/Pairing.lean`.
+The family interface is not an iterated binary one: `□` does not preserve `≠ ⊥`, so the binary
+bound cannot be iterated, and what iterates is the *construction*, `IsExactFinsetSum.cons`. And
+`exact_le` demands a splitting of every `y`, so `IsExactFinsetSum B ∅ f` forces `F` to be trivial —
+the empty family is not exact, just as two functions with disjoint effective domains are not.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Theorem 16.3,
-  Theorem 16.4), §20 (Theorem 20.1), §23 (Theorem 23.8, Theorem 23.9), §31 (Theorem 31.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §16 (Theorems 16.3
+  and 16.4), §20 (Theorem 20.1), §23 (Theorems 23.8, 23.9), §31 (Theorem 31.1).
 -/
 
 open Pointwise
@@ -114,9 +80,8 @@ section Sum
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal} {y₁ y₂ : F} {c₁ c₂ : ℝ}
 
-/-- An affine minorant of `f` and an affine minorant of `g` add to an affine minorant of `f + g`.
-Read through `conj_le_coe_iff`, this is the whole unconditional content of Rockafellar's
-Theorem 16.4, and it needs no hypothesis on `f` or `g`. -/
+/-- An affine minorant of `f` and one of `g` add to an affine minorant of `f + g`. Read through
+`conj_le_coe_iff` this is the whole unconditional content of Theorem 16.4. -/
 theorem conj_add_le_coe_add (h₁ : conj B f y₁ ≤ (c₁ : EReal)) (h₂ : conj B g y₂ ≤ (c₂ : EReal)) :
     conj B (f + g) (y₁ + y₂) ≤ ((c₁ + c₂ : ℝ) : EReal) := by
   rw [conj_le_coe_iff] at h₁ h₂ ⊢
@@ -130,27 +95,23 @@ theorem conj_add_le_coe_add (h₁ : conj B f y₁ ≤ (c₁ : EReal)) (h₂ : co
   rw [hsplit, Pi.add_apply]
   exact add_le_add (h₁ x) (h₂ x)
 
-/-- The epigraph of `f*` and the epigraph of `g*` add into the epigraph of `(f + g)*`. This is
-`conj_add_le_coe_add` in the language `infConv` is defined in. -/
 theorem epi_conj_add_epi_conj_subset (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) :
     epi (conj B f) + epi (conj B g) ⊆ epi (conj B (f + g)) := by
   rintro _ ⟨⟨y₁, c₁⟩, h₁, ⟨y₂, c₂⟩, h₂, rfl⟩
   rw [mk_mem_epi] at h₁ h₂
   simpa using conj_add_le_coe_add h₁ h₂
 
-/-- **Half of Rockafellar's Theorem 16.4, unconditionally.** The conjugate of a sum is at most the
-infimal convolution of the conjugates, for *arbitrary* `f` and `g`.
-
-The reverse inequality is what `IsExactSum` asks for; it is the half that fails in general, and the
-half every constraint qualification in the book exists to supply. -/
+/-- **Half of Theorem 16.4, unconditionally**: the conjugate of a sum is at most the infimal
+convolution of the conjugates, for *arbitrary* `f` and `g`. The reverse inequality is what
+`IsExactSum` asks for, and what every constraint qualification exists to supply. -/
 theorem conj_add_le_infConv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) :
     conj B (f + g) ≤ infConv (conj B f) (conj B g) := by
   rw [infConv_def]
   exact subset_epi_iff_le_ofEpi.1 (epi_conj_add_epi_conj_subset B f g)
 
-/-- The pointwise form of `conj_add_le_infConv`. Unlike the two statements above it is *not*
-unconditional: if `f ≡ +∞` and `g` takes `-∞` somewhere then `(f + g)* ≡ +∞` while
-`f* y₁ + g* y₂ = ⊥ + ⊤ = ⊥`. Nonempty effective domains are exactly what rules that out. -/
+/-- The pointwise form of `conj_add_le_infConv`, which is *not* unconditional: if `f ≡ +∞` and `g`
+takes `-∞` somewhere then `(f + g)* ≡ +∞` while `f* y₁ + g* y₂ = ⊥ + ⊤ = ⊥`. Nonempty effective
+domains rule that out. -/
 theorem conj_add_le_add_conj (hf : (dom f).Nonempty) (hg : (dom g).Nonempty) (y₁ y₂ : F) :
     conj B (f + g) (y₁ + y₂) ≤ conj B f y₁ + conj B g y₂ := by
   rcases eq_or_ne (conj B f y₁) ⊤ with h₁ | h₁
@@ -177,11 +138,8 @@ variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f g : E → EReal}
 
 /-- `f` and `g` **add exactly** with respect to the pairing `B`: both are proper, and the infimal
 convolution `f* □ g*` is attained at every point — equivalently (`IsExactSum.conj_add`), the
-conjugate of the sum *is* the infimal convolution of the conjugates.
-
-This is the conclusion of Rockafellar's Theorem 16.4 and of its polyhedral refinement Theorem 20.1,
-named so that the constraint qualifications become interchangeable sufficient conditions rather
-than a hypothesis pattern repeated at every use site. -/
+conjugate of the sum *is* the infimal convolution of the conjugates. This is the conclusion of
+Theorem 16.4 and of its polyhedral refinement Theorem 20.1. -/
 structure IsExactSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (f g : E → EReal) : Prop where
   /-- The left summand is proper. -/
   proper_left : Proper f
@@ -202,7 +160,6 @@ theorem conj_left_ne_bot (y : F) : conj B f y ≠ ⊥ := conj_ne_bot h.proper_le
 
 theorem conj_right_ne_bot (y : F) : conj B g y ≠ ⊥ := conj_ne_bot h.proper_right.dom_nonempty y
 
-/-- Exact addition is symmetric. -/
 theorem symm : IsExactSum B g f where
   proper_left := h.proper_right
   proper_right := h.proper_left
@@ -212,9 +169,8 @@ theorem symm : IsExactSum B g f where
     rw [add_comm g f, add_comm (conj B g y₂)]
     exact hle
 
-/-- **The interface rules out disjoint effective domains.** If `dom f ∩ dom g = ∅` then
-`f + g ≡ +∞` and `(f + g)* ≡ -∞`, which no sum of conjugates of proper functions can bound from
-above. So the sum of two exactly-adding functions is itself proper. -/
+/-- **The interface rules out disjoint effective domains**: the sum of two exactly-adding
+functions is itself proper. -/
 theorem proper_add : Proper (f + g) := by
   have hb : conj B (f + g) 0 ≠ ⊥ := by
     obtain ⟨y₁, y₂, -, hle⟩ := h.exact_le 0
@@ -240,7 +196,6 @@ of the conjugates. -/
 theorem conj_add : conj B (f + g) = infConv (conj B f) (conj B g) :=
   le_antisymm (conj_add_le_infConv B f g) h.infConv_le_conj_add
 
-/-- Theorem 16.4 spelled out as an infimum. -/
 theorem conj_add_apply (y : F) :
     conj B (f + g) y = ⨅ y' : F, conj B f (y - y') + conj B g y' := by
   rw [h.conj_add]
@@ -267,8 +222,6 @@ variable {ι E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Modu
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E → EReal}
 
 omit [AddCommGroup E] [Module ℝ E] in
-/-- The effective domain of a finite sum is the intersection of the effective domains: `dom_add`
-over a `Finset`, with the same `≠ ⊥` hypothesis and for the same reason. -/
 theorem dom_finsetSum (hf : ∀ i ∈ s, ∀ x, f i x ≠ ⊥) :
     dom (∑ i ∈ s, f i) = ⋂ i ∈ s, dom (f i) := by
   induction s using Finset.cons_induction with
@@ -284,8 +237,6 @@ theorem dom_finsetSum (hf : ∀ i ∈ s, ∀ x, f i x ≠ ⊥) :
     ext x
     simp [Finset.mem_cons]
 
-/-- Affine minorants of `f₁, …, fₘ` add to an affine minorant of `f₁ + ⋯ + fₘ`. This is
-`conj_add_le_coe_add` over a `Finset`, and like it, it needs no hypothesis whatsoever. -/
 theorem conj_finsetSum_le_coe_sum {y : ι → F} {c : ι → ℝ}
     (h : ∀ i ∈ s, conj B (f i) (y i) ≤ (c i : EReal)) :
     conj B (∑ i ∈ s, f i) (∑ i ∈ s, y i) ≤ ((∑ i ∈ s, c i : ℝ) : EReal) := by
@@ -300,10 +251,8 @@ theorem conj_finsetSum_le_coe_sum {y : ι → F} {c : ι → ℝ}
     simp only [Finset.sum_cons]
     exact conj_add_le_coe_add (h i (by simp)) (ih fun j hj => h j (by simp [hj]))
 
-/-- The pointwise `m`-ary form: `(f₁ + ⋯ + fₘ)* (y₁ + ⋯ + yₘ) ≤ f₁* y₁ + ⋯ + fₘ* yₘ`.
-
-As in the binary case (`conj_add_le_add_conj`) this is *not* unconditional: non-empty effective
-domains are what keep the right-hand side from collapsing to `⊥` through a `⊤ + ⊥`. -/
+/-- The pointwise `m`-ary form: `(f₁ + ⋯ + fₘ)* (y₁ + ⋯ + yₘ) ≤ f₁* y₁ + ⋯ + fₘ* yₘ`. Nonempty
+effective domains keep the right-hand side from collapsing to `⊥` through a `⊤ + ⊥`. -/
 theorem conj_finsetSum_le_sum_conj (hf : ∀ i ∈ s, (dom (f i)).Nonempty) (y : ι → F) :
     conj B (∑ i ∈ s, f i) (∑ i ∈ s, y i) ≤ ∑ i ∈ s, conj B (f i) (y i) := by
   rcases eq_or_ne (∑ i ∈ s, conj B (f i) (y i)) ⊤ with htop | htop
@@ -320,13 +269,11 @@ theorem conj_finsetSum_le_sum_conj (hf : ∀ i ∈ s, (dom (f i)).Nonempty) (y :
   rw [hsum]
   exact conj_finsetSum_le_coe_sum fun i hi => (hci i hi).le
 
-/-- **Half of Rockafellar's Theorem 16.4 in the book's `m`-ary form, unconditionally**:
-`(f₁ + ⋯ + fₘ)* ≤ f₁* □ ⋯ □ fₘ*`, the `□`-product being the `AddCommMonoid` sum of
-`InfConvFn F`.
+/-- **Half of Theorem 16.4 in the book's `m`-ary form, unconditionally**:
+`(f₁ + ⋯ + fₘ)* ≤ f₁* □ ⋯ □ fₘ*`, the `□`-product being the `AddCommMonoid` sum of `InfConvFn F`.
 
-No properness is needed anywhere, and none may be assumed at the intermediate stages: `□` does not
-preserve properness, so the induction runs on `infConv_mono` and never re-enters the infimum
-formula. -/
+No properness may be assumed at the intermediate stages, since `□` does not preserve it; the
+induction runs on `infConv_mono` and never re-enters the infimum formula. -/
 theorem conj_finsetSum_le_sum_toInfConvFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Finset ι)
     (f : ι → E → EReal) :
     conj B (∑ i ∈ s, f i) ≤ ofInfConvFn (∑ i ∈ s, toInfConvFn (conj B (f i))) := by
@@ -355,14 +302,10 @@ variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {s : Finset ι} {f : ι → E →
 
 /-- A finite family `(fᵢ)_{i ∈ s}` **adds exactly** with respect to the pairing `B`: every member
 is proper, and the `m`-fold infimal convolution `f₁* □ ⋯ □ fₘ*` is attained at every point —
-equivalently (`IsExactFinsetSum.conj_finsetSum`), the conjugate of `f₁ + ⋯ + fₘ` *is*
-`f₁* □ ⋯ □ fₘ*`.
+equivalently, the conjugate of `f₁ + ⋯ + fₘ` *is* `f₁* □ ⋯ □ fₘ*`.
 
-This is the conclusion of Rockafellar's Theorem 16.4 and of its polyhedral refinement
-Theorem 20.1, both of which the book states for `m` summands; `IsExactSum` is the case of two.
-Nothing here is special to `m = 2` reached by iteration: `IsExactFinsetSum.cons` and
-`IsExactFinsetSum.of_split` build a family interface out of binary ones, and every consequence
-below is proved once, for the family. -/
+`IsExactSum` is the case of two. Every consequence below is proved once, for the family;
+`IsExactFinsetSum.cons` and `.of_split` build a family interface out of binary ones. -/
 structure IsExactFinsetSum (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (s : Finset ι) (f : ι → E → EReal) : Prop where
   /-- Every member of the family is proper. -/
   proper : ∀ i ∈ s, Proper (f i)
@@ -377,14 +320,12 @@ namespace IsExactFinsetSum
 variable (h : IsExactFinsetSum B s f)
 include h
 
-/-- The sum of an exactly-adding family never takes the value `⊥`. -/
 theorem finsetSum_ne_bot (x : E) : (∑ i ∈ s, f i) x ≠ ⊥ := by
   rw [Finset.sum_apply]
   exact Tdaf.EReal.sum_ne_bot fun i hi => (h.proper i hi).ne_bot x
 
 /-- **The interface rules out effective domains with empty intersection**, exactly as in the
-binary case (`IsExactSum.proper_add`): if `⋂ dom fᵢ = ∅` then `f₁ + ⋯ + fₘ ≡ +∞` and its
-conjugate is `≡ -∞`, which no sum of conjugates of proper functions bounds from above. -/
+binary case. -/
 theorem proper_finsetSum : Proper (∑ i ∈ s, f i) := by
   have hb : conj B (∑ i ∈ s, f i) 0 ≠ ⊥ := by
     obtain ⟨y', -, hle⟩ := h.exact_le 0
@@ -432,11 +373,8 @@ theorem IsExactFinsetSum.singleton {i : ι} (hf : Proper (f i)) :
   exact_le y := ⟨fun _ => y, by simp, by simp⟩
 
 /-- **Adjoining one summand.** A family adds exactly as soon as its tail does and the new summand
-adds exactly to the sum of the tail.
-
-This is the induction step every `m`-ary constraint qualification runs on; what each of them has
-to supply is the *binary* hypothesis `hbin`, and that is where the convexity, properness and
-relative-interior facts about `f₁ + ⋯ + fₘ₋₁` are consumed. -/
+adds exactly to the sum of the tail: the induction step every `m`-ary constraint qualification
+runs on. -/
 theorem IsExactFinsetSum.cons {i : ι} {t : Finset ι} (hi : i ∉ t)
     (hbin : IsExactSum B (f i) (∑ j ∈ t, f j)) (ht : IsExactFinsetSum B t f) :
     IsExactFinsetSum B (Finset.cons i t hi) f := by
@@ -459,12 +397,9 @@ theorem IsExactFinsetSum.cons {i : ι} {t : Finset ι} (hi : i ∉ t)
       exact le_trans (add_le_add le_rfl hle') hle
 
 /-- **Gluing two exactly-adding subfamilies.** If `s` splits into disjoint `t` and `u`, both of
-which add exactly, and the two partial sums add exactly to each other, then `s` adds exactly.
-
-The splitting is spelled as `∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u` rather than `s = t ∪ u` so that the
-statement needs no `DecidableEq` instance, which a caller supplying `Classical.propDecidable` could
-not match. This is the form Rockafellar's proof of Theorem 20.1 uses: `t` the polyhedral indices,
-`u` the rest. -/
+which add exactly, and the two partial sums add exactly to each other, then `s` adds exactly. This
+is the form the proof of Theorem 20.1 uses, with `t` the polyhedral indices and `u` the rest; the
+splitting is spelled pointwise so that no `DecidableEq` instance is needed. -/
 theorem IsExactFinsetSum.of_split {t u : Finset ι} (hdisj : Disjoint t u)
     (hmem : ∀ i, i ∈ s ↔ i ∈ t ∨ i ∈ u)
     (ht : IsExactFinsetSum B t f) (hu : IsExactFinsetSum B u f)
@@ -505,11 +440,8 @@ variable {E F G H : Type*}
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ}
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
-/-- **Half of Rockafellar's Theorem 16.3, unconditionally.** The conjugate of the inverse image
-`g A` is at most the image under the transpose of the conjugate of `g`.
-
-Only the adjointness datum is used; `g` is arbitrary. The reverse inequality is what
-`IsExactImage` asks for. -/
+/-- **Half of Theorem 16.3, unconditionally**: the conjugate of the inverse image `g A` is at most
+the image under the transpose of the conjugate of `g`. Only the adjointness datum is used. -/
 theorem conj_compLin_le_mapLin (hA : IsAdjointPair B B' A A') (g : G → EReal) :
     conj B (compLin g A) ≤ mapLin A' (conj B' g) := by
   intro y
@@ -520,11 +452,10 @@ theorem conj_compLin_le_mapLin (hA : IsAdjointPair B B' A A') (g : G → EReal) 
   exact sub_le_conj B' g (A x) z
 
 /-- `g` **pulls back exactly** along `A`: `g` is proper, and the infimum over the fibres of the
-transpose `A'` that defines `A' (g*)` is attained — equivalently (`IsExactImage.conj_compLin`),
-`(g A)* = A' (g*)`.
+transpose `A'` that defines `A' (g*)` is attained — equivalently, `(g A)* = A' (g*)`.
 
-This is the conclusion of Rockafellar's Theorem 16.3. The transpose `A'` and the adjointness `hA`
-are *data*: between arbitrarily paired spaces a linear map need not have an adjoint at all. -/
+The conclusion of Theorem 16.3. The transpose `A'` and the adjointness `hA` are *data*: between
+arbitrarily paired spaces a linear map need not have an adjoint at all. -/
 structure IsExactImage (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (B' : G →ₗ[ℝ] H →ₗ[ℝ] ℝ)
     (A : E →ₗ[ℝ] G) (A' : H →ₗ[ℝ] F) (hA : IsAdjointPair B B' A A') (g : G → EReal) : Prop where
   /-- The function being pulled back is proper. -/
@@ -534,7 +465,7 @@ structure IsExactImage (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (B' : G →ₗ[ℝ]
 
   The guard `(g A)* y < ⊤` is not a weakening of convenience: without it the field would demand a
   point of the fibre `A' ⁻¹' {y}` for *every* `y`, i.e. it would silently force `A'` to be
-  surjective. See the design notes. -/
+  surjective. -/
   exact_le : ∀ y : F, conj B (compLin g A) y < ⊤ →
     ∃ z : H, A' z = y ∧ conj B' g z ≤ conj B (compLin g A) y
 
@@ -543,9 +474,6 @@ namespace IsExactImage
 variable {hA : IsAdjointPair B B' A A'} (h : IsExactImage B B' A A' hA g)
 include h
 
-/-- **The interface rules out a range that misses the effective domain.** If `A x ∉ dom g` for
-every `x` then `g A ≡ +∞` and `(g A)* ≡ -∞`, which no conjugate of a proper function bounds from
-above. -/
 theorem proper_compLin : Proper (compLin g A) := by
   have hb : conj B (compLin g A) 0 ≠ ⊥ := by
     intro hc

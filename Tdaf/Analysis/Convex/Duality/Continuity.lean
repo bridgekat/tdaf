@@ -9,39 +9,31 @@ import Tdaf.Analysis.Convex.Duality.Exact
 /-!
 # The continuity constraint qualification
 
-`IsExactSum.of_continuousAt`: if one of two proper convex functions is continuous at a point where
-the other is finite, they add exactly — `(f + g)* = f* □ g*` with the infimal convolution attained.
+If one of two proper convex functions is continuous at a point where the other is finite, they add
+exactly: `(f + g)* = f* □ g*`, with the infimal convolution attained.
 
 Rockafellar does not state this. His Theorem 16.4 asks that `ri (dom f)` and `ri (dom g)` meet,
 which is the sharp condition in finite dimensions but is not available in general, `ri` being empty
-for most infinite-dimensional convex sets. Continuity is the condition that replaces it, and it is
-the one every application in a Banach space actually verifies (typically because one summand is
-finite and continuous everywhere).
+for most infinite-dimensional convex sets. Continuity is the condition that replaces it, and the
+one every application in a Banach space actually verifies — typically because one summand is finite
+and continuous everywhere.
 
 ## Main results
 
-* `IsExactSum.of_continuousAt` — the qualification, the third constructor of `IsExactSum`
-  alongside `IsExactSum.of_relint` (§16, finite dimensions) and `IsExactSum.of_polyhedral` (§20).
+* `IsExactSum.of_continuousAt` — the qualification, the third constructor of `IsExactSum` alongside
+  `IsExactSum.of_relint` (finite dimensions) and `IsExactSum.of_polyhedral`.
 
-## Design notes
+## Implementation notes
 
-**Layer B, not D — and not even C.** The only topological input is
-`geometric_hahn_banach_open`, which separates a *nonempty open* convex set from a disjoint convex
-set in any real topological vector space; local convexity is what one needs to separate two closed
-sets, and it is not needed here. What supplies the open set is exactly the hypothesis: continuity
-at `x₀` makes `f` bounded above near `x₀`, so the strict epigraph of `f` has interior.
+The only topological input is `geometric_hahn_banach_open`, which separates a *nonempty open*
+convex set from a disjoint convex set in any real topological vector space; local convexity, which
+is what separating two closed sets needs, is not required. Continuity at `x₀` is what supplies the
+open set: it makes `f` bounded above near `x₀`, so the strict epigraph of `f` has interior.
 
-**Two convex sets in `E × ℝ`.** With `a = (f + g)* y` finite, the hypothesis to be contradicted is
-`f x + g x < ⟨x, y⟩ - a`. So the sets to separate are the strict epigraph of `f` and the
-*hypograph* `{(x, μ) | g x ≤ ⟨x, y⟩ - a - μ}` of the concave function `x ↦ ⟨x, y⟩ - a - g x`; the
-displayed inequality says precisely that these are disjoint. The separating functional is
-non-vertical — its `ℝ`-coefficient is `< 0` — because a vertical one would have to be both `< u`
-and `≥ u` at `x₀`, and it is negative rather than positive because the strict epigraph is
-unbounded upwards.
-
-**The separation is strict only on the interior.** `geometric_hahn_banach_open` gives `φ < u` on
-the *open* set, and the estimate is needed on the whole strict epigraph. `Convex` bridges the gap:
-`closure (interior C) = closure C` once the interior is nonempty, and `{φ ≤ u}` is closed.
+With `a = (f + g)* y` finite, the hypothesis to be contradicted is `f x + g x < ⟨x, y⟩ - a`, so the
+two sets separated are the strict epigraph of `f` and the hypograph of the concave function
+`x ↦ ⟨x, y⟩ - a - g x`. The separating functional is non-vertical, and its `ℝ`-coefficient is
+negative rather than positive because the strict epigraph is unbounded upwards.
 
 ## References
 
@@ -72,10 +64,8 @@ theorem ConvexFn.convex_strictEpi (hf : ConvexFn f) :
   simpa [smul_eq_mul] using hcombo
 
 /-- **The continuity constraint qualification.** If `f` and `g` are proper convex functions and `f`
-is continuous at some point where both are finite, then `f` and `g` add exactly.
-
-This is the constructor of `IsExactSum` that survives into infinite dimensions; see the module
-docstring for why it needs neither `ri` nor local convexity. -/
+is continuous at some point where both are finite, then `f` and `g` add exactly. This is the
+constructor of `IsExactSum` that survives into infinite dimensions. -/
 theorem IsExactSum.of_continuousAt (hf : ConvexFn f) (hpf : Proper f) (hg : ConvexFn g)
     (hpg : Proper g) {x₀ : E} (hfx₀ : x₀ ∈ dom f) (hgx₀ : x₀ ∈ dom g)
     (hcont : ContinuousAt f x₀) : IsExactSum B f g := by

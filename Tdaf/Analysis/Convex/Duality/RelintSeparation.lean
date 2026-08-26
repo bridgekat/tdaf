@@ -10,72 +10,38 @@ import Tdaf.Analysis.Convex.Duality.Relint
 
 The constraint qualifications of the exactness theory — "the range of `A` meets `ri (dom g)`", "the
 effective domains have a common relative interior point" — are *primal* conditions. This file turns
-them into *dual* ones: statements about the directions of the pairing in which the sets are
-bounded.
+them into dual ones: statements about the directions of the pairing in which the sets are bounded.
 
 The engine is proper separation. Two nonempty convex sets have disjoint relative interiors exactly
 when some hyperplane separates them properly, and over a compatible pairing the separating
 functional is `⟨·, y⟩` for a `y` of the second space; the two conditions defining proper separation
 then read as two inequalities between values of the pairing. When one of the two sets is a
-*subspace* `L`, the pairing is bounded on `L` only in the directions where it vanishes on `L`, so
-the whole condition collapses to a statement about a single set together with the annihilator
-of `L`.
+*subspace* `L`, a direction in which the pairing is bounded on `L` is one in which it vanishes on
+`L`, so both extrema over `L` collapse to `0` and the condition becomes a statement about a single
+set together with the annihilator of `L`.
 
 ## Main results
 
 * `exists_pairing_le_iff_disjoint_relint` — proper separation over a pairing: `ri C₁` and `ri C₂`
   are disjoint exactly when the pairing with some `y` is nowhere larger on `C₁` than on `C₂` and is
   strictly smaller somewhere.
-* `submodule_inter_relint_nonempty_iff` and `submodule_inter_relint_nonempty_iff_supportFn` — the
-  subspace case, pointwise and through the support function. The two readings of `δ*` at the level
-  `0` that the second runs on are `supportFn_le_zero_iff` and `zero_lt_supportFn_iff`, in
-  `Duality/Support.lean`.
-* `submodule_inter_relint_dom_nonempty_iff` — the effective-domain case, with the support function
-  of `dom f` rewritten as the recession function of `f*`.
-* `exists_apply_mem_relint_dom_iff` — the same for the range of a linear map, whose annihilator on
-  the other side of the pairing is the kernel of the adjoint.
+* `submodule_inter_relint_nonempty_iff`, `submodule_inter_relint_nonempty_iff_supportFn` — the
+  subspace case, pointwise and through the support function.
+* `submodule_inter_relint_dom_nonempty_iff` — **Lemma 16.2**, the effective-domain case, with the
+  support function of `dom f` rewritten as the recession function of `f*`.
+* `exists_apply_mem_relint_dom_iff` — **Corollary 16.2.1**, the same for the range of a linear map,
+  whose annihilator on the other side of the pairing is the kernel of the adjoint.
 
-## Assembled from
+## Implementation notes
 
-`exists_separatesProperly_iff_disjoint_relint` (**Rockafellar, Theorem 11.3**),
-`exists_separatesProperly_iff_iSup_le_iInf` (**Theorem 11.1**, conditions (a) and (b)) and
-`recessionFn_conj` (**Theorem 13.3**). Those three are what Rockafellar's Lemma 16.2 and its
-corollaries are built from, and this file is that assembly with no `ℝⁿ` in it.
+The general statement is written with pointwise inequalities `⟨x₁, y⟩ ≤ ⟨x₂, y⟩`, which mention no
+`EReal`; the support function appears only once one of the two sets is a subspace, where two of the
+four extrema of Rockafellar's Theorem 11.1 become `0`.
 
-## Design notes
-
-**The pointwise form is the primitive one.** Rockafellar phrases proper separation through four
-extrema of `⟨·, y⟩` over the two sets; two of the four are support functions and the other two are
-`-δ*(-y | ·)`. Carrying those negations through `EReal` buys nothing here, because the subspace
-case immediately turns both of `L`'s extrema into `0`. So the general statement is written with the
-pointwise inequalities `⟨x₁, y⟩ ≤ ⟨x₂, y⟩`, which mention no `EReal` at all, and the support
-function appears only once one of the two sets is a subspace.
-
-**Boundedness on a subspace is vanishing on it.** A linear function bounded above on a subspace is
-identically zero there, since the subspace is closed under arbitrary real scaling; this is
-`forall_pairing_eq_zero_of_forall_le`, and it is the only thing that distinguishes the subspace
-case from the general one. It is also why the annihilator condition need not be assumed: it is
-*implied* by the separation inequality rather than added to it.
-
-**Only one of the two spaces is topologised.** Proper separation happens in `E`, which must be
-finite-dimensional — Theorem 11.3 rests on `ri C ≠ ∅` for nonempty convex `C`. The `F` side enters
-only through `IsCompatiblePairing`, which turns the separating continuous functional into a vector
-of `F`, so `F` is a bare module throughout. In the image statement the source space of the linear
-map carries no topology at all.
-
-**Properness of the conjugate is a hypothesis, not a conclusion.** `recessionFn_conj` takes
-`Proper (conj B f)` rather than deriving it, so that it stays at the layer where no topology on `F`
-is needed; the statements below follow suit. A caller in finite dimensions discharges it with
-`proper_conj_of_proper`, which is Rockafellar's own reading of Theorem 12.2.
-
-## What is not here
-
-**The many-set form is in `Duality/FiniteProduct.lean`.** `ri C₁ ∩ ⋯ ∩ ri Cₘ ≠ ∅` against a family
-`y₁, …, yₘ` summing to zero is the diagonal subspace of `ι → E` applied to
-`submodule_inter_relint_nonempty_iff_supportFn`, and the transport needs a pairing on a finite
-product, the relative interior of a product set and the support function of a product set. Those
-are the subject of their own module, and `iInter_relint_nonempty_iff_supportFn` there is the
-result.
+Only `E` is topologised: proper separation happens there and needs finite dimension, while `F`
+enters through `IsCompatiblePairing` alone and is a bare module. `Proper (conj B f)` is a
+hypothesis rather than a conclusion, following `recessionFn_conj`; a caller in finite dimensions
+discharges it with `proper_conj_of_proper`.
 
 ## References
 
@@ -127,11 +93,9 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {C C₁ C₂ : Set E}
 
 /-- **Proper separation over a pairing.** Two nonempty convex sets have disjoint relative interiors
-exactly when the pairing with some `y` is nowhere larger on `C₁` than it is on `C₂`, and is
-strictly smaller at one pair of points.
-
-This is **Rockafellar, Theorem 11.3** composed with conditions (a) and (b) of **Theorem 11.1**, the
-separating functional being transported to `F` by `IsCompatiblePairing`. -/
+exactly when the pairing with some `y` is nowhere larger on `C₁` than on `C₂` and is strictly
+smaller at one pair of points. This is **Theorem 11.3** with conditions (a) and (b) of
+**Theorem 11.1**. -/
 theorem exists_pairing_le_iff_disjoint_relint (h₁ : Convex ℝ C₁) (h₂ : Convex ℝ C₂)
     (hne₁ : C₁.Nonempty) (hne₂ : C₂.Nonempty) :
     (∃ y : F, (∀ x₁ ∈ C₁, ∀ x₂ ∈ C₂, B x₁ y ≤ B x₂ y) ∧
@@ -182,10 +146,8 @@ theorem exists_pairing_le_iff_disjoint_relint (h₁ : Convex ℝ C₁) (h₂ : C
 
 /-- **A subspace meets the relative interior of a convex set** exactly when no direction of the
 pairing annihilates the subspace, is nowhere positive on the set and is negative somewhere on it.
-
-The annihilator condition is not assumed: a direction along which the pairing is bounded below on a
-subspace vanishes on that subspace (`forall_pairing_eq_zero_of_forall_le`), so both of the extrema
-over `L` in Rockafellar's Theorem 11.1 are `0`. -/
+The annihilator condition is not assumed but implied: a direction along which the pairing is
+bounded below on a subspace vanishes on it. -/
 theorem submodule_inter_relint_nonempty_iff (L : Submodule ℝ E) (hC : Convex ℝ C)
     (hne : C.Nonempty) :
     ((L : Set E) ∩ ri C).Nonempty ↔
@@ -243,13 +205,9 @@ section Function
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [AddCommGroup F] [Module ℝ F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {f : E → EReal}
 
-/-- **Rockafellar, Lemma 16.2.** A subspace `L` meets `ri (dom f)` exactly when there is no `y`
-annihilating `L` with `(f*) 0⁺ y ≤ 0 < (f*) 0⁺ (-y)`.
-
-The support function of `dom f` is the recession function of `f*` — **Theorem 13.3** — so this is
-`submodule_inter_relint_nonempty_iff_supportFn` at `C = dom f`. `Proper (conj B f)` is a hypothesis
-rather than a conclusion for the reason `recessionFn_conj` makes it one; in finite dimensions
-`proper_conj_of_proper` supplies it from `ConvexFn f` and `Proper f`. -/
+/-- **Lemma 16.2.** A subspace `L` meets `ri (dom f)` exactly when there is no `y` annihilating `L`
+with `(f*) 0⁺ y ≤ 0 < (f*) 0⁺ (-y)`. The support function of `dom f` is the recession function of
+`f*` (**Theorem 13.3**), so this is the previous statement at `C = dom f`. -/
 theorem submodule_inter_relint_dom_nonempty_iff (L : Submodule ℝ E) (hf : ConvexFn f)
     (hp : Proper f) (hc : Proper (conj B f)) :
     ((L : Set E) ∩ ri (dom f)).Nonempty ↔
@@ -271,9 +229,8 @@ variable {E F G H : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Mod
   {A : E →ₗ[ℝ] G} {A' : H →ₗ[ℝ] F} {g : G → EReal}
 
 omit [FiniteDimensional ℝ G] [IsCompatiblePairing B'] in
-/-- **The annihilator of the range of `A` is the kernel of its adjoint.** Recovering `A' y = 0`
-from "`⟨·, A' y⟩` vanishes identically" is what `B.SeparatingRight` is for; over `ℝⁿ` paired with
-itself the two conditions coincide and Rockafellar does not distinguish them. -/
+/-- **The annihilator of the range of `A` is the kernel of its adjoint.** `B.SeparatingRight` is
+what recovers `A' y = 0` from "`⟨·, A' y⟩` vanishes identically". -/
 theorem forall_mem_range_eq_zero_iff (hB : B.SeparatingRight) (hA : IsAdjointPair B B' A A')
     (y : H) : (∀ z ∈ LinearMap.range A, B' z y = 0) ↔ A' y = 0 := by
   constructor
@@ -285,11 +242,9 @@ theorem forall_mem_range_eq_zero_iff (hB : B.SeparatingRight) (hA : IsAdjointPai
     obtain ⟨x, rfl⟩ := LinearMap.mem_range.1 hz
     rw [hA x y, h, map_zero]
 
-/-- **Rockafellar, Corollary 16.2.1.** For a linear transformation `A` with adjoint `A'` and a
-proper convex `g`, some `A x` lies in `ri (dom g)` exactly when no `y` in the kernel of `A'` has
-`(g*) 0⁺ y ≤ 0 < (g*) 0⁺ (-y)`.
-
-This is Lemma 16.2 for the subspace `L = range A`. -/
+/-- **Corollary 16.2.1.** For a linear transformation `A` with adjoint `A'` and a proper convex
+`g`, some `A x` lies in `ri (dom g)` exactly when no `y` in the kernel of `A'` has
+`(g*) 0⁺ y ≤ 0 < (g*) 0⁺ (-y)`: Lemma 16.2 for the subspace `L = range A`. -/
 theorem exists_apply_mem_relint_dom_iff (hB : B.SeparatingRight) (hA : IsAdjointPair B B' A A')
     (hg : ConvexFn g) (hp : Proper g) (hc : Proper (conj B' g)) :
     (∃ x, A x ∈ ri (dom g)) ↔

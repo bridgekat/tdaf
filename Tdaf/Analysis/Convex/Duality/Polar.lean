@@ -10,126 +10,63 @@ import Tdaf.Order.GaloisConnection
 /-!
 # Polars of convex sets and convex cones
 
-Rockafellar's §14, over a dual pair `B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ`. §14 opens by observing that a
-positively homogeneous *indicator* function conjugates to a positively homogeneous indicator
-function, so the conjugacy correspondence of §12 restricts to a correspondence between convex
-cones. That restriction is polarity, and it is proved here from
-`conj_eq_indicatorFn_of_posHomogeneous` together with the separation theory of §11.
+The **polar** of a convex cone `K` is `K° = {y ∣ ∀ x ∈ K, ⟨x, y⟩ ≤ 0}`, and the polar of a convex
+set `C` containing the origin is `C° = {y ∣ ∀ x ∈ C, ⟨x, y⟩ ≤ 1}`. Polarity is what conjugacy
+becomes on indicator functions: the indicator of a cone is positively homogeneous, so its conjugate
+is again an indicator, and the set it indicates is the polar. The bipolar theorem `K°° = cl K`
+follows from that together with separation. Theorems 14.2–14.7 need the recession function or the
+gauge and are proved in `Recession/Conjugate.lean`, `Duality/HomConePolar.lean`,
+`Duality/Level.lean`, `Duality/Gauge.lean` and `Duality/PolarBounded.lean`.
 
 ## Main definitions
 
-* `polarCone B K` — Rockafellar's polar `K° = {y | ∀ x ∈ K, ⟨x, y⟩ ≤ 0}` of a convex cone.
-* `polarPointedCone B K` — the same set bundled as a `PointedCone ℝ F`.
-* `polarSet B C` — the polar `C° = {y | ∀ x ∈ C, ⟨x, y⟩ ≤ 1}` of a convex set containing the
-  origin.
-* `gc_polarCone_polarCone`, `polarConeClosure` — polarity as an *antitone Galois
-  connection* between `Set E` and `Set F` and the closure operator `K ↦ K°°` it induces; likewise
+* `polarCone B K`, `polarSet B C` — the two polars above; `polarPointedCone B K` bundles the first
+  as a `PointedCone ℝ F` and `polarSubmodule B M` bundles the polar of a subspace.
+* `gc_polarCone_polarCone`, `polarConeClosure` — polarity as an antitone Galois connection between
+  `Set E` and `Set F`, and the closure operator `K ↦ K°°` it induces; likewise
   `gc_polarSet_polarSet` and `polarSetClosure`.
 
 ## Main results
 
-* `conj_indicatorFn_eq_indicatorFn_polarCone` — **Theorem 14.1**, third assertion: the
-  indicator functions of `K` and `K°` are conjugate.
-* `polarCone_polarCone` — **Theorem 14.1**, second assertion: `K°° = cl K` for a nonempty
-  convex cone `K`; `polarCone_polarCone_of_isClosed` is the closed case, and
-  `isClosed_polarConeClosure_iff` identifies these with the closed elements of the closure
-  operator.
-* `isClosed_polarCone`, `polarPointedCone` — **Theorem 14.1**, first assertion: `K°` is a
-  nonempty closed convex cone, for *any* `K`.
-* `polarCone_neg`, `smul_neg_polarCone`, `zero_mem_neg_polarCone`, `convex_neg_polarCone`,
-  `neg_polarCone_neg_polarCone` — the same facts for Rockafellar's *dual* cone `K* = -K°`, which
-  is what §31 pairs with `K`; the last is `K** = K` for a nonempty closed convex cone.
+* `isClosed_polarCone`, `polarPointedCone`, `polarCone_polarCone`,
+  `conj_indicatorFn_eq_indicatorFn_polarCone` — the three assertions of **Theorem 14.1**: `K°` is
+  a nonempty closed convex cone for *any* `K`; `K°° = cl K` for a nonempty convex cone; and the
+  indicator functions of `K` and `K°` are conjugate. `neg_polarCone_neg_polarCone` is `K** = K`
+  for the *dual* cone `K* = -K°` that §31 pairs with `K`.
 * `polarSet_polarSet` — **Theorem 14.5**, first assertion: `C°° = C` for a closed convex `C`
   containing the origin.
 * `polarCone_eq_setOf_supportFn_le_zero` — the polar is the zero sublevel set of the support
-  function, for an arbitrary set. This is what turns a theorem computing a support function into a
-  theorem computing a polar, and is how §14's Theorem 14.3 is assembled from Theorem 13.5.
-* **The bundled family.** Every Theorem 14.1 statement above takes `Convex ℝ K`,
-  `∀ a > 0, a • K = K` and `K.Nonempty` separately, because that is the generality in which the
-  separation argument runs. A `PointedCone ℝ E` supplies all three, so each has a `_pointedCone`
-  companion — `polarCone_polarCone_pointedCone`, `…_eq_closure`,
-  `neg_polarCone_neg_polarCone_pointedCone`, `conj_indicatorFn_polarCone_pointedCone`. A surface
-  section stating Theorem 14.1 for cones should use those and never discharge the triple by hand.
-* `polarSubmodule`, `partialAffineFn`, `conj_partialAffineFn` — the polar of a subspace bundled
-  as a submodule, and the **conjugate of a partial affine function** (Rockafellar §12, the display
-  preceding Theorem 12.3): `(δ(· | L + a) + ⟨·, a*⟩ + α)* = δ(· | L^⊥ + a*) + ⟨a, ·⟩ + α*`.
-* `convex_polarSet`, `polarSet_closure`, `polarSet_union`, `polarSet_iUnion`,
-  `polarSet_convexHull`, `polarSet_smul`,
-  `polarCone_add` — the lattice and scaling identities, in the `polarSet` forms that only
-  `polarCone` had. `polarSet_convexHull` is the reason `convex_setOf_pairing_le_coe` is here: a
-  polar set is an intersection of closed half-spaces, so polarity does not see the convex hull.
-* `polarCone_coe_submodule`, `polarCone_hull_range`,
-  `polarCone_setOf_forall_le_zero`, `polarCone_nonnegOrthant` — the examples of §14:
-  the polar of a subspace is its annihilator, the polar of a generated cone is the solution set of
-  the corresponding homogeneous inequalities and conversely, and the polar of the nonnegative
-  orthant is the nonpositive orthant.
+  function, for an arbitrary set: this is what turns a theorem computing a support function into a
+  theorem computing a polar.
+* `polarSet_closure`, `polarSet_union`, `polarSet_convexHull`, `polarSet_smul`, `polarCone_add` —
+  the lattice and scaling identities. A polar is an intersection of closed half-spaces, so polarity
+  does not see the convex hull.
+* `polarCone_coe_submodule`, `polarCone_hull_range`, `polarCone_setOf_forall_le_zero`,
+  `polarCone_nonnegOrthant` — the examples of §14: the polar of a subspace is its annihilator, the
+  polar of a generated cone is the solution set of the corresponding homogeneous inequalities and
+  conversely, and the polar of the nonnegative orthant is the nonpositive orthant.
+* `conj_partialAffineFn` — the conjugate of a partial affine function,
+  `(δ(· ∣ L + a) + ⟨·, a*⟩ + α)* = δ(· ∣ L^⊥ + a*) + ⟨a, ·⟩ + α*`.
 
-## Bridges to Mathlib
+## Implementation notes
 
-* `polarPointedCone_eq_dual_neg` — Mathlib **does** have a dual cone: `PointedCone.dual p s`
-  in `Mathlib/Geometry/Convex/Cone/Dual.lean` is `{y | ∀ x ∈ s, 0 ≤ p x y}`, the *inner* dual, so
-  `K° = (-K)ᵛ = -(Kᵛ)`. Mathlib also has `ProperCone.dual` with `ProperCone.dual_flip_dual`, the
-  bipolar theorem for a *perfect continuous* pairing (`LinearMap.IsContPerfPair`); the version
-  proved here instead asks for `IsCompatiblePairing`, so it applies to a space paired
-  with its own continuous dual without asking for a perfect pairing; closedness of the polar
-  (`isClosed_polarCone`) needs only `IsContinuousPairing`.
-* `polarSet_eq_polar_of_balanced` — Mathlib's `LinearMap.polar` is the **absolute** polar
-  `{y | ∀ x ∈ s, ‖B x y‖ ≤ 1}`. It agrees with `polarSet` exactly on balanced sets;
-  Rockafellar's polar is one-sided and the two are genuinely different objects otherwise.
+Every Theorem 14.1 statement takes `Convex ℝ K`, `∀ a > 0, a • K = K` and `K.Nonempty` separately,
+because that is the generality in which the separation argument runs; a `PointedCone ℝ E` supplies
+all three, and each statement has a `_pointedCone` companion. `K°° = cl K`, not `K°° = K`, is the
+theorem, and nonemptiness of `K` is genuinely needed: `∅° = F`, and `F°` is the kernel of the
+pairing rather than `cl ∅ = ∅`. The adjunction `L ⊆ K° ↔ K ⊆ L°` makes `K ↦ K°°` a
+`ClosureOperator (Set E)`, with the `OrderDual` on the *codomain* rather than the domain because
+the indicator embedding `s ↦ δ(· ∣ s)` is antitone.
 
-## Design notes
-
-**Polarity is a Galois connection, and `polarConeClosure` is its closure operator.** The
-adjunction `L ⊆ K° ↔ K ⊆ L°` is `subset_polarCone_comm`, and it makes `K ↦ K°°` a
-`ClosureOperator (Set E)`. The `OrderDual` sits on the *codomain* here, not on the domain as in
-`conjClosure`, so the induced closure operator lives on `Set E` itself and `K ⊆ K°°` is its
-unit; Theorem 14.1 then says exactly which sets are closed for it. The change of side is forced by
-variance: `δ(· | K) ≤ δ(· | L)` means `L ⊆ K`, so the indicator embedding is *antitone*, and the
-polarity adjunction is the image of `conj_le_iff` under it.
-
-**`K°° = cl K`, not `K°° = K`, is the theorem.** This is design decision `D0`: the missing
-hypothesis in a statement transcribed from `Rⁿ` is "closed" or "continuous", and here it is
-"closed". `polarCone_polarCone` is stated with `cl K` and needs no closedness at all.
-
-**Nonemptiness of `K` is needed.** `∅° = F` and `F° = {x | ∀ y, ⟨x, y⟩ ≤ 0}`, which is the kernel
-of the pairing rather than `cl ∅ = ∅`. Rockafellar's standing hypothesis in §14 is that the cone is
-nonempty, and it is kept.
-
-## Deferred
-
-* **Theorem 14.2 and Corollaries 14.2.1–14.2.2** describe the polar of the cone generated by
-  `dom f` and of a recession cone in terms of the **recession cone** of `f*`. That is `recessionFn`
-  in `Tdaf/Analysis/Convex/Recession/Function.lean`, which this file does not import; the
-  statements are in `Tdaf/Analysis/Convex/Recession/Conjugate.lean`.
-* **Theorem 14.3** (the closed convex cones generated by `{x | f x ≤ 0}` and `{y | f* y ≤ 0}` are
-  polar to each other) needs no recession cone at all: its geometric step is
-  `setOf_clFn_posHomGen_le_zero` in `Tdaf/Analysis/Convex/Duality/Level.lean`, and the assembly is
-  `polarCone_eq_setOf_supportFn_le_zero` together with Theorem 13.5. Every piece is in the
-  backbone; only the assembly, in the book's packaging, is at the surface, in
-  `Tdaf/Surface/Rockafellar/Part3/Section14.lean`.
-* **Theorem 14.4** (the `ℝⁿ⁺²` cone whose polar carries `f*`) is proved in
-  `Tdaf/Analysis/Convex/Duality/HomConePolar.lean`, as `closure_homCone_conj`, over `ℝ × E × ℝ`
-  rather than `ℝⁿ⁺²`. It does **not** need the recession function of the positively homogeneous
-  function generated by `f`, which this note used to defer it for: that description of `cl K`
-  belongs to the unnumbered paragraph *preceding* the theorem, and the printed proof never uses
-  it. Nor does it need the bipolar theorem — the two half-space facts Rockafellar reads off
-  `cl K` are visible in `K` itself, from a vertical ray and from a single affine minorant — so it
-  sits one layer below this file's Theorem 14.1.
-* **Theorem 14.5, second and third assertions** identify the gauge of `C` with the support
-  function of `C°`. That quantifies over the **gauge**, and so do **Theorems 14.6, 14.7 and the
-  whole of §15**; those are a separate module. Mathlib already has `gauge` and `egauge`
-  (`Mathlib/Analysis/Convex/EGauge.lean`) and the plan is to reuse them rather than to introduce a
-  third.
-* **Corollary 14.5.1** (`C°` is bounded exactly when `0 ∈ int C`) does *not* need a gauge, in spite
-  of Rockafellar's own proof: the route through `recessionCone_eq_polarCone_polarSet`,
-  `isBounded_iff_recessionCone_eq_zero` and `zero_mem_interior_iff_polarCone_eq_zero` avoids it.
-  What it does need is the recession cone, so it lives one module further down, in
-  `Tdaf/Analysis/Convex/Duality/PolarBounded.lean`.
+Two Mathlib objects are close but different. `PointedCone.dual` is the *inner* dual, so
+`K° = -(Kᵛ)` (`polarPointedCone_eq_dual_neg`); the bipolar theorem proved here asks for
+`IsCompatiblePairing` rather than a perfect pairing, and closedness of the polar needs only
+`IsContinuousPairing`. `LinearMap.polar` is the **absolute** polar, which agrees with `polarSet`
+exactly on balanced sets (`polarSet_eq_polar_of_balanced`).
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §14 (Theorem 14.1,
-  Theorem 14.5).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §14.
 -/
 
 open Set Pointwise
@@ -142,11 +79,9 @@ section Defs
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
-/-- **Rockafellar's polar of a convex cone**: `K° = {y | ∀ x ∈ K, ⟨x, y⟩ ≤ 0}`.
-
-This is a *one-sided* polar, and it is not Mathlib's `LinearMap.polar`, which is the absolute polar
-`{y | ∀ x ∈ K, ‖⟨x, y⟩‖ ≤ 1}`. It is the negative of Mathlib's inner dual cone
-(`polarPointedCone_eq_dual_neg`). -/
+/-- **The polar of a convex cone**: `K° = {y | ∀ x ∈ K, ⟨x, y⟩ ≤ 0}`. This is a *one-sided* polar,
+neither Mathlib's absolute polar `LinearMap.polar` nor its inner dual cone, of which it is the
+negative (`polarPointedCone_eq_dual_neg`). -/
 def polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : Set F := {y | ∀ x ∈ K, B x y ≤ 0}
 
 /-- **Rockafellar's polar of a convex set containing the origin**:
@@ -155,35 +90,26 @@ def polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) : Set F := {y | �
 
 variable {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {K L : Set E} {C D : Set E} {y : F}
 
-/-- Membership in the polar cone, unfolded. -/
 @[simp] theorem mem_polarCone : y ∈ polarCone B K ↔ ∀ x ∈ K, B x y ≤ 0 := Iff.rfl
 
-/-- Membership in the polar set, unfolded. -/
 @[simp] theorem mem_polarSet : y ∈ polarSet B C ↔ ∀ x ∈ C, B x y ≤ 1 := Iff.rfl
 
-/-- Polarity of cones is order-reversing. -/
 theorem polarCone_anti (h : K ⊆ L) : polarCone B L ⊆ polarCone B K := fun _ hy x hx => hy x (h hx)
 
-/-- Polarity of sets is order-reversing (Rockafellar §14). -/
 theorem polarSet_anti (h : C ⊆ D) : polarSet B D ⊆ polarSet B C := fun _ hy x hx => hy x (h hx)
 
-/-- The polar of the empty set is everything. -/
 @[simp] theorem polarCone_empty (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
     polarCone B (∅ : Set E) = univ := by ext y; simp
 
-/-- The polar of the empty set is everything. -/
 @[simp] theorem polarSet_empty (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
     polarSet B (∅ : Set E) = univ := by ext y; simp
 
-/-- The origin lies in every polar cone. -/
 @[simp] theorem zero_mem_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     (0 : F) ∈ polarCone B K := fun x _ => by simp
 
-/-- The origin lies in every polar set. -/
 @[simp] theorem zero_mem_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) :
     (0 : F) ∈ polarSet B C := fun x _ => by simp
 
-/-- A polar cone is never empty: it contains the origin. -/
 theorem polarCone_nonempty (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : (polarCone B K).Nonempty :=
   ⟨0, zero_mem_polarCone B K⟩
 
@@ -191,20 +117,17 @@ theorem polarCone_nonempty (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : (
 theorem polarCone_subset_polarSet : polarCone B K ⊆ polarSet B K :=
   fun _ hy x hx => (hy x hx).trans zero_le_one
 
-/-- The polar of a union is the intersection of the polars. -/
 theorem polarCone_union (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K L : Set E) :
     polarCone B (K ∪ L) = polarCone B K ∩ polarCone B L := by
   ext y; exact ⟨fun h => ⟨fun x hx => h x (Or.inl hx), fun x hx => h x (Or.inr hx)⟩,
     fun h x hx => hx.elim (h.1 x) (h.2 x)⟩
 
-/-- The polar of a union of a family is the intersection of the polars. -/
 theorem polarCone_iUnion {ι : Sort*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (u : ι → Set E) :
     polarCone B (⋃ i, u i) = ⋂ i, polarCone B (u i) := by
   ext y
   simp only [mem_polarCone, Set.mem_iInter, Set.mem_iUnion]
   exact ⟨fun h i x hx => h x ⟨i, hx⟩, fun h x hx => hx.elim fun i hi => h i x hi⟩
 
-/-- The polar of a union is the intersection of the polars. -/
 theorem polarSet_union (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C D : Set E) :
     polarSet B (C ∪ D) = polarSet B C ∩ polarSet B D := by
   ext y
@@ -212,8 +135,6 @@ theorem polarSet_union (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C D : Set E) :
   exact ⟨fun h => ⟨fun x hx => h x (Or.inl hx), fun x hx => h x (Or.inr hx)⟩,
     fun h x hx => hx.elim (h.1 x) (h.2 x)⟩
 
-/-- The polar of an indexed union is the intersection of the polars. This is the `polarSet`
-counterpart of `polarCone_iUnion`. -/
 theorem polarSet_iUnion {ι : Sort*} (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (u : ι → Set E) :
     polarSet B (⋃ i, u i) = ⋂ i, polarSet B (u i) := by
   ext y
@@ -234,13 +155,11 @@ theorem polarCone_eq_polarSet_of_isCone (hK : ∀ a : ℝ, 0 < a → a • K = K
   rw [map_smul, LinearMap.smul_apply, smul_eq_mul, div_mul_cancel₀ _ hcon.ne'] at h
   linarith
 
-/-- **The polarity adjunction**: `L ⊆ K°` and `K ⊆ L°` both say that `⟨x, y⟩ ≤ 0` for every `x ∈ K`
-and `y ∈ L`. This is the image, under the antitone embedding `s ↦ δ(· | s)`, of the adjunction
-`conj_le_iff` of §12. -/
+/-- **The polarity adjunction**: `L ⊆ K°` and `K ⊆ L°` both say that `⟨x, y⟩ ≤ 0` for every
+`x ∈ K` and `y ∈ L`. -/
 theorem subset_polarCone_comm {L : Set F} : L ⊆ polarCone B K ↔ K ⊆ polarCone B.flip L :=
   ⟨fun h _ hx _ hy => h hy _ hx, fun h _ hy _ hx => h hx _ hy⟩
 
-/-- The same adjunction for polars of sets. -/
 theorem subset_polarSet_comm {L : Set F} : L ⊆ polarSet B C ↔ C ⊆ polarSet B.flip L :=
   ⟨fun h _ hx _ hy => h hy _ hx, fun h _ hy _ hx => h hx _ hy⟩
 
@@ -248,16 +167,10 @@ theorem subset_polarSet_comm {L : Set F} : L ⊆ polarSet B C ↔ C ⊆ polarSet
 theorem subset_polarCone_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     K ⊆ polarCone B.flip (polarCone B K) := subset_polarCone_comm.1 (subset_refl _)
 
-/-- Every set is contained in its bipolar, for polars of sets. -/
 theorem subset_polarSet_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) :
     C ⊆ polarSet B.flip (polarSet B C) := subset_polarSet_comm.1 (subset_refl _)
 
-/-! ### Polarity as a Galois connection
-
-The adjunction above is exactly the shape of `gc_ofEpi_epi` and `gc_conj_conj`, and it is
-recorded here so that the whole `ClosureOperator` API is available. Unlike conjugacy, the
-`OrderDual` sits on the *codomain*, and the resulting closure operator therefore lives on `Set E`
-itself. -/
+/-! ### Polarity as a Galois connection -/
 
 /-- **Polarity of cones is an antitone Galois connection** between `Set E` and `Set F`. -/
 theorem gc_polarCone_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
@@ -276,11 +189,9 @@ theorem gc_polarSet_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
 def polarConeClosure (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : ClosureOperator (Set E) :=
   (gc_polarCone_polarCone B).closureOperator
 
-/-- `polarConeClosure` is the bipolar. -/
 @[simp] theorem polarConeClosure_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     polarConeClosure B K = polarCone B.flip (polarCone B K) := rfl
 
-/-- Closedness for `polarConeClosure` is the bipolar equation `K°° = K`. -/
 theorem isClosed_polarConeClosure_iff :
     (polarConeClosure B).IsClosed K ↔ polarCone B.flip (polarCone B K) = K := Iff.rfl
 
@@ -289,11 +200,9 @@ theorem isClosed_polarConeClosure_iff :
 def polarSetClosure (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) : ClosureOperator (Set E) :=
   (gc_polarSet_polarSet B).closureOperator
 
-/-- `polarSetClosure` is the bipolar. -/
 @[simp] theorem polarSetClosure_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) :
     polarSetClosure B C = polarSet B.flip (polarSet B C) := rfl
 
-/-- Closedness for `polarSetClosure` is the bipolar equation `C°° = C`. -/
 theorem isClosed_polarSetClosure_iff :
     (polarSetClosure B).IsClosed C ↔ polarSet B.flip (polarSet B C) = C := Iff.rfl
 
@@ -304,13 +213,9 @@ theorem polarCone_polarCone_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K :
   subset_antisymm (polarCone_anti (subset_polarCone_polarCone B K))
     (subset_polarCone_comm.2 (subset_refl _))
 
-/-- **Polarity is an order anti-isomorphism between the bipolar-closed sets.**
-
-Rockafellar's Theorem 14.1 says polarity is a one-to-one correspondence between the closed convex
-cones containing the origin on the two sides. This is that correspondence with its order structure,
-and with no topology: the bipolar-closed sets are exactly those cones once `E` and `F` carry
-compatible topologies (`polarCone_polarCone_of_isClosed`), and the inclusion-reversal is what makes
-the statement an *anti*-isomorphism. Free from `GaloisConnection.closedsOrderIso`. -/
+/-- **Polarity is an order anti-isomorphism between the bipolar-closed sets.** Theorem 14.1 with
+its order structure and with no topology; once `E` and `F` carry compatible topologies the
+bipolar-closed sets are exactly the closed convex cones containing the origin. -/
 def polarConeOrderIso (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
     {K : Set E // polarCone B.flip (polarCone B K) = K} ≃o
       {L : (Set F)ᵒᵈ //
@@ -327,9 +232,7 @@ def polarSetOrderIso (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) :
 /-! ### The polar cone as a `PointedCone` -/
 
 /-- **The polar of an arbitrary set is a pointed convex cone** — the first assertion of
-Rockafellar's Theorem 14.1, before any topology enters. Bundling it makes `Submodule.span_le` and
-the rest of the `PointedCone` API available, exactly as for `halfSpaceCone` and
-`recessionPointedCone`. -/
+Theorem 14.1, before any topology enters. Bundling it makes the `PointedCone` API available. -/
 def polarPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : PointedCone ℝ F where
   carrier := polarCone B K
   zero_mem' := zero_mem_polarCone B K
@@ -341,19 +244,14 @@ def polarPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : Pointed
     calc (c : ℝ) * B x u ≤ (c : ℝ) * 0 := mul_le_mul_of_nonneg_left (hu x hx) c.2
       _ = 0 := mul_zero _
 
-/-- The underlying set of `polarPointedCone` is the polar cone. -/
 @[simp] theorem coe_polarPointedCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     (polarPointedCone B K : Set F) = polarCone B K := rfl
 
-/-- Membership in `polarPointedCone`, unfolded. -/
 @[simp] theorem mem_polarPointedCone : y ∈ polarPointedCone B K ↔ ∀ x ∈ K, B x y ≤ 0 := Iff.rfl
 
-/-- The polar of any set is convex. -/
 theorem convex_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) : Convex ℝ (polarCone B K) :=
   ((polarPointedCone B K : ConvexCone ℝ F)).convex
 
-/-- The polar of any set, in the `polarSet` sense, is convex — the companion of
-`convex_polarCone`. -/
 theorem convex_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) : Convex ℝ (polarSet B C) := by
   intro y hy z hz a b ha hb hab x hx
   have h1 := hy x hx
@@ -362,8 +260,7 @@ theorem convex_polarSet (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) : Conv
   nlinarith
 
 /-- **A closed half-space of the pairing is convex**, in the real-valued form that cuts out a polar
-set. `convex_setOf_pairing_le` (`Duality/Support.lean`) is the `EReal` form; this is the one the
-polar API needs, and `polarSet_convexHull` is what it is for. -/
+set; `convex_setOf_pairing_le` is the `EReal` form. -/
 theorem convex_setOf_pairing_le_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (y : F) (c : ℝ) :
     Convex ℝ {x : E | B x y ≤ c} := by
   intro u hu v hv a b ha hb hab
@@ -377,9 +274,8 @@ theorem convex_setOf_pairing_le_coe (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (y : F
         exact add_le_add (mul_le_mul_of_nonneg_left hu' ha) (mul_le_mul_of_nonneg_left hv' hb)
     _ = c := by rw [← add_mul, hab, one_mul]
 
-/-- **Polarity does not see the convex hull.** The polar is cut out by the closed half-spaces
-`{x | ⟨x, y⟩ ≤ 1}`, each of which is convex, so a set and its convex hull have the same polar. The
-`polarCone` counterpart is `polarCone_hull`. -/
+/-- **Polarity does not see the convex hull**: the polar is cut out by the convex half-spaces
+`{x | ⟨x, y⟩ ≤ 1}`. The `polarCone` counterpart is `polarCone_hull`. -/
 @[simp] theorem polarSet_convexHull (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (C : Set E) :
     polarSet B (convexHull ℝ C) = polarSet B C := by
   refine Set.Subset.antisymm (polarSet_anti (subset_convexHull ℝ C)) fun y hy => ?_
@@ -418,7 +314,6 @@ theorem polarCone_add (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) {K L : Set E} (hK : 
     rw [hsum]
     simpa using add_le_add (h₁ x₁ hx₁) (h₂ x₂ hx₂)
 
-/-- The underlying set of a pointed cone is a cone in Rockafellar's sense. -/
 theorem smul_coe_pointedCone (K : PointedCone ℝ E) (a : ℝ) (ha : 0 < a) :
     a • (K : Set E) = (K : Set E) := by
   ext x
@@ -426,8 +321,6 @@ theorem smul_coe_pointedCone (K : PointedCone ℝ E) (a : ℝ) (ha : 0 < a) :
   rintro ⟨z, hz, rfl⟩
   exact K.smul_mem ha.le hz
 
-/-- A subspace is invariant under every positive scaling: it is a cone in Rockafellar's sense,
-and a symmetric one. -/
 theorem smul_coe_submodule (M : Submodule ℝ E) {a : ℝ} (ha : 0 < a) :
     a • (M : Set E) = (M : Set E) := by
   ext z
@@ -439,13 +332,11 @@ theorem smul_coe_submodule (M : Submodule ℝ E) {a : ℝ} (ha : 0 < a) :
     change a • a⁻¹ • z = z
     rw [smul_smul, mul_inv_cancel₀ ha.ne', one_smul]
 
-/-- The polar of any set is a cone in Rockafellar's sense. -/
 theorem smul_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) (a : ℝ) (ha : 0 < a) :
     a • polarCone B K = polarCone B K := smul_coe_pointedCone (polarPointedCone B K) a ha
 
-/-- **Negating the cone negates its polar**: `(-K)° = -(K°)`. Together with Theorem 14.1 this is
-what makes Rockafellar's dual cone `K* = -K°` an involution — see
-`neg_polarCone_neg_polarCone`. -/
+/-- **Negating the cone negates its polar**: `(-K)° = -(K°)`. With Theorem 14.1 this makes the dual
+cone `K* = -K°` an involution (`neg_polarCone_neg_polarCone`). -/
 theorem polarCone_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     polarCone B (-K) = -(polarCone B K) := by
   ext y
@@ -457,24 +348,19 @@ theorem polarCone_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
   · have h := hy (-x) (Set.mem_neg.1 hx)
     rwa [map_neg B x, LinearMap.neg_apply, map_neg (B x) y, neg_neg] at h
 
-/-- Rockafellar's dual cone `K* = -K°` is itself invariant under every positive scaling, so it
-meets the cone hypothesis of Theorem 31.4. -/
 theorem smul_neg_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) (a : ℝ) (ha : 0 < a) :
     a • (-(polarCone B K)) = -(polarCone B K) := by
   rw [← polarCone_neg]
   exact smul_polarCone B (-K) a ha
 
-/-- The origin lies in Rockafellar's dual cone `K* = -K°`, whatever `K` is. -/
 theorem zero_mem_neg_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     (0 : F) ∈ -(polarCone B K) := by
   rw [Set.mem_neg, neg_zero, mem_polarCone]
   exact fun x _ => le_of_eq (map_zero (B x))
 
-/-- Rockafellar's dual cone `K* = -K°` is nonempty: it always contains the origin. -/
 theorem neg_polarCone_nonempty (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     (-(polarCone B K)).Nonempty := ⟨0, zero_mem_neg_polarCone B K⟩
 
-/-- Rockafellar's dual cone `K* = -K°` is convex. -/
 theorem convex_neg_polarCone (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     Convex ℝ (-(polarCone B K)) := (convex_polarCone B K).neg
 
@@ -496,7 +382,6 @@ theorem polarPointedCone_eq_dual_neg (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : 
     rw [map_neg, LinearMap.neg_apply] at hx'
     linarith
 
-/-- The polar cone is the negative of Mathlib's dual cone. -/
 theorem polarCone_eq_neg_dual (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     polarCone B K = -(PointedCone.dual B K : Set F) := by
   rw [← coe_polarPointedCone, polarPointedCone_eq_dual_neg]
@@ -544,10 +429,8 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
     · rw [indicatorFn_of_notMem hx]
       exact le_top
 
-/-- **Rockafellar, Theorem 14.1**, third assertion (and the computation §14 opens with): the
-indicator function of a nonempty convex cone and the indicator function of its polar are conjugate
-to each other. Only one direction needs the hypotheses; the other is
-`polarCone_polarCone`. -/
+/-- **Theorem 14.1**, third assertion: the indicator functions of a nonempty convex cone and of
+its polar are conjugate to each other. -/
 theorem conj_indicatorFn_eq_indicatorFn_polarCone (hK : ∀ a : ℝ, 0 < a → a • K = K)
     (hne : K.Nonempty) : conj B (indicatorFn K) = indicatorFn (polarCone B K) := by
   obtain ⟨x₀, hx₀⟩ := hne
@@ -562,11 +445,8 @@ theorem supportFn_eq_indicatorFn_polarCone (hK : ∀ a : ℝ, 0 < a → a • K 
   exact conj_indicatorFn_eq_indicatorFn_polarCone hK hne
 
 /-- **The polar is the zero sublevel set of the support function**: `⟨x, y⟩ ≤ 0` for every `x ∈ K`
-says exactly that `δ*(y | K) ≤ 0`.
-
-This is the definition of `polarCone` rewritten through the universal property of the supremum, and
-it holds for an arbitrary set `K`. It is what turns a theorem computing a support function into a
-theorem computing a polar. -/
+says exactly that `δ*(y | K) ≤ 0`. Holds for an arbitrary set `K`, and is what turns a theorem
+computing a support function into a theorem computing a polar. -/
 theorem polarCone_eq_setOf_supportFn_le_zero (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (K : Set E) :
     polarCone B K = {y : F | supportFn B K y ≤ 0} := by
   ext y
@@ -588,8 +468,6 @@ theorem isClosed_polarCone : IsClosed (polarCone B K) := by
   rw [h]
   exact isClosed_biInter fun x _ => isClosed_le (continuous_pairing B.flip x) continuous_const
 
-/-- The polar of a set in the sense of `polarSet` is closed, for the same reason: it is an
-intersection of closed half-spaces. -/
 theorem isClosed_polarSet : IsClosed (polarSet B C) := by
   have h : polarSet B C = ⋂ x ∈ C, {y : F | B x y ≤ 1} := by ext y; simp [polarSet]
   rw [h]
@@ -619,8 +497,7 @@ end ClosureDomain
 
 /-! ### Theorem 14.1
 
-The bipolar theorem. Separation supplies the only nontrivial half, exactly as in Rockafellar's
-alternative derivation from Corollary 11.7.1. -/
+The bipolar theorem. Separation supplies the only nontrivial half. -/
 
 section Theorem141
 
@@ -628,14 +505,11 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {K : Set E}
 
-/-- **Rockafellar, Theorem 14.1**, second assertion, in the form `D0` predicts: the bipolar of a
-nonempty convex cone is its *closure*.
+/-- **Theorem 14.1**, second assertion: the bipolar of a nonempty convex cone is its *closure*.
 
-The inclusion `cl K ⊆ K°°` holds because `K°°` is closed and contains `K`. For the converse, a
-point outside `cl K` is strongly separated from it by a continuous linear functional `f`; because
-`cl K` is a nonempty cone, `f ≤ 0` on `cl K` and the separating constant is nonnegative
-(`le_zero_of_isCone_of_forall_le` and `nonneg_of_isCone_of_forall_le`), so the `y`
-representing `f` lies in `K°` and detects the point. -/
+A point outside `cl K` is strongly separated from it by a continuous linear functional; because
+`cl K` is a nonempty cone, that functional is `≤ 0` on it and the separating constant is
+nonnegative, so the `y` representing it lies in `K°` and detects the point. -/
 theorem polarCone_polarCone (hconv : Convex ℝ K) (hcone : ∀ a : ℝ, 0 < a → a • K = K)
     (hne : K.Nonempty) :
     polarCone B.flip (polarCone B K) = closure K := by
@@ -671,21 +545,17 @@ theorem polarCone_polarCone_pointedCone (K : PointedCone ℝ E) (hcl : IsClosed 
   polarCone_polarCone_of_isClosed (K : ConvexCone ℝ E).convex
     (smul_coe_pointedCone K) ⟨0, K.zero_mem⟩ hcl
 
-/-- The bipolar of a bundled cone is its closure — `polarCone_polarCone` with the three
-hypotheses supplied by the bundling. -/
 theorem polarCone_polarCone_pointedCone_eq_closure (K : PointedCone ℝ E) :
     polarCone B.flip (polarCone B (K : Set E)) = closure (K : Set E) :=
   polarCone_polarCone (K : ConvexCone ℝ E).convex (smul_coe_pointedCone K) ⟨0, K.zero_mem⟩
 
-/-- **Rockafellar, Theorem 14.1** in the form §31 states it: `K** = K` for a nonempty closed convex
-cone, where `K* = -K°` is the dual cone of Theorem 31.4. The two sign flips cancel against the one
-of `polarCone_neg`. -/
+/-- **Theorem 14.1** in the form §31 states it: `K** = K` for a nonempty closed convex cone, where
+`K* = -K°` is the dual cone. -/
 theorem neg_polarCone_neg_polarCone (hconv : Convex ℝ K)
     (hcone : ∀ a : ℝ, 0 < a → a • K = K) (hne : K.Nonempty) (hcl : IsClosed K) :
     -(polarCone B.flip (-(polarCone B K))) = K := by
   rw [polarCone_neg, neg_neg, polarCone_polarCone_of_isClosed hconv hcone hne hcl]
 
-/-- `K** = K` for a closed bundled cone. -/
 theorem neg_polarCone_neg_polarCone_pointedCone (K : PointedCone ℝ E)
     (hcl : IsClosed (K : Set E)) :
     -(polarCone B.flip (-(polarCone B (K : Set E)))) = (K : Set E) :=
@@ -701,7 +571,6 @@ theorem conj_indicatorFn_polarCone (hconv : Convex ℝ K)
       (polarCone_nonempty B K),
     polarCone_polarCone_of_isClosed hconv hcone hne hcl]
 
-/-- `δ(· ∣ K°)* = δ(· ∣ K)` for a closed bundled cone. -/
 theorem conj_indicatorFn_polarCone_pointedCone (K : PointedCone ℝ E)
     (hcl : IsClosed (K : Set E)) :
     conj B.flip (indicatorFn (polarCone B (K : Set E))) = indicatorFn (K : Set E) :=
@@ -721,11 +590,9 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module 
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsCompatiblePairing B] {C : Set E}
 
-/-- **Rockafellar, Theorem 14.5**, first assertion: the polar of a closed convex set containing the
-origin is another closed convex set containing the origin, and `C°° = C`.
-
-Containment of the origin is what makes the separating constant positive, so that the separating
-functional can be rescaled to have value exactly `1` on the boundary of the half-space. -/
+/-- **Theorem 14.5**, first assertion: the polar of a closed convex set containing the origin is
+another such set, and `C°° = C`. Containment of the origin is what makes the separating constant
+positive, so that the separating functional can be rescaled to have value exactly `1`. -/
 theorem polarSet_polarSet (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E) ∈ C) :
     polarSet B.flip (polarSet B C) = C := by
   refine subset_antisymm (fun x hx => ?_) (subset_polarSet_polarSet B C)
@@ -742,8 +609,6 @@ theorem polarSet_polarSet (hconv : Convex ℝ C) (hcl : IsClosed C) (h0 : (0 : E
   rw [LinearMap.flip_apply, map_smul, smul_eq_mul, ← hy x, inv_mul_le_iff₀ hu, mul_one] at hxle
   linarith
 
-/-- The closed elements of `polarSetClosure` include every closed convex set containing the
-origin — the reading of Theorem 14.5 as a statement about the bipolar closure operator. -/
 theorem isClosed_polarSetClosure_of_isClosed (hconv : Convex ℝ C) (hcl : IsClosed C)
     (h0 : (0 : E) ∈ C) : (polarSetClosure B).IsClosed C :=
   isClosed_polarSetClosure_iff.2 (polarSet_polarSet hconv hcl h0)
@@ -757,9 +622,8 @@ section Examples
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
 
-/-- **The polar of a subspace is its annihilator** (Rockafellar §14: "if `K` is a subspace then
-`K°` is the orthogonally complementary subspace"). Under the pairing this is Mathlib's
-`Submodule.dualAnnihilator`, pulled back along `B.flip : F →ₗ[ℝ] Module.Dual ℝ E`. -/
+/-- **The polar of a subspace is its annihilator** — the book's "orthogonally complementary
+subspace". Under the pairing this is `Submodule.dualAnnihilator` pulled back along `B.flip`. -/
 theorem polarCone_coe_submodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) :
     polarCone B (M : Set E) = (M.dualAnnihilator.comap B.flip : Set F) := by
   ext y
@@ -770,7 +634,6 @@ theorem polarCone_coe_submodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submo
   rw [map_neg, LinearMap.neg_apply] at this
   linarith
 
-/-- The polar of a subspace, unbundled. -/
 theorem polarCone_coe_submodule' (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) :
     polarCone B (M : Set E) = {y : F | ∀ x ∈ M, B x y = 0} := by
   rw [polarCone_coe_submodule]
@@ -778,8 +641,7 @@ theorem polarCone_coe_submodule' (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Subm
   simp [Submodule.mem_dualAnnihilator]
 
 /-- The polar of a **subspace**, bundled as a submodule of `F`: the annihilator of `M` pulled back
-along `B.flip`. Its carrier is `polarCone B M`, which for a subspace is Rockafellar's "orthogonally
-complementary subspace" (`polarCone_coe_submodule`). -/
+along `B.flip`. Its carrier is `polarCone B M` (`polarCone_coe_submodule`). -/
 noncomputable def polarSubmodule (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (M : Submodule ℝ E) : Submodule ℝ F :=
   M.dualAnnihilator.comap B.flip
 
@@ -806,16 +668,11 @@ end Examples
 
 /-! ### Partial affine functions
 
-Rockafellar's §12, the paragraph preceding Theorem 12.3. A *partial affine function* is a proper
-convex function whose effective domain is an affine set and which is affine on it; every such
-function can be written as `δ(· | L + a) + ⟨·, a*⟩ + α` for a subspace `L`. Conjugacy exchanges `L`
-with its polar, `a` with `a*`, and `α` with `-α - ⟨a, a*⟩`, so partial affine functions, like
-subspaces, come in dual pairs. The formula is Theorem 12.3 (`conj_comp_affine`) at
-`h = δ(· | L)` and `A = I`, fed by `conj_indicatorFn_eq_indicatorFn_polarCone`.
-
-It belongs here rather than in `Duality/Conjugate.lean` because the dual datum is a polar: the
-statement cannot be written before `polarCone` exists. Rockafellar makes the same remark about the
-subspace example it generalises — "this observation will be broadened at the beginning of §14". -/
+A *partial affine function* is a proper convex function whose effective domain is an affine set and
+which is affine on it; every such function is `δ(· | L + a) + ⟨·, a*⟩ + α` for a subspace `L`.
+Conjugacy exchanges `L` with its polar, `a` with `a*`, and `α` with `-α - ⟨a, a*⟩`, so partial
+affine functions, like subspaces, come in dual pairs. The formula is Theorem 12.3 at
+`h = δ(· | L)` and `A = I`, fed by `conj_indicatorFn_eq_indicatorFn_polarCone`. -/
 
 section PartialAffine
 
@@ -827,17 +684,12 @@ noncomputable def partialAffineFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (L : Sub
     (α : ℝ) : E → EReal :=
   fun x => indicatorFn (a +ᵥ (L : Set E)) x + ((B x b : ℝ) : EReal) + (α : EReal)
 
-/-- The defining formula for a partial affine function. -/
 theorem partialAffineFn_apply (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (L : Submodule ℝ E) (a : E) (b : F)
     (α : ℝ) (x : E) : partialAffineFn B L a b α x
       = indicatorFn (a +ᵥ (L : Set E)) x + ((B x b : ℝ) : EReal) + (α : EReal) := rfl
 
-/-- **The conjugate of a partial affine function** (Rockafellar §12, the display preceding
-Theorem 12.3): `(δ(· | L + a) + ⟨·, a*⟩ + α)* = δ(· | L^⊥ + a*) + ⟨a, ·⟩ + α*`, where `α*` is
-`-α - ⟨a, a*⟩`.
-
-The two sides are the *same* construction read through the polar pairing, which is the sense in
-which partial affine functions, like subspaces, come in dual pairs. -/
+/-- **The conjugate of a partial affine function**:
+`(δ(· | L + a) + ⟨·, a*⟩ + α)* = δ(· | L^⊥ + a*) + ⟨a, ·⟩ + α*`, where `α*` is `-α - ⟨a, a*⟩`. -/
 theorem conj_partialAffineFn (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (L : Submodule ℝ E) (a : E) (b : F) (α : ℝ) :
     conj B (partialAffineFn B L a b α)
       = partialAffineFn B.flip (polarSubmodule B L) b a (-α - B a b) := by
@@ -880,8 +732,7 @@ end ExamplesTopology
 
 /-! ### The nonnegative orthant
 
-Rockafellar's second example, in the setting of `biconj_eq_clFn_inner`: a real inner-product
-space paired with itself. -/
+The book's second example, for a real inner-product space paired with itself. -/
 
 section Orthant
 
