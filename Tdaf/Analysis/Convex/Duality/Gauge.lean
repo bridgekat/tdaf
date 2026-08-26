@@ -556,7 +556,7 @@ of `C` is the annihilator of `C°`. The classical proof reads the recession cone
 closed convex cone inside `C`; the argument here identifies it directly as a polar, which needs only
 the bipolar theorem. -/
 
-section Theorem146
+section RecessionLineality
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -670,7 +670,7 @@ theorem polarCone_linealitySpace [TopologicalSpace F] [IsTopologicalAddGroup F]
     ⟨0, (Submodule.span ℝ (polarSet B C)).zero_mem⟩
   rwa [LinearMap.flip_flip] at h
 
-end Theorem146
+end RecessionLineality
 
 /-! ### The dimension relations for a polar set
 
@@ -682,7 +682,7 @@ finite-dimensional space has the complementary dimension. -/
 agree — is `Tdaf.vectorSpan_eq_span_of_zero_mem` in `Tdaf/LinearAlgebra/Subspace.lean`. It has no
 convexity in it and three unrelated developments want it. -/
 
-section Corollary1461
+section PolarDimension
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
@@ -759,14 +759,14 @@ theorem finrank_vectorSpan_add_lineality_polarSet [IsCompatiblePairing B]
     hcvx isClosed_polarSet (zero_mem_polarSet B C)
   rwa [polarSet_polarSet (B := B) hconv hcl h0] at h
 
-end Corollary1461
+end PolarDimension
 
 /-! ### The polar of a sublevel set
 
 For a nonnegative convex function vanishing at the origin, the polar of a sublevel set and the
 corresponding sublevel set of the conjugate are within a factor of `2` of each other. -/
 
-section Theorem147
+section SublevelPolar
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {α : ℝ}
@@ -882,7 +882,7 @@ theorem polarSet_setOf_le_subset_and_subset (hconv : ConvexFn f) (hnn : ∀ x, 0
     rw [hcalc] at h
     exact h hy
 
-end Theorem147
+end SublevelPolar
 
 /-! ### The polar of a gauge
 
@@ -1304,7 +1304,7 @@ end NonnegClosureGroup
 The epigraph of `f°` is the vertical reflection of the polar of the epigraph of `f`, so the
 bipolar theorem of `Duality/Polar.lean`, applied in `E × ℝ`, gives `f°° = cl f` at once. -/
 
-section Theorem154
+section PolarEpi
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
@@ -1332,9 +1332,9 @@ theorem convexFn_polarFn (hnn : ∀ x, 0 ≤ f x) : ConvexFn (polarFn B f) := by
   rw [convexFn_iff_convex_epi, epi_polarFn hnn, image_vNeg_eq_preimage]
   exact (convex_polarSet _ _).linear_preimage (vNeg F)
 
-end Theorem154
+end PolarEpi
 
-section Theorem154Closed
+section PolarClosed
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B.flip] {f : E → EReal}
@@ -1351,9 +1351,9 @@ theorem closedFn_polarFn (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 ≤ 0) : ClosedFn (p
     continuous_fst.prodMk continuous_snd.neg
   exact isClosed_polarSet.preimage hc
 
-end Theorem154Closed
+end PolarClosed
 
-section Theorem154Main
+section BipolarFn
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
   [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F]
@@ -1377,7 +1377,7 @@ theorem polarFn_polarFn (hconv : ConvexFn f) (hnn : ∀ x, 0 ≤ f x) (h0 : f 0 
   have hof := congrArg ofEpi hepi
   rwa [ofEpi_epi, ← epi_clFn_of_nonneg hnn, ofEpi_epi] at hof
 
-end Theorem154Main
+end BipolarFn
 
 /-! ### The class on which the polar is an involution
 
@@ -1408,7 +1408,7 @@ theorem IsGauge.isPolarFn (h : IsGauge f) (hcl : ClosedFn f) : IsPolarFn f :=
 
 end PolarClass
 
-section Corollary1541
+section
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
   [Module ℝ F] [TopologicalSpace F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B.flip]
@@ -1421,9 +1421,9 @@ theorem isPolarFn_polarFn (h : IsPolarFn f) : IsPolarFn (polarFn B f) where
   convexFn := convexFn_polarFn h.nonneg
   closedFn := closedFn_polarFn h.nonneg h.map_zero_le
 
-end Corollary1541
+end
 
-section Corollary1541Equiv
+section PolarInvolution
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
   [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F] [TopologicalSpace F]
@@ -1447,7 +1447,7 @@ noncomputable def polarFnEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompatib
     rw [h]
     exact g.2.closedFn
 
-end Corollary1541Equiv
+end PolarInvolution
 
 /-! ### The involution `k°° = cl k`
 
@@ -1455,7 +1455,7 @@ The book derives this from polarity of the unit level set. Here it is a special 
 `polarFn_polarFn` instead: on a gauge the two polar operations agree (`polarFn_eq_polarGauge`),
 because the `1 +` in the definition of `f°` is invisible to a positively homogeneous function. -/
 
-section Theorem151
+section
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {k : E → EReal}
@@ -1507,9 +1507,9 @@ theorem polarFn_eq_polarGauge (hnn : ∀ x, 0 ≤ k x) (hph : PosHomogeneous k) 
     rw [hexp, div_mul_cancel₀ (2 : ℝ) ha0.ne'] at hb
     linarith
 
-end Theorem151
+end
 
-section Theorem151Main
+section GaugeInvolution
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
   [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F]
@@ -1523,11 +1523,11 @@ theorem polarGauge_polarGauge (hk : IsGauge k) :
     ← polarFn_eq_polarGauge hk.nonneg hk.posHomogeneous hk.map_zero]
   exact polarFn_polarFn hk.convexFn hk.nonneg (le_of_eq hk.map_zero)
 
-end Theorem151Main
+end GaugeInvolution
 
 /-! ### Polarity as a correspondence, for gauges and for sets -/
 
-section Corollary1511
+section GaugeCorrespondence
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
   [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F] [TopologicalSpace F]
@@ -1554,9 +1554,9 @@ noncomputable def polarGaugeEquiv (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) [IsCompa
     rw [h]
     exact j.2.2
 
-end Corollary1511
+end GaugeCorrespondence
 
-section Corollary1511Sets
+section SetCorrespondence
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace F] [ContinuousSMul ℝ F]
@@ -1574,7 +1574,7 @@ theorem polarSet_eq_iff_polarGauge_gaugeFn_eq (B : E →ₗ[ℝ] F →ₗ[ℝ] �
   rwa [setOf_gaugeFn_le_one (convex_polarSet B C) (fun x _ => by simp) isClosed_polarSet,
     setOf_gaugeFn_le_one hD hD0 hDcl] at hpc
 
-end Corollary1511Sets
+end SetCorrespondence
 
 /-! ### The obverse
 
@@ -1771,7 +1771,7 @@ coordinates. Here the single computation `f* = (f°)ᵒ` (`conj_eq_obverse_polar
 is a level-set comparison, and everything else follows from it together with `obverse_obverse` and
 `polarFn_polarFn`. -/
 
-section Theorem155Aux
+section ConjEpi
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal} {y : F}
@@ -1796,9 +1796,9 @@ theorem conj_le_coe_iff_epi (hnn : ∀ x, 0 ≤ f x) {ν : ℝ} :
     rw [hc, ← _root_.EReal.coe_sub, EReal.coe_le_coe_iff]
     exact h x c (le_of_eq hc)
 
-end Theorem155Aux
+end ConjEpi
 
-section Theorem155Conj
+section ConjPolarClass
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
   [Module ℝ F] [TopologicalSpace F] [IsTopologicalAddGroup F] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ}
@@ -1812,9 +1812,9 @@ theorem isPolarFn_conj (h : IsPolarFn f) : IsPolarFn (conj B f) where
   convexFn := convexFn_conj B f
   closedFn := closedFn_conj
 
-end Theorem155Conj
+end ConjPolarClass
 
-section Theorem155Obverse
+section ObverseFormula
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [AddCommGroup F]
   [Module ℝ F] [TopologicalSpace F] [ContinuousSMul ℝ F] [IsTopologicalAddGroup F]
@@ -1839,9 +1839,9 @@ theorem conj_eq_obverse_polarFn (h : IsPolarFn f) : conj B f = obverse (polarFn 
 theorem polarFn_eq_obverse_conj (h : IsPolarFn f) : polarFn B f = obverse (conj B f) := by
   rw [conj_eq_obverse_polarFn h, obverse_obverse (isPolarFn_polarFn h)]
 
-end Theorem155Obverse
+end ObverseFormula
 
-section Theorem155Main
+section PolarConjObverse
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E] [IsTopologicalAddGroup E]
   [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E] [AddCommGroup F] [Module ℝ F] [TopologicalSpace F]
@@ -1900,7 +1900,7 @@ theorem setOf_polarFn_le (h : IsPolarFn f) {α : ℝ} (hα : 0 < α) :
   rw [polarFn_eq_obverse_conj (B := B) h,
     setOf_obverse_le (isPolarFn_conj (B := B) h) (inv_pos.2 hα), inv_inv]
 
-end Theorem155Main
+end PolarConjObverse
 
 /-! ### Norms
 

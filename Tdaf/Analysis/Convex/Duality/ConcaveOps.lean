@@ -127,7 +127,7 @@ end SupConv
 
 /-! ### The concave conjugate of a sum -/
 
-section ConcaveThm164
+section ConcaveConjSum
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
 
@@ -163,6 +163,6 @@ theorem concaveConj_add_of_isExactSum {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {g�
       = -(infConv (fun w => -(concaveConj B g₁ w)) (fun w => -(concaveConj B g₂ w)) v)
   rw [step1, step2, step3]
 
-end ConcaveThm164
+end ConcaveConjSum
 
 end Tdaf.ConvexAnalysis

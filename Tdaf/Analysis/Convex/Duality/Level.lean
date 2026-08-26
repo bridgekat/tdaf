@@ -475,7 +475,7 @@ Only the space the *function* lives on carries a topology: the closure of a posi
 convex function is a support function, and the level set produced is a subset of the other
 space. -/
 
-section Theorem135
+section ZeroLevelSupport
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace F] [IsTopologicalAddGroup F] [ContinuousSMul ℝ F] [LocallyConvexSpace ℝ F]
@@ -498,9 +498,9 @@ theorem supportFn_setOf_conj_le_zero (hcl : ClosedFn (posHomGen g)) :
     supportFn B {x : E | conj B.flip g x ≤ 0} = posHomGen g :=
   (clFn_posHomGen g).symm.trans hcl
 
-end Theorem135
+end ZeroLevelSupport
 
-section Theorem135First
+section
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -518,7 +518,7 @@ theorem supportFn_setOf_le_zero (hf : ConvexFn f) (hc : ClosedFn f) :
     rw [show conj B.flip (conj B f) = biconj B f from rfl, biconj_eq_self hf hc]
   rw [clFn_posHomGen (B := B) (conj B f), hset]
 
-end Theorem135First
+end
 
 /-! ### The homogenisation `hom f`
 
@@ -527,7 +527,7 @@ The previous result applied to the level-one lift of `f`, paired against `ℝ ×
 which is `innerₗ ℝ`; that is the only compatible pairing of `ℝ` with `ℝ` up to a positive
 scalar, and it is the one the book's `λ λ*` means. -/
 
-section Corollary1351
+section Homogenisation
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -577,7 +577,7 @@ theorem clFn_hom (hf : ConvexFn f) (hdom : (dom f).Nonempty) :
   simp only [Set.mem_ofPred_eq, LinearMap.flip_flip]
   exact conj_levelOneLift_le_zero_iff B f q
 
-end Corollary1351
+end Homogenisation
 
 /-! ### The lineality space of the conjugate
 
@@ -586,7 +586,7 @@ recession function is additively reversible — Rockafellar's directions of affi
 strictly larger than the *constancy space* (`constancySpace`), which asks the recession function to
 vanish in both directions, and it is the lineality space that is computed here. -/
 
-section Theorem134
+section ConjLineality
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} {f : E → EReal}
@@ -631,9 +631,9 @@ theorem linealitySpaceFn_conj_eq_annihilator (hp : Proper f) (hc : Proper (conj 
     rw [map_sub, LinearMap.sub_apply] at hz
     linarith
 
-end Theorem134
+end ConjLineality
 
-section Theorem134Dual
+section LinealityDual
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -652,7 +652,7 @@ theorem linealitySpaceFn_eq_annihilator_dom_conj (hf : ClosedProperConvexFn f) :
   ext x
   exact forall₂_congr fun w _ => Iff.rfl
 
-end Theorem134Dual
+end LinealityDual
 
 /-! ### Co-finiteness -/
 

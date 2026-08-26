@@ -255,7 +255,7 @@ end ConjClosure
 
 /-! ### Affine minorants of a closed convex function -/
 
-section Theorem121
+section AffineMinorants
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -367,7 +367,7 @@ theorem eq_biSup_affineFn (hf : ConvexFn f) (hc : ClosedFn f) :
   exact absurd (lt_of_lt_of_le hlt (le_iSup₂ (f := fun p (_ : p ∈ _) => affineFn B p.1 p.2 x)
     ((y, c) : F × ℝ) hle)) (not_lt.2 hα₁.le)
 
-end Theorem121
+end AffineMinorants
 
 /-! ### The Fenchel–Moreau theorem -/
 
@@ -520,7 +520,7 @@ adjoint is invertible. Over a general pairing neither is automatic, so `conj_com
 takes the inverse pair `A`, `A'` and the adjointness datum `IsAdjointPair B B' A A'` as
 hypotheses; with `B` and `B'` separating, `A'` is determined by `A`, so nothing is lost. -/
 
-section Theorem123
+section AffineOps
 
 variable {E F G H : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [AddCommGroup G] [Module ℝ G] [AddCommGroup H] [Module ℝ H]
@@ -635,7 +635,7 @@ theorem conj_comp_add_sub_pairing (B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ) (h : E �
   rw [conj_sub_pairing B (fun x => h (z + x)) z' y, conj_comp_add B h z (y + z'),
     add_comm y z', map_add, add_comm ((B z) z' : ℝ) ((B z) y), hsplit]
 
-end Theorem123
+end AffineOps
 
 
 section TopDual

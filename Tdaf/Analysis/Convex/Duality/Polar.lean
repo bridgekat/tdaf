@@ -499,7 +499,7 @@ end ClosureDomain
 
 Separation supplies the only nontrivial half. -/
 
-section Theorem141
+section BipolarCone
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -577,14 +577,14 @@ theorem conj_indicatorFn_polarCone_pointedCone (K : PointedCone ℝ E)
   conj_indicatorFn_polarCone (K : ConvexCone ℝ E).convex (smul_coe_pointedCone K)
     ⟨0, K.zero_mem⟩ hcl
 
-end Theorem141
+end BipolarCone
 
 /-! ### The bipolar of a set containing the origin
 
 `C°° = C` for a closed convex set containing the origin. The separation argument is the same as for
 cones, with the constant normalised to `1` instead of `0`. -/
 
-section Theorem145
+section BipolarSet
 
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E] [LocallyConvexSpace ℝ E]
@@ -613,7 +613,7 @@ theorem isClosed_polarSetClosure_of_isClosed (hconv : Convex ℝ C) (hcl : IsClo
     (h0 : (0 : E) ∈ C) : (polarSetClosure B).IsClosed C :=
   isClosed_polarSetClosure_iff.2 (polarSet_polarSet hconv hcl h0)
 
-end Theorem145
+end BipolarSet
 
 /-! ### Examples -/
 
