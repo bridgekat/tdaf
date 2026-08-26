@@ -71,8 +71,8 @@ forms (`mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff`) are
 | Corollary 25.1.2 | `corollary_25_1_2` |
 | Corollary 25.1.3 | `corollary_25_1_3` |
 | Theorem 25.2 | `theorem_25_2_dirDeriv`, `theorem_25_2`, `theorem_25_2_partial` |
-| Theorem 25.3 | `theorem_25_3_countable`, `theorem_25_3_dense`, `theorem_25_3_continuousAt`,
-  `theorem_25_3_monotone` |
+| Theorem 25.3 | `theorem_25_3_differentiableAtFn_iff`, `theorem_25_3_countable`,
+  `theorem_25_3_dense`, `theorem_25_3_continuousAt`, `theorem_25_3_monotone` |
 | Theorem 25.4 | `theorem_25_4_continuousAt_iff`, `theorem_25_4_dense`, `theorem_25_4_measure` |
 | Theorem 25.5 | `theorem_25_5_dense`, `theorem_25_5_measure`, `theorem_25_5_continuousOn` |
 | Corollary 25.5.1 | `corollary_25_5_1` |
@@ -87,7 +87,13 @@ forms (`mem_exposedPoints_epi_conj_iff`, `mem_exposedPoints_supportSet_iff`) are
   `hasGradientVecAt_iff_hasGradientAt` is the bridge.
 * `Rockafellar.gradientVec f x` — `∇f(x)` as a vector, namely the Riesz representative of
   `fderiv ℝ (fun z => (f z).toReal) x`. `HasGradientVecAt.gradientVec_eq` and
-  `hasGradientVecAt_gradientVec` are its bridges.
+  `hasGradientVecAt_gradientVec` are its bridges, `hasGradientVecAt_coe` is the case of a finite
+  `f`, and `differentiableAtFn_iff_differentiableAt` is the dictionary to Mathlib.
+
+**`epi f*` lives in `Rn n × ℝ`, not in `Rn (n + 1)`.** Corollary 25.1.2 speaks of "the convex set
+`epi f*` in `Rⁿ⁺¹`"; the backbone's `epi` is a subset of `E × ℝ`, and
+`Tdaf/Analysis/Convex/EuclideanProd.lean` is the identification of the two when a statement needs
+it. Nothing in §25 does — no statement here mixes the two readings.
 
 ## Where the book is defective
 
@@ -215,6 +221,19 @@ theorem hasGradientVecAt_gradientVec (h : DifferentiableAtFn f x) :
   have hd := DifferentiableAtFn.hasGradientAt_fderiv h
   rw [← linFn_gradientVec f x] at hd
   exact hd
+
+/-- **The finite case.** Where the book says "let `f` be a *finite* convex function", the gradient
+is Mathlib's Fréchet derivative of a real-valued function, and this is the translation. -/
+theorem hasGradientVecAt_coe {g : Rn n → ℝ} (hd : HasFDerivAt g (linFn b) x) :
+    HasGradientVecAt (fun z => ((g z : ℝ) : EReal)) b x :=
+  hasGradientAt_coe hd
+
+/-- **The dictionary to Mathlib's `DifferentiableAt`.** At an interior point of `dom f` — and by
+Corollary 25.1.1 there is nowhere else to look — differentiability in the sense of §25 is ordinary
+differentiability of the real trace `z ↦ (f z).toReal`. -/
+theorem differentiableAtFn_iff_differentiableAt (hp : Proper f) (hx : x ∈ interior (dom f)) :
+    DifferentiableAtFn f x ↔ DifferentiableAt ℝ (fun z => (f z).toReal) x :=
+  differentiableAtFn_iff_differentiableAt_toReal hp hx
 
 end GradientVector
 
@@ -382,6 +401,13 @@ agrees with `f'` on `D`, so the clauses below are the book's, strengthened. -/
 section Theorem253
 
 variable {f : ℝ → EReal}
+
+/-- **Rockafellar, Theorem 25.3**, the definition of `D`: on the line, differentiability at an
+interior point of `dom f` is exactly the equality of the two one-sided derivatives, which is what
+the book means by "the ordinary two-sided derivative `f'` exists". -/
+theorem theorem_25_3_differentiableAtFn_iff (hf : ConvexFn f) (hp : Proper f) {x : ℝ}
+    (hx : x ∈ interior (dom f)) : DifferentiableAtFn f x ↔ leftDeriv f x = rightDeriv f x :=
+  differentiableAtFn_iff_leftDeriv_eq_rightDeriv hf hp hx
 
 /-- **Rockafellar, Theorem 25.3**, first assertion: `D` contains all but perhaps countably many
 points of `I`. -/
@@ -583,8 +609,12 @@ theorem theorem_25_7 (hC : IsOpen C) (hCc : Convex ℝ C) (hf : ∀ i, ConvexFn 
     (hb' : HasGradientVecAt g b' x) : Tendsto b atTop (𝓝 b') := by
   have h := tendsto_of_hasGradientAt hC hCc hf hfp hfC hg hgp hgC hconv hx
     (G := fun i => linFn (b i)) (G' := linFn b') (fun i => hb i) hb'
-  have hc := ((InnerProductSpace.toDual ℝ (Rn n)).symm.continuous.tendsto (linFn b')).comp h
-  simpa [linFn_eq_toDual] using hc
+  have hsymm : ∀ c : Rn n, (InnerProductSpace.toDual ℝ (Rn n)).symm (linFn c) = c := fun c => by
+    rw [linFn_eq_toDual, LinearIsometryEquiv.symm_apply_apply]
+  have hc : Tendsto (fun i => (InnerProductSpace.toDual ℝ (Rn n)).symm (linFn (b i))) atTop
+      (𝓝 ((InnerProductSpace.toDual ℝ (Rn n)).symm (linFn b'))) :=
+    ((InnerProductSpace.toDual ℝ (Rn n)).symm.continuous.tendsto _).comp h
+  simpa only [hsymm] using hc
 
 /-- **Rockafellar, Theorem 25.7**, the sentence after it: the mappings `∇fᵢ` converge to `∇g`
 uniformly on every closed bounded subset of `C`.
