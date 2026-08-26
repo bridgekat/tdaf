@@ -215,7 +215,7 @@ end ConcaveFnSup
 
 /-! ### The two optimal values -/
 
-section Cor3022
+section OptimalValues
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -234,9 +234,9 @@ theorem normal_iff_iSup_adjointBifun_eq (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (
     Normal F ↔ (⨆ v : V, adjointBifun Bu Bx F 0 v) = infBifun F 0 := by
   rw [normal_iff, clFn_infBifun_zero_eq_iSup_adjointBifun (Bu := Bu) Bx hF]
 
-end Cor3022
+end OptimalValues
 
-section Cor3022Dual
+section ConcaveOptimalValues
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -271,11 +271,11 @@ theorem clConcave_supBifun_zero_eq_infBifun_concaveAdjointBifun (hG : ConcaveBif
     iInf_congr hpt]
   exact hsurj.iInf_comp fun x : X => concaveAdjointBifun Bu Bx G 0 x
 
-end Cor3022Dual
+end ConcaveOptimalValues
 
 /-! ### Normality of `(P)`, of `(P*)`, and the absence of a duality gap -/
 
-section Thm303
+section DualityGap
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -306,11 +306,11 @@ theorem normal_iff_concaveNormal_adjointBifun (hF : ConvexBifun F) (hcl : Closed
   (normal_iff_iSup_adjointBifun_eq (Bu := Bu) Bx hF).trans
     (concaveNormal_adjointBifun_iff hF hcl).symm
 
-end Thm303
+end DualityGap
 
 /-! ### Sufficient conditions for normality -/
 
-section Thm304KuhnTucker
+section KuhnTucker
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -356,9 +356,9 @@ theorem isGreatest_adjointBifun_zero_of_mem_kuhnTucker (Bx : X →ₗ[ℝ] Y →
   rw [mem_kuhnTucker_iff_adjointBifun_zero_eq (Bx := Bx)] at hv
   exact ⟨⟨v, hv.2.2⟩, by rintro _ ⟨w, rfl⟩; exact adjointBifun_zero_le Bu Bx F w⟩
 
-end Thm304KuhnTucker
+end KuhnTucker
 
-section Thm304Strong
+section StrongConsistency
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup X] [Module ℝ X] {F : Bifun U X}
@@ -373,11 +373,11 @@ theorem StronglyConsistent.normal (hs : StronglyConsistent F) (hF : ConvexBifun 
 theorem StrictlyConsistent.normal (hs : StrictlyConsistent F) (hF : ConvexBifun F) : Normal F :=
   hs.stronglyConsistent.normal hF
 
-end Thm304Strong
+end StrongConsistency
 
 /-! ### Strong consistency of the dual program -/
 
-section ConcaveThm304
+section
 
 variable {V Y : Type*} [AddCommGroup V] [Module ℝ V] [NormedAddCommGroup Y] [NormedSpace ℝ Y]
   [FiniteDimensional ℝ Y] {G : Bifun Y V}
@@ -391,9 +391,9 @@ theorem ConcaveStronglyConsistent.concaveNormal (hs : ConcaveStronglyConsistent 
   rw [ConcaveNormal, clConcave_apply,
     (concaveFn_supBifun hG).convexFn_neg.clFn_eq_of_mem_relint_dom hri, neg_neg]
 
-end ConcaveThm304
+end
 
-section Thm304Dual
+section DualStrongConsistency
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X]
@@ -409,11 +409,11 @@ theorem normal_of_concaveStronglyConsistent_adjointBifun (hF : ConvexBifun F)
   (normal_iff_concaveNormal_adjointBifun hF hcl).2
     (hs.concaveNormal (concaveBifun_adjointBifun Bu Bx F))
 
-end Thm304Dual
+end DualStrongConsistency
 
 /-! ### Bounded level sets and bounded sets of optimal solutions -/
 
-section Thm304Shift
+section Shift
 
 variable {U V X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
   {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X} {y : Y}
@@ -435,9 +435,9 @@ theorem infBifun_shiftBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U 
     (Or.inl (_root_.EReal.coe_ne_top ((Bx x) y))), sub_eq_add_neg]
   exact add_comm _ _
 
-end Thm304Shift
+end Shift
 
-section Thm304Convex
+section ShiftConvex
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -473,9 +473,9 @@ theorem adjointBifun_shiftBifun_zero (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx 
       add_comm (-(((c : ℝ) : EReal))) (((b : ℝ) : EReal))]
   simp only [adjointBifun_apply, shiftBifun_apply, map_zero, sub_zero, key]
 
-end Thm304Convex
+end ShiftConvex
 
-section Thm304Main
+section BoundedLevelSets
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V]
@@ -608,11 +608,11 @@ theorem normal_of_argmin_nonempty_and_isBounded (hF : ConvexBifun F) (hcl : Clos
     ((argmin_nonempty_and_isBounded_iff_exists_setOf_le (B := Bx) (hF.convexFn_apply 0) hc hp).1
       ⟨hne, hbd⟩)
 
-end Thm304Main
+end BoundedLevelSets
 
 /-! ### Bounded level sets of the dual objective -/
 
-section Thm304DualBounded
+section DualBoundedLevelSets
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -674,7 +674,7 @@ theorem normal_of_argmax_adjointBifun_nonempty_and_isBounded (hF : ConvexBifun F
       (convexBifun_neg_adjointBifun Bu Bx F) closedBifun_neg_adjointBifun hp hne' hbd'
   exact (normal_iff_concaveNormal_adjointBifun hF hcl).2 (concaveNormal_iff_normal_neg.2 hnormal)
 
-end Thm304DualBounded
+end DualBoundedLevelSets
 
 /-! ### Consistency of the two programs -/
 
@@ -714,7 +714,7 @@ theorem forall_conj_eq_top_iff (hf : ConvexFn f) :
 
 end ConjTop
 
-section Cor3021Primal
+section DualConsistency
 
 variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -764,7 +764,7 @@ theorem concaveConsistent_adjointBifun_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ
   push Not
   rfl
 
-end Cor3021Primal
+end DualConsistency
 
 /-! ### The objective of the doubly-adjoint program
 
@@ -804,7 +804,7 @@ theorem convexFn_neg_supBifun (hG : ConcaveBifun G) : ConvexFn (fun y => -(supBi
 
 end ConcaveAdjointZero
 
-section Cor3021Dual
+section PrimalConsistency
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X]
@@ -840,7 +840,7 @@ theorem consistent_iff_forall_supBifun_ne_top (hF : ConvexBifun F) (hcl : Closed
   push Not
   rfl
 
-end Cor3021Dual
+end PrimalConsistency
 
 /-! ### Kuhn–Tucker vectors of the dual program -/
 
@@ -913,7 +913,7 @@ theorem concaveNormal_of_concaveKuhnTucker_nonempty (hG : ConcaveBifun G)
 
 end ConcaveKuhnTuckerNormal
 
-section Thm304d
+section DualKuhnTucker
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -931,11 +931,11 @@ theorem normal_of_concaveKuhnTucker_adjointBifun_nonempty (hF : ConvexBifun F)
   (normal_iff_concaveNormal_adjointBifun hF hcl).2
     (concaveNormal_of_concaveKuhnTucker_nonempty (concaveBifun_adjointBifun Bu Bx F) h)
 
-end Thm304d
+end DualKuhnTucker
 
 /-! ### Polyhedral programs -/
 
-section Thm304Polyhedral
+section Polyhedral
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {F : Bifun U X}
@@ -949,7 +949,7 @@ theorem PolyhedralBifun.normal (hF : PolyhedralBifun F) (hc : Consistent F) : No
     exact hc
   exact PolyhedralFn.clFn_eq_of_mem_dom hF.polyhedralFn_infBifun hdom
 
-end Thm304Polyhedral
+end Polyhedral
 
 section ConcavePolyhedral
 
@@ -979,7 +979,7 @@ theorem ConcavePolyhedralBifun.concaveNormal (hG : ConcavePolyhedralBifun G)
 
 end ConcavePolyhedral
 
-section Thm304f
+section DualPolyhedral
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
@@ -996,7 +996,7 @@ theorem normal_of_concavePolyhedral_adjointBifun (hF : ConvexBifun F) (hcl : Clo
   (normal_iff_concaveNormal_adjointBifun hF hcl).2
     (ConcavePolyhedralBifun.concaveNormal hG hc)
 
-end Thm304f
+end DualPolyhedral
 
 /-! ### The two optimal values as a `liminf` and a `limsup` -/
 
@@ -1028,7 +1028,7 @@ theorem clConcave_eq_limsup_or (hg : ConcaveFn g) (x : E) :
 
 end ClConcaveLimsup
 
-section Cor3023
+section Liminf
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1058,9 +1058,9 @@ theorem liminf_infBifun_eq_iSup_adjointBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] �
     · obtain ⟨v, hv⟩ := hc
       exact hv (iSup_eq_bot.1 hsup v)
 
-end Cor3023
+end Liminf
 
-section Cor3023Dual
+section Limsup
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1091,7 +1091,7 @@ theorem limsup_supBifun_adjointBifun_eq (hF : ConvexBifun F) (hcl : ClosedBifun 
     · obtain ⟨v, hv⟩ := hc
       exact hv (iSup_eq_bot.1 hsup v)
 
-end Cor3023Dual
+end Limsup
 
 /-! ### The dual assertion, and attainment of the primal infimum
 
@@ -1122,7 +1122,7 @@ theorem mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq (Bu : U →ₗ[ℝ
 
 end ConcaveKuhnTuckerAdjoint
 
-section Thm305Dual
+section DualAssertion
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -1147,9 +1147,9 @@ theorem mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin (hF : ConvexBifun F)
     mem_argmin_iff_eq_iInf, ← infBifun_apply]
   exact ⟨fun h => h.2.2, fun h => ⟨ht, hb, h⟩⟩
 
-end Thm305Dual
+end DualAssertion
 
-section Cor3052
+section Attainment
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
@@ -1197,6 +1197,6 @@ theorem exists_infBifun_eq_of_concaveStronglyConsistent (hF : ConvexBifun F)
     congrFun (concaveAdjointBifun_adjointBifun_eq_self hF hcl) 0
   exact ⟨-w, by rw [← hgap, ← heq, hself]⟩
 
-end Cor3052
+end Attainment
 
 end Tdaf.ConvexAnalysis

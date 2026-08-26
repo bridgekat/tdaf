@@ -432,7 +432,7 @@ theorem concaveAdjointBifun_adjointBifun_eq_biconj (Bu : U →ₗ[ℝ] V →ₗ[
 
 end ConcaveAdjoint
 
-section Thm301
+section SecondAdjoint
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
@@ -478,7 +478,7 @@ theorem properConcave_graphFn_adjointBifun_iff (hF : ConvexBifun F) (hcl : Close
   rw [properConcave_iff_proper_neg, hg, proper_compLin_of_surjective surjective_adjointSwap,
     proper_conj_iff (B := prodPairing Bu Bx) hF hcl]
 
-end Thm301
+end SecondAdjoint
 
 /-! ### The dual objective -/
 
@@ -531,7 +531,7 @@ end Dual
 
 /-! ### Closing a strongly consistent program changes nothing -/
 
-section Cor2941
+section ClosureInvariance
 
 open Filter Topology
 
@@ -600,9 +600,9 @@ theorem eventually_infBifun_clBifun_eq (hF : ConvexBifun F) (hp : Proper (graphF
     have hF0 : u ∉ domBifun F := fun hmem => haff (subset_affineSpan ℝ _ hmem)
     rw [infBifun_eq_top_of_notMem_domBifun hcl, infBifun_eq_top_of_notMem_domBifun hF0]
 
-end Cor2941
+end ClosureInvariance
 
-section Cor2941KuhnTucker
+section ClosureKuhnTucker
 
 variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
@@ -619,6 +619,6 @@ theorem kuhnTucker_clBifun_eq {Y : Type*} [AddCommGroup Y] [Module ℝ Y]
   rw [mem_kuhnTucker_iff_adjointBifun_zero_eq (Bx := Bx),
     mem_kuhnTucker_iff_adjointBifun_zero_eq (Bx := Bx), adjointBifun_clBifun, hval]
 
-end Cor2941KuhnTucker
+end ClosureKuhnTucker
 
 end Tdaf.ConvexAnalysis

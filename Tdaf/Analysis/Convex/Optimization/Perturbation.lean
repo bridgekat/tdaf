@@ -384,7 +384,7 @@ theorem infBifun_eq_bot_of_mem_relint (hF : ConvexBifun F) (h : ∃ u, infBifun 
 
 end Improper
 
-section Cor2912
+section KuhnTuckerEmpty
 
 variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X]
@@ -434,7 +434,7 @@ theorem kuhnTucker_eq_empty_iff (hF : ConvexBifun F) (ht : infBifun F 0 ≠ ⊤)
     rw [hu, le_bot_iff] at hcontra
     exact absurd hcontra (_root_.EReal.coe_ne_bot _)
 
-end Cor2912
+end KuhnTuckerEmpty
 
 /-! ### What consistency and differentiability buy -/
 
@@ -471,7 +471,7 @@ theorem infBifun_ne_top_of_mem_domBifun {u : U} (hu : u ∈ domBifun F) : infBif
 
 end Consistency
 
-section Cor2914
+section DirDerivFormula
 
 variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Module ℝ X]
@@ -503,9 +503,9 @@ theorem bddAbove_kuhnTucker_of_strictlyConsistent (hF : ConvexBifun F) (hp : Pro
   have hb := hc (-v) hv
   simpa using hb
 
-end Cor2914
+end DirDerivFormula
 
-section Cor2915
+section KuhnTuckerCompact
 
 variable {U V X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V] [AddCommGroup X] [Module ℝ X]
@@ -536,9 +536,9 @@ theorem kuhnTucker_nonempty_of_strictlyConsistent (hF : ConvexBifun F)
     (KuhnTucker B F).Nonempty :=
   kuhnTucker_nonempty_of_stronglyConsistent (B := B) hF hp hs.stronglyConsistent ht
 
-end Cor2915
+end KuhnTuckerCompact
 
-section Cor2913
+section KuhnTuckerUnique
 
 variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] {B : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {F : Bifun U X}
@@ -554,9 +554,9 @@ theorem kuhnTucker_eq_singleton_of_dirDeriv_eq (hsep : Function.Injective B.flip
     subgradient_eq_singleton_of_dirDeriv_eq hsep ht hb h]
   simp
 
-end Cor2913
+end KuhnTuckerUnique
 
-section Cor2913Gradient
+section KuhnTuckerGradient
 
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [AddCommGroup X] [Module ℝ X]
   {F : Bifun U X}
@@ -570,7 +570,7 @@ theorem kuhnTucker_eq_singleton_of_hasGradientAt (hF : ConvexBifun F)
   rw [kuhnTucker_eq_neg_subgradient ht hb, HasGradientAt.subgradient_eq (convexFn_infBifun hF) h]
   simp
 
-end Cor2913Gradient
+end KuhnTuckerGradient
 
 /-! ### Polyhedral convex programs -/
 

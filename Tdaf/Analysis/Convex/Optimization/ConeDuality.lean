@@ -123,7 +123,7 @@ end Shift
 
 /-! ### The cone duality identity -/
 
-section Cor3143
+section DualityIdentity
 
 variable {E F : Type*}
   [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
@@ -294,6 +294,6 @@ theorem exists_iInf_mem_eq_of_cofinite (hcof : Cofinite h) (hdom : dom h = univ)
   exact exists_mem_eq_iInf_of_isExactSum_conj (biconj_eq_self hconvf hclf)
     (isExactSum_conj_comp_add_sub_pairing_indicatorFn hcof hdom z z') hconv hK hne hcl
 
-end Cor3143
+end DualityIdentity
 
 end Tdaf.ConvexAnalysis
