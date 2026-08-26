@@ -1524,7 +1524,18 @@ theorem isMaximalMonotoneRel_monotoneCurve …
 theorem subgradientRel_eq_monotoneCurve_rightDeriv …     -- the converse: every `∂f` is such a curve
 theorem exists_closedProperConvexFn_leftDeriv_eq_rightDeriv_eq …    -- Thm 24.2, existence
 theorem exists_closedProperConvexFn_forall_le_le …                  -- Thm 24.2, in full
+theorem monotone_of_forall_ne_of_le_of_le …    -- perturbing φ at one point keeps it monotone
+theorem monotoneCurve_eq_of_forall_ne …        -- …and leaves Γ(φ) unchanged
+theorem exists_monotone_ne_bot_ne_top_monotoneCurve_eq …  -- every ∂f is Γ(φ), φ finite somewhere
 ```
+
+**The one-point domain needs no case of its own.** Reading `∂f` back as `Γ(φ)` wants a `φ` *finite
+somewhere*, and `f′₊` is not — exactly when `dom f` is a singleton. The temptation is a two-branch
+`φ`, and both the Part V round's gap note and remediation §12.6 prescribed one. It is cheaper to
+move `f′₊` at one *relative interior* point of `dom f` to a subgradient there — which is real, and
+lies between the two one-sided limits precisely because it **is** a subgradient — and to observe
+that `Γ` reads `φ` only through its one-sided limits and so cannot see the change. One argument
+covers both cases, and it is what closed the Part V round's single declined proof.
 
 **Theorem 24.2's existence clause needs no integral.** `OneDim.lean` used to record the missing
 `∫ₐˣ φ` as the obstruction, and the plan carried the dependency "Theorem 24.2 existence ⇒ improper
@@ -1792,7 +1803,35 @@ theorem hasGradientAt_evalCLM_of_subgradient_eq_singleton …
 theorem hasGradientAt_iff_subgradient_eq_singleton …        -- **Thm 25.1** in full
 theorem mem_exposedPoints_epi_conj_iff_hasGradientAt …      -- **Cor 25.1.2**
 theorem mem_exposedPoints_supportSet_iff_hasGradientAt …    -- **Cor 25.1.3**
+theorem ConvexFn.interior_dom_clFn …            -- int (dom (cl f)) = int (dom f); Thm 7.4 for interiors
+theorem ConvexFn.clFn_eventuallyEq_of_mem_interior_dom …
+theorem hasGradientAt_clFn_iff …                -- the remark after Cor 25.1.1: ∇(cl f) = ∇f
+theorem differentiableAtFn_clFn_iff …
+theorem exists_subgradient_clFn_eq_singleton_iff …
+theorem posHomogeneous_clFn_and_supportSet_clFn …    -- relocation candidate: Duality/Support.lean
+theorem mem_exposedPoints_epi_conj_iff_of_proper …   -- Cor 25.1.2, any pairing, no ClosedFn
+theorem mem_exposedPoints_supportSet_iff_of_proper … -- Cor 25.1.3, any pairing, no ClosedFn
 ```
+
+**`∇(cl f) = ∇f` is where the closedness of Corollaries 25.1.2 and 25.1.3 goes.** Rockafellar states
+both for a merely proper convex `f` and reduces to the closed case by replacing `f` with `cl f`, on
+the strength of a one-sentence remark after Corollary 25.1.1 (line 9751): *"the gradient mappings
+`∇f` and `∇(cl f)` coincide, inasmuch as `f` and `cl f` coincide on int (dom `f`)"*. **That is half
+the argument.** Agreeing on `int (dom f)` gives every gradient of `f` to `cl f` and nothing more; the
+converse — that `cl f` has no *extra* points of differentiability — needs
+`int (dom (cl f)) = int (dom f)`, which the quoted reason does not supply and which is *not*
+Corollary 7.4.1, that being the relative interior. It is two lines from 7.4.1 once one notices that
+`interior (dom (cl f))` is an open subset of `ri (dom (cl f)) = ri (dom f) ⊆ dom f`, but it is a
+step, and it is the step the book skips. With it, both corollaries carry the book's hypotheses.
+
+The corresponding *subgradient* statements in `Gradient.lean` keep their `ClosedFn`, because
+`∂f = ∂(cl f)` fails at relative boundary points. What transfers is `∃ x, ∂f x = {y}`: a singleton
+subdifferential forces `x ∈ int (dom f)`, and there `mem_subgradient_clFn_iff` applies.
+
+**Relocation candidates** (remediation §12.17). `ConvexFn.interior_dom_clFn` belongs beside
+`ConvexFn.relint_dom_clFn` in `RelativeInterior.lean`; `posHomogeneous_clFn_and_supportSet_clFn`
+belongs, split in two, beside `clFn_eq_supportFn_of_posHomogeneous` in `Duality/Support.lean`. Both
+are here because that is the file the remediation item named.
 
 **The whole difficulty is one word in Rockafellar's proof.** He assumes only "`f` finite at `x`"
 and then applies Theorem 23.2, which computes `cl f'(x; ·)`, not `f'(x; ·)`. The closure is
@@ -1847,7 +1886,14 @@ theorem exists_mem_interior_dom_of_forall_normalCone …            -- the separ
 theorem exists_seq_differentiableAtFn_tendsto_dir …               -- the approach sequence
 theorem exposedPoints_subset_gradientLimits …                     -- the substantive step
 theorem subgradient_eq_closure_convexHull_gradientLimits_add_normalCone …   -- **Thm 25.6**
+theorem recessionCone_subgradient_eq_normalCone …   -- the p. 218 exercise; nothing here uses it
 ```
+
+**The p. 218 exercise is discharged here, not where the book says it is.** Rockafellar leaves
+`rec (∂f x) = N_{dom f}(x)` as an exercise in §23 (line 8477) and says its verification "will be
+given later as part of the proof of Theorem 25.6". It is not: that proof uses only the inclusion
+`⊆`. The equality is four lines here, independent of Theorem 25.6, and nothing in this module needs
+it — `recessionCone_subgradient_subset_normalCone` is what the reconstruction runs on.
 
 **The recession cone of `∂f x` is never computed.** Rockafellar identifies `N_{dom f}(x)` with
 `0⁺(∂f x)` and uses the identification three times. Each use follows more cheaply from the
@@ -1914,6 +1960,8 @@ theorem continuousOn_fderiv_toReal …                  -- **Thm 25.5**, `∇f` 
 theorem continuousOn_fderiv_of_convexOn …             -- **Cor 25.5.1**
 theorem measure_diff_twoSided_dirDeriv …              -- **Thm 25.4**, measure-zero clause
 theorem mem_subgradient_innerL_iff …                  -- the Riesz bridge between the pairings
+theorem topDualPairing_flip_toDual …            -- the Riesz bridge, pointwise
+theorem conj_innerL_eq_conj_topDualPairing …    -- …for `conj`; carries Legendre.lean's Thm 26.4 over
 ```
 
 **Mathlib has Rademacher's theorem** — `Mathlib/Analysis/Calculus/Rademacher.lean`,
@@ -2081,6 +2129,13 @@ theorem essentiallySmooth_infConv_of_relint …                   -- **Cor 26.3.
 theorem IsExactImage.essentiallySmooth_mapLin …                 -- **Cor 26.3.3**, D5 form
 theorem essentiallySmooth_mapLin_of_relint …                    -- **Cor 26.3.3**, the book's `ri` form
 ```
+
+**Both orders of the sum rule are here**: `StrictConvexOnFn.add_convexFn` and
+`ConvexFn.add_strictConvexOnFn`, the second being the first plus `add_comm`. The second could not
+live in `StrictlyConvex.lean` where remediation §12.8 put it, because `Preservation.lean` *imports*
+that module; there it would have been a twelve-line near-duplicate of a proof three modules away.
+The `X.add_Y` convention makes the receiver the first summand, and here the first summand is the
+convex one.
 
 **The `ri` hypotheses are D5 interfaces, and the `of_relint` bridges already existed.**
 `IsExactSum.of_relint` and `IsExactImage.of_relint` (`Duality/Relint.lean`) supply the instances
@@ -5192,3 +5247,37 @@ book's "only finitely many extreme points and extreme directions" is true of ext
 `exists_finite_generating_extremeDirections` is the form that survives: a finite subset generating
 all of them as a pointed cone. Every generator of a given half-line face lies in that face's
 recession cone, which is one ray.
+
+### `Tdaf/Analysis/Convex/Subgradient/StrictlyConvex.lean`
+
+```lean
+def StrictConvexOnFn (f : E → EReal) (C : Set E) : Prop
+def EssentiallyStrictlyConvex (f : E → EReal) : Prop
+theorem StrictConvexOnFn.mono …
+theorem strictConvexOnFn_iff_strictConvexOn …   -- the bridge to Mathlib, for `f` finite on convex `C`
+theorem sub_le_of_mem_subgradient … ; theorem mem_subgradient_of_forall_sub_le …
+theorem pairing_sub_combo … ; theorem pairing_combo_sub_left … ; theorem pairing_combo_sub_right …
+theorem mem_subgradient_of_combo … ; theorem le_combo_of_mem_subgradient …
+theorem mem_subgradient_endpoints_of_le_combo …
+theorem essentiallyStrictlyConvex_iff_pairwise_disjoint …
+theorem mem_subgradient_conj_innerL_iff … ; theorem subsingleton_subgradient_conj_iff …
+theorem pairwise_disjoint_subgradient_conj_iff …
+theorem essentiallySmooth_conj_iff_essentiallyStrictlyConvex …    -- Theorem 26.3
+theorem conj_conj_innerL … ; theorem essentiallyStrictlyConvex_conj_iff_essentiallySmooth …
+theorem subgradient_injective_iff …                               -- Corollary 26.3.1
+```
+
+**Strict convexity of an `EReal`-valued function, and §26's half of the conjugacy correspondence.**
+`EssentiallyStrictlyConvex` is phrased as "the subdifferentials at distinct points are pairwise
+disjoint" rather than as strict convexity on every convex subset of `dom ∂f`;
+`essentiallyStrictlyConvex_iff_pairwise_disjoint` is the bridge, and it is what makes Theorem 26.3
+and Corollary 26.3.1 statable without quantifying over subsets.
+
+**`strictConvexOnFn_iff_strictConvexOn` is the only way in for a concrete function**, and it does
+not go far. Mathlib's strict-convexity criteria stop at `strictConvexOn_of_deriv2_pos`, which is one
+variable; there is no positive-definite-Hessian criterion in several variables anywhere in Mathlib,
+so a two-variable formula still needs its inequality by hand. That is why §26's two counterexamples
+of pp. 253–254 remain half-proved (remediation §12.16) — not for want of an interface.
+
+**The sum rule is not here.** `StrictConvexOnFn.add_convexFn` and `ConvexFn.add_strictConvexOnFn`
+are in `Preservation.lean`, which imports this module.
