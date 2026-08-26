@@ -21,26 +21,26 @@ is worth buying.
 
 Everything rests on one identification: `inf F` is a partial minimisation of the graph function,
 hence convex, and `v` is a Kuhn–Tucker vector exactly when `-v ∈ ∂(inf F)(0)` (**Theorem 29.1**).
-The Kuhn–Tucker set is therefore a reflected subdifferential, and the subdifferential theory of §23
-transfers to it wholesale: existence under strong consistency, compactness under strict
-consistency, the directional-derivative formulas, and the polyhedral case.
+The Kuhn–Tucker set is a reflected subdifferential, so the theory of §23 transfers wholesale:
+existence under strong consistency, compactness under strict consistency, the
+directional-derivative formulas, the polyhedral case.
 
 ## Main definitions
 
-* `Bifun U X` — a bifunction; `graphFn F` is the same data on `U × X` and `ConvexBifun F` is
-  convexity of it.
+* `Bifun U X` — a bifunction; `graphFn F` is the same data on `U × X`, `ConvexBifun F` and
+  `PolyhedralBifun F` are convexity and polyhedrality of it.
 * `infBifun F`, `domBifun F` — the perturbation function and the effective domain `{u | F u ≢ ⊤}`.
 * `KuhnTucker B F` — the `v` for which `⨅ u (⟨u, v⟩ + inf F u)` is finite and equal to `inf F 0`.
 * `Consistent`, `StronglyConsistent`, `StrictlyConsistent` — `0 ∈ dom F`, `0 ∈ ri (dom F)`,
-  `0 ∈ int (dom F)`; `PolyhedralBifun F` — the graph function is polyhedral.
+  `0 ∈ int (dom F)`.
 
 ## Main results
 
 * `convexFn_infBifun`, `dom_infBifun`, `mem_kuhnTucker_iff_neg_mem_subgradient` — **Theorem 29.1**.
 * `kuhnTucker_eq_neg_subgradient`, `convex_kuhnTucker`, `isClosed_kuhnTucker`,
   `supportFn_kuhnTucker` — **Corollary 29.1.1**; `kuhnTucker_eq_empty_iff` — **Corollary 29.1.2**;
-  `kuhnTucker_eq_singleton_of_hasGradientAt` — **Corollary 29.1.3**.
-* `kuhnTucker_nonempty_of_stronglyConsistent`, `dirDeriv_infBifun_eq` — **Corollary 29.1.4**.
+  `kuhnTucker_eq_singleton_of_hasGradientAt` — **Corollary 29.1.3**;
+  `kuhnTucker_nonempty_of_stronglyConsistent`, `dirDeriv_infBifun_eq` — **Corollary 29.1.4**.
 * `isCompact_kuhnTucker_of_strictlyConsistent`, `continuousOn_infBifun_interior` —
   **Corollary 29.1.5**; `infBifun_eq_bot_of_mem_relint` — **Corollary 29.1.6**.
 * `PolyhedralBifun.polyhedralFn_infBifun`, `kuhnTucker_nonempty_of_polyhedralBifun`,
@@ -49,11 +49,10 @@ consistency, the directional-derivative formulas, and the polyhedral case.
 ## Implementation notes
 
 `KuhnTucker` is the book's own definition, not Theorem 29.1's conclusion: the inequality form
-`inf F 0 ≤ ⟨u, v⟩ + inf F u` is a consequence (`mem_kuhnTucker_iff_forall_le`), and defining
-`KuhnTucker` by it would have made Theorem 29.1 an `Iff.rfl`. The boundedness clause of
-Corollary 29.1.5 is finite-dimensional in `V`: pairing-boundedness (Corollary 13.2.2) is all a
-general dual pair supports, and upgrading it to `Bornology.IsBounded` needs a coordinate estimate
-against a finite basis.
+`inf F 0 ≤ ⟨u, v⟩ + inf F u` is a consequence, and defining `KuhnTucker` by it would have made
+Theorem 29.1 an `Iff.rfl`. The boundedness clause of Corollary 29.1.5 is finite-dimensional in `V`:
+pairing-boundedness (Corollary 13.2.2) is all a general dual pair supports, and a norm bound needs
+a coordinate estimate against a finite basis.
 
 ## References
 

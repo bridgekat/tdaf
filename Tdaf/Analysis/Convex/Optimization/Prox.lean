@@ -28,15 +28,15 @@ which is a different statement from the maximal cyclic monotonicity of Theorem 2
 
 ## Main results
 
-* `subgradient_quadFn_sub` — `∂(w (z - ·)) x = {x - z}`.
-* `recessionFn_quadFn_sub` — `w (z - ·)` recedes in no direction but `0`.
+* `subgradient_quadFn_sub` — `∂(w (z - ·)) x = {x - z}`; `recessionFn_quadFn_sub` — `w (z - ·)`
+  recedes in no direction but `0`.
 * `argmin_moreauObj_nonempty`, `mem_argmin_moreauObj_iff`, `existsUnique_sub_mem_subgradient`,
-  `prox_eq_iff` — **Theorem 31.5**: the minimum exists, is unique, and solves `z - x ∈ ∂f x`.
-* `prox_add_prox_conj` — **Theorem 31.5**: `z = prox (z | f) + prox (z | f*)`.
+  `prox_eq_iff` — **Theorem 31.5**: the minimum exists, is unique, and solves `z - x ∈ ∂f x`;
+  `prox_add_prox_conj` — **Theorem 31.5**: `z = prox (z | f) + prox (z | f*)`.
 * `pairingNorm_prox_sub_le`, `dist_prox_prox_le`, `lipschitzWith_prox` — proximation is
   nonexpansive.
-* `subgradientRelHomeomorph` — **Corollary 31.5.1**.
-* `isMaximalMonotoneRel_subgradientRel` — **Corollary 31.5.2**.
+* `subgradientRelHomeomorph`, `isMaximalMonotoneRel_subgradientRel` — **Corollaries 31.5.1**
+  and **31.5.2**.
 
 ## Implementation notes
 

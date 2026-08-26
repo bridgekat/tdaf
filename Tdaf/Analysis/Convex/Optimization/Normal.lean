@@ -9,66 +9,49 @@ import Tdaf.Analysis.Convex.Optimization.Minimum
 /-!
 # Normality of a dual pair of convex programs
 
-Rockafellar's §30, from Corollary 30.2.2 onwards. A convex program `(P)` is **normal** when its
-perturbation function is closed at the origin,
+A convex program `(P)` is **normal** when its perturbation function is closed at the origin,
 
 `(cl (inf F))(0) = (inf F)(0)`,
 
-and the point of the section is that this single condition is equivalent to the absence of a
-duality gap, and to normality of the dual program `(P*)`.
-
-The computation behind all of it is `clFn_zero_eq_iSup_iInf`: for a convex `f`,
-
-`(cl f)(0) = ⨆ y, ⨅ x, (⟨x, y⟩ + f x)`,
-
-which is Fenchel–Moreau read at the origin. Applied to `f = inf F` the inner infimum is exactly the
-dual objective `(F* 0)(y)` (`adjointBifun_zero_apply`), so `(cl (inf F))(0) = sup F* 0` — the first
-formula of Corollary 30.2.2.
+and the content of the section is that this one condition is equivalent to the absence of a duality
+gap and to normality of the dual `(P*)` (**Theorem 30.3**). **Theorem 30.4** collects ten
+sufficient conditions, and under normality the Kuhn–Tucker vectors of `(P)` are precisely the
+optimal solutions of `(P*)` (**Theorem 30.5**). Everything rests on Fenchel–Moreau at the origin,
+`(cl f)(0) = ⨆ y, ⨅ x, (⟨x, y⟩ + f x)`: with `f = inf F` the inner infimum is the dual objective
+`(F* 0)(y)`, so `(cl (inf F))(0) = sup F* 0`, which is **Corollary 30.2.2**.
 
 ## Main definitions
 
-* `Normal F` — Rockafellar's normality of the convex program associated with `F`.
-* `supBifun G` — the concave counterpart of `infBifun`: the optimal value of the concave program
-  `G y` as a function of the perturbation `y`.
-* `domConcaveBifun G`, `ConcaveConsistent G`, `ConcaveStronglyConsistent G`, `ConcaveNormal G` —
-  the concave counterparts of `domBifun`, `Consistent`, `StronglyConsistent` and `Normal`, needed
-  to state the dual half of every result here.
+* `Normal F` — normality of the convex program associated with `F`.
+* `supBifun G`, `domConcaveBifun G`, `ConcaveConsistent G`, `ConcaveStronglyConsistent G`,
+  `ConcaveNormal G`, `ConcaveKuhnTucker` — the concave counterparts of `infBifun`, `domBifun`,
+  `Consistent`, `StronglyConsistent`, `Normal` and `KuhnTucker`, each the convex notion at `-G`.
 
 ## Main results
 
 * `clFn_infBifun_zero_eq_iSup_adjointBifun`, `clConcave_supBifun_adjointBifun_zero_eq` —
-  **Corollary 30.2.2**, the two closure formulas.
+  **Corollary 30.2.2**; `iSup_adjointBifun_eq_bot_iff` and companions — **Corollary 30.2.1**;
+  `liminf_infBifun_eq_iSup_adjointBifun` — **Corollary 30.2.3**.
 * `normal_iff_iSup_adjointBifun_eq`, `concaveNormal_adjointBifun_iff`,
-  `normal_iff_concaveNormal_adjointBifun` — **Theorem 30.3**, the three equivalent conditions.
+  `normal_iff_concaveNormal_adjointBifun` — **Theorem 30.3**.
 * `StronglyConsistent.normal`, `normal_of_concaveStronglyConsistent_adjointBifun`,
-  `normal_of_kuhnTucker_nonempty` — **Theorem 30.4**, clauses (a), (b) and (c).
-* `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup`, `kuhnTucker_eq_setOf_isMax` — **Theorem 30.5**:
-  under normality the Kuhn–Tucker vectors of `(P)` are precisely the optimal solutions of `(P*)`;
-  `mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin` is the dual assertion, which the book leaves
-  as "parallel".
-* `exists_infBifun_eq_of_concaveStronglyConsistent` — **Corollary 30.5.2**, first assertion: a
-  consistent program whose dual is strongly consistent attains its infimum.
+  `normal_of_kuhnTucker_nonempty`, `normal_of_exists_setOf_le` and companions — **Theorem 30.4**,
+  clauses (a)–(j).
+* `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup`, `kuhnTucker_eq_setOf_isMax` — **Theorem 30.5**,
+  with `mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin` for the dual assertion;
+  `exists_infBifun_eq_of_concaveStronglyConsistent` — **Corollary 30.5.2**, first assertion.
 
 ## Implementation notes
 
-**Corollary 30.2.2 needs no closedness for its first formula.** Rockafellar states the whole
-corollary for closed convex `F`. The formula `(cl (inf F))(0) = sup F* 0` only uses Fenchel–Moreau
-for `inf F`, so `ConvexBifun F` suffices; closedness of `F` enters only in the second formula,
-where `F** = cl F` has to be turned back into `F`. Consequently the equivalence (a) ⟺ (c) of
-Theorem 30.3 holds for every convex bifunction, and only (b) needs `ClosedBifun F`.
+Corollary 30.2.2's first formula needs only convexity of `F`, not closedness: it is Fenchel–Moreau
+for `inf F`, and the adjoint does not distinguish `F` from `cl F`. So (a) ⟺ (c) of Theorem 30.3
+holds for every convex bifunction, and only (b) needs `ClosedBifun F`. Theorem 30.4(c) is proved
+from Theorem 30.3 and weak duality rather than through subgradients, so needs no finite
+dimension.
 
-**Theorem 30.4(c) does not go through subgradients.** Rockafellar's own argument for (c) is
-Theorem 23.5; here `mem_kuhnTucker_iff_adjointBifun_zero_eq` already says that a Kuhn–Tucker vector
-is a point where the dual objective attains `inf F 0`, and weak duality
-(`iSup_adjointBifun_zero_le`) then pins the dual optimal value down, so normality is immediate from
-Theorem 30.3. This also removes the finite-dimensionality that the subgradient route would need.
+## References
 
-**The concave mirror of Theorem 7.4 is not proved here.** It is
-`ConcaveFn.clConcave_eq_of_mem_relint_domConcave` in `Saddle/Kernel.lean`, together with the rest
-of its family; `Normal.lean` cannot import that module, so `ConcaveStronglyConsistent.concaveNormal`
-inlines the two-line proof. Both copies want a common home: the `clConcave` block of
-`Duality/ConcaveConj.lean` split into a `ConcaveClosure.lean` that `RelativeInterior.lean` can
-import, so the concave Theorem 7.4 can sit next to the convex one.
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §30.
 -/
 
 open Filter Topology
@@ -90,10 +73,7 @@ private theorem neg_coe_sub_eq {c : ℝ} {w : EReal} :
   rfl
 
 /-- **Fenchel–Moreau at the origin.** For a convex `f`, the closure at `0` is the supremum over the
-dual variable of the infimum of the affine functions `x ↦ ⟨x, y⟩ + f x`.
-
-This is the one computation §30 rests on: with `f = inf F` the inner infimum is the dual objective
-`(F* 0)(y)`, so this reads `(cl (inf F))(0) = sup F* 0`. -/
+dual variable of the infimum of `x ↦ ⟨x, y⟩ + f x`. This is the one computation §30 rests on. -/
 theorem clFn_zero_eq_iSup_iInf (hf : ConvexFn f) :
     clFn f 0 = ⨆ y : F, ⨅ x : E, (((B x y : ℝ) : EReal) + f x) := by
   have hsurj : Function.Surjective (fun y : F => -y) := fun y => ⟨-y, neg_neg y⟩
@@ -116,13 +96,9 @@ section Normal
 
 variable {U X : Type*} [AddCommGroup U] [TopologicalSpace U] {F : Bifun U X}
 
-/-- A convex program is **normal** when its perturbation function is closed at the origin
-(Rockafellar §30):
-
-`(cl (inf F))(0) = (inf F)(0)`.
-
-When `0 ∈ cl (dom F)` this is exactly lower semicontinuity of `u ↦ inf F u` at `u = 0`: without it
-the program is unstable in some direction of perturbation. -/
+/-- A convex program is **normal** when its perturbation function is closed at the origin,
+`(cl (inf F))(0) = (inf F)(0)`. When `0 ∈ cl (dom F)` this is lower semicontinuity of
+`u ↦ inf F u` at `u = 0`. -/
 def Normal (F : Bifun U X) : Prop := clFn (infBifun F) 0 = infBifun F 0
 
 theorem normal_iff : Normal F ↔ clFn (infBifun F) 0 = infBifun F 0 := Iff.rfl
@@ -152,12 +128,9 @@ theorem neg_supBifun (G : Bifun Y V) :
   funext y
   rw [supBifun_apply, Tdaf.EReal.neg_iSup, infBifun_apply]
 
-/-- **The effective domain of `-G` is the concave effective domain of `G`.** The two membership
-conditions are `-(G y v) ≠ ⊤` and `G y v ≠ ⊥`, which are the same condition.
-
-Trivial, and load-bearing: it is what turns every consistency hypothesis about a concave program
-into the corresponding hypothesis about the convex program `-G`, `ConcaveStronglyConsistent G` into
-`StronglyConsistent (-G)` in particular (`concaveStronglyConsistent_iff_stronglyConsistent_neg`). -/
+/-- **The effective domain of `-G` is the concave effective domain of `G`**: `-(G y v) ≠ ⊤` and
+`G y v ≠ ⊥` are the same condition. This turns every consistency hypothesis about a concave program
+into the corresponding hypothesis about the convex program `-G`. -/
 theorem domBifun_neg (G : Bifun Y V) : domBifun (fun y v => -(G y v)) = domConcaveBifun G := by
   ext y
   simp only [mem_domBifun, mem_domConcaveBifun, ne_eq, _root_.EReal.neg_eq_top_iff]
@@ -192,11 +165,8 @@ def ConcaveNormal (G : Bifun Y V) : Prop := clConcave (supBifun G) 0 = supBifun 
 
 theorem concaveNormal_iff : ConcaveNormal G ↔ clConcave (supBifun G) 0 = supBifun G 0 := Iff.rfl
 
-/-- Concave normality of `G` is ordinary normality of `-G`: the concave closure of `sup G` is minus
-the closure of `inf (-G)`, and the two optimal values are opposite.
-
-This is what makes the concave clauses of Theorem 30.4 free — each of them is the corresponding
-convex clause read at `-F*`, with the pairings flipped. -/
+/-- Concave normality of `G` is ordinary normality of `-G`. This is what makes the concave clauses
+of Theorem 30.4 free: each is the corresponding convex clause read at `-F*`, pairings flipped. -/
 theorem concaveNormal_iff_normal_neg : ConcaveNormal G ↔ Normal fun y v => -(G y v) := by
   have hval : ∀ y, infBifun (fun y' v => -(G y' v)) y = -(supBifun G y) :=
     fun y => (congrFun (neg_supBifun G) y).symm
@@ -217,9 +187,8 @@ theorem ConcaveStronglyConsistent.concaveConsistent (h : ConcaveStronglyConsiste
     ConcaveConsistent G :=
   intrinsicInterior_subset h
 
-/-- Strong consistency of the concave program `G` is strong consistency of the convex program `-G`,
-the mirror of `concaveNormal_iff_normal_neg`. It is `domBifun_neg` and nothing else, and it is what
-lets the concave clauses of §29 be read off the convex ones. -/
+/-- Strong consistency of the concave program `G` is strong consistency of `-G`; this is what lets
+the concave clauses of §29 be read off the convex ones. -/
 theorem concaveStronglyConsistent_iff_stronglyConsistent_neg :
     ConcaveStronglyConsistent G ↔ StronglyConsistent fun y v => -(G y v) := by
   rw [ConcaveStronglyConsistent, StronglyConsistent, domBifun_neg]
@@ -251,10 +220,8 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {F : Bifun U X}
 
-/-- **Rockafellar, Corollary 30.2.2**, first formula: `(cl (inf F))(0) = sup F* 0`.
-
-Unlike in the book, `F` need not be closed: the formula is Fenchel–Moreau for `inf F`, and `F*`
-does not see the difference between `F` and `cl F` anyway (`adjointBifun_clBifun`). -/
+/-- **Corollary 30.2.2**, first formula: `(cl (inf F))(0) = sup F* 0`. Unlike in the book, `F` need
+not be closed — the formula is Fenchel–Moreau for `inf F`, and `F*` does not see the closure. -/
 theorem clFn_infBifun_zero_eq_iSup_adjointBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F) :
     clFn (infBifun F) 0 = ⨆ v : V, adjointBifun Bu Bx F 0 v := by
   rw [clFn_zero_eq_iSup_iInf (B := Bu) (convexFn_infBifun hF)]
@@ -281,9 +248,8 @@ private theorem neg_neg_add_coe {a : EReal} {c : ℝ} :
   rw [_root_.EReal.neg_add (.inr (_root_.EReal.coe_ne_top _)) (.inr (_root_.EReal.coe_ne_bot _)),
     neg_neg, sub_eq_add_neg, ← _root_.EReal.coe_neg]
 
-/-- The dual of `clFn_infBifun_zero_eq_iSup_adjointBifun`, obtained from it by negation: the
-concave closure of the dual perturbation function at the origin is the optimal value of the program
-associated with the *concave* adjoint. -/
+/-- The dual of `clFn_infBifun_zero_eq_iSup_adjointBifun`: the concave closure of the dual
+perturbation function at the origin is the optimal value of the doubly-adjoint program. -/
 theorem clConcave_supBifun_zero_eq_infBifun_concaveAdjointBifun (hG : ConcaveBifun G) :
     clConcave (supBifun G) 0 = infBifun (concaveAdjointBifun Bu Bx G) 0 := by
   have hsurj : Function.Surjective (fun x : X => -x) := fun x => ⟨-x, neg_neg x⟩
@@ -350,12 +316,9 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {F : Bifun U X} {v : V}
 
-/-- **Rockafellar, Theorem 30.4(c)**: if a Kuhn–Tucker vector exists then normality holds. (The
-finiteness of the optimal value that the book asks for is already part of `KuhnTucker`.)
-
-A Kuhn–Tucker vector is a point at which the dual objective reaches `inf F 0`
-(`mem_kuhnTucker_iff_adjointBifun_zero_eq`), and weak duality says it can never exceed it, so the
-dual optimal value *is* `inf F 0`. -/
+/-- **Theorem 30.4(c)**: if a Kuhn–Tucker vector exists then normality holds. Such a vector is a
+point at which the dual objective reaches `inf F 0`, and weak duality says it can never exceed it.
+(The finiteness of the optimal value the book asks for is already part of `KuhnTucker`.) -/
 theorem normal_of_kuhnTucker_nonempty (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F)
     (h : (KuhnTucker Bu F).Nonempty) : Normal F := by
   obtain ⟨w, hw⟩ := h
@@ -384,9 +347,8 @@ theorem kuhnTucker_eq_setOf_isMax (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : C
 
 omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
   [LocallyConvexSpace ℝ U] [IsCompatiblePairing Bu] in
-/-- A Kuhn–Tucker vector is a dual optimal solution, and the common optimal value is `inf F 0`.
-This half of Theorem 30.5 needs no normality hypothesis: existence of a Kuhn–Tucker vector supplies
-it (`normal_of_kuhnTucker_nonempty`). -/
+/-- A Kuhn–Tucker vector is a dual optimal solution, with common optimal value `inf F 0`. This half
+of Theorem 30.5 needs no normality hypothesis — the vector's existence supplies it. -/
 theorem isGreatest_adjointBifun_zero_of_mem_kuhnTucker (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (hv : v ∈ KuhnTucker Bu F) :
     IsGreatest (Set.range (adjointBifun Bu Bx F 0)) (infBifun F 0) := by
@@ -400,9 +362,8 @@ section Thm304Strong
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [AddCommGroup X] [Module ℝ X] {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 30.4(a)**: a strongly consistent convex program is normal. This is
-Theorem 7.4 for `inf F`: the origin is a relative interior point of its effective domain, and `cl`
-changes nothing there. -/
+/-- **Theorem 30.4(a)**: a strongly consistent convex program is normal — Theorem 7.4 for `inf F`,
+whose effective domain has the origin in its relative interior. -/
 theorem StronglyConsistent.normal (hs : StronglyConsistent F) (hF : ConvexBifun F) : Normal F := by
   have hri : (0 : U) ∈ ri (dom (infBifun F)) := by rwa [dom_infBifun]
   exact (convexFn_infBifun hF).clFn_eq_of_mem_relint_dom hri
@@ -457,9 +418,8 @@ section Thm304Shift
 variable {U V X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
   {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X} {y : Y}
 
-/-- `F` with a linear function of `x` subtracted off. Its optimal value at `u` is `-(Fu)*(y)`, so
-Corollary 30.2.2 read at the origin for `shiftBifun Bx F y` computes `sup (F* y)` — the whole
-`y`-slice of the adjoint, not only the one at `y = 0`. -/
+/-- `F` with a linear function of `x` subtracted off; its optimal value at `u` is `-(F u)*(y)`, so
+Corollary 30.2.2 for it computes the whole `y`-slice `sup (F* y)` of the adjoint. -/
 noncomputable def shiftBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (y : Y) : Bifun U X :=
   fun u x => F u x - ((Bx x y : ℝ) : EReal)
 
@@ -536,15 +496,12 @@ theorem supBifun_adjointBifun (hF : ConvexBifun F) (y : Y) :
 
 omit [FiniteDimensional ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bx]
   [IsCompatiblePairing Bx.flip] in
-/-- **The step Rockafellar's proof of Theorem 30.4(g) writes as "i.e."**: if the perturbed
-objective `Fu - ⟨·, y⟩` is bounded below for *every* perturbation `u`, then `y` belongs to the
-effective domain of the dual program.
+/-- If the perturbed objective `F u - ⟨·, y⟩` is bounded below for *every* perturbation `u`, then
+`y` belongs to the effective domain of the dual program.
 
-This is where the closure operation is paid for. `domConcaveBifun F*` asks for `sup (F* y) ≠ -∞`,
-which by `supBifun_adjointBifun` is `cl (inf (F - ⟨·, y⟩)) 0 ≠ -∞`, strictly stronger than
-`inf (F - ⟨·, y⟩) 0 ≠ -∞` — and the latter is what `y ∈ dom ((F0)*)` says. What bridges them is
-Theorem 7.4: a *proper* convex function has a proper closure, and properness of `u ↦ -(Fu)*(y)` is
-exactly the hypothesis here. It is also what makes this the one §30 statement needing
+`domConcaveBifun F*` asks for `sup (F* y) ≠ -∞`, which is `cl (inf (F - ⟨·, y⟩)) 0 ≠ -∞`, strictly
+stronger than the `inf (F - ⟨·, y⟩) 0 ≠ -∞` that `y ∈ dom ((F 0)*)` says. Theorem 7.4 bridges them:
+a proper convex function has a proper closure. This is the one §30 statement needing
 `FiniteDimensional ℝ U`. -/
 theorem mem_domConcaveBifun_adjointBifun (hF : ConvexBifun F) (hc : Consistent F)
     (h : ∀ u : U, conj Bx (F u) y ≠ ⊤) :
@@ -569,20 +526,16 @@ theorem mem_domConcaveBifun_adjointBifun (hF : ConvexBifun F) (hc : Consistent F
   exact hne (by rw [supBifun_apply, iSup_eq_bot.2 hcon])
 
 include Bu Bx in
-/-- **Rockafellar, Theorem 30.4(g)**: if some level set `{x | (F0)(x) ≤ α}` is non-empty and
-bounded, then normality holds for `(P)` and `(P*)`.
+/-- **Theorem 30.4(g)**: if some level set `{x | (F 0)(x) ≤ α}` is non-empty and bounded, then
+normality holds for `(P)` and `(P*)`.
 
-The book calls this "a special case of (b)" via Theorem 27.1(d), and the passage from one to the
-other is a single word: "i.e.". It is not a single step. Theorem 27.1(d) does give
-`0 ∈ int (dom ((F0)*))`, but strict consistency of `(P*)` is `0 ∈ int (domConcaveBifun F*)`, which
-is an intersection over *all* perturbations `u` of the sets `dom ((Fu)*)`; the `u = 0` term is what
-Theorem 27.1(d) supplies, and openness of an intersection is not automatic. What makes it open here
-is that all slices of a closed convex bifunction have the **same recession function** —
-`recessionFn_slice_eq`, Theorem 8.3 read on the epigraph — so Corollary 13.3.4(c) describes every
-`int (dom ((Fu)*))` by the same inequality and they are all *equal*.
-
-No properness is assumed: an improper closed convex bifunction has `inf F 0 = -∞`, and normality
-then holds for the trivial reason that `cl` cannot go below `-∞`. -/
+Theorem 27.1(d) gives `0 ∈ int (dom ((F 0)*))`, but strict consistency of `(P*)` is
+`0 ∈ int (domConcaveBifun F*)`, an intersection over *all* perturbations `u` of the sets
+`dom ((F u)*)`, and openness of an intersection is not automatic. What makes it open is that all
+slices of a closed convex bifunction have the same recession function (Theorem 8.3 on the
+epigraph), so Corollary 13.3.4(c) describes every `int (dom ((F u)*))` by the same inequality and
+they are all equal. No properness is assumed: an improper closed convex bifunction has
+`inf F 0 = -∞`, where normality is trivial. -/
 theorem normal_of_exists_setOf_le (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (h : ∃ α : ℝ, {x : X | F 0 x ≤ (α : EReal)}.Nonempty ∧
       Bornology.IsBounded {x : X | F 0 x ≤ (α : EReal)}) :
@@ -639,14 +592,11 @@ theorem normal_of_exists_setOf_le (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (interior_subset_intrinsicInterior (interior_maximal hsub isOpen_interior h0int))
 
 include Bu Bx in
-/-- **Rockafellar, Theorem 30.4(i)**: if the optimal solutions to `(P)` form a non-empty bounded
-set — in particular if there is exactly one — then normality holds.
-
-The book calls (i) "contained in (g)", and with `F0` proper it is: `argmin (F0)` is a level set of
-`F0` at its own minimum value, and `argmin_nonempty_and_isBounded_iff_exists_setOf_le` is that
-observation. Properness is not removable here as it is in `normal_of_exists_setOf_le`: without it
-"optimal solution" and "optimal value" come apart, and for `F0 ≡ ⊤` over a zero-dimensional `X` the
-set of optimal solutions is non-empty and bounded while no level set is. -/
+/-- **Theorem 30.4(i)**: if the optimal solutions to `(P)` form a non-empty bounded set — in
+particular if there is exactly one — then normality holds. With `F 0` proper this is clause (g),
+since `argmin (F 0)` is then a level set at the minimum value. Properness is not removable: for
+`F 0 ≡ ⊤` over a zero-dimensional `X` the optimal solutions are non-empty and bounded while no
+level set is. -/
 theorem normal_of_argmin_nonempty_and_isBounded (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (hp : Proper (F 0)) (hne : (argmin (F 0)).Nonempty)
     (hbd : Bornology.IsBounded (argmin (F 0))) :
@@ -673,19 +623,14 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDim
   {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
   {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 30.4(h)**: if some superlevel set `{v | α ≤ (F* 0)(v)}` of the dual
-objective is non-empty and bounded, then normality holds for `(P)` and `(P*)`.
+/-- **Theorem 30.4(h)**: if some superlevel set `{v | α ≤ (F* 0)(v)}` of the dual objective is
+non-empty and bounded, then normality holds for `(P)` and `(P*)`.
 
-The book calls this "a special case of (a)", the mirror of the way (g) is a special case of (b).
-Here it is literally clause (g) read for the *convex* program associated with `-F*`: that
-bifunction is convex and closed with no hypothesis on `F` at all (Theorem 30.1, in the form
-`convexBifun_neg_adjointBifun` and `closedBifun_neg_adjointBifun`), its objective is `-(F* 0)`, and
-its sublevel set at `-α` is the superlevel set of `F* 0` at `α`. Normality of that program is
-concave normality of `F*` (`concaveNormal_iff_normal_neg`), which is normality of `(P)` by
-Theorem 30.3.
-
-What the book's route needs and this one does not is a concave mirror of Theorem 27.1(d) and of
-Corollary 13.3.4 on `V`; the flip of the pairings supplies both. -/
+This is clause (g) read for the *convex* program associated with `-F*`, which is convex and closed
+with no hypothesis on `F` (Theorem 30.1): its objective is `-(F* 0)` and its sublevel set at `-α`
+is the superlevel set of `F* 0` at `α`. Normality of that program is concave normality of `F*`,
+hence normality of `(P)` by Theorem 30.3. Going this way needs no concave mirror of Theorem 27.1(d)
+or of Corollary 13.3.4 on `V`. -/
 theorem normal_of_exists_setOf_ge_adjointBifun (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (h : ∃ α : ℝ, {v : V | (α : EReal) ≤ adjointBifun Bu Bx F 0 v}.Nonempty ∧
       Bornology.IsBounded {v : V | (α : EReal) ≤ adjointBifun Bu Bx F 0 v}) :
@@ -709,12 +654,9 @@ theorem normal_of_exists_setOf_ge_adjointBifun (hF : ConvexBifun F) (hcl : Close
       (convexBifun_neg_adjointBifun Bu Bx F) closedBifun_neg_adjointBifun ⟨-α, hne', hbd'⟩
   exact (normal_iff_concaveNormal_adjointBifun hF hcl).2 (concaveNormal_iff_normal_neg.2 hnormal)
 
-/-- **Rockafellar, Theorem 30.4(j)**: if the optimal solutions to `(P*)` form a non-empty bounded
-set — in particular if there is exactly one — then normality holds.
-
-Clause (i) read for the convex program associated with `-F*`, exactly as (h) is clause (g) read
-there. As in (i), properness of the objective is not removable: without it "optimal solution" and
-"optimal value" come apart. -/
+/-- **Theorem 30.4(j)**: if the optimal solutions to `(P*)` form a non-empty bounded set — in
+particular if there is exactly one — then normality holds. Clause (i) read for the convex program
+associated with `-F*`; properness of the objective is not removable there either. -/
 theorem normal_of_argmax_adjointBifun_nonempty_and_isBounded (hF : ConvexBifun F)
     (hcl : ClosedBifun F) (hp : Proper fun v => -(adjointBifun Bu Bx F 0 v))
     (hne : (argmax (adjointBifun Bu Bx F 0)).Nonempty)
@@ -743,12 +685,9 @@ variable {E G : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensi
   [AddCommGroup G] [Module ℝ G] {B : E →ₗ[ℝ] G →ₗ[ℝ] ℝ} [IsCompatiblePairing B]
   {f : E → EReal}
 
-/-- **The dichotomy behind Corollary 30.2.1**: the conjugate of a convex function is identically
-`⊤` exactly when the function takes the value `⊥` somewhere.
-
-One direction is free — a single `⊥` value makes every difference `⟨x, y⟩ - f x` equal to `⊤`. The
-other is Theorem 12.2 read through Theorem 7.4: a proper convex function has a closed proper
-closure, whose conjugate is proper, and `(cl f)* = f*`. -/
+/-- **The dichotomy behind Corollary 30.2.1**: the conjugate of a convex function is identically `⊤`
+exactly when the function takes the value `⊥` somewhere. One direction is free; the other is
+Theorem 12.2 read through Theorem 7.4, using `(cl f)* = f*`. -/
 theorem forall_conj_eq_top_iff (hf : ConvexFn f) :
     (∀ y : G, conj B f y = ⊤) ↔ ∃ x : E, f x = ⊥ := by
   constructor
@@ -804,11 +743,9 @@ theorem adjointBifun_zero_eq_bot_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (v :
     adjointBifun Bu Bx F 0 v = ⊥ ↔ conj Bu (infBifun F) (-v) = ⊤ := by
   rw [← neg_adjointBifun_zero_apply (Bu := Bu) Bx (F := F) v, _root_.EReal.neg_eq_top_iff]
 
-/-- **Rockafellar, Corollary 30.2.1**, first half: the dual program `(P*)` is inconsistent exactly
-when some perturbation of `(P)` is unbounded below, i.e. when `inf F u = -∞` for some `u`.
-
-Rockafellar states the corollary for closed `F`; closedness is not used, because `F*` never sees
-the difference between `F` and `cl F` (`adjointBifun_clBifun`). -/
+/-- **Corollary 30.2.1**, first half: the dual program `(P*)` is inconsistent exactly when some
+perturbation of `(P)` is unbounded below. The book assumes `F` closed; closedness is not used,
+because `F*` never sees the difference between `F` and `cl F`. -/
 theorem not_concaveConsistent_adjointBifun_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F) :
     ¬ ConcaveConsistent (adjointBifun Bu Bx F) ↔ ∃ u, infBifun F u = ⊥ := by
   rw [← forall_conj_eq_top_iff (B := Bu) (convexFn_infBifun hF), concaveConsistent_iff]
@@ -852,9 +789,7 @@ theorem concaveAdjointBifun_zero_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (B
   simp only [hzero]
   rw [supBifun_apply, add_comm, Tdaf.EReal.iSup_add_coe]
 
-/-- **Rockafellar, Theorem 30.2**, the first half of the second formula: `(-sup G)* = G* 0`, the
-objective of the program associated with the concave adjoint is the conjugate of the convex
-function `-sup G`. -/
+/-- **Theorem 30.2**, first half of the second formula: `(-sup G)* = G* 0`. -/
 theorem concaveAdjointBifun_zero_eq_conj (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (G : Bifun Y V) :
     concaveAdjointBifun Bu Bx G 0 = conj Bx.flip (fun y => -(supBifun G y)) := by
@@ -879,12 +814,9 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
 
-/-- **Rockafellar, Corollary 30.2.1**, second half: the primal program `(P)` is inconsistent
-exactly when some perturbation of `(P*)` is unbounded above, i.e. when `sup F* y = +∞` for some
-`y`.
-
-Unlike the first half this one really does need `F` closed: it is the first half read for the dual
-pair, and `F** = F` is what identifies the objective of `(P)` with the conjugate of `-sup F*`. -/
+/-- **Corollary 30.2.1**, second half: `(P)` is inconsistent exactly when some perturbation of
+`(P*)` is unbounded above. Unlike the first half this does need `F` closed: it is the first half
+read for the dual pair, and `F** = F` identifies the objective of `(P)`. -/
 theorem not_consistent_iff_exists_supBifun_eq_top (hF : ConvexBifun F) (hcl : ClosedBifun F) :
     ¬ Consistent F ↔ ∃ y, supBifun (adjointBifun Bu Bx F) y = ⊤ := by
   have hg : ConvexFn (fun y => -(supBifun (adjointBifun Bu Bx F) y)) :=
@@ -960,12 +892,9 @@ variable {V X Y : Type*} [AddCommGroup V] [Module ℝ V] [AddCommGroup X] [Modul
   [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] {B : Y →ₗ[ℝ] X →ₗ[ℝ] ℝ}
   [IsCompatiblePairing B] {G : Bifun Y V}
 
-/-- The concave mirror of **Theorem 30.4(c)**: a concave program possessing a Kuhn–Tucker vector
-is normal.
-
-Read through `mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker`, a Kuhn–Tucker vector is a
-supergradient of `sup G` at the origin, and Corollary 23.5.2 says a function is closed wherever it
-is subdifferentiable. -/
+/-- The concave mirror of **Theorem 30.4(c)**: a concave program possessing a Kuhn–Tucker vector is
+normal. Such a vector is a supergradient of `sup G` at the origin, and Corollary 23.5.2 says a
+function is closed wherever it is subdifferentiable. -/
 theorem concaveNormal_of_concaveKuhnTucker_nonempty (hG : ConcaveBifun G)
     (h : (ConcaveKuhnTucker B G).Nonempty) : ConcaveNormal G := by
   obtain ⟨x, hx⟩ := h
@@ -1010,11 +939,9 @@ section Thm304Polyhedral
 variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensional ℝ U]
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X] {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 30.4(e)**: a polyhedral convex program that is merely *consistent* is
-normal.
-
-Theorem 29.2 makes `inf F` a polyhedral convex function, and a polyhedral convex function agrees
-with its closure throughout its effective domain — which contains the origin, by consistency. -/
+/-- **Theorem 30.4(e)**: a polyhedral convex program that is merely *consistent* is normal. By
+Theorem 29.2 `inf F` is polyhedral, and a polyhedral convex function agrees with its closure
+throughout its effective domain, which consistency places the origin in. -/
 theorem PolyhedralBifun.normal (hF : PolyhedralBifun F) (hc : Consistent F) : Normal F := by
   have hdom : (0 : U) ∈ dom (infBifun F) := by
     rw [dom_infBifun]
@@ -1087,9 +1014,8 @@ theorem le_limsup_nhds (g : E → EReal) (x : E) : g x ≤ Filter.limsup g (𝓝
   rw [_root_.EReal.liminf_neg, Pi.neg_apply] at h
   exact _root_.EReal.neg_le_neg_iff.1 h
 
-/-- The concave mirror of `clFn_eq_liminf_or`: for a concave `g` the concave closure at `x` is the
-`limsup` of `g` at `x`, except in the degenerate case where the left side is `+∞` and the right is
-`-∞`. -/
+/-- The concave mirror of `clFn_eq_liminf_or`: for concave `g` the concave closure at `x` is the
+`limsup` of `g` at `x`, except when the left side is `+∞` and the right `-∞`. -/
 theorem clConcave_eq_limsup_or (hg : ConcaveFn g) (x : E) :
     clConcave g x = Filter.limsup g (𝓝 x)
       ∨ (clConcave g x = ⊤ ∧ Filter.limsup g (𝓝 x) = ⊥) := by
@@ -1110,15 +1036,10 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {F : Bifun U X}
 
-/-- **Rockafellar, Corollary 30.2.3**, first formula: unless *both* programs are inconsistent, the
-optimal value of the dual is the limit inferior of the optimal value of `(P)` under vanishing
-perturbations,
-
-`liminf_{u → 0} (inf F u) = sup F* 0`.
-
-The excluded case is exactly Rockafellar's: `cl (inf F)` and `liminf (inf F)` can differ only when
-the first is `-∞` — which says the dual is inconsistent — and the second is `+∞` — which forces
-`inf F 0 = +∞`, i.e. `(P)` inconsistent. -/
+/-- **Corollary 30.2.3**, first formula: unless *both* programs are inconsistent,
+`liminf_{u → 0} (inf F u) = sup F* 0`. The excluded case is the book's: `cl (inf F)` and
+`liminf (inf F)` can differ only when the first is `-∞`, i.e. the dual is inconsistent, and the
+second is `+∞`, which forces `inf F 0 = +∞`. -/
 theorem liminf_infBifun_eq_iSup_adjointBifun (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (hF : ConvexBifun F)
     (h : Consistent F ∨ ConcaveConsistent (adjointBifun Bu Bx F)) :
     Filter.liminf (infBifun F) (𝓝 (0 : U)) = ⨆ v : V, adjointBifun Bu Bx F 0 v := by
@@ -1151,8 +1072,7 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
 
-/-- **Rockafellar, Corollary 30.2.3**, second formula: unless both programs are inconsistent,
-
+/-- **Corollary 30.2.3**, second formula: unless both programs are inconsistent,
 `limsup_{y → 0} (sup F* y) = inf F 0`. -/
 theorem limsup_supBifun_adjointBifun_eq (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (h : Consistent F ∨ ConcaveConsistent (adjointBifun Bu Bx F)) :
@@ -1187,13 +1107,10 @@ section ConcaveKuhnTuckerAdjoint
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- **The concave mirror of `mem_kuhnTucker_iff_adjointBifun_zero_eq`**: `x` is a Kuhn–Tucker
-vector of the concave program `G` exactly when the optimal value `sup G 0` is finite and the
-objective of the doubly-adjoint program attains it at `x`.
-
-Both halves already existed — the definition of `ConcaveKuhnTucker` and
-`concaveAdjointBifun_zero_apply` — and putting them together is the whole content. The one step is
-that `ConcaveKuhnTucker` pairs with `Bx.flip` where the adjoint pairs with `Bx`. -/
+/-- **The concave mirror of `mem_kuhnTucker_iff_adjointBifun_zero_eq`**: `x` is a Kuhn–Tucker vector
+of the concave program `G` exactly when `sup G 0` is finite and the objective of the doubly-adjoint
+program attains it at `x`. Note that `ConcaveKuhnTucker` pairs with `Bx.flip` where the adjoint
+pairs with `Bx`. -/
 theorem mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (G : Bifun Y V) (x : X) :
     x ∈ ConcaveKuhnTucker Bx.flip G
@@ -1217,14 +1134,10 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx] {F : Bifun U X} {x : X}
 
-/-- **Rockafellar, Theorem 30.5**, dual assertion: under normality, `x` is a Kuhn–Tucker vector for
-the dual program `(P*)` exactly when `x` is an optimal solution to `(P)`.
-
-The mirror of `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup`, which is the assertion the book
-proves. The defining supremum of a concave Kuhn–Tucker vector *is* the objective of the
-doubly-adjoint program (`mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq`), and `F** = F`
-turns that into `(F 0)(x)`; normality identifies the two optimal values, so the finiteness clauses
-of `ConcaveKuhnTucker` become the hypotheses `ht` and `hb`. -/
+/-- **Theorem 30.5**, dual assertion: under normality, `x` is a Kuhn–Tucker vector for `(P*)`
+exactly when it is an optimal solution to `(P)`. The defining supremum of a concave Kuhn–Tucker
+vector is the objective of the doubly-adjoint program, and `F** = F` turns that into `(F 0)(x)`;
+normality identifies the two optimal values. -/
 theorem mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin (hF : ConvexBifun F)
     (hcl : ClosedBifun F) (hn : Normal F) (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) :
     x ∈ ConcaveKuhnTucker Bx.flip (adjointBifun Bu Bx F) ↔ x ∈ argmin (F 0) := by
@@ -1248,16 +1161,14 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
 
-/-- **Rockafellar, Corollary 30.5.2**, first assertion: if `(P)` is consistent and `(P*)` is
-strongly consistent, the infimum of `(P)` is attained.
+/-- **Corollary 30.5.2**, first assertion: if `(P)` is consistent and `(P*)` is strongly consistent,
+the infimum of `(P)` is attained.
 
-This is the assertion the book proves (12731), and its proof there invokes the *concave* Corollary
-29.1.4, which the library does not have. The route here is the convex one applied to `-F*`: that is
-a convex bifunction with no hypothesis on `F` (`convexBifun_neg_adjointBifun`), strong consistency
-of `(P*)` is strong consistency of it (`concaveStronglyConsistent_iff_stronglyConsistent_neg`), and
-its perturbation function `-sup F*` is proper because the optimal values are finite. Corollary
-29.1.4 then produces a Kuhn–Tucker vector for `-F*`, and Theorem 30.5's dual assertion — here in
-the form `F** = F` — turns it into a minimiser of `F 0`. -/
+Where the book invokes a concave Corollary 29.1.4, the route here is the convex one applied to
+`-F*`: that is a convex bifunction with no hypothesis on `F`, strong consistency of `(P*)` is
+strong consistency of it, and its perturbation function `-sup F*` is proper because the optimal
+values are finite. Corollary 29.1.4 then produces a Kuhn–Tucker vector for `-F*`, which
+Theorem 30.5's dual assertion turns into a minimiser of `F 0`. -/
 theorem exists_infBifun_eq_of_concaveStronglyConsistent (hF : ConvexBifun F)
     (hcl : ClosedBifun F) (hc : Consistent F) (hbot : infBifun F 0 ≠ ⊥)
     (hs : ConcaveStronglyConsistent (adjointBifun Bu Bx F)) : ∃ x, F 0 x = infBifun F 0 := by

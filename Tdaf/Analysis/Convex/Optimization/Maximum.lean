@@ -29,9 +29,9 @@ and `ConvexFn.iSup_extremePoints_add_coneHull` is the unconditional statement ke
 ## Main results
 
 * `ConvexFn.eq_of_isMaxOn_mem_relint` — **Theorem 32.1**, the maximum principle, with
-  `exists_isFace_forall_eq_of_isMaxOn` — **Corollary 32.1.1**.
-* `ConvexFn.iSup_convexHull`, `exists_eq_of_isMaxOn_convexHull` — **Theorem 32.2**.
-* `ConvexFn.iSup_sdiff_relint`, `exists_notMem_relint_eq_of_isMaxOn` — **Corollary 32.2.1**.
+  `exists_isFace_forall_eq_of_isMaxOn` — **Corollary 32.1.1**; `ConvexFn.iSup_convexHull`,
+  `exists_eq_of_isMaxOn_convexHull` — **Theorem 32.2**; `ConvexFn.iSup_sdiff_relint`,
+  `exists_notMem_relint_eq_of_isMaxOn` — **Corollary 32.2.1**.
 * `ConvexFn.iSup_extremePoints_of_containsNoLine`,
   `ConvexFn.iSup_extremePoints_inter_of_isCompl`, `ConvexFn.iSup_extremePoints_add_coneHull` —
   **Theorem 32.3**: for a line-free `C`, for a general `C` cut down by a complement of its
@@ -46,8 +46,8 @@ and `ConvexFn.iSup_extremePoints_add_coneHull` is the unconditional statement ke
 
 Maximisation is spelled `∀ z ∈ C, f z ≤ f x` rather than `IsMaxOn`, the form every proof consumes;
 `isMaxOn_iff` bridges. Theorem 32.3 quotients out the lineality space `L` of `C` by intersecting
-with a complement `N` rather than by passing to `E ⧸ L`: `C = L + (C ∩ N)` holds for *any*
-complement, so no inner product is needed where the book takes `N = L⊥`.
+with a complement `N` rather than by passing to `E ⧸ L`: `C = L + (C ∩ N)` holds for *any* `N`, so
+no inner product is needed where the book takes `N = L⊥`.
 
 ## References
 

@@ -18,36 +18,35 @@ and the concave program `(P*)` dual to `(P)` is "maximise `F* 0` over `V`". Ever
 from one computation: `F*` is the conjugate of the graph function of `F`, negated and read at the
 reflected point `(-v, y)`. So `F*` is closed concave with no hypothesis on `F`, `F** = cl F`, and
 the dual objective is the *concave* conjugate of `-inf F`. The same view gives Theorem 29.4 and
-Corollary 29.4.1: `cl F` is computed slice by slice at a relative interior point of `dom F`, and
-closing a strongly consistent program changes neither its value, its solutions, nor its
-Kuhn–Tucker vectors.
+Corollary 29.4.1: `cl F` is computed slice by slice on `ri (dom F)`, and closing a strongly
+consistent program changes neither its value, its solutions, nor its Kuhn–Tucker vectors.
 
 ## Main definitions
 
 * `adjointBifun Bu Bx F`, `concaveAdjointBifun Bu Bx G` — the adjoint of a convex bifunction, and
   of a concave one (the same formula with a supremum).
 * `ConcaveBifun`, `ClosedBifun`, `ImageClosedBifun` — the graph function is concave, it is closed,
-  the slices `F u` are each closed. `clBifun F` is `cl F`, the closure of the graph function.
+  the slices `F u` are each closed; `clBifun F` is the closure of the graph function.
 
 ## Main results
 
-* `adjointBifun_eq_neg_conj_graphFn` — the computation above.
-* `concaveFn_graphFn_adjointBifun`, `closedConcaveFn_graphFn_adjointBifun`,
+* `adjointBifun_eq_neg_conj_graphFn` — the computation above;
+  `concaveFn_graphFn_adjointBifun`, `closedConcaveFn_graphFn_adjointBifun`,
   `concaveAdjointBifun_adjointBifun_eq_clBifun`, `properConcave_graphFn_adjointBifun_iff` —
   **Theorem 30.1**: `F*` is closed concave, `F** = cl F`, and `F*` is proper exactly when `F` is.
 * `adjointBifun_zero_eq_concaveConj` — **Theorem 30.2**; `adjointBifun_zero_le` —
   **Corollary 30.2.2**, weak duality.
 * `mem_kuhnTucker_iff_adjointBifun_zero_eq` — the Kuhn–Tucker vectors are the points where the dual
-  objective attains the optimal value of `(P)`: the half of **Theorem 30.5** needing no normality.
+  objective attains the optimal value: the half of **Theorem 30.5** needing no normality.
 * `clBifun_apply_eq_clFn`, `infBifun_clBifun_eq` and the two `domBifun` inclusions —
-  **Theorem 29.4**, all three assertions.
+  **Theorem 29.4**.
 
 ## Implementation notes
 
 The sign flip is carried in the argument rather than in a reflected pairing: `⟨u, -v⟩ + ⟨x, y⟩` is
 read as the pairing of `(u, x)` with `(-v, y)`, so `F*` is `conj` at a reflected point and `conj`'s
 own lemmas apply verbatim. The two real terms are grouped inside one coercion, so no `∞ - ∞` can
-arise. Theorem 30.2 uses the *concave* conjugate, since `g* ≠ -(-g)*`.
+arise, and Theorem 30.2 uses the *concave* conjugate, since `g* ≠ -(-g)*`.
 
 ## References
 
