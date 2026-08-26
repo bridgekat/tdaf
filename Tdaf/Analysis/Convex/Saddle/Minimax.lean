@@ -11,144 +11,61 @@ import Tdaf.Analysis.Convex.Saddle.Kernel
 /-!
 # Minimax problems and conjugate saddle-functions
 
-Rockafellar's §36 and the first part of §37. A function `K` of two variables has two iterated
-extrema,
+A function `K` of two variables has two iterated extrema, `maximin K = ⨆ u, ⨅ x, K (u, x)` and
+`minimax K = ⨅ x, ⨆ u, K (u, x)`, the first never above the second (**Lemma 36.1**); when they
+agree their common value is the **saddle-value** of `K`. A **saddle-point** is a point `p` at which
+`K (·, p.2)` is maximised and `K (p.1, ·)` minimised, and **Lemma 36.2** says a saddle-point is
+exactly a pair of optimal strategies together with the existence of the saddle-value. For a closed
+proper concave-convex `K`, **Theorem 36.3** replaces the whole space by `dom K` without changing
+either, and **Theorem 36.4** says both depend only on the equivalence class of `K`.
 
-`maximin K = ⨆ u, ⨅ x, K (u, x)`  and  `minimax K = ⨅ x, ⨆ u, K (u, x)`,
+The Lagrangian of a convex program is a saddle-function whose saddle-points are the pairs "optimal
+solution, Kuhn–Tucker vector" (**Theorem 29.3**, whence the general Kuhn–Tucker theorem **36.6**),
+and **Theorem 36.5** says the Lagrangians of closed convex programs are exactly the upper closed
+concave-convex functions.
 
-the first is never above the second (Lemma 36.1), and when they agree their common value is the
-**saddle-value** of `K`. A **saddle-point** is a point `p` at which `K (·, p.2)` is maximised and
-`K (p.1, ·)` is minimised; Lemma 36.2 says that a saddle-point is exactly a pair of optimal
-strategies together with the existence of the saddle-value.
-
-§37 turns the two iterated extrema into a *conjugacy correspondence*: the lower and upper
-conjugates `K̲*`, `K̄*` of a saddle-function are again saddle-functions, `-K̲* (0, 0)` and
-`-K̄* (0, 0)` are the two iterated extrema of `K`, and Theorem 37.1 identifies both conjugates of
-every member of an equivalence class `Ω (F)` in terms of the inverse of `F`.
+The last part turns the iterated extrema into a conjugacy: `-K̲*(0, 0)` and `-K̄*(0, 0)` are
+`minimax K` and `maximin K`, and **Theorem 37.1** identifies both conjugates of every member of a
+class `Ω (F)` in terms of `F` — the upper one is the Lagrangian of `F`, the lower one the bracket
+of `F_*^*`. So the saddle-value exists exactly when the two conjugates agree at the origin.
 
 ## Main definitions
 
-* `IsSaddlePoint K p` — `K (u, p.2) ≤ K p ≤ K (p.1, x)` for all `u`, `x`.
-* `IsSaddlePointOn K C D p` — the same, with `u` ranging over `C` and `x` over `D`.
-* `maximin K`, `minimax K` — Rockafellar's "sup inf" and "inf sup".
-* `HasSaddleValue K` — `maximin K = minimax K`.
-* `saddleLagrangian Bu F` — the Lagrangian of `(P)` read as a function on `V × X`, i.e. as a
-  saddle-function.
-* `flipBifun F` — the bifunction with its two arguments exchanged.
-* `inverseBifun F` — Rockafellar's `F_*`, `(F_* x) u = -(Fu)(x)`.
-* `lowerConjSaddle Bu Bx K`, `upperConjSaddle Bu Bx K` — the lower and upper conjugates `K̲*`,
-  `K̄*` of a saddle-function.
-* `bifunSaddleClass Bu Bx F` — the equivalence class `Ω (F)`, the saddle-functions between the two
-  brackets of `F`.
+* `IsSaddlePoint K p`, `IsSaddlePointOn K C D p` — the saddle-point condition, over the whole space
+  and relative to `C × D`.
+* `maximin K`, `minimax K`, `HasSaddleValue K` — the two iterated extrema and their equality.
+* `saddleLagrangian Bu F` — the Lagrangian of `(P)` read as a saddle-function on `V × X`;
+  `flipBifun F` and `inverseBifun F` — arguments exchanged, and Rockafellar's `F_*`.
+* `lowerConjSaddle Bu Bx K`, `upperConjSaddle Bu Bx K` — the conjugates `K̲*`, `K̄*`;
+  `bifunSaddleClass Bu Bx F` — the class `Ω (F)`, squeezed between the two brackets of `F`.
 
 ## Main results
 
-* `maximin_le_minimax` — **Lemma 36.1**, with no hypothesis of any kind, not even nonemptiness.
-* `isSaddlePoint_iff_iSup_eq_iInf` — the one-equation form of the saddle-point condition. It is
-  the workhorse: everything downstream is a computation of `⨆ u, K (u, x)` and `⨅ x, K (u, x)`.
-* `isSaddlePoint_iff_attained` — **Lemma 36.2**.
-* `maximin_eq_biSup_dom₁`, `minimax_eq_biInf_dom₂` — the outer extrema may always be restricted
-  to the effective domains, with no hypothesis at all.
-* `maximin_eq_biSup_biInf`, `minimax_eq_biInf_biSup`, `isSaddlePoint_iff_isSaddlePointOn_dom` —
-  **Theorem 36.3**: for a closed proper concave-convex function the minimax problem on the whole
-  space and the one on `C × D = dom K` have the same value and the same saddle-points.
-* `IsSaddlePoint.mem_domSaddle`, `IsSaddlePoint.exists_maximin_eq_coe` — **Corollary 36.3.1**.
-* `SaddleEquiv.maximin_eq`, `.minimax_eq`, `.hasSaddleValue_iff`, `.isSaddlePoint_iff` —
-  **Theorem 36.4**.
-* `isSaddlePoint_lagrangian_iff` — **Theorem 29.3**, which `Optimization/Lagrangian.lean` had to
-  leave out for want of `IsSaddlePoint`.
-* `mem_argmin_iff_exists_isSaddlePoint_lagrangian`,
-  `isSaddlePoint_lagrangian_iff_mem_kuhnTucker` — **Theorem 36.6** (= **Corollary 29.3.1**), the
-  general Kuhn–Tucker theorem.
-* `isSaddlePoint_lagrangian_iff_normal_and_optimal`,
-  `isSaddlePoint_lagrangian_iff_le_adjointBifun` — **Corollary 30.5.1**, which
-  `Optimization/Normal.lean` had to leave out for the same reason.
-* `upperClosedFn_saddleLagrangian`, `exists_unique_closedBifun_saddleLagrangian_eq` —
-  **Theorem 36.5**: the Lagrangians of closed convex programs are exactly the upper closed
-  concave-convex functions.
-* `ConvexFn.biInf_eq_iInf_of_relint_dom_subset` — **Corollary 7.3.1** in the form Theorem 36.3
-  runs on; a relocation candidate for `RelativeInterior.lean`, where
-  `ConvexFn.exists_mem_relint_dom_lt` that it rests on already lives.
-* `iSup_clConcave_eq_iSup`, `concaveConj_clConcave` — the concave mirrors of `iInf_clFn_eq_iInf`
-  and of `conj_clFn` (**Theorem 12.2**, first half); relocation candidates for
-  `Duality/ConcaveConj.lean`.
-* `lowerConjSaddle_le_upperConjSaddle` — **§37**: `K̲* ≤ K̄*`, Lemma 36.1 again.
-* `minimax_eq_neg_lowerConjSaddle_zero`, `maximin_eq_neg_upperConjSaddle_zero`,
-  `hasSaddleValue_iff_conjSaddle_zero_eq` — **§37**, the displays before Corollary 37.1.3: the two
-  iterated extrema of `K` are the two conjugates evaluated at the origin, so the saddle-value
-  exists exactly when the conjugates agree there.
+* `maximin_le_minimax` — **Lemma 36.1**; `isSaddlePoint_iff_attained` — **Lemma 36.2**. Neither
+  needs any structure at all, not even nonemptiness of the two spaces.
+* `isSaddlePoint_iff_iSup_eq_iInf` — the one-equation form of the saddle-point condition, on which
+  everything downstream is a computation of `⨆ u, K (u, x)` and `⨅ x, K (u, x)`.
+* `maximin_eq_biSup_biInf`, `isSaddlePoint_iff_isSaddlePointOn_dom` — **Theorem 36.3**;
+  `IsSaddlePoint.mem_domSaddle` — **Corollary 36.3.1**; `SaddleEquiv.maximin_eq` — **Theorem 36.4**.
+* `isSaddlePoint_lagrangian_iff` — **Theorem 29.3**;
+  `isSaddlePoint_lagrangian_iff_normal_and_optimal` — **Corollary 30.5.1**;
+  `mem_argmin_iff_exists_isSaddlePoint_lagrangian` — **Theorem 36.6**;
+  `exists_unique_closedBifun_saddleLagrangian_eq` — **Theorem 36.5**.
+* `hasSaddleValue_iff_conjSaddle_zero_eq` — the saddle-value read off at the origin.
 * `upperConjSaddle_eq_saddleLagrangian`, `lowerConjSaddle_eq_bracket_inverseBifun` —
-  **Theorem 37.1**: `K̄* = ⟨u*, F_* x⟩` is the Lagrangian of `F` and `K̲* = ⟨F_*^* u*, x⟩` is the
-  bracket of the inverse adjoint, for *every* `K` in `Ω (F)`.
-* `concaveConvexFn_upperConjSaddle`, `upperClosedFn_upperConjSaddle`,
-  `concaveConvexFn_lowerConjSaddle`, `lowerClosedFn_lowerConjSaddle` — **Corollary 37.1.1**: the
-  lower conjugate is lower closed concave-convex and the upper conjugate is upper closed
-  concave-convex, and both depend only on the class.
-* `bifunOfSaddle_eq_of_mem_bifunSaddleClass`, `concaveConj_slice_eq_adjointBifun` — the two
-  computations Theorem 37.1 rests on, each saying that one partial conjugate of `K` sees only one
-  of the two partial closures and is therefore constant on `Ω (F)`.
+  **Theorem 37.1**; `concaveConvexFn_upperConjSaddle` and companions — **Corollary 37.1.1**.
 
-## Design notes
+## Implementation notes
 
-**`HasSaddleValue` is the *existence* of the saddle-value, not its finiteness.** Rockafellar
-(§36, first page) calls the common value of the two iterated extrema the saddle-value *when they
-are equal*, and then states finiteness separately wherever he needs it (Corollary 36.3.1,
-Corollary 37.1.3, Theorem 37.3). So `HasSaddleValue K` is the bare equation
-`maximin K = minimax K`, and finiteness is a second conclusion. Building finiteness into the
-definition would make Corollary 36.3.1 vacuous and would match none of the book's statements.
+`HasSaddleValue K` is the bare equation `maximin K = minimax K`; as in the book, finiteness of the
+common value is a separate conclusion. The extrema are taken over the whole space, the `±∞`
+extension making a problem on `C × D` into one on the product; `IsSaddlePointOn` records that.
 
-**`maximin` and `minimax` are taken over the whole space.** Rockafellar's §36 opens by showing
-that a minimax problem on `C × D` is the same as one on `R^m × R^n` once `K` is extended by
-`+∞`/`−∞`; the extended form is the one every later theorem uses, and it is the one taken here.
-`IsSaddlePointOn` records the translation.
-
-**Lemma 36.1 and Lemma 36.2 need no structure at all** — no topology, no module structure, and
-not even nonemptiness of the two spaces (the book assumes `C × D ≠ ∅`, which the `±∞` extension
-makes unnecessary). They are stated over bare types. So is Corollary 36.3.1, which needs only
-`ProperSaddleFn`; and Theorem 36.4 needs only a topology on each factor — neither closedness nor
-properness nor concave-convexity nor finite dimension enter.
-
-**Theorem 36.5 goes through the *negated* pairing, not through the inverse bifunction.**
-Rockafellar reads the Lagrangian as `L (v, x) = ⟨v, F_* x⟩`, a bracket of the *concave* inverse
-`F_*`, and appeals to a concave mirror of Theorem 33.3 that the backbone does not have. The same
-identity read after `saddleSwap` — which negates and exchanges the variables — is
-`saddleSwap L = ⟨(flip F) x, v⟩` for the pairing `-Bu` (`saddleSwap_saddleLagrangian`), so the
-*convex* Theorem 33.3 applies verbatim. The price is the negated-pairing instances in
-`Duality/Pairing.lean` — `isCompatiblePairing_neg`, `isCompatiblePairing_flip_neg` and `flip_neg`,
-three lines each: negating a pairing preserves continuity, and `g = ⟨·, y⟩` for `-B` exactly when
-`-g = ⟨·, y⟩` for `B`.
-
-**`(F_*)^* = (F^*)_*` is taken as a definition, not proved.** Rockafellar writes the bifunction
-behind the lower conjugate as `F_*^*`, the adjoint of the *concave* inverse, and then observes
-that it agrees with `(F^*)_*`. The backbone has no concave adjoint of a concave bifunction, so
-`inverseBifun (adjointBifun Bu Bx F)` is used throughout; the commutation is then a triviality
-rather than a lemma, and `convexBifun_inverseBifun_adjointBifun` /
-`closedBifun_inverseBifun_adjointBifun` supply the two facts Theorem 33.3 needs about it.
-
-**Both conjugates are stated for an arbitrary member of `Ω (F)`, which is where their content
-lies.** `upperConjSaddle` and `lowerConjSaddle` are defined for any `K` whatever; Theorem 37.1
-says that on a class they do not see the representative, and that is exactly the statement that
-makes minimax theory a theory of equivalence classes. The proofs are two sandwich arguments: the
-partial conjugate in one variable sees only the partial closure in that variable
-(`bifunOfSaddle_partialCl₂`, `concaveConj_clConcave`), and Theorem 33.2 says the two brackets are
-each other's partial closures.
-
-## What is not here
-
-**The subgradient form of the Kuhn–Tucker condition** `(0, 0) ∈ ∂L (v̄, x̄)` is
-`zero_mem_saddleSubgradient_saddleLagrangian_iff` in `Saddle/Subgradient.lean`, where §37's
-`saddleSubgradient` lives. It is Theorem 37.4 applied to the tilt by the origin on top of
-`isSaddlePoint_lagrangian_iff`, which is the "optimal solution plus Kuhn–Tucker vector" form
-Rockafellar's Theorem 36.6 restates.
-
-**The rest of §37 is in `Saddle/{Conjugate,Subgradient,Existence,Monotone}.lean`.** Corollary
-37.1.2 (the two conjugates are a closure pair with the Theorem 34.3 structure), Corollary 37.1.3,
-Theorem 37.2 and the existence theorems 37.3–37.6 are all there. Corollary 37.1.2 needed the
-biadjoint identity `(F_*^*)^* = F_*` to put `K̲*` and `K̄*` into the *same* class the way
-`partialCl₁_bracket` and `partialCl₂_concaveBracket_adjoint` do for `F`, and Theorem 37.2 needed
-Theorem 6.8 (relative interiors of images). Corollary 37.6.2, the classical minimax theorem, is
-proved from Rockafellar's own unbounded machinery rather than from Mathlib's
-`Mathlib/Topology/Sion.lean`, because the unbounded theorems it specializes are wanted anyway.
+Rockafellar writes the Lagrangian as `L (v, x) = ⟨v, F_* x⟩` and the bifunction behind the lower
+conjugate as `F_*^*`, both through the *concave* inverse. There is no concave adjoint of a concave
+bifunction here, so `inverseBifun (adjointBifun Bu Bx F)` is the definition of `F_*^*`; and
+Theorem 36.5 goes through `saddleSwap`, which turns the Lagrangian into a bracket of `flipBifun F`
+for the negated pairing, where the convex Theorem 33.3 applies verbatim.
 
 ## References
 
@@ -190,8 +107,7 @@ def HasSaddleValue (K : U × X → EReal) : Prop := maximin K = minimax K
 theorem hasSaddleValue_iff : HasSaddleValue K ↔ maximin K = minimax K := Iff.rfl
 
 /-- **Rockafellar, Lemma 36.1**: `sup inf ≤ inf sup`. No hypothesis at all is needed — in
-particular neither `U` nor `X` need be nonempty, the book's nonemptiness assumption serving only
-to make his `C × D` formulation match this one. -/
+particular neither `U` nor `X` need be nonempty. -/
 theorem maximin_le_minimax (K : U × X → EReal) : maximin K ≤ minimax K :=
   iSup_le fun u => le_iInf fun x => (iInf_le (fun x => K (u, x)) x).trans
     (le_iSup (fun u => K (u, x)) u)
@@ -208,9 +124,8 @@ theorem iInf_slice_le_self (K : U × X → EReal) (p : U × X) : (⨅ x, K (p.1,
 theorem le_iSup_slice (K : U × X → EReal) (p : U × X) : K p ≤ ⨆ u, K (u, p.2) :=
   le_iSup (fun u => K (u, p.2)) p.1
 
-/-- **The saddle-point condition in one equation.** `p` is a saddle-point exactly when the maximum
-of `K (·, p.2)` and the minimum of `K (p.1, ·)` agree; the common value is then `K p`. Rockafellar
-uses this reformulation throughout §29 and §36. -/
+/-- **The saddle-point condition in one equation**: `p` is a saddle-point exactly when the maximum
+of `K (·, p.2)` and the minimum of `K (p.1, ·)` agree, the common value being `K p`. -/
 theorem isSaddlePoint_iff_iSup_eq_iInf :
     IsSaddlePoint K p ↔ (⨆ u, K (u, p.2)) = ⨅ x, K (p.1, x) := by
   constructor
@@ -318,10 +233,7 @@ section ClosureExtrema
 variable {E : Type*} [TopologicalSpace E] [AddCommGroup E] {g : E → EReal}
 
 /-- The concave mirror of `iInf_clFn_eq_iInf`: a concave function and its concave closure have the
-same supremum. Like its convex original it needs no convexity.
-
-This belongs next to `clConcave` in `Duality/ConcaveConj.lean`; it lives here until something else
-needs it. -/
+same supremum. Like its convex original it needs no convexity. -/
 theorem iSup_clConcave_eq_iSup (g : E → EReal) : (⨆ x, clConcave g x) = ⨆ x, g x := by
   have h : (⨆ x, clConcave g x) = -⨅ x, clFn (fun z => -(g z)) x := by
     rw [Tdaf.EReal.neg_iInf]
@@ -337,13 +249,11 @@ variable {U X : Type*} [TopologicalSpace U] [AddCommGroup U] [TopologicalSpace X
   [AddCommGroup X] {K L : U × X → EReal} {p : U × X}
 
 omit [TopologicalSpace U] [AddCommGroup U] in
-/-- Closing in the convex variable does not change the inner infimum. -/
 theorem iInf_partialCl₂_slice (K : U × X → EReal) (u : U) :
     (⨅ x, partialCl₂ K (u, x)) = ⨅ x, K (u, x) :=
   iInf_clFn_eq_iInf fun x => K (u, x)
 
 omit [TopologicalSpace X] [AddCommGroup X] in
-/-- Closing in the concave variable does not change the inner supremum. -/
 theorem iSup_partialCl₁_slice (K : U × X → EReal) (x : X) :
     (⨆ u, partialCl₁ K (u, x)) = ⨆ u, K (u, x) :=
   iSup_clConcave_eq_iSup fun u => K (u, x)
@@ -393,9 +303,8 @@ section Cor3631
 
 variable {U X : Type*} {K : U × X → EReal} {p : U × X}
 
-/-- **Rockafellar, Corollary 36.3.1**, first half: a saddle-point of a proper saddle-function
-lies in its effective domain. Only properness is used: neither closedness, nor concave-convexity,
-nor finite dimension. -/
+/-- **Rockafellar, Corollary 36.3.1**, first half: a saddle-point of a proper saddle-function lies
+in its effective domain. Only properness is used. -/
 theorem IsSaddlePoint.mem_domSaddle (hp : ProperSaddleFn K) (h : IsSaddlePoint K p) :
     p ∈ domSaddle K := by
   obtain ⟨u₀, hu₀⟩ := hp.dom₁_nonempty
@@ -452,10 +361,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
 
 omit [FiniteDimensional ℝ U] in
 /-- **Rockafellar, Theorem 36.3**, the inner infimum: for a closed proper concave-convex `K` the
-infimum of a slice over all of `X` is already reached over `D = dom₂ K`.
-
-`SaddleStructure K` is Theorem 34.3's structural description; `ClosedSaddleFn.saddleStructure`
-supplies it from closedness. -/
+infimum of a slice over all of `X` is already reached over `D = dom₂ K`. `SaddleStructure K` is
+Theorem 34.3's structural description. -/
 theorem biInf_dom₂_eq_iInf_slice (hK : ConcaveConvexFn K) (hs : SaddleStructure K)
     (hp : ProperSaddleFn K) (u : U) : (⨅ x ∈ dom₂ K, K (u, x)) = ⨅ x, K (u, x) := by
   by_cases hu : u ∈ dom₁ K
@@ -522,9 +429,8 @@ section SliceFlip
 variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   {F : Bifun U X}
 
-/-- Each *first*-variable slice `F (·) x` of a convex bifunction is convex — the mirror of
-`ConvexBifun.convexFn_apply`, and, like it, not an instance of `convexFn_compLin`, because
-`u ↦ (u, x)` is affine and not linear. -/
+/-- Each *first*-variable slice `F (·) x` of a convex bifunction is convex. Not an instance of
+`convexFn_compLin`, because `u ↦ (u, x)` is affine and not linear. -/
 theorem ConvexBifun.convexFn_flip (hF : ConvexBifun F) (x : X) : ConvexFn fun u => F u x := by
   refine convexFn_of_epi_combo fun u w mu nu hu hw a b ha hb hab => ?_
   have h := hF.epi_combo (x := (u, x)) (y := (w, x)) hu hw ha hb hab
@@ -576,8 +482,7 @@ variable {U V X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Modul
 
 omit [AddCommGroup X] [Module ℝ X] [TopologicalSpace X] [IsTopologicalAddGroup X] in
 /-- The companion of `iInf_lagrangian`: *maximising* the Lagrangian over the price variable gives
-the closure of the objective slice at the origin. This is `clFn_zero_eq_iSup_iInf` read at
-`f = F (·) x`, and it is the computation Rockafellar performs inside the proof of Theorem 29.3. -/
+the closure of the objective slice at the origin. This is the computation inside Theorem 29.3. -/
 theorem iSup_lagrangian (hf : ConvexFn fun u => F u x) :
     (⨆ w, lagrangian Bu F w x) = clFn (fun u => F u x) 0 :=
   (clFn_zero_eq_iSup_iInf (B := Bu) hf).symm
@@ -602,9 +507,8 @@ theorem iInf_lagrangian_ne_top (hpr : Proper (graphFn F)) :
 /-- **Rockafellar, Theorem 29.3**: `(v, x)` is a saddle-point of the Lagrangian of `(P)` exactly
 when `v` is a Kuhn–Tucker vector for `(P)` and `x` is an optimal solution to `(P)`.
 
-The proof is Rockafellar's: `⨅ y, L (v, y) ≤ inf F 0 ≤ (F 0) x = ⨆ w, L (w, x)`, the outer terms
-are respectively `≠ ⊤` and `≠ ⊥` by properness, and the saddle-point condition
-(`isSaddlePoint_iff_iSup_eq_iInf`) collapses the chain. -/
+The proof is the book's: `⨅ y, L (v, y) ≤ inf F 0 ≤ (F 0) x = ⨆ w, L (w, x)`, whose outer terms are
+respectively `≠ ⊤` and `≠ ⊥` by properness, so the saddle-point condition collapses the chain. -/
 theorem isSaddlePoint_lagrangian_iff (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (hpr : Proper (graphFn F)) :
     IsSaddlePoint (saddleLagrangian Bu F) (v, x)
@@ -661,9 +565,8 @@ theorem isSaddlePoint_lagrangian_iff_le_adjointBifun (Bx : X →ₗ[ℝ] Y →�
   rw [iSup_lagrangian_eq hF hcl, iInf_lagrangian_eq_adjointBifun_zero (Bu := Bu) Bx]
   exact ⟨le_of_eq, fun h => le_antisymm h hge⟩
 
-/-- **Rockafellar, Corollary 30.5.1**, (a) ⟺ (b) — the corollary `Optimization/Normal.lean` had
-to leave out for want of `IsSaddlePoint`. `(v, x)` is a saddle-point of the Lagrangian exactly
-when normality holds and `x`, `v` are optimal for `(P)` and `(P*)`. -/
+/-- **Rockafellar, Corollary 30.5.1**, (a) ⟺ (b): `(v, x)` is a saddle-point of the Lagrangian
+exactly when normality holds and `x`, `v` are optimal for `(P)` and `(P*)`. -/
 theorem isSaddlePoint_lagrangian_iff_normal_and_optimal (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (hF : ConvexBifun F) (hcl : ClosedBifun F) (hpr : Proper (graphFn F)) :
     IsSaddlePoint (saddleLagrangian Bu F) (v, x) ↔ Normal F ∧ x ∈ argmin (F 0) ∧
@@ -788,10 +691,9 @@ omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
   [TopologicalSpace X]
   [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X] [TopologicalSpace Y]
   [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] in
-/-- **The Lagrangian is a bracket, after swapping.** Rockafellar writes the Lagrangian as
-`L (v, x) = ⟨v, F_* x⟩` through the *inverse* bifunction; the same identity, negated and with the
-two variables exchanged, is the bracket of `flipBifun F` for the **negated** pairing. Stating it
-this way lets Theorem 33.3 be used verbatim instead of remirrored. -/
+/-- **The Lagrangian is a bracket, after swapping.** Rockafellar writes it `L (v, x) = ⟨v, F_* x⟩`,
+through the *inverse* bifunction; the same identity, negated and with the variables exchanged, is
+the bracket of `flipBifun F` for the **negated** pairing, where Theorem 33.3 applies verbatim. -/
 theorem saddleSwap_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (F : Bifun U X) :
     saddleSwap (saddleLagrangian Bu F)
       = fun q : X × V => bracket (-Bu) (flipBifun F) q.1 q.2 := by
@@ -904,10 +806,9 @@ section ConcaveConjClosure
 variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [AddCommGroup F] [Module ℝ F]
   [TopologicalSpace E] [IsTopologicalAddGroup E] {B : E →ₗ[ℝ] F →ₗ[ℝ] ℝ} [IsContinuousPairing B]
 
-/-- **Rockafellar, Theorem 12.2** (first half) for concave functions: `(cl g)* = g*`, with `cl` the
-concave closure. This is `conj_clFn` read through the sign dictionary, and it is the step that
-makes the *lower* half of Theorem 37.1 independent of which member of the equivalence class is
-used. A relocation candidate for `Duality/ConcaveConj.lean`. -/
+/-- **Rockafellar, Theorem 12.2** (first half) for concave functions: `(cl g)* = g*` with `cl` the
+concave closure. This is `conj_clFn` read through the sign dictionary, and it is what makes the
+lower half of Theorem 37.1 independent of the representative of the equivalence class. -/
 theorem concaveConj_clConcave (g : E → EReal) :
     concaveConj B (clConcave g) = concaveConj B g := by
   funext y
@@ -1020,7 +921,6 @@ section AdjointStructure
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- Each slice of the adjoint is a concave function. -/
 theorem concaveFn_adjointBifun_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (F : Bifun U X) (y : Y) : ConcaveFn (adjointBifun Bu Bx F y) :=
   concaveFn_iff_convexFn_neg.2 ((convexBifun_neg_adjointBifun Bu Bx F).convexFn_apply y)
@@ -1092,10 +992,9 @@ theorem bifunOfSaddle_partialCl₂ (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCom
 
 omit [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V]
   [LocallyConvexSpace ℝ V] in
-/-- **Every member of the class `Ω (F)` has the same associated bifunction, namely `F` itself.**
-The two brackets have equal `bifunOfSaddle` — one is the `cl₂` of the other, and `bifunOfSaddle`
-sees only `cl₂` — so the sandwich collapses. This is the half of Theorem 37.1 that produces the
-upper conjugate. -/
+/-- **Every member of the class `Ω (F)` has the same associated bifunction, namely `F`.** The two
+brackets have equal `bifunOfSaddle` — one is the `cl₂` of the other, and `bifunOfSaddle` sees only
+`cl₂` — so the sandwich collapses. This is the half of Theorem 37.1 giving the upper conjugate. -/
 theorem bifunOfSaddle_eq_of_mem_bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -1126,10 +1025,9 @@ theorem bifunOfSaddle_eq_of_mem_bifunSaddleClass (Bu : U →ₗ[ℝ] V →ₗ[�
 
 omit [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
   [LocallyConvexSpace ℝ X] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] in
-/-- **The concave conjugate of a slice of `K` is a slice of the adjoint `F*`,** for every `K` in
-the class `Ω (F)`. This is the mirror of `bifunOfSaddle_eq_of_mem_bifunSaddleClass`: the concave
-conjugate sees only `cl₁`, and `cl₁` of the lower bracket is the upper bracket (Theorem 33.2). It
-is the half of Theorem 37.1 that produces the lower conjugate. -/
+/-- **The concave conjugate of a slice of `K` is a slice of the adjoint `F*`**, for every `K` in the
+class `Ω (F)`: the concave conjugate sees only `cl₁`, and `cl₁` of the lower bracket is the upper
+bracket (Theorem 33.2). This is the half of Theorem 37.1 giving the lower conjugate. -/
 theorem concaveConj_slice_eq_adjointBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip]
     (hF : ConvexBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) (y : Y) :
@@ -1163,9 +1061,8 @@ omit [TopologicalSpace V] [IsTopologicalAddGroup V] [ContinuousSMul ℝ V]
   [LocallyConvexSpace ℝ V] in
 /-- **Rockafellar, Theorem 37.1**, first equation: the *upper* conjugate of any `K` in the class
 `Ω (F)` of a closed convex bifunction `F` is the Lagrangian of `F`,
-`K̄* (u*, x) = ⟨u*, F_* x⟩ = ⨅ u, {⟨u, u*⟩ + (Fu)(x)}`.
-
-In particular the upper conjugate depends only on the class, not on the representative. -/
+`K̄* (u*, x) = ⟨u*, F_* x⟩ = ⨅ u, {⟨u, u*⟩ + (Fu)(x)}`. In particular it does not depend on the
+representative. -/
 theorem upperConjSaddle_eq_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip]
     (hF : ConvexBifun F) (hcl : ClosedBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :
@@ -1189,9 +1086,8 @@ theorem upperConjSaddle_eq_saddleLagrangian (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
 omit [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
   [LocallyConvexSpace ℝ X] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] in
 /-- **Rockafellar, Theorem 37.1**, second equation: the *lower* conjugate of any `K` in the class
-`Ω (F)` is the bracket of the inverse adjoint, `K̲* (u*, x) = ⟨F_*^* u*, x⟩`.
-
-Like the upper conjugate it depends only on the class. -/
+`Ω (F)` is the bracket of the inverse adjoint, `K̲* (u*, x) = ⟨F_*^* u*, x⟩`; like the upper
+conjugate it depends only on the class. -/
 theorem lowerConjSaddle_eq_bracket_inverseBifun (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hK : K ∈ bifunSaddleClass Bu Bx F) :

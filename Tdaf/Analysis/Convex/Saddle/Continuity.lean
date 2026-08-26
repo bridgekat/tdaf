@@ -9,75 +9,51 @@ import Tdaf.Analysis.Convex.Saddle.Kernel
 /-!
 # Continuity of finite saddle-functions
 
-Rockafellar, *Convex Analysis*, §35, the continuity and convergence half: **Theorems 35.1–35.5**.
-Every one of them is a §10 statement read for a function of two variables, and every one of them is
-obtained here by applying the §10 result twice — once in each variable — and combining.
+**Theorems 35.1–35.5.** A finite concave-convex function on `C × D` is Lipschitz on every product
+of compact subsets of `ri C` and `ri D`, hence continuous there; a pointwise bounded *family* of
+such functions is uniformly bounded and equi-Lipschitz on such a rectangle; and the usual
+convergence and Arzelà–Ascoli consequences follow. Each of these is a §10 statement about convex
+functions of one variable, applied once in each variable and combined.
 
-## What is here
+## Main definitions
 
-* `ConcaveConvexOn C D K` — the bundled hypothesis of the whole section: `K : U × X → ℝ` is
-  concave in its first argument on `C` for each point of `D`, and convex in its second on `D` for
-  each point of `C`. Its two fields are exactly the two unbundled hypotheses that
-  `Saddle/Kernel.lean`'s simple extensions take, so `hK.concave_fst` and `hK.convex_snd` feed them
-  directly.
+* `ConcaveConvexOn C D K` — `K : U × X → ℝ` is concave in its first argument on `C` for each point
+  of `D` and convex in its second on `D` for each point of `C`. Its two fields are exactly the
+  hypotheses the simple extensions of `Saddle/Kernel.lean` take.
+
+## Main results
+
 * `exists_forall_abs_le_and_lipschitzOnWith_prod` — **Theorem 35.2**, for a family indexed by an
-  arbitrary type: uniform boundedness and a single Lipschitz constant on `S ×ˢ T` for compact
-  `S ⊆ ri C`, `T ⊆ ri D`. Its two halves are
-  `exists_forall_abs_le_and_lipschitzOnWith_fst` and `exists_forall_lipschitzOnWith_snd`.
-* `ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact`,
-  `ConcaveConvexOn.exists_forall_abs_le_of_isCompact` and `ConcaveConvexOn.continuousOn` —
-  **Theorem 35.1**, the one-element family.
-* `exists_isCompact_mem_nhdsWithin_relint` and `exists_isCompact_collar_relint` — `ri C` is locally
-  compact, and a compact subset of it has a compact *relative collar*. Both are about a single
-  convex set and belong in `RelativeInterior.lean`.
-* `uniformCauchySeqOn_of_equiLipschitz` — the metric core of Theorems 10.8 and 35.4 with the
+  arbitrary type; the engine of the section.
+* `ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact`, `.exists_forall_abs_le_of_isCompact`,
+  `.continuousOn` — **Theorem 35.1**, the one-element family.
+* `continuousOn_prod_of_concaveConvexOn`, `continuousOn_prod_of_concaveConvexOn'` —
+  **Theorem 35.3**, joint continuity in a parameter.
+* `exists_tendstoUniformlyOn_prod_of_dense`, `tendstoUniformlyOn_prod_of_tendsto` —
+  **Theorem 35.4**; `exists_subseq_tendstoUniformlyOn_prod` — **Theorem 35.5**.
+* `exists_isCompact_mem_nhdsWithin_relint`, `exists_isCompact_collar_relint` — `ri C` is locally
+  compact, and a compact subset of it has a compact relative collar.
+* `uniformCauchySeqOn_of_equiLipschitz` — the metric core of Theorems 10.8 and 35.4, with the
   convexity stripped out.
-* `continuousOn_prod_of_concaveConvexOn` and `continuousOn_prod_of_concaveConvexOn'` —
-  **Theorem 35.3**.
-* `exists_tendstoUniformlyOn_prod_of_dense`, `exists_tendstoUniformlyOn_prod_of_dense'` and
-  `tendstoUniformlyOn_prod_of_tendsto` — **Theorem 35.4**, on
-  `uniformCauchySeqOn_prod_of_dense`.
-* `exists_subseq_tendstoUniformlyOn_prod` — **Theorem 35.5**, Arzelà–Ascoli for saddle-functions.
-
-## What is not here
-
-Theorems 35.6–35.10 (directional derivatives, subgradients, differentiability almost everywhere)
-are the §23/§24/§25 half of the section and belong with the material they extend: 35.6–35.8 are in
-`Saddle/Differential.lean` and 35.9–35.10 in `Saddle/Rademacher.lean`, which reads
-`ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact` below on a ball and hands it to Mathlib's
-Rademacher theorem.
 
 ## Implementation notes
 
-**The Lipschitz constant is `α₁ + α₂`, not Rockafellar's `2(α₁ + α₂)`.** The book measures
-distance on `R^m × R^n` with the Euclidean norm and pays a factor of `2` passing between it and
-the sum of the coordinate distances. Mathlib's product metric is the **supremum** metric
-(`Prod.dist_eq`), for which `dist u' u ≤ dist p q` and `dist x' x ≤ dist p q` outright, so
-`α₁ * dist u' u + α₂ * dist x' x ≤ (α₁ + α₂) * dist p q` with no factor to pay.
+Everything is stated for arbitrary convex `C` and `D`, with `ri C` and `ri D` written out; the book
+takes them relatively open, where `ri C = C`. The Lipschitz constant is `α₁ + α₂` rather than the
+book's `2(α₁ + α₂)`, because Mathlib's product metric is the supremum metric and no factor is paid
+passing between the coordinate distances and the distance on the product.
 
-**Everything is stated for arbitrary convex `C` and `D`, not for relatively open ones.** The book
-takes `C` and `D` relatively open, where `C = ri C`; the results below are the same statements with
-`ri C` and `ri D` written out, which is what §10 in this project already does
-(`exists_forall_abs_le_of_isCompact_relint`).
+The convergence theorems take an arbitrary dense `A ⊆ ri C ×ˢ ri D` rather than a product
+`C' ×ˢ D'`. The book takes a product, and the equi-Lipschitz input does need one, but the diagonal
+extraction in Theorem 35.5 produces a countable dense set that is not a product.
 
-**§10 transports to `ri` by a chart; §35 cannot.** `Convergence.lean` proves each theorem for an
-*open* convex set and then pulls it back along `exists_chart_retraction`. That route is closed here:
-the chart of `C ×ˢ D` is not the product of the charts of `C` and of `D`, and it is the product
-structure that the concave-convex hypothesis lives on. So Theorems 35.3–35.5 are proved directly in
-`ri`, and what replaces the `interior` proofs' `IsCompact.exists_cthickening_subset_open` is
-`exists_isCompact_collar_relint`: `cthickening ε S ⊆ U` is simply false relatively — points off the
-affine hull of `C` are near `S` and not in `ri C` — so the collar has to be a set, not a thickening.
-
-**The convergence theorems take an arbitrary dense `A ⊆ ri C ×ˢ ri D`, not a product `C' ×ˢ D'`.**
-The book takes a product, and Theorem 35.2 does need one, because it bounds one variable at a time.
-But the diagonal extraction in Theorem 35.5 produces a *countable* dense set, and a countable dense
-subset of a product is not a product; so the convergence hypothesis of Theorem 35.4 is stated for a
-general `A`, with `exists_tendstoUniformlyOn_prod_of_dense'` recovering the book's form.
+Unlike §10, these theorems cannot be transported from the `interior` case along a chart: the chart
+of `C ×ˢ D` is not the product of the charts of `C` and `D`, and it is the product structure that
+the concave-convex hypothesis lives on. They are proved directly in `ri`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35
-  (Theorems 35.1–35.5).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35.
 -/
 
 open Set Filter Topology Metric
@@ -92,11 +68,8 @@ section Defs
 variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
 
 /-- `K` is **concave-convex on `C × D`**: concave in its first argument on `C` for each point of
-`D`, convex in its second on `D` for each point of `C`.
-
-This is the finite, set-relative form of `ConcaveConvexFn` (`Saddle/Defs.lean`), and it is the
-hypothesis §35 runs on. The two fields are the two hypotheses `concaveConvexFn_lowerSimpleExt`
-takes, so `hK.concave_fst` and `hK.convex_snd` extend `K` to all of `U × X` when that is wanted. -/
+`D`, convex in its second on `D` for each point of `C`. The finite, set-relative form of
+`ConcaveConvexFn`, and the hypothesis §35 runs on. -/
 structure ConcaveConvexOn (C : Set U) (D : Set X) (K : U × X → ℝ) : Prop where
   /-- `K (·, x)` is concave on `C` for every `x ∈ D`. -/
   concave_fst : ∀ x ∈ D, ConcaveOn ℝ C fun u => K (u, x)
@@ -114,8 +87,8 @@ end Defs
 
 /-! ### Negation
 
-§10 is stated for convex functions; the concave variable of a saddle-function reaches it through
-`-K`, and these three lemmas carry the conclusions back. -/
+§10 is stated for convex functions; the concave variable reaches it through `-K`, and these lemmas
+carry the conclusions back. -/
 
 section Neg
 
@@ -157,8 +130,8 @@ end Neg
 
 /-! ### Theorem 35.2
 
-The engine of the section. Theorem 10.6 is applied four times: twice to bound the family — once in
-each variable, the second time using the first — and twice to make it equi-Lipschitz. -/
+The engine of the section: Theorem 10.6 applied four times — twice to bound the family, once in
+each variable, and twice to make it equi-Lipschitz. -/
 
 section Family
 
@@ -306,13 +279,9 @@ theorem exists_forall_lipschitzOnWith_snd (hC : Convex ℝ C) (hD : Convex ℝ D
 pointwise bounded on `C' × D'`, is uniformly bounded and equi-Lipschitzian on `S ×ˢ T` for every
 compact `S ⊆ ri C` and `T ⊆ ri D`.
 
-Rockafellar's hypothesis is `conv (cl (C' × D')) ⊇ C × D` for relatively open `C`, `D`; the form
-here is the one §10 uses — `C' ⊆ ri C ⊆ cl C'` and likewise for `D` — and taking `C' = ri C`,
-`D' = ri D` gives the headline statement.
-
-The Lipschitz constant is `k₁ + k₂`, not the book's `2(α₁ + α₂)`: Mathlib's product metric is the
-supremum metric, so no factor is paid passing between the coordinate distances and the distance on
-the product. -/
+The book's hypothesis is `conv (cl (C' × D')) ⊇ C × D` for relatively open `C`, `D`; the form used
+here is `C' ⊆ ri C ⊆ cl C'` and likewise for `D`, and `C' = ri C`, `D' = ri D` gives the headline
+statement. -/
 theorem exists_forall_abs_le_and_lipschitzOnWith_prod (hC : Convex ℝ C) (hD : Convex ℝ D)
     (hK : ∀ i, ConcaveConvexOn C D (K i))
     (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
@@ -358,10 +327,7 @@ section Single
 variable [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] {L : U × X → ℝ}
 
 /-- **Rockafellar, Theorem 35.1**: a finite concave-convex function on `C × D` is Lipschitzian on
-every product of compact subsets of `ri C` and `ri D`.
-
-This is Theorem 35.2 for the one-element family; the book states it for relatively open `C` and
-`D`, where `ri C = C`. -/
+every product of compact subsets of `ri C` and `ri D`. Theorem 35.2 for the one-element family. -/
 theorem ConcaveConvexOn.exists_lipschitzOnWith_of_isCompact (hC : Convex ℝ C) (hD : Convex ℝ D)
     (hL : ConcaveConvexOn C D L)
     {S : Set U} (hS : IsCompact S) (hSC : S ⊆ ri C)
@@ -390,12 +356,8 @@ end Family
 
 /-! ### Compact relative neighbourhoods
 
-`ri C` is locally compact, which is what turns "Lipschitz on every compact rectangle" into
-"continuous". The proof is the chart of `Continuity.lean`: `ri C` is the translate of an *open*
-subset of a finite-dimensional subspace, where closed balls are compact.
-
-This lemma is about a single convex set and belongs in `RelativeInterior.lean`; it lives here
-until a second consumer appears. -/
+`ri C` is locally compact — being a translate of an open subset of a finite-dimensional subspace —
+which is what turns "Lipschitz on every compact rectangle" into "continuous". -/
 
 section LocallyCompact
 
@@ -436,11 +398,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
   {C : Set U} {D : Set X} {L : U × X → ℝ}
 
 /-- **Rockafellar, Theorem 35.1**, first assertion: a finite concave-convex function on `C × D` is
-continuous relative to `ri C × ri D`.
-
-The book states it for relatively open `C` and `D`, where `ri C = C`. Continuity is local, `ri C`
-and `ri D` are locally compact (`exists_isCompact_mem_nhdsWithin_relint`), and on a compact
-rectangle the function is Lipschitz. -/
+continuous relative to `ri C × ri D`. Continuity is local, `ri C` and `ri D` are locally compact,
+and on a compact rectangle the function is Lipschitz. -/
 theorem ConcaveConvexOn.continuousOn (hC : Convex ℝ C) (hD : Convex ℝ D)
     (hL : ConcaveConvexOn C D L) : ContinuousOn L (ri C ×ˢ ri D) := by
   rintro ⟨u, x⟩ ⟨hu, hx⟩
@@ -456,11 +415,9 @@ end ContinuousOn
 
 /-! ### The relative collar
 
-Theorems 35.3–35.5 all need, for a compact `S ⊆ ri C`, a *slightly larger* compact subset of `ri C`
-containing every point of `ri C` near `S`. In the `interior` setting that is
-`IsCompact.exists_cthickening_subset_open`, whose conclusion `cthickening ε S ⊆ U` is false here:
-points off the affine hull of `C` are near `S` but are not in `ri C`. Intersecting with `ri C`
-repairs it, and the chart supplies the compactness. -/
+Theorems 35.3–35.5 need, for a compact `S ⊆ ri C`, a slightly larger compact subset of `ri C`
+containing every point of `ri C` near `S`. `IsCompact.exists_cthickening_subset_open` will not
+serve: `cthickening ε S ⊆ ri C` is false, because points off the affine hull of `C` are near `S`. -/
 
 section Collar
 
@@ -468,11 +425,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {C : Set E}
 
 /-- **A compact subset of `ri C` has a relative collar**: an `ε > 0` and a compact `S' ⊆ ri C`
-which contains `S` and every point of `ri C` within `ε` of `S`.
-
-This is the relative analogue of `IsCompact.exists_cthickening_subset_open`, and it is what makes
-the `interior` proofs of Theorems 10.7–10.9 run in `ri`. It is about a single convex set and
-belongs in `RelativeInterior.lean`; it lives here until a second consumer appears. -/
+containing `S` and every point of `ri C` within `ε` of `S`. The relative analogue of
+`IsCompact.exists_cthickening_subset_open`, and what makes the `interior` proofs of
+Theorems 10.7–10.9 run in `ri`. -/
 theorem exists_isCompact_collar_relint (hC : Convex ℝ C) {S : Set E}
     (hS : IsCompact S) (hSC : S ⊆ ri C) :
     ∃ (ε : ℝ) (S' : Set E), 0 < ε ∧ IsCompact S' ∧ S ⊆ S' ∧ S' ⊆ ri C ∧
@@ -517,16 +472,15 @@ end Collar
 
 /-! ### Equi-Lipschitz plus a dense Cauchy set
 
-The metric core of Theorems 10.8 and 35.4, with the convexity stripped out: on a compact `S`
-carrying a collar `S'` on which the whole sequence is equi-Lipschitz, pointwise Cauchy behaviour on
-a set `A` dense in `S` is already uniform Cauchy behaviour on `S`. -/
+The metric core of Theorems 10.8 and 35.4 with the convexity stripped out: on a compact `S` carrying
+a collar `S'` on which the sequence is equi-Lipschitz, pointwise Cauchy behaviour on a dense subset
+of `S` is already uniform Cauchy behaviour on `S`. -/
 
 section UniformCauchy
 
 variable {Ω : Type*} [PseudoMetricSpace Ω] {f : ℕ → Ω → ℝ} {A S S' : Set Ω} {ε : ℝ} {k : ℝ≥0}
 
 /-- **Equi-Lipschitz on a collar plus pointwise Cauchy on a dense subset gives uniform Cauchy.**
-
 `hcollar` is the only thing the ambient structure has to supply: every point of `A` within `ε` of
 `S` must lie in `S'`, the set on which the family is equi-Lipschitz. In the `interior` setting
 `S' = cthickening ε S`; in the relative setting it is `exists_isCompact_collar_relint`. -/
@@ -579,14 +533,9 @@ end UniformCauchy
 
 /-! ### Theorems 35.4 and 35.5: convergence
 
-Both are the §10 statements with the compact set replaced by a compact *rectangle*. Theorem 35.2
+Both are the §10 statements with the compact set replaced by a compact *rectangle*: Theorem 35.2
 supplies the equi-Lipschitz constant, `exists_isCompact_collar_relint` the room to move in, and
-`uniformCauchySeqOn_of_equiLipschitz` does the rest.
-
-The dense set on which the sequence is assumed to converge is an arbitrary `A ⊆ ri C ×ˢ ri D`, not
-a product `C' ×ˢ D'`. The book takes a product, and so does the equi-Lipschitz input; but the
-diagonal extraction in Theorem 35.5 produces a countable dense set that is *not* a product, so the
-convergence hypothesis has to be stated for a general `A`. -/
+`uniformCauchySeqOn_of_equiLipschitz` does the rest. -/
 
 section Convergence
 
@@ -622,9 +571,8 @@ theorem uniformCauchySeqOn_prod_of_dense (hC : Convex ℝ C) (hD : Convex ℝ D)
 /-- **Rockafellar, Theorem 35.4**: a sequence of finite concave-convex functions on `C × D`, whose
 values are bounded at every point of a product `C' × D'` dense in `ri C × ri D` and convergent at
 every point of a dense `A ⊆ ri C × ri D`, converges at every point of `ri C × ri D` to a finite
-concave-convex limit, uniformly on every compact rectangle.
-
-Taking `A = C' ×ˢ D'` — and `hbdd` from the convergence — gives the statement in the book. -/
+concave-convex limit, uniformly on every compact rectangle. Taking `A = C' ×ˢ D'` gives the book's
+statement. -/
 theorem exists_tendstoUniformlyOn_prod_of_dense (hC : Convex ℝ C) (hD : Convex ℝ D)
     (hK : ∀ i, ConcaveConvexOn C D (K i))
     (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
@@ -701,12 +649,10 @@ theorem tendstoUniformlyOn_prod_of_tendsto (hC : Convex ℝ C) (hD : Convex ℝ 
 /-- **Rockafellar, Theorem 35.5**: a sequence of finite concave-convex functions on `C × D` whose
 values are bounded at every point of a product `C' × D'` dense in `ri C × ri D` has a subsequence
 converging, uniformly on every compact rectangle inside `ri C × ri D`, to a finite concave-convex
-function.
+function — Arzelà–Ascoli for saddle-functions.
 
-This is Arzelà–Ascoli for saddle-functions. As in Theorem 10.9 the subsequence comes from a
-countable dense subset — here of the *product* `C' ×ˢ D'`, which is why
-`exists_tendstoUniformlyOn_prod_of_dense` is stated for a general dense `A` — plus sequential
-compactness of a countable product of intervals. -/
+As in Theorem 10.9 the subsequence comes from a countable dense subset of the *product* `C' ×ˢ D'`,
+which is why `exists_tendstoUniformlyOn_prod_of_dense` is stated for a general dense `A`. -/
 theorem exists_subseq_tendstoUniformlyOn_prod (hC : Convex ℝ C) (hD : Convex ℝ D)
     (hK : ∀ i, ConcaveConvexOn C D (K i))
     (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')
@@ -775,12 +721,10 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
 concave-convex in `(u, x)` for each `t` and continuous in `t` for each `(u, x)`, is *jointly*
 continuous relative to `ri C × ri D × T`.
 
-As in the book — and as in Theorem 10.7, of which this is the two-variable form — continuity in `t`
-is only needed at the points of dense subsets `C'` and `D'`; `continuousOn_prod_of_concaveConvexOn'`
-is the headline statement. The proof is Rockafellar's: on a compact neighbourhood `T₀` of `t₀` the
-family `{F(·, t) | t ∈ T₀}` is pointwise bounded on `C' × D'`, so Theorem 35.2 makes it
-equi-Lipschitz on a compact relative neighbourhood of `(u₀, x₀)`, and the four-term estimate through
-a nearby point of `C' × D'` closes the argument. -/
+Continuity in `t` is only needed at the points of dense subsets `C'` and `D'`;
+`continuousOn_prod_of_concaveConvexOn'` is the headline statement. On a compact neighbourhood `T₀`
+of `t₀` the family `{F(·, t) | t ∈ T₀}` is pointwise bounded on `C' × D'`, so Theorem 35.2 makes it
+equi-Lipschitz near `(u₀, x₀)`, and a four-term estimate through a nearby point closes it. -/
 theorem continuousOn_prod_of_concaveConvexOn (hC : Convex ℝ C) (hD : Convex ℝ D)
     {F : (U × X) × T → ℝ} (hF : ∀ t : T, ConcaveConvexOn C D fun p => F (p, t))
     (hC' : C' ⊆ ri C) (hCdense : ri C ⊆ closure C')

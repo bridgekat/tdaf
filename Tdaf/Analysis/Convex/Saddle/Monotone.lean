@@ -8,70 +8,46 @@ import Tdaf.Analysis.Convex.Saddle.Differential
 import Tdaf.Analysis.Convex.Saddle.Existence
 
 /-!
-# Corollaries 37.5.1 and 37.5.2: the geometry of the subdifferential of a saddle-function
+# The subdifferential of a saddle-function as a monotone mapping
 
-Rockafellar's **Corollary 37.5.1**, homeomorphism clause — the graph of `∂K` is homeomorphic to
-the space under `(u, v, u*, v*) ↦ (u - u*, v + v*)` — and **Corollary 37.5.2** — the mapping
-`(u, v) ↦ {(-u*, v*) | (u*, v*) ∈ ∂K (u, v)}` is *maximal monotone*.
+For a closed proper saddle-function `K`, the graph of `∂K` is homeomorphic to the underlying space
+under `(u, v, u*, v*) ↦ (u - u*, v + v*)` (**Corollary 37.5.1**), and the mapping
+`ρ : (u, v) ↦ {(-u*, v*) | (u*, v*) ∈ ∂K (u, v)}` is *maximal monotone* (**Corollary 37.5.2**).
 
-Both come from Theorem 37.5's condition (c), which says that `∂K` is the **partial inversion** of
-`∂f`, where `f` is the graph function of the convex bifunction `F` representing the equivalence
-class of `K` (`Saddle/Existence.lean`, `setOf_mem_saddleSubgradient_eq_preimage`). Composing that
-with a geometric fact about `∂f` gives the corollary: Corollary 31.5.1 for the first,
-Corollary 31.5.2 for the second, both in `Optimization/Prox.lean`.
+Both come from Theorem 37.5, which makes `∂K` the **partial inversion** of `∂f`, `f` the graph
+function of a convex bifunction representing the class of `K`. Partial inversion exchanges the
+second component of a relation's argument with that of its value and preserves the monotonicity
+form, so each corollary is the matching fact about `∂f` — Corollaries 31.5.1 and 31.5.2.
 
 ## Main definitions
 
-* `partialInvertEquiv` — the involution `((u, y), (v, x)) ↦ ((u, x), (v, y))` exchanging the
-  second component of the argument of a relation with the second component of its value.
-* `partialInvertNegHomeomorph` — the same exchange carrying condition (c)'s sign flip,
-  `((u, y), (v, x)) ↦ ((u, x), (-v, y))`. It is linear, hence a homeomorphism.
-* `saddleMonotoneRel Bu Bx K` — Rockafellar's `ρ`, the graph of
-  `(u, y) ↦ {(-v, x) | (v, x) ∈ ∂K (u, y)}`.
+* `partialInvertEquiv` — the involution `((u, y), (v, x)) ↦ ((u, x), (v, y))`.
+* `partialInvertNegHomeomorph` — the same with Theorem 37.5's sign flip, a linear homeomorphism.
+* `saddleMonotoneRel Bu Bx K` — Rockafellar's `ρ`, as a relation.
 
 ## Main results
 
-* `prodPairing_sub_partialInvertEquiv` — **partial inversion preserves the monotonicity form**.
-* `isMonotoneRel_preimage_partialInvertEquiv`,
-  `IsMaximalMonotoneRel.preimage_partialInvertEquiv` — monotonicity and maximal monotonicity
-  therefore transfer across it.
-* `saddleSubgradientHomeomorph`, `saddleSubgradientHomeomorph_apply` — **Corollary 37.5.1**,
-  homeomorphism clause: `((u, y), (v, x)) ↦ (u - v, x + y)`.
+* `prodPairing_sub_partialInvertEquiv` — partial inversion preserves the monotonicity form, so
+  `IsMaximalMonotoneRel.preimage_partialInvertEquiv` transfers maximal monotonicity across it.
+* `saddleSubgradientHomeomorph` — **Corollary 37.5.1**, homeomorphism clause.
 * `isMaximalMonotoneRel_saddleMonotoneRel` — **Corollary 37.5.2**.
-* `isMaximalMonotoneRel_setOf_hasSaddleGradientAt` — **Corollary 37.5.2**, second sentence:
-  for a finite differentiable `K` the mapping is `(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))`.
+* `isMaximalMonotoneRel_setOf_hasSaddleGradientAt` — **Corollary 37.5.2**, second sentence: for a
+  finite differentiable `K` the mapping is `(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))`.
 
-## Design notes
+## Implementation notes
 
-**Partial inversion needs no symmetry.** Monotonicity of a relation on `(U × Y) × (V × X)` is
-measured by `prodPairing Bu Bx.flip`, and of a relation on `(U × X) × (V × Y)` by
-`prodPairing Bu Bx`. Exchanging the two `X`/`Y` slots turns `Bx.flip (y₁ - y₂) (x₁ - x₂)` into
-`Bx (x₁ - x₂) (y₁ - y₂)`, which is the same number by `LinearMap.flip_apply` — so the transfer
-lemmas hold for arbitrary pairings, and the inner product enters only where Corollaries 31.5.1 and
-31.5.2 do.
+The transfer lemmas need no symmetry and hold for arbitrary pairings. An inner product enters only
+where Corollaries 31.5.1 and 31.5.2 do, and there as a self-pairing rather than an
+`InnerProductSpace` instance: `U × X` carries the supremum norm, but
+`prodPairing (innerₗ U) (innerₗ X)` is a continuous inner pairing on it.
 
-**Two maps, one idea.** `partialInvertEquiv` has no sign in it and `partialInvertNegHomeomorph`
-does, because `ρ` already absorbs condition (c)'s sign into its own definition while the graph of
-`∂K` does not. They are the two ways of writing the same identification, and the two corollaries
-need one each.
-
-**Self-pairing, not inner product.** Corollaries 31.5.1 and 31.5.2 are stated in
-`Optimization/Prox.lean` for a symmetric positive definite self-pairing `B`, precisely so that
-they can be used here: `U × X` carries the supremum norm and is not an `InnerProductSpace`, but
-`prodPairing (innerₗ U) (innerₗ X)` is an `IsContinuousInnerPairing` on it
-(`Duality/InnerPairing.lean`).
-
-**§35 and §37 keep separate subdifferentials, and the bridge is one `ext`.**
-`Saddle/Differential.lean` works with a real-valued `K` on an open rectangle and
-`subgradientSaddle C D K`; §37 works with an `EReal`-valued `K` on the whole space and
-`saddleSubgradient Bu Bx K`. On `C = D = univ` the two agree
-(`saddleSubgradient_eq_subgradientSaddle`), which is all the differentiable clause of Corollary
-37.5.2 needs — the unification of the two notions is still a deferred clean-up.
+§35 and §37 carry different subdifferentials — `subgradientSaddle C D K` for a real-valued `K` on an
+open rectangle, `saddleSubgradient Bu Bx K` for an `EReal`-valued one on the whole space — and they
+agree at `C = D = univ`, which is what the differentiable clause below needs.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §37 (Corollary 37.5.1,
-  Corollary 37.5.2).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §37.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -82,10 +58,8 @@ section PartialInversion
 
 variable {U V X Y : Type*}
 
-/-- **Partial inversion**, Rockafellar's word in §37: the involution that exchanges the second
-component of the argument of a relation with the second component of its value,
-`((u, y), (v, x)) ↦ ((u, x), (v, y))`. Theorem 37.5 says that `∂K` and `∂f` are partial inversions
-of each other. -/
+/-- **Partial inversion**, Rockafellar's word in §37: the involution exchanging the second component
+of a relation's argument with that of its value, `((u, y), (v, x)) ↦ ((u, x), (v, y))`. -/
 def partialInvertEquiv : ((U × Y) × (V × X)) ≃ ((U × X) × (V × Y)) where
   toFun r := ((r.1.1, r.2.2), (r.2.1, r.1.2))
   invFun s := ((s.1.1, s.2.2), (s.2.1, s.1.2))
@@ -104,7 +78,7 @@ variable [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
 /-- **Partial inversion preserves the monotonicity form.** No symmetry is needed: the `X`-half of
-the form on the source is `Bx.flip (y₁ - y₂) (x₁ - x₂)` and on the target `Bx (x₁ - x₂) (y₁ - y₂)`,
+the form is `Bx.flip (y₁ - y₂) (x₁ - x₂)` on the source and `Bx (x₁ - x₂) (y₁ - y₂)` on the target,
 which is the same number. -/
 theorem prodPairing_sub_partialInvertEquiv (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     (r s : (U × Y) × (V × X)) :
@@ -117,7 +91,6 @@ theorem prodPairing_sub_partialInvertEquiv (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ
 
 variable {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {σ : SetRel (U × X) (V × Y)}
 
-/-- Monotonicity transfers across partial inversion. -/
 theorem isMonotoneRel_preimage_partialInvertEquiv :
     IsMonotoneRel (prodPairing Bu Bx.flip) (partialInvertEquiv ⁻¹' σ)
       ↔ IsMonotoneRel (prodPairing Bu Bx) σ := by
@@ -163,9 +136,8 @@ section Homeo
 variable {U V X Y : Type*} [TopologicalSpace U] [TopologicalSpace X] [TopologicalSpace Y]
   [AddCommGroup V] [TopologicalSpace V] [IsTopologicalAddGroup V]
 
-/-- **The map of Theorem 37.5's condition (c)**: partial inversion together with the sign flip
-that (c) carries on the first dual component, `((u, y), (v, x)) ↦ ((u, x), (-v, y))`. It is its own
-inverse up to that sign, and continuous both ways. -/
+/-- **The map of Theorem 37.5's condition (c)**: partial inversion together with the sign flip that
+(c) carries on the first dual component, `((u, y), (v, x)) ↦ ((u, x), (-v, y))`. -/
 def partialInvertNegHomeomorph : ((U × Y) × (V × X)) ≃ₜ ((U × X) × (V × Y)) where
   toFun r := ((r.1.1, r.2.2), (-r.2.1, r.1.2))
   invFun s := ((s.1.1, s.2.2), (-s.2.1, s.1.2))
@@ -191,9 +163,9 @@ section Rho
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
   [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
 
-/-- **Rockafellar's `ρ` of Corollary 37.5.2**: the subdifferential of `K` with the sign of its
-concave half reversed, `ρ (u, y) = {(-v, x) | (v, x) ∈ ∂K (u, y)}`. The sign is what makes `ρ`
-monotone rather than "monotone in one variable and antitone in the other". -/
+/-- **Rockafellar's `ρ`**: the subdifferential of `K` with the sign of its concave half reversed,
+`ρ (u, y) = {(-v, x) | (v, x) ∈ ∂K (u, y)}`. The sign is what makes `ρ` monotone rather than
+monotone in one variable and antitone in the other. -/
 def saddleMonotoneRel (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (K : U × Y → EReal) :
     SetRel (U × Y) (V × X) :=
   {r | (-r.2.1, r.2.2) ∈ saddleSubgradient Bu Bx.flip K r.1}
@@ -213,8 +185,7 @@ variable {U V X Y : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U]
   [NormedAddCommGroup V] [NormedSpace ℝ V] [NormedAddCommGroup X] [NormedSpace ℝ X]
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] {F : Bifun U X} {K : U × Y → EReal}
 
-/-- Theorem 37.5's condition (c) as an equality of sets, with the identification written as the
-homeomorphism `partialInvertNegHomeomorph`. -/
+/-- Theorem 37.5's condition (c) as an equality of sets, along `partialInvertNegHomeomorph`. -/
 theorem setOf_mem_saddleSubgradient_eq_preimage_homeomorph (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bu] [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
     [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F)
@@ -224,8 +195,8 @@ theorem setOf_mem_saddleSubgradient_eq_preimage_homeomorph (Bu : U →ₗ[ℝ] V
         ⁻¹' subgradientRel (prodPairing Bu Bx) (graphFn F) :=
   setOf_mem_saddleSubgradient_eq_preimage Bu Bx hF hcl hK
 
-/-- **`ρ` is the graph of `∂f`, partially inverted.** This is Theorem 37.5's condition (c) with
-the sign flip absorbed into `ρ`, which is why no sign survives on the right. -/
+/-- **`ρ` is the graph of `∂f`, partially inverted.** Theorem 37.5's condition (c) with the sign
+flip absorbed into `ρ`, which is why no sign survives on the right. -/
 theorem saddleMonotoneRel_eq_preimage (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) [IsCompatiblePairing Bu]
     [IsCompatiblePairing Bu.flip] (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx]
     [IsCompatiblePairing Bx.flip] (hF : ConvexBifun F) (hcl : ClosedBifun F)
@@ -260,11 +231,8 @@ theorem setOf_mem_saddleSubgradient_innerL_eq_preimage (hF : ConvexBifun F) (hcl
   rwa [flip_eq_self] at h
 
 /-- **Rockafellar, Corollary 37.5.1**, homeomorphism clause: the graph of `∂K` is homeomorphic to
-`U × X` under `((u, y), (v, x)) ↦ (u - v, x + y)`.
-
-Theorem 37.5 identifies that graph with the graph of `∂f` through the linear homeomorphism
-`partialInvertNegHomeomorph`, and Corollary 31.5.1 (`subgradientRelHomeomorph`) maps the graph of
-`∂f` onto `U × X` by `(z, z*) ↦ z + z*`. The composite is Rockafellar's map. -/
+`U × X` under `((u, y), (v, x)) ↦ (u - v, x + y)`. Theorem 37.5 identifies that graph with the
+graph of `∂f`, and Corollary 31.5.1 maps the latter onto `U × X` by `(z, z*) ↦ z + z*`. -/
 noncomputable def saddleSubgradientHomeomorph (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (hpr : Proper (graphFn F)) (hK : K ∈ bifunSaddleClass (innerₗ U) (innerₗ X) F) :
     ↥{r : (U × X) × (U × X) | r.2 ∈ saddleSubgradient (innerₗ U) (innerₗ X) K r.1} ≃ₜ (U × X) :=
@@ -279,11 +247,9 @@ noncomputable def saddleSubgradientHomeomorph (hF : ConvexBifun F) (hcl : Closed
       = (r.1.1.1 - r.1.2.1, r.1.2.2 + r.1.1.2) := by
   refine Prod.ext ?_ ?_ <;> simp [saddleSubgradientHomeomorph, sub_eq_add_neg]
 
-/-- **Rockafellar, Corollary 37.5.2**: `ρ : (u, v) ↦ {(-u*, v*) | (u*, v*) ∈ ∂K (u, v)}` is a
-maximal monotone mapping.
-
-Theorem 37.5 makes `ρ` the partial inversion of `∂f`, partial inversion preserves the monotonicity
-form, and `∂f` is maximal monotone by Corollary 31.5.2. -/
+/-- **Rockafellar, Corollary 37.5.2**: `ρ : (u, v) ↦ {(-u*, v*) | (u*, v*) ∈ ∂K (u, v)}` is maximal
+monotone. Theorem 37.5 makes `ρ` the partial inversion of `∂f`, partial inversion preserves the
+monotonicity form, and `∂f` is maximal monotone by Corollary 31.5.2. -/
 theorem isMaximalMonotoneRel_saddleMonotoneRel (hF : ConvexBifun F) (hcl : ClosedBifun F)
     (hpr : Proper (graphFn F)) (hK : K ∈ bifunSaddleClass (innerₗ U) (innerₗ X) F) :
     IsMaximalMonotoneRel (prodPairing (innerₗ U) (innerₗ X))
@@ -301,8 +267,8 @@ section Differentiable
 
 variable {U X : Type*}
 
-/-- A finite saddle-function is its own lower simple extension over the whole space. This is the
-bridge between §35's real-valued `K` and §37's `EReal`-valued one. -/
+/-- A finite saddle-function is its own lower simple extension over the whole space: the bridge
+between §35's real-valued `K` and §37's `EReal`-valued one. -/
 theorem lowerSimpleExt_univ (K : U × X → ℝ) :
     lowerSimpleExt (Set.univ : Set U) (Set.univ : Set X) K = fun p => ((K p : ℝ) : EReal) :=
   funext fun _ => lowerSimpleExt_of_mem (Set.mem_univ _) (Set.mem_univ _)
@@ -332,8 +298,8 @@ theorem subgradient_eq_subgradientSnd (K : U × X → ℝ) (p : U × X) :
     innerₗ_apply_apply, ← _root_.EReal.coe_add, _root_.EReal.coe_le_coe_iff]
 
 omit [FiniteDimensional ℝ U] [FiniteDimensional ℝ X] in
-/-- Over the whole space §37's `∂K` and §35's `∂K` are the same set. The two definitions differ
-only in where their junk values live. -/
+/-- Over the whole space §37's `∂K` and §35's `∂K` are the same set; the definitions differ only in
+where their junk values live. -/
 theorem saddleSubgradient_eq_subgradientSaddle (K : U × X → ℝ) (p : U × X) :
     saddleSubgradient (innerₗ U) (innerₗ X) (fun q => ((K q : ℝ) : EReal)) p
       = subgradientSaddle Set.univ Set.univ K p := by
@@ -371,11 +337,9 @@ theorem saddleMonotoneRel_eq_setOf_hasSaddleGradientAt
   exact (Set.singleton_eq_singleton_iff.1 hsing).symm
 
 /-- **Rockafellar, Corollary 37.5.2**, second sentence: if `K` is everywhere finite and
-differentiable, `(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))` is a maximal monotone mapping.
-
-Differentiability collapses `∂K` to a single point (Theorem 35.8), so `ρ` is the graph of that
-mapping and `isMaximalMonotoneRel_saddleMonotoneRel` applies. The representing bifunction comes
-from Corollary 34.2.4 at `C = D = univ`, where continuity of the slices is free. -/
+differentiable, `(u, v) ↦ (-∇₁K (u, v), ∇₂K (u, v))` is maximal monotone. Differentiability
+collapses `∂K` to a point (Theorem 35.8), so `ρ` is the graph of that mapping; the representing
+bifunction comes from Corollary 34.2.4 at `C = D = univ`. -/
 theorem isMaximalMonotoneRel_setOf_hasSaddleGradientAt
     (hK : ConcaveConvexOn (Set.univ : Set U) (Set.univ : Set X) K)
     (hdiff : ∀ p : U × X, DifferentiableAt ℝ K p) :

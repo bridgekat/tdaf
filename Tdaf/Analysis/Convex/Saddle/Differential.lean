@@ -11,130 +11,64 @@ import Tdaf.Analysis.Convex.Subgradient.Gradient
 /-!
 # Directional derivatives and subgradients of a saddle-function
 
-Rockafellar, *Convex Analysis*, §35, the differential half: **Theorems 35.6, 35.7 and 35.8** with
-Corollaries 35.7.1 and 35.8.1. These are the §23/§24/§25 statements read for a concave-convex
-function of a pair, on an open rectangle `C ×ˢ D` where the function is finite and real-valued.
+**Theorems 35.6, 35.7 and 35.8** with Corollaries 35.7.1 and 35.8.1: the §23/§24/§25 differential
+theory read for a concave-convex function of a pair, on an open rectangle `C ×ˢ D` where the
+function is finite and real-valued.
+
+Theorem 35.6 says the joint one-sided directional derivative exists and splits,
+`K'(u, v; u', v') = K'(u, v; u', 0) + K'(u, v; 0, v')`, and is a finite concave-convex function of
+the direction. The subdifferential `∂K = ∂₁K ×ˢ ∂₂K` is a *product* — the two variables never
+interact — so Theorem 35.8 is a statement about *separate* differentiability: `K` is differentiable
+at a point exactly when `∂K` is a singleton there. Theorem 35.7 makes the directional derivatives
+semicontinuous and `∂K` upper semicontinuous along a convergent sequence.
+
+## Main definitions
+
+* `dirDerivReal f x y` — the one-sided directional derivative `f'(x; y)` of a real-valued function,
+  read as a genuine limit and taking the junk value `0` where that limit fails to exist.
+* `subgradientFst`, `subgradientSnd`, `subgradientSaddle` — `∂₁K`, `∂₂K` and `∂K = ∂₁K ×ˢ ∂₂K`.
+* `prodInnerL q` — the functional `(w, x) ↦ ⟪w, q.1⟫ + ⟪x, q.2⟫` that a pair represents;
+  `HasSaddleGradientAt K q p` is `HasFDerivAt K (prodInnerL q) p`.
 
 ## Main results
 
-* `dirDerivReal` — the one-sided directional derivative `f'(x; y)` of a *real-valued* function,
-  read as a genuine limit rather than as the infimum of the difference quotients.
-* `dirDerivReal_prod` — **Theorem 35.6**, the displayed equation
-  `K'(u, v; u', v') = K'(u, v; u', 0) + K'(u, v; 0, v')`; `tendsto_slope_dirDerivReal_prod` is the
-  existence of the joint limit that it presupposes, `concaveConvexOn_dirDerivReal` and
-  `dirDerivReal_prod_smul` the finiteness, concave-convexity and positive homogeneity clauses, and
-  `dirDerivReal_prod_fst` / `dirDerivReal_prod_snd` the two readings on the axes.
-* `subgradientFst`, `subgradientSnd`, `subgradientSaddle` — `∂₁K`, `∂₂K` and
-  `∂K = ∂₁K ×ˢ ∂₂K`, with `subgradientSnd_eq_subgradient` and `subgradientFst_eq_neg_subgradient`
-  identifying each block with a §23 subdifferential of a slice, so that §24 applies one variable at
-  a time.
-* `eventually_dirDerivReal_snd_lt`, `eventually_lt_dirDerivReal_fst` — **Theorem 35.7**, the two
-  displayed semicontinuity inequalities, spelled without junk values.
-* `eventually_subgradientSaddle_subset` — **Theorem 35.7**, third assertion:
-  `∂K_i(u_i, v_i) ⊆ ∂K(u, v) + εB` eventually. Its two halves are
-  `eventually_subgradientFst_subset` and `eventually_subgradientSnd_subset`.
+* `dirDerivReal_prod`, `tendsto_slope_dirDerivReal_prod`, `concaveConvexOn_dirDerivReal` —
+  **Theorem 35.6**: the joint limit exists, splits into the two partial derivatives, and is a finite
+  concave-convex function of the direction.
+* `eventually_dirDerivReal_snd_lt`, `eventually_lt_dirDerivReal_fst`,
+  `eventually_subgradientSaddle_subset` — **Theorem 35.7**: the two semicontinuity inequalities,
+  spelled without junk values, and `∂K_i(u_i, v_i) ⊆ ∂K(u, v) + εB` eventually.
 * `lowerSemicontinuousAt_dirDerivReal_fst`, `upperSemicontinuousAt_dirDerivReal_snd`,
   `eventually_nhds_subgradientSaddle_subset` — **Corollary 35.7.1**, the constant sequence.
-* `prodInnerL`, `HasSaddleGradientAt` — `∇K (u, v)` as a *pair* `(u*, v*)`, with
-  `differentiableAt_iff_exists_hasSaddleGradientAt` saying that in finite dimensions this loses
-  nothing.
-* `subgradientSaddle_eq_singleton_of_hasSaddleGradientAt` and
-  `hasSaddleGradientAt_of_subgradient_eq_singleton` — the two halves of **Theorem 35.8**, combined
-  in `hasSaddleGradientAt_iff_subgradientSaddle_eq_singleton` and, in the book's shape, in
-  `differentiableAt_iff_exists_subgradientSaddle_eq_singleton`.
-* `differentiableAt_iff_isLinearMap_dirDerivReal` — **Corollary 35.8.1**: on a rectangle where `K`
-  is already finite, differentiability is exactly linearity of `K'(u, v; ·, ·)`.
+* `hasSaddleGradientAt_iff_subgradientSaddle_eq_singleton`,
+  `differentiableAt_iff_exists_subgradientSaddle_eq_singleton` — **Theorem 35.8**.
+* `differentiableAt_iff_isLinearMap_dirDerivReal` — **Corollary 35.8.1**: where `K` is already
+  finite, differentiability is exactly linearity of `K'(u, v; ·, ·)`.
 
-Four §23/§25 statements are proved here in real form because the `EReal` versions in
-`Subgradient/` are not usable through a slice without a detour: `le_add_of_hasFDerivAt_of_convexOn`
-and `eq_of_forall_add_le_of_hasFDerivAt` (**Theorem 25.1** and its uniqueness half),
-`forall_inner_le_dirDerivReal_iff` (**Theorem 23.2** at an interior point) and
-`subgradientSnd_nonempty` / `subgradientFst_nonempty` (**Theorem 23.4**). Each comes with its
-concave mirror.
+Four §23/§25 statements are proved here in real form, each with its concave mirror, because the
+`EReal` versions are not usable through a slice without a detour: **Theorem 25.1** and its
+uniqueness half, **Theorem 23.2** at an interior point, and **Theorem 23.4**.
 
-## Design notes
+## Implementation notes
 
-**The module is `Differential`, not `Subgradient`, because §37 owns that name.** What lives here
-is the differential theory of a *real-valued* concave-convex function on an open rectangle —
-`dirDerivReal`, `subgradientFst`, `subgradientSnd`, `subgradientSaddle`, `HasSaddleGradientAt` —
-while `Saddle/Subgradient.lean` holds `concaveSubgradient` and `saddleSubgradient` for
-`EReal`-valued saddle-functions, which is what §37's conjugacy needs. The two notions agree where
-both apply, and unifying them is a deferred clean-up rather than a name clash.
+`subgradientFst` and `subgradientSnd` test against `C` and `D` rather than the whole space;
+Rockafellar tests against `Rᵐ`, the case `C = univ`, and the two agree once `K` is extended off the
+rectangle by the simple extension of `Saddle/Kernel.lean`.
 
-**`dirDerivReal` is a limit, not an infimum.** `dirDeriv` (`Subgradient/Defs.lean`) is defined as
-`⨅ t > 0, (f (x + t • y) - f x) / t`, which coincides with the limit exactly when the difference
-quotient is monotone in the step. That is true along a line for a convex function and false for a
-saddle-function in a *joint* direction — which is the whole content of Theorem 35.6 — so the limit
-has to be taken literally here. `dirDerivReal` therefore takes the junk value `0` where the limit
-does not exist, and every statement about it carries the hypotheses that make it exist.
-
-**Theorem 35.6 is a `limsup` bound and its mirror, not a two-sided estimate.** The difference
-quotient splits as `[K(u + tu', v) - K(u, v)]/t + [K(u + tu', v + tv') - K(u + tu', v)]/t`, whose
-first summand converges by Theorem 23.1. `eventually_slope_snd_lt` bounds the second summand above
-by anything above `K'(u, v; 0, v')`, using continuity of the concave slice along a line to move the
-base point. The matching lower bound is that same lemma applied to `(x, w) ↦ -K (w, x)`, which is
-again concave-convex (`ConcaveConvexOn.negSwap`); no second proof is needed.
-
-**`∂K(u, v)` is a product, and that is the point.** The two variables never interact, which is what
-makes Theorem 35.8 a statement about *separate* differentiability and what lets each block be
-handled by a §23/§24 result about a single convex function. The price is
-`subgradientSaddle_eq_singleton_iff`: `A ×ˢ B = {q}` implies `A = {q.1}` and `B = {q.2}` only when
-both factors are nonempty, since an empty factor empties the product.
-
-**`subgradientFst` and `subgradientSnd` test against `C` and `D`, not against the whole space.**
-Rockafellar tests against all of `R^m`, which is the `C = univ` case. For a `K` given, and
-concave-convex, only on a rectangle, testing against the rectangle is the right reading, and the
-two agree whenever `K` is extended off `C × D` by the simple extension of `Saddle/Kernel.lean`,
-which is `-∞`/`+∞` there and makes the extra inequalities vacuous.
-
-**Theorem 35.8's converse is proved from Corollary 35.7.1, not from Theorem 35.4.** Rockafellar
-upgrades separate differentiability to joint differentiability by applying Theorem 35.4 to the
-rescalings `h_λ(x, y) = [K(u + λx, v + λy) - K(u, v) - λ⟪x, u*⟫ - λ⟪y, v*⟫]/λ`. Corollary 35.7.1 is
-downstream of Theorem 35.4 anyway, and it gives the Fréchet estimate directly: sandwich the
-increment between subgradient inequalities at `(u, v)`, `(u, v + b)` and `(u + a, v + b)`, each of
-whose subgradients lies within `ε` of `q`. That also makes the converse half of Theorem 25.1 —
-which `Subgradient/Gradient.lean` records as missing — a special case of the same argument.
-
-**`U × X` is not an inner-product space.** Mathlib gives a product of normed spaces the *supremum*
-norm, so `∇K (u, v)` cannot be a vector of `U × X` in the sense of `innerSL`, and Mathlib's
-`gradient` does not apply. `prodInnerL q` is the continuous functional
-`(w, x) ↦ ⟪w, q.1⟫ + ⟪x, q.2⟫` that a pair represents, and `HasSaddleGradientAt K q p` is
-`HasFDerivAt K (prodInnerL q) p`. The same choice of norm is why Theorem 35.7's `εB` is the
-supremum ball rather than Rockafellar's Euclidean one; the two differ by a factor bounded by `√2`,
-and every statement here quantifies over all `ε > 0`.
-
-## What is not here
-
-**Theorems 35.9 and 35.10 are in `Saddle/Rademacher.lean`**, which imports this file. Their
-measure-zero and density clauses need Rademacher's theorem, and keeping the measure-theoretic
-imports out of here costs nothing: 35.9's continuity clause is
-`eventually_nhds_subgradientSaddle_subset` below with the subdifferentials collapsed by
-Theorem 35.8, and 35.10 is `eventually_subgradientSaddle_subset` the same way.
-
-**Corollary 35.8.1's last clause is not formalised**: that finiteness of the `m + n` two-sided
-partial derivatives already forces differentiability. It is a statement about a coordinate basis,
-not about the underlying spaces, and it adds nothing that
-`differentiableAt_iff_isLinearMap_dirDerivReal` does not already give.
-
-**Everything is stated on an *open* rectangle.** Rockafellar restricts to interior points of
-`dom K` "for the sake of simplicity" and so does this file; the relatively open case would need
-`ri` versions of Theorems 23.1 and 23.2, which is a §23 project rather than a §35 one.
+Mathlib gives `U × X` the *supremum* norm, so it is not an inner-product space and `∇K (u, v)` has
+to be a pair rather than a vector; the same choice makes the `εB` of Theorem 35.7 the supremum ball
+rather than the book's Euclidean one, harmlessly, since every statement quantifies over all
+`ε > 0`. Everything is stated on an *open* rectangle, as in the book.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35 (Theorems 35.6–35.8,
-  Corollaries 35.7.1 and 35.8.1).
+* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35.
 -/
 
 open Set Filter Topology
 open scoped Pointwise RealInnerProductSpace
 
 namespace Tdaf.ConvexAnalysis
-
-/-! ### Convexity along a line
-
-The line-restriction API moved to `Tdaf.Analysis.Convex.Line`, which this file imports: it is
-elementary, has no saddle content, and §4 of the surface needs it without the saddle tower. -/
 
 /-! ### The one-sided directional derivative of a real-valued function -/
 
@@ -143,13 +77,11 @@ section DirDerivReal
 variable {E : Type*} [AddCommGroup E] [Module ℝ E] {S : Set E} {f : E → ℝ} {x y : E}
 
 /-- The **one-sided directional derivative** `f'(x; y)` of a real-valued function: the limit of the
-difference quotient as the step decreases to `0`.
+difference quotient as the step decreases to `0`, with the junk value `0` where it does not exist.
 
-This is `dirDeriv` (`Subgradient/Defs.lean`) read in `ℝ` rather than in `EReal`. The `EReal`
-version is an infimum, which is the limit only when the quotient is monotone in the step -- true
-for a convex function, false for a saddle-function in a joint direction, which is precisely what
-Rockafellar's Theorem 35.6 is about. So the limit has to be taken literally here, and the value is
-junk (`0`) when it does not exist. -/
+`dirDeriv` (`Subgradient/Defs.lean`) is an infimum instead, which agrees with the limit only when
+the quotient is monotone in the step — true along a line for a convex function, false for a
+saddle-function in a joint direction, which is what Theorem 35.6 is about. -/
 noncomputable def dirDerivReal (f : E → ℝ) (x y : E) : ℝ :=
   limUnder (𝓝[>] (0 : ℝ)) fun t => (f (x + t • y) - f x) / t
 
@@ -160,11 +92,9 @@ theorem dirDerivReal_eq_of_tendsto {L : ℝ}
   h.limUnder_eq
 
 /-- **Rockafellar, Theorem 23.1**, existence clause, in real form: at a point where a convex
-function is finite on a neighbourhood, the one-sided difference quotient converges.
-
-The quotient is the secant slope of `f` along the line `t ↦ x + t • y` based at `t = 0`; it is
-nondecreasing (`ConvexOn.secant_mono`) and bounded below by its value at a negative step, so it
-converges to its infimum. -/
+function is finite on a neighbourhood, the one-sided difference quotient converges. It is the secant
+slope along the line `t ↦ x + t • y`, nondecreasing and bounded below by its value at a negative
+step, so it converges to its infimum. -/
 theorem exists_tendsto_slope_of_convexOn [TopologicalSpace E] [ContinuousAdd E]
     [ContinuousSMul ℝ E] (hS : IsOpen S) (hf : ConvexOn ℝ S f) (hx : x ∈ S) (y : E) :
     ∃ L : ℝ, Tendsto (fun t : ℝ => (f (x + t • y) - f x) / t) (𝓝[>] (0 : ℝ)) (𝓝 L) := by
@@ -368,13 +298,12 @@ theorem ConcaveConvexOn.negSwap (hK : ConcaveConvexOn C D K) :
     ConcaveConvexOn D C fun p : X × U => -K (p.2, p.1) :=
   ⟨fun w hw => (hK.convex_snd w hw).neg, fun y hy => (hK.concave_fst y hy).neg⟩
 
-/-- **Rockafellar, Theorem 35.6**, the `limsup` half: moving the concave variable does not raise
-the difference quotient of the convex variable above its limit at the base point.
+/-- **Rockafellar, Theorem 35.6**, the `limsup` half: moving the concave variable does not raise the
+difference quotient of the convex variable above its limit at the base point.
 
-Given `μ` above `K'(u, v; 0, v')`, a single step `α > 0` already realises a secant slope of the
-convex slice below `μ`; the concave slice is continuous along the line `t ↦ u + t • u'`, so the
-same secant slope at the moving point `u + t • u'` is still below `μ` for small `t`; and the secant
-slope at step `t ≤ α` is below the one at step `α`, by convexity in the second variable. -/
+Given `μ` above `K'(u, v; 0, v')`, some step `α > 0` already realises a secant slope of the convex
+slice below `μ`; the concave slice is continuous along `t ↦ u + t • u'`, so the same secant slope at
+the moving point is still below `μ` for small `t`. -/
 theorem eventually_slope_snd_lt (hCo : IsOpen C) (hDo : IsOpen D) (hK : ConcaveConvexOn C D K)
     (hu : u ∈ C) (hv : v ∈ D) {u' : U} {v' : X} {b μ : ℝ}
     (hb : Tendsto (fun t : ℝ => (K (u, v + t • v') - K (u, v)) / t) (𝓝[>] (0 : ℝ)) (𝓝 b))
@@ -404,15 +333,13 @@ theorem eventually_slope_snd_lt (hCo : IsOpen C) (hDo : IsOpen D) (hK : ConcaveC
   exact lt_of_le_of_lt hsec hΦt
 
 /-- **Rockafellar, Theorem 35.6**: the joint one-sided directional derivative of a finite
-concave-convex function at an interior point of the rectangle exists, and it is the *sum* of the
-two partial directional derivatives.
+concave-convex function at an interior point of the rectangle exists, and it is the *sum* of the two
+partial directional derivatives.
 
 The difference quotient splits as
-`[K(u + t u', v) - K(u, v)]/t + [K(u + t u', v + t v') - K(u + t u', v)]/t`,
-whose first summand converges to `K'(u, v; u', 0)`. `eventually_slope_snd_lt` bounds the second
-summand above by anything above `K'(u, v; 0, v')`; the matching lower bound is that same lemma
-applied to the negated swap `(x, w) ↦ -K (w, x)`, for which the roles of the two variables are
-exchanged. -/
+`[K(u + t u', v) - K(u, v)]/t + [K(u + t u', v + t v') - K(u + t u', v)]/t`, whose first summand
+converges by Theorem 23.1. `eventually_slope_snd_lt` bounds the second above by anything above
+`K'(u, v; 0, v')`, and the matching lower bound is that lemma at the negated swap. -/
 theorem tendsto_slope_prod (hCo : IsOpen C) (hDo : IsOpen D) (hK : ConcaveConvexOn C D K)
     (hu : u ∈ C) (hv : v ∈ D) {u' : U} {v' : X} {a b : ℝ}
     (ha : Tendsto (fun t : ℝ => (K (u + t • u', v) - K (u, v)) / t) (𝓝[>] (0 : ℝ)) (𝓝 a))
@@ -552,13 +479,9 @@ theorem proper_restrict_coe {s : Set E} (hs : s.Nonempty) (g : E → ℝ) :
     · rw [restrict_of_notMem hx]
       exact top_ne_bot
 
-/-- `∂₁K(u, v)`, Rockafellar's subdifferential of a saddle-function in its **concave** variable:
-the supergradients at `u` of the concave slice `K (·, v)`, tested against the points of `C`.
-
-Rockafellar tests against all of `R^m`, which is this definition with `C = univ`. For a `K` that is
-only given, and only concave-convex, on a rectangle `C × D`, testing against `C` is the right
-reading, and it agrees with his whenever `K` is extended off `C × D` by the simple extension
-(`lowerSimpleExt`), which is `-∞` there and makes the extra inequalities vacuous. -/
+/-- `∂₁K(u, v)`, the subdifferential of a saddle-function in its **concave** variable: the
+supergradients at `u` of the concave slice `K (·, v)`, tested against the points of `C`.
+Rockafellar tests against all of `Rᵐ`, which is the case `C = univ`. -/
 def subgradientFst (C : Set U) (K : U × X → ℝ) (p : U × X) : Set U :=
   {y | ∀ w ∈ C, K (w, p.2) ≤ K p + ⟪w - p.1, y⟫}
 
@@ -647,12 +570,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
 
 /-- **Finite concave-convex functions converge continuously.** Pointwise convergence on an open
 convex rectangle `C × D` forces `K i (u i, v i) → K (u, v)` along every sequence
-`(u i, v i) → (u, v)` in `C × D`.
-
-This is Theorem 35.4 (`tendstoUniformlyOn_prod_of_tendsto`, uniform convergence on compact
-rectangles) together with Theorem 35.1 (`ConcaveConvexOn.continuousOn`, continuity of the limit),
-combined by `TendstoUniformlyOn.tendsto_comp` on a closed-ball rectangle around `(u, v)`. It is the
-saddle-function analogue of `tendsto_eval_of_tendsto`. -/
+`(u i, v i) → (u, v)` in `C × D`. This is Theorem 35.4 (uniform convergence on compact rectangles)
+together with Theorem 35.1 (continuity of the limit), combined on a closed-ball rectangle. -/
 theorem tendsto_eval_prod_of_tendsto (hCo : IsOpen C) (hCc : Convex ℝ C) (hDo : IsOpen D)
     (hDc : Convex ℝ D) (hKs : ∀ i, ConcaveConvexOn C D (Ks i)) (hK : ConcaveConvexOn C D K)
     (hconv : ∀ q ∈ C ×ˢ D, Tendsto (fun i => Ks i q) atTop (𝓝 (K q)))
@@ -783,10 +702,8 @@ theorem prod_add_prod_subset {A A' : Set U} {B B' : Set X} :
 /-- **Rockafellar, Theorem 35.7**, third assertion, in the convex variable:
 `∂₂K_i(u_i, v_i) ⊆ ∂₂K(u, v) + εB` eventually.
 
-This is Theorem 24.5 (`eventually_subgradient_subset_add_closedBall`) applied to the family of
-convex slices `K_i (u_i, ·)`, extended by `+∞` off `D`; the family converges pointwise on `D` to
-`K (u, ·)` by continuous convergence. The moving point `u_i` is first replaced by one lying in `C`
-for *every* index, which changes nothing eventually. -/
+Theorem 24.5 applied to the convex slices `K_i (u_i, ·)`, extended by `+∞` off `D`; the family
+converges pointwise on `D` to `K (u, ·)` by continuous convergence. -/
 theorem eventually_subgradientSnd_subset (hCo : IsOpen C) (hCc : Convex ℝ C) (hDo : IsOpen D)
     (hDc : Convex ℝ D) (hKs : ∀ i, ConcaveConvexOn C D (Ks i)) (hK : ConcaveConvexOn C D K)
     (hconv : ∀ q ∈ C ×ˢ D, Tendsto (fun i => Ks i q) atTop (𝓝 (K q)))
@@ -1042,9 +959,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [InnerProductSpace ℝ U]
 `(w, x) ↦ ⟪w, u*⟫ + ⟪x, v*⟫`.
 
 A product of inner-product spaces carries the *supremum* norm in Mathlib, so `U × X` is not itself
-an inner-product space and neither Mathlib's `gradient` nor `innerSL` applies to a function of a
-pair. This is the substitute: Rockafellar's `∇K (u, v)` is the pair `q` for which `prodInnerL q` is
-the Fréchet derivative. -/
+an inner-product space and Mathlib's `gradient` does not apply to a function of a pair.
+Rockafellar's `∇K (u, v)` is the pair `q` for which `prodInnerL q` is the Fréchet derivative. -/
 noncomputable def prodInnerL (q : U × X) : (U × X) →L[ℝ] ℝ :=
   (innerSL ℝ q.1).comp (ContinuousLinearMap.fst ℝ U X) +
     (innerSL ℝ q.2).comp (ContinuousLinearMap.snd ℝ U X)
@@ -1279,17 +1195,14 @@ theorem eventually_nhds_subgradientSnd_subset (hCo : IsOpen C) (hCc : Convex ℝ
     (fun _ _ => tendsto_const_nhds) hu hv hps.fst hps.snd hε
 
 /-- **Rockafellar, Theorem 35.8**, converse half: a finite concave-convex function with a *unique*
-subgradient at a point of an open rectangle where it is finite is differentiable there, jointly in
-the two variables.
+subgradient at a point of an open rectangle is differentiable there, jointly in the two variables.
 
-The proof is not Rockafellar's. He upgrades separate differentiability to joint differentiability
-through Theorem 35.4, applied to the rescalings
-`h_λ (x, y) = [K (u + λx, v + λy) - K (u, v) - λ⟪x, u*⟫ - λ⟪y, v*⟫] / λ`, which converge pointwise
-to `0` and therefore, being concave-convex, uniformly on bounded sets. Corollary 35.7.1 is already
-that theorem's consequence, and it gives the estimate outright: the increment
-`K (u + a, v + b) - K (u, v)` is sandwiched by subgradient inequalities at the three points
-`(u, v)`, `(u, v + b)` and `(u + a, v + b)`, each of whose subgradients lies within `ε` of `q`, so
-the error is at most `ε (‖a‖ + ‖b‖)`. -/
+The proof is not the book's. Rockafellar upgrades separate to joint differentiability through
+Theorem 35.4 applied to the rescalings
+`h_λ (x, y) = [K (u + λx, v + λy) - K (u, v) - λ⟪x, u*⟫ - λ⟪y, v*⟫] / λ`. Corollary 35.7.1 gives the
+estimate outright: the increment `K (u + a, v + b) - K (u, v)` is sandwiched by subgradient
+inequalities at `(u, v)`, `(u, v + b)` and `(u + a, v + b)`, each of whose subgradients lies within
+`ε` of `q`, so the error is at most `ε (‖a‖ + ‖b‖)`. -/
 theorem hasSaddleGradientAt_of_subgradient_eq_singleton (hCo : IsOpen C) (hCc : Convex ℝ C)
     (hDo : IsOpen D) (hDc : Convex ℝ D) (hK : ConcaveConvexOn C D K) (hu : u ∈ C) (hv : v ∈ D)
     (h₁ : subgradientFst C K (u, v) = {q.1}) (h₂ : subgradientSnd D K (u, v) = {q.2}) :
@@ -1493,12 +1406,9 @@ theorem subgradientSnd_eq_singleton_of_dirDerivReal (hDo : IsOpen D)
     exact eq_of_forall_real_inner_le fun w => (hy' w).trans (h w).le
 
 /-- **Rockafellar, Corollary 35.8.1**: `∇K(u, v) = q` exactly when `K'(u, v; ·, ·)` is the linear
-function `prodInnerL q`.
-
-The forward direction is `dirDerivReal_eq_of_hasFDerivAt` and needs no hypothesis at all. The
-converse restricts the assumed identity to the two axes — which Theorem 35.6 identifies with the
-two partial directional derivatives — turns each into a one-point subdifferential by Theorem 25.2,
-and then invokes Theorem 35.8. -/
+function `prodInnerL q`. The forward direction needs no hypothesis; the converse restricts the
+identity to the two axes, turns each into a one-point subdifferential by Theorem 25.2, and invokes
+Theorem 35.8. -/
 theorem hasSaddleGradientAt_iff_forall_dirDerivReal_eq (hCo : IsOpen C) (hCc : Convex ℝ C)
     (hDo : IsOpen D) (hDc : Convex ℝ D) (hK : ConcaveConvexOn C D K) (hu : u ∈ C) (hv : v ∈ D) :
     HasSaddleGradientAt K q (u, v) ↔ ∀ z : U × X, dirDerivReal K (u, v) z = prodInnerL q z := by
