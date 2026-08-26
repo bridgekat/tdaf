@@ -26,9 +26,9 @@ book states.
   `differentiableAtFn_iff_exists_subgradient_eq_singleton` — **Theorem 25.1** in full.
 * `hasGradientAt_clFn_iff`, `differentiableAtFn_clFn_iff` — the **remark after Corollary 25.1.1**,
   `∇(cl f) = ∇f`.
-* `exists_subgradient_clFn_eq_singleton_iff` — together with `posHomogeneous_clFn` and
-  `supportSet_clFn` (`Duality/Support.lean`), what lets the book's reduction to `cl f` be carried
-  out.
+* `exists_subgradient_clFn_eq_singleton_iff` — together with `posHomogeneous_clFn`
+  (`Convex/Closure.lean`) and `supportSet_clFn` (`Duality/Support.lean`), what lets the book's
+  reduction to `cl f` be carried out.
 * `mem_exposedPoints_epi_conj_iff_of_proper`, `mem_exposedPoints_supportSet_iff_of_proper` —
   **Corollaries 25.1.2 and 25.1.3** for an arbitrary compatible pairing, with the `ClosedFn`
   hypothesis of their `Gradient.lean` originals removed.
@@ -267,8 +267,9 @@ variable {E F : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
 homogeneous proper convex. The book's own proof does not reduce to the closed case here — it
 identifies `g*` with an indicator and appeals to Corollary 25.1.2, which by
 `mem_exposedPoints_epi_conj_iff_of_proper` no longer needs closedness. The reduction is done
-directly instead, on the strength of `posHomogeneous_clFn` and `supportSet_clFn`
-(`Duality/Support.lean`) together with `exists_subgradient_clFn_eq_singleton_iff`. -/
+directly instead, on the strength of `posHomogeneous_clFn` (`Convex/Closure.lean`) and
+`supportSet_clFn` (`Duality/Support.lean`) together with
+`exists_subgradient_clFn_eq_singleton_iff`. -/
 theorem mem_exposedPoints_supportSet_iff_of_proper [IsCompatiblePairing B]
     [IsCompatiblePairing B.flip] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E]
     [LocallyConvexSpace ℝ E] (hgh : PosHomogeneous g) (hgc : ConvexFn g) (hgp : Proper g)
@@ -276,8 +277,8 @@ theorem mem_exposedPoints_supportSet_iff_of_proper [IsCompatiblePairing B]
     z ∈ (supportSet B.flip g).exposedPoints ℝ ↔ ∃ y : F, subgradient B.flip g y = {z} := by
   obtain ⟨w, hw⟩ := hgp.dom_nonempty
   have hne : ∃ y, g y ≠ ⊤ := ⟨w, (mem_dom.1 hw).ne⟩
-  have hph := posHomogeneous_clFn (B := B) hgh hgc hne
-  rw [← supportSet_clFn (B := B) hgh hgc hne,
+  have hph := posHomogeneous_clFn hgh
+  rw [← supportSet_clFn (B := B) hgh hne,
     mem_exposedPoints_supportSet_iff (B := B) hph (convexFn_clFn hgc)
     (hgc.proper_clFn hgp) (closedFn_clFn g)]
   exact exists_subgradient_clFn_eq_singleton_iff hgc hgp

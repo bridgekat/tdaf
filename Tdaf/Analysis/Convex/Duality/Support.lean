@@ -36,9 +36,10 @@ proved again.
   convex functions.
 * `clFn_eq_supportFn_of_posHomogeneous` — **Corollary 13.2.1**: the closure of a positively
   homogeneous convex function is a support function.
-* `posHomogeneous_clFn`, `supportSet_clFn` — its two immediate consequences: taking the closure
-  of a positively homogeneous convex function preserves positive homogeneity and changes neither
-  the set it supports.
+* `supportSet_clFn` — its immediate consequence: taking the closure of a positively homogeneous
+  function does not change the set it supports. The companion "the closure is again positively
+  homogeneous" is `posHomogeneous_clFn` in `Convex/Closure.lean`, where it needs neither a pairing
+  nor convexity.
 * `supportFn_le_zero_iff`, `zero_lt_supportFn_iff` — `supportFn_le_coe_iff` at the level `0`,
   which is the level a polar cone is cut out at.
 * `exists_supportFn_finite_iff` — **Corollary 13.2.2**: bounded ⟺ finite.
@@ -508,29 +509,19 @@ theorem clFn_eq_supportFn_of_posHomogeneous
     ← conj_eq_indicatorFn_of_posHomogeneous (B := B.flip) hg hne]
   exact (biconj_eq_clFn (B := B.flip) hconv).symm
 
-include B in
-/-- **The closure of a positively homogeneous convex function is positively homogeneous.**
-Corollary 13.2.1 writes `cl g` as a support function, and support functions are positively
-homogeneous.
-
-The statement names no pairing; `include B in` supplies the one the proof runs through, so callers
-pass `(B := B)`. A pairing-free proof would go through `epi (cl g)` being the closure of a cone.
--/
-theorem posHomogeneous_clFn (hg : PosHomogeneous g) (hconv : ConvexFn g) (hne : ∃ y, g y ≠ ⊤) :
-    PosHomogeneous (clFn g) := by
-  rw [clFn_eq_supportFn_of_posHomogeneous (B := B) hg hconv hne]
-  exact posHomogeneous_supportFn _ _
-
-/-- **Taking the closure of a positively homogeneous convex function does not change the set it
+omit [LocallyConvexSpace ℝ F] in
+/-- **Taking the closure of a positively homogeneous function does not change the set it
 supports.** The two conjugates agree (`conj_clFn`) and both are indicator functions
-(`conj_eq_indicatorFn_of_posHomogeneous`), so the two supported sets agree. -/
-theorem supportSet_clFn (hg : PosHomogeneous g) (hconv : ConvexFn g) (hne : ∃ y, g y ≠ ⊤) :
+(`conj_eq_indicatorFn_of_posHomogeneous`), so the two supported sets agree.
+
+Convexity of `g` was a hypothesis while `posHomogeneous_clFn` was proved through Corollary 13.2.1;
+neither step needs it. -/
+theorem supportSet_clFn (hg : PosHomogeneous g) (hne : ∃ y, g y ≠ ⊤) :
     supportSet B.flip (clFn g) = supportSet B.flip g := by
   obtain ⟨w, hw⟩ := hne
   have hne' : ∃ y, clFn g y ≠ ⊤ := ⟨w, fun h => hw (top_le_iff.1 (h ▸ clFn_le g w))⟩
   have h₁ := conj_eq_indicatorFn_of_posHomogeneous (B := B.flip) hg ⟨w, hw⟩
-  have h₂ := conj_eq_indicatorFn_of_posHomogeneous (B := B.flip)
-    (posHomogeneous_clFn (B := B) hg hconv ⟨w, hw⟩) hne'
+  have h₂ := conj_eq_indicatorFn_of_posHomogeneous (B := B.flip) (posHomogeneous_clFn hg) hne'
   rw [conj_clFn, h₁] at h₂
   rw [← dom_indicatorFn (supportSet B.flip (clFn g)), ← h₂, dom_indicatorFn]
 

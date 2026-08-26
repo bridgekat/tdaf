@@ -69,21 +69,6 @@ open scoped NNReal RealInnerProductSpace
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### The relative interior of a set with interior points -/
-
-section Relint
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] {C : Set E}
-
-/-- A convex set with an interior point has `ri C = interior C`; in particular
-`interior C ⊆ ri C`, which is how Theorem 23.4 becomes applicable at interior points. -/
-theorem Convex.interior_subset_relint (hC : Convex ℝ C) (hne : (interior C).Nonempty) :
-    interior C ⊆ ri C :=
-  le_of_eq (intrinsicInterior_eq_interior
-    ((Convex.interior_nonempty_iff_affineSpan_eq_top hC).1 hne)).symm
-
-end Relint
-
 /-! ### Theorem 24.7, the quantitative half -/
 
 section Bound
