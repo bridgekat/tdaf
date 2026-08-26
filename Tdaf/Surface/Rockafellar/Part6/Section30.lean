@@ -1133,9 +1133,6 @@ theorem convexBifun_noDualSolutionBifun : ConvexBifun noDualSolutionBifun := by
   exact convexFn_add_coe (l := fun p : Rn 1 × Rn 1 => p.2 0)
     (convexFn_indicatorFn.2 convex_noDualSolutionSet) fun _ _ _ _ _ => rfl
 
-private theorem continuous_coord (i : Fin 1) : Continuous fun x : Rn 1 => x i :=
-  PiLp.continuous_apply (p := 2) (fun _ : Fin 1 => ℝ) i
-
 /-- The p. 316 example is a closed bifunction: its epigraph is cut out by two continuous
 inequalities. -/
 theorem closedBifun_noDualSolutionBifun : ClosedBifun noDualSolutionBifun := by

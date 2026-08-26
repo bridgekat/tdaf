@@ -388,7 +388,11 @@ when `f` has no direction of recession — compact.
 
 Public because it is not an implementation detail of Theorem 27.2: Corollary 28.1.1 wants exactly
 this set with exactly these hypotheses, and reaching it through
-`isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le` costs a dozen lines. -/
+`isCompact_iff_recessionCone_eq_zero` and `recessionCone_setOf_le` costs four lines there.
+
+Only the `⇒` direction is packaged here. Corollary 28.1.1 uses that pair three times, and its other
+two uses run the other way — compactness *out of* a recession-cone computation — for which there is
+no lemma. -/
 theorem isCompact_setOf_le (hf : ConvexFn f) (hc : ClosedFn f) (hp : Proper f)
     (hrec : recessionConeFn f = {0}) {α : ℝ} (hne : {z : E | f z ≤ (α : EReal)}.Nonempty) :
     IsCompact {z : E | f z ≤ (α : EReal)} := by

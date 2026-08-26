@@ -53,8 +53,11 @@ a gap gets closed once rather than once per surface.
   A book writes a linear system as `⟨aᵢ, x⟩ ≤ αᵢ` and the backbone quantifies the other way round;
   these are the translation.
 * `pairing_eq_sum`, `pairing_two` — the pairing in coordinates, `⟨u, v⟩ = ∑ᵢ uᵢvᵢ` and its `n = 2`
-  instance. Every two-dimensional counterexample in a textbook opens with the second, and three
-  sections wrote it out `private` before it was put here.
+  instance. Every two-dimensional counterexample in a textbook opens with the second. Four
+  sections had written one or the other `private` before they were put here.
+* `continuous_coord` — each coordinate of `Rn n` is continuous. The companion to the two above:
+  a counterexample that *cuts a region out* of `Rn n` with coordinate inequalities needs it to
+  show the region is open. Also written `private` twice, at `Fin 1` and `Fin 2`.
 * `separatingRight_pairing` — `(pairing n).SeparatingRight`, which several backbone theorems ask
   for as a hypothesis and which is otherwise re-derived, at every call site, from
   `separatingRight_flip_of_separatingDual`.
@@ -152,6 +155,15 @@ counterexamples are two-dimensional almost without exception, and this is the fi
 one of them. -/
 theorem pairing_two (u v : Rn 2) : pairing 2 u v = u 0 * v 0 + u 1 * v 1 := by
   rw [pairing_eq_sum, Fin.sum_univ_two]
+
+/-- **Each coordinate of `Rn n` is continuous.** `Rn n` is a `PiLp 2`, whose topology is the
+product topology, so this is `PiLp.continuous_apply` with the exponent supplied.
+
+Public here for the same reason as `pairing_eq_sum`: every counterexample that cuts a region out of
+`Rn n` with coordinate inequalities opens by proving it, and it had been written `private` at
+`Fin 1` and at `Fin 2` in two different sections. -/
+theorem continuous_coord {n : ℕ} (i : Fin n) : Continuous fun x : Rn n => x i :=
+  PiLp.continuous_apply (p := 2) (fun _ : Fin n => ℝ) i
 
 /-- **`pairing n` separates on the right**, which is the hypothesis the backbone's level-set and
 recession duality asks for in place of a book's `y ≠ 0`. It follows from

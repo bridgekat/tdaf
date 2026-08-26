@@ -1304,10 +1304,6 @@ and the backbone's `lagrangian` agree, and everything §29 proves about the latt
 
 namespace OrdinaryConvexProgram
 
-private theorem pairing_eq_sum {k : ℕ} (u v : Rn k) : pairing k u v = ∑ i, u i * v i := by
-  simp only [pairing_apply, PiLp.inner_apply, RCLike.inner_apply, conj_trivial]
-  exact Finset.sum_congr rfl fun i _ => mul_comm _ _
-
 private theorem pairing_unitVec {k : ℕ} (i : Fin k) (u : Rn k) :
     pairing k (unitVec k i) u = u i := by
   rw [pairing_eq_sum]

@@ -585,9 +585,6 @@ the weighted Cauchy–Schwarz inequality `(au + bv)²/(as + bt) ≤ au²/s + bv�
 /-- The open positive quadrant of `ℝ²`, which is `ri (dom f)` for the p. 254 example. -/
 def openQuadrant : Set (Rn 2) := {x : Rn 2 | 0 < x 0 ∧ 0 < x 1}
 
-private theorem continuous_coord (i : Fin 2) : Continuous fun x : Rn 2 => x i :=
-  PiLp.continuous_apply (p := 2) (fun _ : Fin 2 => ℝ) i
-
 theorem isOpen_openQuadrant : IsOpen openQuadrant :=
   (isOpen_lt continuous_const (continuous_coord 0)).inter
     (isOpen_lt continuous_const (continuous_coord 1))

@@ -143,10 +143,9 @@ theorem mem_constancySpace_conj_of_relint [IsCompatiblePairing B'] [IsCompatible
     z ∈ constancySpace (conj B' g) := by
   have hconjp : Proper (conj B' g) := proper_conj hg
   rw [constancySpace_conj hg.proper hconjp]
-  have hzero : ((0 : ℝ) : EReal) = 0 := by norm_num
   have hnonpos : ∀ x ∈ dom g, (B'.flip z) x ≤ 0 := by
     intro x hx
-    rw [recessionFn_conj hg.proper hconjp, ← hzero, supportFn_le_coe_iff] at hrec
+    rw [recessionFn_conj hg.proper hconjp, supportFn_le_zero_iff] at hrec
     exact hrec x hx
   have hvanish : (B'.flip z) (A x₀) = 0 := by
     rw [LinearMap.flip_apply, hA x₀ z, hz0, map_zero]
