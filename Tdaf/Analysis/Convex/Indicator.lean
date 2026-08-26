@@ -17,6 +17,7 @@ which every statement about convex *sets* becomes an instance of a statement abo
 * `convexFn_indicatorFn` — `δ(· | s)` is convex iff `s` is convex.
 * `indicatorFn_ne_bot` — indicator functions never take the value `⊥`.
 * `dom_indicatorFn` — the effective domain of `δ(· | s)` is `s`.
+* `proper_indicatorFn` — `δ(· | s)` is proper exactly when `s` is non-empty.
 * `indicatorFn_add`, `indicatorFn_finsetSum` — adding indicators intersects the sets, for two
   summands and for a `Finset` of them.
 * `epi_indicatorFn` — the epigraph of `δ(· | s)` is the "half-cylinder" `s ×ˢ Ici 0`.
@@ -49,6 +50,14 @@ theorem indicatorFn_ne_bot (s : Set E) (x : E) : indicatorFn s x ≠ ⊥ := by
 
 @[simp] theorem dom_indicatorFn (s : Set E) : dom (indicatorFn s) = s := by
   ext x; by_cases hx : x ∈ s <;> simp [hx]
+
+/-- **`δ(· | s)` is proper exactly when `s` is non-empty.** The two fields of `Proper` are
+`dom_indicatorFn` and `indicatorFn_ne_bot`, so nothing is left to prove; what the packaging buys is
+that every minimisation of `h + δ(· | C)` — Rockafellar's standing device for a constrained problem
+(§4, §27) — can cite properness of the constraint term without also assuming `C` closed. -/
+@[simp] theorem proper_indicatorFn {s : Set E} : Proper (indicatorFn s) ↔ s.Nonempty :=
+  ⟨fun h => by simpa using h.dom_nonempty,
+    fun h => ⟨by simpa using h, indicatorFn_ne_bot s⟩⟩
 
 /-- **Adding indicators intersects the sets.** `0 + 0 = 0`, and `⊤` absorbs everything an
 indicator can be. This is why every "intersection" corollary in the book — Cor 16.4.1's polar of

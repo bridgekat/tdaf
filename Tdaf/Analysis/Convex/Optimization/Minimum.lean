@@ -191,6 +191,13 @@ theorem iInf_eq_of_mem_argmin {a : E} (ha : a ∈ argmin f) : (⨅ z, f z) = f a
   le_antisymm (iInf_le _ _) (mem_argmin_iff_le_iInf.1 ha)
 
 omit [AddCommGroup E] [Module ℝ E] in
+/-- A point minimises exactly when its value *is* the infimum. The equational form of
+`mem_argmin_iff_le_iInf`, which is what a statement identifying an optimal value with `inf F 0`
+wants to rewrite with. -/
+theorem mem_argmin_iff_eq_iInf : x ∈ argmin f ↔ f x = ⨅ z, f z :=
+  ⟨fun h => (iInf_eq_of_mem_argmin h).symm, fun h => mem_argmin_iff_le_iInf.2 h.le⟩
+
+omit [AddCommGroup E] [Module ℝ E] in
 /-- Rockafellar's `lev_{inf f} f`: once the infimum is attained and finite, the minimum set is
 literally a level set of `f`. -/
 theorem argmin_eq_setOf_le {a : E} (ha : a ∈ argmin f) {μ : ℝ} (hμ : f a = (μ : EReal)) :
@@ -210,6 +217,14 @@ def argmax (g : E → EReal) : Set E := {x | ∀ z, g z ≤ g x}
 
 omit [AddCommGroup E] [Module ℝ E] in
 theorem mem_argmax_iff {g : E → EReal} : x ∈ argmax g ↔ ∀ z, g z ≤ g x := Iff.rfl
+
+omit [AddCommGroup E] [Module ℝ E] in
+/-- A point maximises exactly when its value *is* the supremum. The mirror of
+`mem_argmin_iff_eq_iInf`, and the step every statement of the form "`v` is an optimal solution to
+the concave program `(P*)`" pays: `argmax` is a family of inequalities and the dual optimal value is
+a supremum. -/
+theorem mem_argmax_iff_eq_iSup {g : E → EReal} : x ∈ argmax g ↔ g x = ⨆ z, g z :=
+  ⟨fun h => le_antisymm (le_iSup g x) (iSup_le h), fun h z => by rw [h]; exact le_iSup g z⟩
 
 omit [AddCommGroup E] [Module ℝ E] in
 /-- Maximising `g` is minimising `-g`. -/

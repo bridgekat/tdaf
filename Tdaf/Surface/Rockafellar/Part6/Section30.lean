@@ -172,36 +172,13 @@ convex counterpart at the negated bifunction so that no mirror proof is needed.
 
 ## Backbone gaps
 
-Nothing in the numbered content is blocked; every gap below was closed `private` in this file, and
-each is recorded with the signature wanted and the module it belongs in.
+Almost everything this file once carried `private` is now in the backbone; what is left is
+recorded below with the signature wanted and the module it belongs in.
 
-* `Optimization/Normal.lean`, beside `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup` — **the dual
-  half of Theorem 30.5**:
-  `theorem mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin (hF : ConvexBifun F)
-  (hcl : ClosedBifun F) (hn : Normal F) (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) :
-  x ∈ ConcaveKuhnTucker Bx.flip (adjointBifun Bu Bx F) ↔ x ∈ argmin (F 0)`.
-  Carried here as `theorem_30_5_dual`; it is four lines given `concaveAdjointBifun_zero_apply` and
-  `concaveAdjointBifun_adjointBifun_eq_self`.
-* `Optimization/Normal.lean` — **Corollary 30.5.2**, both assertions. The primal one needs the
-  concave mirror of Corollary 29.1.4, which the backbone does not have; the route used here runs the
-  *convex* Corollary 29.1.4 on `-F*`. Carried as `corollary_30_5_2` and `corollary_30_5_2_dual`.
-* `Optimization/Normal.lean`, beside `neg_supBifun` —
-  `theorem domBifun_neg (G : Bifun Y V) : domBifun (fun y v => -(G y v)) = domConcaveBifun G`.
-  Two lines, and it is what turns `ConcaveStronglyConsistent G` into `StronglyConsistent (-G)`.
-* `Optimization/Adjoint.lean`, beside `exists_adjointBifun_ne_bot` — **Theorem 30.1's properness
-  clause as a biconditional**:
-  `theorem properConcave_graphFn_adjointBifun_iff (hF : ConvexBifun F) (hcl : ClosedBifun F) :
-  ProperConcave (graphFn (adjointBifun Bu Bx F)) ↔ Proper (graphFn F)`. The backbone has only the
-  `⇐` half, and only in the form "somewhere `≠ ⊥`". Carried here as `theorem_30_1_proper`.
-* `Operations/Image.lean`, beside `compLin` —
-  `theorem proper_compLin_of_surjective (hA : Function.Surjective A) :
-  Proper (compLin g A) ↔ Proper g`. Eight lines, and it is what the properness clause above needs.
-* `Optimization/Minimum.lean`, beside `argmax` —
-  `theorem mem_argmax_iff_eq_iSup (g : E → EReal) (v : E) : v ∈ argmax g ↔ g v = ⨆ w, g w`.
-  Every §30 statement about "an optimal solution to `(P*)`" pays this once.
-* `Tdaf/Order/EReal.lean` —
-  `theorem le_zero_of_forall_le_pos {a : EReal} (h : ∀ ε : ℝ, 0 < ε → a ≤ (ε : EReal)) : a ≤ 0`.
-  Four lines from `EReal.lt_iff_exists_real_btwn`; both counterexamples run on it.
+* `Optimization/Normal.lean` — **Corollary 30.5.2's second assertion**, that a strongly consistent
+  program with a consistent dual has a dual optimal solution. The first assertion is in the backbone
+  (`exists_infBifun_eq_of_concaveStronglyConsistent`); the second is `corollary_30_5_2_dual` here,
+  five lines on `kuhnTucker_nonempty_of_stronglyConsistent` and Theorem 30.5.
 * **Not in this repository at all**: the convexity of the abnormal example. What is wanted is
   `theorem concaveOn_sqrt_mul : ConcaveOn ℝ {p : ℝ × ℝ | 0 ≤ p.1 ∧ 0 ≤ p.2}
   fun p => Real.sqrt (p.1 * p.2)` — the geometric mean is concave on the first quadrant — together
@@ -216,6 +193,15 @@ each is recorded with the signature wanted and the module it belongs in.
   in `Optimization/Adjoint.lean`. The convex-side statement
   `concaveAdjointBifun_adjointBifun_eq_clBifun` is there; its mirror is not, and neither is a
   `clConcaveBifun`. Not attempted here.
+
+**What the backbone gained.** `mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin` (the dual half of
+Theorem 30.5) and `exists_infBifun_eq_of_concaveStronglyConsistent` (Corollary 30.5.2's first
+assertion) are in `Optimization/Normal.lean`, together with `domBifun_neg` and
+`concaveStronglyConsistent_iff_stronglyConsistent_neg`;
+`properConcave_graphFn_adjointBifun_iff` (Theorem 30.1's properness clause as a biconditional) is in
+`Optimization/Adjoint.lean`, on `proper_compLin_of_surjective` in `Operations/Image.lean`;
+`mem_argmax_iff_eq_iSup` is in `Optimization/Minimum.lean`; and
+`Tdaf.EReal.le_zero_of_forall_le_pos` is in `Tdaf/Order/EReal.lean`.
 
 **A placement note, not a gap.** Theorem 30.1's polyhedrality clause *does* exist —
 `polyhedralFn_neg_graphFn_adjointBifun`, whose own docstring calls it Theorem 30.1 — but it lives in
@@ -286,37 +272,11 @@ theorem theorem_30_1_closed (F : Bifun (Rn m) (Rn n)) :
     ClosedConcaveFn (graphFn (dualProgram F)) :=
   closedConcaveFn_graphFn_adjointBifun (Bu := pairing m) (Bx := pairing n) (F := F)
 
-/-- Properness transports across a surjective linear substitution. Used only to move Theorem 12.2's
-properness statement about `(graph F)*` across the reflection `(x*, u*) ↦ (-u*, x*)`. -/
-private theorem proper_compLin_of_surjective {E G : Type*} [AddCommGroup E] [Module ℝ E]
-    [AddCommGroup G] [Module ℝ G] {g : G → EReal} {A : E →ₗ[ℝ] G}
-    (hA : Function.Surjective A) : Proper (compLin g A) ↔ Proper g := by
-  constructor
-  · rintro ⟨⟨x, hx⟩, hb⟩
-    refine ⟨⟨A x, hx⟩, fun z => ?_⟩
-    obtain ⟨w, rfl⟩ := hA z
-    exact hb w
-  · rintro ⟨⟨z, hz⟩, hb⟩
-    obtain ⟨w, rfl⟩ := hA z
-    exact ⟨⟨w, hz⟩, fun x => hb (A x)⟩
-
 /-- **Rockafellar, Theorem 30.1** (12303), the properness clause: `F*` is proper if and only if `F`
-is, for a closed convex `F`.
-
-This is Theorem 12.2 (`proper_conj_iff`) read through `graphFn_adjointBifun`: `-F*` is the
-conjugate of the graph function of `F` composed with the reflection `(x*, u*) ↦ (-u*, x*)`, which
-is surjective, and properness of a concave function is properness of its negative
-(`properConcave_iff_proper_neg`). Closedness is used only in the direction "`F` proper ⇒ `F*`
-proper", exactly as in Theorem 12.2. -/
+is, for a closed convex `F`. -/
 theorem theorem_30_1_proper (hF : ConvexBifun F) (hcl : ClosedBifun F) :
-    ProperConcave (graphFn (dualProgram F)) ↔ Proper (graphFn F) := by
-  have hg : (fun q : Rn n × Rn m => -(graphFn (dualProgram F) q))
-      = compLin (conj (pairingProd m n) (graphFn F)) (adjointSwap (Rn m) (Rn n)) := by
-    funext q
-    rw [graphFn_adjointBifun, neg_neg]
-  rw [properConcave_iff_proper_neg, hg,
-    proper_compLin_of_surjective surjective_adjointSwap,
-    proper_conj_iff (B := pairingProd m n) hF hcl]
+    ProperConcave (graphFn (dualProgram F)) ↔ Proper (graphFn F) :=
+  properConcave_graphFn_adjointBifun_iff (Bu := pairing m) (Bx := pairing n) hF hcl
 
 /-- **Rockafellar, Theorem 30.1** (12303): `F** = cl F` for a convex bifunction. -/
 theorem theorem_30_1_biadjoint (hF : ConvexBifun F) :
@@ -753,16 +713,6 @@ theorem gale_kuhn_tucker_duality (hF : PolyhedralBifun F) (hcl : ClosedBifun F)
 
 /-! ### Theorem 30.5 -/
 
-/-- A point maximises exactly when its value is the supremum. -/
-private theorem mem_argmax_iff_eq_iSup {E : Type*} (g : E → EReal) (v : E) :
-    v ∈ argmax g ↔ g v = ⨆ w, g w := by
-  constructor
-  · intro h
-    exact le_antisymm (le_iSup g v) (iSup_le h)
-  · intro h w
-    rw [h]
-    exact le_iSup g w
-
 /-- **Rockafellar, Theorem 30.5** (12693), first assertion: under normality, `u*` is a Kuhn–Tucker
 vector for `(P)` if and only if `u*` is an optimal solution to `(P*)`. -/
 theorem theorem_30_5 (hF : ConvexBifun F) (hn : Normal F) (ht : infBifun F 0 ≠ ⊤)
@@ -774,34 +724,17 @@ theorem theorem_30_5 (hF : ConvexBifun F) (hn : Normal F) (ht : infBifun F 0 ≠
 /-- **Rockafellar, Theorem 30.5** (12693), second assertion: under normality, `x` is a Kuhn–Tucker
 vector for `(P*)` if and only if `x` is an optimal solution to `(P)`.
 
-The book says only "the proof of the dual assertion of the theorem is parallel" (12701). It is not
-carried out there and the backbone had only the primal half, so the argument here is supplied: the
-defining supremum of a concave Kuhn–Tucker vector *is* the value of the second adjoint
-(`concaveAdjointBifun_zero_apply`), and `F** = F` (Theorem 30.1) turns it into `(F0)(x)`. -/
+The book says only "the proof of the dual assertion of the theorem is parallel" (12701), and does
+not carry it out. The backbone does, as `mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin`; the
+only step left here is that the book's `⟨y, x⟩` is the *flipped* pairing in the backbone's
+statement, and `pairing n` is symmetric. -/
 theorem theorem_30_5_dual (hF : ConvexBifun F) (hcl : ClosedBifun F) (hn : Normal F)
     (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) (x : Rn n) :
     x ∈ ConcaveKuhnTucker (pairing n) (dualProgram F) ↔ x ∈ argmin (F 0) := by
-  have hval : supBifun (dualProgram F) 0 = infBifun F 0 := ((theorem_30_3_a_iff_c hF).1 hn).symm
-  have hkey : (⨆ y : Rn n, (((pairing n y x : ℝ) : EReal) + supBifun (dualProgram F) y))
-      = F 0 x := by
-    have hbi := theorem_30_1_biadjoint_closed hF hcl
-    have h := concaveAdjointBifun_zero_apply (pairing m) (pairing n) (dualProgram F) x
-    rw [hbi] at h
-    rw [h]
-    exact iSup_congr fun y => by rw [pairing_comm]
-  have hmin : x ∈ argmin (F 0) ↔ F 0 x = infBifun F 0 := by
-    rw [mem_argmin_iff_le_iInf]
-    exact ⟨fun h => le_antisymm h (iInf_le (fun z => F 0 z) x), le_of_eq⟩
-  rw [hmin]
-  constructor
-  · rintro ⟨-, -, h3⟩
-    rw [hkey, hval] at h3
-    exact h3
-  · intro hx
-    refine ⟨?_, ?_, ?_⟩
-    · rw [hval]; exact ht
-    · rw [hval]; exact hb
-    · rw [hkey, hval]; exact hx
+  have h := mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin (Bu := pairing m) (Bx := pairing n)
+    (x := x) hF hcl hn ht hb
+  rw [flip_pairing] at h
+  exact h
 
 /-! ### Corollary 30.5.1 -/
 
@@ -866,12 +799,6 @@ private theorem infBifun_zero_ne_bot (hF : ConvexBifun F) (hn : Normal F)
   intro hcon
   exact hv (iSup_eq_bot.1 hcon v)
 
-/-- The effective domain of `-G` is the concave effective domain of `G`. -/
-private theorem domBifun_neg (G : Bifun (Rn n) (Rn m)) :
-    domBifun (fun y v => -(G y v)) = domConcaveBifun G := by
-  ext y
-  simp only [mem_domBifun, mem_domConcaveBifun, ne_eq, _root_.EReal.neg_eq_top_iff]
-
 /-- **Rockafellar, Corollary 30.5.2** (12729), second assertion: if `(P)` is strongly consistent and
 `(P*)` is consistent then `(P*)` has an optimal solution.
 
@@ -890,35 +817,17 @@ theorem corollary_30_5_2_dual (hF : ConvexBifun F) (hs : StronglyConsistent F)
 /-- **Rockafellar, Corollary 30.5.2** (12729), first assertion: if `(P)` is consistent and `(P*)` is
 strongly consistent then `(P)` has an optimal solution.
 
-This is the assertion the book actually proves (12731). The concave Corollary 29.1.4 it invokes is
-not in the backbone; the route here is the convex one applied to `-F*`, which is a closed convex
-bifunction with no hypothesis on `F` (Theorem 30.1), followed by Theorem 30.5's dual assertion. -/
+This is the assertion the book actually proves (12731), and its proof invokes the *concave*
+Corollary 29.1.4. The backbone route runs the convex one on `-F*` instead and is
+`exists_infBifun_eq_of_concaveStronglyConsistent`; all that is left here is to read the attained
+value as membership of `argmin`. -/
 theorem corollary_30_5_2 (hF : ConvexBifun F) (hcl : ClosedBifun F) (hc : Consistent F)
     (hs : ConcaveStronglyConsistent (dualProgram F)) : (argmin (F 0)).Nonempty := by
   have hn : Normal F := theorem_30_4_b hF hcl hs
-  have ht : infBifun F 0 ≠ ⊤ := infBifun_zero_ne_top hc
   have hb : infBifun F 0 ≠ ⊥ := infBifun_zero_ne_bot hF hn hs.concaveConsistent
-  have hG : ConvexBifun fun y v => -(dualProgram F y v) :=
-    convexBifun_neg_adjointBifun (pairing m) (pairing n) F
-  have hsG : StronglyConsistent fun y v => -(dualProgram F y v) := by
-    change (0 : Rn n) ∈ ri (domBifun fun y v => -(dualProgram F y v))
-    rw [domBifun_neg]
-    exact hs
-  have hinfG : infBifun (fun y v => -(dualProgram F y v)) 0 = -(supBifun (dualProgram F) 0) := by
-    rw [supBifun_apply, Tdaf.EReal.neg_iSup, infBifun_apply]
-  have hval : supBifun (dualProgram F) 0 = infBifun F 0 := ((theorem_30_3_a_iff_c hF).1 hn).symm
-  have hGt : infBifun (fun y v => -(dualProgram F y v)) 0 ≠ ⊤ := by
-    rw [hinfG, hval, ne_eq, _root_.EReal.neg_eq_top_iff]
-    exact hb
-  have hGb : infBifun (fun y v => -(dualProgram F y v)) 0 ≠ ⊥ := by
-    rw [hinfG, hval, ne_eq, _root_.EReal.neg_eq_bot_iff]
-    exact ht
-  obtain ⟨z, hz⟩ := kuhnTucker_nonempty_of_stronglyConsistent (B := pairing n) hG
-    (proper_infBifun_of_stronglyConsistent hG hsG hGb) hsG hGt
-  have hz' : (-z) ∈ ConcaveKuhnTucker (pairing n) (dualProgram F) := by
-    rw [mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker, neg_neg]
-    exact hz
-  exact ⟨-z, (theorem_30_5_dual hF hcl hn ht hb (-z)).1 hz'⟩
+  obtain ⟨x, hx⟩ := exists_infBifun_eq_of_concaveStronglyConsistent (Bu := pairing m)
+    (Bx := pairing n) hF hcl hc hb hs
+  exact ⟨x, mem_argmin_iff_eq_iInf.2 (hx.trans (infBifun_apply F 0))⟩
 
 /-! ### The section's two counterexamples: the toolkit
 
@@ -948,16 +857,6 @@ private theorem tendsto_coord1 :
   have h := (hc.tendsto 0).comp tendsto_one_div_add_atTop_nhds_zero_nat
   rw [zero_smul] at h
   exact h
-
-/-- An `EReal` below every positive real is below zero. `EReal` is densely ordered, so this is
-`EReal.lt_iff_exists_real_btwn` plus a contradiction. -/
-private theorem le_zero_of_forall_le_pos {a : EReal} (h : ∀ ε : ℝ, 0 < ε → a ≤ (ε : EReal)) :
-    a ≤ 0 := by
-  by_contra hc
-  rw [not_le] at hc
-  obtain ⟨z, hz0, hza⟩ := _root_.EReal.lt_iff_exists_real_btwn.1 hc
-  refine absurd (h z ?_) (not_le.2 hza)
-  exact_mod_cast hz0
 
 /-! ### An unnumbered counterexample (12671): an abnormal program with a duality gap
 
@@ -1018,7 +917,8 @@ private theorem exp_neg_le {ε : ℝ} (hε : 0 < ε) : Real.exp (-(1 / ε)) ≤ 
 /-- **Rockafellar, §30 (12675)**: `inf Fu = 0` for every `u > 0`. -/
 theorem infBifun_abnormalBifun_of_pos {u : Rn 1} (hu : 0 < u 0) :
     infBifun abnormalBifun u = 0 := by
-  refine le_antisymm (le_zero_of_forall_le_pos fun ε hε => ?_) (zero_le_infBifun_abnormalBifun u)
+  refine le_antisymm (Tdaf.EReal.le_zero_of_forall_le_pos fun ε hε => ?_)
+    (zero_le_infBifun_abnormalBifun u)
   refine le_trans (iInf_le _ (coord1 ((1 / ε) ^ 2 / u 0))) ?_
   have hx : 0 ≤ (1 / ε) ^ 2 / u 0 := by positivity
   rw [abnormalBifun_of_mem (u := u) (x := coord1 ((1 / ε) ^ 2 / u 0))
@@ -1040,7 +940,7 @@ theorem supBifun_dualProgram_abnormalBifun_zero :
     supBifun (dualProgram abnormalBifun) 0 = 0 := by
   refine le_antisymm ?_ ?_
   · rw [supBifun_apply]
-    refine iSup_le fun v => le_zero_of_forall_le_pos fun ε hε => ?_
+    refine iSup_le fun v => Tdaf.EReal.le_zero_of_forall_le_pos fun ε hε => ?_
     rw [dualProgram_zero_apply]
     set t : ℝ := ε / (|v 0| + 1) with ht
     have hden : 0 < |v 0| + 1 := by positivity

@@ -37,7 +37,8 @@ first factor.
   hypothesis on `F` at all.
 * `concaveAdjointBifun_adjointBifun_eq_clBifun` — **Theorem 30.1**'s biconjugation, `F** = cl F`;
 * `exists_adjointBifun_ne_bot` — **Theorem 30.1**'s properness half: the adjoint of a closed
-  proper convex bifunction is finite somewhere.
+  proper convex bifunction is finite somewhere; `properConcave_graphFn_adjointBifun_iff` is the
+  same clause as a biconditional, `F*` proper concave ⟺ `F` proper.
   `concaveAdjointBifun_adjointBifun_eq_self` is the fixed-point form for closed convex `F`.
 * `adjointBifun_zero_eq_concaveConj` — **Theorem 30.2**: the dual objective `F* 0` is the *concave*
   conjugate of the concave function `-inf F`.
@@ -535,6 +536,26 @@ theorem exists_adjointBifun_ne_bot (hF : ClosedProperConvexFn (graphFn F)) :
   refine ⟨q.2, -q.1, ?_⟩
   rw [adjointBifun_eq_neg_conj_graphFn, neg_neg]
   simpa using hq.ne
+
+/-- **Rockafellar, Theorem 30.1**, the properness clause in full: for a closed convex `F`, the
+adjoint `F*` is a proper *concave* bifunction exactly when `F` is proper.
+
+`exists_adjointBifun_ne_bot` is one direction in the weaker form "somewhere `≠ -∞`"; this is the
+biconditional, and with `concaveFn_graphFn_adjointBifun` and
+`closedConcaveFn_graphFn_adjointBifun` it completes "`F*` is a closed proper concave bifunction".
+It is Theorem 12.2's properness clause (`proper_conj_iff`) read through `graphFn_adjointBifun`:
+properness of a concave function is properness of its negative, `-(graph F*)` is the conjugate of
+`graph F` composed with the reflection `(y, v) ↦ (-v, y)`, and that reflection is onto
+(`proper_compLin_of_surjective`). As in Theorem 12.2, closedness is used only for "`F` proper ⇒
+`F*` proper". -/
+theorem properConcave_graphFn_adjointBifun_iff (hF : ConvexBifun F) (hcl : ClosedBifun F) :
+    ProperConcave (graphFn (adjointBifun Bu Bx F)) ↔ Proper (graphFn F) := by
+  have hg : (fun q : Y × V => -(graphFn (adjointBifun Bu Bx F) q))
+      = compLin (conj (prodPairing Bu Bx) (graphFn F)) (adjointSwap V Y) := by
+    funext q
+    rw [graphFn_adjointBifun, neg_neg]
+  rw [properConcave_iff_proper_neg, hg, proper_compLin_of_surjective surjective_adjointSwap,
+    proper_conj_iff (B := prodPairing Bu Bx) hF hcl]
 
 end Thm301
 

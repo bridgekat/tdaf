@@ -32,6 +32,8 @@ is the interesting one: the infimum need not be attained, so `A f` is not read o
 * `mapLin_eq_ofEpi` — the image is the function determined by the image of the epigraph under
   `(x, μ) ↦ (A x, μ)`, which is Rockafellar's own proof of Theorem 5.7.
 * `dom_mapLin`, `dom_compLin` — the effective domain is transported the same way.
+* `proper_compLin_of_surjective` — properness is transported by a *surjective* substitution, in
+  both directions.
 * `convexFn_iInf_right` — the projection case Rockafellar highlights: partial minimisation
   `(y ↦ ⨅ z, h (y, z))` of a convex function of two variables is convex. This is the form §29 uses.
 * `ConvexFn.comp_affine` — precomposition with an affine map, and `ConvexFn.slice_left` /
@@ -163,6 +165,24 @@ noncomputable def gci_compLin_mapLin (hA : Function.Surjective A) :
 
 /-- The effective domain of an inverse image is the preimage of the effective domain. -/
 theorem dom_compLin (g : G → EReal) (A : E →ₗ[ℝ] G) : dom (compLin g A) = A ⁻¹' dom g := rfl
+
+/-- **Properness survives a surjective substitution, in both directions.** Both fields of `Proper`
+are quantified over the domain, so both halves need `A` onto: without it `g A` can be proper while
+`g` is `⊥` off the range, and `g` can be proper while its finite values are all missed.
+
+This is what transports a properness statement across a linear reflection — the reflection
+`(x*, u*) ↦ (-u*, x*)` under which an adjoint bifunction is a conjugate
+(`Optimization/Adjoint.lean`) is the case that motivated it. -/
+theorem proper_compLin_of_surjective (hA : Function.Surjective A) :
+    Proper (compLin g A) ↔ Proper g := by
+  constructor
+  · rintro ⟨⟨x, hx⟩, hb⟩
+    refine ⟨⟨A x, hx⟩, fun z => ?_⟩
+    obtain ⟨w, rfl⟩ := hA z
+    exact hb w
+  · rintro ⟨⟨z, hz⟩, hb⟩
+    obtain ⟨w, rfl⟩ := hA z
+    exact ⟨⟨w, hz⟩, fun x => hb (A x)⟩
 
 /-- The effective domain of an image is the image of the effective domain. No convexity is needed:
 `⨅` is `< ⊤` exactly when one of the terms is. -/

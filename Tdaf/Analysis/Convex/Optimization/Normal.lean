@@ -43,7 +43,11 @@ formula of Corollary 30.2.2.
 * `StronglyConsistent.normal`, `normal_of_concaveStronglyConsistent_adjointBifun`,
   `normal_of_kuhnTucker_nonempty` — **Theorem 30.4**, clauses (a), (b) and (c).
 * `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup`, `kuhnTucker_eq_setOf_isMax` — **Theorem 30.5**:
-  under normality the Kuhn–Tucker vectors of `(P)` are precisely the optimal solutions of `(P*)`.
+  under normality the Kuhn–Tucker vectors of `(P)` are precisely the optimal solutions of `(P*)`;
+  `mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin` is the dual assertion, which the book leaves
+  as "parallel".
+* `exists_infBifun_eq_of_concaveStronglyConsistent` — **Corollary 30.5.2**, first assertion: a
+  consistent program whose dual is strongly consistent attains its infimum.
 
 ## Implementation notes
 
@@ -148,6 +152,16 @@ theorem neg_supBifun (G : Bifun Y V) :
   funext y
   rw [supBifun_apply, Tdaf.EReal.neg_iSup, infBifun_apply]
 
+/-- **The effective domain of `-G` is the concave effective domain of `G`.** The two membership
+conditions are `-(G y v) ≠ ⊤` and `G y v ≠ ⊥`, which are the same condition.
+
+Trivial, and load-bearing: it is what turns every consistency hypothesis about a concave program
+into the corresponding hypothesis about the convex program `-G`, `ConcaveStronglyConsistent G` into
+`StronglyConsistent (-G)` in particular (`concaveStronglyConsistent_iff_stronglyConsistent_neg`). -/
+theorem domBifun_neg (G : Bifun Y V) : domBifun (fun y v => -(G y v)) = domConcaveBifun G := by
+  ext y
+  simp only [mem_domBifun, mem_domConcaveBifun, ne_eq, _root_.EReal.neg_eq_top_iff]
+
 /-- The mirror of `dom_infBifun`. -/
 theorem domConcave_supBifun (G : Bifun Y V) : domConcave (supBifun G) = domConcaveBifun G := by
   ext y
@@ -202,6 +216,13 @@ def ConcaveStronglyConsistent (G : Bifun Y V) : Prop := (0 : Y) ∈ ri (domConca
 theorem ConcaveStronglyConsistent.concaveConsistent (h : ConcaveStronglyConsistent G) :
     ConcaveConsistent G :=
   intrinsicInterior_subset h
+
+/-- Strong consistency of the concave program `G` is strong consistency of the convex program `-G`,
+the mirror of `concaveNormal_iff_normal_neg`. It is `domBifun_neg` and nothing else, and it is what
+lets the concave clauses of §29 be read off the convex ones. -/
+theorem concaveStronglyConsistent_iff_stronglyConsistent_neg :
+    ConcaveStronglyConsistent G ↔ StronglyConsistent fun y v => -(G y v) := by
+  rw [ConcaveStronglyConsistent, StronglyConsistent, domBifun_neg]
 
 end ConcaveStrongConsistency
 
@@ -808,20 +829,17 @@ theorem concaveConsistent_adjointBifun_iff (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ
 
 end Cor3021Primal
 
-section Cor3021Dual
+/-! ### The objective of the doubly-adjoint program
+
+Three algebraic facts about `G* 0` for a concave `G`. They carried the whole instance context of
+Corollary 30.2.1 with an `omit` list per declaration; none of them uses any of it, so they sit in
+their own section at the weakest layer instead. -/
+
+section ConcaveAdjointZero
 
 variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
-  [AddCommGroup X] [Module ℝ X]
-  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
-  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
-  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
-  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
-  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X} {G : Bifun Y V}
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y] {G : Bifun Y V}
 
-omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
-  [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
-  [LocallyConvexSpace ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bu]
-  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] in
 /-- The mirror of `adjointBifun_zero_apply`: the objective of the program associated with the
 concave adjoint is `(G* 0)(x) = ⨆ y (⟨x, y⟩ + sup G y)`. -/
 theorem concaveAdjointBifun_zero_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ)
@@ -834,10 +852,6 @@ theorem concaveAdjointBifun_zero_apply (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (B
   simp only [hzero]
   rw [supBifun_apply, add_comm, Tdaf.EReal.iSup_add_coe]
 
-omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
-  [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
-  [LocallyConvexSpace ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bu]
-  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] in
 /-- **Rockafellar, Theorem 30.2**, the first half of the second formula: `(-sup G)* = G* 0`, the
 objective of the program associated with the concave adjoint is the conjugate of the convex
 function `-sup G`. -/
@@ -848,14 +862,22 @@ theorem concaveAdjointBifun_zero_eq_conj (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) 
   rw [concaveAdjointBifun_zero_apply, conj_apply]
   exact iSup_congr fun y => by rw [LinearMap.flip_apply, sub_eq_add_neg, neg_neg]
 
-omit [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
-  [LocallyConvexSpace ℝ U] [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
-  [LocallyConvexSpace ℝ X] [FiniteDimensional ℝ Y] [IsCompatiblePairing Bu]
-  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] in
 /-- `-sup G` is convex when `G` is a concave bifunction: it is `inf (-G)`. -/
 theorem convexFn_neg_supBifun (hG : ConcaveBifun G) : ConvexFn (fun y => -(supBifun G y)) := by
   rw [neg_supBifun]
   exact convexFn_infBifun (concaveFn_iff_convexFn_neg.1 hG)
+
+end ConcaveAdjointZero
+
+section Cor3021Dual
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
 
 /-- **Rockafellar, Corollary 30.2.1**, second half: the primal program `(P)` is inconsistent
 exactly when some perturbation of `(P*)` is unbounded above, i.e. when `sup F* y = +∞` for some
@@ -1153,5 +1175,120 @@ theorem limsup_supBifun_adjointBifun_eq (hF : ConvexBifun F) (hcl : ClosedBifun 
       exact hv (iSup_eq_bot.1 hsup v)
 
 end Cor3023Dual
+
+/-! ### Theorem 30.5's dual assertion, and Corollary 30.5.2
+
+The book gives the dual assertion of Theorem 30.5 as "parallel" (12701) and does not carry it out.
+It comes last here because it needs both the concave Kuhn–Tucker vocabulary of Theorem 30.4(d) and
+the second-adjoint computation `concaveAdjointBifun_zero_apply` that Corollary 30.2.1 introduces. -/
+
+section ConcaveKuhnTuckerAdjoint
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+
+/-- **The concave mirror of `mem_kuhnTucker_iff_adjointBifun_zero_eq`**: `x` is a Kuhn–Tucker
+vector of the concave program `G` exactly when the optimal value `sup G 0` is finite and the
+objective of the doubly-adjoint program attains it at `x`.
+
+Both halves already existed — the definition of `ConcaveKuhnTucker` and
+`concaveAdjointBifun_zero_apply` — and putting them together is the whole content. The one step is
+that `ConcaveKuhnTucker` pairs with `Bx.flip` where the adjoint pairs with `Bx`. -/
+theorem mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (G : Bifun Y V) (x : X) :
+    x ∈ ConcaveKuhnTucker Bx.flip G
+      ↔ supBifun G 0 ≠ ⊤ ∧ supBifun G 0 ≠ ⊥
+        ∧ concaveAdjointBifun Bu Bx G 0 x = supBifun G 0 := by
+  have h : concaveAdjointBifun Bu Bx G 0 x
+      = ⨆ y, (((Bx.flip y x : ℝ) : EReal) + supBifun G y) := by
+    rw [concaveAdjointBifun_zero_apply]
+    exact iSup_congr fun y => by rw [LinearMap.flip_apply]
+  rw [h]
+  exact Iff.rfl
+
+end ConcaveKuhnTuckerAdjoint
+
+section Thm305Dual
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Module ℝ Y]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] {F : Bifun U X} {x : X}
+
+/-- **Rockafellar, Theorem 30.5**, dual assertion: under normality, `x` is a Kuhn–Tucker vector for
+the dual program `(P*)` exactly when `x` is an optimal solution to `(P)`.
+
+The mirror of `mem_kuhnTucker_iff_adjointBifun_zero_eq_iSup`, which is the assertion the book
+proves. The defining supremum of a concave Kuhn–Tucker vector *is* the objective of the
+doubly-adjoint program (`mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq`), and `F** = F`
+turns that into `(F 0)(x)`; normality identifies the two optimal values, so the finiteness clauses
+of `ConcaveKuhnTucker` become the hypotheses `ht` and `hb`. -/
+theorem mem_concaveKuhnTucker_adjointBifun_iff_mem_argmin (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hn : Normal F) (ht : infBifun F 0 ≠ ⊤) (hb : infBifun F 0 ≠ ⊥) :
+    x ∈ ConcaveKuhnTucker Bx.flip (adjointBifun Bu Bx F) ↔ x ∈ argmin (F 0) := by
+  have hval : supBifun (adjointBifun Bu Bx F) 0 = infBifun F 0 := by
+    rw [supBifun_apply]
+    exact (normal_iff_iSup_adjointBifun_eq (Bu := Bu) Bx hF).1 hn
+  have hself : concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) 0 = F 0 :=
+    congrFun (concaveAdjointBifun_adjointBifun_eq_self hF hcl) 0
+  rw [mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq Bu Bx, hself, hval,
+    mem_argmin_iff_eq_iInf, ← infBifun_apply]
+  exact ⟨fun h => h.2.2, fun h => ⟨ht, hb, h⟩⟩
+
+end Thm305Dual
+
+section Cor3052
+
+variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Module ℝ V]
+  [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
+  [NormedAddCommGroup X] [NormedSpace ℝ X]
+  [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+  {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
+  [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
+
+/-- **Rockafellar, Corollary 30.5.2**, first assertion: if `(P)` is consistent and `(P*)` is
+strongly consistent, the infimum of `(P)` is attained.
+
+This is the assertion the book proves (12731), and its proof there invokes the *concave* Corollary
+29.1.4, which the library does not have. The route here is the convex one applied to `-F*`: that is
+a convex bifunction with no hypothesis on `F` (`convexBifun_neg_adjointBifun`), strong consistency
+of `(P*)` is strong consistency of it (`concaveStronglyConsistent_iff_stronglyConsistent_neg`), and
+its perturbation function `-sup F*` is proper because the optimal values are finite. Corollary
+29.1.4 then produces a Kuhn–Tucker vector for `-F*`, and Theorem 30.5's dual assertion — here in
+the form `F** = F` — turns it into a minimiser of `F 0`. -/
+theorem exists_infBifun_eq_of_concaveStronglyConsistent (hF : ConvexBifun F)
+    (hcl : ClosedBifun F) (hc : Consistent F) (hbot : infBifun F 0 ≠ ⊥)
+    (hs : ConcaveStronglyConsistent (adjointBifun Bu Bx F)) : ∃ x, F 0 x = infBifun F 0 := by
+  have hnorm : Normal F := normal_of_concaveStronglyConsistent_adjointBifun hF hcl hs
+  have hgap : supBifun (adjointBifun Bu Bx F) 0 = infBifun F 0 := by
+    rw [supBifun_apply]
+    exact (normal_iff_iSup_adjointBifun_eq (Bu := Bu) Bx hF).1 hnorm
+  have htop : ∀ y, supBifun (adjointBifun Bu Bx F) y ≠ ⊤ :=
+    (consistent_iff_forall_supBifun_ne_top (Bu := Bu) (Bx := Bx) hF hcl).1 hc
+  have hinfneg : ∀ y, infBifun (fun y' v => -(adjointBifun Bu Bx F y' v)) y
+      = -(supBifun (adjointBifun Bu Bx F) y) :=
+    fun y => (congrFun (neg_supBifun (adjointBifun Bu Bx F)) y).symm
+  have ht : infBifun (fun y' v => -(adjointBifun Bu Bx F y' v)) 0 ≠ ⊤ := by
+    rw [hinfneg 0, hgap, ne_eq, _root_.EReal.neg_eq_top_iff]
+    exact hbot
+  have hp : Proper (infBifun fun y' v => -(adjointBifun Bu Bx F y' v)) := by
+    refine ⟨⟨0, lt_top_iff_ne_top.2 ht⟩, fun y => ?_⟩
+    rw [hinfneg y, ne_eq, _root_.EReal.neg_eq_bot_iff]
+    exact htop y
+  obtain ⟨w, hw⟩ := kuhnTucker_nonempty_of_stronglyConsistent (B := Bx.flip)
+    (convexBifun_neg_adjointBifun Bu Bx F) hp
+    (concaveStronglyConsistent_iff_stronglyConsistent_neg.1 hs) ht
+  have hkt : -w ∈ ConcaveKuhnTucker Bx.flip (adjointBifun Bu Bx F) := by
+    rw [mem_concaveKuhnTucker_iff_neg_mem_kuhnTucker, neg_neg]
+    exact hw
+  obtain ⟨-, -, heq⟩ :=
+    (mem_concaveKuhnTucker_iff_concaveAdjointBifun_zero_eq Bu Bx _ (-w)).1 hkt
+  have hself : concaveAdjointBifun Bu Bx (adjointBifun Bu Bx F) 0 = F 0 :=
+    congrFun (concaveAdjointBifun_adjointBifun_eq_self hF hcl) 0
+  exact ⟨-w, by rw [← hgap, ← heq, hself]⟩
+
+end Cor3052
 
 end Tdaf.ConvexAnalysis
