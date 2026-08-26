@@ -35,20 +35,20 @@ first.
 
 ## Main results
 
-* `concaveConvexFn_bracket`, `closedFn_bracket`, `clFn_eq_conj_bracket` — **Theorem 33.1** and its
-  inversion formula `cl (F u) = ⟨F u, ·⟩*`.
-* `convexBifun_bifunOfSaddle`, `bracket_bifunOfSaddle` — **Theorem 33.1**, converse: the attached
-  bifunction is convex and its bracket is `cl₂ K`.
-* `convexFn_partialCl₂`, `concaveConvexFn_partialCl₂`, `concaveFn_partialCl₁` —
-  **Corollary 33.1.1**.
-* `concaveBracket_adjointBifun_eq_partialCl₁` and `partialCl₂_concaveBracket_adjointBifun` — the
-  two equations of **Theorem 33.2**, `⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩` and `cl₂ ⟨u, F* y⟩ = ⟨(cl F) u, y⟩`.
+* `concaveConvexFn_bracket`, `closedFn_bracket`, `clFn_eq_conj_bracket` — the bracket of a convex
+  bifunction is concave-convex and closed in `y`, and inverts as `cl (F u) = ⟨F u, ·⟩*`.
+* `convexBifun_bifunOfSaddle`, `bracket_bifunOfSaddle` — conversely, the bifunction attached to a
+  concave-convex `K` is convex and its bracket is `cl₂ K`.
+* `convexFn_partialCl₂`, `concaveConvexFn_partialCl₂`, `concaveFn_partialCl₁` — the partial
+  closures preserve concave-convexity.
+* `concaveBracket_adjointBifun_eq_partialCl₁`, `partialCl₂_concaveBracket_adjointBifun` — the two
+  equations `⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩` and `cl₂ ⟨u, F* y⟩ = ⟨(cl F) u, y⟩` (Theorem 33.2 in [^1]).
   One theorem in opposite variables, so the pairing hypotheses differ: `U` for the first, `Y` for
   the second.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §33–§34.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §33–§34.
 -/
 
 namespace Tdaf.ConvexAnalysis
@@ -229,7 +229,7 @@ theorem concaveClosedFn_iff [TopologicalSpace U] {K : U × X → EReal} :
 
 end PartialCl
 
-/-! ### Theorem 33.1: the bracket of a convex bifunction -/
+/-! ### The bracket of a convex bifunction -/
 
 section Bracket
 
@@ -249,7 +249,7 @@ theorem bracket_eq_conj (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (
 theorem partialConj₂_graphFn (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (p : U × Y) :
     partialConj₂ Bx (graphFn F) p = bracket Bx F p.1 p.2 := rfl
 
-/-- **Rockafellar, Theorem 33.1**: `⟨Fu, ·⟩` is convex, with no hypothesis on `F`. -/
+/-- `⟨Fu, ·⟩` is convex, with no hypothesis on `F`. -/
 theorem convexFn_bracket (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (u : U) :
     ConvexFn (bracket Bx F u) :=
   convexFn_conj Bx (F u)
@@ -262,20 +262,20 @@ variable {U X Y : Type*} [AddCommGroup X] [Module ℝ X] [AddCommGroup Y] [Modul
   [TopologicalSpace Y] [IsTopologicalAddGroup Y] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsContinuousPairing Bx.flip] {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 33.1**: `⟨Fu, ·⟩` is closed as well as convex. -/
+/-- `⟨Fu, ·⟩` is closed as well as convex. -/
 theorem closedFn_bracket (u : U) : ClosedFn (bracket Bx F u) := closedFn_conj
 
 end BracketClosed
 
-/-! ### Theorem 33.1: the clauses that use convexity of the bifunction -/
+/-! ### The clauses that use convexity of the bifunction -/
 
 section BracketConvex
 
 variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   [AddCommGroup Y] [Module ℝ Y] {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 33.1**, the clause with content: `⟨F·, y⟩` is *concave* in `u` whenever
-`F` is a convex bifunction. This is Theorem 5.7 applied to the projection `(u, x) ↦ u`. -/
+/-- The clause with content: `⟨F·, y⟩` is *concave* in `u` whenever `F` is a convex bifunction.
+Its negative is the infimal projection of a jointly convex function along `(u, x) ↦ u`. -/
 theorem concaveFn_bracket (hF : ConvexBifun F) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (y : Y) :
     ConcaveFn fun u => bracket Bx F u y := by
   rw [concaveFn_iff_convexFn_neg]
@@ -309,15 +309,15 @@ variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Modul
   [ContinuousSMul ℝ X] [LocallyConvexSpace ℝ X] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx] {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 33.1**, the inversion formula: `cl (F u)` is recovered from the bracket
-by conjugating back. This is Fenchel–Moreau, uniformly in `u`. -/
+/-- The inversion formula: `cl (F u)` is recovered from the bracket by conjugating back. This is
+the Fenchel–Moreau theorem, uniformly in `u`. -/
 theorem clFn_eq_conj_bracket (hF : ConvexBifun F) (u : U) :
     clFn (F u) = conj Bx.flip (bracket Bx F u) :=
   (biconj_eq_clFn (B := Bx) (hF.convexFn_apply u)).symm
 
 end BracketInversion
 
-/-! ### Theorem 33.1, converse direction -/
+/-! ### The bifunction attached to a saddle-function -/
 
 section OfSaddleDefs
 
@@ -338,8 +338,8 @@ section OfSaddle
 variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   [AddCommGroup Y] [Module ℝ Y] {K : U × Y → EReal}
 
-/-- **Rockafellar, Theorem 33.1**, converse: the bifunction attached to a concave-convex `K` is
-convex. Its graph function is a pointwise supremum of jointly convex functions. -/
+/-- The bifunction attached to a concave-convex `K` is convex: its graph function is a pointwise
+supremum of jointly convex functions. -/
 theorem convexBifun_bifunOfSaddle (hK : ConcaveConvexFn K) (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) :
     ConvexBifun (bifunOfSaddle Bx K) := by
   have hconv : ∀ y : Y,
@@ -370,25 +370,25 @@ variable {U X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Modul
   [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx.flip] {K : U × Y → EReal}
 
-/-- **Rockafellar, Theorem 33.1**, converse: the bracket of that bifunction is `cl₂ K`. -/
+/-- The bracket of that bifunction is `cl₂ K`. -/
 theorem bracket_bifunOfSaddle (hK : ConcaveConvexFn K) (p : U × Y) :
     bracket Bx (bifunOfSaddle Bx K) p.1 p.2 = partialCl₂ K p :=
   congrFun (biconj_eq_clFn (B := Bx.flip) (hK.convex_snd p.1)) p.2
 
 end OfSaddleBracket
 
-/-! ### Corollary 33.1.1 -/
+/-! ### Closedness of the partial closures -/
 
 section CorClosed
 
 variable {U X : Type*}
 
-/-- **Rockafellar, Corollary 33.1.1** for `cl₂`: the result is convex-closed. -/
+/-- `cl₂ K` is convex-closed. -/
 theorem convexClosedFn_partialCl₂ [TopologicalSpace X] [AddCommGroup X]
     [IsTopologicalAddGroup X] (K : U × X → EReal) : ConvexClosedFn (partialCl₂ K) :=
   convexClosedFn_iff.2 fun u => closedFn_clFn fun x => K (u, x)
 
-/-- **Rockafellar, Corollary 33.1.1** for `cl₁`: the result is concave-closed. -/
+/-- `cl₁ K` is concave-closed. -/
 theorem concaveClosedFn_partialCl₁ [TopologicalSpace U] [AddCommGroup U]
     [IsTopologicalAddGroup U] (K : U × X → EReal) : ConcaveClosedFn (partialCl₁ K) :=
   concaveClosedFn_iff.2 fun x => closedConcaveFn_clConcave fun u => K (u, x)
@@ -400,13 +400,13 @@ section Cor
 variable {U X : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup X] [Module ℝ X]
   {K : U × X → EReal}
 
-/-- **Rockafellar, Corollary 33.1.1** for `cl₂`: it preserves convexity in the second variable. -/
+/-- `cl₂` preserves convexity in the second variable. -/
 theorem convexFn_partialCl₂ [TopologicalSpace X] [IsTopologicalAddGroup X] [ContinuousSMul ℝ X]
     (hK : ConcaveConvexFn K) (u : U) : ConvexFn fun x => partialCl₂ K (u, x) := by
   rw [partialCl₂_slice]
   exact convexFn_clFn (hK.convex_snd u)
 
-/-- **Rockafellar, Corollary 33.1.1** for `cl₁`: it preserves concavity in the first variable. -/
+/-- `cl₁` preserves concavity in the first variable. -/
 theorem concaveFn_partialCl₁ [TopologicalSpace U] [IsTopologicalAddGroup U] [ContinuousSMul ℝ U]
     (hK : ConcaveConvexFn K) (x : X) : ConcaveFn fun u => partialCl₁ K (u, x) := by
   rw [partialCl₁_slice]
@@ -414,7 +414,7 @@ theorem concaveFn_partialCl₁ [TopologicalSpace U] [IsTopologicalAddGroup U] [C
 
 end Cor
 
-/-! ### The concave bracket and the bridge to §30 -/
+/-! ### The concave bracket and the bridge to adjoint bifunctions -/
 
 section ConcaveBracket
 
@@ -462,14 +462,13 @@ variable {U V Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Modul
   [AddCommGroup Y] [Module ℝ Y] {G : Bifun Y V}
 
 omit [AddCommGroup Y] [Module ℝ Y] in
-/-- **Rockafellar, Theorem 33.1** for a concave bifunction: `⟨·, G y⟩` is concave, being a concave
-conjugate. -/
+/-- For a concave bifunction, `⟨·, G y⟩` is concave, being a concave conjugate. -/
 theorem concaveFn_concaveBracket (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (G : Bifun Y V) (y : Y) :
     ConcaveFn fun u => concaveBracket Bu G u y :=
   concaveFn_concaveConj Bu.flip (G y)
 
-/-- **Rockafellar, Theorem 33.1** for a concave bifunction: `⟨u, G ·⟩` is convex. The mirror of
-`concaveFn_bracket`, and again Theorem 5.7 at a projection. -/
+/-- For a concave bifunction, `⟨u, G ·⟩` is convex. The mirror of `concaveFn_bracket`, and again
+an infimal projection of a jointly convex function. -/
 theorem convexFn_concaveBracket (hG : ConcaveBifun G) (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ) (u : U) :
     ConvexFn fun y => concaveBracket Bu G u y := by
   have hconv : ConvexFn (fun q : Y × V => -(graphFn G q) + ((Bu u q.2 : ℝ) : EReal)) := by
@@ -498,7 +497,7 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
 
 /-- **The adjoint is the concave conjugate of the bracket.** `⟨Fu, y⟩` and `F*` are the two halves
 of one conjugation of the graph function: first convexly in `x`, then concavely in `u`. This is
-what turns Theorem 33.2 into `⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩`. -/
+what makes `⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩` a case of concave Fenchel–Moreau. -/
 theorem adjointBifun_eq_concaveConj_bracket (Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ)
     (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) (F : Bifun U X) (y : Y) (v : V) :
     adjointBifun Bu Bx F y v = concaveConj Bu (fun u => bracket Bx F u y) v := by
@@ -516,7 +515,7 @@ theorem adjointBifun_eq_concaveConj_bracket (Bu : U →ₗ[ℝ] V →ₗ[ℝ] �
 
 end Adjoint
 
-/-! ### Theorem 33.2 -/
+/-! ### The adjoint against the two partial closures -/
 
 section Thm332
 
@@ -525,9 +524,8 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [IsTopologicalAddGroup U] [ContinuousSMul ℝ U] [LocallyConvexSpace ℝ U]
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 33.2**, first equation: `⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩`. Once
-`adjointBifun_eq_concaveConj_bracket` identifies `F* y` with `concaveConj Bu ⟨F·, y⟩`, this is
-concave Fenchel–Moreau applied to the concave function supplied by Theorem 33.1. -/
+/-- `⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩`. Once `adjointBifun_eq_concaveConj_bracket` identifies `F* y` with
+`concaveConj Bu ⟨F·, y⟩`, this is concave Fenchel–Moreau applied to the concavity of `⟨F·, y⟩`. -/
 theorem concaveConj_adjointBifun_eq_partialCl₁ (hF : ConvexBifun F) (y : Y) :
     concaveConj Bu.flip (fun v => adjointBifun Bu Bx F y v)
       = fun u => partialCl₁ (fun p : U × Y => bracket Bx F p.1 p.2) (u, y) := by
@@ -537,7 +535,7 @@ theorem concaveConj_adjointBifun_eq_partialCl₁ (hF : ConvexBifun F) (y : Y) :
   rw [hbr]
   exact biconcaveConj_eq_clConcave (concaveFn_bracket hF Bx y)
 
-/-- **Rockafellar, Theorem 33.2**, first equation, in bracket notation. -/
+/-- `⟨u, F* y⟩ = cl₁ ⟨Fu, y⟩`, in bracket notation. -/
 theorem concaveBracket_adjointBifun_eq_partialCl₁ (hF : ConvexBifun F) (y : Y) :
     (fun u => concaveBracket Bu (adjointBifun Bu Bx F) u y)
       = fun u => partialCl₁ (fun p : U × Y => bracket Bx F p.1 p.2) (u, y) :=
@@ -553,9 +551,9 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ} [IsCompatiblePairing Bx.flip]
   {G : Bifun Y V}
 
-/-- **Rockafellar, Theorem 33.2**, second equation, in the general form in which it is proved: for
-a concave bifunction `G`, the bracket of `G*` is the convex closure in `y` of the concave bracket
-of `G`. Fenchel–Moreau on `Y`, uniformly in `u`. -/
+/-- The general form in which the second equation is proved: for a concave bifunction `G`, the
+bracket of `G*` is the convex closure in `y` of the concave bracket of `G`. Fenchel–Moreau on `Y`,
+uniformly in `u`. -/
 theorem bracket_concaveAdjointBifun_eq_partialCl₂ (hG : ConcaveBifun G) (u : U) :
     bracket Bx (concaveAdjointBifun Bu Bx G) u
       = fun y => partialCl₂ (fun p : U × Y => concaveBracket Bu G p.1 p.2) (u, y) := by
@@ -577,9 +575,8 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   {Bu : U →ₗ[ℝ] V →ₗ[ℝ] ℝ} [IsCompatiblePairing Bu] {Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ}
   [IsCompatiblePairing Bx] [IsCompatiblePairing Bx.flip] {F : Bifun U X}
 
-/-- **Rockafellar, Theorem 33.2**, second equation: `cl₂ ⟨u, F* y⟩ = ⟨(cl F) u, y⟩`. The adjoint of
-`F` is concave with no hypothesis on `F`, so this is the concave form at `F*` followed by
-Theorem 30.1's `F** = cl F`. -/
+/-- `cl₂ ⟨u, F* y⟩ = ⟨(cl F) u, y⟩`. The adjoint of `F` is concave with no hypothesis on `F`, so
+this is the concave form at `F*` followed by the biconjugation identity `F** = cl F`. -/
 theorem partialCl₂_concaveBracket_adjointBifun (hF : ConvexBifun F) (u : U) :
     (fun y => partialCl₂
         (fun p : U × Y => concaveBracket Bu (adjointBifun Bu Bx F) p.1 p.2) (u, y))
@@ -589,7 +586,7 @@ theorem partialCl₂_concaveBracket_adjointBifun (hF : ConvexBifun F) (u : U) :
 
 end Thm332Full
 
-/-! ### Corollary 33.1.1, the clauses that need the correspondence -/
+/-! ### The clauses that need the correspondence -/
 
 section CorFull
 
@@ -598,8 +595,8 @@ variable {U V X Y : Type*} [AddCommGroup U] [Module ℝ U] [AddCommGroup V] [Mod
   [IsTopologicalAddGroup Y] [ContinuousSMul ℝ Y] [LocallyConvexSpace ℝ Y] {K : U × Y → EReal}
 
 omit [AddCommGroup V] [Module ℝ V] in
-/-- **Rockafellar, Corollary 33.1.1**, the clause that is not pointwise: `cl₂ K` is again
-concave-convex. It is a bracket, and brackets are concave-convex (Theorem 33.1). -/
+/-- The clause that is not pointwise: `cl₂ K` is again concave-convex. It is a bracket, and
+brackets are concave-convex. -/
 theorem concaveConvexFn_partialCl₂ (Bx : X →ₗ[ℝ] Y →ₗ[ℝ] ℝ) [IsCompatiblePairing Bx.flip]
     (hK : ConcaveConvexFn K) : ConcaveConvexFn (partialCl₂ K) := by
   have h : (fun p : U × Y => bracket Bx (bifunOfSaddle Bx K) p.1 p.2) = partialCl₂ K :=

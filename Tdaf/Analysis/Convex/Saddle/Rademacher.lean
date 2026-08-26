@@ -10,36 +10,37 @@ import Tdaf.Analysis.Convex.Saddle.Differential
 # Differentiability almost everywhere of a saddle-function
 
 A finite concave-convex function on an open rectangle `C × D` is differentiable almost everywhere
-there, its points of differentiability are dense, and the gradient mapping is continuous on them:
-this is **Theorem 35.9**. **Theorem 35.10** adds that gradients converge wherever the functions
-converge pointwise, uniformly on every compact subset.
+there, its points of differentiability are dense, and the gradient mapping is continuous on them.
+Gradients also converge wherever the functions converge pointwise, uniformly on every compact
+subset.
 
-Convexity supplies only a local Lipschitz constant — Theorem 35.1 on a ball — after which
-Rademacher's theorem does the analysis. Theorem 35.10 is Theorem 35.7 and Corollary 35.7.1 with the
-subdifferentials collapsed to singletons by Theorem 35.8; in particular its pointwise clause needs
-differentiability only at the point in question, not everywhere as the book assumes.
+Convexity supplies only a local Lipschitz constant on a ball, after which Rademacher's theorem does
+the analysis. The convergence statements come from upper semicontinuity of the saddle
+subdifferential, with the subdifferentials collapsed to singletons at points of differentiability;
+in particular the pointwise clause needs differentiability only at the point in question.
 
 ## Main results
 
-* `ConcaveConvexOn.exists_lipschitzOnWith_ball` — Theorem 35.1 localized to a *ball*, which is what
+* `ConcaveConvexOn.exists_lipschitzOnWith_ball` — a Lipschitz constant on a *ball*, which is what
   Rademacher's theorem needs: differentiability within an open set is differentiability.
 * `ae_differentiableAt_of_concaveConvexOn`, `measure_diff_differentiableAt_of_concaveConvexOn`,
   `subset_closure_differentiableAt_of_concaveConvexOn`, `continuousOn_saddleGradient` —
-  **Theorem 35.9**: the measure-zero clause in two forms, then density and continuity.
-* `tendsto_of_hasSaddleGradientAt`, `tendstoUniformlyOn_saddleGradient` — **Theorem 35.10** and the
-  uniformity on compact sets that follows it.
+  differentiability almost everywhere in two forms, then density and continuity of the gradient
+  (Theorem 35.9 in [^1]).
+* `tendsto_of_hasSaddleGradientAt`, `tendstoUniformlyOn_saddleGradient` — gradients converge under
+  pointwise convergence, uniformly on compact sets (Theorem 35.10 in [^1]).
 
 ## Implementation notes
 
 `HasSaddleGradientAt K q p` says `∇K p = q` for a pair `q : U × X`, and there is no canonical `∇K`
 without choice, so the continuity and convergence statements take any `G` with
 `HasSaddleGradientAt K (G p) p` on the set in question; `prodInnerL` is injective, so such a `G` is
-unique there. The `εB` is the supremum ball of `U × X`; the book's Euclidean ball differs by a
+unique there. The `εB` is the supremum ball of `U × X`; the Euclidean ball differs from it by a
 bounded factor, and every statement quantifies over all `ε > 0`.
 
 ## References
 
-* R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35.
+[^1]: R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §35.
 -/
 
 open Set Filter MeasureTheory Metric Topology
@@ -47,7 +48,7 @@ open scoped NNReal Pointwise
 
 namespace Tdaf.ConvexAnalysis
 
-/-! ### Theorem 35.1 on a ball -/
+/-! ### A Lipschitz constant on a ball -/
 
 section Lipschitz
 
@@ -55,10 +56,10 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
   {C : Set U} {D : Set X} {K : U × X → ℝ} {p : U × X}
 
-/-- **Rockafellar, Theorem 35.1, localized**: a finite concave-convex function on an open rectangle
-is Lipschitz on a whole *ball* around each of its points. Theorem 35.1 gives a constant on a product
-of compact sets; shrinking to an open ball makes it open as well, which is what upgrades
-`DifferentiableWithinAt` to `DifferentiableAt`. -/
+/-- A finite concave-convex function on an open rectangle is Lipschitz on a whole *ball* around
+each of its points. Local Lipschitzness gives a constant on a product of compact sets; shrinking to
+an open ball makes it open as well, which is what upgrades `DifferentiableWithinAt` to
+`DifferentiableAt`. -/
 theorem ConcaveConvexOn.exists_lipschitzOnWith_ball (hCo : IsOpen C) (hCc : Convex ℝ C)
     (hDo : IsOpen D) (hDc : Convex ℝ D) (hK : ConcaveConvexOn C D K) (hp : p ∈ C ×ˢ D) :
     ∃ r > 0, ball p r ⊆ C ×ˢ D ∧ ∃ k : ℝ≥0, LipschitzOnWith k K (ball p r) := by
@@ -84,7 +85,7 @@ theorem ConcaveConvexOn.exists_lipschitzOnWith_ball (hCo : IsOpen C) (hCc : Conv
 
 end Lipschitz
 
-/-! ### Theorem 35.9: differentiability almost everywhere -/
+/-! ### Differentiability almost everywhere -/
 
 section AlmostEverywhere
 
@@ -93,8 +94,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
   {C : Set U} {D : Set X} {K : U × X → ℝ}
   [MeasurableSpace (U × X)] [BorelSpace (U × X)] {μ : Measure (U × X)} [μ.IsAddHaarMeasure]
 
-/-- **Rockafellar, Theorem 35.9**, the measure-zero clause: a finite concave-convex function on an
-open rectangle is differentiable at almost every point of it. -/
+/-- A finite concave-convex function on an open rectangle is differentiable at almost every point
+of it. -/
 theorem ae_differentiableAt_of_concaveConvexOn (hCo : IsOpen C) (hCc : Convex ℝ C) (hDo : IsOpen D)
     (hDc : Convex ℝ D) (hK : ConcaveConvexOn C D K) :
     ∀ᵐ p ∂μ, p ∈ C ×ˢ D → DifferentiableAt ℝ K p := by
@@ -115,7 +116,7 @@ theorem ae_differentiableAt_of_concaveConvexOn (hCo : IsOpen C) (hCc : Convex �
   obtain ⟨q, hqT, hpq⟩ := hcover p hpU
   exact (hp q hqT hpq).differentiableAt (isOpen_ball.mem_nhds hpq)
 
-/-- **Rockafellar, Theorem 35.9**, the measure-zero clause as a null set. -/
+/-- The points of the open rectangle at which `K` is not differentiable form a null set. -/
 theorem measure_diff_differentiableAt_of_concaveConvexOn (hCo : IsOpen C) (hCc : Convex ℝ C)
     (hDo : IsOpen D) (hDc : Convex ℝ D) (hK : ConcaveConvexOn C D K) :
     μ ((C ×ˢ D) \ {p | DifferentiableAt ℝ K p}) = 0 := by
@@ -133,8 +134,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [NormedSpace ℝ U] [FiniteDimensi
   [NormedAddCommGroup X] [NormedSpace ℝ X] [FiniteDimensional ℝ X]
   {C : Set U} {D : Set X} {K : U × X → ℝ}
 
-/-- **Rockafellar, Theorem 35.9**, the density clause: the points of differentiability are dense in
-the open rectangle. No measure appears in the statement; the proof borrows one. -/
+/-- The points of differentiability are dense in the open rectangle. No measure appears in the
+statement; the proof borrows one. -/
 theorem subset_closure_differentiableAt_of_concaveConvexOn (hCo : IsOpen C) (hCc : Convex ℝ C)
     (hDo : IsOpen D) (hDc : Convex ℝ D) (hK : ConcaveConvexOn C D K) :
     C ×ˢ D ⊆ closure {p | DifferentiableAt ℝ K p} := by
@@ -154,7 +155,7 @@ theorem subset_closure_differentiableAt_of_concaveConvexOn (hCo : IsOpen C) (hCc
 
 end Dense
 
-/-! ### Theorem 35.9: continuity of the gradient -/
+/-! ### Continuity of the gradient -/
 
 section GradientContinuity
 
@@ -162,9 +163,8 @@ variable {U X : Type*} [NormedAddCommGroup U] [InnerProductSpace ℝ U] [FiniteD
   [NormedAddCommGroup X] [InnerProductSpace ℝ X] [FiniteDimensional ℝ X]
   {C : Set U} {D : Set X} {K : U × X → ℝ}
 
-/-- **Rockafellar, Theorem 35.9**, the continuity clause: the gradient mapping is continuous on any
-set of points of the open rectangle at which it exists. This is Corollary 35.7.1 — upper
-semicontinuity of `∂K` — with both subdifferentials collapsed to singletons by Theorem 35.8. -/
+/-- The gradient mapping is continuous on any set of points of the open rectangle at which it
+exists: upper semicontinuity of `∂K` with both subdifferentials collapsed to singletons. -/
 theorem continuousOn_saddleGradient (hCo : IsOpen C) (hCc : Convex ℝ C) (hDo : IsOpen D)
     (hDc : Convex ℝ D) (hK : ConcaveConvexOn C D K) {S : Set (U × X)} (hS : S ⊆ C ×ˢ D)
     {G : U × X → U × X} (hG : ∀ p ∈ S, HasSaddleGradientAt K (G p) p) : ContinuousOn G S := by
@@ -186,7 +186,7 @@ theorem continuousOn_saddleGradient (hCo : IsOpen C) (hCc : Convex ℝ C) (hDo :
 
 end GradientContinuity
 
-/-! ### Theorem 35.10: convergence of gradients -/
+/-! ### Convergence of gradients -/
 
 section GradientLimit
 
@@ -213,10 +213,10 @@ theorem dist_le_of_subgradientSaddle_subset (hCo : IsOpen C) (hDo : IsOpen D)
   rw [dist_eq_norm]
   exact norm_sub_le_of_mem_singleton_add_closedBall hmem
 
-/-- **Rockafellar, Theorem 35.10**: the gradients of finite concave-convex functions converging
-pointwise on an open rectangle converge at every point of it. Theorem 35.7 at the constant sequence,
-with the subdifferentials collapsed by Theorem 35.8; differentiability is needed only at the point
-in question. -/
+/-- The gradients of finite concave-convex functions converging pointwise on an open rectangle
+converge at every point of it. Subdifferential convergence along the constant sequence of points,
+with the subdifferentials collapsed to singletons; differentiability is needed only at the point in
+question. -/
 theorem tendsto_of_hasSaddleGradientAt (hCo : IsOpen C) (hCc : Convex ℝ C) (hDo : IsOpen D)
     (hDc : Convex ℝ D) (hKs : ∀ i, ConcaveConvexOn C D (Ks i)) (hK : ConcaveConvexOn C D K)
     (hconv : ∀ q ∈ C ×ˢ D, Tendsto (fun i => Ks i q) atTop (𝓝 (K q))) (hp : p ∈ C ×ˢ D)
@@ -230,12 +230,12 @@ theorem tendsto_of_hasSaddleGradientAt (hCo : IsOpen C) (hCc : Convex ℝ C) (hD
   exact lt_of_le_of_lt (dist_le_of_subgradientSaddle_subset hCo hDo (hKs i) hK hp hp (hG i) hG' hi)
     (half_lt_self hε)
 
-/-- **Rockafellar, Theorem 35.10**, the uniform clause: on every compact subset of the open
-rectangle the gradients converge uniformly.
+/-- On every compact subset of the open rectangle the gradients converge uniformly.
 
 A failure of uniform convergence on a compact `S` produces indices `φ n` and points `zₙ ∈ S` with
-`‖∇K(zₙ) - ∇K_{φ n}(zₙ)‖ ≥ ε`; a convergent subsequence `zₙ → w ∈ S` turns Theorem 35.7 along the
-subsequence and Corollary 35.7.1 at `w` into two `ε/3` bounds that contradict it. -/
+`‖∇K(zₙ) - ∇K_{φ n}(zₙ)‖ ≥ ε`; a convergent subsequence `zₙ → w ∈ S` turns subdifferential
+convergence along the subsequence and upper semicontinuity at `w` into two `ε/3` bounds that
+contradict it. -/
 theorem tendstoUniformlyOn_saddleGradient (hCo : IsOpen C) (hCc : Convex ℝ C) (hDo : IsOpen D)
     (hDc : Convex ℝ D) (hKs : ∀ i, ConcaveConvexOn C D (Ks i)) (hK : ConcaveConvexOn C D K)
     (hconv : ∀ q ∈ C ×ˢ D, Tendsto (fun i => Ks i q) atTop (𝓝 (K q)))
