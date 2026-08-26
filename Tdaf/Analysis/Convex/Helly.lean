@@ -41,6 +41,10 @@ It is the existence workhorse behind the Lagrange multiplier theorems of §27 an
   `not_forall_le_weighted_of_forall_subsystem` is its contradiction step, shared with Theorem
   21.4's version.
 * `helly_of_no_common_recession` — **Corollary 21.3.2**, Helly's theorem for infinite families.
+* `helly_of_exists_isBounded_biInter` — the **exercise of book line 7593**: when every subfamily has
+  a common point, the recession hypothesis may be replaced by "some finite subfamily has a bounded
+  intersection". The equivalence of the two hypotheses is
+  `iInter_recessionCone_eq_zero_iff_exists_isBounded`, in `Recession/Cone.lean`.
 * `finrank_eq_of_isCompatiblePairing` — the bookkeeping lemma that lets the multiplier count be
   stated as `dim E + 1` although Carathéodory is applied in `F`.
 
@@ -106,7 +110,8 @@ by zero is harmless in `EReal` precisely because `0 · (+∞) = 0`.
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §21 (Theorems 21.1, 21.2,
-  21.3, 21.6, Corollaries 21.3.1, 21.3.2, 21.6.1, 21.6.2).
+  21.3, 21.6, Corollaries 21.3.1, 21.3.2, 21.6.1, 21.6.2, and the exercise stated after
+  Corollary 21.3.2).
 -/
 
 open Set Filter Topology
@@ -1236,6 +1241,27 @@ theorem helly_of_no_common_recession [IsCompatiblePairing B] [IsCompatiblePairin
   have h0 := hx i
   rw [indicatorFn_of_notMem hcon] at h0
   exact absurd h0 (by simp)
+
+/-- **Rockafellar, §21, book line 7593** — the exercise after Corollary 21.3.2, read as a Helly
+theorem. A family of closed convex sets *every finite subfamily of which has a common point* has a
+common point outright, as soon as **some** finite subfamily has a bounded intersection.
+
+This is the usable form of `helly_of_no_common_recession`. Under the standing hypothesis the
+recession hypothesis and the bounded-subfamily hypothesis are equivalent
+(`iInter_recessionCone_eq_zero_iff_exists_isBounded`), and the bounded subfamily is in practice a
+single bounded `K i`, which is the case Rockafellar mentions first. -/
+theorem helly_of_exists_isBounded_biInter [IsCompatiblePairing B] [IsCompatiblePairing B.flip]
+    {K : ι → Set E} (hconv : ∀ i, Convex ℝ (K i)) (hcl : ∀ i, IsClosed (K i))
+    (hne : ∀ S : Finset ι, (⋂ i ∈ S, K i).Nonempty)
+    (hbdd : ∃ S : Finset ι, Bornology.IsBounded (⋂ i ∈ S, K i)) :
+    (⋂ i, K i).Nonempty := by
+  have hrec : ⋂ i, recessionCone (K i) = {0} :=
+    (iInter_recessionCone_eq_zero_iff_exists_isBounded hconv hcl hne).2 hbdd
+  refine helly_of_no_common_recession (B := B) hconv hcl (fun i => by simpa using hne {i})
+    (fun y hy => ?_) fun S _ => hne S
+  have hy' : y ∈ ⋂ i, recessionCone (K i) := mem_iInter.2 hy
+  rw [hrec] at hy'
+  simpa using hy'
 
 end Infinite
 

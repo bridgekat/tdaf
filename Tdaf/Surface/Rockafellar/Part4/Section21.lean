@@ -43,6 +43,7 @@ two declarations: `theorem_21_k` is the disjunction — the half with content �
 | Theorem 21.3 | `theorem_21_3`, `theorem_21_3_exclusive` |
 | Corollary 21.3.1 | `corollary_21_3_1` |
 | Corollary 21.3.2 | `corollary_21_3_2` |
+| the exercise after Corollary 21.3.2 (7593) | `helly_recession_iff_exists_isBounded` |
 | Theorem 21.4 | `theorem_21_4`, `theorem_21_4_subsystem` |
 | Theorem 21.5 | `theorem_21_5` |
 | Theorem 21.6 | `theorem_21_6` |
@@ -71,13 +72,6 @@ No `0⁺` bookkeeping appears anywhere in this section.
   unnumbered prose showing that the recession hypothesis cannot be dropped. Transcribing them is
   a one-variable calculus computation about `Real.sqrt (ξ² + 1)`, not convex analysis, and nothing
   later in the book cites them. The same holds for the `-x^(1/2)` example after Theorem 21.1.
-* **The exercise at book line 7601** — *deferred by scope*. "The recession hypothesis in Helly's
-  Theorem is satisfied if and only if some finite subcollection has a bounded intersection,
-  assuming every finite subcollection is non-empty. The proof of this fact is left as an
-  exercise." It is unnumbered, the book supplies no proof, and its forward direction needs the
-  recession-cone-of-an-intersection theory of §8 in a form the backbone states only for finitely
-  many closed convex sets with a common point.
-
 Everything else in the section's range is here.
 
 ## A citation the book gets wrong
@@ -376,6 +370,28 @@ theorem corollary_21_3_2 {ι : Type*} {K : ι → Set (Rn n)} (hconv : ∀ i, Co
     (⋂ i, K i).Nonempty := by
   refine helly_of_no_common_recession (B := pairing n) hconv hcl hne hrec ?_
   simpa only [finrank_euclideanSpace_fin] using hinter
+
+/-- **Rockafellar, §21, book line 7593** — the unnumbered exercise stated after Corollary 21.3.2.
+"The recession hypothesis in Helly's Theorem … is satisfied if and only if some finite
+subcollection of the `Cᵢ`'s has a bounded intersection, assuming that every finite subcollection has
+a non-empty intersection."
+
+Taking `S = {i}` recovers the sentence before it: the hypothesis holds as soon as one of the `Cᵢ`
+is bounded.
+
+Specialises `iInter_recessionCone_eq_zero_iff_exists_isBounded`; the left-hand side is written in
+the `∀ y` form so that it is literally `corollary_21_3_2`'s `hrec`, and
+`helly_of_exists_isBounded_biInter` is Corollary 21.3.2 with the two hypotheses already traded. -/
+theorem helly_recession_iff_exists_isBounded {ι : Type*} {K : ι → Set (Rn n)}
+    (hconv : ∀ i, Convex ℝ (K i)) (hcl : ∀ i, IsClosed (K i))
+    (hne : ∀ S : Finset ι, (⋂ i ∈ S, K i).Nonempty) :
+    (∀ y : Rn n, (∀ i, y ∈ recessionCone (K i)) → y = 0) ↔
+      ∃ S : Finset ι, Bornology.IsBounded (⋂ i ∈ S, K i) := by
+  have hbridge : ⋂ i, recessionCone (K i) = {0} ↔
+      ∀ y : Rn n, (∀ i, y ∈ recessionCone (K i)) → y = 0 := by
+    simp [Set.eq_singleton_iff_unique_mem, mem_iInter]
+  rw [← hbridge]
+  exact iInter_recessionCone_eq_zero_iff_exists_isBounded hconv hcl hne
 
 /-! ### Theorems 21.4 and 21.5: the polyhedral refinements -/
 

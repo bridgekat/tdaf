@@ -39,12 +39,18 @@ from a point of `C` stays inside `C`. The *lineality space* is the largest subsp
   `0⁺C` consists of the limits of sequences `lᵢ • xᵢ` with `xᵢ ∈ C` and `lᵢ ↓ 0`.
 * `mem_recessionCone_of_exists_ray` — **Theorem 8.3**: one half-line in the direction `y`
   inside a closed convex `C` forces all of them.
-* `recessionCone_iInter`, `recessionCone_preimage` — **Corollaries 8.3.3 and 8.3.4**.
+* `recessionCone_iInter`, `recessionCone_iInter₂`, `recessionCone_preimage` — **Corollaries 8.3.3
+  and 8.3.4**.
 * `recessionCone_prod`, `linealitySpace_prod` and their `Set.pi` forms `recessionCone_pi`,
   `linealitySpace_pi` — a product recedes coordinatewise, provided the product is nonempty.
 * `recessionCone_eq_asymptoticCone` — the bridge to Mathlib's `asymptoticCone`.
 * `isBounded_iff_recessionCone_eq_zero` — **Theorem 8.4**, with
   `isBounded_inter_of_direction_eq` for **Corollary 8.4.1**.
+* `iInter_recessionCone_eq_zero_iff_exists_isBounded` — the **exercise of §21** (book line 7593):
+  for a family of closed convex sets every finite subfamily of which has a common point, "no common
+  direction of recession" holds exactly when some finite subfamily has a bounded intersection. It
+  is the recession hypothesis of Helly's theorem, and `Helly.lean` reads it back as
+  `helly_of_exists_isBounded_biInter`.
 
 ## Layers
 
@@ -58,9 +64,11 @@ names are those of the project plan.
   Corollaries 8.3.2–8.3.4, and the `asymptoticCone` bridge. The plan placed closedness of `0⁺C`
   and Theorems 8.2/8.3 in layer D; they do not belong there. See the design note below.
 * **Layer B, normed**: the recession cone of a bounded set and of a closed ball.
-* **Layer D**, `[NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]`: Theorem 8.4 and
-  Corollary 8.4.1 only. Finite-dimensionality enters exactly once, through local compactness, and
-  it is what makes an unbounded closed convex set recede in some direction.
+* **Layer D**, `[NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]`: Theorem 8.4,
+  Corollary 8.4.1 and the §21 exercise. Finite-dimensionality enters through local compactness
+  twice: it is what makes an unbounded closed convex set recede in some direction, and it is what
+  makes the unit sphere compact, so that a family of closed cones meeting only at the origin has a
+  finite subfamily that already does.
 
 ## Design notes
 
@@ -113,7 +121,8 @@ worth anything, so only `lineality` is defined here.
 ## References
 
 * R. T. Rockafellar, *Convex Analysis*, Princeton University Press, 1970, §8 — from the start
-  through Theorem 8.4 and the discussion of lineality spaces.
+  through Theorem 8.4 and the discussion of lineality spaces — and the exercise stated after
+  Corollary 21.3.2 in §21.
 -/
 
 open Bornology Filter Pointwise Set Topology
@@ -741,6 +750,19 @@ theorem recessionCone_iInter {ι : Sort*} {C : ι → Set E} (hconv : ∀ i, Con
   exact mem_recessionCone_of_exists_ray (hconv i) (hclosed i)
     ⟨x, fun a ha => mem_iInter.1 (hy x hx a ha) i⟩
 
+/-- **Corollary 8.3.3** over a *sub*family: the recession cone of `⋂ i ∈ s, C i` is
+`⋂ i ∈ s, 0⁺Cᵢ`. Stated with a bare predicate rather than a `Set` or a `Finset`, so that it applies
+to either spelling of the bounded intersection. -/
+theorem recessionCone_iInter₂ {ι : Sort*} {p : ι → Prop} {C : ∀ i, p i → Set E}
+    (hconv : ∀ i h, Convex ℝ (C i h)) (hclosed : ∀ i h, IsClosed (C i h))
+    (hne : (⋂ i, ⋂ h, C i h).Nonempty) :
+    recessionCone (⋂ i, ⋂ h, C i h) = ⋂ i, ⋂ h, recessionCone (C i h) := by
+  obtain ⟨x, hx⟩ := hne
+  rw [recessionCone_iInter (fun i => convex_iInter (hconv i))
+    (fun i => isClosed_iInter (hclosed i)) ⟨x, hx⟩]
+  exact iInter_congr fun i =>
+    recessionCone_iInter (hconv i) (hclosed i) ⟨x, mem_iInter.1 hx i⟩
+
 /-- The binary form of **Corollary 8.3.3**. -/
 theorem recessionCone_inter (hC : Convex ℝ C) (hC' : IsClosed C) (hD : Convex ℝ D)
     (hD' : IsClosed D) (hne : (C ∩ D).Nonempty) :
@@ -922,6 +944,63 @@ theorem isBounded_inter_of_direction_eq (hC : Convex ℝ C) (hC' : IsClosed C)
       recessionCone_coe_affineSubspace hNne, recessionCone_coe_affineSubspace hMne, hMN]
   rw [isBounded_iff_recessionCone_eq_zero (N.convex.inter hC) (hNcl.inter hC') hN, key]
   exact (isBounded_iff_recessionCone_eq_zero (M.convex.inter hC) (hMcl.inter hC') hM).1 hb
+
+/-- A family of closed sets whose recession cones meet only at the origin has a **finite**
+subfamily whose recession cones already meet only at the origin.
+
+Convexity is not used: `0⁺C` is a cone and is closed as soon as `C` is, so the unit sphere is
+covered by the complements of finitely many of them. -/
+theorem exists_finset_iInter₂_recessionCone_eq_zero {ι : Type*} {C : ι → Set E}
+    (hcl : ∀ i, IsClosed (C i)) (h : ⋂ i, recessionCone (C i) = {0}) :
+    ∃ S : Finset ι, ⋂ i ∈ S, recessionCone (C i) = {0} := by
+  have hempty : Metric.sphere (0 : E) 1 ∩ ⋂ i, recessionCone (C i) = ∅ := by
+    rw [h]
+    ext y
+    simp +contextual
+  obtain ⟨S, hS⟩ := (isCompact_sphere (0 : E) 1).elim_finite_subfamily_closed
+    (fun i => recessionCone (C i)) (fun i => isClosed_recessionCone (hcl i)) hempty
+  refine ⟨S, Set.Subset.antisymm (fun y hy => ?_) (by simp)⟩
+  by_contra hy0
+  have hyne : ‖y‖ ≠ 0 := norm_ne_zero_iff.2 (by simpa using hy0)
+  have hmem : ‖y‖⁻¹ • y ∈ Metric.sphere (0 : E) 1 ∩ ⋂ i ∈ S, recessionCone (C i) := by
+    refine ⟨?_, mem_iInter₂.2 fun i hi =>
+      smul_mem_recessionCone (by positivity) (mem_iInter₂.1 hy i hi)⟩
+    rw [mem_sphere_zero_iff_norm, norm_smul, norm_inv, norm_norm,
+      inv_mul_cancel₀ (by simpa using hyne)]
+  rw [hS] at hmem
+  exact hmem
+
+/-- **Rockafellar, §21, book line 7593**, the exercise left after Corollary 21.3.2: for a closed
+convex family *every finite subfamily of which has a common point*, the recession hypothesis of
+Helly's theorem — no common direction of recession — holds **if and only if** some finite subfamily
+has a bounded intersection.
+
+The `⇐` direction at a singleton `S = {i}` is the book's preceding sentence, that the hypothesis
+holds as soon as one of the sets is bounded.
+
+Neither direction needs the recession cone of the *whole* intersection, which is what makes the
+exercise elementary: `⇒` is Theorem 8.4 applied to a finite subfamily produced by compactness of
+the unit sphere, and `⇐` is Theorem 8.4 read backwards through Corollary 8.3.3. -/
+theorem iInter_recessionCone_eq_zero_iff_exists_isBounded {ι : Type*} {C : ι → Set E}
+    (hconv : ∀ i, Convex ℝ (C i)) (hcl : ∀ i, IsClosed (C i))
+    (hne : ∀ S : Finset ι, (⋂ i ∈ S, C i).Nonempty) :
+    ⋂ i, recessionCone (C i) = {0} ↔ ∃ S : Finset ι, IsBounded (⋂ i ∈ S, C i) := by
+  have hrec : ∀ S : Finset ι,
+      recessionCone (⋂ i ∈ S, C i) = ⋂ i ∈ S, recessionCone (C i) := fun S =>
+    recessionCone_iInter₂ (C := fun i (_ : i ∈ S) => C i) (fun i _ => hconv i)
+      (fun i _ => hcl i) (hne S)
+  have hbdd : ∀ S : Finset ι,
+      IsBounded (⋂ i ∈ S, C i) ↔ ⋂ i ∈ S, recessionCone (C i) = {0} := fun S => by
+    rw [isBounded_iff_recessionCone_eq_zero (convex_iInter₂ fun i _ => hconv i)
+      (isClosed_iInter fun i => isClosed_iInter fun _ => hcl i) (hne S), hrec S]
+  constructor
+  · intro h
+    obtain ⟨S, hS⟩ := exists_finset_iInter₂_recessionCone_eq_zero hcl h
+    exact ⟨S, (hbdd S).2 hS⟩
+  · rintro ⟨S, hS⟩
+    refine Set.Subset.antisymm (fun y hy => ?_) (by simp)
+    rw [← (hbdd S).1 hS]
+    exact mem_iInter₂.2 fun i _ => mem_iInter.1 hy i
 
 end FiniteDimensional
 
