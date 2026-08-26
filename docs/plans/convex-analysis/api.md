@@ -5294,3 +5294,38 @@ of pp. 253–254 remain half-proved (remediation §12.16) — not for want of an
 
 **The sum rule is not here.** `StrictConvexOnFn.add_convexFn` and `ConvexFn.add_strictConvexOnFn`
 are in `Preservation.lean`, which imports this module.
+
+### `Tdaf/Analysis/Convex/Subgradient/EssentiallySmooth.lean`
+
+```lean
+structure EssentiallySmooth (f : E → EReal) : Prop            -- conditions (a), (b), (c)
+theorem subgradient_eq_singleton_of_essentiallySmooth …       -- ∂f x = {∇f x} on int (dom f)
+theorem subgradient_eq_empty_of_essentiallySmooth …           -- …and ∅ off it
+theorem domSubgradient_eq_interior_dom_of_essentiallySmooth …
+theorem subsingleton_subgradient_of_essentiallySmooth …       -- Theorem 26.1, forward
+theorem differentiableAtFn_of_subsingleton_subgradient …
+theorem essentiallySmooth_of_subsingleton_subgradient …       -- Theorem 26.1, converse
+theorem subsingleton_subgradient_iff_essentiallySmooth …      -- **Theorem 26.1**
+```
+
+**Rockafellar's Theorem 26.1**: for a closed proper convex function the subdifferential is
+single-valued exactly when the function is *essentially smooth*, and in that case `∂f` **is** the
+gradient on `int (dom f)` and empty everywhere else. This is what makes §26's Legendre
+transformation work — it is the statement that for an essentially smooth function the multivalued
+`∂f` carries exactly the information of the classical gradient mapping.
+
+**Condition (c) is stated at every point outside the interior, not at boundary points.** Rockafellar
+quantifies over sequences in `C = int (dom f)` converging to a *boundary* point of `C`. Since `C` is
+open, a sequence in `C` converging to a point not in `C` converges to a boundary point
+automatically, so the two readings agree and dropping the word removes a hypothesis that would
+otherwise be re-derived at every use — including inside Theorem 26.1's own proof, where the point is
+known only to lie outside `int (dom f)`. The surface carries the book's quantifier as
+`Rockafellar.EssentiallySmoothBook` with `essentiallySmooth_iff_book` as the bridge, and the
+directional form (c′) of Lemma 26.2 as `EssentiallySmoothDir`; §§27–32 use different ones, so both
+are kept.
+
+**The gradient is written `fderiv ℝ (fun z => (f z).toReal)`**, not as a `HasGradientAt` datum, so
+that `EssentiallySmooth` is a `Prop` about `f` alone with nothing to supply at a call site.
+
+This record was missing until remediation §12.18; `Legendre.lean`'s record had named the module in
+passing without listing its API.
