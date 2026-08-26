@@ -59,7 +59,8 @@ coincide "inasmuch as `f` and `cl f` coincide on `int (dom f)`". That is half th
 gives every gradient of `f` to `cl f`, but the other direction has to know that `cl f` has no
 *extra* interior points to be differentiable at, which is `ConvexFn.interior_dom_clFn`
 (`RelativeInterior.lean`, beside Corollary 7.4.1) and not the sentence quoted. With that,
-`hasGradientAt_clFn_iff` holds and both corollaries carry the book's hypotheses. The corresponding *subgradient* statements in `Gradient.lean` keep their `ClosedFn`,
+`hasGradientAt_clFn_iff` holds and both corollaries carry the book's hypotheses. The
+corresponding *subgradient* statements in `Gradient.lean` keep their `ClosedFn`,
 because `∂f = ∂(cl f)` is false at relative boundary points; only the gradients transfer.
 
 **Why not go through Corollary 24.5.1.** Upper semicontinuity of `∂f` gives the Fréchet estimate
