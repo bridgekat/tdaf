@@ -1,5 +1,6 @@
 import Tdaf.Analysis.Convex.Bifunction.Algebra
 import Tdaf.Analysis.Convex.Bifunction.Cofinite
+import Tdaf.Analysis.Convex.Bifunction.LinearProcess
 import Tdaf.Analysis.Convex.Bifunction.Process
 import Tdaf.Analysis.Convex.Bifunction.ProcessDuality
 import Tdaf.Analysis.Convex.Caratheodory
