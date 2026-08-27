@@ -1,3 +1,4 @@
+import Tdaf.Analysis.Convex
 import Tdaf.Analysis.Convex.Bifunction.Algebra
 import Tdaf.Analysis.Convex.Bifunction.Cofinite
 import Tdaf.Analysis.Convex.Bifunction.LinearProcess
