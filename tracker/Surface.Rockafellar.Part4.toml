@@ -1,0 +1,7 @@
+kind = 'part'
+title = 'Part IV: Representation and Inequalities'
+parent = 'Surface.Rockafellar'
+module = 'Tdaf.Surface.Rockafellar.Part4'
+notes = '''
+One group per section of this Part. A node named for a numbered result cites it in `source`.
+'''

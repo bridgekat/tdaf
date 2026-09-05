@@ -1,0 +1,10 @@
+kind = 'area'
+title = 'The surfaces'
+notes = '''
+One directory per textbook. A surface states a book's results in the book's own terms and proves
+them from the backbone: it is the integration test the backbone has to pass, not a place to prove
+new mathematics. A surface node whose proof does not go through a backbone node is a sign the
+backbone is missing something — that is what the graph is for.
+
+The conventions this plan is written by are in `tracker/README.md`.
+'''

@@ -1,0 +1,17 @@
+kind = 'module'
+title = 'Supremal convolution and the conjugate of a concave sum'
+parent = 'Analysis.Convex.Duality'
+module = 'Tdaf.Analysis.Convex.Duality.ConcaveOps'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'infConv_neg'
+
+[[node]]
+id = 'supConv'
+
+[[node]]
+id = 'supConv_apply'
+
+[[node]]
+id = 'concaveConj_add_of_isExactSum'

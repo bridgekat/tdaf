@@ -1,0 +1,8 @@
+kind = 'area'
+title = 'Polyhedral convexity'
+parent = 'Analysis.Convex'
+notes = '''
+Polyhedra under both descriptions and the Minkowski–Weyl theorem relating them, the polyhedral
+calculus, polyhedral functions and their conjugates, and the sharper constraint qualifications
+polyhedrality allows. Linear programming would build on `Defs`, `Cone` and `Ops`.
+'''

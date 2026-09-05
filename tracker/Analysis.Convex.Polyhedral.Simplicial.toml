@@ -1,0 +1,20 @@
+kind = 'module'
+title = 'Polytopes, triangulation, and local simpliciality'
+parent = 'Analysis.Convex.Polyhedral'
+module = 'Tdaf.Analysis.Convex.Polyhedral.Simplicial'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'exists_polyhedral_isBounded_mem_nhds'
+
+[[node]]
+id = 'Polyhedral.exists_finset_convexHull'
+
+[[node]]
+id = 'isSimplex_convexHull_coe'
+
+[[node]]
+id = 'Polyhedral.locallySimplicial'
+
+[[node]]
+id = 'exists_polyhedral_between'

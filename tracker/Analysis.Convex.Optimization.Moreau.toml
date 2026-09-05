@@ -1,0 +1,26 @@
+kind = 'module'
+title = "Moreau's decomposition"
+parent = 'Analysis.Convex.Optimization'
+module = 'Tdaf.Analysis.Convex.Optimization.Moreau'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'quadFn'
+
+[[node]]
+id = 'conj_quadFn'
+
+[[node]]
+id = 'conj_quadFn_sub'
+
+[[node]]
+id = 'moreau_add'
+
+[[node]]
+id = 'infConv_quadFn_ne_top'
+
+[[node]]
+id = 'infConv_quadFn_ne_bot'
+
+[[node]]
+id = 'mem_subgradient_iff_infConv_eq'

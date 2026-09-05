@@ -1,0 +1,11 @@
+kind = 'module'
+title = 'The recession cone of a polyhedral set, read off its generators'
+parent = 'Analysis.Convex.Polyhedral'
+module = 'Tdaf.Analysis.Convex.Polyhedral.Recession'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'recessionCone_of_finitelyGenerated'
+
+[[node]]
+id = 'Polyhedral.recessionCone_image'

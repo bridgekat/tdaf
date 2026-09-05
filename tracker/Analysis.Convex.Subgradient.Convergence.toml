@@ -1,0 +1,29 @@
+kind = 'module'
+title = 'Convergence of directional derivatives and of subgradients'
+parent = 'Analysis.Convex.Subgradient'
+module = 'Tdaf.Analysis.Convex.Subgradient.Convergence'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'tendsto_eval_of_tendsto'
+
+[[node]]
+id = 'eventually_dirDeriv_lt'
+
+[[node]]
+id = 'upperSemicontinuousAt_dirDeriv'
+
+[[node]]
+id = 'eventually_subgradient_subset_add_closedBall'
+
+[[node]]
+id = 'eventually_nhds_subgradient_subset_add_closedBall'
+
+[[node]]
+id = 'eventually_dirDeriv_lt_of_tendsto_dir'
+
+[[node]]
+id = 'subgradient_dirDeriv'
+
+[[node]]
+id = 'eventually_subgradient_subset_exposed_add_closedBall'

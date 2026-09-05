@@ -1,0 +1,8 @@
+kind = 'module'
+title = 'The continuity constraint qualification'
+parent = 'Analysis.Convex.Duality'
+module = 'Tdaf.Analysis.Convex.Duality.Continuity'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'IsExactSum.of_continuousAt'

@@ -1,0 +1,11 @@
+kind = 'area'
+title = 'The backbone'
+notes = '''
+The backbone: mathematics named for its subject, stated at the weakest hypotheses that carry the
+proof, and tied to no textbook. One directory per subject; convex analysis is the only one so far.
+A new backbone project is a new directory here, and should reuse what `Convex` already has rather
+than restate it — the dual-pair machinery in `Analysis.Convex.Duality` and the recession theory in
+particular are written to be applied outside convex analysis proper.
+
+The conventions this plan is written by are in `tracker/README.md`.
+'''

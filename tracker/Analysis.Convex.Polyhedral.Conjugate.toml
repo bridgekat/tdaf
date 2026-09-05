@@ -1,0 +1,11 @@
+kind = 'module'
+title = 'Conjugates of polyhedral convex functions'
+parent = 'Analysis.Convex.Polyhedral'
+module = 'Tdaf.Analysis.Convex.Polyhedral.Conjugate'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'mem_epi_conj_iff'
+
+[[node]]
+id = 'PolyhedralFn.conj'

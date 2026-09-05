@@ -18,6 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
+      # `check` resolves every node against the library just built and writes the cache `lint`
+      # reads; `lint` is the gate, and fails when a node stops resolving, because a renamed or
+      # deleted declaration leaves the node open and an open node with no `kind` is a plan error.
+      - name: Check the plan
+        run: |
+          lake exe tracker check
+          lake exe tracker lint
       - uses: leanprover-community/docgen-action@v1
         with:
           blueprint: false

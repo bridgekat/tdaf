@@ -1,0 +1,27 @@
+kind = 'module'
+title = 'Sums of finitely many convex sets'
+parent = 'Analysis.Convex.Recession'
+module = 'Tdaf.Analysis.Convex.Recession.PiSum'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'piSum'
+
+[[node]]
+id = 'piSum_apply'
+desc = 'The summation map sends a family to the sum of its members.'
+
+[[node]]
+id = 'image_piSum_univ_pi'
+
+[[node]]
+id = 'forall_mem_linealitySpace_pi'
+
+[[node]]
+id = 'Convex.isClosed_sum'
+
+[[node]]
+id = 'Convex.closure_sum_eq'
+
+[[node]]
+id = 'Convex.recessionCone_sum'

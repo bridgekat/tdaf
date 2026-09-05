@@ -16,5 +16,9 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.34.0-rc1"
 
+[[require]]
+name = "tracker"
+git = "https://github.com/bridgekat/tracker"
+
 [[lean_lib]]
 name = "Tdaf"

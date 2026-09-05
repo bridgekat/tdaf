@@ -18,3 +18,12 @@ The library builds with no `sorry`, no warnings, and nothing beyond the three st
 
 `Tdaf/Surface/Rockafellar.lean` is the project's index: the section-by-section outline, the
 ambient setup, and the places where formalizing the book corrected it.
+
+`tracker/` is the plan, in the TOML that [tracker](https://github.com/bridgekat/tracker) reads: one
+group per module, and a node for each result the library stands behind — what the backbone modules
+advertise as their main definitions and results, and the book's numbered results on the surface
+side, each citing the result it states. `lake build && lake exe tracker check` resolves every node
+against the compiled library; `tracker status` reports the counts, `tracker show` a group's brief or
+one node with its signature and real dependencies, and `tracker graph` the dependency graph. The
+backbone and the surfaces are separate root groups, and a later project adds its own there and names
+these nodes as dependencies. `tracker/README.md` states the conventions the plan is written by.
