@@ -126,7 +126,7 @@ import Tdaf.Analysis.Convex.Tangent
 
 The **backbone** for convex analysis: the theory of convex sets and of extended-real-valued convex
 functions over real vector spaces, named for its subject and stated at the weakest hypotheses that
-carry each proof. Nothing here is tied to a particular text. `Tdaf.Surface.Rockafellar` is the
+carry each proof. Nothing here is tied to a particular text. `TdafSurface.Rockafellar` is the
 surface that tests it against one.
 
 This module imports the whole of `Tdaf.Analysis.Convex` and adds nothing of its own.

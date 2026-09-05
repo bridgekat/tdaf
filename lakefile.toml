@@ -1,7 +1,7 @@
 name = "tdaf"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["Tdaf"]
+defaultTargets = ["Tdaf", "TdafSurface"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -23,3 +23,6 @@ rev = "main"
 
 [[lean_lib]]
 name = "Tdaf"
+
+[[lean_lib]]
+name = "TdafSurface"

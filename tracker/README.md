@@ -40,22 +40,23 @@ surface nodes, which keep the `source` they state.
 
 ## Shape
 
-A group *is* a module, named by the module's path, so this directory is a copy of `Tdaf/` with
-`.lean` replaced by `.toml`, one level deeper than it looks:
+A group *is* a module, named by the module's path, so this directory is a copy of `Tdaf/` and
+`TdafSurface/` with `.lean` replaced by `.toml`, one level deeper than it looks:
 `tracker/Tdaf/Analysis/Convex/Closure.toml` is the plan for `Tdaf.Analysis.Convex.Closure`, and the
 group is `Tdaf/Analysis/Convex/Closure`. That name is the whole of the correspondence — there is no
 field pointing at the module — and `lint` reports a declaration that lands in a module other than
-its group's. Groups nest as the modules do, and there is one root, `Tdaf`, because that is where
-the module tree has its root; the backbone and the surfaces are `Tdaf/Analysis` and `Tdaf/Surface`,
-which nothing joins below `Tdaf` itself. A surface depends on the backbone and never the other way
-round, and `graph` shows that as a one-way flow.
+its group's. Groups nest as the modules do, and there are two roots, `Tdaf` and `TdafSurface`,
+because the project is two libraries: the backbone, and the surfaces that test it. A surface
+depends on the backbone and never the other way round, which is why nothing joins the two trees,
+and `graph` shows that as a one-way flow.
 
-A group standing for a module that is only a directory — `Tdaf/Analysis`, `Tdaf/Order`, the eight
-subdirectories of `Tdaf/Analysis/Convex` — has no nodes, and exists to roll counts up and to carry
-a description of what the directory is for. Those descriptions are the only ones the plan writes:
-every other group has a real module whose `/-! … -/` doc comment describes it, and a plan copy
-would only be superseded. `Tdaf.toml` is empty for the same reason, and exists because a directory
-must have the group file of its name beside it.
+A group standing for a module that is only a directory — `Tdaf/Analysis`, `Tdaf/Order`,
+`TdafSurface/Common`, the eight subdirectories of `Tdaf/Analysis/Convex` — has no nodes, and exists
+to roll counts up and to carry a description of what the directory is for. Those descriptions are
+the only ones the plan writes: every other group has a real module whose `/-! … -/` doc comment
+describes it, and a plan copy would only be superseded. `Tdaf.toml` and `TdafSurface.toml` are
+empty for the same reason, and exist because a directory must have the group file of its name
+beside it.
 
 A group is addressed by its path or by an unambiguous trailing part of it, so `tracker show
 Convex/Closure` and `tracker show Rockafellar/Part7/Section33` both work. Two groups share a stem
@@ -65,10 +66,11 @@ alone is not always enough.
 ## Building on it
 
 A later project appends its own groups — a backbone one under `Tdaf/Analysis`, a surface per book
-under `Tdaf/Surface` — one per module it intends to write, and names ids from these groups in the
+under `TdafSurface` — one per module it intends to write, and names ids from these groups in the
 `deps` of its open nodes. `tracker show <id>` then prints the signature the new work has to meet,
 and `tracker ready` lists the modules that can be worked on now, never one whose dependencies here
-are unproved. Only `Tdaf` is tracked, so Mathlib and core never appear as nodes.
+are unproved. Only `Tdaf` and `TdafSurface` are tracked, so Mathlib and core never appear as
+nodes.
 
 Do not restate an existing node under a new name. If a new project needs to depend on something the
 library has but this plan does not name, add the node to the group that owns it — that is the plan
