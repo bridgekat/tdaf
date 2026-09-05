@@ -1,16 +1,19 @@
 # The plan
 
 The plan of the library, in the TOML that [tracker](https://github.com/bridgekat/tracker/) reads.
-One file per group; the file stem is the group's name.
+One file per group, named by its path under this directory.
 
 ```
-lake build                  # the tracker reads oleans, so build first
-lake exe tracker check      # resolve every node against the compiled library
+lake build                  # the tracker reads oleans and never builds, so build first
 lake exe tracker status     # counts per group, rolled up through parents
 lake exe tracker lint       # plan errors, cycles, placement and kind mismatches
 lake exe tracker show <group | id>
 lake exe tracker graph --under <group> [--dot]
 ```
+
+Every command resolves the plan against the compiled library first when the cache is stale, so
+`check` is only needed to do that step alone or, with `--force`, to redo it. An edit that has not
+been built is invisible, which is why `lake build` comes first.
 
 ## What a node is
 
@@ -37,14 +40,21 @@ surface nodes, which keep the `source` they state.
 
 ## Shape
 
-Group names are module names without the `Tdaf.` prefix, so `Analysis.Convex.Closure` is the plan
-of `Tdaf.Analysis.Convex.Closure`. Every group names the module its declarations must live in, and
-`lint` reports one that lands elsewhere. Groups without a module of their own are the directories,
-and exist to roll counts up.
+This directory is `Tdaf/` with `.lean` replaced by `.toml`: `tracker/Analysis/Convex/Closure.toml`
+is the plan of `Tdaf/Analysis/Convex/Closure.lean`, and the group is named for its path here,
+`Analysis/Convex/Closure`. Groups nest through the directories, so a directory always has the
+group file of the same name beside it. Every group names the module its declarations must live in,
+and `lint` reports one that lands elsewhere. The groups that stand for directories rather than
+modules have no nodes of their own, and exist to roll counts up.
 
 The backbone and the surfaces are different root groups: `Analysis`, `Order` and `LinearAlgebra`
 against `Surface`. Nothing joins them, because nothing should — a surface depends on the backbone,
 never the other way round, and `graph` shows that as a one-way flow.
+
+A group is addressed by its path or by an unambiguous trailing part of it, so `tracker show
+Convex/Closure` and `tracker show Surface/Rockafellar/Part7/Section33` both work. Two groups share
+a stem often enough — `Closure` is a module of both `Convex` and `Convex/Saddle` — that the last
+component alone is not always enough.
 
 ## Building on it
 

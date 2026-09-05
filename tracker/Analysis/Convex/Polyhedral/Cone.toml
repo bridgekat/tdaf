@@ -1,0 +1,19 @@
+kind = 'module'
+title = 'Polyhedral convex cones and the Minkowski–Weyl theorem'
+module = 'Tdaf.Analysis.Convex.Polyhedral.Cone'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'FinitelyGeneratedCone.polyhedralCone'
+
+[[node]]
+id = 'PolyhedralCone.isClosed'
+
+[[node]]
+id = 'FinitelyGeneratedCone.isClosed'
+
+[[node]]
+id = 'PolyhedralCone.finitelyGeneratedCone'
+
+[[node]]
+id = 'polyhedralCone_iff_finitelyGeneratedCone'

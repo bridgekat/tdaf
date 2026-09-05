@@ -1,0 +1,16 @@
+kind = 'module'
+title = 'Condition (c) of essential smoothness, in directional-derivative form'
+module = 'Tdaf.Analysis.Convex.Subgradient.BoundaryDirDeriv'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'closedProperConvexFn_lineRestrict'
+
+[[node]]
+id = 'subgradient_eq_empty_iff_tendsto_dirDeriv'
+
+[[node]]
+id = 'subgradient_eq_empty_iff_tendsto_norm_fderiv'
+
+[[node]]
+id = 'essentiallySmooth_iff_tendsto_dirDeriv'

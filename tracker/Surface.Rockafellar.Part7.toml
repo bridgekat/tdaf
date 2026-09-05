@@ -1,7 +1,0 @@
-kind = 'part'
-title = 'Part VII: Saddle-Functions and Minimax Theory'
-parent = 'Surface.Rockafellar'
-module = 'Tdaf.Surface.Rockafellar.Part7'
-notes = '''
-One group per section of this Part. A node named for a numbered result cites it in `source`.
-'''

@@ -1,0 +1,16 @@
+kind = 'module'
+title = 'Preservation of essential smoothness'
+module = 'Tdaf.Analysis.Convex.Subgradient.Preservation'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'StrictConvexOnFn.add_convexFn'
+
+[[node]]
+id = 'StrictConvexOnFn.compLin'
+
+[[node]]
+id = 'IsExactSum.essentiallySmooth_infConv'
+
+[[node]]
+id = 'IsExactImage.essentiallySmooth_mapLin'

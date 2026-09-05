@@ -1,9 +1,0 @@
-kind = 'area'
-title = 'Saddle-functions and minimax'
-parent = 'Analysis.Convex'
-notes = '''
-Concave-convex functions, their two partial closures and the equivalence classes these generate,
-continuity and differentiability, minimax problems, and the conjugacy carrying the existence theory
-of saddle-values. The orientation convention — `cl₁` closes the concave argument, `cl₂` the convex
-one — is fixed in `Closure`, and reversing it silently breaks everything downstream.
-'''

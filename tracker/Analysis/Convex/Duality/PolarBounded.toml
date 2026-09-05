@@ -1,0 +1,10 @@
+kind = 'module'
+title = 'Boundedness of a polar'
+module = 'Tdaf.Analysis.Convex.Duality.PolarBounded'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'isBounded_polarSet_iff_zero_mem_interior'
+
+[[node]]
+id = 'isBounded_iff_zero_mem_interior_polarSet'

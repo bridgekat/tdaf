@@ -1,0 +1,10 @@
+kind = 'module'
+title = 'The affine hull of a set containing the origin'
+module = 'Tdaf.LinearAlgebra.Subspace'
+namespace = 'Tdaf'
+
+[[node]]
+id = 'vectorSpan_eq_span_of_zero_mem'
+
+[[node]]
+id = 'vectorSpan_eq_of_affineSpan_eq'

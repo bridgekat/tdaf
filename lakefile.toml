@@ -19,6 +19,7 @@ rev = "v4.34.0-rc1"
 [[require]]
 name = "tracker"
 git = "https://github.com/bridgekat/tracker"
+rev = "main"
 
 [[lean_lib]]
 name = "Tdaf"

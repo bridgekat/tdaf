@@ -1,0 +1,16 @@
+kind = 'module'
+title = 'A convex function of one variable is the integral of its derivative'
+module = 'Tdaf.Analysis.Convex.Subgradient.Integral'
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'sub_eq_intervalIntegral_derivWithin_Ioi'
+
+[[node]]
+id = 'rightDeriv_eq_coe_derivWithin'
+
+[[node]]
+id = 'sub_eq_intervalIntegral_rightDeriv'
+
+[[node]]
+id = 'sub_eq_intervalIntegral_leftDeriv'
