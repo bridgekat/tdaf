@@ -1,0 +1,4 @@
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'IsExactSum.of_continuousAt'

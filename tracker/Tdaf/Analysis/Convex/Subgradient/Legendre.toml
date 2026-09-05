@@ -1,0 +1,10 @@
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'conj_eq_of_hasGradientAt'
+
+[[node]]
+id = 'legendreDom'
+
+[[node]]
+id = 'legendreDom_subset_dom_conj'

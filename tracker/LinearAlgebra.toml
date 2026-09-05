@@ -1,5 +1,0 @@
-kind = 'area'
-title = 'Linear algebra'
-notes = '''
-What the backbone needs from linear algebra and Mathlib does not have. Candidates to upstream.
-'''

@@ -1,0 +1,4 @@
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'polarCone_dom_supportFn'

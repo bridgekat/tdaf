@@ -1,7 +1,0 @@
-kind = 'module'
-title = 'The continuity constraint qualification'
-module = 'Tdaf.Analysis.Convex.Duality.Continuity'
-namespace = 'Tdaf.ConvexAnalysis'
-
-[[node]]
-id = 'IsExactSum.of_continuousAt'

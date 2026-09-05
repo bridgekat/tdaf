@@ -1,7 +1,0 @@
-kind = 'module'
-title = 'The barrier cone and the recession cone'
-module = 'Tdaf.Analysis.Convex.Duality.Barrier'
-namespace = 'Tdaf.ConvexAnalysis'
-
-[[node]]
-id = 'polarCone_dom_supportFn'

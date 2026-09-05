@@ -1,0 +1,7 @@
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'mem_epi_conj_iff'
+
+[[node]]
+id = 'PolyhedralFn.conj'

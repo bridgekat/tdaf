@@ -1,7 +1,0 @@
-kind = 'module'
-title = 'A Galois connection restricts to an order isomorphism between the closed elements'
-module = 'Tdaf.Order.GaloisConnection'
-namespace = 'GaloisConnection'
-
-[[node]]
-id = 'closedsOrderIso'

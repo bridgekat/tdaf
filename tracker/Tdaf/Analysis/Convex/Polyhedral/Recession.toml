@@ -1,0 +1,7 @@
+namespace = 'Tdaf.ConvexAnalysis'
+
+[[node]]
+id = 'recessionCone_of_finitelyGenerated'
+
+[[node]]
+id = 'Polyhedral.recessionCone_image'
